@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 export const Hero = () => {
   return (
     <div className="relative min-h-[90vh] overflow-hidden bg-gradient-to-b from-soft-purple via-soft-pink to-soft-blue">
