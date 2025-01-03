@@ -1,19 +1,29 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useEffect } from "react";
 
 export const Hero = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const session = useSession();
+  const supabase = useSupabaseClient();
 
-  const handleJoinNow = () => {
+  useEffect(() => {
+    if (!session) {
+      navigate("/login");
+    }
+  }, [session, navigate]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
     toast({
-      title: "Welcome!",
-      description: "Thanks for joining our creator community.",
+      title: "Signed out",
+      description: "You have been successfully signed out.",
       duration: 3000,
     });
-    // In a real app, this would navigate to a sign-up page
-    // navigate("/signup");
+    navigate("/login");
   };
 
   const handleBecomeCreator = () => {
@@ -22,9 +32,11 @@ export const Hero = () => {
       description: "Thanks for your interest in becoming a creator! We'll be in touch soon.",
       duration: 3000,
     });
-    // In a real app, this would navigate to a creator application page
-    // navigate("/become-creator");
   };
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="relative min-h-[90vh] overflow-hidden bg-gradient-to-b from-soft-purple via-soft-pink to-soft-blue">
@@ -41,9 +53,9 @@ export const Hero = () => {
             <Button
               size="lg"
               className="group relative overflow-hidden bg-gradient-to-r from-primary to-secondary px-8 transition-all hover:scale-105 hover:shadow-xl"
-              onClick={handleJoinNow}
+              onClick={handleSignOut}
             >
-              <span className="relative z-10">Join Now</span>
+              <span className="relative z-10">Sign Out</span>
               <div className="absolute inset-0 z-0 bg-gradient-to-r from-secondary to-primary opacity-0 transition-opacity group-hover:opacity-100" />
             </Button>
             <Button
