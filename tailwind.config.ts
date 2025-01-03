@@ -18,6 +18,16 @@ export default {
     },
     extend: {
       colors: {
+        luxury: {
+          purple: "#8B5CF6",
+          pink: "#D946EF",
+          orange: "#F97316",
+          blue: "#0EA5E9",
+          primary: "#9b87f5",
+          secondary: "#7E69AB",
+          neutral: "#8E9196",
+          softgray: "#F1F0FB",
+        },
         gold: {
           50: "#fff9e6",
           100: "#ffedb3",
@@ -78,6 +88,11 @@ export default {
       animation: {
         "logo-spin": "logo-spin 1.5s ease-in-out",
         "fade-up": "fade-up 0.5s ease-out",
+      },
+      backgroundImage: {
+        'luxury-gradient': 'linear-gradient(225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%)',
+        'purple-gradient': 'linear-gradient(90deg, hsla(277, 75%, 84%, 1) 0%, hsla(297, 50%, 51%, 1) 100%)',
+        'gold-gradient': 'linear-gradient(90deg, hsla(39, 100%, 77%, 1) 0%, hsla(22, 90%, 57%, 1) 100%)',
       },
     },
   },
