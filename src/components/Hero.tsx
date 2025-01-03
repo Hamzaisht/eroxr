@@ -14,43 +14,68 @@ export const Hero = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!session) {
-      navigate("/login");
+    if (session) {
+      navigate("/");
     }
   }, [session, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    setIsLoading(true);
 
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
+        });
+        navigate("/");
+      }
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSocialLogin = async (provider: 'twitter' | 'google' | 'apple') => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-    });
+  const handleSocialLogin = async (provider: 'twitter' | 'google') => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
 
-    if (error) {
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }
@@ -86,6 +111,8 @@ export const Hero = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-white/5 border-white/20 text-white placeholder:text-white/50"
+                  disabled={isLoading}
+                  required
                 />
                 <div className="relative">
                   <Input
@@ -94,11 +121,14 @@ export const Hero = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-white/5 border-white/20 text-white placeholder:text-white/50 pr-10"
+                    disabled={isLoading}
+                    required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -108,8 +138,9 @@ export const Hero = () => {
               <Button
                 type="submit"
                 className="w-full bg-gold-gradient hover:opacity-90 text-white font-semibold transition-all duration-300"
+                disabled={isLoading}
               >
-                Sign In
+                {isLoading ? "Signing in..." : "Sign In"}
               </Button>
 
               <div className="relative">
@@ -127,6 +158,7 @@ export const Hero = () => {
                   variant="outline"
                   onClick={() => handleSocialLogin('twitter')}
                   className="w-full border-white/20 text-white hover:bg-white/10 transition-colors duration-300"
+                  disabled={isLoading}
                 >
                   <Twitter className="w-5 h-5 mr-2" />
                   Twitter
@@ -136,6 +168,7 @@ export const Hero = () => {
                   variant="outline"
                   onClick={() => handleSocialLogin('google')}
                   className="w-full border-white/20 text-white hover:bg-white/10 transition-colors duration-300"
+                  disabled={isLoading}
                 >
                   <Mail className="w-5 h-5 mr-2" />
                   Google
