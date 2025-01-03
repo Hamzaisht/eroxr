@@ -1,6 +1,31 @@
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 export const Hero = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleJoinNow = () => {
+    toast({
+      title: "Welcome!",
+      description: "Thanks for joining our creator community.",
+      duration: 3000,
+    });
+    // In a real app, this would navigate to a sign-up page
+    // navigate("/signup");
+  };
+
+  const handleBecomeCreator = () => {
+    toast({
+      title: "Creator Program",
+      description: "Thanks for your interest in becoming a creator! We'll be in touch soon.",
+      duration: 3000,
+    });
+    // In a real app, this would navigate to a creator application page
+    // navigate("/become-creator");
+  };
+
   return (
     <div className="relative min-h-[90vh] overflow-hidden bg-gradient-to-b from-soft-purple via-soft-pink to-soft-blue">
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-20" />
@@ -16,6 +41,7 @@ export const Hero = () => {
             <Button
               size="lg"
               className="group relative overflow-hidden bg-gradient-to-r from-primary to-secondary px-8 transition-all hover:scale-105 hover:shadow-xl"
+              onClick={handleJoinNow}
             >
               <span className="relative z-10">Join Now</span>
               <div className="absolute inset-0 z-0 bg-gradient-to-r from-secondary to-primary opacity-0 transition-opacity group-hover:opacity-100" />
@@ -24,6 +50,7 @@ export const Hero = () => {
               size="lg"
               variant="outline"
               className="glass-effect border-2 border-primary/20 px-8 backdrop-blur-sm transition-all hover:scale-105 hover:border-primary/40 hover:bg-primary/10"
+              onClick={handleBecomeCreator}
             >
               Become a Creator
             </Button>
