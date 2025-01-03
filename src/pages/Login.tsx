@@ -12,20 +12,26 @@ const Login = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-luxury-purple via-luxury-pink to-luxury-orange flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-luxury-gradient flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -inset-[10px] bg-luxury-primary/5 backdrop-blur-3xl rotate-12 transform-gpu"></div>
+        <div className="absolute -inset-[10px] bg-luxury-secondary/5 backdrop-blur-3xl -rotate-12 transform-gpu"></div>
+      </div>
+
       {/* Logo */}
-      <div className="mb-8">
+      <div className="mb-8 relative z-10">
         <img
           src="/placeholder.svg"
           alt="Eroxr Logo"
-          className="w-24 h-24 filter brightness-0 invert"
+          className="w-24 h-24 filter brightness-0 invert animate-fade-up"
         />
       </div>
 
       {/* Login Container */}
-      <div className="relative w-full max-w-md mb-8">
-        <div className="relative bg-white/10 backdrop-blur-lg p-8 rounded-lg shadow-2xl border border-white/20">
-          <h1 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-gold-300 to-gold-500 bg-clip-text text-transparent">
+      <div className="relative w-full max-w-md mb-8 z-10">
+        <div className="relative bg-white/5 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-luxury-primary/20">
+          <h1 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-luxury-primary to-luxury-secondary bg-clip-text text-transparent">
             Welcome to Eroxr
           </h1>
 
@@ -35,14 +41,14 @@ const Login = () => {
               <Input
                 type="email"
                 placeholder="Email"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
+                className="bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
               />
             </div>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
+                className="bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
               />
               <Button
                 type="button"
@@ -58,20 +64,20 @@ const Login = () => {
             {/* Social Login Buttons */}
             <div className="space-y-3">
               <Button
-                className="w-full bg-luxury-blue hover:bg-luxury-blue/90 text-white"
+                className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300 text-white font-medium"
                 onClick={() => {}}
               >
                 Sign in with Google
               </Button>
               <Button
                 variant="outline"
-                className="w-full border-white/20 text-white hover:bg-white/10"
+                className="w-full border-luxury-primary/20 text-white hover:bg-white/10 transition-colors"
                 onClick={() => {}}
               >
                 Sign in with Apple
               </Button>
               <Button
-                className="w-full bg-luxury-purple hover:bg-luxury-purple/90 text-white"
+                className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300 text-white font-medium"
                 onClick={() => {}}
               >
                 Sign in with Twitter
@@ -97,7 +103,7 @@ const Login = () => {
       </div>
 
       {/* Footer */}
-      <footer className="mt-8 text-center text-xs text-white/50 max-w-2xl">
+      <footer className="mt-8 text-center text-xs text-white/50 max-w-2xl relative z-10">
         <p>©2024 Eroxr</p>
         <div className="flex flex-wrap justify-center gap-2 mt-2">
           <button className="hover:text-white">Contact</button>

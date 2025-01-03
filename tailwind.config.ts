@@ -19,22 +19,12 @@ export default {
     extend: {
       colors: {
         luxury: {
+          dark: "#1A1F2C",
           primary: "#9b87f5",
           secondary: "#7E69AB",
-          neutral: "#8E9196",
+          accent: "#D946EF",
+          neutral: "#E5DEFF",
           softgray: "#F1F0FB",
-        },
-        gold: {
-          50: "#fff9e6",
-          100: "#ffedb3",
-          200: "#ffe180",
-          300: "#ffd54d",
-          400: "#ffc91a",
-          500: "#e6b300",
-          600: "#b38c00",
-          700: "#806400",
-          800: "#4d3c00",
-          900: "#1a1400",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -71,9 +61,9 @@ export default {
         },
       },
       backgroundImage: {
-        'luxury-gradient': 'linear-gradient(to right, #243949 0%, #517fa4 100%)',
-        'purple-gradient': 'linear-gradient(90deg, hsla(221, 45%, 73%, 1) 0%, hsla(220, 78%, 29%, 1) 100%)',
-        'gold-gradient': 'linear-gradient(90deg, hsla(39, 100%, 77%, 1) 0%, hsla(22, 90%, 57%, 1) 100%)',
+        'luxury-gradient': 'linear-gradient(135deg, #1A1F2C 0%, #2A1F3D 50%, #1A1F2C 100%)',
+        'button-gradient': 'linear-gradient(90deg, #9b87f5 0%, #7E69AB 100%)',
+        'hover-gradient': 'linear-gradient(90deg, #7E69AB 0%, #9b87f5 100%)',
       },
       keyframes: {
         "logo-spin": {
