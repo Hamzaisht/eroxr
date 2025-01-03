@@ -7,7 +7,7 @@ export const SplashScreen = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-    }, 1500); // 1.5 seconds as specified
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -25,13 +25,15 @@ export const SplashScreen = () => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 1.5, opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="w-32 h-32"
+            className="relative w-32 h-32"
           >
-            <img
+            <motion.img
               src="/placeholder.svg"
               alt="Eroxr"
-              className="w-full h-full object-contain filter brightness-0 invert opacity-80"
+              className="w-full h-full object-contain animate-logo-spin"
+              style={{ filter: "brightness(0) invert(1) sepia(1) saturate(10000%) hue-rotate(330deg)" }}
             />
+            <div className="absolute inset-0 bg-gradient-to-r from-gold-400 to-gold-600 mix-blend-overlay opacity-50" />
           </motion.div>
         </motion.div>
       )}
