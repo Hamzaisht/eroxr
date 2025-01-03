@@ -3,12 +3,10 @@ import { FeaturedCreators } from "@/components/FeaturedCreators";
 
 const Index = () => {
   return (
-    <div className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <Hero />
-      <div className="container">
-        <FeaturedCreators />
-      </div>
-    </div>
+      <FeaturedCreators />
+    </main>
   );
 };
 

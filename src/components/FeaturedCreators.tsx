@@ -23,21 +23,24 @@ const FEATURED_CREATORS = [
 
 export const FeaturedCreators = () => {
   return (
-    <section className="relative overflow-hidden bg-soft-purple py-24">
+    <section className="relative overflow-hidden py-24">
+      <div className="absolute inset-0 bg-gradient-to-b from-soft-purple/50 to-soft-pink/30" />
       <div className="container relative z-10">
-        <h2 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-center text-4xl font-bold text-transparent md:text-5xl">
-          Featured Creators
-        </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-foreground/70">
-          Discover and support amazing creators who inspire and entertain
-        </p>
-        <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="animate-fade-in space-y-6 text-center">
+          <h2 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
+            Featured Creators
+          </h2>
+          <p className="mx-auto max-w-2xl text-lg text-foreground/70">
+            Discover and support amazing creators who inspire and entertain
+          </p>
+        </div>
+        <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {FEATURED_CREATORS.map((creator) => (
             <CreatorCard key={creator.name} {...creator} />
           ))}
         </div>
       </div>
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-50 [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
     </section>
   );
 };
