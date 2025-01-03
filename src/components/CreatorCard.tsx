@@ -10,16 +10,22 @@ interface CreatorCardProps {
 
 export const CreatorCard = ({ name, image, description, subscribers }: CreatorCardProps) => {
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-lg">
-      <div className="aspect-video w-full overflow-hidden">
-        <img src={image} alt={name} className="h-full w-full object-cover" />
+    <Card className="group relative overflow-hidden border-none bg-white/80 backdrop-blur-sm transition-all hover:-translate-y-1 hover:shadow-xl">
+      <div className="aspect-[4/3] w-full overflow-hidden">
+        <img
+          src={image}
+          alt={name}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
       </div>
       <div className="p-6">
-        <h3 className="text-xl font-semibold">{name}</h3>
-        <p className="mt-2 text-sm text-gray-600">{description}</p>
+        <h3 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-semibold text-transparent">
+          {name}
+        </h3>
+        <p className="mt-2 text-sm text-foreground/70">{description}</p>
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-sm text-gray-500">{subscribers} subscribers</span>
-          <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+          <span className="text-sm font-medium text-foreground/60">{subscribers} subscribers</span>
+          <Button className="relative overflow-hidden bg-gradient-to-r from-primary to-secondary transition-all hover:scale-105">
             Subscribe
           </Button>
         </div>
