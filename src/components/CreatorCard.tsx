@@ -37,7 +37,7 @@ export const CreatorCard = ({
         .select()
         .eq('user_id', session.user.id)
         .eq('creator_id', creatorId)
-        .single();
+        .maybeSingle();
       
       setIsLiked(!!likes);
     };
@@ -49,7 +49,7 @@ export const CreatorCard = ({
         .select()
         .eq('user_id', session.user.id)
         .eq('creator_id', creatorId)
-        .single();
+        .maybeSingle();
       
       setIsSubscribed(!!subscription);
     };
