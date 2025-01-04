@@ -5,6 +5,7 @@ import { Heart, Star } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
+import { Link } from "react-router-dom";
 
 interface CreatorCardProps {
   name: string;
@@ -181,53 +182,61 @@ export const CreatorCard = ({
   };
 
   return (
-    <Card className="group relative overflow-hidden border-none bg-white/80 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl">
-      <div className="absolute right-4 top-4 z-10">
-        <Button 
-          size="icon" 
-          variant="ghost" 
-          className={`rounded-full backdrop-blur-md transition-all duration-300 ${
-            isLiked 
-              ? "bg-primary/20 text-primary hover:bg-primary/30" 
-              : "bg-white/20 text-white hover:bg-white/40"
-          }`}
-          onClick={handleLike}
-        >
-          <Heart className={`h-5 w-5 ${isLiked ? "fill-primary" : ""}`} />
-        </Button>
-      </div>
-      <div className="aspect-[4/3] w-full overflow-hidden">
-        <img
-          src={image}
-          alt={name}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
-      </div>
-      <div className="space-y-4 p-6">
-        <div className="flex items-center justify-between">
-          <h3 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-semibold text-transparent">
-            {name}
-          </h3>
-          <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm font-medium text-foreground/70">4.9</span>
-          </div>
-        </div>
-        <p className="text-sm text-foreground/70">{description}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-foreground/60">{subscribers} subscribers</span>
+    <Link to={`/profile/${creatorId}`}>
+      <Card className="group relative overflow-hidden border-none bg-white/80 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl">
+        <div className="absolute right-4 top-4 z-10">
           <Button 
-            className={`relative overflow-hidden transition-all hover:scale-105 ${
-              isSubscribed 
-                ? "bg-gradient-to-r from-green-500 to-green-600"
-                : "bg-gradient-to-r from-primary to-secondary"
+            size="icon" 
+            variant="ghost" 
+            className={`rounded-full backdrop-blur-md transition-all duration-300 ${
+              isLiked 
+                ? "bg-primary/20 text-primary hover:bg-primary/30" 
+                : "bg-white/20 text-white hover:bg-white/40"
             }`}
-            onClick={handleSubscribe}
+            onClick={(e) => {
+              e.preventDefault(); // Prevent navigation when clicking the like button
+              handleLike();
+            }}
           >
-            {isSubscribed ? "Subscribed" : "Subscribe"}
+            <Heart className={`h-5 w-5 ${isLiked ? "fill-primary" : ""}`} />
           </Button>
         </div>
-      </div>
-    </Card>
+        <div className="aspect-[4/3] w-full overflow-hidden">
+          <img
+            src={image}
+            alt={name}
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+        </div>
+        <div className="space-y-4 p-6">
+          <div className="flex items-center justify-between">
+            <h3 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-semibold text-transparent">
+              {name}
+            </h3>
+            <div className="flex items-center gap-1">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-sm font-medium text-foreground/70">4.9</span>
+            </div>
+          </div>
+          <p className="text-sm text-foreground/70">{description}</p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground/60">{subscribers} subscribers</span>
+            <Button 
+              className={`relative overflow-hidden transition-all hover:scale-105 ${
+                isSubscribed 
+                  ? "bg-gradient-to-r from-green-500 to-green-600"
+                  : "bg-gradient-to-r from-primary to-secondary"
+              }`}
+              onClick={(e) => {
+                e.preventDefault(); // Prevent navigation when clicking the subscribe button
+                handleSubscribe();
+              }}
+            >
+              {isSubscribed ? "Subscribed" : "Subscribe"}
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </Link>
   );
 };
