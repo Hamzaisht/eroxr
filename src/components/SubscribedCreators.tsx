@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "./CreatorCard";
 import { Skeleton } from "./ui/skeleton";
 import { Users } from "lucide-react";
+import { useToast } from "./ui/use-toast";
 
 interface Creator {
   id: string;
@@ -15,13 +16,53 @@ interface Creator {
 
 export const SubscribedCreators = () => {
   const session = useSession();
+  const { toast } = useToast();
 
-  const { data: creators, isLoading } = useQuery({
+  const { data: creators, isLoading, error } = useQuery({
     queryKey: ["subscribed-creators", session?.user?.id],
     queryFn: async () => {
       if (!session?.user) return [];
       
-      const { data: subscriptions, error } = await supabase
+      // First verify the creator exists in profiles
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select()
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch profile data",
+          variant: "destructive",
+        });
+        throw profileError;
+      }
+
+      // If profile doesn't exist, create it
+      if (!profile) {
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert([
+            { 
+              id: session.user.id,
+              username: session.user.email?.split('@')[0] || 'Anonymous User',
+              avatar_url: null 
+            }
+          ]);
+
+        if (insertError) {
+          toast({
+            title: "Error",
+            description: "Failed to create profile",
+            variant: "destructive",
+          });
+          throw insertError;
+        }
+      }
+
+      // Now fetch subscriptions
+      const { data: subscriptions, error: subsError } = await supabase
         .from("creator_subscriptions")
         .select(`
           creator:creator_id (
@@ -32,11 +73,18 @@ export const SubscribedCreators = () => {
         `)
         .eq("user_id", session.user.id);
 
-      if (error) throw error;
+      if (subsError) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch subscriptions",
+          variant: "destructive",
+        });
+        throw subsError;
+      }
 
       // Get subscriber count for each creator
       const creatorsWithCounts = await Promise.all(
-        subscriptions.map(async (sub) => {
+        (subscriptions || []).map(async (sub) => {
           const { count } = await supabase
             .from("creator_subscriptions")
             .select("*", { count: "exact", head: true })
@@ -53,6 +101,19 @@ export const SubscribedCreators = () => {
     },
     enabled: !!session?.user,
   });
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <h3 className="text-2xl font-semibold text-red-500 mb-2">
+          Error Loading Subscriptions
+        </h3>
+        <p className="text-luxury-neutral/70 max-w-md">
+          There was an error loading your subscriptions. Please try again later.
+        </p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
