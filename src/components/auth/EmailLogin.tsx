@@ -70,16 +70,16 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-luxury-primary to-luxury-secondary bg-clip-text text-transparent">
+    <div className="space-y-8">
+      <div className="text-center space-y-2">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-secondary bg-clip-text text-transparent">
           Welcome Back
         </h1>
         <p className="text-luxury-neutral/80">Sign in to continue your journey</p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <FormField
             control={form.control}
             name="email"
@@ -87,17 +87,17 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
               <FormItem>
                 <FormControl>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-5 w-5 text-luxury-neutral/50" />
+                    <Mail className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
                     <Input
                       {...field}
                       type="email"
                       placeholder="Email"
-                      className="pl-10 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
+                      className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
                       disabled={isLoading}
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-sm text-red-400" />
               </FormItem>
             )}
           />
@@ -109,24 +109,24 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
               <FormItem>
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-luxury-neutral/50" />
+                    <Lock className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
                     <Input
                       {...field}
                       type="password"
                       placeholder="Password"
-                      className="pl-10 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
+                      className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
                       disabled={isLoading}
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-sm text-red-400" />
               </FormItem>
             )}
           />
 
           <Button
             type="submit"
-            className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300"
+            className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300 h-12 text-lg font-medium"
             disabled={isLoading}
           >
             {isLoading ? "Signing in..." : "Sign In"}
@@ -134,12 +134,20 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         </form>
       </Form>
 
-      <div className="text-center">
-        <p className="text-luxury-neutral/80">
+      <SocialLogin onSocialLogin={handleSocialLogin} isLoading={isLoading} />
+
+      <div className="text-center space-y-2">
+        <button 
+          className="text-sm text-luxury-neutral/80 hover:text-white transition-colors"
+          onClick={() => {/* Add forgot password handler */}}
+        >
+          Forgot your password?
+        </button>
+        <p className="text-sm text-luxury-neutral/80">
           Don't have an account?{" "}
           <button
             onClick={onToggleMode}
-            className="text-luxury-primary hover:text-luxury-secondary transition-colors"
+            className="text-luxury-primary hover:text-luxury-secondary transition-colors font-medium"
             disabled={isLoading}
           >
             Sign up

@@ -79,18 +79,18 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-secondary bg-clip-text text-transparent">
+    <div className="space-y-8">
+      <div className="text-center space-y-2">
+        <h2 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-secondary bg-clip-text text-transparent">
           Create Account
         </h2>
-        <p className="text-luxury-neutral/80 mt-2">
+        <p className="text-luxury-neutral/80">
           Join our community today
         </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <FormField
             control={form.control}
             name="username"
@@ -98,16 +98,16 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
               <FormItem>
                 <FormControl>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-5 w-5 text-luxury-neutral/50" />
+                    <User className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
                     <Input
                       {...field}
                       placeholder="Username"
-                      className="pl-10 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
+                      className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
                       disabled={isLoading}
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-sm text-red-400" />
               </FormItem>
             )}
           />
@@ -119,17 +119,17 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
               <FormItem>
                 <FormControl>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-5 w-5 text-luxury-neutral/50" />
+                    <Mail className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
                     <Input
                       {...field}
                       type="email"
                       placeholder="Email"
-                      className="pl-10 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
+                      className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
                       disabled={isLoading}
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-sm text-red-400" />
               </FormItem>
             )}
           />
@@ -141,17 +141,17 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
               <FormItem>
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-luxury-neutral/50" />
+                    <Lock className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
                     <Input
                       {...field}
                       type="password"
                       placeholder="Password"
-                      className="pl-10 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
+                      className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
                       disabled={isLoading}
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-sm text-red-400" />
               </FormItem>
             )}
           />
@@ -163,24 +163,24 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
               <FormItem>
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-luxury-neutral/50" />
+                    <Lock className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
                     <Input
                       {...field}
                       type="password"
                       placeholder="Confirm Password"
-                      className="pl-10 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
+                      className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
                       disabled={isLoading}
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-sm text-red-400" />
               </FormItem>
             )}
           />
 
           <Button
             type="submit"
-            className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300"
+            className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300 h-12 text-lg font-medium"
             disabled={isLoading}
           >
             {isLoading ? "Creating account..." : "Sign Up"}
@@ -193,7 +193,7 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
           Already have an account?{" "}
           <button
             onClick={onToggleMode}
-            className="text-luxury-primary hover:text-luxury-secondary transition-colors"
+            className="text-luxury-primary hover:text-luxury-secondary transition-colors font-medium"
             disabled={isLoading}
           >
             Sign in
