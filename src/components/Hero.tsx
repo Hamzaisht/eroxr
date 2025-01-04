@@ -86,108 +86,120 @@ export const Hero = () => {
   }
 
   return (
-    <div className="min-h-screen bg-purple-gradient">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-md mx-auto">
-          <div className="backdrop-blur-md bg-white/10 rounded-xl p-8 shadow-2xl border border-white/20">
-            <div className="text-center mb-8">
-              <img
-                src="/placeholder.svg"
-                alt="Eroxr"
-                className="w-20 h-20 mx-auto mb-6 animate-fade-up"
-                style={{ filter: "brightness(0) invert(1)" }}
-              />
-              <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-gold-200 to-gold-400 bg-clip-text text-transparent">
-                Welcome to Eroxr
-              </h1>
-              <p className="text-luxury-softgray">Connect with amazing creators</p>
-            </div>
+    <div className="min-h-screen bg-luxury-gradient flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-8 shadow-2xl border border-luxury-primary/20">
+          <div className="text-center mb-8">
+            <img
+              src="/placeholder.svg"
+              alt="Eroxr"
+              className="w-20 h-20 mx-auto mb-6 animate-logo-spin"
+              style={{ filter: "brightness(0) invert(1)" }}
+            />
+            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-luxury-primary to-luxury-secondary bg-clip-text text-transparent">
+              Welcome Back
+            </h1>
+            <p className="text-luxury-neutral/80">Sign in to continue your journey</p>
+          </div>
 
-            <form onSubmit={handleSignIn} className="space-y-6">
-              <div className="space-y-4">
+          <form onSubmit={handleSignIn} className="space-y-6">
+            <div className="space-y-4">
+              <div>
                 <Input
                   type="email"
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-white/5 border-white/20 text-white placeholder:text-white/50"
+                  className="bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50 h-12 px-4"
                   disabled={isLoading}
                   required
                 />
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-white/5 border-white/20 text-white placeholder:text-white/50 pr-10"
-                    disabled={isLoading}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
-                    disabled={isLoading}
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
               </div>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50 h-12 px-4 pr-12"
+                  disabled={isLoading}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                  disabled={isLoading}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
 
+            <Button
+              type="submit"
+              className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300 h-12 text-white font-medium text-lg"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing in..." : "Sign In"}
+            </Button>
+
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-luxury-primary/20"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-transparent text-luxury-neutral/80">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <Button
-                type="submit"
-                className="w-full bg-gold-gradient hover:opacity-90 text-white font-semibold transition-all duration-300"
+                type="button"
+                variant="outline"
+                onClick={() => handleSocialLogin('twitter')}
+                className="border-luxury-primary/20 text-white hover:bg-luxury-primary/10 transition-colors h-12"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                <Twitter className="w-5 h-5 mr-2" />
+                Twitter
               </Button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/20"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-transparent text-luxury-softgray">Or continue with</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleSocialLogin('twitter')}
-                  className="w-full border-white/20 text-white hover:bg-white/10 transition-colors duration-300"
-                  disabled={isLoading}
-                >
-                  <Twitter className="w-5 h-5 mr-2" />
-                  Twitter
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleSocialLogin('google')}
-                  className="w-full border-white/20 text-white hover:bg-white/10 transition-colors duration-300"
-                  disabled={isLoading}
-                >
-                  <Mail className="w-5 h-5 mr-2" />
-                  Google
-                </Button>
-              </div>
-            </form>
-
-            <div className="mt-6 text-center text-sm text-luxury-softgray">
-              <p>
-                By signing in, you agree to our{" "}
-                <a href="#" className="text-gold-300 hover:text-gold-200 transition-colors">
-                  Terms of Service
-                </a>{" "}
-                and{" "}
-                <a href="#" className="text-gold-300 hover:text-gold-200 transition-colors">
-                  Privacy Policy
-                </a>
-              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleSocialLogin('google')}
+                className="border-luxury-primary/20 text-white hover:bg-luxury-primary/10 transition-colors h-12"
+                disabled={isLoading}
+              >
+                <Mail className="w-5 h-5 mr-2" />
+                Google
+              </Button>
             </div>
+          </form>
+
+          <div className="mt-8 text-center space-y-2">
+            <button className="text-sm text-luxury-neutral/80 hover:text-white transition-colors">
+              Forgot your password?
+            </button>
+            <p className="text-sm text-luxury-neutral/80">
+              Don't have an account?{" "}
+              <button className="text-luxury-primary hover:text-luxury-secondary transition-colors">
+                Sign up
+              </button>
+            </p>
+          </div>
+
+          <div className="mt-8 text-center text-xs text-luxury-neutral/60">
+            <p>
+              By signing in, you agree to our{" "}
+              <a href="#" className="text-luxury-primary hover:text-luxury-secondary transition-colors">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="#" className="text-luxury-primary hover:text-luxury-secondary transition-colors">
+                Privacy Policy
+              </a>
+            </p>
           </div>
         </div>
       </div>
