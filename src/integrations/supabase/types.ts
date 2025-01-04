@@ -81,25 +81,67 @@ export type Database = {
           },
         ]
       }
+      id_verifications: {
+        Row: {
+          document_type: string
+          document_url: string
+          id: string
+          rejected_reason: string | null
+          status: string | null
+          submitted_at: string | null
+          user_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          document_type: string
+          document_url: string
+          id?: string
+          rejected_reason?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          document_type?: string
+          document_url?: string
+          id?: string
+          rejected_reason?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
+          date_of_birth: string | null
           id: string
+          id_verification_status: string | null
+          is_age_verified: boolean | null
           updated_at: string
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           id: string
+          id_verification_status?: string | null
+          is_age_verified?: boolean | null
           updated_at?: string
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           id?: string
+          id_verification_status?: string | null
+          is_age_verified?: boolean | null
           updated_at?: string
           username?: string | null
         }
