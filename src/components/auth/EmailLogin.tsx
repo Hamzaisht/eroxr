@@ -38,14 +38,17 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
   });
 
   const onSubmit = async (values: LoginValues) => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      console.log("Attempting login with:", values); // Debug log
+      
       const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
+        email: values.email.trim(),
         password: values.password,
       });
 
       if (error) {
+        console.error("Login error:", error); // Debug log
         toast({
           title: "Error",
           description: error.message,
@@ -59,6 +62,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         navigate("/");
       }
     } catch (error) {
+      console.error("Unexpected error:", error); // Debug log
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -94,6 +98,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
                       placeholder="Email"
                       className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
                       disabled={isLoading}
+                      autoComplete="email"
                     />
                   </div>
                 </FormControl>
@@ -116,6 +121,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
                       placeholder="Password"
                       className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
                       disabled={isLoading}
+                      autoComplete="current-password"
                     />
                   </div>
                 </FormControl>
