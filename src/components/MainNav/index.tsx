@@ -34,7 +34,7 @@ export const MainNav = () => {
     }
   };
 
-  console.log("Session status:", !!session); // Debug log to verify session state
+  console.log("Session status:", !!session, "User email:", session?.user?.email); // Enhanced debug log
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b">
@@ -67,7 +67,7 @@ export const MainNav = () => {
                 <Button 
                   variant="default"
                   onClick={() => navigate("/profile")}
-                  className="font-semibold"
+                  className="bg-primary hover:bg-primary/90 text-white font-semibold px-6"
                 >
                   My Profile
                 </Button>
