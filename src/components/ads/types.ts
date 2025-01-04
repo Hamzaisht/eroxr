@@ -8,6 +8,8 @@ export type DatingAd = {
   city: string;
   age_range: { lower: number; upper: number };
   created_at: string;
+  is_premium?: boolean;
+  is_verified?: boolean;
 };
 
 export type SearchCategory = {

@@ -15,9 +15,17 @@ export const AdList = ({ ads, isLoading }: AdListProps) => {
     );
   }
 
+  if (!ads?.length) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px] text-gray-400">
+        No ads found matching your criteria
+      </div>
+    );
+  }
+
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {ads?.map((ad) => (
+      {ads.map((ad) => (
         <AdCard key={ad.id} ad={ad} />
       ))}
     </div>
