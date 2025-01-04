@@ -21,6 +21,11 @@ const searchCategories: SearchCategory[] = [
 
 const countries = ["denmark", "finland", "iceland", "norway", "sweden"];
 
+// Define the type for raw data from Supabase
+type RawDatingAd = Omit<DatingAd, 'age_range'> & {
+  age_range: string;
+};
+
 export const PromotedAds = () => {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedSeeker, setSelectedSeeker] = useState<string | null>(null);
@@ -48,7 +53,7 @@ export const PromotedAds = () => {
       if (error) throw error;
 
       // Transform the data to match the DatingAd type
-      return (data || []).map((ad) => ({
+      return (data as RawDatingAd[] || []).map((ad) => ({
         ...ad,
         age_range: {
           lower: parseInt(ad.age_range.replace(/[\[\]\(\)]/g, '').split(',')[0]),
