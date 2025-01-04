@@ -46,11 +46,11 @@ export const AuthForm = () => {
       <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-8 shadow-2xl border border-luxury-primary/20">
         <div className="text-center mb-8">
           <img
-            src="/placeholder.svg"
-            alt="Eroxr"
-            className="w-20 h-20 mx-auto mb-6 animate-logo-spin"
-            style={{ filter: "brightness(0) invert(1)" }}
+            src="/eroxr-logo.svg"
+            alt="EROXR"
+            className="w-32 h-32 mx-auto mb-4 transition-transform duration-300 hover:scale-110"
           />
+          <h2 className="text-2xl font-bold text-white mb-2">Welcome to EROXR</h2>
         </div>
 
         {isSignup ? (

@@ -18,28 +18,36 @@ export const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <Button
           type="button"
           variant="outline"
           onClick={() => onSocialLogin('twitter')}
-          className="border-luxury-primary/20 text-white hover:bg-luxury-primary/10 transition-colors h-12"
+          className="border-luxury-primary/20 text-white hover:bg-luxury-primary/10 transition-colors h-12 group"
           disabled={isLoading}
         >
-          <Twitter className="w-5 h-5 mr-2" />
-          Twitter
+          <Twitter className="w-6 h-6 group-hover:text-luxury-primary transition-colors" />
+          <span className="sr-only">Sign in with Twitter</span>
         </Button>
         <Button
           type="button"
           variant="outline"
           onClick={() => onSocialLogin('google')}
-          className="border-luxury-primary/20 text-white hover:bg-luxury-primary/10 transition-colors h-12"
+          className="border-luxury-primary/20 text-white hover:bg-luxury-primary/10 transition-colors h-12 group"
           disabled={isLoading}
         >
-          <Mail className="w-5 h-5 mr-2" />
-          Google
+          <Mail className="w-6 h-6 group-hover:text-luxury-primary transition-colors" />
+          <span className="sr-only">Sign in with Google</span>
         </Button>
       </div>
+
+      <Button 
+        type="submit"
+        className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300 h-12 text-lg font-medium"
+        disabled={isLoading}
+      >
+        {isLoading ? "Signing in..." : "LOGIN"}
+      </Button>
     </>
   );
 };
