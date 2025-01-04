@@ -1,5 +1,5 @@
 import { AdCard } from "./AdCard";
-import { type DatingAd } from "./types";
+import { type DatingAd } from "./types/dating";
 
 interface AdListProps {
   ads: DatingAd[] | undefined;

@@ -13,12 +13,12 @@ export type DatingAd = {
   interests?: string[];
   preferred_age_range?: { lower: number; upper: number };
   height?: number;
-  body_type?: 'athletic' | 'average' | 'slim' | 'curvy' | 'muscular' | 'plus_size';
-  smoking_status?: 'non_smoker' | 'occasional' | 'regular';
-  drinking_status?: 'non_drinker' | 'occasional' | 'regular';
+  body_type?: string;
+  smoking_status?: string;
+  drinking_status?: string;
   languages?: string[];
   occupation?: string;
-  education_level?: 'high_school' | 'college' | 'bachelor' | 'master' | 'phd';
+  education_level?: string;
   about_me?: string;
   seeking_description?: string;
   last_active?: string;

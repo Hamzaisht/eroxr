@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Heart, User, Calendar, Shield, Crown, Clock, Briefcase, GraduationCap, Languages } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MapPin, User, Calendar, Shield, Crown, Clock, Briefcase, GraduationCap, Languages } from "lucide-react";
 import { type DatingAd } from "./types/dating";
 import { formatDistanceToNow } from "date-fns";
 
@@ -55,51 +55,56 @@ export const AdCard = ({ ad }: AdCardProps) => {
 
           <p className="text-gray-300 text-sm line-clamp-2">{ad.description}</p>
 
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xs text-gray-300">
-              <MapPin className="h-3 w-3 text-[#9b87f5]" />
-              <span className="capitalize">{ad.city}, {ad.country}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-300">
-              <User className="h-3 w-3 text-[#9b87f5]" />
-              <span className="capitalize">Looking for: {ad.looking_for.join(", ")}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-300">
-              <Calendar className="h-3 w-3 text-[#9b87f5]" />
-              Age range: {ad.age_range.lower} - {ad.age_range.upper}
-            </div>
-            {ad.occupation && (
-              <div className="flex items-center gap-1.5 text-xs text-gray-300">
-                <Briefcase className="h-3 w-3 text-[#9b87f5]" />
-                {ad.occupation}
-              </div>
-            )}
-            {ad.education_level && (
-              <div className="flex items-center gap-1.5 text-xs text-gray-300">
-                <GraduationCap className="h-3 w-3 text-[#9b87f5]" />
-                {ad.education_level.replace('_', ' ')}
-              </div>
-            )}
-            {ad.languages && ad.languages.length > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-gray-300">
-                <Languages className="h-3 w-3 text-[#9b87f5]" />
-                {ad.languages.join(", ")}
-              </div>
-            )}
-            {ad.last_active && (
-              <div className="flex items-center gap-1.5 text-xs text-gray-300">
-                <Clock className="h-3 w-3 text-[#9b87f5]" />
-                Active {formatDistanceToNow(new Date(ad.last_active), { addSuffix: true })}
-              </div>
-            )}
-          </div>
+          <AdCardDetails ad={ad} />
 
           <Button size="sm" className="w-full bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] hover:from-[#7E69AB] hover:to-[#9b87f5] border-none transition-all duration-300 text-xs">
-            <Heart className="w-3 h-3 mr-1.5" />
-            Contact
+            View Profile
           </Button>
         </div>
       </div>
     </Card>
+  );
+};
+
+const AdCardDetails = ({ ad }: AdCardProps) => {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 text-xs text-gray-300">
+        <MapPin className="h-3 w-3 text-[#9b87f5]" />
+        <span className="capitalize">{ad.city}, {ad.country}</span>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs text-gray-300">
+        <User className="h-3 w-3 text-[#9b87f5]" />
+        <span className="capitalize">Looking for: {ad.looking_for.join(", ")}</span>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs text-gray-300">
+        <Calendar className="h-3 w-3 text-[#9b87f5]" />
+        Age range: {ad.age_range.lower} - {ad.age_range.upper}
+      </div>
+      {ad.occupation && (
+        <div className="flex items-center gap-1.5 text-xs text-gray-300">
+          <Briefcase className="h-3 w-3 text-[#9b87f5]" />
+          {ad.occupation}
+        </div>
+      )}
+      {ad.education_level && (
+        <div className="flex items-center gap-1.5 text-xs text-gray-300">
+          <GraduationCap className="h-3 w-3 text-[#9b87f5]" />
+          {ad.education_level.replace('_', ' ')}
+        </div>
+      )}
+      {ad.languages && ad.languages.length > 0 && (
+        <div className="flex items-center gap-1.5 text-xs text-gray-300">
+          <Languages className="h-3 w-3 text-[#9b87f5]" />
+          {ad.languages.join(", ")}
+        </div>
+      )}
+      {ad.last_active && (
+        <div className="flex items-center gap-1.5 text-xs text-gray-300">
+          <Clock className="h-3 w-3 text-[#9b87f5]" />
+          Active {formatDistanceToNow(new Date(ad.last_active), { addSuffix: true })}
+        </div>
+      )}
+    </div>
   );
 };
