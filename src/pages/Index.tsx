@@ -4,6 +4,7 @@ import { CategorySection } from "@/components/CategorySection";
 import { TrendingCreators } from "@/components/TrendingCreators";
 import { PromotedAds } from "@/components/PromotedAds";
 import { FeaturedCreators } from "@/components/FeaturedCreators";
+import { CreatorsFeed } from "@/components/CreatorsFeed";
 
 const Index = () => {
   return (
@@ -12,6 +13,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <CategorySection />
+        <CreatorsFeed />
         <TrendingCreators />
         <FeaturedCreators />
         <PromotedAds />
