@@ -1,22 +1,35 @@
 import { MainNav } from "@/components/MainNav";
-import { HeroSection } from "@/components/HeroSection";
-import { FeaturesSection } from "@/components/FeaturesSection";
-import { TestimonialsSection } from "@/components/TestimonialsSection";
+import { HeroSection } from "@/components/landing/HeroSection";
+import { Features3D } from "@/components/landing/Features3D";
+import { InteractiveFeatures } from "@/components/landing/InteractiveFeatures";
+import { AnimatedStats } from "@/components/landing/AnimatedStats";
+import { CreatorShowcase } from "@/components/landing/CreatorShowcase";
 import { CTASection } from "@/components/CTASection";
 import { Footer } from "@/components/Footer";
+import { SplashScreen } from "@/components/SplashScreen";
+import { motion } from "framer-motion";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <MainNav />
-      <main>
-        <HeroSection />
-        <FeaturesSection />
-        <TestimonialsSection />
-        <CTASection />
-      </main>
-      <Footer />
-    </div>
+    <>
+      <SplashScreen />
+      <div className="min-h-screen bg-luxury-dark">
+        <MainNav />
+        <motion.main
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <HeroSection />
+          <AnimatedStats />
+          <Features3D />
+          <InteractiveFeatures />
+          <CreatorShowcase />
+          <CTASection />
+        </motion.main>
+        <Footer />
+      </div>
+    </>
   );
 };
 
