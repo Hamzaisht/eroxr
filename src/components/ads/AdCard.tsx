@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Heart, User, Calendar, Shield, Crown } from "lucide-react";
-import { type DatingAd } from "./types";
+import { MapPin, Heart, User, Calendar, Shield, Crown, Clock, Briefcase, GraduationCap, Languages } from "lucide-react";
+import { type DatingAd } from "./types/dating";
+import { formatDistanceToNow } from "date-fns";
 
 interface AdCardProps {
   ad: DatingAd;
@@ -35,9 +36,21 @@ export const AdCard = ({ ad }: AdCardProps) => {
             <h3 className="text-base font-semibold mb-1 bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] bg-clip-text text-transparent line-clamp-1">
               {ad.title}
             </h3>
-            <Badge variant="secondary" className="capitalize bg-[#2D2A34]/50 text-[#9b87f5] border-none text-xs">
-              {ad.relationship_status}
-            </Badge>
+            <div className="flex flex-wrap gap-1">
+              <Badge variant="secondary" className="capitalize bg-[#2D2A34]/50 text-[#9b87f5] border-none text-xs">
+                {ad.relationship_status}
+              </Badge>
+              {ad.body_type && (
+                <Badge variant="secondary" className="capitalize bg-[#2D2A34]/50 text-[#9b87f5] border-none text-xs">
+                  {ad.body_type.replace('_', ' ')}
+                </Badge>
+              )}
+              {ad.profile_completion_score && ad.profile_completion_score >= 80 && (
+                <Badge variant="secondary" className="bg-[#2D2A34]/50 text-emerald-400 border-none text-xs">
+                  Complete Profile
+                </Badge>
+              )}
+            </div>
           </div>
 
           <p className="text-gray-300 text-sm line-clamp-2">{ad.description}</p>
@@ -55,6 +68,30 @@ export const AdCard = ({ ad }: AdCardProps) => {
               <Calendar className="h-3 w-3 text-[#9b87f5]" />
               Age range: {ad.age_range.lower} - {ad.age_range.upper}
             </div>
+            {ad.occupation && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                <Briefcase className="h-3 w-3 text-[#9b87f5]" />
+                {ad.occupation}
+              </div>
+            )}
+            {ad.education_level && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                <GraduationCap className="h-3 w-3 text-[#9b87f5]" />
+                {ad.education_level.replace('_', ' ')}
+              </div>
+            )}
+            {ad.languages && ad.languages.length > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                <Languages className="h-3 w-3 text-[#9b87f5]" />
+                {ad.languages.join(", ")}
+              </div>
+            )}
+            {ad.last_active && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                <Clock className="h-3 w-3 text-[#9b87f5]" />
+                Active {formatDistanceToNow(new Date(ad.last_active), { addSuffix: true })}
+              </div>
+            )}
           </div>
 
           <Button size="sm" className="w-full bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] hover:from-[#7E69AB] hover:to-[#9b87f5] border-none transition-all duration-300 text-xs">

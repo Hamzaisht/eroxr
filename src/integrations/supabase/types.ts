@@ -163,45 +163,84 @@ export type Database = {
       }
       dating_ads: {
         Row: {
+          about_me: string | null
           age_range: unknown
+          body_type: string | null
           city: string
           country: Database["public"]["Enums"]["nordic_country"]
           created_at: string | null
           description: string
+          drinking_status: string | null
+          education_level: string | null
+          height: number | null
           id: string
+          interests: string[] | null
           is_active: boolean | null
+          languages: string[] | null
+          last_active: string | null
           looking_for: string[]
+          occupation: string | null
+          preferred_age_range: unknown | null
+          profile_completion_score: number | null
           relationship_status: Database["public"]["Enums"]["relationship_status"]
+          seeking_description: string | null
+          smoking_status: string | null
           title: string
           updated_at: string | null
           user_id: string | null
           views_count: number | null
         }
         Insert: {
+          about_me?: string | null
           age_range: unknown
+          body_type?: string | null
           city: string
           country: Database["public"]["Enums"]["nordic_country"]
           created_at?: string | null
           description: string
+          drinking_status?: string | null
+          education_level?: string | null
+          height?: number | null
           id?: string
+          interests?: string[] | null
           is_active?: boolean | null
+          languages?: string[] | null
+          last_active?: string | null
           looking_for: string[]
+          occupation?: string | null
+          preferred_age_range?: unknown | null
+          profile_completion_score?: number | null
           relationship_status: Database["public"]["Enums"]["relationship_status"]
+          seeking_description?: string | null
+          smoking_status?: string | null
           title: string
           updated_at?: string | null
           user_id?: string | null
           views_count?: number | null
         }
         Update: {
+          about_me?: string | null
           age_range?: unknown
+          body_type?: string | null
           city?: string
           country?: Database["public"]["Enums"]["nordic_country"]
           created_at?: string | null
           description?: string
+          drinking_status?: string | null
+          education_level?: string | null
+          height?: number | null
           id?: string
+          interests?: string[] | null
           is_active?: boolean | null
+          languages?: string[] | null
+          last_active?: string | null
           looking_for?: string[]
+          occupation?: string | null
+          preferred_age_range?: unknown | null
+          profile_completion_score?: number | null
           relationship_status?: Database["public"]["Enums"]["relationship_status"]
+          seeking_description?: string | null
+          smoking_status?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string | null
@@ -474,8 +513,18 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      body_type:
+        | "athletic"
+        | "average"
+        | "slim"
+        | "curvy"
+        | "muscular"
+        | "plus_size"
+      drinking_status: "non_drinker" | "occasional" | "regular"
+      education_level: "high_school" | "college" | "bachelor" | "master" | "phd"
       nordic_country: "denmark" | "finland" | "iceland" | "norway" | "sweden"
       relationship_status: "single" | "couple" | "other"
+      smoking_status: "non_smoker" | "occasional" | "regular"
     }
     CompositeTypes: {
       [_ in never]: never
