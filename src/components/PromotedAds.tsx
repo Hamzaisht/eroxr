@@ -65,41 +65,46 @@ export const PromotedAds = () => {
   });
 
   return (
-    <section className="py-16 bg-gradient-to-br from-[#1A1F2C] to-[#2A1F3D]">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col space-y-8">
+    <section className="py-8 bg-gradient-to-br from-[#1A1F2C] to-[#2A1F3D]">
+      <div className="container mx-auto px-4 max-w-6xl">
+        <div className="flex flex-col space-y-6">
           <div className="text-center">
-            <h2 className="text-4xl font-bold mb-3 bg-gradient-to-r from-[#1EAEDB] to-[#33C3F0] bg-clip-text text-transparent">
+            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] bg-clip-text text-transparent">
               Find Your Perfect Match
             </h2>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-400 text-sm">
               Discover meaningful connections in the Nordics
             </p>
           </div>
 
-          <AdFilters
-            selectedCountry={selectedCountry}
-            setSelectedCountry={setSelectedCountry}
-            selectedSeeker={selectedSeeker}
-            selectedLookingFor={selectedLookingFor}
-            setSelectedSeeker={setSelectedSeeker}
-            setSelectedLookingFor={setSelectedLookingFor}
-            searchCategories={searchCategories}
-            countries={countries}
-          />
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="lg:w-1/4">
+              <AdFilters
+                selectedCountry={selectedCountry}
+                setSelectedCountry={setSelectedCountry}
+                selectedSeeker={selectedSeeker}
+                selectedLookingFor={selectedLookingFor}
+                setSelectedSeeker={setSelectedSeeker}
+                setSelectedLookingFor={setSelectedLookingFor}
+                searchCategories={searchCategories}
+                countries={countries}
+              />
+            </div>
 
-          <div className="flex flex-wrap gap-4 items-center justify-between">
-            <CountrySelect
-              selectedCountry={selectedCountry}
-              setSelectedCountry={setSelectedCountry}
-              countries={countries}
-            />
-            <Button className="bg-gradient-to-r from-[#1EAEDB] to-[#33C3F0] hover:from-[#33C3F0] hover:to-[#1EAEDB] text-white border-none transition-all duration-300">
-              Post an Ad
-            </Button>
+            <div className="lg:w-3/4">
+              <div className="flex flex-wrap gap-4 items-center justify-between mb-4">
+                <CountrySelect
+                  selectedCountry={selectedCountry}
+                  setSelectedCountry={setSelectedCountry}
+                  countries={countries}
+                />
+                <Button className="bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] hover:from-[#7E69AB] hover:to-[#9b87f5] text-white border-none transition-all duration-300">
+                  Post an Ad
+                </Button>
+              </div>
+              <AdList ads={ads} isLoading={isLoading} />
+            </div>
           </div>
-
-          <AdList ads={ads} isLoading={isLoading} />
         </div>
       </div>
     </section>

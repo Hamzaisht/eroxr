@@ -13,9 +13,9 @@ export const CountrySelect = ({
 }: CountrySelectProps) => {
   return (
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1EAEDB] h-4 w-4" />
+      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-[#9b87f5] h-3 w-3" />
       <select
-        className="pl-10 pr-4 py-2 bg-[#2D2A34] text-white border-none rounded-lg focus:ring-2 focus:ring-[#1EAEDB] focus:outline-none transition-all duration-300"
+        className="pl-7 pr-3 py-1.5 bg-[#2D2A34]/50 text-white border-none rounded-lg focus:ring-2 focus:ring-[#9b87f5] focus:outline-none transition-all duration-300 text-sm"
         value={selectedCountry || ""}
         onChange={(e) => setSelectedCountry(e.target.value || null)}
       >
