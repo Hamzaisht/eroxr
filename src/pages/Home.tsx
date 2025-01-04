@@ -6,6 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 
+type Creator = {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  subscriber_count: number;
+};
+
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -49,18 +56,13 @@ const Home = () => {
 
       const limit = Math.max(Math.ceil((count || 0) * 0.05), 5); // At least 5 creators
 
-      // Get creators with their subscription counts using a subquery
       const { data, error } = await supabase
         .from('profiles')
-        .select(`
+        .select<string, Creator>(`
           id,
           username,
           avatar_url,
-          (
-            select count(*)
-            from creator_subscriptions
-            where creator_id = profiles.id
-          ) as subscriber_count
+          subscriber_count:creator_subscriptions(count)
         `)
         .order('subscriber_count', { ascending: false })
         .limit(limit);
