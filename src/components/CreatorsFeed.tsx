@@ -1,78 +1,146 @@
-import { Rss, Image, Video, BookOpen, FileText } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader } from "./ui/card";
+import { Avatar } from "./ui/avatar";
+import { Button } from "./ui/button";
+import { ThumbsUp, MessageSquare } from "lucide-react";
+import { useToast } from "./ui/use-toast";
+import { Skeleton } from "./ui/skeleton";
 
-const FEED_SECTIONS = [
-  {
-    title: "Latest Updates",
-    icon: Rss,
-    content: "Stay up to date with your favorite creators' latest posts",
-    image: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81",
-  },
-  {
-    title: "Photos & Art",
-    icon: Image,
-    content: "Discover stunning visual content from talented artists",
-    image: "https://images.unsplash.com/photo-1470813740244-df37b8c1edcb",
-  },
-  {
-    title: "Videos",
-    icon: Video,
-    content: "Watch engaging videos from creators worldwide",
-    image: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21",
-  },
-  {
-    title: "Articles",
-    icon: BookOpen,
-    content: "Read insightful articles and stories",
-    image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d",
-  },
-  {
-    title: "Tutorials",
-    icon: FileText,
-    content: "Learn new skills with educational content",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
-  },
-];
+interface Post {
+  id: string;
+  content: string;
+  media_url: string[];
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  creator: {
+    username: string;
+    avatar_url: string;
+  };
+}
 
 export const CreatorsFeed = () => {
-  return (
-    <section className="py-16 bg-gradient-to-b from-background to-background/80">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12 animate-fade-in">
-          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            Explore Creator Content
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover amazing content across different formats and categories
-          </p>
-        </div>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {FEED_SECTIONS.map((section) => {
-            const Icon = section.icon;
-            return (
-              <Card
-                key={section.title}
-                className="group relative overflow-hidden hover:shadow-xl transition-all duration-500 hover:-translate-y-1"
-              >
-                <div className="absolute inset-0">
-                  <img
-                    src={section.image}
-                    alt={section.title}
-                    className="w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity duration-500"
-                  />
-                </div>
-                <div className="relative p-6 flex flex-col items-center text-center space-y-4">
-                  <div className="p-3 bg-primary/10 rounded-full backdrop-blur-sm">
-                    <Icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold">{section.title}</h3>
-                  <p className="text-muted-foreground">{section.content}</p>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
+  const session = useSession();
+  const { toast } = useToast();
+
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ["posts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("posts")
+        .select(`
+          *,
+          creator:creator_id (
+            username,
+            avatar_url
+          )
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch posts",
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      return data as Post[];
+    },
+  });
+
+  const handleLike = async (postId: string) => {
+    if (!session?.user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to like posts",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await supabase
+      .from("post_likes")
+      .insert([{ post_id: postId, user_id: session.user.id }]);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to like post",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-[200px] w-full" />
+        ))}
       </div>
-    </section>
+    );
+  }
+
+  return (
+    <div className="space-y-4 max-w-3xl mx-auto">
+      {posts?.map((post) => (
+        <Card key={post.id} className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center gap-4">
+            <Avatar
+              className="h-10 w-10"
+              src={post.creator.avatar_url || "https://via.placeholder.com/40"}
+              alt={post.creator.username || "Anonymous"}
+            />
+            <div>
+              <h3 className="font-semibold">
+                {post.creator.username || "Anonymous"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {new Date(post.created_at).toLocaleDateString()}
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-base">{post.content}</p>
+            {post.media_url && post.media_url.length > 0 && (
+              <div className="grid gap-2 grid-cols-2">
+                {post.media_url.map((url, index) => (
+                  <img
+                    key={index}
+                    src={url}
+                    alt={`Post media ${index + 1}`}
+                    className="rounded-md w-full h-48 object-cover"
+                  />
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-4 pt-4 border-t">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => handleLike(post.id)}
+              >
+                <ThumbsUp className="h-4 w-4" />
+                <span>{post.likes_count || 0}</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>{post.comments_count || 0}</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };

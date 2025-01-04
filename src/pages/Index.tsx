@@ -10,10 +10,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <MainNav />
-      <main>
+      <main className="container mx-auto px-4 py-8">
         <HeroSection />
+        <div className="my-8">
+          <CreatorsFeed />
+        </div>
         <CategorySection />
-        <CreatorsFeed />
         <TrendingCreators />
         <FeaturedCreators />
         <PromotedAds />
