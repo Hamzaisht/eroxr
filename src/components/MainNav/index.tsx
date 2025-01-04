@@ -34,6 +34,8 @@ export const MainNav = () => {
     }
   };
 
+  console.log("Session status:", !!session); // Debug log to verify session state
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b">
       <div className="container mx-auto px-4">
@@ -61,10 +63,11 @@ export const MainNav = () => {
               />
             </div>
             {session ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <Button 
-                  variant="ghost"
+                  variant="default"
                   onClick={() => navigate("/profile")}
+                  className="font-semibold"
                 >
                   My Profile
                 </Button>
