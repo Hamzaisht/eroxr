@@ -10,7 +10,7 @@ type Creator = {
   id: string;
   username: string | null;
   avatar_url: string | null;
-  subscriber_count: number;
+  creator_subscriptions: { count: number }[];
 };
 
 const Home = () => {
@@ -49,7 +49,7 @@ const Home = () => {
   const { data: topCreators } = useQuery({
     queryKey: ["top-creators"],
     queryFn: async () => {
-      // First, get the total count of creators to calculate top 5%
+      // First, get the total count of creators
       const { count } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
@@ -62,9 +62,9 @@ const Home = () => {
           id,
           username,
           avatar_url,
-          subscriber_count:creator_subscriptions(count)
+          creator_subscriptions(count)
         `)
-        .order('subscriber_count', { ascending: false })
+        .order('creator_subscriptions(count)', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
@@ -74,7 +74,7 @@ const Home = () => {
         name: creator.username || "Anonymous Creator",
         image: creator.avatar_url || "https://via.placeholder.com/400",
         description: "Top performing creator",
-        subscribers: creator.subscriber_count || 0,
+        subscribers: creator.creator_subscriptions?.[0]?.count || 0,
       })) || [];
     },
     enabled: !!creators?.length,
