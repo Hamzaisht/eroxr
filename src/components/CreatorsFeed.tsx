@@ -3,7 +3,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader } from "./ui/card";
-import { Avatar } from "./ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { ThumbsUp, MessageSquare } from "lucide-react";
 import { useToast } from "./ui/use-toast";
@@ -91,11 +91,10 @@ export const CreatorsFeed = () => {
       {posts?.map((post) => (
         <Card key={post.id} className="overflow-hidden">
           <CardHeader className="flex flex-row items-center gap-4">
-            <Avatar
-              className="h-10 w-10"
-              src={post.creator.avatar_url || "https://via.placeholder.com/40"}
-              alt={post.creator.username || "Anonymous"}
-            />
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={post.creator.avatar_url || "https://via.placeholder.com/40"} alt={post.creator.username || "Anonymous"} />
+              <AvatarFallback>{post.creator.username?.[0]?.toUpperCase() || 'A'}</AvatarFallback>
+            </Avatar>
             <div>
               <h3 className="font-semibold">
                 {post.creator.username || "Anonymous"}
