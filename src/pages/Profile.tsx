@@ -16,6 +16,12 @@ const Profile = () => {
     queryKey: ["profile", id],
     queryFn: async () => {
       if (!id) return null;
+      
+      // Validate if the ID is a valid UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(id)) {
+        throw new Error("Invalid profile ID format");
+      }
 
       const { data, error } = await supabase
         .from("profiles")
