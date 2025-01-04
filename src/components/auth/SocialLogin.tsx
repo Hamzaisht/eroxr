@@ -2,14 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Twitter, Mail } from "lucide-react";
 
 interface SocialLoginProps {
-  onSocialLogin: (provider: 'twitter' | 'google') => Promise<void>;
+  onSocialLogin: (provider: 'twitter' | 'google') => void;
   isLoading: boolean;
 }
 
 export const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
   return (
-    <>
-      <div className="relative my-8">
+    <div className="space-y-4">
+      <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-luxury-primary/20"></div>
         </div>
@@ -38,14 +38,6 @@ export const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
           <Mail className="w-6 h-6 group-hover:text-luxury-primary transition-colors" />
         </Button>
       </div>
-
-      <Button 
-        type="submit"
-        className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300 h-12 text-lg font-medium"
-        disabled={isLoading}
-      >
-        {isLoading ? "Signing in..." : "LOGIN"}
-      </Button>
-    </>
+    </div>
   );
 };
