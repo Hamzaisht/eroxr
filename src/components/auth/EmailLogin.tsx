@@ -134,8 +134,6 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         </form>
       </Form>
 
-      <SocialLogin onSocialLogin={handleSocialLogin} isLoading={isLoading} />
-
       <div className="text-center space-y-2">
         <button 
           className="text-sm text-luxury-neutral/80 hover:text-white transition-colors"
