@@ -109,6 +109,44 @@ export const CreatorCard = ({
     }
 
     try {
+      // First verify the creator exists in profiles
+      const { data: creatorProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select()
+        .eq("id", creatorId)
+        .maybeSingle();
+
+      if (profileError) {
+        toast({
+          title: "Error",
+          description: "Failed to verify creator profile",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // If creator profile doesn't exist, create it
+      if (!creatorProfile) {
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert([
+            { 
+              id: creatorId,
+              username: name,
+              avatar_url: image 
+            }
+          ]);
+
+        if (insertError) {
+          toast({
+            title: "Error",
+            description: "Failed to create creator profile",
+            duration: 3000,
+          });
+          return;
+        }
+      }
+
       if (isSubscribed) {
         await supabase
           .from('creator_subscriptions')
