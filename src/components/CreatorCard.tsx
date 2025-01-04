@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, Star } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@supabase/auth-helpers-react";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface CreatorCardProps {
   name: string;
@@ -25,17 +25,17 @@ export const CreatorCard = ({
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscribers, setSubscribers] = useState(initialSubscribers);
   const { toast } = useToast();
-  const user = useAuth();
+  const session = useSession();
 
   useEffect(() => {
-    if (!user) return;
+    if (!session?.user) return;
 
     // Check if user has liked the creator
     const checkLikeStatus = async () => {
       const { data: likes } = await supabase
         .from('creator_likes')
         .select()
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .eq('creator_id', creatorId)
         .single();
       
@@ -47,7 +47,7 @@ export const CreatorCard = ({
       const { data: subscription } = await supabase
         .from('creator_subscriptions')
         .select()
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .eq('creator_id', creatorId)
         .single();
       
@@ -56,10 +56,10 @@ export const CreatorCard = ({
 
     checkLikeStatus();
     checkSubscriptionStatus();
-  }, [user, creatorId]);
+  }, [session, creatorId]);
 
   const handleLike = async () => {
-    if (!user) {
+    if (!session?.user) {
       toast({
         title: "Authentication required",
         description: "Please sign in to like creators",
@@ -73,13 +73,13 @@ export const CreatorCard = ({
         await supabase
           .from('creator_likes')
           .delete()
-          .eq('user_id', user.id)
+          .eq('user_id', session.user.id)
           .eq('creator_id', creatorId);
       } else {
         await supabase
           .from('creator_likes')
           .insert([
-            { user_id: user.id, creator_id: creatorId }
+            { user_id: session.user.id, creator_id: creatorId }
           ]);
       }
 
@@ -99,7 +99,7 @@ export const CreatorCard = ({
   };
 
   const handleSubscribe = async () => {
-    if (!user) {
+    if (!session?.user) {
       toast({
         title: "Authentication required",
         description: "Please sign in to subscribe to creators",
@@ -113,14 +113,14 @@ export const CreatorCard = ({
         await supabase
           .from('creator_subscriptions')
           .delete()
-          .eq('user_id', user.id)
+          .eq('user_id', session.user.id)
           .eq('creator_id', creatorId);
         setSubscribers(prev => prev - 1);
       } else {
         await supabase
           .from('creator_subscriptions')
           .insert([
-            { user_id: user.id, creator_id: creatorId }
+            { user_id: session.user.id, creator_id: creatorId }
           ]);
         setSubscribers(prev => prev + 1);
       }
