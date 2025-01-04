@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdFilters } from "./ads/AdFilters";
 import { AdList } from "./ads/AdList";
 import { CountrySelect } from "./ads/CountrySelect";
-import { type SearchCategory } from "./ads/types";
+import { type SearchCategory, type DatingAd } from "./ads/types";
 
 const searchCategories: SearchCategory[] = [
   { seeker: "couple", looking_for: "male" },
@@ -46,7 +46,15 @@ export const PromotedAds = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+
+      // Transform the data to match the DatingAd type
+      return (data || []).map((ad) => ({
+        ...ad,
+        age_range: {
+          lower: parseInt(ad.age_range.replace(/[\[\]\(\)]/g, '').split(',')[0]),
+          upper: parseInt(ad.age_range.replace(/[\[\]\(\)]/g, '').split(',')[1])
+        }
+      })) as DatingAd[];
     },
   });
 
