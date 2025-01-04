@@ -3,11 +3,43 @@ import { EmailLogin } from "./EmailLogin";
 import { SignupForm } from "./SignupForm";
 import { SocialLogin } from "./SocialLogin";
 import { AuthLinks } from "./AuthLinks";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export const AuthForm = () => {
   const [isSignup, setIsSignup] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const toggleMode = () => setIsSignup(!isSignup);
+
+  const handleSocialLogin = async (provider: 'twitter' | 'google') => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Authentication failed",
+          description: error.message
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Authentication failed",
+        description: "An unexpected error occurred"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-md">
@@ -26,7 +58,10 @@ export const AuthForm = () => {
         ) : (
           <>
             <EmailLogin onToggleMode={toggleMode} />
-            <SocialLogin />
+            <SocialLogin 
+              onSocialLogin={handleSocialLogin}
+              isLoading={isLoading}
+            />
             <AuthLinks />
           </>
         )}
