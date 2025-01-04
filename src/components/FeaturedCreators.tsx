@@ -3,19 +3,19 @@ import { CreatorCard } from "./CreatorCard";
 const FEATURED_CREATORS = [
   {
     name: "Sophie Dreams",
-    image: "/placeholder.svg",
+    image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
     description: "Lifestyle and wellness content creator sharing daily inspiration.",
     subscribers: 1234,
   },
   {
     name: "Alex Arts",
-    image: "/placeholder.svg",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
     description: "Digital artist creating unique and mesmerizing artwork.",
     subscribers: 2345,
   },
   {
     name: "Luna Star",
-    image: "/placeholder.svg",
+    image: "https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b",
     description: "Fashion and beauty tips for the modern woman.",
     subscribers: 3456,
   },
