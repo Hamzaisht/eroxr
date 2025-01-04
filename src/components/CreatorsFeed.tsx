@@ -17,18 +17,21 @@ type Post = {
     username: string | null;
     avatar_url: string | null;
   };
-  user_has_liked: boolean;
-  likes_count: number;
-  comments_count: number;
-  media_url: string[];
+  likes_count: number | null;
+  comments_count: number | null;
+  media_url: string[] | null;
+  has_liked: boolean;
 };
 
 export const CreatorsFeed = () => {
   const { toast } = useToast();
   const session = useSession();
+
   const { data: posts, isLoading } = useQuery<Post[]>({
-    queryKey: ["posts"],
+    queryKey: ["posts", session?.user?.id],
     queryFn: async () => {
+      const userId = session?.user?.id;
+
       const { data, error } = await supabase
         .from("posts")
         .select(`
@@ -37,10 +40,10 @@ export const CreatorsFeed = () => {
           created_at,
           creator_id,
           creator:profiles(username, avatar_url),
-          user_has_liked,
           likes_count,
           comments_count,
-          media_url
+          media_url,
+          has_liked:post_likes!inner(id)
         `)
         .order("created_at", { ascending: false });
 
@@ -53,7 +56,10 @@ export const CreatorsFeed = () => {
         throw error;
       }
 
-      return data;
+      return data?.map(post => ({
+        ...post,
+        has_liked: post.has_liked?.length > 0
+      })) || [];
     },
   });
 
@@ -144,7 +150,7 @@ export const CreatorsFeed = () => {
                   >
                     <ThumbsUp
                       className={`h-4 w-4 ${
-                        post.user_has_liked ? "fill-primary text-primary" : ""
+                        post.has_liked ? "fill-primary text-primary" : ""
                       }`}
                     />
                     {post.likes_count || 0}
