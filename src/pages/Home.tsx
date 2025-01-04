@@ -42,16 +42,28 @@ const Home = () => {
   const { data: topCreators } = useQuery({
     queryKey: ["top-creators"],
     queryFn: async () => {
+      // First, get the total count of creators to calculate top 5%
+      const { count } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      const limit = Math.max(Math.ceil((count || 0) * 0.05), 5); // At least 5 creators
+
+      // Get creators with their subscription counts using a subquery
       const { data, error } = await supabase
-        .from("profiles")
+        .from('profiles')
         .select(`
           id,
           username,
           avatar_url,
-          creator_subscriptions(count)
+          (
+            select count(*)
+            from creator_subscriptions
+            where creator_id = profiles.id
+          ) as subscriber_count
         `)
-        .order("creator_subscriptions(count)", { ascending: false })
-        .limit(Math.ceil(creators?.length || 0 * 0.05) || 5); // Top 5% or at least 5 creators
+        .order('subscriber_count', { ascending: false })
+        .limit(limit);
 
       if (error) throw error;
 
@@ -60,7 +72,7 @@ const Home = () => {
         name: creator.username || "Anonymous Creator",
         image: creator.avatar_url || "https://via.placeholder.com/400",
         description: "Top performing creator",
-        subscribers: creator.creator_subscriptions?.[0]?.count || 0,
+        subscribers: creator.subscriber_count || 0,
       })) || [];
     },
     enabled: !!creators?.length,
