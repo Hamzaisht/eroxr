@@ -1,34 +1,34 @@
-import { rss, image, video, bookOpen, fileText } from "lucide-react";
+import { Rss, Image, Video, BookOpen, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const FEED_SECTIONS = [
   {
     title: "Latest Updates",
-    icon: rss,
+    icon: Rss,
     content: "Stay up to date with your favorite creators' latest posts",
     image: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81",
   },
   {
     title: "Photos & Art",
-    icon: image,
+    icon: Image,
     content: "Discover stunning visual content from talented artists",
     image: "https://images.unsplash.com/photo-1470813740244-df37b8c1edcb",
   },
   {
     title: "Videos",
-    icon: video,
+    icon: Video,
     content: "Watch engaging videos from creators worldwide",
     image: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21",
   },
   {
     title: "Articles",
-    icon: bookOpen,
+    icon: BookOpen,
     content: "Read insightful articles and stories",
     image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d",
   },
   {
     title: "Tutorials",
-    icon: fileText,
+    icon: FileText,
     content: "Learn new skills with educational content",
     image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
   },
