@@ -1,27 +1,58 @@
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 export const HeroSection = () => {
   return (
-    <section className="pt-24 pb-16 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10" />
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
-      <div className="container mx-auto px-4 relative">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            Connect with Amazing Creators
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Support your favorite creators, get exclusive content, and join a
-            thriving community of passionate individuals.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-gradient-to-r from-primary to-purple-600">
-              Become a Creator
+    <section className="relative overflow-hidden bg-luxury-gradient py-20 lg:py-32">
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+      
+      <div className="container relative">
+        <div className="mx-auto max-w-[64rem] text-center">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-gradient-to-r from-luxury-neutral to-luxury-primary bg-clip-text text-4xl font-bold text-transparent sm:text-6xl"
+          >
+            Connect with Amazing Creators and Build Your Community
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-6 text-lg text-luxury-neutral/80 sm:text-xl"
+          >
+            Join a thriving community of passionate creators and their dedicated fans.
+            Share exclusive content, engage with your audience, and grow your following.
+          </motion.p>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-8 flex flex-col gap-4 sm:flex-row justify-center"
+          >
+            <Button size="lg" className="bg-button-gradient hover:bg-hover-gradient text-white">
+              Get Started
             </Button>
-            <Button size="lg" variant="outline">
-              Explore Content
+            <Button size="lg" variant="outline" className="border-luxury-neutral text-luxury-neutral hover:bg-luxury-neutral/10">
+              Learn More
             </Button>
-          </div>
+          </motion.div>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            className="mt-16 rounded-lg border border-luxury-neutral/10 bg-luxury-dark/50 p-8 backdrop-blur-xl"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"
+              alt="Platform Preview"
+              className="rounded-lg shadow-2xl"
+            />
+          </motion.div>
         </div>
       </div>
     </section>
