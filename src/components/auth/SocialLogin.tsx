@@ -23,7 +23,7 @@ export const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
           type="button"
           variant="outline"
           onClick={() => onSocialLogin('twitter')}
-          className="border-luxury-primary/20 text-white hover:bg-luxury-primary/10 transition-colors h-12 group"
+          className="border-luxury-primary/20 bg-white/5 text-white hover:bg-luxury-primary/20 hover:border-luxury-primary/40 transition-all duration-300 h-12 group"
           disabled={isLoading}
         >
           <Twitter className="w-6 h-6 group-hover:text-luxury-primary transition-colors" />
@@ -33,7 +33,7 @@ export const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
           type="button"
           variant="outline"
           onClick={() => onSocialLogin('google')}
-          className="border-luxury-primary/20 text-white hover:bg-luxury-primary/10 transition-colors h-12 group"
+          className="border-luxury-primary/20 bg-white/5 text-white hover:bg-luxury-primary/20 hover:border-luxury-primary/40 transition-all duration-300 h-12 group"
           disabled={isLoading}
         >
           <Mail className="w-6 h-6 group-hover:text-luxury-primary transition-colors" />
