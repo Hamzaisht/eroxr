@@ -81,6 +81,54 @@ export type Database = {
           },
         ]
       }
+      dating_ads: {
+        Row: {
+          age_range: unknown
+          city: string
+          country: Database["public"]["Enums"]["nordic_country"]
+          created_at: string | null
+          description: string
+          id: string
+          is_active: boolean | null
+          looking_for: string[]
+          relationship_status: Database["public"]["Enums"]["relationship_status"]
+          title: string
+          updated_at: string | null
+          user_id: string | null
+          views_count: number | null
+        }
+        Insert: {
+          age_range: unknown
+          city: string
+          country: Database["public"]["Enums"]["nordic_country"]
+          created_at?: string | null
+          description: string
+          id?: string
+          is_active?: boolean | null
+          looking_for: string[]
+          relationship_status: Database["public"]["Enums"]["relationship_status"]
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          age_range?: unknown
+          city?: string
+          country?: Database["public"]["Enums"]["nordic_country"]
+          created_at?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean | null
+          looking_for?: string[]
+          relationship_status?: Database["public"]["Enums"]["relationship_status"]
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       id_verifications: {
         Row: {
           document_type: string
@@ -111,6 +159,27 @@ export type Database = {
           submitted_at?: string | null
           user_id?: string | null
           verified_at?: string | null
+        }
+        Relationships: []
+      }
+      nordic_cities: {
+        Row: {
+          city_name: string
+          country: Database["public"]["Enums"]["nordic_country"]
+          id: string
+          population: number | null
+        }
+        Insert: {
+          city_name: string
+          country: Database["public"]["Enums"]["nordic_country"]
+          id?: string
+          population?: number | null
+        }
+        Update: {
+          city_name?: string
+          country?: Database["public"]["Enums"]["nordic_country"]
+          id?: string
+          population?: number | null
         }
         Relationships: []
       }
@@ -165,7 +234,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      nordic_country: "denmark" | "finland" | "iceland" | "norway" | "sweden"
+      relationship_status: "single" | "couple" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
