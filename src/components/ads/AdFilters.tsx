@@ -15,6 +15,7 @@ interface AdFiltersProps {
   setSelectedSeeker: (seeker: string | null) => void;
   setSelectedLookingFor: (lookingFor: string | null) => void;
   searchCategories: SearchCategory[];
+  countries: string[]; // Added this line to fix the TypeScript error
   filterOptions: FilterOptions;
   setFilterOptions: (options: FilterOptions) => void;
 }
