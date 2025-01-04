@@ -36,6 +36,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "creator_likes_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
         ]
       }
       creator_subscriptions: {
@@ -63,6 +70,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
             referencedColumns: ["id"]
           },
         ]
@@ -93,7 +107,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_with_stats: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string | null
+          subscriber_count: number | null
+          updated_at: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
