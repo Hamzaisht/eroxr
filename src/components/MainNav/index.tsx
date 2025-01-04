@@ -46,7 +46,7 @@ export const MainNav = () => {
               Eroxr
             </h1>
             <div className="hidden md:flex items-center gap-6">
-              <Button variant="ghost">Discover</Button>
+              <Button variant="ghost" onClick={() => navigate("/")}>Home</Button>
               <Button variant="ghost">Categories</Button>
               <Button variant="ghost">About</Button>
             </div>
@@ -78,8 +78,11 @@ export const MainNav = () => {
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/")}>
+                    Home
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    Profile
+                    My Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                   <DropdownMenuItem>Subscriptions</DropdownMenuItem>
