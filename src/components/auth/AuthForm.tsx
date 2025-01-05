@@ -16,12 +16,16 @@ export const AuthForm = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
+        });
         navigate('/home');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const toggleMode = () => setIsSignup(!isSignup);
 
