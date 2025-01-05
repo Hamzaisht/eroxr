@@ -6,13 +6,17 @@ import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 export const StoryReel = () => {
   const session = useSession();
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: stories } = useQuery({
+  const { data: stories, refetch } = useQuery({
     queryKey: ["stories"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -33,6 +37,60 @@ export const StoryReel = () => {
       return data;
     },
   });
+
+  const handleStoryUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!session?.user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to create stories",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${session.user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('stories')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('stories')
+        .getPublicUrl(filePath);
+
+      const { error: storyError } = await supabase
+        .from('stories')
+        .insert([
+          {
+            creator_id: session.user.id,
+            media_url: publicUrl,
+          },
+        ]);
+
+      if (storyError) throw storyError;
+
+      toast({
+        title: "Story created",
+        description: "Your story has been published successfully",
+      });
+
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload story. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
@@ -86,7 +144,17 @@ export const StoryReel = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="flex-shrink-0"
           >
-            <div className="w-28 rounded-xl border border-luxury-neutral/10 bg-gradient-to-br from-luxury-dark/50 to-luxury-primary/5 p-2 cursor-pointer hover:bg-luxury-neutral/5 transition-all duration-300 group">
+            <div 
+              className="w-28 rounded-xl border border-luxury-neutral/10 bg-gradient-to-br from-luxury-dark/50 to-luxury-primary/5 p-2 cursor-pointer hover:bg-luxury-neutral/5 transition-all duration-300 group"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleStoryUpload}
+              />
               <div className="relative mb-2">
                 <div className="aspect-[3/4] rounded-lg bg-luxury-primary/10 flex items-center justify-center group-hover:bg-luxury-primary/20 transition-colors">
                   <Plus className="h-8 w-8 text-luxury-neutral/60 group-hover:text-luxury-primary transition-colors" />
@@ -109,7 +177,7 @@ export const StoryReel = () => {
           >
             <div className="w-28 rounded-xl border border-luxury-neutral/10 bg-gradient-to-br from-luxury-dark/50 to-luxury-primary/5 p-2 cursor-pointer hover:bg-luxury-neutral/5 transition-all duration-300 group">
               <div className="relative mb-2">
-                <div className="absolute -top-2 -left-2 z-10">
+                <Link to={`/profile/${story.creator.id}`} className="absolute -top-2 -left-2 z-10">
                   <div className="p-0.5 rounded-full bg-gradient-to-br from-luxury-primary to-luxury-secondary">
                     <Avatar className="h-8 w-8 ring-2 ring-luxury-dark">
                       <AvatarImage src={story.creator.avatar_url} />
@@ -118,7 +186,7 @@ export const StoryReel = () => {
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                </div>
+                </Link>
                 <img 
                   src={story.media_url} 
                   alt={`Story by ${story.creator.username}`}
