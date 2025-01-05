@@ -34,10 +34,10 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="grid grid-cols-[240px,1fr,340px] min-h-screen">
-        {/* Left Sidebar */}
-        <aside className="fixed left-0 top-0 h-screen w-60 bg-card border-r p-6 space-y-6">
+    <div className="flex min-h-screen bg-background">
+      {/* Left Sidebar */}
+      <aside className="w-60 bg-card border-r shrink-0">
+        <div className="fixed w-60 h-screen p-6 space-y-6">
           <div className="flex items-center gap-2 mb-8">
             <img src="/eroxr-logo.svg" alt="EROXR" className="w-8 h-8" />
             <span className="font-semibold text-lg">EROXR</span>
@@ -73,58 +73,60 @@ const Home = () => {
               </Link>
             </div>
           )}
-        </aside>
+        </div>
+      </aside>
 
-        {/* Main Content */}
-        <main className="col-start-2 border-x min-h-screen">
-          <div className="max-w-[600px] mx-auto py-8 px-4">
-            {session && (
-              <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-4 z-50 mb-6">
-                <div className="flex items-center gap-4">
-                  <Link to={`/profile/${session.user.id}`}>
-                    <div className="h-10 w-10 rounded-full bg-muted" />
-                  </Link>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start text-muted-foreground"
-                    onClick={() => setIsCreatePostOpen(true)}
+      {/* Main Content */}
+      <main className="flex-1 border-x min-h-screen">
+        <div className="max-w-[600px] mx-auto py-8 px-4">
+          {session && (
+            <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-4 z-50 mb-6">
+              <div className="flex items-center gap-4">
+                <Link to={`/profile/${session.user.id}`}>
+                  <div className="h-10 w-10 rounded-full bg-muted" />
+                </Link>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start text-muted-foreground"
+                  onClick={() => setIsCreatePostOpen(true)}
+                >
+                  <PenSquare className="mr-2 h-4 w-4" />
+                  What's on your mind?
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="relative overflow-hidden hover:bg-accent"
+                    onClick={() => document.getElementById('file-upload')?.click()}
                   >
-                    <PenSquare className="mr-2 h-4 w-4" />
-                    What's on your mind?
+                    {isPayingCustomer ? (
+                      <Image className="h-5 w-5" />
+                    ) : (
+                      <Lock className="h-5 w-5" />
+                    )}
+                    <input
+                      type="file"
+                      id="file-upload"
+                      multiple
+                      accept="image/*"
+                      className="absolute inset-0 cursor-pointer opacity-0"
+                      onChange={(e) => handleFileSelect(e.target.files)}
+                      disabled={!isPayingCustomer}
+                    />
                   </Button>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="relative overflow-hidden hover:bg-accent"
-                      onClick={() => document.getElementById('file-upload')?.click()}
-                    >
-                      {isPayingCustomer ? (
-                        <Image className="h-5 w-5" />
-                      ) : (
-                        <Lock className="h-5 w-5" />
-                      )}
-                      <input
-                        type="file"
-                        id="file-upload"
-                        multiple
-                        accept="image/*"
-                        className="absolute inset-0 cursor-pointer opacity-0"
-                        onChange={(e) => handleFileSelect(e.target.files)}
-                        disabled={!isPayingCustomer}
-                      />
-                    </Button>
-                  </div>
                 </div>
               </div>
-            )}
-            <CreatorsFeed />
-          </div>
-        </main>
+            </div>
+          )}
+          <CreatorsFeed />
+        </div>
+      </main>
 
-        {/* Right Sidebar */}
-        <aside className="fixed right-0 top-0 w-[340px] h-screen p-6 space-y-6 bg-card border-l">
+      {/* Right Sidebar */}
+      <aside className="w-[340px] bg-card border-l shrink-0">
+        <div className="fixed w-[340px] h-screen p-6 space-y-6">
           <div className="space-y-6">
             {/* Search */}
             <div className="space-y-4">
@@ -177,8 +179,8 @@ const Home = () => {
               </div>
             </div>
           </div>
-        </aside>
-      </div>
+        </div>
+      </aside>
 
       <CreatePostDialog 
         open={isCreatePostOpen} 
