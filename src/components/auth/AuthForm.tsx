@@ -62,7 +62,7 @@ export const AuthForm = () => {
               onSocialLogin={handleSocialLogin}
               isLoading={isLoading}
             />
-            <AuthLinks />
+            <AuthLinks onToggleMode={toggleMode} />
           </>
         )}
       </div>
