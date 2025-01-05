@@ -1,8 +1,15 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Shield, Users, Lock, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Landing = () => {
+  const navigate = useNavigate();
+
+  const handleNavigateToLogin = () => {
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen bg-luxury-dark">
       {/* Navbar */}
@@ -21,10 +28,17 @@ const Landing = () => {
             <a href="#verification" className="hover:text-luxury-neutral transition-colors">Verification</a>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" className="text-luxury-neutral">
+            <Button 
+              variant="ghost" 
+              className="text-luxury-neutral"
+              onClick={handleNavigateToLogin}
+            >
               Log in
             </Button>
-            <Button className="bg-button-gradient hover:bg-hover-gradient">
+            <Button 
+              className="bg-button-gradient hover:bg-hover-gradient"
+              onClick={handleNavigateToLogin}
+            >
               Join Now
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -48,11 +62,20 @@ const Landing = () => {
               A secure and private platform for open-minded adults to connect and meet.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-button-gradient hover:bg-hover-gradient">
+              <Button 
+                size="lg" 
+                className="bg-button-gradient hover:bg-hover-gradient"
+                onClick={handleNavigateToLogin}
+              >
                 Get Started
                 <ChevronRight className="h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="border-luxury-neutral text-luxury-neutral">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-luxury-neutral text-luxury-neutral"
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+              >
                 Learn More
               </Button>
             </div>
