@@ -1,12 +1,15 @@
 import { useParams } from "react-router-dom";
 import { MainNav } from "@/components/MainNav";
 import { ProfileForm } from "@/components/profile/ProfileForm";
+import { VerificationForm } from "@/components/profile/VerificationForm";
+import { PricingForm } from "@/components/profile/PricingForm";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Profile = () => {
   const { id } = useParams();
@@ -17,7 +20,6 @@ const Profile = () => {
     queryFn: async () => {
       if (!id) return null;
       
-      // Validate if the ID is a valid UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(id)) {
         throw new Error("Invalid profile ID format");
@@ -25,26 +27,44 @@ const Profile = () => {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("*, id_verifications(status)")
         .eq("id", id)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!id, // Only run query if we have an ID
+    enabled: !!id,
   });
 
   // If no ID is provided, or if the ID matches the current user's ID,
-  // show the edit form
+  // show the edit forms
   if (!id || (session?.user && session.user.id === id)) {
     return (
       <div className="min-h-screen bg-background">
         <MainNav />
         <main className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <h1 className="text-3xl font-bold mb-8">Edit Profile</h1>
-            <ProfileForm />
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-8">Profile Settings</h1>
+            <Tabs defaultValue="profile" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="verification">Verification</TabsTrigger>
+                <TabsTrigger value="pricing">Pricing</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="profile">
+                <ProfileForm />
+              </TabsContent>
+              
+              <TabsContent value="verification">
+                <VerificationForm />
+              </TabsContent>
+              
+              <TabsContent value="pricing">
+                <PricingForm />
+              </TabsContent>
+            </Tabs>
           </div>
         </main>
       </div>
