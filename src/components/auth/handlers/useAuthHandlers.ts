@@ -46,7 +46,7 @@ export const useAuthHandlers = () => {
       setIsLoading(true);
       console.log("Attempting login with:", values);
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email.trim(),
         password: values.password,
       });
@@ -58,7 +58,7 @@ export const useAuthHandlers = () => {
           description: error.message,
           variant: "destructive",
         });
-      } else {
+      } else if (data.session) {
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
