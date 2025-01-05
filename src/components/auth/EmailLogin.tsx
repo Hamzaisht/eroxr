@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { LoginFields } from "./form-fields/LoginFields";
 import { ForgotPasswordFields } from "./form-fields/ForgotPasswordFields";
 import { LoginHeader } from "./LoginHeader";
 import { LoginActions } from "./LoginActions";
-import { loginSchema, type LoginValues } from "./types";
+import { FormSubmitButton } from "./FormSubmitButton";
+import { loginSchema, type LoginValues } from "./schemas/validation";
 import { useAuthHandlers } from "./handlers/useAuthHandlers";
 
 interface EmailLoginProps {
@@ -50,15 +50,7 @@ export const EmailLogin = ({ onToggleMode }: EmailLoginProps) => {
             <LoginFields form={form} isLoading={isLoading} isForgotPassword={isForgotPassword} />
           )}
 
-          <Button
-            type="submit"
-            className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300 h-12 text-lg font-medium"
-            disabled={isLoading}
-          >
-            {isLoading 
-              ? (isForgotPassword ? "Sending..." : "Signing in...") 
-              : (isForgotPassword ? "Send Reset Link" : "Sign In")}
-          </Button>
+          <FormSubmitButton isLoading={isLoading} isForgotPassword={isForgotPassword} />
         </form>
       </Form>
 
