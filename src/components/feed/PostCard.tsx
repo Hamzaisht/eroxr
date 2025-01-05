@@ -65,7 +65,7 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
   const isOwner = currentUserId === post.creator_id;
 
   return (
-    <Card key={post.id} className="overflow-hidden">
+    <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link to={`/profile/${post.creator_id}`}>
