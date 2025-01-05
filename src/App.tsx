@@ -26,9 +26,9 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-luxury-dark">
         {session && <MainNav />}
-        <div className={session ? "pt-16" : ""}>
+        <div className={`${session ? "pt-16" : ""} min-h-screen`}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
