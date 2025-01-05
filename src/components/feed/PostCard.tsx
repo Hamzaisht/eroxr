@@ -1,9 +1,14 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, MessageSquare, Share } from "lucide-react";
+import { ThumbsUp, Share, Bookmark } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Post } from "./types";
+import { CommentSection } from "./CommentSection";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PostCardProps {
   post: Post;
@@ -11,6 +16,44 @@ interface PostCardProps {
 }
 
 export const PostCard = ({ post, onLike }: PostCardProps) => {
+  const [isSaved, setIsSaved] = useState(false);
+  const { toast } = useToast();
+  const session = useSession();
+
+  const handleShare = async () => {
+    try {
+      await navigator.share({
+        title: `Post by ${post.creator.username}`,
+        text: post.content,
+        url: window.location.href,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name !== "AbortError") {
+        toast({
+          title: "Error sharing post",
+          description: "Could not share the post. Try copying the link instead.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleSave = () => {
+    if (!session) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to save posts.",
+        duration: 3000,
+      });
+      return;
+    }
+    setIsSaved(!isSaved);
+    toast({
+      title: isSaved ? "Post unsaved" : "Post saved",
+      description: isSaved ? "Removed from your saved posts" : "Added to your saved posts",
+    });
+  };
+
   return (
     <Card key={post.id} className="overflow-hidden">
       <CardHeader className="flex flex-row items-center gap-4">
@@ -65,21 +108,24 @@ export const PostCard = ({ post, onLike }: PostCardProps) => {
             />
             {post.likes_count || 0}
           </Button>
+          <CommentSection postId={post.id} commentsCount={post.comments_count} />
           <Button
             variant="ghost"
             size="sm"
             className="flex items-center gap-2"
+            onClick={handleShare}
           >
-            <MessageSquare className="h-4 w-4" />
-            {post.comments_count || 0}
+            <Share className="h-4 w-4" />
+            Share
           </Button>
           <Button
             variant="ghost"
             size="sm"
             className="flex items-center gap-2"
+            onClick={handleSave}
           >
-            <Share className="h-4 w-4" />
-            Share
+            <Bookmark className={`h-4 w-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
+            Save
           </Button>
         </div>
       </CardContent>

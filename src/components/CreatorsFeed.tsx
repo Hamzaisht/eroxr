@@ -1,20 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "./ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { PostCard } from "./feed/PostCard";
 import { LoadingSkeleton } from "./feed/LoadingSkeleton";
 import { Post } from "./feed/types";
+import { useState } from "react";
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./ui/pagination";
+
+const POSTS_PER_PAGE = 5;
 
 export const CreatorsFeed = () => {
   const { toast } = useToast();
   const session = useSession();
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: posts, isLoading } = useQuery<Post[]>({
-    queryKey: ["posts", session?.user?.id],
+  const { data: postsData, isLoading } = useQuery({
+    queryKey: ["posts", session?.user?.id, currentPage],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * POSTS_PER_PAGE;
+      const to = from + POSTS_PER_PAGE - 1;
+
+      const { data: posts, error, count } = await supabase
         .from("posts")
         .select(`
           id,
@@ -26,8 +41,9 @@ export const CreatorsFeed = () => {
           comments_count,
           media_url,
           has_liked:post_likes!inner(id)
-        `)
-        .order("created_at", { ascending: false });
+        `, { count: 'exact' })
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
       if (error) {
         toast({
@@ -38,12 +54,17 @@ export const CreatorsFeed = () => {
         throw error;
       }
 
-      return data?.map(post => ({
-        ...post,
-        has_liked: post.has_liked?.length > 0
-      })) || [];
+      return {
+        posts: posts?.map(post => ({
+          ...post,
+          has_liked: post.has_liked?.length > 0
+        })) || [],
+        totalCount: count || 0
+      };
     },
   });
+
+  const totalPages = Math.ceil((postsData?.totalCount || 0) / POSTS_PER_PAGE);
 
   const handleLike = async (postId: string) => {
     if (!session) {
@@ -90,18 +111,49 @@ export const CreatorsFeed = () => {
   };
 
   return (
-    <ScrollArea className="h-[calc(100vh-200px)]">
-      <div className="space-y-4 pr-4">
-        {isLoading ? (
-          <LoadingSkeleton />
-        ) : (
-          <div className="space-y-4">
-            {posts?.map((post) => (
-              <PostCard key={post.id} post={post} onLike={handleLike} />
+    <div className="space-y-6">
+      <ScrollArea className="h-[calc(100vh-300px)]">
+        <div className="space-y-4 pr-4">
+          {isLoading ? (
+            <LoadingSkeleton />
+          ) : (
+            <div className="space-y-4">
+              {postsData?.posts.map((post) => (
+                <PostCard key={post.id} post={post} onLike={handleLike} />
+              ))}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+      
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              />
+            </PaginationItem>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  onClick={() => setCurrentPage(page)}
+                  isActive={currentPage === page}
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
             ))}
-          </div>
-        )}
-      </div>
-    </ScrollArea>
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
+    </div>
   );
 };

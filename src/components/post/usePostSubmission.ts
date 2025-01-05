@@ -13,7 +13,8 @@ export const usePostSubmission = (onSuccess: () => void) => {
   const handleSubmit = async (
     content: string,
     selectedFiles: FileList | null,
-    isPayingCustomer: boolean | null
+    isPayingCustomer: boolean | null,
+    tags?: string[]
   ) => {
     if (!session) {
       toast({
@@ -77,6 +78,7 @@ export const usePostSubmission = (onSuccess: () => void) => {
             creator_id: session.user.id,
             content,
             media_url: mediaUrls.length > 0 ? mediaUrls : null,
+            tags: tags?.length ? tags : null,
           },
         ]);
 
