@@ -14,7 +14,8 @@ export const usePostSubmission = (onSuccess: () => void) => {
     content: string,
     selectedFiles: FileList | null,
     isPayingCustomer: boolean | null,
-    tags?: string[]
+    tags?: string[],
+    visibility: "public" | "subscribers_only" = "public"
   ) => {
     if (!session) {
       toast({
@@ -79,6 +80,7 @@ export const usePostSubmission = (onSuccess: () => void) => {
             content,
             media_url: mediaUrls.length > 0 ? mediaUrls : null,
             tags: tags?.length ? tags : null,
+            visibility
           },
         ]);
 

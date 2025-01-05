@@ -10,24 +10,34 @@ import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { X } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface CreatePostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  selectedFiles: FileList | null;
+  onFileSelect: (files: FileList | null) => void;
 }
 
-export const CreatePostDialog = ({ open, onOpenChange }: CreatePostDialogProps) => {
+export const CreatePostDialog = ({ 
+  open, 
+  onOpenChange,
+  selectedFiles,
+  onFileSelect
+}: CreatePostDialogProps) => {
   const [content, setContent] = useState("");
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "subscribers_only">("public");
   const session = useSession();
 
   const { handleSubmit, isLoading } = usePostSubmission(() => {
     setContent("");
-    setSelectedFiles(null);
+    onFileSelect(null);
     setTags([]);
+    setVisibility("public");
     onOpenChange(false);
   });
 
@@ -103,6 +113,24 @@ export const CreatePostDialog = ({ open, onOpenChange }: CreatePostDialogProps) 
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label>Post Visibility</Label>
+            <RadioGroup
+              value={visibility}
+              onValueChange={(value: "public" | "subscribers_only") => setVisibility(value)}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="public" id="public" />
+                <Label htmlFor="public">Public</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="subscribers_only" id="subscribers_only" />
+                <Label htmlFor="subscribers_only">Subscribers Only</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           {content && (
             <Card className="p-4">
               <h3 className="text-sm font-medium mb-2">Preview</h3>
@@ -112,14 +140,14 @@ export const CreatePostDialog = ({ open, onOpenChange }: CreatePostDialogProps) 
           
           <MediaUploadButton
             isPayingCustomer={isPayingCustomer}
-            onFileSelect={setSelectedFiles}
+            onFileSelect={onFileSelect}
             selectedFiles={selectedFiles}
           />
           
           <PostSubmitButtons
             isLoading={isLoading}
             onCancel={() => onOpenChange(false)}
-            onSubmit={() => handleSubmit(content, selectedFiles, isPayingCustomer, tags)}
+            onSubmit={() => handleSubmit(content, selectedFiles, isPayingCustomer, tags, visibility)}
           />
         </div>
       </DialogContent>

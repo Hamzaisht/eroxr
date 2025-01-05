@@ -394,7 +394,9 @@ export type Database = {
           id: string
           likes_count: number | null
           media_url: string[] | null
+          tags: string[] | null
           updated_at: string
+          visibility: string | null
         }
         Insert: {
           comments_count?: number | null
@@ -404,7 +406,9 @@ export type Database = {
           id?: string
           likes_count?: number | null
           media_url?: string[] | null
+          tags?: string[] | null
           updated_at?: string
+          visibility?: string | null
         }
         Update: {
           comments_count?: number | null
@@ -414,7 +418,9 @@ export type Database = {
           id?: string
           likes_count?: number | null
           media_url?: string[] | null
+          tags?: string[] | null
           updated_at?: string
+          visibility?: string | null
         }
         Relationships: [
           {

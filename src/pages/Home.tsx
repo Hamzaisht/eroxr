@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, TrendingUp, User, PenSquare } from "lucide-react";
+import { Search, TrendingUp, User, PenSquare, Image, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CreatorsFeed } from "@/components/CreatorsFeed";
@@ -8,11 +8,43 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Link } from "react-router-dom";
 import { TempDemoContent } from "@/components/TempDemoContent";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const session = useSession();
+  const { toast } = useToast();
+  const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
+
+  const checkPayingCustomerStatus = async () => {
+    if (!session?.user?.id) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_paying_customer')
+      .eq('id', session.user.id)
+      .single();
+    
+    if (!error && data) {
+      setIsPayingCustomer(data.is_paying_customer);
+    }
+  };
+
+  const handleFileSelect = (files: FileList | null) => {
+    if (!isPayingCustomer && files) {
+      toast({
+        title: "Premium feature",
+        description: "Only paying customers can upload media",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSelectedFiles(files);
+    setIsCreatePostOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,6 +67,35 @@ const Home = () => {
                     <PenSquare className="mr-2 h-4 w-4" />
                     What's on your mind?
                   </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="relative overflow-hidden"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
+                      {isPayingCustomer ? (
+                        <Image className="h-4 w-4" />
+                      ) : (
+                        <Lock className="h-4 w-4" />
+                      )}
+                      <input
+                        type="file"
+                        id="file-upload"
+                        multiple
+                        accept="image/*"
+                        className="absolute inset-0 cursor-pointer opacity-0"
+                        onChange={(e) => handleFileSelect(e.target.files)}
+                        disabled={!isPayingCustomer}
+                      />
+                    </Button>
+                    {!isPayingCustomer && (
+                      <span className="text-sm text-muted-foreground">
+                        Upgrade to upload media
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -86,7 +147,12 @@ const Home = () => {
           </div>
         </div>
       </div>
-      <CreatePostDialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen} />
+      <CreatePostDialog 
+        open={isCreatePostOpen} 
+        onOpenChange={setIsCreatePostOpen}
+        selectedFiles={selectedFiles}
+        onFileSelect={setSelectedFiles}
+      />
     </div>
   );
 };
