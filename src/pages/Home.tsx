@@ -14,6 +14,7 @@ const Home = () => {
   const session = useSession();
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
 
+  // If no session, redirect to login
   if (!session) {
     return <Navigate to="/login" replace />;
   }
@@ -21,7 +22,7 @@ const Home = () => {
   return (
     <div className="flex min-h-screen bg-luxury-dark">
       <LeftSidebar />
-
+      
       <main className="flex-1 ml-64 border-x border-white/10">
         <div className="max-w-[600px] mx-auto py-8 px-4">
           <CreatePostSection 

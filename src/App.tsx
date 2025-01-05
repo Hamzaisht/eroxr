@@ -24,6 +24,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   const session = useSession();
 
+  // If user is authenticated and tries to access login or landing, redirect to home
+  if (session && (window.location.pathname === '/login' || window.location.pathname === '/')) {
+    return <Navigate to="/home" replace />;
+  }
+
   return (
     <Router>
       <div className="min-h-screen bg-luxury-dark">
