@@ -50,7 +50,7 @@ export const StoryReel = () => {
     }
   };
 
-  if (!stories?.length) return null;
+  if (!stories?.length && !session) return null;
 
   return (
     <div className="relative">
@@ -86,20 +86,20 @@ export const StoryReel = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="flex-shrink-0"
           >
-            <div className="w-28 rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-2 cursor-pointer hover:bg-luxury-neutral/5 transition-colors">
+            <div className="w-28 rounded-xl border border-luxury-neutral/10 bg-gradient-to-br from-luxury-dark/50 to-luxury-primary/5 p-2 cursor-pointer hover:bg-luxury-neutral/5 transition-all duration-300 group">
               <div className="relative mb-2">
-                <div className="aspect-[3/4] rounded-lg bg-luxury-primary/20 flex items-center justify-center">
-                  <Plus className="h-8 w-8 text-luxury-neutral/60" />
+                <div className="aspect-[3/4] rounded-lg bg-luxury-primary/10 flex items-center justify-center group-hover:bg-luxury-primary/20 transition-colors">
+                  <Plus className="h-8 w-8 text-luxury-neutral/60 group-hover:text-luxury-primary transition-colors" />
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-sm text-luxury-neutral/60">Add Story</p>
+                <p className="text-sm text-luxury-neutral/60 group-hover:text-luxury-primary transition-colors">Add Story</p>
               </div>
             </div>
           </motion.div>
         )}
 
-        {stories.map((story, index) => (
+        {stories?.map((story, index) => (
           <motion.div
             key={story.id}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -107,24 +107,26 @@ export const StoryReel = () => {
             transition={{ delay: index * 0.1 }}
             className="flex-shrink-0"
           >
-            <div className="w-28 rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-2 cursor-pointer hover:bg-luxury-neutral/5 transition-colors">
+            <div className="w-28 rounded-xl border border-luxury-neutral/10 bg-gradient-to-br from-luxury-dark/50 to-luxury-primary/5 p-2 cursor-pointer hover:bg-luxury-neutral/5 transition-all duration-300 group">
               <div className="relative mb-2">
-                <div className="ring-2 ring-luxury-primary rounded-full p-0.5 absolute -top-2 -left-2">
-                  <Avatar className="h-8 w-8 border-2 border-luxury-dark">
-                    <AvatarImage src={story.creator.avatar_url} />
-                    <AvatarFallback>
-                      {story.creator.username?.[0]?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                <div className="absolute -top-2 -left-2 z-10">
+                  <div className="p-0.5 rounded-full bg-gradient-to-br from-luxury-primary to-luxury-secondary">
+                    <Avatar className="h-8 w-8 ring-2 ring-luxury-dark">
+                      <AvatarImage src={story.creator.avatar_url} />
+                      <AvatarFallback>
+                        {story.creator.username?.[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
                 </div>
                 <img 
                   src={story.media_url} 
                   alt={`Story by ${story.creator.username}`}
-                  className="aspect-[3/4] rounded-lg object-cover"
+                  className="aspect-[3/4] rounded-lg object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
               <div className="text-center">
-                <p className="text-sm text-luxury-neutral truncate">
+                <p className="text-sm text-luxury-neutral truncate group-hover:text-luxury-primary transition-colors">
                   {story.creator.username}
                 </p>
               </div>
