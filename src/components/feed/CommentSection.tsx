@@ -43,13 +43,17 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
           created_at,
           user_id,
           post_id,
-          creator:profiles(username, avatar_url)
+          creator:profiles!comments_user_id_fkey(username, avatar_url)
         `)
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      
+      return (data || []).map(comment => ({
+        ...comment,
+        creator: comment.creator || { username: null, avatar_url: null }
+      }));
     },
     enabled: isExpanded,
   });

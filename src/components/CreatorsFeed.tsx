@@ -7,14 +7,14 @@ import { PostCard } from "./feed/PostCard";
 import { LoadingSkeleton } from "./feed/LoadingSkeleton";
 import { Post } from "./feed/types";
 import { useState } from "react";
+import { Button } from "./ui/button";
 import { 
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from "./ui/pagination";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const POSTS_PER_PAGE = 5;
 
@@ -130,10 +130,16 @@ export const CreatorsFeed = () => {
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-              />
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <PaginationItem key={page}>
@@ -146,10 +152,16 @@ export const CreatorsFeed = () => {
               </PaginationItem>
             ))}
             <PaginationItem>
-              <PaginationNext
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-              />
+                className="gap-1"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </PaginationItem>
           </PaginationContent>
         </Pagination>
