@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Link } from "react-router-dom";
 import { TempDemoContent } from "@/components/TempDemoContent";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const Home = () => {
@@ -54,7 +54,7 @@ const Home = () => {
           <div className="space-y-6">
             <TempDemoContent />
             {session && (
-              <div className="rounded-lg border bg-card p-4 shadow-sm">
+              <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-20 z-10 bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center gap-4">
                   <Link to={`/profile/${session.user.id}`}>
                     <div className="h-10 w-10 rounded-full bg-muted" />
