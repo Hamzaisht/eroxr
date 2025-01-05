@@ -1,21 +1,29 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, Share, Bookmark } from "lucide-react";
+import { ThumbsUp, Share, Bookmark, MoreVertical, Trash } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Post } from "./types";
 import { CommentSection } from "./CommentSection";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PostCardProps {
   post: Post;
   onLike: (postId: string) => Promise<void>;
+  onDelete: (postId: string, creatorId: string) => Promise<void>;
+  currentUserId?: string;
 }
 
-export const PostCard = ({ post, onLike }: PostCardProps) => {
+export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProps) => {
   const [isSaved, setIsSaved] = useState(false);
   const { toast } = useToast();
   const session = useSession();
@@ -54,34 +62,67 @@ export const PostCard = ({ post, onLike }: PostCardProps) => {
     });
   };
 
+  const isOwner = currentUserId === post.creator_id;
+
   return (
     <Card key={post.id} className="overflow-hidden">
-      <CardHeader className="flex flex-row items-center gap-4">
-        <Link to={`/profile/${post.creator_id}`}>
-          <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity">
-            <AvatarImage 
-              src={post.creator.avatar_url || "https://via.placeholder.com/40"} 
-              alt={post.creator.username || "Anonymous"} 
-            />
-            <AvatarFallback>{post.creator.username?.[0]?.toUpperCase() || 'A'}</AvatarFallback>
-          </Avatar>
-        </Link>
-        <div>
-          <Link 
-            to={`/profile/${post.creator_id}`}
-            className="hover:underline"
-          >
-            <h3 className="font-semibold">
-              {post.creator.username || "Anonymous"}
-            </h3>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link to={`/profile/${post.creator_id}`}>
+            <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity">
+              <AvatarImage 
+                src={post.creator.avatar_url || "https://via.placeholder.com/40"} 
+                alt={post.creator.username || "Anonymous"} 
+              />
+              <AvatarFallback>{post.creator.username?.[0]?.toUpperCase() || 'A'}</AvatarFallback>
+            </Avatar>
           </Link>
-          <p className="text-sm text-muted-foreground">
-            {new Date(post.created_at).toLocaleDateString()}
-          </p>
+          <div>
+            <Link 
+              to={`/profile/${post.creator_id}`}
+              className="hover:underline"
+            >
+              <h3 className="font-semibold">
+                {post.creator.username || "Anonymous"}
+              </h3>
+            </Link>
+            <p className="text-sm text-muted-foreground">
+              {new Date(post.created_at).toLocaleDateString()}
+            </p>
+          </div>
         </div>
+        {isOwner && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                className="text-destructive focus:text-destructive"
+                onClick={() => onDelete(post.id, post.creator_id)}
+              >
+                <Trash className="h-4 w-4 mr-2" />
+                Delete Post
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="whitespace-pre-wrap">{post.content}</p>
+        
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {post.tags.map((tag, index) => (
+              <Badge key={index} variant="secondary">
+                #{tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+
         {post.media_url && post.media_url.length > 0 && (
           <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
             {post.media_url.map((url, index) => (
@@ -94,6 +135,13 @@ export const PostCard = ({ post, onLike }: PostCardProps) => {
             ))}
           </div>
         )}
+        
+        {post.visibility === 'subscribers_only' && (
+          <Badge variant="secondary" className="bg-primary/10 text-primary">
+            Subscribers Only
+          </Badge>
+        )}
+
         <div className="flex gap-4">
           <Button
             variant="ghost"

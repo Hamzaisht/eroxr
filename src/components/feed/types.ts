@@ -11,4 +11,6 @@ export type Post = {
   comments_count: number | null;
   media_url: string[] | null;
   has_liked: boolean;
+  visibility: 'public' | 'subscribers_only';
+  tags: string[] | null;
 };
