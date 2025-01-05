@@ -35,7 +35,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="grid grid-cols-[240px,1fr,340px]">
+      <div className="grid grid-cols-[240px,1fr,340px] min-h-screen">
         {/* Left Sidebar */}
         <aside className="fixed left-0 top-0 h-screen w-60 bg-card border-r p-6 space-y-6">
           <div className="flex items-center gap-2 mb-8">
@@ -76,7 +76,7 @@ const Home = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="min-h-screen col-start-2 border-x">
+        <main className="col-start-2 border-x min-h-screen">
           <div className="max-w-[600px] mx-auto py-8 px-4">
             {session && (
               <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-4 z-50 mb-6">
