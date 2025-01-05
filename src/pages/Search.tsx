@@ -57,7 +57,14 @@ const Search = () => {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {searchResults?.map((profile) => (
-            <CreatorCard key={profile.id} creator={profile} />
+            <CreatorCard
+              key={profile.id}
+              name={profile.username || "Anonymous"}
+              image={profile.avatar_url || "/placeholder.svg"}
+              description={profile.bio || "No bio available"}
+              subscribers={0} // We'll need to get this from the profiles_with_stats view
+              creatorId={profile.id}
+            />
           ))}
         </div>
       )}
