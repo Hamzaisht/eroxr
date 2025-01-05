@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { EmailLogin } from "./EmailLogin";
 import { SignupForm } from "./SignupForm";
 import { SocialLogin } from "./SocialLogin";
@@ -9,21 +10,37 @@ import { useToast } from "@/hooks/use-toast";
 export const AuthForm = () => {
   const [isSignup, setIsSignup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigate('/home');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const toggleMode = () => setIsSignup(!isSignup);
 
-  const handleSocialLogin = async (provider: 'twitter' | 'google') => {
+  const handleSocialLogin = async (provider: 'twitter' | 'google' | 'github') => {
     try {
       setIsLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         }
       });
 
       if (error) {
+        console.error("Social login error:", error);
         toast({
           variant: "destructive",
           title: "Authentication failed",
@@ -31,6 +48,7 @@ export const AuthForm = () => {
         });
       }
     } catch (error) {
+      console.error("Unexpected error during social login:", error);
       toast({
         variant: "destructive",
         title: "Authentication failed",
@@ -42,7 +60,7 @@ export const AuthForm = () => {
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md" role="main" aria-label="Authentication form">
       <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-8 shadow-2xl border border-luxury-primary/20">
         <div className="text-center mb-8">
           <img
@@ -50,7 +68,7 @@ export const AuthForm = () => {
             alt="EROXR"
             className="w-32 h-32 mx-auto mb-4 transition-transform duration-300 hover:scale-110"
           />
-          <h2 className="text-2xl font-bold text-white mb-2">Welcome to EROXR</h2>
+          <h1 className="text-2xl font-bold text-white mb-2">Welcome to EROXR</h1>
         </div>
 
         {isSignup ? (
