@@ -4,7 +4,7 @@ import { SignupForm } from "./SignupForm";
 import { SocialLogin } from "./SocialLogin";
 import { AuthLinks } from "./AuthLinks";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export const AuthForm = () => {
   const [isSignup, setIsSignup] = useState(false);
