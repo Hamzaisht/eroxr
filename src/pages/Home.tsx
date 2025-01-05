@@ -7,6 +7,7 @@ import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Link } from "react-router-dom";
+import { TempDemoContent } from "@/components/TempDemoContent";
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,6 +20,7 @@ const Home = () => {
         <div className="grid gap-8 lg:grid-cols-[1fr,300px]">
           {/* Main Feed */}
           <div className="space-y-6">
+            <TempDemoContent />
             {session && (
               <div className="rounded-lg border bg-card p-4 shadow-sm">
                 <div className="flex items-center gap-4">
