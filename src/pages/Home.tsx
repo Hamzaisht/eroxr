@@ -54,7 +54,7 @@ const Home = () => {
           <div className="space-y-6">
             <TempDemoContent />
             {session && (
-              <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-20 z-10 bg-white/80 backdrop-blur-sm">
+              <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-20 z-50 bg-white/95 backdrop-blur-sm">
                 <div className="flex items-center gap-4">
                   <Link to={`/profile/${session.user.id}`}>
                     <div className="h-10 w-10 rounded-full bg-muted" />
@@ -72,13 +72,13 @@ const Home = () => {
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="relative overflow-hidden"
+                      className="relative overflow-hidden hover:bg-accent"
                       onClick={() => document.getElementById('file-upload')?.click()}
                     >
                       {isPayingCustomer ? (
-                        <Image className="h-4 w-4" />
+                        <Image className="h-5 w-5" />
                       ) : (
-                        <Lock className="h-4 w-4" />
+                        <Lock className="h-5 w-5" />
                       )}
                       <input
                         type="file"
@@ -91,8 +91,8 @@ const Home = () => {
                       />
                     </Button>
                     {!isPayingCustomer && (
-                      <span className="text-sm text-muted-foreground">
-                        Upgrade to upload media
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        Upgrade to upload
                       </span>
                     )}
                   </div>
