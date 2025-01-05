@@ -59,11 +59,11 @@ export const useAuthHandlers = () => {
           variant: "destructive",
         });
       } else if (data.session) {
-        navigate("/home");
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
+        navigate("/home");
       }
     } catch (error) {
       console.error("Unexpected error:", error);

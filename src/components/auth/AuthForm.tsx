@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { EmailLogin } from "./EmailLogin";
 import { SignupForm } from "./SignupForm";
 import { SocialLogin } from "./SocialLogin";
@@ -9,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 export const AuthForm = () => {
   const [isSignup, setIsSignup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const toggleMode = () => setIsSignup(!isSignup);
 
