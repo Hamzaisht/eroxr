@@ -79,11 +79,16 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-20px)" },
         },
+        "pulse-ring": {
+          "0%": { transform: "scale(0.8)", opacity: "0.5" },
+          "100%": { transform: "scale(1.2)", opacity: "0" },
+        },
       },
       animation: {
         "logo-spin": "logo-spin 1.5s ease-in-out",
         "fade-up": "fade-up 0.5s ease-out",
         "float": "float 6s ease-in-out infinite",
+        "pulse-ring": "pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
     },
   },
