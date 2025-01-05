@@ -1,11 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Heart, Star } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
 import { Link } from "react-router-dom";
+import { CreatorActions } from "./creator/CreatorActions";
+import { CreatorStats } from "./creator/CreatorStats";
 
 interface CreatorCardProps {
   name: string;
@@ -22,184 +19,22 @@ export const CreatorCard = ({
   subscribers: initialSubscribers,
   creatorId 
 }: CreatorCardProps) => {
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscribers, setSubscribers] = useState(initialSubscribers);
-  const { toast } = useToast();
-  const session = useSession();
 
-  useEffect(() => {
-    if (!session?.user) return;
-
-    // Check if user has liked the creator
-    const checkLikeStatus = async () => {
-      const { data: likes } = await supabase
-        .from('creator_likes')
-        .select()
-        .eq('user_id', session.user.id)
-        .eq('creator_id', creatorId)
-        .maybeSingle();
-      
-      setIsLiked(!!likes);
-    };
-
-    // Check if user is subscribed to the creator
-    const checkSubscriptionStatus = async () => {
-      const { data: subscription } = await supabase
-        .from('creator_subscriptions')
-        .select()
-        .eq('user_id', session.user.id)
-        .eq('creator_id', creatorId)
-        .maybeSingle();
-      
-      setIsSubscribed(!!subscription);
-    };
-
-    checkLikeStatus();
-    checkSubscriptionStatus();
-  }, [session, creatorId]);
-
-  const handleLike = async () => {
-    if (!session?.user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to like creators",
-        duration: 3000,
-      });
-      return;
-    }
-
-    try {
-      if (isLiked) {
-        await supabase
-          .from('creator_likes')
-          .delete()
-          .eq('user_id', session.user.id)
-          .eq('creator_id', creatorId);
-      } else {
-        await supabase
-          .from('creator_likes')
-          .insert([
-            { user_id: session.user.id, creator_id: creatorId }
-          ]);
-      }
-
-      setIsLiked(!isLiked);
-      toast({
-        title: isLiked ? "Removed from favorites" : "Added to favorites",
-        description: isLiked ? `${name} removed from your favorites` : `${name} added to your favorites`,
-        duration: 3000,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        duration: 3000,
-      });
-    }
-  };
-
-  const handleSubscribe = async () => {
-    if (!session?.user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to subscribe to creators",
-        duration: 3000,
-      });
-      return;
-    }
-
-    try {
-      // First verify the creator exists in profiles
-      const { data: creatorProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select()
-        .eq("id", creatorId)
-        .maybeSingle();
-
-      if (profileError) {
-        toast({
-          title: "Error",
-          description: "Failed to verify creator profile",
-          duration: 3000,
-        });
-        return;
-      }
-
-      // If creator profile doesn't exist, create it
-      if (!creatorProfile) {
-        const { error: insertError } = await supabase
-          .from("profiles")
-          .insert([
-            { 
-              id: creatorId,
-              username: name,
-              avatar_url: image 
-            }
-          ]);
-
-        if (insertError) {
-          toast({
-            title: "Error",
-            description: "Failed to create creator profile",
-            duration: 3000,
-          });
-          return;
-        }
-      }
-
-      if (isSubscribed) {
-        await supabase
-          .from('creator_subscriptions')
-          .delete()
-          .eq('user_id', session.user.id)
-          .eq('creator_id', creatorId);
-        setSubscribers(prev => prev - 1);
-      } else {
-        await supabase
-          .from('creator_subscriptions')
-          .insert([
-            { user_id: session.user.id, creator_id: creatorId }
-          ]);
-        setSubscribers(prev => prev + 1);
-      }
-
-      setIsSubscribed(!isSubscribed);
-      toast({
-        title: isSubscribed ? "Unsubscribed" : "Subscribed!",
-        description: isSubscribed 
-          ? `You have unsubscribed from ${name}` 
-          : `You are now subscribed to ${name}! You'll receive updates about new content.`,
-        duration: 3000,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        duration: 3000,
-      });
-    }
+  const handleSubscriberChange = (change: number) => {
+    setSubscribers(prev => prev + change);
   };
 
   return (
     <Link to={`/profile/${creatorId}`}>
       <Card className="group relative overflow-hidden border-none bg-white/80 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl">
         <div className="absolute right-4 top-4 z-10">
-          <Button 
-            size="icon" 
-            variant="ghost" 
-            className={`rounded-full backdrop-blur-md transition-all duration-300 ${
-              isLiked 
-                ? "bg-primary/20 text-primary hover:bg-primary/30" 
-                : "bg-white/20 text-white hover:bg-white/40"
-            }`}
-            onClick={(e) => {
-              e.preventDefault(); // Prevent navigation when clicking the like button
-              handleLike();
-            }}
-          >
-            <Heart className={`h-5 w-5 ${isLiked ? "fill-primary" : ""}`} />
-          </Button>
+          <CreatorActions
+            creatorId={creatorId}
+            name={name}
+            subscribers={subscribers}
+            onSubscriberChange={handleSubscriberChange}
+          />
         </div>
         <div className="aspect-[4/3] w-full overflow-hidden">
           <img
@@ -213,28 +48,9 @@ export const CreatorCard = ({
             <h3 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-semibold text-transparent">
               {name}
             </h3>
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm font-medium text-foreground/70">4.9</span>
-            </div>
           </div>
           <p className="text-sm text-foreground/70">{description}</p>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-foreground/60">{subscribers} subscribers</span>
-            <Button 
-              className={`relative overflow-hidden transition-all hover:scale-105 ${
-                isSubscribed 
-                  ? "bg-gradient-to-r from-green-500 to-green-600"
-                  : "bg-gradient-to-r from-primary to-secondary"
-              }`}
-              onClick={(e) => {
-                e.preventDefault(); // Prevent navigation when clicking the subscribe button
-                handleSubscribe();
-              }}
-            >
-              {isSubscribed ? "Subscribed" : "Subscribe"}
-            </Button>
-          </div>
+          <CreatorStats subscribers={subscribers} />
         </div>
       </Card>
     </Link>
