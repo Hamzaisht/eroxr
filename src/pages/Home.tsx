@@ -52,9 +52,8 @@ const Home = () => {
         <div className="grid gap-8 lg:grid-cols-[1fr,300px]">
           {/* Main Feed */}
           <div className="space-y-6">
-            <TempDemoContent />
             {session && (
-              <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-20 z-50 bg-white/95 backdrop-blur-sm">
+              <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-[4.5rem] z-50 bg-white/95 backdrop-blur-sm">
                 <div className="flex items-center gap-4">
                   <Link to={`/profile/${session.user.id}`}>
                     <div className="h-10 w-10 rounded-full bg-muted" />
@@ -99,6 +98,7 @@ const Home = () => {
                 </div>
               </div>
             )}
+            <TempDemoContent />
             <CreatorsFeed />
           </div>
 
