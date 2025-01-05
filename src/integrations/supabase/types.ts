@@ -248,6 +248,60 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_messages: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_expired: boolean | null
+          media_url: string[] | null
+          message_type: string | null
+          recipient_id: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_expired?: boolean | null
+          media_url?: string[] | null
+          message_type?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_expired?: boolean | null
+          media_url?: string[] | null
+          message_type?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Relationships: []
+      }
+      followers: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+        }
+        Relationships: []
+      }
       id_verifications: {
         Row: {
           document_type: string
@@ -389,6 +443,7 @@ export type Database = {
           id_verification_status: string | null
           interests: string[] | null
           is_age_verified: boolean | null
+          is_paying_customer: boolean | null
           location: string | null
           profile_visibility: boolean | null
           social_links: Json | null
@@ -404,6 +459,7 @@ export type Database = {
           id_verification_status?: string | null
           interests?: string[] | null
           is_age_verified?: boolean | null
+          is_paying_customer?: boolean | null
           location?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null
@@ -419,6 +475,7 @@ export type Database = {
           id_verification_status?: string | null
           interests?: string[] | null
           is_age_verified?: boolean | null
+          is_paying_customer?: boolean | null
           location?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null

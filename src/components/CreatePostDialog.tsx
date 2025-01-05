@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { Image, Loader2 } from "lucide-react";
+import { Image, Loader2, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,29 @@ export const CreatePostDialog = ({ open, onOpenChange }: CreatePostDialogProps) 
   const { toast } = useToast();
   const session = useSession();
   const queryClient = useQueryClient();
+  const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
+
+  // Fetch paying customer status
+  const checkPayingCustomerStatus = async () => {
+    if (!session?.user?.id) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_paying_customer')
+      .eq('id', session.user.id)
+      .single();
+    
+    if (!error && data) {
+      setIsPayingCustomer(data.is_paying_customer);
+    }
+  };
+
+  // Check status when dialog opens
+  useState(() => {
+    if (open) {
+      checkPayingCustomerStatus();
+    }
+  }, [open, session?.user?.id]);
 
   const handleSubmit = async () => {
     if (!session) {
@@ -40,12 +63,21 @@ export const CreatePostDialog = ({ open, onOpenChange }: CreatePostDialogProps) 
       return;
     }
 
+    if (selectedFiles?.length && !isPayingCustomer) {
+      toast({
+        title: "Premium feature",
+        description: "Only paying customers can upload media",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       let mediaUrls: string[] = [];
 
-      if (selectedFiles && selectedFiles.length > 0) {
+      if (selectedFiles && selectedFiles.length > 0 && isPayingCustomer) {
         const files = Array.from(selectedFiles);
         mediaUrls = await Promise.all(
           files.map(async (file) => {
@@ -119,9 +151,23 @@ export const CreatePostDialog = ({ open, onOpenChange }: CreatePostDialogProps) 
               variant="outline"
               size="icon"
               className="relative overflow-hidden"
-              onClick={() => document.getElementById('file-upload')?.click()}
+              onClick={() => {
+                if (!isPayingCustomer) {
+                  toast({
+                    title: "Premium feature",
+                    description: "Only paying customers can upload media",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                document.getElementById('file-upload')?.click();
+              }}
             >
-              <Image className="h-4 w-4" />
+              {isPayingCustomer ? (
+                <Image className="h-4 w-4" />
+              ) : (
+                <Lock className="h-4 w-4" />
+              )}
               <input
                 type="file"
                 id="file-upload"
@@ -129,11 +175,17 @@ export const CreatePostDialog = ({ open, onOpenChange }: CreatePostDialogProps) 
                 accept="image/*"
                 className="absolute inset-0 cursor-pointer opacity-0"
                 onChange={(e) => setSelectedFiles(e.target.files)}
+                disabled={!isPayingCustomer}
               />
             </Button>
             {selectedFiles && (
               <span className="text-sm text-muted-foreground">
                 {selectedFiles.length} file(s) selected
+              </span>
+            )}
+            {!isPayingCustomer && (
+              <span className="text-sm text-muted-foreground">
+                Upgrade to upload media
               </span>
             )}
           </div>
