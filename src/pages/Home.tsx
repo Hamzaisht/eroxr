@@ -34,15 +34,10 @@ const Home = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex">
       {/* Left Sidebar */}
       <aside className="w-60 bg-card border-r shrink-0">
-        <div className="fixed w-60 h-screen p-6 space-y-6">
-          <div className="flex items-center gap-2 mb-8">
-            <img src="/eroxr-logo.svg" alt="EROXR" className="w-8 h-8" />
-            <span className="font-semibold text-lg">EROXR</span>
-          </div>
-          
+        <div className="fixed w-60 h-[calc(100vh-64px)] p-6 space-y-6">
           <nav className="space-y-2">
             {[
               { icon: <HomeIcon className="w-5 h-5" />, label: "Home", path: "/home" },
@@ -77,10 +72,10 @@ const Home = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 border-x min-h-screen">
+      <main className="flex-1 border-x min-h-[calc(100vh-64px)]">
         <div className="max-w-[600px] mx-auto py-8 px-4">
           {session && (
-            <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-4 z-50 mb-6">
+            <div className="rounded-lg border bg-card p-4 shadow-sm sticky top-20 z-50 mb-6">
               <div className="flex items-center gap-4">
                 <Link to={`/profile/${session.user.id}`}>
                   <div className="h-10 w-10 rounded-full bg-muted" />
@@ -126,7 +121,7 @@ const Home = () => {
 
       {/* Right Sidebar */}
       <aside className="w-[340px] bg-card border-l shrink-0">
-        <div className="fixed w-[340px] h-screen p-6 space-y-6">
+        <div className="fixed w-[340px] h-[calc(100vh-64px)] p-6 space-y-6">
           <div className="space-y-6">
             {/* Search */}
             <div className="space-y-4">
