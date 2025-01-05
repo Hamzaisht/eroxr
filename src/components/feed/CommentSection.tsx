@@ -8,16 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageSquare } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+interface Creator {
+  username: string | null;
+  avatar_url: string | null;
+}
+
 interface Comment {
   id: string;
   content: string;
   created_at: string;
   user_id: string;
   post_id: string;
-  creator: {
-    username: string | null;
-    avatar_url: string | null;
-  };
+  creator: Creator;
 }
 
 interface CommentSectionProps {
@@ -43,7 +45,7 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
           created_at,
           user_id,
           post_id,
-          creator:profiles!comments_user_id_fkey(username, avatar_url)
+          creator:profiles(username, avatar_url)
         `)
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
@@ -53,7 +55,7 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
       return (data || []).map(comment => ({
         ...comment,
         creator: comment.creator || { username: null, avatar_url: null }
-      }));
+      })) as Comment[];
     },
     enabled: isExpanded,
   });
