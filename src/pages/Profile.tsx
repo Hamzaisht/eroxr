@@ -1,16 +1,15 @@
 import { useParams } from "react-router-dom";
+import { MainNav } from "@/components/MainNav";
+import { ProfileForm } from "@/components/profile/ProfileForm";
+import { VerificationForm } from "@/components/profile/VerificationForm";
+import { PricingForm } from "@/components/profile/PricingForm";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProfileForm } from "@/components/profile/ProfileForm";
-import { VerificationForm } from "@/components/profile/VerificationForm";
-import { PricingForm } from "@/components/profile/PricingForm";
-import { ProfileHeader } from "@/components/profile/ProfileHeader";
-import { ProfileContent } from "@/components/profile/ProfileContent";
-import { TempDemoContent } from "@/components/TempDemoContent";
 
 const Profile = () => {
   const { id } = useParams();
@@ -38,67 +37,98 @@ const Profile = () => {
     enabled: !!id,
   });
 
-  const isOwnProfile = !id || (session?.user && session.user.id === id);
-
-  if (!session) {
-    return <TempDemoContent />;
-  }
-
-  if (isOwnProfile) {
+  // If no ID is provided, or if the ID matches the current user's ID,
+  // show the edit forms
+  if (!id || (session?.user && session.user.id === id)) {
     return (
-      <div className="container mx-auto px-4 py-8 bg-luxury-dark min-h-[calc(100vh-64px)]">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-white">Profile Settings</h1>
-          <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="verification">Verification</TabsTrigger>
-              <TabsTrigger value="pricing">Pricing</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="profile">
-              <ProfileForm />
-            </TabsContent>
-            
-            <TabsContent value="verification">
-              <VerificationForm />
-            </TabsContent>
-            
-            <TabsContent value="pricing">
-              <PricingForm />
-            </TabsContent>
-          </Tabs>
-        </div>
+      <div className="min-h-screen bg-background">
+        <MainNav />
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-8">Profile Settings</h1>
+            <Tabs defaultValue="profile" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="verification">Verification</TabsTrigger>
+                <TabsTrigger value="pricing">Pricing</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="profile">
+                <ProfileForm />
+              </TabsContent>
+              
+              <TabsContent value="verification">
+                <VerificationForm />
+              </TabsContent>
+              
+              <TabsContent value="pricing">
+                <PricingForm />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </main>
       </div>
     );
   }
 
+  // Otherwise, show the public profile view
   return (
-    <div className="container mx-auto px-4 py-8 bg-luxury-dark min-h-[calc(100vh-64px)]">
-      <div className="max-w-4xl mx-auto">
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-12 w-[250px]" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        ) : profile ? (
-          <div className="space-y-6">
-            <ProfileHeader profile={profile} isOwnProfile={isOwnProfile} />
-            <ProfileContent profile={profile} />
-          </div>
-        ) : (
-          <Card className="p-12">
-            <div className="text-center">
+    <div className="min-h-screen bg-background">
+      <MainNav />
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-[250px]" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          ) : profile ? (
+            <Card className="p-6">
+              <div className="flex items-center gap-4 mb-6">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={profile.avatar_url || undefined} />
+                  <AvatarFallback>
+                    {profile.username?.[0]?.toUpperCase() || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h1 className="text-3xl font-bold">{profile.username}</h1>
+                  {profile.location && (
+                    <p className="text-muted-foreground">{profile.location}</p>
+                  )}
+                </div>
+              </div>
+              {profile.bio && (
+                <div className="mb-6">
+                  <h2 className="text-lg font-semibold mb-2">About</h2>
+                  <p className="text-muted-foreground">{profile.bio}</p>
+                </div>
+              )}
+              {profile.interests && profile.interests.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">Interests</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.interests.map((interest, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
+                      >
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+          ) : (
+            <div className="text-center py-12">
               <h1 className="text-2xl font-bold text-muted-foreground">
                 Profile not found
               </h1>
-              <p className="text-muted-foreground mt-2">
-                The profile you're looking for doesn't exist or has been removed.
-              </p>
             </div>
-          </Card>
-        )}
-      </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 };

@@ -1,54 +1,89 @@
-import { Card } from "@/components/ui/card";
+import { MainNav } from "@/components/MainNav";
+import { Footer } from "@/components/Footer";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const About = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="min-h-screen bg-luxury-dark py-16 px-4">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-4xl font-bold text-center text-white mb-12">About Us</h1>
-        
-        <Card className="p-8 bg-white/5 border-white/10">
-          <h2 className="text-2xl font-semibold text-white mb-4">Our Mission</h2>
-          <p className="text-white/80 leading-relaxed">
-            We're dedicated to creating a safe and inclusive space for creators and their audiences to connect, share, and grow together. Our platform empowers creative individuals to monetize their content while building meaningful relationships with their supporters.
-          </p>
-        </Card>
-        
-        <Card className="p-8 bg-white/5 border-white/10">
-          <h2 className="text-2xl font-semibold text-white mb-4">Our Values</h2>
-          <div className="grid gap-6 md:grid-cols-2">
-            {[
-              {
-                title: "Privacy & Security",
-                description: "We prioritize the safety and privacy of our users above all else."
-              },
-              {
-                title: "Transparency",
-                description: "We believe in clear, honest communication with our community."
-              },
-              {
-                title: "Innovation",
-                description: "We continuously evolve to provide the best possible experience."
-              },
-              {
-                title: "Community",
-                description: "We foster a supportive environment for creators and fans alike."
-              }
-            ].map((value, index) => (
-              <div key={index} className="space-y-2">
-                <h3 className="text-lg font-medium text-white">{value.title}</h3>
-                <p className="text-white/60">{value.description}</p>
+    <div className="min-h-screen bg-luxury-dark">
+      <MainNav />
+      <motion.main
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="py-20"
+      >
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto space-y-12">
+            <section className="text-center">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-secondary bg-clip-text text-transparent mb-6">
+                About Our Platform
+              </h1>
+              <p className="text-luxury-neutral/80 text-lg">
+                Connecting passionate creators with their dedicated audience
+              </p>
+            </section>
+
+            <section className="space-y-6">
+              <h2 className="text-2xl font-bold text-luxury-primary">Our Mission</h2>
+              <p className="text-luxury-neutral/80">
+                We believe in empowering creators to share their passion and build meaningful 
+                connections with their audience. Our platform provides the tools and community 
+                needed to turn creativity into a sustainable career.
+              </p>
+            </section>
+
+            <section className="space-y-6">
+              <h2 className="text-2xl font-bold text-luxury-primary">What We Offer</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="p-6 rounded-lg bg-luxury-dark/50 border border-luxury-neutral/10">
+                  <h3 className="text-xl font-semibold text-luxury-neutral mb-3">For Creators</h3>
+                  <ul className="space-y-2 text-luxury-neutral/80">
+                    <li>• Monetization tools</li>
+                    <li>• Community management</li>
+                    <li>• Analytics and insights</li>
+                    <li>• Content protection</li>
+                  </ul>
+                </div>
+                <div className="p-6 rounded-lg bg-luxury-dark/50 border border-luxury-neutral/10">
+                  <h3 className="text-xl font-semibold text-luxury-neutral mb-3">For Supporters</h3>
+                  <ul className="space-y-2 text-luxury-neutral/80">
+                    <li>• Exclusive content</li>
+                    <li>• Direct creator interaction</li>
+                    <li>• Community participation</li>
+                    <li>• Flexible subscription options</li>
+                  </ul>
+                </div>
               </div>
-            ))}
+            </section>
+
+            <section className="text-center">
+              <h2 className="text-2xl font-bold text-luxury-primary mb-6">
+                Ready to Join Our Community?
+              </h2>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  onClick={() => navigate("/login")}
+                  className="bg-button-gradient hover:bg-hover-gradient"
+                >
+                  Get Started
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/home")}
+                  className="border-luxury-neutral text-luxury-neutral hover:bg-luxury-neutral/10"
+                >
+                  Explore Content
+                </Button>
+              </div>
+            </section>
           </div>
-        </Card>
-        
-        <Card className="p-8 bg-white/5 border-white/10">
-          <h2 className="text-2xl font-semibold text-white mb-4">Contact Us</h2>
-          <p className="text-white/80">
-            Have questions or feedback? We'd love to hear from you. Reach out to our support team at support@example.com
-          </p>
-        </Card>
-      </div>
+        </div>
+      </motion.main>
+      <Footer />
     </div>
   );
 };
