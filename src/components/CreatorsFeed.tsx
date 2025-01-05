@@ -60,7 +60,9 @@ export const CreatorsFeed = () => {
       return {
         posts: posts?.map(post => ({
           ...post,
-          has_liked: post.has_liked?.length > 0
+          has_liked: post.has_liked?.length > 0,
+          // Ensure visibility is correctly typed
+          visibility: (post.visibility === 'subscribers_only' ? 'subscribers_only' : 'public') as const
         })) || [],
         totalCount: count || 0
       };
