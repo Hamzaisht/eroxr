@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Categories from "./pages/Categories";
 import About from "./pages/About";
 import { Toaster } from "@/components/ui/toaster";
+import { MainNav } from "./components/MainNav";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -21,8 +22,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  const session = useSession();
+
   return (
     <Router>
+      {session && <MainNav />}
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
