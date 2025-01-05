@@ -490,6 +490,48 @@ export type Database = {
         }
         Relationships: []
       }
+      stories: {
+        Row: {
+          created_at: string
+          creator_id: string
+          expires_at: string
+          id: string
+          is_active: boolean | null
+          media_url: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          media_url: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          media_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stories_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stories_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_tiers: {
         Row: {
           created_at: string
