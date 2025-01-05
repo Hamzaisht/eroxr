@@ -25,9 +25,10 @@ const Profile = () => {
         throw new Error("Invalid profile ID format");
       }
 
+      // Modified query to only fetch profile data without the invalid join
       const { data, error } = await supabase
         .from("profiles")
-        .select("*, id_verifications(status)")
+        .select("*")
         .eq("id", id)
         .single();
 
