@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { CreatorsFeed } from "@/components/CreatorsFeed";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { TempDemoContent } from "@/components/TempDemoContent";
 import { LeftSidebar } from "@/components/home/LeftSidebar";
 import { RightSidebar } from "@/components/home/RightSidebar";
 import { CreatePostSection } from "@/components/home/CreatePostSection";
+import { Navigate } from "react-router-dom";
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,7 +15,7 @@ const Home = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
 
   if (!session) {
-    return <TempDemoContent />;
+    return <Navigate to="/login" replace />;
   }
 
   return (
