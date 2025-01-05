@@ -4,12 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CreatorsFeed } from "@/components/CreatorsFeed";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Link } from "react-router-dom";
 import { TempDemoContent } from "@/components/TempDemoContent";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 
 const Home = () => {
