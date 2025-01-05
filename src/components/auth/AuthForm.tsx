@@ -3,6 +3,8 @@ import { EmailLogin } from "./EmailLogin";
 import { SignupForm } from "./SignupForm";
 import { SocialLogin } from "./SocialLogin";
 import { AuthLinks } from "./AuthLinks";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export const AuthForm = () => {
   const [isSignup, setIsSignup] = useState(false);
