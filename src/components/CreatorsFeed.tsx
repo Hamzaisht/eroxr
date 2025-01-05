@@ -36,7 +36,7 @@ export const CreatorsFeed = () => {
                   key={post.id} 
                   post={post} 
                   onLike={handleLike}
-                  onDelete={handleDelete}
+                  onDelete={(postId) => handleDelete(postId, post.creator_id)}
                   currentUserId={session?.user?.id}
                 />
               ))}
