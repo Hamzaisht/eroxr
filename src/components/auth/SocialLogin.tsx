@@ -25,6 +25,7 @@ export const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
           onClick={() => onSocialLogin('twitter')}
           className="border-luxury-primary/20 bg-white/5 text-white hover:bg-luxury-primary/20 hover:border-luxury-primary/40 transition-all duration-300 w-14 h-14 rounded-full p-0 group"
           disabled={isLoading}
+          title="Continue with Twitter"
         >
           <Twitter className="w-7 h-7 group-hover:text-luxury-primary transition-colors" />
         </Button>
@@ -34,6 +35,7 @@ export const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
           onClick={() => onSocialLogin('google')}
           className="border-luxury-primary/20 bg-white/5 text-white hover:bg-luxury-primary/20 hover:border-luxury-primary/40 transition-all duration-300 w-14 h-14 rounded-full p-0 group"
           disabled={isLoading}
+          title="Continue with Google"
         >
           <Mail className="w-7 h-7 group-hover:text-luxury-primary transition-colors" />
         </Button>
