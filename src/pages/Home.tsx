@@ -1,25 +1,33 @@
 import { useState, useEffect } from "react";
-import { Search, ImagePlus, Video, Sparkles, MoreVertical } from "lucide-react";
+import { Search, ImagePlus, Video, Sparkles, MoreVertical, Radio } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CreatorsFeed } from "@/components/CreatorsFeed";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { StoryReel } from "@/components/StoryReel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const session = useSession();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -51,6 +59,35 @@ const Home = () => {
     }
     setSelectedFiles(files);
     setIsCreatePostOpen(true);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleGoLive = () => {
+    if (!session) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to start streaming",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isPayingCustomer) {
+      toast({
+        title: "Premium feature",
+        description: "Only paying customers can go live",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGoLiveOpen(true);
   };
 
   return (
@@ -104,6 +141,7 @@ const Home = () => {
                       variant="ghost"
                       size="icon"
                       className="text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/10"
+                      onClick={() => setIsCreatePostOpen(true)}
                     >
                       <Video className="h-5 w-5" />
                     </Button>
@@ -111,8 +149,9 @@ const Home = () => {
                       variant="ghost"
                       size="icon"
                       className="text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/10"
+                      onClick={handleGoLive}
                     >
-                      <Sparkles className="h-5 w-5" />
+                      <Radio className="h-5 w-5" />
                     </Button>
                   </div>
                 </div>
@@ -131,6 +170,21 @@ const Home = () => {
               animate={{ opacity: 1, x: 0 }}
               className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-4 shadow-lg backdrop-blur-lg sticky top-24"
             >
+              <form onSubmit={handleSearch} className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="search"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-luxury-dark/30 border-luxury-neutral/10"
+                  />
+                  <Button type="submit" size="icon" variant="ghost">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </form>
+
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-luxury-neutral">Suggestions</h2>
@@ -170,6 +224,12 @@ const Home = () => {
                       <Button
                         size="sm"
                         className="opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary"
+                        onClick={() => {
+                          toast({
+                            title: "Following",
+                            description: "You are now following this creator",
+                          });
+                        }}
                       >
                         Follow
                       </Button>
@@ -181,12 +241,39 @@ const Home = () => {
           </div>
         </div>
       </div>
+
       <CreatePostDialog 
         open={isCreatePostOpen} 
         onOpenChange={setIsCreatePostOpen}
         selectedFiles={selectedFiles}
         onFileSelect={setSelectedFiles}
       />
+
+      <Dialog open={isGoLiveOpen} onOpenChange={setIsGoLiveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Go Live</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Stream Title"
+              className="bg-luxury-dark/30 border-luxury-neutral/10"
+            />
+            <Button 
+              className="w-full bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary"
+              onClick={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Live streaming feature will be available soon!",
+                });
+                setIsGoLiveOpen(false);
+              }}
+            >
+              Start Streaming
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
