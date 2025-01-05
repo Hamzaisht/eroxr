@@ -10,7 +10,7 @@ type Creator = {
   id: string;
   username: string | null;
   avatar_url: string | null;
-  creator_subscriptions: { count: number }[];
+  subscriber_count: number;
 };
 
 const Home = () => {
@@ -20,12 +20,12 @@ const Home = () => {
     queryKey: ["creators", searchQuery],
     queryFn: async () => {
       let query = supabase
-        .from("profiles")
+        .from("profiles_with_stats")
         .select(`
           id,
           username,
           avatar_url,
-          creator_subscriptions(count)
+          subscriber_count
         `);
 
       if (searchQuery) {
@@ -41,7 +41,7 @@ const Home = () => {
         name: creator.username || "Anonymous Creator",
         image: creator.avatar_url || "https://via.placeholder.com/400",
         description: "Content creator on our platform",
-        subscribers: creator.creator_subscriptions?.[0]?.count || 0,
+        subscribers: creator.subscriber_count || 0,
       })) || [];
     },
   });
@@ -49,23 +49,16 @@ const Home = () => {
   const { data: topCreators } = useQuery({
     queryKey: ["top-creators"],
     queryFn: async () => {
-      // First, get the total count of creators
-      const { count } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      const limit = Math.max(Math.ceil((count || 0) * 0.05), 5); // At least 5 creators
-
       const { data, error } = await supabase
-        .from('profiles')
-        .select<string, Creator>(`
+        .from('profiles_with_stats')
+        .select(`
           id,
           username,
           avatar_url,
-          creator_subscriptions(count)
+          subscriber_count
         `)
-        .order('creator_subscriptions(count)', { ascending: false })
-        .limit(limit);
+        .order('subscriber_count', { ascending: false })
+        .limit(5);
 
       if (error) throw error;
 
@@ -74,10 +67,9 @@ const Home = () => {
         name: creator.username || "Anonymous Creator",
         image: creator.avatar_url || "https://via.placeholder.com/400",
         description: "Top performing creator",
-        subscribers: creator.creator_subscriptions?.[0]?.count || 0,
+        subscribers: creator.subscriber_count || 0,
       })) || [];
     },
-    enabled: !!creators?.length,
   });
 
   return (
@@ -128,7 +120,7 @@ const Home = () => {
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-luxury-primary" />
                 <h2 className="text-xl font-semibold text-luxury-primary">
-                  Top 5% Performers
+                  Top Performers
                 </h2>
               </div>
               <div className="space-y-4">
