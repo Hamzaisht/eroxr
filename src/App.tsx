@@ -3,6 +3,9 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Landing from "./pages/Landing";
+import Home from "./pages/Home";
+import Categories from "./pages/Categories";
+import About from "./pages/About";
 import { Toaster } from "@/components/ui/toaster";
 
 function App() {
@@ -10,10 +13,12 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/home" element={<Index />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:id" element={<Profile />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/about" element={<About />} />
       </Routes>
       <Toaster />
     </Router>
