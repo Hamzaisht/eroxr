@@ -59,7 +59,7 @@ export const useAuthHandlers = () => {
           variant: "destructive",
         });
       } else if (data.session) {
-        // The navigation will be handled by the onAuthStateChange listener in AuthForm
+        navigate("/home");
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
