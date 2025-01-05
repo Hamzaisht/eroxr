@@ -32,6 +32,17 @@ export const UserMenu = () => {
     }
   };
 
+  const handleMenuClick = (path: string) => {
+    if (path === "settings" || path === "subscriptions") {
+      toast({
+        title: "Coming Soon",
+        description: `The ${path} feature is currently under development.`,
+      });
+      return;
+    }
+    navigate(`/${path}`);
+  };
+
   console.log("Session status:", !!session, "User email:", session?.user?.email);
 
   if (!session) {
@@ -71,14 +82,18 @@ export const UserMenu = () => {
         <DropdownMenuContent className="w-56" align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate("/")}>
+          <DropdownMenuItem onClick={() => handleMenuClick("home")}>
             Home
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/profile")}>
+          <DropdownMenuItem onClick={() => handleMenuClick("profile")}>
             My Profile
           </DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuItem>Subscriptions</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleMenuClick("settings")}>
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleMenuClick("subscriptions")}>
+            Subscriptions
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-red-600 focus:text-red-600" 
