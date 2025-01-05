@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageSquare, Loader2 } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Creator {
@@ -30,12 +30,11 @@ interface CommentSectionProps {
 export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const session = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: comments = [], isLoading } = useQuery({
+  const { data: comments = [], isLoading } = useQuery<Comment[]>({
     queryKey: ["comments", postId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -49,7 +48,7 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
           creator:profiles(username, avatar_url)
         `)
         .eq("post_id", postId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
       
@@ -60,32 +59,6 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
     },
     enabled: isExpanded,
   });
-
-  // Set up real-time subscription for new comments
-  useEffect(() => {
-    if (!isExpanded) return;
-
-    const channel = supabase
-      .channel('comments-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'comments',
-          filter: `post_id=eq.${postId}`
-        },
-        () => {
-          // Invalidate and refetch comments when changes occur
-          queryClient.invalidateQueries({ queryKey: ["comments", postId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [postId, isExpanded, queryClient]);
 
   const handleSubmitComment = async () => {
     if (!session) {
@@ -105,8 +78,6 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
       });
       return;
     }
-
-    setIsSubmitting(true);
 
     try {
       const { error } = await supabase
@@ -135,20 +106,7 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
         description: "Failed to post comment. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
   };
 
   return (
@@ -171,31 +129,18 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
                 placeholder="Write a comment..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                className="min-h-[80px] resize-none"
+                className="min-h-[80px]"
               />
-              <Button 
-                onClick={handleSubmitComment}
-                disabled={isSubmitting}
-                className="flex items-center gap-2"
-              >
-                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Post Comment
-              </Button>
+              <Button onClick={handleSubmitComment}>Post Comment</Button>
             </div>
           )}
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : comments.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              No comments yet. Be the first to comment!
-            </div>
+            <div>Loading comments...</div>
           ) : (
             <div className="space-y-4">
               {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3 group">
+                <div key={comment.id} className="flex gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage
                       src={comment.creator.avatar_url || ""}
@@ -211,7 +156,7 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
                         {comment.creator.username || "Anonymous"}
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        {formatDate(comment.created_at)}
+                        {new Date(comment.created_at).toLocaleDateString()}
                       </span>
                     </div>
                     <p className="text-sm">{comment.content}</p>

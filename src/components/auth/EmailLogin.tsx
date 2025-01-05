@@ -25,7 +25,6 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
@@ -38,46 +37,10 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
     },
   });
 
-  const handleForgotPassword = async (email: string) => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Check your email",
-          description: "We've sent you a password reset link.",
-        });
-        setIsForgotPassword(false);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const onSubmit = async (values: LoginValues) => {
-    if (isForgotPassword) {
-      await handleForgotPassword(values.email);
-      return;
-    }
-
     try {
       setIsLoading(true);
-      console.log("Attempting login with:", values);
+      console.log("Attempting login with:", values); // Debug log
       
       const { error } = await supabase.auth.signInWithPassword({
         email: values.email.trim(),
@@ -85,7 +48,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       });
 
       if (error) {
-        console.error("Login error:", error);
+        console.error("Login error:", error); // Debug log
         toast({
           title: "Error",
           description: error.message,
@@ -96,10 +59,10 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        navigate("/home");
+        navigate("/");
       }
     } catch (error) {
-      console.error("Unexpected error:", error);
+      console.error("Unexpected error:", error); // Debug log
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -114,13 +77,9 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
     <div className="space-y-8">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-secondary bg-clip-text text-transparent">
-          {isForgotPassword ? "Reset Password" : "Welcome Back"}
+          Welcome Back
         </h1>
-        <p className="text-luxury-neutral/80">
-          {isForgotPassword 
-            ? "Enter your email to receive a reset link" 
-            : "Sign in to continue your journey"}
-        </p>
+        <p className="text-luxury-neutral/80">Sign in to continue your journey</p>
       </div>
 
       <Form {...form}>
@@ -148,39 +107,35 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
             )}
           />
 
-          {!isForgotPassword && (
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
-                      <Input
-                        {...field}
-                        type="password"
-                        placeholder="Password"
-                        className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
-                        disabled={isLoading}
-                        autoComplete="current-password"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage className="text-sm text-red-400" />
-                </FormItem>
-              )}
-            />
-          )}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="Password"
+                      className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
+                      disabled={isLoading}
+                      autoComplete="current-password"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-sm text-red-400" />
+              </FormItem>
+            )}
+          />
 
           <Button
             type="submit"
             className="w-full bg-button-gradient hover:bg-hover-gradient transition-all duration-300 h-12 text-lg font-medium"
             disabled={isLoading}
           >
-            {isLoading 
-              ? (isForgotPassword ? "Sending..." : "Signing in...") 
-              : (isForgotPassword ? "Send Reset Link" : "Sign In")}
+            {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
       </Form>
@@ -188,10 +143,9 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       <div className="text-center space-y-2">
         <button 
           className="text-sm text-luxury-neutral/80 hover:text-white transition-colors"
-          onClick={() => setIsForgotPassword(!isForgotPassword)}
-          type="button"
+          onClick={() => {/* Add forgot password handler */}}
         >
-          {isForgotPassword ? "Back to login" : "Forgot your password?"}
+          Forgot your password?
         </button>
         <p className="text-sm text-luxury-neutral/80">
           Don't have an account?{" "}
@@ -199,7 +153,6 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
             onClick={onToggleMode}
             className="text-luxury-primary hover:text-luxury-secondary transition-colors font-medium"
             disabled={isLoading}
-            type="button"
           >
             Sign up
           </button>

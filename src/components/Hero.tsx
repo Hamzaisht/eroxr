@@ -9,7 +9,7 @@ export const Hero = () => {
 
   useEffect(() => {
     if (session) {
-      navigate("/home");
+      navigate("/");
     }
   }, [session, navigate]);
 
