@@ -10,10 +10,14 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { Heart, MessageCircle, Share2, Users } from "lucide-react";
 
 const Profile = () => {
   const { id } = useParams();
   const session = useSession();
+  const { toast } = useToast();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", id],
@@ -38,8 +42,10 @@ const Profile = () => {
   });
 
   // If no ID is provided, or if the ID matches the current user's ID,
-  // show the edit forms
-  if (!id || (session?.user && session.user.id === id)) {
+  // show the edit profile view
+  const isOwnProfile = !id || (session?.user && session.user.id === id);
+
+  if (isOwnProfile) {
     return (
       <div className="min-h-screen bg-background">
         <MainNav />
@@ -47,7 +53,7 @@ const Profile = () => {
           <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold mb-8">Profile Settings</h1>
             <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList>
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
                 <TabsTrigger value="verification">Verification</TabsTrigger>
                 <TabsTrigger value="pricing">Pricing</TabsTrigger>
@@ -71,61 +77,124 @@ const Profile = () => {
     );
   }
 
-  // Otherwise, show the public profile view
+  // Show public profile view for other users
   return (
     <div className="min-h-screen bg-background">
       <MainNav />
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {isLoading ? (
             <div className="space-y-4">
               <Skeleton className="h-12 w-[250px]" />
               <Skeleton className="h-32 w-full" />
             </div>
           ) : profile ? (
-            <Card className="p-6">
-              <div className="flex items-center gap-4 mb-6">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={profile.avatar_url || undefined} />
-                  <AvatarFallback>
-                    {profile.username?.[0]?.toUpperCase() || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h1 className="text-3xl font-bold">{profile.username}</h1>
-                  {profile.location && (
-                    <p className="text-muted-foreground">{profile.location}</p>
-                  )}
+            <div className="space-y-6">
+              <Card className="p-8">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                  <Avatar className="h-32 w-32">
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback className="text-2xl">
+                      {profile.username?.[0]?.toUpperCase() || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <h1 className="text-3xl font-bold">{profile.username}</h1>
+                      {profile.location && (
+                        <p className="text-muted-foreground">{profile.location}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-4">
+                      <Button 
+                        variant="default" 
+                        className="gap-2"
+                        onClick={() => {
+                          toast({
+                            title: "Coming Soon",
+                            description: "This feature will be available soon!",
+                          });
+                        }}
+                      >
+                        <Users className="h-4 w-4" />
+                        Follow
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="gap-2"
+                        onClick={() => {
+                          toast({
+                            title: "Coming Soon",
+                            description: "This feature will be available soon!",
+                          });
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Message
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          toast({
+                            title: "Coming Soon",
+                            description: "This feature will be available soon!",
+                          });
+                        }}
+                      >
+                        <Heart className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          toast({
+                            title: "Coming Soon",
+                            description: "This feature will be available soon!",
+                          });
+                        }}
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Card>
+
               {profile.bio && (
-                <div className="mb-6">
+                <Card className="p-6">
                   <h2 className="text-lg font-semibold mb-2">About</h2>
                   <p className="text-muted-foreground">{profile.bio}</p>
-                </div>
+                </Card>
               )}
+
               {profile.interests && profile.interests.length > 0 && (
-                <div>
+                <Card className="p-6">
                   <h2 className="text-lg font-semibold mb-2">Interests</h2>
                   <div className="flex flex-wrap gap-2">
-                    {profile.interests.map((interest, index) => (
+                    {profile.interests.map((interest: string, index: number) => (
                       <span
                         key={index}
-                        className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
+                        className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                       >
                         {interest}
                       </span>
                     ))}
                   </div>
-                </div>
+                </Card>
               )}
-            </Card>
-          ) : (
-            <div className="text-center py-12">
-              <h1 className="text-2xl font-bold text-muted-foreground">
-                Profile not found
-              </h1>
             </div>
+          ) : (
+            <Card className="p-12">
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-muted-foreground">
+                  Profile not found
+                </h1>
+                <p className="text-muted-foreground mt-2">
+                  The profile you're looking for doesn't exist or has been removed.
+                </p>
+              </div>
+            </Card>
           )}
         </div>
       </main>
