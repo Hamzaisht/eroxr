@@ -34,10 +34,10 @@ const Home = () => {
   };
 
   return (
-    <div className="flex">
+    <div className="flex min-h-[calc(100vh-64px)]">
       {/* Left Sidebar */}
-      <aside className="w-60 bg-luxury-dark/50 border-r border-white/10 shrink-0">
-        <div className="fixed w-60 h-[calc(100vh-64px)] p-6 space-y-6">
+      <aside className="w-60 border-r border-white/10 fixed left-0 top-16 bottom-0">
+        <div className="h-full p-6 space-y-6">
           <nav className="space-y-2">
             {[
               { icon: <HomeIcon className="w-5 h-5" />, label: "Home", path: "/home" },
@@ -72,7 +72,7 @@ const Home = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 border-x border-white/10 min-h-[calc(100vh-64px)]">
+      <main className="flex-1 ml-60 border-x border-white/10">
         <div className="max-w-[600px] mx-auto py-8 px-4">
           {session && (
             <div className="rounded-lg border border-white/10 bg-luxury-dark/50 p-4 shadow-sm sticky top-20 z-50 mb-6 backdrop-blur-sm">
@@ -120,8 +120,8 @@ const Home = () => {
       </main>
 
       {/* Right Sidebar */}
-      <aside className="w-[340px] bg-luxury-dark/50 border-l border-white/10 shrink-0">
-        <div className="fixed w-[340px] h-[calc(100vh-64px)] p-6 space-y-6">
+      <aside className="w-[340px] border-l border-white/10 fixed right-0 top-16 bottom-0">
+        <div className="h-full p-6 space-y-6">
           <div className="space-y-6">
             {/* Search */}
             <div className="space-y-4">
