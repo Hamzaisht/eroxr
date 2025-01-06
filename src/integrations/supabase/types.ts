@@ -87,6 +87,13 @@ export type Database = {
             referencedRelation: "profiles_with_stats"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "creator_content_prices_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       creator_likes: {
@@ -123,6 +130,13 @@ export type Database = {
             referencedRelation: "profiles_with_stats"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "creator_likes_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       creator_subscriptions: {
@@ -157,6 +171,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -504,6 +525,13 @@ export type Database = {
             referencedRelation: "profiles_with_stats"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "posts_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -595,6 +623,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stories_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           },
         ]
@@ -709,6 +744,18 @@ export type Database = {
           id: string | null
           subscriber_count: number | null
           updated_at: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      top_creators_by_earnings: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          earnings_percentile: number | null
+          id: string | null
+          subscriber_count: number | null
+          total_earnings: number | null
           username: string | null
         }
         Relationships: []
