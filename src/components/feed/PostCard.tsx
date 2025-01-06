@@ -41,15 +41,27 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
               </div>
             )}
 
-            {post.media_url && post.media_url.length > 0 && (
+            {/* Media Grid - Now handles both images and videos */}
+            {(post.media_url?.length > 0 || post.video_urls?.length > 0) && (
               <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
-                {post.media_url.map((url, index) => (
+                {post.media_url?.map((url, index) => (
                   <img
-                    key={index}
+                    key={`img-${index}`}
                     src={url}
                     alt={`Post media ${index + 1}`}
                     className="rounded-lg w-full h-48 object-cover"
                   />
+                ))}
+                {post.video_urls?.map((url, index) => (
+                  <video
+                    key={`video-${index}`}
+                    src={url}
+                    controls
+                    className="rounded-lg w-full h-48 object-cover"
+                    preload="metadata"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
                 ))}
               </div>
             )}

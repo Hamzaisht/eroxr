@@ -10,6 +10,7 @@ export type Post = {
   likes_count: number | null;
   comments_count: number | null;
   media_url: string[] | null;
+  video_urls: string[] | null;
   has_liked: boolean;
   visibility: 'public' | 'subscribers_only';
   tags: string[] | null;

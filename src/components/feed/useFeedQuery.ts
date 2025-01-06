@@ -26,6 +26,7 @@ export const useFeedQuery = (userId?: string) => {
           likes_count,
           comments_count,
           media_url,
+          video_urls,
           has_liked:post_likes!inner(id),
           visibility,
           tags,

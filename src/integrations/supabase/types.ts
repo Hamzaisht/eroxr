@@ -599,6 +599,7 @@ export type Database = {
           ppv_amount: number | null
           tags: string[] | null
           updated_at: string
+          video_urls: string[] | null
           visibility: string | null
         }
         Insert: {
@@ -613,6 +614,7 @@ export type Database = {
           ppv_amount?: number | null
           tags?: string[] | null
           updated_at?: string
+          video_urls?: string[] | null
           visibility?: string | null
         }
         Update: {
@@ -627,6 +629,7 @@ export type Database = {
           ppv_amount?: number | null
           tags?: string[] | null
           updated_at?: string
+          video_urls?: string[] | null
           visibility?: string | null
         }
         Relationships: [
