@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { CreatorActions } from "./creator/CreatorActions";
 import { CreatorStats } from "./creator/CreatorStats";
+import { CheckCircle } from "lucide-react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreatorCardProps {
   name: string;
@@ -20,6 +23,27 @@ export const CreatorCard = ({
   creatorId 
 }: CreatorCardProps) => {
   const [subscribers, setSubscribers] = useState(initialSubscribers);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const session = useSession();
+
+  useEffect(() => {
+    const checkFollowingStatus = async () => {
+      if (!session?.user?.id) return;
+      
+      const { data, error } = await supabase
+        .from('followers')
+        .select('*')
+        .eq('follower_id', session.user.id)
+        .eq('following_id', creatorId)
+        .single();
+
+      if (!error && data) {
+        setIsFollowing(true);
+      }
+    };
+
+    checkFollowingStatus();
+  }, [session?.user?.id, creatorId]);
 
   const handleSubscriberChange = (change: number) => {
     setSubscribers(prev => prev + change);
@@ -45,9 +69,14 @@ export const CreatorCard = ({
         </div>
         <div className="space-y-4 p-6">
           <div className="flex items-center justify-between">
-            <h3 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-semibold text-transparent">
-              {name}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-semibold text-transparent">
+                {name}
+              </h3>
+              {isFollowing && (
+                <CheckCircle className="h-5 w-5 text-primary" />
+              )}
+            </div>
           </div>
           <p className="text-sm text-foreground/70">{description}</p>
           <CreatorStats subscribers={subscribers} />
