@@ -9,10 +9,11 @@ import { usePostSubmission } from "./post/usePostSubmission";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { X } from "lucide-react";
+import { X, ImagePlus } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface CreatePostDialogProps {
   open: boolean;
