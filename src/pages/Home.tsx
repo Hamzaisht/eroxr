@@ -95,7 +95,7 @@ const Home = () => {
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
         <div className="container max-w-[2000px] mx-auto px-4 py-2">
-          <div className="grid grid-cols-[220px,1fr,280px] gap-6">
+          <div className="grid grid-cols-[280px,1fr,320px] gap-4">
             {/* Left Sidebar */}
             <LeftSidebar />
 
@@ -103,7 +103,7 @@ const Home = () => {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-4 min-h-[calc(100vh-4rem)]"
+              className="space-y-4 min-h-[calc(100vh-4rem)] max-w-[1000px] mx-auto w-full"
             >
               <FeedHeader />
 
