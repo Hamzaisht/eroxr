@@ -51,8 +51,7 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      
-      return (data || []) as Comment[];
+      return data as Comment[];
     },
     enabled: isExpanded,
   });
