@@ -62,20 +62,20 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
         >
           <TabsContent value="showcase" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((item) => (
+              {[1, 2, 3].map((index) => (
                 <motion.div
-                  key={item}
+                  key={index}
                   variants={item}
                   className="rounded-xl overflow-hidden bg-luxury-dark/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 hover:scale-105"
                 >
                   <img
-                    src={`https://picsum.photos/400/300?random=${item}`}
+                    src={`https://picsum.photos/400/300?random=${index}`}
                     alt="Showcase"
                     className="w-full h-48 object-cover"
                   />
                   <div className="p-4">
-                    <h3 className="text-lg font-semibold text-luxury-neutral">Showcase Item {item}</h3>
-                    <p className="text-sm text-luxury-neutral/70">Description for showcase item {item}</p>
+                    <h3 className="text-lg font-semibold text-luxury-neutral">Showcase Item {index}</h3>
+                    <p className="text-sm text-luxury-neutral/70">Description for showcase item {index}</p>
                   </div>
                 </motion.div>
               ))}
