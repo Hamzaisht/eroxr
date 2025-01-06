@@ -19,11 +19,14 @@ export const SuggestedCreators = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .limit(5);
+        .limit(5)
+        .throwOnError();
 
       if (error) throw error;
       return data;
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
   const handleFollow = async (creatorId: string, creatorName: string) => {
@@ -37,33 +40,30 @@ export const SuggestedCreators = () => {
     }
 
     try {
-      // First check if the follow relationship already exists
-      const { data: existingFollow } = await supabase
-        .from("followers")
-        .select()
-        .eq("follower_id", session.user.id)
-        .eq("following_id", creatorId)
-        .maybeSingle();
-
-      if (existingFollow) {
-        toast({
-          title: "Already following",
-          description: `You are already following ${creatorName}`,
-        });
-        return;
-      }
-
-      // If no existing follow, create new follow relationship
+      // Use a single query with upsert to handle both checking and inserting
       const { error } = await supabase
         .from("followers")
-        .insert([
+        .upsert(
           {
             follower_id: session.user.id,
             following_id: creatorId,
           },
-        ]);
+          { 
+            onConflict: 'follower_id,following_id',
+            ignoreDuplicates: true 
+          }
+        );
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "23505") {
+          toast({
+            title: "Already following",
+            description: `You are already following ${creatorName}`,
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Following",
@@ -71,6 +71,17 @@ export const SuggestedCreators = () => {
       });
     } catch (error) {
       console.error("Follow error:", error);
+      
+      // Check if it's a timeout error
+      if (error.message?.includes("timeout") || error.message?.includes("504")) {
+        toast({
+          title: "Network timeout",
+          description: "Please check your connection and try again",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Error",
         description: "Failed to follow creator. Please try again.",
