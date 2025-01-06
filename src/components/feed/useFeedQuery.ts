@@ -14,6 +14,7 @@ export const useFeedQuery = (userId?: string) => {
       const from = pageParam * POSTS_PER_PAGE;
       const to = from + POSTS_PER_PAGE - 1;
 
+      // First get the posts
       const { data: posts, error } = await supabase
         .from("posts")
         .select(`
@@ -27,7 +28,9 @@ export const useFeedQuery = (userId?: string) => {
           media_url,
           has_liked:post_likes!inner(id),
           visibility,
-          tags
+          tags,
+          is_ppv,
+          ppv_amount
         `)
         .order("created_at", { ascending: false })
         .range(from, to);
@@ -41,10 +44,30 @@ export const useFeedQuery = (userId?: string) => {
         throw error;
       }
 
+      // If there are posts and a user is logged in, check for PPV purchases
+      if (posts && posts.length > 0 && userId) {
+        const { data: purchases } = await supabase
+          .from('post_purchases')
+          .select('post_id')
+          .eq('user_id', userId)
+          .in('post_id', posts.map(post => post.id));
+
+        const purchasedPostIds = new Set(purchases?.map(p => p.post_id) || []);
+
+        return posts.map(post => ({
+          ...post,
+          has_liked: post.has_liked?.length > 0,
+          visibility: post.visibility as "subscribers_only" | "public",
+          has_purchased: purchasedPostIds.has(post.id)
+        }));
+      }
+
+      // If no user is logged in or no posts, just return the posts without purchase info
       return posts?.map(post => ({
         ...post,
         has_liked: post.has_liked?.length > 0,
-        visibility: post.visibility as "subscribers_only" | "public"
+        visibility: post.visibility as "subscribers_only" | "public",
+        has_purchased: false
       })) || [];
     },
     getNextPageParam: (lastPage, allPages) => {
