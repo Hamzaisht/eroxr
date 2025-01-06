@@ -27,30 +27,33 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
     queryFn: async () => {
       if (!session?.user?.id) return [];
       
-      // Get users who follow me AND I follow them back
-      const { data, error } = await supabase
+      // First, get the list of users who follow me
+      const { data: followersData } = await supabase
+        .from('followers')
+        .select('follower_id')
+        .eq('following_id', session.user.id);
+
+      if (!followersData) return [];
+
+      // Then get users I follow who also follow me back
+      const { data: mutualData, error } = await supabase
         .from('followers')
         .select(`
-          following:following_id(
+          following:profiles!followers_following_id_fkey(
             id,
             username,
             avatar_url
           )
         `)
         .eq('follower_id', session.user.id)
-        .filter('following_id', 'in', (
-          supabase
-            .from('followers')
-            .select('follower_id')
-            .eq('following_id', session.user.id)
-        ));
+        .in('following_id', followersData.map(f => f.follower_id));
 
       if (error) {
         console.error('Error fetching mutual followers:', error);
         throw error;
       }
 
-      return data?.map(f => f.following) || [];
+      return mutualData?.map(f => f.following) || [];
     },
     enabled: !!session?.user?.id,
   });
