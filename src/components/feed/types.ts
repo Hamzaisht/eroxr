@@ -13,4 +13,7 @@ export type Post = {
   has_liked: boolean;
   visibility: 'public' | 'subscribers_only';
   tags: string[] | null;
+  is_ppv: boolean;
+  ppv_amount: number | null;
+  has_purchased?: boolean;
 };
