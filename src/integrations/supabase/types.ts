@@ -715,6 +715,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           media_url: string
+          screenshot_disabled: boolean | null
         }
         Insert: {
           created_at?: string
@@ -723,6 +724,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           media_url: string
+          screenshot_disabled?: boolean | null
         }
         Update: {
           created_at?: string
@@ -731,6 +733,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           media_url?: string
+          screenshot_disabled?: boolean | null
         }
         Relationships: [
           {

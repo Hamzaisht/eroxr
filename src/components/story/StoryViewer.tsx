@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useState, useEffect } from "react";
+import { formatDistanceToNow } from "date-fns";
 
 interface StoryViewerProps {
   open: boolean;
@@ -11,6 +12,8 @@ interface StoryViewerProps {
   stories: Array<{
     id: string;
     media_url: string;
+    created_at: string;
+    expires_at: string;
   }>;
   creator: {
     id: string;
@@ -23,6 +26,44 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHoldingClick, setIsHoldingClick] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+  // Prevent screenshots
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.key === 'PrintScreen') ||
+        (e.ctrlKey && e.key === 'p') ||
+        (e.metaKey && e.key === 'p')
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Update time remaining
+  useEffect(() => {
+    if (!open) return;
+
+    const updateTimeRemaining = () => {
+      const expiryDate = new Date(stories[currentIndex].expires_at);
+      const now = new Date();
+      
+      if (expiryDate > now) {
+        setTimeRemaining(formatDistanceToNow(expiryDate, { addSuffix: true }));
+      } else {
+        setTimeRemaining("Expired");
+        onOpenChange(false);
+      }
+    };
+
+    updateTimeRemaining();
+    const interval = setInterval(updateTimeRemaining, 1000);
+    return () => clearInterval(interval);
+  }, [currentIndex, open, stories, onOpenChange]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -35,7 +76,7 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
           onOpenChange(false);
           setCurrentIndex(0);
         }
-      }, 5000); // 5 seconds per story
+      }, 5000);
     }
 
     return () => clearTimeout(timer);
@@ -81,6 +122,8 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className="relative w-full cursor-pointer"
+            style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
+            onContextMenu={(e) => e.preventDefault()}
           >
             <AspectRatio ratio={9/16} className="bg-black">
               {/* Story Header with Animation */}
@@ -90,28 +133,33 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
                 transition={{ delay: 0.2 }}
                 className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/50 to-transparent"
               >
-                <Link to={`/profile/${creator.id}`} className="flex items-center gap-2">
-                  <div className="relative">
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.1, 1],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatType: "reverse"
-                      }}
-                      className="absolute inset-0 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent opacity-75 blur-sm"
-                    />
-                    <Avatar className="h-10 w-10 ring-2 ring-luxury-primary relative z-10">
-                      <AvatarImage src={creator.avatar_url} />
-                      <AvatarFallback>
-                        {creator.username?.[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <span className="text-white font-medium">{creator.username}</span>
-                </Link>
+                <div className="flex items-center justify-between">
+                  <Link to={`/profile/${creator.id}`} className="flex items-center gap-2">
+                    <div className="relative">
+                      <motion.div
+                        animate={{
+                          scale: [1, 1.1, 1],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatType: "reverse"
+                        }}
+                        className="absolute inset-0 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent opacity-75 blur-sm"
+                      />
+                      <Avatar className="h-10 w-10 ring-2 ring-luxury-primary relative z-10">
+                        <AvatarImage src={creator.avatar_url} />
+                        <AvatarFallback>
+                          {creator.username?.[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-white font-medium">{creator.username}</span>
+                      <span className="text-xs text-white/70">{timeRemaining}</span>
+                    </div>
+                  </Link>
+                </div>
               </motion.div>
 
               {/* Story Progress Bars */}
@@ -175,6 +223,12 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
                     duration: 0.2,
                   }
                 }}
+                style={{ 
+                  pointerEvents: 'none',
+                  WebkitUserSelect: 'none',
+                  userSelect: 'none'
+                }}
+                onContextMenu={(e) => e.preventDefault()}
               />
             </AspectRatio>
           </motion.div>
