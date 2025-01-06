@@ -22,7 +22,7 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="overflow-hidden bg-gradient-to-br from-luxury-dark/90 to-luxury-dark/70 backdrop-blur-lg border-luxury-neutral/10 shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <Card className="overflow-hidden glass-effect">
         <CardHeader>
           <PostHeader 
             post={post} 

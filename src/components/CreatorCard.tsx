@@ -32,7 +32,7 @@ export const CreatorCard = ({
         whileHover={{ y: -8 }}
         transition={{ type: "spring", stiffness: 300 }}
       >
-        <Card className="group relative overflow-hidden border-none bg-gradient-to-br from-luxury-dark/90 to-luxury-dark/70 backdrop-blur-lg shadow-xl">
+        <Card className="group relative overflow-hidden glass-effect">
           <div className="absolute right-4 top-4 z-10">
             <CreatorActions
               creatorId={creatorId}
