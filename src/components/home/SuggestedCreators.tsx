@@ -1,4 +1,4 @@
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Plus, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -8,10 +8,12 @@ import { Link } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 export const SuggestedCreators = () => {
   const { toast } = useToast();
   const session = useSession();
+  const [followedCreators, setFollowedCreators] = useState<string[]>([]);
 
   const { data: suggestedCreators } = useQuery({
     queryKey: ["suggested-creators"],
@@ -40,7 +42,6 @@ export const SuggestedCreators = () => {
     }
 
     try {
-      // Use a single query with upsert to handle both checking and inserting
       const { error } = await supabase
         .from("followers")
         .upsert(
@@ -65,6 +66,7 @@ export const SuggestedCreators = () => {
         throw error;
       }
 
+      setFollowedCreators(prev => [...prev, creatorId]);
       toast({
         title: "Following",
         description: `You are now following ${creatorName}`,
@@ -72,7 +74,6 @@ export const SuggestedCreators = () => {
     } catch (error) {
       console.error("Follow error:", error);
       
-      // Check if it's a timeout error
       if (error.message?.includes("timeout") || error.message?.includes("504")) {
         toast({
           title: "Network timeout",
@@ -133,10 +134,19 @@ export const SuggestedCreators = () => {
             </Link>
             <Button
               size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary"
+              variant="ghost"
+              className={`w-8 h-8 p-0 rounded-full transition-all duration-300 ${
+                followedCreators.includes(creator.id)
+                  ? 'bg-luxury-primary text-white animate-neon-glow'
+                  : 'bg-transparent hover:bg-luxury-neutral/10'
+              }`}
               onClick={() => handleFollow(creator.id, creator.username || "Creator")}
             >
-              Follow
+              {followedCreators.includes(creator.id) ? (
+                <CheckCircle className="h-4 w-4" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
             </Button>
           </motion.div>
         ))}
