@@ -22,6 +22,7 @@ const Home = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const { toast } = useToast();
 
+  // Modified to use real-time subscription for premium status updates
   useEffect(() => {
     const checkPayingCustomerStatus = async () => {
       if (!session?.user?.id) return;
@@ -33,11 +34,34 @@ const Home = () => {
         .single();
       
       if (!error && data) {
+        console.log("Premium status:", data.is_paying_customer); // Debug log
         setIsPayingCustomer(data.is_paying_customer);
       }
     };
 
     checkPayingCustomerStatus();
+
+    // Subscribe to real-time changes on the profiles table
+    const subscription = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${session?.user?.id}`,
+        },
+        (payload) => {
+          console.log("Profile updated:", payload); // Debug log
+          setIsPayingCustomer(payload.new.is_paying_customer);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [session?.user?.id]);
 
   // Subscribe to real-time updates
