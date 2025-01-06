@@ -30,9 +30,9 @@ export const CreatorsFeed = () => {
   const posts = data?.pages.flat() || [];
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="w-full max-w-[1200px] mx-auto">
       <ScrollArea className="h-[calc(100vh-220px)]">
-        <div className="space-y-8">
+        <div className="space-y-8 px-4">
           {isLoading ? (
             <LoadingSkeleton />
           ) : (

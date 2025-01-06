@@ -94,8 +94,8 @@ const Home = () => {
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
-        <div className="container max-w-[1920px] mx-auto px-4 py-2">
-          <div className="grid gap-6 lg:grid-cols-[220px,1fr,280px]">
+        <div className="container max-w-[2000px] mx-auto px-4 py-2">
+          <div className="grid grid-cols-[220px,1fr,280px] gap-6">
             {/* Left Sidebar */}
             <LeftSidebar />
 
@@ -112,7 +112,7 @@ const Home = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="w-full mx-auto"
+                  className="w-full"
                 >
                   <StoryReel />
                 </motion.div>
@@ -121,7 +121,7 @@ const Home = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="w-full mx-auto bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-neutral/10 p-4 shadow-lg"
+                  className="w-full bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-neutral/10 p-4 shadow-lg"
                 >
                   <CreatePostArea
                     onOpenCreatePost={() => setIsCreatePostOpen(true)}
@@ -135,7 +135,7 @@ const Home = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="w-full mx-auto"
+                  className="w-full"
                 >
                   <CreatorsFeed />
                 </motion.div>
