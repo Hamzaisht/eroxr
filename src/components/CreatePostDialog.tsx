@@ -8,12 +8,13 @@ import { usePostSubmission } from "./post/usePostSubmission";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ImagePlus, Lock } from "lucide-react";
+import { ImagePlus, Lock, CheckCircle2 } from "lucide-react";
 import { TagInput } from "./post/TagInput";
 import { VisibilitySelect } from "./post/VisibilitySelect";
 import { ContentPreview } from "./post/ContentPreview";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -34,17 +35,29 @@ export const CreatePostDialog = ({
   const [visibility, setVisibility] = useState<"public" | "subscribers_only">("public");
   const [isPPV, setIsPPV] = useState(false);
   const [ppvAmount, setPpvAmount] = useState<number | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const session = useSession();
   const { toast } = useToast();
 
   const { handleSubmit, isLoading } = usePostSubmission(() => {
-    setContent("");
-    onFileSelect(null);
-    setTags([]);
-    setVisibility("public");
-    setIsPPV(false);
-    setPpvAmount(null);
-    onOpenChange(false);
+    setShowSuccess(true);
+    toast({
+      title: "Post Created! 🎉",
+      description: "Your content is now live and visible to your audience",
+      duration: 3000,
+    });
+    
+    // Reset form after a brief delay to show success animation
+    setTimeout(() => {
+      setContent("");
+      onFileSelect(null);
+      setTags([]);
+      setVisibility("public");
+      setIsPPV(false);
+      setPpvAmount(null);
+      setShowSuccess(false);
+      onOpenChange(false);
+    }, 1500);
   });
 
   const checkPayingCustomerStatus = async () => {
@@ -81,7 +94,29 @@ export const CreatePostDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] relative overflow-hidden">
+        <AnimatePresence>
+          {showSuccess && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", damping: 15 }}
+                className="flex flex-col items-center space-y-4 text-center"
+              >
+                <CheckCircle2 className="w-16 h-16 text-green-500" />
+                <h3 className="text-xl font-semibold">Post Created Successfully!</h3>
+                <p className="text-muted-foreground">Your content is now live</p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <DialogHeader>
           <DialogTitle>Create Post</DialogTitle>
         </DialogHeader>
@@ -101,7 +136,11 @@ export const CreatePostDialog = ({
           />
 
           {isPayingCustomer && (
-            <div className="space-y-2 p-4 rounded-lg border border-luxury-neutral/10 bg-luxury-dark/20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-2 p-4 rounded-lg border border-luxury-neutral/10 bg-luxury-dark/20"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Lock className="w-4 h-4 text-luxury-primary" />
@@ -115,7 +154,12 @@ export const CreatePostDialog = ({
               </div>
               
               {isPPV && (
-                <div className="space-y-2 pt-2">
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="space-y-2 pt-2"
+                >
                   <Label htmlFor="ppv-amount">Amount ($)</Label>
                   <Input
                     id="ppv-amount"
@@ -130,9 +174,9 @@ export const CreatePostDialog = ({
                   <p className="text-sm text-muted-foreground">
                     Content will be locked until payment is made
                   </p>
-                </div>
+                </motion.div>
               )}
-            </div>
+            </motion.div>
           )}
 
           <ContentPreview content={content} />
