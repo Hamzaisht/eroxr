@@ -30,13 +30,13 @@ export const CreatorsFeed = () => {
   const posts = data?.pages.flat() || [];
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <ScrollArea className="h-[calc(100vh-200px)]">
-        <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <ScrollArea className="h-[calc(100vh-220px)]">
+        <div className="space-y-8">
           {isLoading ? (
             <LoadingSkeleton />
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {posts.map((post) => (
                 <PostCard 
                   key={post.id} 

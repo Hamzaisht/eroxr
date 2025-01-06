@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Home = () => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -95,31 +96,51 @@ const Home = () => {
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
         <div className="container max-w-[1920px] mx-auto px-4 py-2">
-          <div className="grid gap-6 lg:grid-cols-[1fr,320px]">
+          <div className="grid gap-6 lg:grid-cols-[280px,1fr,320px]">
+            {/* Left Sidebar */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="hidden lg:block space-y-4"
+            >
+              <div className="sticky top-4 space-y-2">
+                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-luxury-neutral/5 transition-colors cursor-pointer">
+                  <Bell className="h-5 w-5 text-luxury-neutral" />
+                  <span className="font-medium">News Feed</span>
+                </div>
+                {/* Add more navigation items here */}
+              </div>
+            </motion.div>
+
             {/* Main Feed */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4 min-h-[calc(100vh-4rem)]"
             >
-              <div className="flex items-center justify-between mb-2">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary/90 to-luxury-accent bg-clip-text text-transparent">
-                  Your Feed
-                </h1>
-                <div className="relative">
-                  <Bell 
-                    className="h-6 w-6 text-luxury-neutral cursor-pointer hover:text-luxury-primary transition-colors" 
-                    onClick={() => setNewNotifications(0)}
-                  />
-                  {newNotifications > 0 && (
-                    <Badge 
-                      className="absolute -top-2 -right-2 bg-luxury-primary animate-pulse"
-                      variant="secondary"
+              <div className="flex items-center justify-between mb-4">
+                <Tabs defaultValue="feed" className="w-full">
+                  <TabsList className="w-full justify-start h-12 bg-transparent border-b rounded-none p-0">
+                    <TabsTrigger 
+                      value="feed"
+                      className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-luxury-primary rounded-none px-8"
                     >
-                      {newNotifications}
-                    </Badge>
-                  )}
-                </div>
+                      Feed
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="popular"
+                      className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-luxury-primary rounded-none px-8"
+                    >
+                      Popular
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="recent"
+                      className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-luxury-primary rounded-none px-8"
+                    >
+                      Recent
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
 
               <AnimatePresence mode="wait">
