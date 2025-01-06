@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { CreatorsFeed } from "@/components/CreatorsFeed";
 import { StoryReel } from "@/components/StoryReel";
 import { SearchBar } from "@/components/home/SearchBar";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
@@ -128,6 +129,15 @@ const Home = () => {
                     onOpenGoLive={() => setIsGoLiveOpen(true)}
                     isPayingCustomer={isPayingCustomer}
                   />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="w-full"
+                >
+                  <CreatorsFeed />
                 </motion.div>
               </AnimatePresence>
             </motion.div>
