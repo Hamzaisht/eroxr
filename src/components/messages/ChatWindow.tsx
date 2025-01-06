@@ -22,7 +22,7 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         .from('direct_messages')
         .select(`
           *,
-          sender:profiles(username, avatar_url)
+          sender:profiles!direct_messages_sender_id_fkey(username, avatar_url)
         `)
         .or(`and(sender_id.eq.${session?.user?.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${session?.user?.id})`)
         .order('created_at', { ascending: true });
