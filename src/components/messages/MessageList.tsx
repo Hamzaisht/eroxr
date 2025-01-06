@@ -16,25 +16,6 @@ export const MessageList = ({ onSelectUser }: MessageListProps) => {
     queryFn: async () => {
       if (!session?.user?.id) return [];
 
-      // Add a dummy message for testing
-      const dummyMessage = {
-        id: 'dummy-id',
-        content: "Hey! This is a test message with all features. Try replying!",
-        created_at: new Date().toISOString(),
-        sender_id: session.user.id,
-        recipient_id: 'dummy-recipient',
-        sender: {
-          username: "TestUser",
-          avatar_url: null
-        },
-        recipient: {
-          username: "DummyRecipient",
-          avatar_url: null
-        },
-        viewed_at: null,
-        message_type: 'text'
-      };
-
       const { data, error } = await supabase
         .from('direct_messages')
         .select(`
@@ -56,8 +37,7 @@ export const MessageList = ({ onSelectUser }: MessageListProps) => {
         throw error;
       }
 
-      // Add the dummy message to the beginning of the list
-      return [dummyMessage, ...(data || [])];
+      return data || [];
     },
     enabled: !!session?.user?.id,
   });
