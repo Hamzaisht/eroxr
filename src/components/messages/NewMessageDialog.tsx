@@ -24,6 +24,14 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface FollowerResponse {
+  follower_id: string;
+}
+
+interface MutualFollowerResponse {
+  profiles: Profile;
+}
+
 export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
   const session = useSession();
   const [open, setOpen] = useState(false);
@@ -44,7 +52,8 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
         return [];
       }
 
-      if (!followersData?.length) return [];
+      const followers = followersData as FollowerResponse[];
+      if (!followers?.length) return [];
 
       // Then get the profiles of users I follow who also follow me back
       const { data: mutualData, error: mutualError } = await supabase
@@ -57,14 +66,15 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
           )
         `)
         .eq('follower_id', session.user.id)
-        .in('following_id', followersData.map(f => f.follower_id));
+        .in('following_id', followers.map(f => f.follower_id));
 
       if (mutualError) {
         console.error('Error fetching mutual followers:', mutualError);
         return [];
       }
 
-      return (mutualData?.map(item => item.profiles) || []) as Profile[];
+      const mutuals = mutualData as MutualFollowerResponse[];
+      return mutuals?.map(item => item.profiles) || [];
     },
     enabled: !!session?.user?.id,
   });
