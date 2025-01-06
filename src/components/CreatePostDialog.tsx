@@ -5,16 +5,14 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PostSubmitButtons } from "./post/PostSubmitButtons";
 import { usePostSubmission } from "./post/usePostSubmission";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { ImagePlus, Lock, CheckCircle2 } from "lucide-react";
 import { TagInput } from "./post/TagInput";
 import { VisibilitySelect } from "./post/VisibilitySelect";
 import { ContentPreview } from "./post/ContentPreview";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { motion, AnimatePresence } from "framer-motion";
+import { PPVSettings } from "./post/PPVSettings";
+import { MediaUploadSection } from "./post/MediaUploadSection";
+import { SuccessOverlay } from "./post/SuccessOverlay";
+import { AnimatePresence } from "framer-motion";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -47,7 +45,6 @@ export const CreatePostDialog = ({
       duration: 3000,
     });
     
-    // Reset form after a brief delay to show success animation
     setTimeout(() => {
       setContent("");
       onFileSelect(null);
@@ -96,30 +93,13 @@ export const CreatePostDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] relative overflow-hidden">
         <AnimatePresence>
-          {showSuccess && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", damping: 15 }}
-                className="flex flex-col items-center space-y-4 text-center"
-              >
-                <CheckCircle2 className="w-16 h-16 text-green-500" />
-                <h3 className="text-xl font-semibold">Post Created Successfully!</h3>
-                <p className="text-muted-foreground">Your content is now live</p>
-              </motion.div>
-            </motion.div>
-          )}
+          <SuccessOverlay show={showSuccess} />
         </AnimatePresence>
 
         <DialogHeader>
           <DialogTitle>Create Post</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
           <Textarea
             placeholder="What's on your mind?"
@@ -136,79 +116,22 @@ export const CreatePostDialog = ({
           />
 
           {isPayingCustomer && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-2 p-4 rounded-lg border border-luxury-neutral/10 bg-luxury-dark/20"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Lock className="w-4 h-4 text-luxury-primary" />
-                  <Label htmlFor="ppv-toggle">Pay-Per-View Content</Label>
-                </div>
-                <Switch
-                  id="ppv-toggle"
-                  checked={isPPV}
-                  onCheckedChange={setIsPPV}
-                />
-              </div>
-              
-              {isPPV && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="space-y-2 pt-2"
-                >
-                  <Label htmlFor="ppv-amount">Amount ($)</Label>
-                  <Input
-                    id="ppv-amount"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={ppvAmount || ''}
-                    onChange={(e) => setPpvAmount(parseFloat(e.target.value))}
-                    placeholder="Enter amount"
-                    className="bg-luxury-dark/30 border-luxury-neutral/10"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Content will be locked until payment is made
-                  </p>
-                </motion.div>
-              )}
-            </motion.div>
+            <PPVSettings
+              isPPV={isPPV}
+              setIsPPV={setIsPPV}
+              ppvAmount={ppvAmount}
+              setPpvAmount={setPpvAmount}
+            />
           )}
 
           <ContentPreview content={content} />
           
-          <div className="space-y-2">
-            <Label>Media</Label>
-            <div className="flex items-center gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('post-file-upload')?.click()}
-                className="w-full"
-              >
-                <ImagePlus className="h-4 w-4 mr-2" />
-                {selectedFiles?.length ? `${selectedFiles.length} file(s) selected` : 'Add Media'}
-              </Button>
-              <input
-                type="file"
-                id="post-file-upload"
-                multiple
-                accept="image/*,video/*"
-                className="hidden"
-                onChange={handleFileSelect}
-                disabled={!isPayingCustomer}
-              />
-            </div>
-            {!isPayingCustomer && (
-              <p className="text-sm text-muted-foreground">
-                Upgrade to upload media files
-              </p>
-            )}
-          </div>
+          <MediaUploadSection
+            selectedFiles={selectedFiles}
+            onFileSelect={onFileSelect}
+            isPayingCustomer={isPayingCustomer}
+            handleFileSelect={handleFileSelect}
+          />
           
           <PostSubmitButtons
             isLoading={isLoading}
