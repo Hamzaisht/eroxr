@@ -8,6 +8,7 @@ import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import Categories from "./pages/Categories";
 import About from "./pages/About";
+import Messages from "./pages/Messages";
 import { Toaster } from "@/components/ui/toaster";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,6 +24,7 @@ function App() {
           <Route path="/profile/:id" element={<Profile />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/about" element={<About />} />
+          <Route path="/messages" element={<Messages />} />
         </Routes>
         <Toaster />
       </Router>
