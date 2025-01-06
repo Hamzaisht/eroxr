@@ -64,6 +64,7 @@ export default {
         'luxury-gradient': 'linear-gradient(135deg, #1A1F2C 0%, #2A1F3D 50%, #1A1F2C 100%)',
         'button-gradient': 'linear-gradient(90deg, #9b87f5 0%, #7E69AB 100%)',
         'hover-gradient': 'linear-gradient(90deg, #7E69AB 0%, #9b87f5 100%)',
+        'neon-glow': 'linear-gradient(90deg, rgba(155,135,245,0.5) 0%, rgba(217,70,239,0.5) 100%)',
       },
       keyframes: {
         "logo-spin": {
@@ -83,12 +84,21 @@ export default {
           "0%": { transform: "scale(0.8)", opacity: "0.5" },
           "100%": { transform: "scale(1.2)", opacity: "0" },
         },
+        "neon-pulse": {
+          "0%, 100%": { 
+            boxShadow: "0 0 5px theme('colors.luxury.primary'), 0 0 20px theme('colors.luxury.primary')",
+          },
+          "50%": { 
+            boxShadow: "0 0 10px theme('colors.luxury.accent'), 0 0 30px theme('colors.luxury.accent')",
+          }
+        }
       },
       animation: {
         "logo-spin": "logo-spin 1.5s ease-in-out",
         "fade-up": "fade-up 0.5s ease-out",
         "float": "float 6s ease-in-out infinite",
         "pulse-ring": "pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "neon-glow": "neon-pulse 2s ease-in-out infinite",
       },
     },
   },
