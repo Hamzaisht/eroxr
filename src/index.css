@@ -37,5 +37,5 @@
 }
 
 .glass-effect {
-  @apply backdrop-blur-sm bg-white/10 border border-white/20;
+  @apply backdrop-blur-md bg-white/30;
 }
