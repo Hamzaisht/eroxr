@@ -22,10 +22,12 @@ const Home = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const { toast } = useToast();
 
-  // Modified to use real-time subscription for premium status updates
+  // Fetch initial premium status and subscribe to changes
   useEffect(() => {
     const checkPayingCustomerStatus = async () => {
       if (!session?.user?.id) return;
+      
+      console.log("Checking premium status for user:", session.user.id);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -34,15 +36,24 @@ const Home = () => {
         .single();
       
       if (!error && data) {
-        console.log("Premium status:", data.is_paying_customer); // Debug log
+        console.log("Premium status fetched:", data.is_paying_customer);
         setIsPayingCustomer(data.is_paying_customer);
+        
+        if (data.is_paying_customer) {
+          toast({
+            title: "Premium Status Active",
+            description: "You have access to all premium features",
+          });
+        }
+      } else {
+        console.error("Error fetching premium status:", error);
       }
     };
 
     checkPayingCustomerStatus();
 
     // Subscribe to real-time changes on the profiles table
-    const subscription = supabase
+    const channel = supabase
       .channel('profile-changes')
       .on(
         'postgres_changes',
@@ -53,18 +64,26 @@ const Home = () => {
           filter: `id=eq.${session?.user?.id}`,
         },
         (payload) => {
-          console.log("Profile updated:", payload); // Debug log
-          setIsPayingCustomer(payload.new.is_paying_customer);
+          console.log("Profile updated:", payload);
+          const newPremiumStatus = payload.new.is_paying_customer;
+          setIsPayingCustomer(newPremiumStatus);
+          
+          if (newPremiumStatus) {
+            toast({
+              title: "Premium Status Updated",
+              description: "Your account has been upgraded to premium!",
+            });
+          }
         }
       )
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      channel.unsubscribe();
     };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, toast]);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates for posts and stories
   useEffect(() => {
     if (!session?.user?.id) return;
 
