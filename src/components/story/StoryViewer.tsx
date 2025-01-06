@@ -4,8 +4,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface StoryViewerProps {
   open: boolean;
@@ -24,18 +22,22 @@ interface StoryViewerProps {
 export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleNext = () => {
-    if (currentIndex < stories.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      onOpenChange(false);
-      setCurrentIndex(0);
-    }
-  };
+  const handleClick = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const isRightSide = x > rect.width / 2;
 
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+    if (isRightSide) {
+      if (currentIndex < stories.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      } else {
+        onOpenChange(false);
+        setCurrentIndex(0);
+      }
+    } else {
+      if (currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      }
     }
   };
 
@@ -44,10 +46,12 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
       <DialogContent className="max-w-[500px] p-0 bg-transparent border-none">
         <AnimatePresence mode="wait">
           <motion.div
+            key={currentIndex}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="relative w-full"
+            transition={{ duration: 0.2 }}
+            className="relative w-full cursor-pointer"
           >
             <AspectRatio ratio={9/16} className="bg-black">
               {/* Story Header */}
@@ -63,58 +67,55 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
                 </Link>
               </div>
 
-              {/* Story Navigation */}
+              {/* Story Navigation Progress */}
               <div className="absolute top-0 left-0 right-0 z-10 p-2">
                 <div className="flex gap-1">
                   {stories.map((_, index) => (
                     <div
                       key={index}
-                      className={`h-1 flex-1 rounded-full ${
-                        index === currentIndex
-                          ? "bg-luxury-primary"
-                          : index < currentIndex
-                          ? "bg-luxury-neutral/50"
-                          : "bg-luxury-neutral/20"
-                      }`}
-                    />
+                      className="relative h-1 flex-1 bg-luxury-neutral/20 overflow-hidden rounded-full"
+                    >
+                      <motion.div
+                        initial={{ scaleX: 0 }}
+                        animate={{ 
+                          scaleX: index <= currentIndex ? 1 : 0,
+                        }}
+                        transition={{ 
+                          duration: index === currentIndex ? 0.2 : 0,
+                          ease: "easeInOut"
+                        }}
+                        className="absolute inset-0 bg-luxury-primary origin-left"
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
 
+              {/* Interactive Story Area */}
+              <div 
+                className="absolute inset-0 z-20"
+                onClick={handleClick}
+              >
+                <motion.div
+                  initial={false}
+                  whileHover={{ 
+                    background: "linear-gradient(90deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 100%)" 
+                  }}
+                  className="w-full h-full"
+                />
+              </div>
+
               {/* Story Image */}
-              <img
+              <motion.img
+                key={stories[currentIndex].media_url}
                 src={stories[currentIndex].media_url}
                 alt={`Story by ${creator.username}`}
                 className="h-full w-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
               />
-
-              {/* Navigation Buttons */}
-              {currentIndex > 0 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-luxury-dark/50 text-luxury-neutral hover:bg-luxury-dark/70"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePrevious();
-                  }}
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </Button>
-              )}
-              {currentIndex < stories.length - 1 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-luxury-dark/50 text-luxury-neutral hover:bg-luxury-dark/70"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleNext();
-                  }}
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </Button>
-              )}
             </AspectRatio>
           </motion.div>
         </AnimatePresence>
