@@ -37,6 +37,23 @@ export const SuggestedCreators = () => {
     }
 
     try {
+      // First check if the follow relationship already exists
+      const { data: existingFollow } = await supabase
+        .from("followers")
+        .select()
+        .eq("follower_id", session.user.id)
+        .eq("following_id", creatorId)
+        .maybeSingle();
+
+      if (existingFollow) {
+        toast({
+          title: "Already following",
+          description: `You are already following ${creatorName}`,
+        });
+        return;
+      }
+
+      // If no existing follow, create new follow relationship
       const { error } = await supabase
         .from("followers")
         .insert([
@@ -53,6 +70,7 @@ export const SuggestedCreators = () => {
         description: `You are now following ${creatorName}`,
       });
     } catch (error) {
+      console.error("Follow error:", error);
       toast({
         title: "Error",
         description: "Failed to follow creator. Please try again.",
