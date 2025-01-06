@@ -19,7 +19,7 @@ interface Comment {
   created_at: string;
   user_id: string;
   post_id: string;
-  profiles: Creator;
+  creator: Creator;
 }
 
 interface CommentSectionProps {
@@ -45,7 +45,7 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
           created_at,
           user_id,
           post_id,
-          profiles:user_id(username, avatar_url)
+          creator:profiles!user_id(username, avatar_url)
         `)
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
@@ -140,17 +140,17 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
                 <div key={comment.id} className="flex gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage
-                      src={comment.profiles.avatar_url || ""}
-                      alt={comment.profiles.username || ""}
+                      src={comment.creator.avatar_url || ""}
+                      alt={comment.creator.username || ""}
                     />
                     <AvatarFallback>
-                      {comment.profiles.username?.[0]?.toUpperCase() || "U"}
+                      {comment.creator.username?.[0]?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
-                        {comment.profiles.username || "Anonymous"}
+                        {comment.creator.username || "Anonymous"}
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {new Date(comment.created_at).toLocaleDateString()}
