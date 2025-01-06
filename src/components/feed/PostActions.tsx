@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, Share, Bookmark } from "lucide-react";
+import { ThumbsUp, Share, Bookmark, Link as LinkIcon } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { CommentSection } from "./CommentSection";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PostActionsProps {
   postId: string;
@@ -20,11 +21,20 @@ export const PostActions = ({ postId, likesCount, commentsCount, hasLiked, onLik
 
   const handleShare = async () => {
     try {
-      await navigator.share({
-        title: "Share Post",
-        text: "Check out this post",
-        url: window.location.href,
-      });
+      if (navigator.share) {
+        await navigator.share({
+          title: "Share Post",
+          text: "Check out this post",
+          url: window.location.href,
+        });
+      } else {
+        // Fallback to copying link
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link copied",
+          description: "Post link has been copied to your clipboard",
+        });
+      }
     } catch (error) {
       if (error instanceof Error && error.name !== "AbortError") {
         toast({
@@ -36,7 +46,7 @@ export const PostActions = ({ postId, likesCount, commentsCount, hasLiked, onLik
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!session) {
       toast({
         title: "Authentication required",
@@ -45,11 +55,46 @@ export const PostActions = ({ postId, likesCount, commentsCount, hasLiked, onLik
       });
       return;
     }
-    setIsSaved(!isSaved);
-    toast({
-      title: isSaved ? "Post unsaved" : "Post saved",
-      description: isSaved ? "Removed from your saved posts" : "Added to your saved posts",
-    });
+
+    try {
+      const { error: existingSaveError, data: existingSave } = await supabase
+        .from("post_saves")
+        .select()
+        .eq("post_id", postId)
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (existingSaveError) throw existingSaveError;
+
+      if (existingSave) {
+        const { error: deleteError } = await supabase
+          .from("post_saves")
+          .delete()
+          .eq("post_id", postId)
+          .eq("user_id", session.user.id);
+
+        if (deleteError) throw deleteError;
+        setIsSaved(false);
+      } else {
+        const { error: insertError } = await supabase
+          .from("post_saves")
+          .insert([{ post_id: postId, user_id: session.user.id }]);
+
+        if (insertError) throw insertError;
+        setIsSaved(true);
+      }
+
+      toast({
+        title: isSaved ? "Post unsaved" : "Post saved",
+        description: isSaved ? "Removed from your saved posts" : "Added to your saved posts",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save post. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -63,16 +108,19 @@ export const PostActions = ({ postId, likesCount, commentsCount, hasLiked, onLik
         <ThumbsUp className={`h-4 w-4 ${hasLiked ? "fill-primary text-primary" : ""}`} />
         {likesCount || 0}
       </Button>
+      
       <CommentSection postId={postId} commentsCount={commentsCount} />
+      
       <Button
         variant="ghost"
         size="sm"
         className="flex items-center gap-2"
         onClick={handleShare}
       >
-        <Share className="h-4 w-4" />
-        Share
+        {navigator.share ? <Share className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
+        {navigator.share ? "Share" : "Copy Link"}
       </Button>
+      
       <Button
         variant="ghost"
         size="sm"
