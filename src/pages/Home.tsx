@@ -94,15 +94,15 @@ const Home = () => {
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
-        <div className="container max-w-[1800px] mx-auto px-4 py-4">
-          <div className="grid gap-6 lg:grid-cols-[1fr,320px]">
+        <div className="container max-w-full mx-auto px-2 py-2">
+          <div className="grid gap-4 lg:grid-cols-[1fr,300px]">
             {/* Main Feed */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
+              className="space-y-4"
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-luxury-primary/90 to-luxury-accent bg-clip-text text-transparent">
                   Your Feed
                 </h1>
@@ -127,7 +127,7 @@ const Home = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="w-full max-w-[800px] mx-auto"
+                  className="w-full max-w-[1200px] mx-auto"
                 >
                   <StoryReel />
                 </motion.div>
@@ -136,7 +136,7 @@ const Home = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="w-full max-w-[800px] mx-auto"
+                  className="w-full max-w-[1200px] mx-auto"
                 >
                   <CreatePostArea
                     onOpenCreatePost={() => setIsCreatePostOpen(true)}
@@ -150,7 +150,7 @@ const Home = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="w-full max-w-[800px] mx-auto"
+                  className="w-full max-w-[1200px] mx-auto"
                 >
                   <CreatorsFeed />
                 </motion.div>
@@ -162,7 +162,7 @@ const Home = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="space-y-6 sticky top-4"
+              className="space-y-4 sticky top-4 h-[calc(100vh-2rem)]"
             >
               <div className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-4 shadow-lg backdrop-blur-lg">
                 <SearchBar />
