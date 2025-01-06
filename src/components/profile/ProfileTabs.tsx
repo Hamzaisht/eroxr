@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Image, Users, CircuitBoard, Sparkles, Lock } from "lucide-react";
+import { Heart, Image, Users, CircuitBoard, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
@@ -14,8 +14,8 @@ interface ProfileTabsProps {
 export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  // Fetch creator's subscription price
-  const { data: creatorPrice } = useQuery({
+  // Fetch creator's subscription price with proper error handling
+  const { data: creatorPrice, isError } = useQuery({
     queryKey: ["creator-price", profile?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -23,8 +23,8 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
         .select("*")
         .eq("creator_id", profile?.id)
         .maybeSingle();
-        
-      if (error) throw error;
+      
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
   });
@@ -50,6 +50,9 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
     { id: 3, type: "image", url: "https://picsum.photos/400/300?random=3", isPremium: true },
   ];
 
+  // Default price if none is set
+  const displayPrice = creatorPrice?.monthly_price || 9.99;
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Subscription Price Banner */}
@@ -61,7 +64,7 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
           </div>
           <div className="text-right">
             <div className="text-3xl font-bold text-luxury-primary mb-1">
-              ${creatorPrice?.monthly_price || "9.99"}<span className="text-sm text-luxury-neutral/70">/month</span>
+              ${displayPrice}<span className="text-sm text-luxury-neutral/70">/month</span>
             </div>
             <Button className="bg-luxury-primary hover:bg-luxury-secondary">
               Subscribe Now
