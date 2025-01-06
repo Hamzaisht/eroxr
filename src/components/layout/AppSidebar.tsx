@@ -1,6 +1,7 @@
 import { MessageSquare, Settings, User, Users } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Logo } from "@/components/MainNav/Logo";
 import { SidebarMenuItem } from "@/components/ui/sidebar/SidebarMenuItem";
 
 const menuItems = [
@@ -43,13 +44,7 @@ export function AppSidebar() {
       <div className="flex h-full flex-col gap-8">
         {/* Logo Area */}
         <div className="flex items-center justify-center">
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            className="text-2xl font-bold text-luxury-primary"
-          >
-            Logo
-          </motion.div>
+          <Logo />
         </div>
 
         {/* Navigation Menu */}
