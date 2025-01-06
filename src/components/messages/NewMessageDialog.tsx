@@ -24,6 +24,11 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface MutualFollower {
+  following_id: string;
+  following: Profile;
+}
+
 export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
   const session = useSession();
   const [open, setOpen] = useState(false);
@@ -65,7 +70,7 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
         return [];
       }
 
-      return mutualData?.map(item => item.following) || [];
+      return (mutualData as MutualFollower[])?.map(item => item.following) || [];
     },
     enabled: !!session?.user?.id,
   });
