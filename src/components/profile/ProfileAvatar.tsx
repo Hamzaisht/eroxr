@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
 
 interface ProfileAvatarProps {
   profile: any;
@@ -14,7 +14,7 @@ export const ProfileAvatar = ({ profile, getMediaType }: ProfileAvatarProps) => 
   return (
     <div className="relative group">
       <Avatar 
-        className="h-48 w-48 shadow-2xl rounded-3xl overflow-hidden bg-luxury-dark/40 ring-1 ring-luxury-primary/20"
+        className="h-48 w-48 shadow-luxury rounded-3xl overflow-hidden bg-luxury-darker ring-1 ring-luxury-primary/10 transition-shadow duration-300 group-hover:shadow-luxury-hover"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
@@ -33,13 +33,12 @@ export const ProfileAvatar = ({ profile, getMediaType }: ProfileAvatarProps) => 
             className="group-hover:scale-105 transition-transform duration-500" 
           />
         )}
-        <AvatarFallback className="text-4xl bg-luxury-dark text-luxury-primary">
+        <AvatarFallback className="text-4xl bg-luxury-darker text-luxury-primary">
           {profile?.username?.[0]?.toUpperCase() || "?"}
         </AvatarFallback>
       </Avatar>
       
-      {/* Refined hover effect with dark mode aesthetics */}
-      <div className="absolute inset-0 bg-gradient-to-t from-luxury-dark/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px] flex items-center justify-center">
+      <div className="absolute inset-0 bg-gradient-to-t from-luxury-darker/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px] flex items-center justify-center">
         <motion.div
           initial={{ scale: 0 }}
           whileHover={{ scale: 1.1 }}

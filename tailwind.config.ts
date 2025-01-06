@@ -19,26 +19,21 @@ export default {
     extend: {
       colors: {
         luxury: {
-          // Main colors
-          dark: "#1A1F2C",
+          dark: "#0D1117",
+          darker: "#161B22",
           primary: "#9b87f5",
           secondary: "#7E69AB",
           accent: "#D946EF",
-          
-          // Text and background colors
           neutral: "#E5DEFF",
-          softgray: "#F1F0FB",
-          
-          // Semantic colors
-          success: "#4CAF50",
-          warning: "#FFA726",
-          error: "#EF5350",
-          info: "#42A5F5",
-          
-          // Gradient stops
-          'gradient-from': "#1A1F2C",
-          'gradient-via': "#2A1F3D",
-          'gradient-to': "#1A1F2C",
+          muted: "#A8B3CF",
+          softgray: "#2D3748",
+          success: "rgba(76, 175, 80, 0.9)",
+          warning: "rgba(255, 167, 38, 0.9)",
+          error: "rgba(239, 83, 80, 0.9)",
+          info: "rgba(66, 165, 245, 0.9)",
+          'gradient-from': "#0D1117",
+          'gradient-via': "#1A1F2C",
+          'gradient-to': "#161B22",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -75,10 +70,14 @@ export default {
         },
       },
       backgroundImage: {
-        'luxury-gradient': 'linear-gradient(135deg, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%)',
+        'luxury-gradient': 'linear-gradient(135deg, var(--tw-colors-luxury-dark) 0%, var(--tw-colors-luxury-darker) 100%)',
         'button-gradient': 'linear-gradient(90deg, var(--tw-colors-luxury-primary) 0%, var(--tw-colors-luxury-secondary) 100%)',
         'hover-gradient': 'linear-gradient(90deg, var(--tw-colors-luxury-secondary) 0%, var(--tw-colors-luxury-primary) 100%)',
-        'neon-glow': 'linear-gradient(90deg, rgba(155,135,245,0.5) 0%, rgba(217,70,239,0.5) 100%)',
+        'neon-glow': 'linear-gradient(90deg, rgba(155,135,245,0.15) 0%, rgba(217,70,239,0.15) 100%)',
+      },
+      boxShadow: {
+        'luxury': '0 0 20px rgba(155, 135, 245, 0.15)',
+        'luxury-hover': '0 0 30px rgba(155, 135, 245, 0.25)',
       },
       keyframes: {
         "logo-spin": {
@@ -100,11 +99,15 @@ export default {
         },
         "neon-pulse": {
           "0%, 100%": { 
-            boxShadow: "0 0 5px theme('colors.luxury.primary'), 0 0 20px theme('colors.luxury.primary')",
+            boxShadow: "0 0 5px theme('colors.luxury.primary'), 0 0 20px theme('colors.luxury.primary')"
           },
           "50%": { 
-            boxShadow: "0 0 10px theme('colors.luxury.accent'), 0 0 30px theme('colors.luxury.accent')",
+            boxShadow: "0 0 10px theme('colors.luxury.accent'), 0 0 30px theme('colors.luxury.accent')"
           }
+        },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" }
         }
       },
       animation: {
@@ -113,6 +116,7 @@ export default {
         "float": "float 6s ease-in-out infinite",
         "pulse-ring": "pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "neon-glow": "neon-pulse 2s ease-in-out infinite",
+        "spin-slow": "spin-slow 3s linear infinite"
       },
     },
   },
