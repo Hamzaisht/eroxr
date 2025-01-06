@@ -8,6 +8,8 @@ interface StoryItemProps {
   stories: Array<{
     id: string;
     media_url: string;
+    created_at: string;  // Added this
+    expires_at: string;  // Added this
   }>;
   creator: {
     id: string;
