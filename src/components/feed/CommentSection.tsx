@@ -45,7 +45,7 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
           created_at,
           user_id,
           post_id,
-          creator:profiles(username, avatar_url)
+          creator:profiles!user_id(username, avatar_url)
         `)
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
