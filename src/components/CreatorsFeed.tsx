@@ -30,13 +30,13 @@ export const CreatorsFeed = () => {
   const posts = data?.pages.flat() || [];
 
   return (
-    <div className="space-y-6">
-      <ScrollArea className="h-[calc(100vh-300px)]">
-        <div className="space-y-4 pr-4">
+    <div className="space-y-4">
+      <ScrollArea className="h-[calc(100vh-180px)] px-1">
+        <div className="space-y-6">
           {isLoading ? (
             <LoadingSkeleton />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {posts.map((post) => (
                 <PostCard 
                   key={post.id} 
@@ -50,7 +50,7 @@ export const CreatorsFeed = () => {
               {hasNextPage && (
                 <div ref={ref} className="h-8 flex items-center justify-center">
                   {isFetchingNextPage && (
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900" />
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-luxury-primary" />
                   )}
                 </div>
               )}

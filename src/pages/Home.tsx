@@ -94,21 +94,26 @@ const Home = () => {
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid gap-8 lg:grid-cols-[1fr,380px]">
+        <div className="container max-w-[1800px] mx-auto px-4 py-4">
+          <div className="grid gap-6 lg:grid-cols-[1fr,320px]">
             {/* Main Feed */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-8"
+              className="space-y-6"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-luxury-neutral">Your Feed</h1>
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-luxury-primary/90 to-luxury-accent bg-clip-text text-transparent">
+                  Your Feed
+                </h1>
                 <div className="relative">
-                  <Bell className="h-6 w-6 text-luxury-neutral cursor-pointer hover:text-luxury-primary transition-colors" />
+                  <Bell 
+                    className="h-6 w-6 text-luxury-neutral cursor-pointer hover:text-luxury-primary transition-colors" 
+                    onClick={() => setNewNotifications(0)}
+                  />
                   {newNotifications > 0 && (
                     <Badge 
-                      className="absolute -top-2 -right-2 bg-luxury-primary"
+                      className="absolute -top-2 -right-2 bg-luxury-primary animate-pulse"
                       variant="secondary"
                     >
                       {newNotifications}
@@ -118,16 +123,37 @@ const Home = () => {
               </div>
 
               <AnimatePresence mode="wait">
-                <StoryReel />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="w-full max-w-[800px] mx-auto"
+                >
+                  <StoryReel />
+                </motion.div>
                 
-                <CreatePostArea
-                  onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                  onFileSelect={setSelectedFiles}
-                  onOpenGoLive={() => setIsGoLiveOpen(true)}
-                  isPayingCustomer={isPayingCustomer}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="w-full max-w-[800px] mx-auto"
+                >
+                  <CreatePostArea
+                    onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                    onFileSelect={setSelectedFiles}
+                    onOpenGoLive={() => setIsGoLiveOpen(true)}
+                    isPayingCustomer={isPayingCustomer}
+                  />
+                </motion.div>
 
-                <CreatorsFeed />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="w-full max-w-[800px] mx-auto"
+                >
+                  <CreatorsFeed />
+                </motion.div>
               </AnimatePresence>
             </motion.div>
 
@@ -136,9 +162,9 @@ const Home = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="space-y-8"
+              className="space-y-6 sticky top-4"
             >
-              <div className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-6 shadow-lg backdrop-blur-lg sticky top-24">
+              <div className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-4 shadow-lg backdrop-blur-lg">
                 <SearchBar />
                 <SuggestedCreators />
               </div>
