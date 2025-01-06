@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCirclePlus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface NewMessageDialogProps {
   onSelectUser: (userId: string) => void;
@@ -32,45 +33,56 @@ interface MutualFollower {
 export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
   const session = useSession();
   const [open, setOpen] = useState(false);
+  const { toast } = useToast();
 
-  const { data: mutualFollowers } = useQuery({
+  const { data: mutualFollowers, error } = useQuery({
     queryKey: ["mutual-followers", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return [];
       
-      // First, get the list of users who follow me
-      const { data: followersData, error: followersError } = await supabase
-        .from('followers')
-        .select('follower_id')
-        .eq('following_id', session.user.id);
+      try {
+        // First, get the list of users who follow me
+        const { data: followersData, error: followersError } = await supabase
+          .from('followers')
+          .select('follower_id')
+          .eq('following_id', session.user.id);
 
-      if (followersError) {
-        console.error('Error fetching followers:', followersError);
+        if (followersError) {
+          console.error('Error fetching followers:', followersError);
+          throw followersError;
+        }
+
+        if (!followersData?.length) return [];
+
+        // Then get the profiles of users I follow who also follow me back
+        const { data: mutualData, error: mutualError } = await supabase
+          .from('followers')
+          .select(`
+            following_id,
+            following:profiles!followers_following_id_fkey (
+              id,
+              username,
+              avatar_url
+            )
+          `)
+          .eq('follower_id', session.user.id)
+          .in('following_id', followersData.map(f => f.follower_id));
+
+        if (mutualError) {
+          console.error('Error fetching mutual followers:', mutualError);
+          throw mutualError;
+        }
+
+        return mutualData as MutualFollower[];
+      } catch (error) {
+        console.error('Error in mutual followers query:', error);
+        toast({
+          title: "Error loading mutual followers",
+          description: "Please try again later",
+          variant: "destructive",
+        });
         return [];
       }
-
-      if (!followersData?.length) return [];
-
-      // Then get the profiles of users I follow who also follow me back
-      const { data: mutualData, error: mutualError } = await supabase
-        .from('followers')
-        .select(`
-          following_id,
-          following:profiles!followers_following_id_fkey (
-            id,
-            username,
-            avatar_url
-          )
-        `)
-        .eq('follower_id', session.user.id)
-        .in('following_id', followersData.map(f => f.follower_id));
-
-      if (mutualError) {
-        console.error('Error fetching mutual followers:', mutualError);
-        return [];
-      }
-
-      return mutualData as MutualFollower[];
     },
     enabled: !!session?.user?.id,
   });
