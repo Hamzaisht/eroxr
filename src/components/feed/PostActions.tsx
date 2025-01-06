@@ -47,17 +47,30 @@ export const PostActions = ({ postId, likesCount, commentsCount, hasLiked, onLik
           url: window.location.href,
         });
       } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "Link copied",
-          description: "Post link has been copied to your clipboard",
-        });
+        // Fallback to clipboard API with error handling
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          toast({
+            title: "Link copied",
+            description: "Post link has been copied to your clipboard",
+          });
+        } catch (clipboardError) {
+          console.error('Clipboard error:', clipboardError);
+          // If clipboard API fails, show a manual copy dialog
+          toast({
+            title: "Manual copy required",
+            description: "Please manually copy this link: " + window.location.href,
+            duration: 5000,
+          });
+        }
       }
     } catch (error) {
+      console.error('Share error:', error);
+      // Only show error toast if it's not an AbortError (user canceling share dialog)
       if (error instanceof Error && error.name !== "AbortError") {
         toast({
-          title: "Error sharing post",
-          description: "Could not share the post. Try copying the link instead.",
+          title: "Could not share post",
+          description: "Please try copying the link instead",
           variant: "destructive",
         });
       }
