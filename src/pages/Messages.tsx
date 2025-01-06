@@ -3,6 +3,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { MessageList } from "@/components/messages/MessageList";
 import { ChatWindow } from "@/components/messages/ChatWindow";
 import { ChatDetails } from "@/components/messages/ChatDetails";
+import { NewMessageDialog } from "@/components/messages/NewMessageDialog";
 import { cn } from "@/lib/utils";
 
 const Messages = () => {
@@ -15,7 +16,8 @@ const Messages = () => {
         <div className="grid h-full grid-cols-[320px,1fr,350px]">
           {/* Left Sidebar - Chat List */}
           <div className="border-r border-luxury-neutral/10 bg-luxury-dark/50">
-            <div className="p-4 border-b border-luxury-neutral/10">
+            <div className="p-4 space-y-4 border-b border-luxury-neutral/10">
+              <NewMessageDialog onSelectUser={setSelectedUserId} />
               <div className="relative">
                 <input
                   type="text"
