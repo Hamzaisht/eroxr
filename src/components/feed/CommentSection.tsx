@@ -19,7 +19,7 @@ interface Comment {
   created_at: string;
   user_id: string;
   post_id: string;
-  creator: Creator;
+  profiles: Creator;
 }
 
 interface CommentSectionProps {
@@ -45,17 +45,14 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
           created_at,
           user_id,
           post_id,
-          creator:profiles(username, avatar_url)
+          profiles!comments_user_id_fkey (username, avatar_url)
         `)
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
       
-      return (data || []).map(comment => ({
-        ...comment,
-        creator: comment.creator || { username: null, avatar_url: null }
-      })) as Comment[];
+      return (data || []) as Comment[];
     },
     enabled: isExpanded,
   });
@@ -143,17 +140,17 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
                 <div key={comment.id} className="flex gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage
-                      src={comment.creator.avatar_url || ""}
-                      alt={comment.creator.username || ""}
+                      src={comment.profiles.avatar_url || ""}
+                      alt={comment.profiles.username || ""}
                     />
                     <AvatarFallback>
-                      {comment.creator.username?.[0]?.toUpperCase() || "U"}
+                      {comment.profiles.username?.[0]?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
-                        {comment.creator.username || "Anonymous"}
+                        {comment.profiles.username || "Anonymous"}
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {new Date(comment.created_at).toLocaleDateString()}
