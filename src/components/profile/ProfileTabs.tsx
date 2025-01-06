@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Image, Users, CircuitBoard, Sparkles, Lock } from "lucide-react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -18,16 +18,18 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
   const { data: creatorPrice } = useQuery({
     queryKey: ["creator-price", profile?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("creator_content_prices")
         .select("*")
         .eq("creator_id", profile?.id)
-        .single();
+        .maybeSingle();
+        
+      if (error) throw error;
       return data;
     },
   });
 
-  const container: Variants = {
+  const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -37,7 +39,7 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
     }
   };
 
-  const item: Variants = {
+  const item = {
     hidden: { y: 20, opacity: 0 },
     show: { y: 0, opacity: 1 }
   };
@@ -89,26 +91,30 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
         </TabsList>
 
         <AnimatePresence mode="wait">
-          <motion.div variants={container} initial="hidden" animate="show">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
             <TabsContent value="media" className="mt-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mediaItems.map((item) => (
+                {mediaItems.map((mediaItem) => (
                   <motion.div
-                    key={item.id}
+                    key={mediaItem.id}
                     variants={item}
                     whileHover={{ scale: 1.02, y: -5 }}
                     className="relative group cursor-pointer"
-                    onClick={() => !item.isPremium && setSelectedImage(item.url)}
+                    onClick={() => !mediaItem.isPremium && setSelectedImage(mediaItem.url)}
                   >
                     <div className="relative rounded-2xl overflow-hidden aspect-video">
                       <img
-                        src={item.url}
+                        src={mediaItem.url}
                         alt="Media content"
                         className={`w-full h-full object-cover transition-all duration-300 ${
-                          item.isPremium ? "blur-lg" : ""
+                          mediaItem.isPremium ? "blur-lg" : ""
                         }`}
                       />
-                      {item.isPremium && (
+                      {mediaItem.isPremium && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
                           <Lock className="w-8 h-8 text-luxury-primary mb-2" />
                           <p className="text-white font-medium">Premium Content</p>
@@ -126,7 +132,7 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
               </div>
             </TabsContent>
 
-            <TabsContent value="created" className="mt-8">
+            <TabsContent value="showcase" className="mt-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -138,7 +144,7 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
               </motion.div>
             </TabsContent>
 
-            <TabsContent value="collected" className="mt-8">
+            <TabsContent value="subscribers" className="mt-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -146,7 +152,7 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
                 className="text-center text-luxury-neutral/70 p-12 rounded-2xl border border-luxury-primary/20 bg-luxury-dark/30 backdrop-blur-sm"
               >
                 <Users className="w-12 h-12 mx-auto mb-4 text-luxury-primary animate-pulse" />
-                <p className="text-lg">No collected items yet</p>
+                <p className="text-lg">No subscribers yet</p>
               </motion.div>
             </TabsContent>
 
