@@ -10,6 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Instagram, Facebook, Twitter, Share2, Users, Image, Heart } from "lucide-react";
 
 const Profile = () => {
   const { id } = useParams();
@@ -25,7 +27,6 @@ const Profile = () => {
         throw new Error("Invalid profile ID format");
       }
 
-      // Modified query to only fetch profile data without the invalid join
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -72,63 +73,148 @@ const Profile = () => {
     );
   }
 
-  // Otherwise, show the public profile view
+  // Public profile view
   return (
     <div className="min-h-screen bg-background">
       <MainNav />
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          {isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-12 w-[250px]" />
+      <main className="w-full">
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-64 w-full" />
+            <div className="container mx-auto px-4">
               <Skeleton className="h-32 w-full" />
             </div>
-          ) : profile ? (
-            <Card className="p-6">
-              <div className="flex items-center gap-4 mb-6">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={profile.avatar_url || undefined} />
-                  <AvatarFallback>
-                    {profile.username?.[0]?.toUpperCase() || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h1 className="text-3xl font-bold">{profile.username}</h1>
-                  {profile.location && (
-                    <p className="text-muted-foreground">{profile.location}</p>
-                  )}
-                </div>
+          </div>
+        ) : profile ? (
+          <>
+            {/* Banner and Profile Section */}
+            <div className="relative">
+              {/* Banner Image */}
+              <div className="h-64 w-full overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81"
+                  alt="Profile Banner"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              {profile.bio && (
-                <div className="mb-6">
-                  <h2 className="text-lg font-semibold mb-2">About</h2>
-                  <p className="text-muted-foreground">{profile.bio}</p>
-                </div>
-              )}
-              {profile.interests && profile.interests.length > 0 && (
-                <div>
-                  <h2 className="text-lg font-semibold mb-2">Interests</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {profile.interests.map((interest, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
-                      >
-                        {interest}
-                      </span>
-                    ))}
+              
+              {/* Profile Info Overlay */}
+              <div className="container mx-auto px-4">
+                <div className="relative -mt-24 pb-4">
+                  {/* Profile Picture */}
+                  <div className="absolute left-4 -top-16">
+                    <Avatar className="h-32 w-32 border-4 border-background">
+                      <AvatarImage src={profile.avatar_url || undefined} />
+                      <AvatarFallback className="text-2xl">
+                        {profile.username?.[0]?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  
+                  {/* Profile Header */}
+                  <div className="ml-40 flex justify-between items-start">
+                    <div>
+                      <h1 className="text-3xl font-bold">{profile.username}</h1>
+                      <p className="text-muted-foreground">{profile.bio}</p>
+                      
+                      {/* Stats */}
+                      <div className="flex gap-6 mt-2">
+                        <div className="text-center">
+                          <div className="font-semibold">4,355</div>
+                          <div className="text-sm text-muted-foreground">Followers</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold">2,986</div>
+                          <div className="text-sm text-muted-foreground">Following</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold">55</div>
+                          <div className="text-sm text-muted-foreground">Images</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <Button className="bg-luxury-primary hover:bg-luxury-secondary text-white">
+                        Follow
+                      </Button>
+                      <Button variant="outline" size="icon">
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Social Links */}
+                  <div className="ml-40 flex gap-4 mt-4">
+                    <a href="#" className="text-muted-foreground hover:text-foreground">
+                      <Instagram className="h-5 w-5" />
+                    </a>
+                    <a href="#" className="text-muted-foreground hover:text-foreground">
+                      <Facebook className="h-5 w-5" />
+                    </a>
+                    <a href="#" className="text-muted-foreground hover:text-foreground">
+                      <Twitter className="h-5 w-5" />
+                    </a>
                   </div>
                 </div>
-              )}
-            </Card>
-          ) : (
+              </div>
+            </div>
+
+            {/* Content Tabs */}
+            <div className="container mx-auto px-4 py-8">
+              <Tabs defaultValue="showcase" className="w-full">
+                <TabsList className="w-full justify-start">
+                  <TabsTrigger value="showcase">Showcase</TabsTrigger>
+                  <TabsTrigger value="created">
+                    <Image className="h-4 w-4 mr-2" />
+                    Created
+                  </TabsTrigger>
+                  <TabsTrigger value="collected">
+                    <Users className="h-4 w-4 mr-2" />
+                    Collected
+                  </TabsTrigger>
+                  <TabsTrigger value="likes">
+                    <Heart className="h-4 w-4 mr-2" />
+                    Likes
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="showcase" className="mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Add showcase content here */}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="created" className="mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Add created content here */}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="collected" className="mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Add collected content here */}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="likes" className="mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Add liked content here */}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </>
+        ) : (
+          <div className="container mx-auto px-4">
             <div className="text-center py-12">
               <h1 className="text-2xl font-bold text-muted-foreground">
                 Profile not found
               </h1>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
     </div>
   );
