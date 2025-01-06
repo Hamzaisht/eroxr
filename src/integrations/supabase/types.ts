@@ -385,6 +385,38 @@ export type Database = {
           },
         ]
       }
+      post_purchases: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          post_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_purchases_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           comments_count: number | null
@@ -392,8 +424,10 @@ export type Database = {
           created_at: string
           creator_id: string
           id: string
+          is_ppv: boolean | null
           likes_count: number | null
           media_url: string[] | null
+          ppv_amount: number | null
           tags: string[] | null
           updated_at: string
           visibility: string | null
@@ -404,8 +438,10 @@ export type Database = {
           created_at?: string
           creator_id: string
           id?: string
+          is_ppv?: boolean | null
           likes_count?: number | null
           media_url?: string[] | null
+          ppv_amount?: number | null
           tags?: string[] | null
           updated_at?: string
           visibility?: string | null
@@ -416,8 +452,10 @@ export type Database = {
           created_at?: string
           creator_id?: string
           id?: string
+          is_ppv?: boolean | null
           likes_count?: number | null
           media_url?: string[] | null
+          ppv_amount?: number | null
           tags?: string[] | null
           updated_at?: string
           visibility?: string | null

@@ -15,7 +15,8 @@ export const usePostSubmission = (onSuccess: () => void) => {
     selectedFiles: FileList | null,
     isPayingCustomer: boolean | null,
     tags?: string[],
-    visibility: "public" | "subscribers_only" = "public"
+    visibility: "public" | "subscribers_only" = "public",
+    ppvAmount: number | null = null
   ) => {
     if (!session) {
       toast({
@@ -39,6 +40,15 @@ export const usePostSubmission = (onSuccess: () => void) => {
       toast({
         title: "Premium feature",
         description: "Only paying customers can upload media",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (ppvAmount !== null && ppvAmount <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "PPV amount must be greater than 0",
         variant: "destructive",
       });
       return;
@@ -80,7 +90,9 @@ export const usePostSubmission = (onSuccess: () => void) => {
             content,
             media_url: mediaUrls.length > 0 ? mediaUrls : null,
             tags: tags?.length ? tags : null,
-            visibility
+            visibility,
+            is_ppv: ppvAmount !== null,
+            ppv_amount: ppvAmount,
           },
         ]);
 

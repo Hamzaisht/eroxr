@@ -8,10 +8,12 @@ import { usePostSubmission } from "./post/usePostSubmission";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, Lock } from "lucide-react";
 import { TagInput } from "./post/TagInput";
 import { VisibilitySelect } from "./post/VisibilitySelect";
 import { ContentPreview } from "./post/ContentPreview";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -30,6 +32,8 @@ export const CreatePostDialog = ({
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<"public" | "subscribers_only">("public");
+  const [isPPV, setIsPPV] = useState(false);
+  const [ppvAmount, setPpvAmount] = useState<number | null>(null);
   const session = useSession();
   const { toast } = useToast();
 
@@ -38,6 +42,8 @@ export const CreatePostDialog = ({
     onFileSelect(null);
     setTags([]);
     setVisibility("public");
+    setIsPPV(false);
+    setPpvAmount(null);
     onOpenChange(false);
   });
 
@@ -94,6 +100,41 @@ export const CreatePostDialog = ({
             onVisibilityChange={setVisibility}
           />
 
+          {isPayingCustomer && (
+            <div className="space-y-2 p-4 rounded-lg border border-luxury-neutral/10 bg-luxury-dark/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Lock className="w-4 h-4 text-luxury-primary" />
+                  <Label htmlFor="ppv-toggle">Pay-Per-View Content</Label>
+                </div>
+                <Switch
+                  id="ppv-toggle"
+                  checked={isPPV}
+                  onCheckedChange={setIsPPV}
+                />
+              </div>
+              
+              {isPPV && (
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="ppv-amount">Amount ($)</Label>
+                  <Input
+                    id="ppv-amount"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={ppvAmount || ''}
+                    onChange={(e) => setPpvAmount(parseFloat(e.target.value))}
+                    placeholder="Enter amount"
+                    className="bg-luxury-dark/30 border-luxury-neutral/10"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Content will be locked until payment is made
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <ContentPreview content={content} />
           
           <div className="space-y-2">
@@ -128,7 +169,14 @@ export const CreatePostDialog = ({
           <PostSubmitButtons
             isLoading={isLoading}
             onCancel={() => onOpenChange(false)}
-            onSubmit={() => handleSubmit(content, selectedFiles, isPayingCustomer, tags, visibility)}
+            onSubmit={() => handleSubmit(
+              content, 
+              selectedFiles, 
+              isPayingCustomer, 
+              tags, 
+              visibility,
+              isPPV ? ppvAmount : null
+            )}
           />
         </div>
       </DialogContent>
