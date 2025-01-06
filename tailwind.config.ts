@@ -19,12 +19,26 @@ export default {
     extend: {
       colors: {
         luxury: {
+          // Main colors
           dark: "#1A1F2C",
           primary: "#9b87f5",
           secondary: "#7E69AB",
           accent: "#D946EF",
+          
+          // Text and background colors
           neutral: "#E5DEFF",
           softgray: "#F1F0FB",
+          
+          // Semantic colors
+          success: "#4CAF50",
+          warning: "#FFA726",
+          error: "#EF5350",
+          info: "#42A5F5",
+          
+          // Gradient stops
+          'gradient-from': "#1A1F2C",
+          'gradient-via': "#2A1F3D",
+          'gradient-to': "#1A1F2C",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -61,9 +75,9 @@ export default {
         },
       },
       backgroundImage: {
-        'luxury-gradient': 'linear-gradient(135deg, #1A1F2C 0%, #2A1F3D 50%, #1A1F2C 100%)',
-        'button-gradient': 'linear-gradient(90deg, #9b87f5 0%, #7E69AB 100%)',
-        'hover-gradient': 'linear-gradient(90deg, #7E69AB 0%, #9b87f5 100%)',
+        'luxury-gradient': 'linear-gradient(135deg, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%)',
+        'button-gradient': 'linear-gradient(90deg, var(--tw-colors-luxury-primary) 0%, var(--tw-colors-luxury-secondary) 100%)',
+        'hover-gradient': 'linear-gradient(90deg, var(--tw-colors-luxury-secondary) 0%, var(--tw-colors-luxury-primary) 100%)',
         'neon-glow': 'linear-gradient(90deg, rgba(155,135,245,0.5) 0%, rgba(217,70,239,0.5) 100%)',
       },
       keyframes: {
