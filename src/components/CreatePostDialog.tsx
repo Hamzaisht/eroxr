@@ -3,17 +3,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { MediaUploadButton } from "./post/MediaUploadButton";
 import { PostSubmitButtons } from "./post/PostSubmitButtons";
 import { usePostSubmission } from "./post/usePostSubmission";
-import { Card } from "./ui/card";
-import { Input } from "./ui/input";
-import { Badge } from "./ui/badge";
-import { X, ImagePlus } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { ImagePlus } from "lucide-react";
+import { TagInput } from "./post/TagInput";
+import { VisibilitySelect } from "./post/VisibilitySelect";
+import { ContentPreview } from "./post/ContentPreview";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -31,7 +29,6 @@ export const CreatePostDialog = ({
   const [content, setContent] = useState("");
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [tags, setTags] = useState<string[]>([]);
-  const [currentTag, setCurrentTag] = useState("");
   const [visibility, setVisibility] = useState<"public" | "subscribers_only">("public");
   const session = useSession();
   const { toast } = useToast();
@@ -64,20 +61,6 @@ export const CreatePostDialog = ({
     }
   }, [open, session?.user?.id]);
 
-  const handleTagSubmit = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && currentTag.trim()) {
-      e.preventDefault();
-      if (!tags.includes(currentTag.trim())) {
-        setTags([...tags, currentTag.trim()]);
-      }
-      setCurrentTag("");
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
-  };
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isPayingCustomer) {
       toast({
@@ -104,55 +87,14 @@ export const CreatePostDialog = ({
             className="min-h-[100px] bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40"
           />
           
-          <div className="space-y-2">
-            <Input
-              placeholder="Add tags (press Enter)"
-              value={currentTag}
-              onChange={(e) => setCurrentTag(e.target.value)}
-              onKeyDown={handleTagSubmit}
-              className="bg-luxury-dark/30 border-luxury-neutral/10"
-            />
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                    {tag}
-                    <button
-                      onClick={() => removeTag(tag)}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
+          <TagInput tags={tags} onTagsChange={setTags} />
+          
+          <VisibilitySelect 
+            visibility={visibility} 
+            onVisibilityChange={setVisibility}
+          />
 
-          <div className="space-y-2">
-            <Label>Post Visibility</Label>
-            <RadioGroup
-              value={visibility}
-              onValueChange={(value: "public" | "subscribers_only") => setVisibility(value)}
-              className="flex gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="public" id="public" />
-                <Label htmlFor="public">Public</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="subscribers_only" id="subscribers_only" />
-                <Label htmlFor="subscribers_only">Subscribers Only</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {content && (
-            <Card className="p-4 bg-luxury-dark/30 border-luxury-neutral/10">
-              <h3 className="text-sm font-medium mb-2">Preview</h3>
-              <p className="text-sm whitespace-pre-wrap">{content}</p>
-            </Card>
-          )}
+          <ContentPreview content={content} />
           
           <div className="space-y-2">
             <Label>Media</Label>
