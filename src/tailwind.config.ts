@@ -86,13 +86,16 @@ export default {
         },
         "neon-pulse": {
           "0%, 100%": { 
-            boxShadow: "0 0 5px theme('colors.luxury.primary'), 0 0 20px theme('colors.luxury.primary')",
+            boxShadow: "0 0 5px theme('colors.luxury.primary'), 0 0 20px theme('colors.luxury.primary')"
           },
           "50%": { 
-            boxShadow: "0 0 10px theme('colors.luxury.accent'), 0 0 30px theme('colors.luxury.accent')",
+            boxShadow: "0 0 10px theme('colors.luxury.accent'), 0 0 30px theme('colors.luxury.accent')"
           }
         },
-        "spin-slow": "spin 3s linear infinite",
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" }
+        }
       },
       animation: {
         "logo-spin": "logo-spin 1.5s ease-in-out",
@@ -100,6 +103,7 @@ export default {
         "float": "float 6s ease-in-out infinite",
         "pulse-ring": "pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "neon-glow": "neon-pulse 2s ease-in-out infinite",
+        "spin-slow": "spin-slow 3s linear infinite"
       },
     },
   },
