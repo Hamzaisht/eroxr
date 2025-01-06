@@ -36,11 +36,15 @@ const Home = () => {
   }, [session?.user?.id]);
 
   return (
-    <div className="min-h-screen bg-luxury-dark">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid gap-8 lg:grid-cols-[1fr,320px]">
+    <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
+      <div className="container mx-auto px-4 py-20">
+        <div className="grid gap-8 lg:grid-cols-[1fr,380px]">
           {/* Main Feed */}
-          <div className="space-y-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
             <StoryReel />
             
             <CreatePostArea
@@ -51,19 +55,20 @@ const Home = () => {
             />
 
             <CreatorsFeed />
-          </div>
+          </motion.div>
 
           {/* Sidebar */}
-          <div className="space-y-8">
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-4 shadow-lg backdrop-blur-lg sticky top-24"
-            >
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-8"
+          >
+            <div className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-6 shadow-lg backdrop-blur-lg sticky top-24">
               <SearchBar />
               <SuggestedCreators />
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </div>
       </div>
 

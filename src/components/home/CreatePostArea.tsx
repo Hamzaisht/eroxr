@@ -23,6 +23,18 @@ export const CreatePostArea = ({
   const session = useSession();
   const { toast } = useToast();
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isPayingCustomer) {
+      toast({
+        title: "Premium feature",
+        description: "Only paying customers can upload media",
+        variant: "destructive",
+      });
+      return;
+    }
+    onFileSelect(e.target.files);
+  };
+
   const handleGoLive = () => {
     if (!session) {
       toast({
@@ -51,11 +63,11 @@ export const CreatePostArea = ({
     <motion.div 
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-4 shadow-lg backdrop-blur-lg"
+      className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-6 shadow-lg backdrop-blur-lg"
     >
       <div className="flex items-center gap-4">
         <Link to={`/profile/${session.user.id}`}>
-          <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/20">
+          <Avatar className="h-12 w-12 ring-2 ring-luxury-primary/20 transition-all hover:ring-luxury-primary/40">
             <AvatarImage src={session.user.user_metadata?.avatar_url} />
             <AvatarFallback className="bg-luxury-primary/20">
               {session.user.email?.[0]?.toUpperCase()}
@@ -64,14 +76,14 @@ export const CreatePostArea = ({
         </Link>
         <Input
           placeholder="Share something with your followers..."
-          className="flex-1 bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40"
+          className="flex-1 bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40 hover:bg-luxury-dark/40 focus:bg-luxury-dark/50 transition-all"
           onClick={onOpenCreatePost}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/10"
+            className="text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/10 transition-all"
             onClick={() => document.getElementById('file-upload')?.click()}
           >
             <ImagePlus className="h-5 w-5" />
@@ -79,16 +91,15 @@ export const CreatePostArea = ({
               type="file"
               id="file-upload"
               multiple
-              accept="image/*"
+              accept="image/*,video/*"
               className="hidden"
-              onChange={(e) => onFileSelect(e.target.files)}
-              disabled={!isPayingCustomer}
+              onChange={handleFileSelect}
             />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/10"
+            className="text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/10 transition-all"
             onClick={onOpenCreatePost}
           >
             <Video className="h-5 w-5" />
@@ -96,7 +107,7 @@ export const CreatePostArea = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/10"
+            className="text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/10 transition-all"
             onClick={handleGoLive}
           >
             <Radio className="h-5 w-5" />

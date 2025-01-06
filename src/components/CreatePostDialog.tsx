@@ -12,6 +12,7 @@ import { Badge } from "./ui/badge";
 import { X } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -32,6 +33,7 @@ export const CreatePostDialog = ({
   const [currentTag, setCurrentTag] = useState("");
   const [visibility, setVisibility] = useState<"public" | "subscribers_only">("public");
   const session = useSession();
+  const { toast } = useToast();
 
   const { handleSubmit, isLoading } = usePostSubmission(() => {
     setContent("");
@@ -75,6 +77,18 @@ export const CreatePostDialog = ({
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isPayingCustomer) {
+      toast({
+        title: "Premium feature",
+        description: "Only paying customers can upload media",
+        variant: "destructive",
+      });
+      return;
+    }
+    onFileSelect(e.target.files);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -86,7 +100,7 @@ export const CreatePostDialog = ({
             placeholder="What's on your mind?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[100px]"
+            className="min-h-[100px] bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40"
           />
           
           <div className="space-y-2">
@@ -95,6 +109,7 @@ export const CreatePostDialog = ({
               value={currentTag}
               onChange={(e) => setCurrentTag(e.target.value)}
               onKeyDown={handleTagSubmit}
+              className="bg-luxury-dark/30 border-luxury-neutral/10"
             />
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -132,17 +147,40 @@ export const CreatePostDialog = ({
           </div>
 
           {content && (
-            <Card className="p-4">
+            <Card className="p-4 bg-luxury-dark/30 border-luxury-neutral/10">
               <h3 className="text-sm font-medium mb-2">Preview</h3>
               <p className="text-sm whitespace-pre-wrap">{content}</p>
             </Card>
           )}
           
-          <MediaUploadButton
-            isPayingCustomer={isPayingCustomer}
-            onFileSelect={onFileSelect}
-            selectedFiles={selectedFiles}
-          />
+          <div className="space-y-2">
+            <Label>Media</Label>
+            <div className="flex items-center gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('post-file-upload')?.click()}
+                className="w-full"
+              >
+                <ImagePlus className="h-4 w-4 mr-2" />
+                {selectedFiles?.length ? `${selectedFiles.length} file(s) selected` : 'Add Media'}
+              </Button>
+              <input
+                type="file"
+                id="post-file-upload"
+                multiple
+                accept="image/*,video/*"
+                className="hidden"
+                onChange={handleFileSelect}
+                disabled={!isPayingCustomer}
+              />
+            </div>
+            {!isPayingCustomer && (
+              <p className="text-sm text-muted-foreground">
+                Upgrade to upload media files
+              </p>
+            )}
+          </div>
           
           <PostSubmitButtons
             isLoading={isLoading}
