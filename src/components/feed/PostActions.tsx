@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, Share, Bookmark, Link as LinkIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { CommentSection } from "./CommentSection";
@@ -19,6 +19,25 @@ export const PostActions = ({ postId, likesCount, commentsCount, hasLiked, onLik
   const { toast } = useToast();
   const session = useSession();
 
+  useEffect(() => {
+    const checkSavedStatus = async () => {
+      if (!session?.user?.id) return;
+      
+      const { data, error } = await supabase
+        .from('post_saves')
+        .select('*')
+        .eq('post_id', postId)
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (!error && data) {
+        setIsSaved(true);
+      }
+    };
+
+    checkSavedStatus();
+  }, [postId, session?.user?.id]);
+
   const handleShare = async () => {
     try {
       if (navigator.share) {
@@ -28,7 +47,6 @@ export const PostActions = ({ postId, likesCount, commentsCount, hasLiked, onLik
           url: window.location.href,
         });
       } else {
-        // Fallback to copying link
         await navigator.clipboard.writeText(window.location.href);
         toast({
           title: "Link copied",
@@ -57,37 +75,33 @@ export const PostActions = ({ postId, likesCount, commentsCount, hasLiked, onLik
     }
 
     try {
-      const { error: existingSaveError, data: existingSave } = await supabase
-        .from("post_saves")
-        .select()
-        .eq("post_id", postId)
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      if (existingSaveError) throw existingSaveError;
-
-      if (existingSave) {
+      if (isSaved) {
         const { error: deleteError } = await supabase
-          .from("post_saves")
+          .from('post_saves')
           .delete()
-          .eq("post_id", postId)
-          .eq("user_id", session.user.id);
+          .eq('post_id', postId)
+          .eq('user_id', session.user.id);
 
         if (deleteError) throw deleteError;
         setIsSaved(false);
+        
+        toast({
+          title: "Post unsaved",
+          description: "Removed from your saved posts",
+        });
       } else {
         const { error: insertError } = await supabase
-          .from("post_saves")
+          .from('post_saves')
           .insert([{ post_id: postId, user_id: session.user.id }]);
 
         if (insertError) throw insertError;
         setIsSaved(true);
+        
+        toast({
+          title: "Post saved",
+          description: "Added to your saved posts",
+        });
       }
-
-      toast({
-        title: isSaved ? "Post unsaved" : "Post saved",
-        description: isSaved ? "Removed from your saved posts" : "Added to your saved posts",
-      });
     } catch (error) {
       toast({
         title: "Error",
