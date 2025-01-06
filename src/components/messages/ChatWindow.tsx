@@ -8,9 +8,10 @@ import { useVideoRecording } from "./useVideoRecording";
 
 interface ChatWindowProps {
   recipientId: string;
+  onToggleDetails?: () => void;  // Added this prop
 }
 
-export const ChatWindow = ({ recipientId }: ChatWindowProps) => {
+export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) => {
   const session = useSession();
   const queryClient = useQueryClient();
 
