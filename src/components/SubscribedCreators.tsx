@@ -147,6 +147,7 @@ export const SubscribedCreators = () => {
           key={creator.id}
           name={creator.username || "Anonymous Creator"}
           image={creator.avatar_url || "https://via.placeholder.com/400"}
+          banner="https://images.unsplash.com/photo-1605810230434-7631ac76ec81"
           description="Content creator on our platform"
           subscribers={creator.subscriber_count}
           creatorId={creator.id}

@@ -61,8 +61,9 @@ const Search = () => {
               key={profile.id}
               name={profile.username || "Anonymous"}
               image={profile.avatar_url || "/placeholder.svg"}
+              banner="https://images.unsplash.com/photo-1605810230434-7631ac76ec81"
               description={profile.bio || "No bio available"}
-              subscribers={0} // We'll need to get this from the profiles_with_stats view
+              subscribers={0}
               creatorId={profile.id}
             />
           ))}
