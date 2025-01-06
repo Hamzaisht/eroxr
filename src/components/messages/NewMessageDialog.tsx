@@ -50,7 +50,8 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
       const { data: mutualData, error: mutualError } = await supabase
         .from('followers')
         .select(`
-          profiles!followers_follower_id_fkey (
+          following_id,
+          following:profiles(
             id,
             username,
             avatar_url
@@ -64,7 +65,7 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
         return [];
       }
 
-      return mutualData?.map(item => item.profiles) || [];
+      return mutualData?.map(item => item.following) || [];
     },
     enabled: !!session?.user?.id,
   });
@@ -88,7 +89,7 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
         </DialogHeader>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-2">
-            {mutualFollowers?.map((user) => (
+            {mutualFollowers?.map((user: Profile) => (
               <button
                 key={user.id}
                 onClick={() => handleSelectUser(user.id)}

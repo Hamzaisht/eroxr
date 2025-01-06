@@ -7,15 +7,17 @@ interface MessagePreviewProps {
   message: any;
   currentUserId: string | undefined;
   isSelected?: boolean;
+  onClick?: () => void;
 }
 
-export const MessagePreview = ({ message, currentUserId, isSelected }: MessagePreviewProps) => {
+export const MessagePreview = ({ message, currentUserId, isSelected, onClick }: MessagePreviewProps) => {
   const otherUser = message.sender_id === currentUserId ? message.recipient : message.sender;
   
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      onClick={onClick}
       className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
         isSelected 
           ? "bg-luxury-primary/10 hover:bg-luxury-primary/15" 
