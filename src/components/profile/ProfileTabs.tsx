@@ -1,11 +1,13 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Image, Users, CircuitBoard, Lock } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Image, Users, CircuitBoard } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SubscriptionBanner } from "./SubscriptionBanner";
+import { MediaGrid } from "./MediaGrid";
+import { EmptyState } from "./EmptyState";
 
 interface ProfileTabsProps {
   profile: any;
@@ -14,7 +16,6 @@ interface ProfileTabsProps {
 export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  // Fetch creator's subscription price with proper error handling
   const { data: creatorPrice, isError } = useQuery({
     queryKey: ["creator-price", profile?.id],
     queryFn: async () => {
@@ -29,49 +30,20 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
     },
   });
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1 }
-  };
-
   const mediaItems = [
     { id: 1, type: "image", url: "https://picsum.photos/400/300?random=1", isPremium: true },
     { id: 2, type: "image", url: "https://picsum.photos/400/300?random=2", isPremium: false },
     { id: 3, type: "image", url: "https://picsum.photos/400/300?random=3", isPremium: true },
   ];
 
-  // Default price if none is set
   const displayPrice = creatorPrice?.monthly_price || 9.99;
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Subscription Price Banner */}
-      <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-luxury-dark/80 to-luxury-primary/20 backdrop-blur-lg border border-luxury-primary/20">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-2xl font-bold text-white mb-2">Subscribe to {profile?.username}</h3>
-            <p className="text-luxury-neutral/70">Get exclusive access to premium content</p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-luxury-primary mb-1">
-              ${displayPrice}<span className="text-sm text-luxury-neutral/70">/month</span>
-            </div>
-            <Button className="bg-luxury-primary hover:bg-luxury-secondary">
-              Subscribe Now
-            </Button>
-          </div>
-        </div>
-      </div>
+      <SubscriptionBanner 
+        username={profile?.username} 
+        price={displayPrice}
+      />
 
       <Tabs defaultValue="showcase" className="w-full">
         <TabsList className="w-full justify-start bg-luxury-dark/50 backdrop-blur-lg rounded-2xl p-2">
@@ -94,87 +66,33 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
         </TabsList>
 
         <AnimatePresence mode="wait">
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            <TabsContent value="media" className="mt-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mediaItems.map((mediaItem) => (
-                  <motion.div
-                    key={mediaItem.id}
-                    variants={item}
-                    whileHover={{ scale: 1.02, y: -5 }}
-                    className="relative group cursor-pointer"
-                    onClick={() => !mediaItem.isPremium && setSelectedImage(mediaItem.url)}
-                  >
-                    <div className="relative rounded-2xl overflow-hidden aspect-video">
-                      <img
-                        src={mediaItem.url}
-                        alt="Media content"
-                        className={`w-full h-full object-cover transition-all duration-300 ${
-                          mediaItem.isPremium ? "blur-lg" : ""
-                        }`}
-                      />
-                      {mediaItem.isPremium && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-                          <Lock className="w-8 h-8 text-luxury-primary mb-2" />
-                          <p className="text-white font-medium">Premium Content</p>
-                          <Button 
-                            size="sm"
-                            className="mt-2 bg-luxury-primary hover:bg-luxury-secondary"
-                          >
-                            Subscribe to Unlock
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </TabsContent>
+          <TabsContent value="media" className="mt-8">
+            <MediaGrid items={mediaItems} onImageClick={setSelectedImage} />
+          </TabsContent>
 
-            <TabsContent value="showcase" className="mt-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="text-center text-luxury-neutral/70 p-12 rounded-2xl border border-luxury-primary/20 bg-luxury-dark/30 backdrop-blur-sm"
-              >
-                <CircuitBoard className="w-12 h-12 mx-auto mb-4 text-luxury-primary animate-pulse" />
-                <p className="text-lg">No created content yet</p>
-              </motion.div>
-            </TabsContent>
+          <TabsContent value="showcase" className="mt-8">
+            <EmptyState 
+              icon={CircuitBoard}
+              message="No created content yet"
+            />
+          </TabsContent>
 
-            <TabsContent value="subscribers" className="mt-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="text-center text-luxury-neutral/70 p-12 rounded-2xl border border-luxury-primary/20 bg-luxury-dark/30 backdrop-blur-sm"
-              >
-                <Users className="w-12 h-12 mx-auto mb-4 text-luxury-primary animate-pulse" />
-                <p className="text-lg">No subscribers yet</p>
-              </motion.div>
-            </TabsContent>
+          <TabsContent value="subscribers" className="mt-8">
+            <EmptyState 
+              icon={Users}
+              message="No subscribers yet"
+            />
+          </TabsContent>
 
-            <TabsContent value="likes" className="mt-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="text-center text-luxury-neutral/70 p-12 rounded-2xl border border-luxury-primary/20 bg-luxury-dark/30 backdrop-blur-sm"
-              >
-                <Heart className="w-12 h-12 mx-auto mb-4 text-luxury-primary animate-pulse" />
-                <p className="text-lg">No liked content yet</p>
-              </motion.div>
-            </TabsContent>
-          </motion.div>
+          <TabsContent value="likes" className="mt-8">
+            <EmptyState 
+              icon={Heart}
+              message="No liked content yet"
+            />
+          </TabsContent>
         </AnimatePresence>
       </Tabs>
 
-      {/* Full Screen Media Dialog */}
       <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
         <DialogContent className="max-w-4xl bg-luxury-dark/95 border-luxury-primary/20">
           <div className="relative aspect-video">
