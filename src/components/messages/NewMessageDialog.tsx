@@ -56,7 +56,7 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
         .from('followers')
         .select(`
           following_id,
-          following:profiles(
+          following:profiles!followers_following_id_fkey (
             id,
             username,
             avatar_url
@@ -70,7 +70,7 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
         return [];
       }
 
-      return (mutualData as MutualFollower[])?.map(item => item.following) || [];
+      return mutualData as MutualFollower[];
     },
     enabled: !!session?.user?.id,
   });
@@ -94,19 +94,19 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
         </DialogHeader>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-2">
-            {mutualFollowers?.map((user: Profile) => (
+            {mutualFollowers?.map((user: MutualFollower) => (
               <button
-                key={user.id}
-                onClick={() => handleSelectUser(user.id)}
+                key={user.following_id}
+                onClick={() => handleSelectUser(user.following_id)}
                 className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-secondary transition-colors"
               >
                 <Avatar>
-                  <AvatarImage src={user.avatar_url || undefined} />
+                  <AvatarImage src={user.following.avatar_url || undefined} />
                   <AvatarFallback>
-                    {user.username?.[0]?.toUpperCase() || '?'}
+                    {user.following.username?.[0]?.toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
-                <span className="font-medium">{user.username}</span>
+                <span className="font-medium">{user.following.username}</span>
               </button>
             ))}
             {!mutualFollowers?.length && (
