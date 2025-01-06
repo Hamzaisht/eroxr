@@ -94,47 +94,63 @@ const Home = () => {
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
         <div className="container max-w-[2000px] mx-auto px-4 py-2">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-4 min-h-[calc(100vh-4rem)]"
-          >
-            <FeedHeader />
+          <div className="grid grid-cols-[1fr,400px] gap-8">
+            {/* Main Feed */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4 min-h-[calc(100vh-4rem)]"
+            >
+              <FeedHeader />
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="w-full"
-              >
-                <StoryReel />
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="w-full bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-neutral/10 p-4 shadow-lg"
-              >
-                <CreatePostArea
-                  onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                  onFileSelect={setSelectedFiles}
-                  onOpenGoLive={() => setIsGoLiveOpen(true)}
-                  isPayingCustomer={isPayingCustomer}
-                />
-              </motion.div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="w-full"
+                >
+                  <StoryReel />
+                </motion.div>
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="w-full bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-neutral/10 p-4 shadow-lg"
+                >
+                  <CreatePostArea
+                    onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                    onFileSelect={setSelectedFiles}
+                    onOpenGoLive={() => setIsGoLiveOpen(true)}
+                    isPayingCustomer={isPayingCustomer}
+                  />
+                </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="w-full"
-              >
-                <CreatorsFeed />
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="w-full"
+                >
+                  <CreatorsFeed />
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Right Sidebar */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-4 sticky top-4 h-[calc(100vh-2rem)] hidden lg:block"
+            >
+              <div className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-4 shadow-lg backdrop-blur-lg">
+                <SearchBar />
+                <SuggestedCreators />
+              </div>
+            </motion.div>
+          </div>
         </div>
 
         <CreatePostDialog 
