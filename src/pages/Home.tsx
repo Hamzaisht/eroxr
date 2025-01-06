@@ -11,9 +11,8 @@ import { SuggestedCreators } from "@/components/home/SuggestedCreators";
 import { GoLiveDialog } from "@/components/home/GoLiveDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import { Bell } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LeftSidebar } from "@/components/home/LeftSidebar";
+import { FeedHeader } from "@/components/home/FeedHeader";
 
 const Home = () => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -96,21 +95,9 @@ const Home = () => {
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
         <div className="container max-w-[1920px] mx-auto px-4 py-2">
-          <div className="grid gap-6 lg:grid-cols-[280px,1fr,320px]">
+          <div className="grid gap-6 lg:grid-cols-[220px,1fr,280px]">
             {/* Left Sidebar */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="hidden lg:block space-y-4"
-            >
-              <div className="sticky top-4 space-y-2">
-                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-luxury-neutral/5 transition-colors cursor-pointer">
-                  <Bell className="h-5 w-5 text-luxury-neutral" />
-                  <span className="font-medium">News Feed</span>
-                </div>
-                {/* Add more navigation items here */}
-              </div>
-            </motion.div>
+            <LeftSidebar />
 
             {/* Main Feed */}
             <motion.div 
@@ -118,30 +105,7 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4 min-h-[calc(100vh-4rem)]"
             >
-              <div className="flex items-center justify-between mb-4">
-                <Tabs defaultValue="feed" className="w-full">
-                  <TabsList className="w-full justify-start h-12 bg-transparent border-b rounded-none p-0">
-                    <TabsTrigger 
-                      value="feed"
-                      className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-luxury-primary rounded-none px-8"
-                    >
-                      Feed
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="popular"
-                      className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-luxury-primary rounded-none px-8"
-                    >
-                      Popular
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="recent"
-                      className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-luxury-primary rounded-none px-8"
-                    >
-                      Recent
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
+              <FeedHeader />
 
               <AnimatePresence mode="wait">
                 <motion.div
