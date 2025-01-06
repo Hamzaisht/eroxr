@@ -18,6 +18,12 @@ interface NewMessageDialogProps {
   onSelectUser: (userId: string) => void;
 }
 
+interface Profile {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+}
+
 export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
   const session = useSession();
   const [open, setOpen] = useState(false);
@@ -28,18 +34,23 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
       if (!session?.user?.id) return [];
       
       // First, get the list of users who follow me
-      const { data: followersData } = await supabase
+      const { data: followersData, error: followersError } = await supabase
         .from('followers')
         .select('follower_id')
         .eq('following_id', session.user.id);
 
-      if (!followersData) return [];
+      if (followersError) {
+        console.error('Error fetching followers:', followersError);
+        return [];
+      }
 
-      // Then get users I follow who also follow me back
-      const { data: mutualData, error } = await supabase
+      if (!followersData?.length) return [];
+
+      // Then get the profiles of users I follow who also follow me back
+      const { data: mutualData, error: mutualError } = await supabase
         .from('followers')
         .select(`
-          following:profiles!followers_following_id_fkey(
+          profiles!followers_following_id_fkey (
             id,
             username,
             avatar_url
@@ -48,12 +59,12 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
         .eq('follower_id', session.user.id)
         .in('following_id', followersData.map(f => f.follower_id));
 
-      if (error) {
-        console.error('Error fetching mutual followers:', error);
-        throw error;
+      if (mutualError) {
+        console.error('Error fetching mutual followers:', mutualError);
+        return [];
       }
 
-      return mutualData?.map(f => f.following) || [];
+      return (mutualData?.map(item => item.profiles) || []) as Profile[];
     },
     enabled: !!session?.user?.id,
   });
@@ -84,7 +95,7 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
                 className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-secondary transition-colors"
               >
                 <Avatar>
-                  <AvatarImage src={user.avatar_url} />
+                  <AvatarImage src={user.avatar_url || undefined} />
                   <AvatarFallback>
                     {user.username?.[0]?.toUpperCase() || '?'}
                   </AvatarFallback>
