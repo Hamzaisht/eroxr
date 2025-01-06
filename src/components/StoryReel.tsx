@@ -29,7 +29,21 @@ export const StoryReel = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      // Group stories by creator
+      const groupedStories = data.reduce((acc: any, story) => {
+        const creatorId = story.creator.id;
+        if (!acc[creatorId]) {
+          acc[creatorId] = {
+            creator: story.creator,
+            stories: []
+          };
+        }
+        acc[creatorId].stories.push(story);
+        return acc;
+      }, {});
+
+      return Object.values(groupedStories);
     },
   });
 
@@ -61,8 +75,13 @@ export const StoryReel = () => {
       >
         {session && <StoryUploader />}
 
-        {stories?.map((story, index) => (
-          <StoryItem key={story.id} story={story} index={index} />
+        {stories?.map((groupedStory: any, index: number) => (
+          <StoryItem 
+            key={groupedStory.creator.id} 
+            stories={groupedStory.stories}
+            creator={groupedStory.creator}
+            index={index} 
+          />
         ))}
       </div>
     </div>
