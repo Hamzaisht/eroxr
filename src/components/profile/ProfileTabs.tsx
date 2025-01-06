@@ -1,13 +1,33 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Image, Users, CircuitBoard, Sparkles } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Image, Users, CircuitBoard, Sparkles, Lock } from "lucide-react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileTabsProps {
   profile: any;
 }
 
 export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
-  const container = {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Fetch creator's subscription price
+  const { data: creatorPrice } = useQuery({
+    queryKey: ["creator-price", profile?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("creator_content_prices")
+        .select("*")
+        .eq("creator_id", profile?.id)
+        .single();
+      return data;
+    },
+  });
+
+  const container: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -17,89 +37,89 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
     }
   };
 
-  const item = {
+  const item: Variants = {
     hidden: { y: 20, opacity: 0 },
     show: { y: 0, opacity: 1 }
   };
 
+  const mediaItems = [
+    { id: 1, type: "image", url: "https://picsum.photos/400/300?random=1", isPremium: true },
+    { id: 2, type: "image", url: "https://picsum.photos/400/300?random=2", isPremium: false },
+    { id: 3, type: "image", url: "https://picsum.photos/400/300?random=3", isPremium: true },
+  ];
+
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Subscription Price Banner */}
+      <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-luxury-dark/80 to-luxury-primary/20 backdrop-blur-lg border border-luxury-primary/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-2xl font-bold text-white mb-2">Subscribe to {profile?.username}</h3>
+            <p className="text-luxury-neutral/70">Get exclusive access to premium content</p>
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-bold text-luxury-primary mb-1">
+              ${creatorPrice?.monthly_price || "9.99"}<span className="text-sm text-luxury-neutral/70">/month</span>
+            </div>
+            <Button className="bg-luxury-primary hover:bg-luxury-secondary">
+              Subscribe Now
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <Tabs defaultValue="showcase" className="w-full">
         <TabsList className="w-full justify-start bg-luxury-dark/50 backdrop-blur-lg rounded-2xl p-2">
-          <TabsTrigger 
-            value="showcase"
-            className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2"
-          >
+          <TabsTrigger value="showcase" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
             <CircuitBoard className="h-4 w-4" />
             Showcase
           </TabsTrigger>
-          <TabsTrigger 
-            value="created"
-            className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2"
-          >
+          <TabsTrigger value="media" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
             <Image className="h-4 w-4" />
-            Created
+            Media
           </TabsTrigger>
-          <TabsTrigger 
-            value="collected"
-            className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2"
-          >
+          <TabsTrigger value="subscribers" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Collected
+            Subscribers
           </TabsTrigger>
-          <TabsTrigger 
-            value="likes"
-            className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2"
-          >
+          <TabsTrigger value="likes" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
             <Heart className="h-4 w-4" />
             Likes
           </TabsTrigger>
         </TabsList>
 
         <AnimatePresence mode="wait">
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            <TabsContent value="showcase" className="mt-8">
+          <motion.div variants={container} initial="hidden" animate="show">
+            <TabsContent value="media" className="mt-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((index) => (
+                {mediaItems.map((item) => (
                   <motion.div
-                    key={index}
+                    key={item.id}
                     variants={item}
-                    whileHover={{ 
-                      scale: 1.02,
-                      y: -5,
-                      transition: { duration: 0.2 }
-                    }}
-                    className="rounded-2xl overflow-hidden bg-luxury-dark/30 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 border border-luxury-primary/20 group"
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    className="relative group cursor-pointer"
+                    onClick={() => !item.isPremium && setSelectedImage(item.url)}
                   >
-                    <div className="relative">
+                    <div className="relative rounded-2xl overflow-hidden aspect-video">
                       <img
-                        src={`https://picsum.photos/400/300?random=${index}`}
-                        alt="Showcase"
-                        className="w-full h-48 object-cover"
+                        src={item.url}
+                        alt="Media content"
+                        className={`w-full h-full object-cover transition-all duration-300 ${
+                          item.isPremium ? "blur-lg" : ""
+                        }`}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                        <Sparkles className="text-white w-6 h-6" />
-                      </div>
-                    </div>
-                    <div className="p-6 space-y-2">
-                      <h3 className="text-xl font-semibold text-luxury-neutral">Showcase Item {index}</h3>
-                      <p className="text-sm text-luxury-neutral/70 leading-relaxed">
-                        Description for showcase item {index}
-                      </p>
-                      <div className="flex items-center gap-4 pt-2">
-                        <div className="flex items-center gap-1 text-luxury-primary">
-                          <Heart className="h-4 w-4" />
-                          <span className="text-sm">{Math.floor(Math.random() * 1000)}</span>
+                      {item.isPremium && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                          <Lock className="w-8 h-8 text-luxury-primary mb-2" />
+                          <p className="text-white font-medium">Premium Content</p>
+                          <Button 
+                            size="sm"
+                            className="mt-2 bg-luxury-primary hover:bg-luxury-secondary"
+                          >
+                            Subscribe to Unlock
+                          </Button>
                         </div>
-                        <div className="flex items-center gap-1 text-luxury-accent">
-                          <Users className="h-4 w-4" />
-                          <span className="text-sm">{Math.floor(Math.random() * 100)}</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -144,6 +164,19 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
           </motion.div>
         </AnimatePresence>
       </Tabs>
+
+      {/* Full Screen Media Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl bg-luxury-dark/95 border-luxury-primary/20">
+          <div className="relative aspect-video">
+            <img
+              src={selectedImage || ""}
+              alt="Full screen media"
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
