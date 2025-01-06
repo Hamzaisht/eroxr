@@ -13,7 +13,11 @@ export const ProfileAvatar = ({ profile, getMediaType }: ProfileAvatarProps) => 
 
   return (
     <div className="relative group">
-      <Avatar className="h-48 w-48 border-4 border-background shadow-xl rounded-3xl overflow-hidden">
+      <Avatar 
+        className="h-48 w-48 shadow-xl rounded-3xl overflow-hidden ring-2 ring-luxury-primary/20"
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+      >
         {getMediaType(profile?.avatar_url) === 'video' ? (
           <video
             src={profile?.avatar_url}
@@ -29,17 +33,17 @@ export const ProfileAvatar = ({ profile, getMediaType }: ProfileAvatarProps) => 
             className="group-hover:scale-105 transition-transform duration-500" 
           />
         )}
-        <AvatarFallback className="text-4xl bg-luxury-primary text-white">
+        <AvatarFallback className="text-4xl bg-luxury-primary text-luxury-neutral">
           {profile?.username?.[0]?.toUpperCase() || "?"}
         </AvatarFallback>
       </Avatar>
       
       {/* Subtle hover effect */}
-      <div className="absolute inset-0 bg-gradient-to-t from-luxury-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[2px] flex items-center justify-center">
+      <div className="absolute inset-0 bg-gradient-to-t from-luxury-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px] flex items-center justify-center">
         <motion.div
           initial={{ scale: 0 }}
           whileHover={{ scale: 1.1 }}
-          className="text-white"
+          className="text-luxury-neutral"
         >
           <Sparkles className="w-8 h-8 animate-pulse" />
         </motion.div>
