@@ -273,6 +273,7 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string | null
+          duration: number | null
           expires_at: string | null
           id: string
           is_expired: boolean | null
@@ -280,10 +281,13 @@ export type Database = {
           message_type: string | null
           recipient_id: string | null
           sender_id: string | null
+          video_url: string | null
+          viewed_at: string | null
         }
         Insert: {
           content?: string | null
           created_at?: string | null
+          duration?: number | null
           expires_at?: string | null
           id?: string
           is_expired?: boolean | null
@@ -291,10 +295,13 @@ export type Database = {
           message_type?: string | null
           recipient_id?: string | null
           sender_id?: string | null
+          video_url?: string | null
+          viewed_at?: string | null
         }
         Update: {
           content?: string | null
           created_at?: string | null
+          duration?: number | null
           expires_at?: string | null
           id?: string
           is_expired?: boolean | null
@@ -302,6 +309,8 @@ export type Database = {
           message_type?: string | null
           recipient_id?: string | null
           sender_id?: string | null
+          video_url?: string | null
+          viewed_at?: string | null
         }
         Relationships: []
       }
