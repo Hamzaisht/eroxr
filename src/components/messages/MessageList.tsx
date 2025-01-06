@@ -21,13 +21,16 @@ export const MessageList = ({ onSelectUser }: MessageListProps) => {
         .from('direct_messages')
         .select(`
           *,
-          sender:profiles!direct_messages_sender_id_fkey(username, avatar_url),
-          recipient:profiles!direct_messages_recipient_id_fkey(username, avatar_url)
+          sender:profiles(username, avatar_url),
+          recipient:profiles(username, avatar_url)
         `)
         .or(`sender_id.eq.${session?.user?.id},recipient_id.eq.${session?.user?.id}`)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
+      }
       return data;
     },
     enabled: !!session?.user?.id,
