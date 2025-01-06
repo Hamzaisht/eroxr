@@ -1,3 +1,4 @@
+import { MainLayout } from "@/components/layout/MainLayout";
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,71 +92,73 @@ const Home = () => {
   }, [session?.user?.id, toast]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
-      <div className="container mx-auto px-4 py-20">
-        <div className="grid gap-8 lg:grid-cols-[1fr,380px]">
-          {/* Main Feed */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold text-luxury-neutral">Your Feed</h1>
-              <div className="relative">
-                <Bell className="h-6 w-6 text-luxury-neutral cursor-pointer hover:text-luxury-primary transition-colors" />
-                {newNotifications > 0 && (
-                  <Badge 
-                    className="absolute -top-2 -right-2 bg-luxury-primary"
-                    variant="secondary"
-                  >
-                    {newNotifications}
-                  </Badge>
-                )}
+    <MainLayout>
+      <div className="min-h-screen bg-gradient-to-b from-luxury-dark to-luxury-dark/95">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid gap-8 lg:grid-cols-[1fr,380px]">
+            {/* Main Feed */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-8"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold text-luxury-neutral">Your Feed</h1>
+                <div className="relative">
+                  <Bell className="h-6 w-6 text-luxury-neutral cursor-pointer hover:text-luxury-primary transition-colors" />
+                  {newNotifications > 0 && (
+                    <Badge 
+                      className="absolute -top-2 -right-2 bg-luxury-primary"
+                      variant="secondary"
+                    >
+                      {newNotifications}
+                    </Badge>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <AnimatePresence mode="wait">
-              <StoryReel />
-              
-              <CreatePostArea
-                onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                onFileSelect={setSelectedFiles}
-                onOpenGoLive={() => setIsGoLiveOpen(true)}
-                isPayingCustomer={isPayingCustomer}
-              />
+              <AnimatePresence mode="wait">
+                <StoryReel />
+                
+                <CreatePostArea
+                  onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                  onFileSelect={setSelectedFiles}
+                  onOpenGoLive={() => setIsGoLiveOpen(true)}
+                  isPayingCustomer={isPayingCustomer}
+                />
 
-              <CreatorsFeed />
-            </AnimatePresence>
-          </motion.div>
+                <CreatorsFeed />
+              </AnimatePresence>
+            </motion.div>
 
-          {/* Sidebar */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-8"
-          >
-            <div className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-6 shadow-lg backdrop-blur-lg sticky top-24">
-              <SearchBar />
-              <SuggestedCreators />
-            </div>
-          </motion.div>
+            {/* Sidebar */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-8"
+            >
+              <div className="rounded-xl border border-luxury-neutral/10 bg-luxury-dark/50 p-6 shadow-lg backdrop-blur-lg sticky top-24">
+                <SearchBar />
+                <SuggestedCreators />
+              </div>
+            </motion.div>
+          </div>
         </div>
+
+        <CreatePostDialog 
+          open={isCreatePostOpen} 
+          onOpenChange={setIsCreatePostOpen}
+          selectedFiles={selectedFiles}
+          onFileSelect={setSelectedFiles}
+        />
+
+        <GoLiveDialog 
+          open={isGoLiveOpen}
+          onOpenChange={setIsGoLiveOpen}
+        />
       </div>
-
-      <CreatePostDialog 
-        open={isCreatePostOpen} 
-        onOpenChange={setIsCreatePostOpen}
-        selectedFiles={selectedFiles}
-        onFileSelect={setSelectedFiles}
-      />
-
-      <GoLiveDialog 
-        open={isGoLiveOpen}
-        onOpenChange={setIsGoLiveOpen}
-      />
-    </div>
+    </MainLayout>
   );
 };
 
