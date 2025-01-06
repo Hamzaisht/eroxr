@@ -25,7 +25,12 @@ export const SearchBar = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="bg-luxury-dark/30 border-luxury-neutral/10"
         />
-        <Button type="submit" size="icon" variant="ghost">
+        <Button 
+          type="submit" 
+          size="icon" 
+          variant="ghost"
+          className="hover:bg-luxury-neutral/10 text-foreground"
+        >
           <Search className="h-4 w-4" />
         </Button>
       </div>
