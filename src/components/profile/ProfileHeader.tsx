@@ -17,7 +17,6 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
   const opacity = useTransform(scrollY, [0, 200], [1, 0]);
   const scale = useTransform(scrollY, [0, 200], [1, 0.95]);
 
-  // Function to determine media type
   const getMediaType = (url: string) => {
     if (!url) return 'image';
     const extension = url.split('.').pop()?.toLowerCase();
@@ -50,13 +49,13 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
                 transition={{ delay: 0.2 }}
                 className="space-y-3"
               >
-                <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-button-gradient">
+                <h1 className="text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
                   {profile?.username}
                 </h1>
-                <p className="text-luxury-neutral mt-2 max-w-2xl text-lg leading-relaxed">
+                <p className="text-luxury-neutral/80 mt-2 max-w-2xl text-lg leading-relaxed backdrop-blur-sm">
                   {profile?.bio || "No bio yet"}
                 </p>
-                <div className="flex gap-2 items-center text-luxury-neutral/70">
+                <div className="flex gap-2 items-center text-luxury-neutral/60">
                   <CircuitBoard className="h-4 w-4" />
                   <span>Joined {new Date().toLocaleDateString()}</span>
                 </div>
@@ -70,8 +69,8 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
               >
                 {!isOwnProfile && (
                   <Button 
-                    className="bg-luxury-primary hover:bg-luxury-secondary text-white px-8 py-6 rounded-xl text-lg font-medium
-                    relative overflow-hidden group"
+                    className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary text-white px-8 py-6 rounded-xl text-lg font-medium
+                    relative overflow-hidden group transition-all duration-300"
                   >
                     <span className="relative z-10">Follow</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-luxury-accent to-luxury-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -80,7 +79,7 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="animate-neon-glow w-14 h-14 rounded-xl border-luxury-primary/30"
+                  className="w-14 h-14 rounded-xl border-luxury-primary/20 bg-luxury-darker/40 hover:bg-luxury-primary/20 transition-all duration-300"
                 >
                   <Share2 className="h-5 w-5" />
                 </Button>

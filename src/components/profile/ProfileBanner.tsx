@@ -19,7 +19,7 @@ export const ProfileBanner = ({ profile, getMediaType }: ProfileBannerProps) => 
       onHoverStart={() => setIsHovering(true)}
       onHoverEnd={() => setIsHovering(false)}
     >
-      <div className="absolute inset-0 bg-luxury-gradient opacity-50 z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to opacity-90 z-10" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(155,135,245,0.1)_0%,transparent_70%)] animate-pulse z-20" />
       
       {bannerMediaType === 'video' ? (

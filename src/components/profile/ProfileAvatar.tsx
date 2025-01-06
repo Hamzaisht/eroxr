@@ -14,7 +14,7 @@ export const ProfileAvatar = ({ profile, getMediaType }: ProfileAvatarProps) => 
   return (
     <div className="relative group">
       <Avatar 
-        className="h-48 w-48 shadow-luxury rounded-3xl overflow-hidden bg-luxury-darker ring-1 ring-luxury-primary/10 transition-shadow duration-300 group-hover:shadow-luxury-hover"
+        className="h-48 w-48 shadow-[0_0_30px_rgba(155,135,245,0.15)] rounded-3xl overflow-hidden bg-luxury-darker transition-all duration-500 group-hover:shadow-[0_0_50px_rgba(217,70,239,0.25)]"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
