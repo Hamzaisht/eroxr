@@ -1,15 +1,7 @@
 import { MessageSquare, Settings, User, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+import { SidebarMenuItem } from "@/components/ui/sidebar/SidebarMenuItem";
 
 const menuItems = [
   {
@@ -40,36 +32,64 @@ const menuItems = [
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
-    <Sidebar className="border-r border-luxury-neutral/10 bg-luxury-dark/95 backdrop-blur supports-[backdrop-filter]:bg-luxury-dark/80">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-luxury-neutral/50">
+    <motion.aside
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      className="fixed left-0 top-0 z-50 h-screen w-64 bg-gradient-to-b from-luxury-dark to-luxury-dark/95 px-3 py-6 shadow-xl backdrop-blur-md"
+    >
+      <div className="flex h-full flex-col gap-8">
+        {/* Logo Area */}
+        <div className="flex items-center justify-center">
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            className="text-2xl font-bold text-luxury-primary"
+          >
+            Logo
+          </motion.div>
+        </div>
+
+        {/* Navigation Menu */}
+        <nav className="flex-1">
+          <div className="mb-4 px-3 text-sm font-medium text-luxury-neutral/50">
             Menu
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    onClick={() => navigate(item.url)}
-                    className="group flex w-full items-center gap-3 rounded-lg p-3 text-luxury-neutral hover:bg-luxury-primary/10 hover:text-luxury-primary"
-                  >
-                    <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{item.title}</span>
-                      <span className="text-xs text-luxury-neutral/70">
-                        {item.description}
-                      </span>
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+          </div>
+          <ul className="space-y-2">
+            {menuItems.map((item) => (
+              <SidebarMenuItem
+                key={item.title}
+                variant={location.pathname === item.url ? "active" : "default"}
+                onClick={() => navigate(item.url)}
+              >
+                <item.icon className="shrink-0" />
+                <div className="flex flex-col">
+                  <span className="font-medium">{item.title}</span>
+                  <span className="text-xs text-luxury-neutral/70">
+                    {item.description}
+                  </span>
+                </div>
+              </SidebarMenuItem>
+            ))}
+          </ul>
+        </nav>
+
+        {/* User Profile Section */}
+        <div className="mt-auto border-t border-luxury-neutral/10 pt-6">
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="flex items-center gap-3 rounded-lg bg-luxury-primary/5 p-3"
+          >
+            <div className="h-10 w-10 rounded-full bg-luxury-primary/20" />
+            <div className="flex flex-col">
+              <span className="font-medium text-luxury-neutral">User Name</span>
+              <span className="text-xs text-luxury-neutral/70">View Profile</span>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </motion.aside>
   );
 }

@@ -1,4 +1,3 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { MainNav } from "@/components/MainNav";
 import { AppSidebar } from "./AppSidebar";
 
@@ -8,16 +7,14 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-luxury-dark">
-        <AppSidebar />
-        <div className="flex-1">
-          <MainNav />
-          <main className="container mx-auto px-4 py-20">
-            {children}
-          </main>
-        </div>
+    <div className="min-h-screen bg-luxury-dark">
+      <AppSidebar />
+      <div className="pl-64">
+        <MainNav />
+        <main className="container mx-auto px-6 py-8">
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
