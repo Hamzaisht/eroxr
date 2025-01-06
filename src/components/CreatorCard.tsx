@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface CreatorCardProps {
   name: string;
   image: string;
+  banner: string;
   description: string;
   subscribers: number;
   creatorId: string;
@@ -18,6 +19,7 @@ interface CreatorCardProps {
 export const CreatorCard = ({ 
   name, 
   image, 
+  banner,
   description, 
   subscribers: initialSubscribers,
   creatorId 
@@ -60,14 +62,25 @@ export const CreatorCard = ({
             onSubscriberChange={handleSubscriberChange}
           />
         </div>
-        <div className="aspect-[4/3] w-full overflow-hidden">
-          <img
-            src={image}
-            alt={name}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
+        <div className="relative">
+          <div className="h-32 w-full overflow-hidden">
+            <img
+              src={banner}
+              alt={`${name}'s banner`}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="absolute -bottom-10 left-4">
+            <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-white">
+              <img
+                src={image}
+                alt={name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
         </div>
-        <div className="space-y-4 p-6">
+        <div className="space-y-4 p-6 pt-12">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h3 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-semibold text-transparent">
