@@ -29,6 +29,7 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
 
   const handleSave = () => {
     setIsEditing(false);
+    // The form will update automatically through React Query's cache invalidation
   };
 
   const handleClose = () => {
