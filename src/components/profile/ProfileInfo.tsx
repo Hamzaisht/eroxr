@@ -6,6 +6,14 @@ interface ProfileInfoProps {
 }
 
 export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   return (
     <motion.div
       initial={{ x: -20, opacity: 0 }}
@@ -15,7 +23,7 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
     >
       <div className="flex items-center gap-4">
         <h1 className="text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
-          {profile?.username}
+          @{profile?.username || "Anonymous"}
         </h1>
       </div>
       <p className="text-luxury-neutral/80 mt-2 max-w-2xl text-lg leading-relaxed backdrop-blur-sm">
@@ -23,7 +31,7 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
       </p>
       <div className="flex gap-2 items-center text-luxury-neutral/60">
         <CircuitBoard className="h-4 w-4" />
-        <span>Joined {new Date().toLocaleDateString()}</span>
+        <span>Joined {profile?.created_at ? formatDate(profile.created_at) : "recently"}</span>
       </div>
     </motion.div>
   );
