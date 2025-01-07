@@ -1,11 +1,11 @@
+import { useState } from "react";
 import { ProfileBanner } from "@/components/profile/ProfileBanner";
 import { ProfileInfo } from "@/components/profile/ProfileInfo";
 import { ProfileStats } from "@/components/profile/ProfileStats";
-import { PreviewModals } from "./PreviewModals";
 import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
-import { useState } from "react";
+import { PreviewModals } from "./PreviewModals";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import type { Profile } from "@/integrations/supabase/types/profile";
 import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
@@ -27,13 +27,6 @@ interface ProfileHeaderContainerProps {
   onGoLive?: () => void;
 }
 
-const getMediaType = (url: string): 'video' | 'gif' | 'image' => {
-  if (!url) return 'image';
-  if (url.match(/\.(mp4|webm|ogg)$/i)) return 'video';
-  if (url.match(/\.gif$/i)) return 'gif';
-  return 'image';
-};
-
 export const ProfileHeaderContainer = ({
   profile,
   isOwnProfile,
@@ -47,7 +40,6 @@ export const ProfileHeaderContainer = ({
   handleSave,
   handleClose,
   setIsEditing,
-  onCreatePost,
   onGoLive,
 }: ProfileHeaderContainerProps) => {
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
@@ -60,7 +52,7 @@ export const ProfileHeaderContainer = ({
   return (
     <div className="relative">
       <ProfileBanner 
-        profile={profile} 
+        profile={profile}
         getMediaType={getMediaType}
         isOwnProfile={isOwnProfile}
       />
@@ -124,4 +116,11 @@ export const ProfileHeaderContainer = ({
       />
     </div>
   );
+};
+
+const getMediaType = (url: string): 'video' | 'gif' | 'image' => {
+  if (!url) return 'image';
+  if (url.match(/\.(mp4|webm|ogg)$/i)) return 'video';
+  if (url.match(/\.gif$/i)) return 'gif';
+  return 'image';
 };
