@@ -14,6 +14,11 @@ interface ProfileHeaderProps {
   isOwnProfile: boolean;
 }
 
+interface PresenceState {
+  presence_ref: string;
+  status?: AvailabilityStatus;
+}
+
 export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
@@ -29,9 +34,9 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
     const channel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
-        const userState = state[profile.id];
+        const userState = state[profile.id] as PresenceState[];
         
-        if (userState) {
+        if (userState && userState.length > 0) {
           const status = userState[0]?.status || "offline";
           setAvailability(status as AvailabilityStatus);
         } else {
