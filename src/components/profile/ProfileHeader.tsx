@@ -8,6 +8,13 @@ import { ProfileActions } from "./ProfileActions";
 import { ProfileEditModal } from "./ProfileEditModal";
 import { AvailabilityIndicator, AvailabilityStatus } from "../ui/availability-indicator";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -26,14 +33,15 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 200], [1, 0]);
   const scale = useTransform(scrollY, [0, 200], [1, 0.95]);
+  const [channel, setChannel] = useState<any>(null);
 
   useEffect(() => {
     if (!profile?.id) return;
 
     // Subscribe to presence changes
-    const channel = supabase.channel('online-users')
+    const presenceChannel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
+        const state = presenceChannel.presenceState();
         const userState = state[profile.id] as PresenceState[];
         
         if (userState && userState.length > 0) {
@@ -45,9 +53,11 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
       })
       .subscribe();
 
+    setChannel(presenceChannel);
+
     // If it's the current user's profile, track their presence
     if (isOwnProfile) {
-      channel.track({
+      presenceChannel.track({
         user_id: profile.id,
         status: "online",
         timestamp: new Date().toISOString()
@@ -55,9 +65,19 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
     }
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(presenceChannel);
     };
   }, [profile?.id, isOwnProfile]);
+
+  const updateStatus = async (newStatus: AvailabilityStatus) => {
+    if (channel && isOwnProfile) {
+      await channel.track({
+        user_id: profile.id,
+        status: newStatus,
+        timestamp: new Date().toISOString()
+      });
+    }
+  };
 
   const getMediaType = (url: string) => {
     if (!url) return 'image';
@@ -92,8 +112,38 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
           >
             <div className="relative group">
               <ProfileAvatar profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
-              <div className="absolute bottom-0 right-0 translate-x-1/4">
-                <AvailabilityIndicator status={availability} size={16} />
+              <div className="absolute -bottom-1 -right-1">
+                {isOwnProfile ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="p-0 h-auto rounded-full ring-2 ring-white">
+                        <AvailabilityIndicator status={availability} size={16} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => updateStatus("online")}>
+                        <AvailabilityIndicator status="online" size={12} />
+                        <span className="ml-2">Online</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateStatus("away")}>
+                        <AvailabilityIndicator status="away" size={12} />
+                        <span className="ml-2">Away</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateStatus("busy")}>
+                        <AvailabilityIndicator status="busy" size={12} />
+                        <span className="ml-2">Busy</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateStatus("offline")}>
+                        <AvailabilityIndicator status="offline" size={12} />
+                        <span className="ml-2">Appear Offline</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <div className="ring-2 ring-white rounded-full">
+                    <AvailabilityIndicator status={availability} size={16} />
+                  </div>
+                )}
               </div>
             </div>
 
