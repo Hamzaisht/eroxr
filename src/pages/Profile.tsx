@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useState } from "react"; // Added missing import
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { TabsContainer } from "@/components/profile/tabs/TabsContainer";
 import { ProfileDialogs } from "@/components/profile/dialogs/ProfileDialogs";
@@ -14,6 +15,8 @@ const Profile = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isLiveDialogOpen, setIsLiveDialogOpen] = useState(false);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ["profile", id || session?.user?.id],
@@ -32,11 +35,11 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-    setIsEditing(false);
-    toast({
-      title: "Changes saved",
-      description: "Your profile has been updated successfully.",
-    });
+      setIsEditing(false);
+      toast({
+        title: "Changes saved",
+        description: "Your profile has been updated successfully.",
+      });
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
@@ -81,6 +84,10 @@ const Profile = () => {
       <ProfileDialogs
         isLiveDialogOpen={isLiveDialogOpen}
         setIsLiveDialogOpen={setIsLiveDialogOpen}
+        isPostDialogOpen={isPostDialogOpen}
+        setIsPostDialogOpen={setIsPostDialogOpen}
+        selectedFiles={selectedFiles}
+        onFileSelect={setSelectedFiles}
       />
     </div>
   );
