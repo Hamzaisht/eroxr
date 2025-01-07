@@ -180,6 +180,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
           imageUrl={tempImageUrl}
           onCropComplete={handleCropComplete}
           aspectRatio={3}
+          isCircular={false}
         />
       )}
     </>

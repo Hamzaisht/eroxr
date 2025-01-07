@@ -10,6 +10,7 @@ interface ImageCropDialogProps {
   imageUrl: string;
   onCropComplete: (croppedImageBlob: Blob) => void;
   aspectRatio?: number;
+  isCircular?: boolean;
 }
 
 export const ImageCropDialog = ({ 
@@ -17,7 +18,8 @@ export const ImageCropDialog = ({
   onClose, 
   imageUrl, 
   onCropComplete,
-  aspectRatio 
+  aspectRatio,
+  isCircular = false
 }: ImageCropDialogProps) => {
   const [crop, setCrop] = useState<Crop>({
     unit: '%',
@@ -41,6 +43,7 @@ export const ImageCropDialog = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Draw the cropped image
     ctx.drawImage(
       imageRef.current,
       crop.x * scaleX,
@@ -52,6 +55,21 @@ export const ImageCropDialog = ({
       crop.width * scaleX,
       crop.height * scaleY
     );
+
+    // If circular crop is enabled, create a circular mask
+    if (isCircular) {
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.beginPath();
+      ctx.arc(
+        canvas.width / 2,
+        canvas.height / 2,
+        Math.min(canvas.width, canvas.height) / 2,
+        0,
+        2 * Math.PI,
+        true
+      );
+      ctx.fill();
+    }
 
     return new Promise<Blob>((resolve) => {
       canvas.toBlob((blob) => {
@@ -79,7 +97,8 @@ export const ImageCropDialog = ({
             crop={crop}
             onChange={(c) => setCrop(c)}
             aspect={aspectRatio}
-            className="max-h-[60vh] mx-auto"
+            circularCrop={isCircular}
+            className={`max-h-[60vh] mx-auto ${isCircular ? 'rounded-full' : ''}`}
           >
             <img
               ref={imageRef}
