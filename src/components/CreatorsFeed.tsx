@@ -40,7 +40,7 @@ export const CreatorsFeed = () => {
               {posts.map((post) => (
                 <PostCard 
                   key={post.id} 
-                  post={post} 
+                  post={post}
                   onLike={handleLike}
                   onDelete={handleDelete}
                   currentUserId={session?.user?.id}

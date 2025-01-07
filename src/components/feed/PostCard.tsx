@@ -6,37 +6,34 @@ import { cn } from "@/lib/utils";
 import { PostHeader } from "./PostHeader";
 import { getImageStyles } from "@/lib/image-utils";
 import { MediaViewer } from "@/components/media/MediaViewer";
-
-interface Post {
-  id: string;
-  user: {
-    name: string;
-    username: string;
-    avatar_url: string;
-  };
-  content: string;
-  media_url: string[];
-  likes: number;
-  comments: number;
-  created_at: string;
-}
+import { Post } from "@/integrations/supabase/types/post";
 
 interface PostCardProps {
   post: Post;
+  onLike?: (postId: string) => Promise<void>;
+  onDelete?: (postId: string, creatorId: string) => Promise<void>;
+  currentUserId?: string;
 }
 
-export const PostCard = ({ post }: PostCardProps) => {
-  const [liked, setLiked] = useState(false);
+export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProps) => {
+  const [liked, setLiked] = useState(post.has_liked);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
 
-  const handleLike = () => {
-    setLiked(!liked);
+  const handleLike = async () => {
+    if (onLike) {
+      await onLike(post.id);
+      setLiked(!liked);
+    }
   };
 
   return (
     <Card className="overflow-hidden bg-luxury-dark border-luxury-primary/10">
-      <PostHeader post={post} />
+      <PostHeader 
+        post={post} 
+        isOwner={currentUserId === post.creator_id}
+        onDelete={onDelete}
+      />
       
       {post.media_url && post.media_url.length > 0 && (
         <div className="relative">
@@ -92,7 +89,7 @@ export const PostCard = ({ post }: PostCardProps) => {
             onClick={handleLike}
           >
             <Heart className="w-5 h-5 mr-1.5" />
-            {post.likes + (liked ? 1 : 0)}
+            {post.likes_count || 0}
           </Button>
           
           <Button
@@ -101,7 +98,7 @@ export const PostCard = ({ post }: PostCardProps) => {
             className="text-white/70 hover:text-white hover:bg-white/10"
           >
             <MessageCircle className="w-5 h-5 mr-1.5" />
-            {post.comments}
+            {post.comments_count || 0}
           </Button>
           
           <Button
