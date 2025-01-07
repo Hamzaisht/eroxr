@@ -5,14 +5,12 @@ export const getImageStyles = (minWidth?: number, minHeight?: number): CSSProper
   minWidth: minWidth ? `${minWidth}px` : undefined,
   minHeight: minHeight ? `${minHeight}px` : undefined,
   objectFit: "cover" as const,
-  loading: "eager" as const,
 });
 
 export const getEnlargedImageStyles = (): CSSProperties => ({
   imageRendering: "auto" as const,
   maxWidth: "95vw",
   maxHeight: "95vh",
-  loading: "eager" as const,
 });
 
 // Helper function to generate srcSet for responsive images
