@@ -29,7 +29,6 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
     try {
       setIsUploading(true);
       
-      // Upload file to Supabase storage
       const fileExt = file.name.split('.').pop();
       const filePath = `${profile.id}/avatar.${fileExt}`;
       
@@ -39,12 +38,10 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
@@ -70,11 +67,13 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
   };
 
   return (
-    <div className="relative inline-block">
+    <div 
+      className="relative inline-block group"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
       <Avatar 
         className="h-48 w-48 shadow-[0_0_30px_rgba(155,135,245,0.15)] rounded-3xl overflow-hidden bg-luxury-darker transition-all duration-500 group-hover:shadow-[0_0_50px_rgba(217,70,239,0.25)] cursor-pointer"
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
         onClick={handleAvatarClick}
       >
         {getMediaType(profile?.avatar_url) === 'video' ? (
@@ -98,10 +97,10 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
       </Avatar>
       
       {isOwnProfile && (
-        <div className="absolute inset-0 bg-luxury-darker/60 opacity-0 hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px] flex items-center justify-center">
+        <div className="absolute inset-0 bg-luxury-darker/60 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px] flex items-center justify-center">
           <motion.div
             initial={{ scale: 0 }}
-            whileHover={{ scale: 1.1 }}
+            animate={{ scale: isHovering ? 1 : 0 }}
             className="text-luxury-primary flex flex-col items-center gap-2"
           >
             <UserRound className="w-8 h-8 animate-pulse" />
