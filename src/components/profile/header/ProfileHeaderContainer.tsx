@@ -1,5 +1,4 @@
 import { ProfileActions } from "@/components/profile/ProfileActions";
-import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileBanner } from "@/components/profile/ProfileBanner";
 import { ProfileInfo } from "@/components/profile/ProfileInfo";
 import { ProfileStats } from "@/components/profile/ProfileStats";
@@ -57,32 +56,32 @@ export const ProfileHeaderContainer = ({
       />
       
       <div className="container mx-auto px-4">
-        <div className="relative -mt-24 mb-8 flex flex-col lg:flex-row items-start lg:items-end gap-6 z-20">
-          <div className="flex-shrink-0">
+        <div className="relative -mt-24 flex flex-col items-center gap-6 z-20">
+          <div className="flex flex-col items-center">
             <ProfileAvatar 
               profile={profile}
               getMediaType={getMediaType}
               isOwnProfile={isOwnProfile}
             />
+            
+            <div className="mt-4">
+              <ProfileHeaderStatus 
+                isOwnProfile={isOwnProfile}
+                availability={availability}
+                setAvailability={setAvailability}
+              />
+            </div>
           </div>
           
-          <div className="flex-1 min-w-0 space-y-4">
-            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-              <ProfileInfo profile={profile} />
-              <div className="lg:ml-4">
-                <ProfileHeaderStatus 
-                  isOwnProfile={isOwnProfile}
-                  availability={availability}
-                  setAvailability={setAvailability}
-                />
-              </div>
+          <div className="w-full max-w-3xl space-y-6 text-center">
+            <ProfileInfo profile={profile} />
+            
+            <div className="flex justify-center">
+              <ProfileStats />
             </div>
             
-            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-              <div className="flex-1">
-                <ProfileStats />
-              </div>
-              <div className="lg:ml-auto">
+            {isOwnProfile && (
+              <div className="flex justify-center gap-4">
                 <ProfileActions
                   isOwnProfile={isOwnProfile}
                   isEditing={isEditing}
@@ -93,7 +92,7 @@ export const ProfileHeaderContainer = ({
                   onGoLive={onGoLive}
                 />
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
