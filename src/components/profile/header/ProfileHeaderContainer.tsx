@@ -22,6 +22,8 @@ interface ProfileHeaderContainerProps {
   handleSave: () => void;
   handleClose: () => void;
   setIsEditing: (editing: boolean) => void;
+  onCreatePost?: () => void;
+  onGoLive?: () => void;
 }
 
 export const ProfileHeaderContainer = ({
@@ -37,6 +39,8 @@ export const ProfileHeaderContainer = ({
   handleSave,
   handleClose,
   setIsEditing,
+  onCreatePost,
+  onGoLive,
 }: ProfileHeaderContainerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
@@ -89,6 +93,8 @@ export const ProfileHeaderContainer = ({
                 onEdit={() => setIsEditing(true)}
                 onSave={handleSave}
                 onCancel={() => setIsEditing(false)}
+                onCreatePost={onCreatePost}
+                onGoLive={onGoLive}
               />
             </div>
           </motion.div>

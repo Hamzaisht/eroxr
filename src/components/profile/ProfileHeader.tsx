@@ -6,6 +6,8 @@ import { ProfileHeaderContainer } from "./header/ProfileHeaderContainer";
 interface ProfileHeaderProps {
   profile: any;
   isOwnProfile: boolean;
+  onCreatePost?: () => void;
+  onGoLive?: () => void;
 }
 
 interface PresenceState {
@@ -13,7 +15,7 @@ interface PresenceState {
   status?: AvailabilityStatus;
 }
 
-export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => {
+export const ProfileHeader = ({ profile, isOwnProfile, onCreatePost, onGoLive }: ProfileHeaderProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
@@ -74,6 +76,8 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
       handleSave={handleSave}
       handleClose={handleClose}
       setIsEditing={setIsEditing}
+      onCreatePost={onCreatePost}
+      onGoLive={onGoLive}
     />
   );
 };
