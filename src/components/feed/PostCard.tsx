@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { PostHeader } from "./PostHeader";
 import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { MediaViewer } from "@/components/media/MediaViewer";
-import { Post } from "@/integrations/supabase/types/post";
+import { Post } from "@/components/feed/types";
 
 interface PostCardProps {
   post: Post;
@@ -53,7 +53,7 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
                     decoding="sync"
                     srcSet={generateSrcSet(url)}
                     sizes={getResponsiveSizes()}
-                    style={getImageStyles(720, 720)}
+                    style={getImageStyles()}
                   />
                 </div>
               ))}
