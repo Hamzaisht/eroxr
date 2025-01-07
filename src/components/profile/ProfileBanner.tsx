@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Edit } from "lucide-react";
+import { Image } from "lucide-react";
 
 interface ProfileBannerProps {
   profile: any;
@@ -67,7 +67,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
             whileHover={{ scale: 1.1 }}
             className="text-white flex flex-col items-center gap-2"
           >
-            <Edit className="w-12 h-12" />
+            <Image className="w-12 h-12 animate-pulse" />
             <span className="text-lg font-medium">Change Banner</span>
           </motion.div>
         </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, Sparkles } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ProfileAvatarProps {
@@ -61,7 +61,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
             whileHover={{ scale: 1.1 }}
             className="text-luxury-primary flex flex-col items-center gap-2"
           >
-            <Edit className="w-8 h-8 animate-pulse" />
+            <UserRound className="w-8 h-8 animate-pulse" />
             <span className="text-sm font-medium text-white">Change Avatar</span>
           </motion.div>
         </div>
