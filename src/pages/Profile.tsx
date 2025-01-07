@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
+import { ProfileVideo } from "@/components/profile/ProfileVideo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Save, X } from "lucide-react";
 import { useState } from "react";
@@ -66,6 +67,7 @@ const Profile = () => {
       <div className="min-h-screen bg-luxury-gradient">
         <main className="w-full">
           <ProfileHeader profile={profile} isOwnProfile={true} />
+          <ProfileVideo />
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
               <Tabs defaultValue="profile" className="space-y-6">
@@ -105,6 +107,7 @@ const Profile = () => {
         {profile ? (
           <>
             <ProfileHeader profile={profile} isOwnProfile={session?.user?.id === profile.id} />
+            <ProfileVideo />
             <ProfileTabs profile={profile} />
           </>
         ) : (
