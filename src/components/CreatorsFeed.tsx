@@ -40,7 +40,17 @@ export const CreatorsFeed = () => {
               {posts.map((post) => (
                 <PostCard 
                   key={post.id} 
-                  post={post}
+                  post={{
+                    ...post,
+                    updated_at: post.updated_at || post.created_at, // Ensure updated_at is always present
+                    visibility: post.visibility || 'public',
+                    is_ppv: post.is_ppv || false,
+                    has_liked: post.has_liked || false,
+                    creator: {
+                      username: post.creator?.username || null,
+                      avatar_url: post.creator?.avatar_url || null
+                    }
+                  }}
                   onLike={handleLike}
                   onDelete={handleDelete}
                   currentUserId={session?.user?.id}
