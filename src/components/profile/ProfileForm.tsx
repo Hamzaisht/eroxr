@@ -29,7 +29,11 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-export const ProfileForm = () => {
+interface ProfileFormProps {
+  onSave?: () => void;
+}
+
+export const ProfileForm = ({ onSave }: ProfileFormProps) => {
   const { toast } = useToast();
   const session = useSession();
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +71,8 @@ export const ProfileForm = () => {
         title: "Profile updated",
         description: "Your profile has been successfully updated.",
       });
+      
+      onSave?.();
     } catch (error) {
       toast({
         variant: "destructive",

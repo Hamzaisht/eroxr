@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Share2, CircuitBoard, Edit } from "lucide-react";
+import { Share2, CircuitBoard, Edit, X, Save } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import { ProfileAvatar } from "./ProfileAvatar";
@@ -27,6 +27,11 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
     return 'image';
   };
 
+  const handleSave = () => {
+    // This will be handled by the ProfileForm component
+    setIsEditing(false);
+  };
+
   return (
     <>
       <div className="relative" ref={containerRef}>
@@ -45,7 +50,7 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
             >
               <div className="relative group">
                 <ProfileAvatar profile={profile} getMediaType={getMediaType} />
-                {isOwnProfile && (
+                {isOwnProfile && !isEditing && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -93,7 +98,7 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
                       <div className="absolute inset-0 bg-gradient-to-r from-luxury-accent to-luxury-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </Button>
                   )}
-                  {isOwnProfile && (
+                  {isOwnProfile && !isEditing && (
                     <Button
                       variant="outline"
                       className="border-luxury-primary/20 bg-luxury-darker/40 hover:bg-luxury-primary/20 transition-all duration-300"
@@ -123,15 +128,25 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
             <div className="max-w-4xl mx-auto bg-luxury-dark rounded-xl p-6 shadow-2xl border border-luxury-primary/10">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold text-gradient">Edit Profile</h1>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                  className="border-luxury-primary/20 bg-luxury-darker/40 hover:bg-luxury-primary/20"
-                >
-                  Cancel
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditing(false)}
+                    className="border-luxury-primary/20 bg-luxury-darker/40 hover:bg-luxury-primary/20"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </div>
               </div>
-              <ProfileForm />
+              <ProfileForm onSave={handleSave} />
             </div>
           </div>
         </div>
