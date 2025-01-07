@@ -18,13 +18,13 @@ export const ImageCropDialog = ({
   onClose, 
   imageUrl, 
   onCropComplete,
-  aspectRatio,
+  aspectRatio = 1,
   isCircular = false
 }: ImageCropDialogProps) => {
   const [crop, setCrop] = useState<Crop>({
     unit: '%',
     width: 90,
-    height: aspectRatio ? 90 * aspectRatio : 90,
+    height: 90,
     x: 5,
     y: 5
   });
@@ -37,8 +37,9 @@ export const ImageCropDialog = ({
     const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
     const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
     
-    canvas.width = crop.width * scaleX;
-    canvas.height = crop.height * scaleY;
+    const size = Math.min(crop.width * scaleX, crop.height * scaleY);
+    canvas.width = size;
+    canvas.height = size;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -52,8 +53,8 @@ export const ImageCropDialog = ({
       crop.height * scaleY,
       0,
       0,
-      crop.width * scaleX,
-      crop.height * scaleY
+      size,
+      size
     );
 
     // If circular crop is enabled, create a circular mask
@@ -61,9 +62,9 @@ export const ImageCropDialog = ({
       ctx.globalCompositeOperation = 'destination-in';
       ctx.beginPath();
       ctx.arc(
-        canvas.width / 2,
-        canvas.height / 2,
-        Math.min(canvas.width, canvas.height) / 2,
+        size / 2,
+        size / 2,
+        size / 2,
         0,
         2 * Math.PI,
         true
@@ -98,7 +99,7 @@ export const ImageCropDialog = ({
             onChange={(c) => setCrop(c)}
             aspect={aspectRatio}
             circularCrop={isCircular}
-            className={`max-h-[60vh] mx-auto ${isCircular ? 'rounded-full' : ''}`}
+            className="max-h-[60vh] mx-auto"
           >
             <img
               ref={imageRef}

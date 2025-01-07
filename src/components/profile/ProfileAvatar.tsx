@@ -49,8 +49,10 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
         const userState = Object.values(state)
           .flat()
           .find((presence: any) => {
-            const presenceState = presence as PresenceState;
-            return presenceState.user_id === profile.id;
+            if (typeof presence === 'object' && presence !== null) {
+              return 'user_id' in presence && presence.user_id === profile.id;
+            }
+            return false;
           });
         
         if (userState && 'status' in userState) {
