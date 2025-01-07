@@ -21,7 +21,6 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
 
-  // Default to a video URL if no banner is set
   const defaultVideoUrl = "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766";
   const bannerUrl = profile?.banner_url || defaultVideoUrl;
   const bannerMediaType = profile?.banner_url ? getMediaType(profile.banner_url) : 'video';
@@ -30,7 +29,6 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast({
         variant: "destructive",
@@ -85,7 +83,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   return (
     <>
       <motion.div 
-        className="h-[60vh] w-full overflow-hidden relative cursor-pointer group"
+        className="h-[60vh] w-full overflow-hidden relative cursor-pointer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -109,7 +107,6 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         )}
       </motion.div>
 
-      {/* Upload Modal */}
       <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -142,7 +139,6 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         </DialogContent>
       </Dialog>
 
-      {/* Preview Modal */}
       <BannerPreview
         isOpen={showPreview}
         onOpenChange={setShowPreview}
