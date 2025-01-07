@@ -82,14 +82,14 @@ export const CreatePostDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] sm:max-w-[600px] relative overflow-hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <DialogContent className="fixed left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] w-[95%] sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 rounded-lg shadow-xl">
         <AnimatePresence>
           {showSuccess && <SuccessOverlay show={showSuccess} />}
         </AnimatePresence>
 
         <PostDialogHeader />
 
-        <div className="space-y-6">
+        <div className="space-y-6 p-6">
           <PostContentInput
             content={content}
             setContent={setContent}
