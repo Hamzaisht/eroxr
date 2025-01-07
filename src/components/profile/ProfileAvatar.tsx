@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AvatarStatus } from "./avatar/AvatarStatus";
-import { AvatarImage } from "./avatar/AvatarImage";
+import { ProfileAvatarImage } from "./avatar/AvatarImage";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { X } from "lucide-react";
 
@@ -57,7 +57,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
   return (
     <>
       <div className="relative inline-block">
-        <AvatarImage
+        <ProfileAvatarImage
           src={profile?.avatar_url}
           username={profile?.username}
           onClick={() => profile?.avatar_url && setShowPreview(true)}
