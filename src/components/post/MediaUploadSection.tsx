@@ -20,6 +20,16 @@ export const MediaUploadSection = ({
 
   const validateVideoFile = async (file: File): Promise<boolean> => {
     if (file.type.startsWith('video/')) {
+      // Check file size (20MB = 20 * 1024 * 1024 bytes)
+      if (file.size > 20 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Videos must be 20MB or smaller",
+          variant: "destructive",
+        });
+        return false;
+      }
+
       const video = document.createElement('video');
       video.preload = 'metadata';
 
@@ -88,7 +98,7 @@ export const MediaUploadSection = ({
         </p>
       )}
       <p className="text-sm text-muted-foreground">
-        Supported formats: Images (JPG, PNG, GIF) and Videos (MP4, WebM) up to 20 minutes
+        Supported formats: Images (JPG, PNG, GIF) and Videos (MP4, WebM) up to 20MB
       </p>
     </div>
   );
