@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -22,7 +22,11 @@ export const UserMenu = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      navigate("/login");
+      navigate("/");
+      toast({
+        title: "Signed out successfully",
+        description: "Come back soon!",
+      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -32,29 +36,32 @@ export const UserMenu = () => {
     }
   };
 
-  console.log("User ID:", session?.user?.id);
-  console.log("Full session:", session);
-
   if (!session) {
     return (
       <div className="flex items-center gap-2">
-        <Button variant="ghost" onClick={() => navigate("/login")}>
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate("/login")}
+          className="hover:bg-luxury-neutral/10"
+        >
           Log in
         </Button>
-        <Button onClick={() => navigate("/login")}>Sign up</Button>
+        <Button 
+          onClick={() => navigate("/login")}
+          className="bg-button-gradient hover:bg-hover-gradient text-white"
+        >
+          Sign up
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="flex items-center gap-4">
-      <div className="text-sm text-muted-foreground">
-        ID: {session.user.id}
-      </div>
       <Button 
         variant="default"
         onClick={() => navigate("/profile")}
-        className="bg-primary hover:bg-primary/90 text-white font-semibold px-6"
+        className="bg-button-gradient hover:bg-hover-gradient text-white font-semibold px-6"
       >
         My Profile
       </Button>
@@ -81,8 +88,12 @@ export const UserMenu = () => {
           <DropdownMenuItem onClick={() => navigate("/profile")}>
             My Profile
           </DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuItem>Subscriptions</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/settings")}>
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
+            Subscriptions
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-red-600 focus:text-red-600" 

@@ -3,24 +3,38 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Star, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@supabase/auth-helpers-react";
 
 export const CTASection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const session = useSession();
 
   const handleGetStarted = () => {
-    navigate("/login");
-    toast({
-      title: "Welcome!",
-      description: "Let's begin your creator journey!",
-    });
+    if (session) {
+      navigate("/profile");
+    } else {
+      navigate("/login");
+      toast({
+        title: "Welcome!",
+        description: "Let's begin your creator journey!",
+      });
+    }
   };
 
   const handleContactSales = () => {
-    toast({
-      title: "Thanks for your interest!",
-      description: "Our team will contact you shortly.",
-    });
+    if (session) {
+      toast({
+        title: "Thanks for your interest!",
+        description: "Our team will contact you shortly.",
+      });
+    } else {
+      navigate("/login");
+      toast({
+        title: "Please sign in",
+        description: "Create an account to connect with our sales team.",
+      });
+    }
   };
 
   return (
