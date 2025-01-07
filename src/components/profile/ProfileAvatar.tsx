@@ -54,18 +54,24 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
     };
   }, [profile?.id, isOwnProfile, availability]);
 
+  const handleAvatarClick = () => {
+    if (profile?.avatar_url) {
+      setShowPreview(true);
+    }
+  };
+
   return (
     <>
-      <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+      <div className="relative inline-block">
         <div className="relative">
           <ProfileAvatarImage
             src={profile?.avatar_url}
             username={profile?.username}
-            onImageClick={() => profile?.avatar_url && setShowPreview(true)}
+            onImageClick={handleAvatarClick}
           />
           
           {isOwnProfile && (
-            <div className="absolute -bottom-1 -right-1 z-10">
+            <div className="absolute -bottom-1 -right-1 z-10" onClick={e => e.stopPropagation()}>
               <AvatarStatus
                 profileId={profile?.id}
                 isOwnProfile={!!isOwnProfile}

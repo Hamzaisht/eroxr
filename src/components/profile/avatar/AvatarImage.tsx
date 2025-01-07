@@ -7,17 +7,13 @@ interface AvatarImageProps {
 }
 
 export const ProfileAvatarImage = ({ src, username, onImageClick }: AvatarImageProps) => {
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    if (onImageClick) {
-      onImageClick();
-    }
-  };
-
   return (
     <Avatar 
       className="h-48 w-48 rounded-full overflow-hidden bg-luxury-darker cursor-pointer [&:hover]:shadow-[0_0_50px_rgba(217,70,239,0.25)]"
-      onClick={handleClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onImageClick?.();
+      }}
     >
       <UIAvatarImage 
         src={src || ""} 
