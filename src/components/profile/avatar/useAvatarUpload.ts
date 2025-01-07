@@ -32,10 +32,12 @@ export const useAvatarUpload = (profile: any) => {
     try {
       setIsUploading(true);
       
+      // Create a unique filename with timestamp and user ID
       const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
       const filePath = `${profile.id}/${timestamp}.${fileExt}`;
       
+      // Upload to Supabase Storage with correct content type
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { 
@@ -45,10 +47,12 @@ export const useAvatarUpload = (profile: any) => {
 
       if (uploadError) throw uploadError;
 
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
+      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
@@ -64,6 +68,7 @@ export const useAvatarUpload = (profile: any) => {
         description: "Profile picture updated successfully",
       });
 
+      // Force a page reload to show the new avatar
       window.location.reload();
 
     } catch (error) {
