@@ -7,23 +7,22 @@ interface BannerMediaProps {
 }
 
 export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProps) => {
-  const defaultBannerUrl = "https://images.unsplash.com/photo-1605810230434-7631ac76ec81";
-  const url = mediaUrl || defaultBannerUrl;
+  if (!mediaUrl) return null;
 
   return mediaType === 'video' ? (
     <video
-      src={url}
+      src={mediaUrl}
       className={`w-full h-full object-cover transform transition-transform duration-700 ${
         isHovering ? 'scale-105' : 'scale-100'
       }`}
-      autoPlay={isHovering}
+      autoPlay
       loop
       muted
       playsInline
     />
   ) : (
     <img
-      src={url}
+      src={mediaUrl}
       alt="Profile Banner"
       className={`w-full h-full object-cover transform transition-transform duration-700 ${
         isHovering ? 'scale-105' : 'scale-100'

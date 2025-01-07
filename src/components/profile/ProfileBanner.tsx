@@ -20,7 +20,11 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
-  const bannerMediaType = getMediaType(profile?.banner_url || '');
+
+  // Default to a video URL if no banner is set
+  const defaultVideoUrl = "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766";
+  const bannerUrl = profile?.banner_url || defaultVideoUrl;
+  const bannerMediaType = profile?.banner_url ? getMediaType(profile.banner_url) : 'video';
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,13 +91,13 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         transition={{ duration: 0.5 }}
         onHoverStart={() => setIsHovering(true)}
         onHoverEnd={() => setIsHovering(false)}
-        onClick={() => profile?.banner_url && setShowPreview(true)}
+        onClick={() => setShowPreview(true)}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to opacity-90 z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(155,135,245,0.1)_0%,transparent_70%)] animate-pulse z-20" />
         
         <BannerMedia 
-          mediaUrl={profile?.banner_url}
+          mediaUrl={bannerUrl}
           mediaType={bannerMediaType}
           isHovering={isHovering}
         />
@@ -145,7 +149,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
       <BannerPreview
         isOpen={showPreview}
         onOpenChange={setShowPreview}
-        mediaUrl={profile?.banner_url}
+        mediaUrl={bannerUrl}
         mediaType={bannerMediaType}
       />
     </>
