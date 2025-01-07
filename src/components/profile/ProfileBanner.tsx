@@ -33,11 +33,11 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 20 * 1024 * 1024) {
       toast({
         variant: "destructive",
         title: "File too large",
-        description: "Please upload a file smaller than 10MB",
+        description: "Please upload a file smaller than 20MB",
       });
       return;
     }
@@ -138,7 +138,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
               Upload a new banner image or video. For best results:
               <ul className="list-disc pl-4 mt-2 space-y-1">
                 <li>Minimum dimensions: 1500x500 pixels</li>
-                <li>Maximum file size: 10MB</li>
+                <li>Maximum file size: 20MB</li>
                 <li>Supported formats: JPG, PNG, GIF, MP4</li>
               </ul>
             </DialogDescription>
