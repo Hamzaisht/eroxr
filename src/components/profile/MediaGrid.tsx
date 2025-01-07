@@ -79,7 +79,8 @@ export const MediaGrid = ({ items, onImageClick }: MediaGridProps) => {
                 alt="Media content"
                 className={cn(
                   "w-full h-full object-cover",
-                  mediaItem.isPremium ? "blur-lg" : ""
+                  mediaItem.isPremium ? "blur-lg" : "",
+                  "hover:opacity-90 transition-opacity duration-200"
                 )}
                 loading="lazy"
                 style={getImageStyles(360)}

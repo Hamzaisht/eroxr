@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostHeader } from "./PostHeader";
-import { getImageStyles, getEnlargedImageStyles } from "@/lib/image-utils";
+import { getImageStyles } from "@/lib/image-utils";
 import { MediaViewer } from "@/components/media/MediaViewer";
 
 interface Post {
@@ -53,7 +53,7 @@ export const PostCard = ({ post }: PostCardProps) => {
                     alt={`Post media ${index + 1}`}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     loading="lazy"
-                    style={getImageStyles(undefined, 720)}
+                    style={getImageStyles(720, 720)}
                   />
                 </div>
               ))}

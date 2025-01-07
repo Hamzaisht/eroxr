@@ -7,4 +7,6 @@ export const getImageStyles = (minWidth?: number, minHeight?: number) => ({
 
 export const getEnlargedImageStyles = () => ({
   imageRendering: "crisp-edges" as const,
+  maxWidth: "95vw",
+  maxHeight: "95vh",
 });
