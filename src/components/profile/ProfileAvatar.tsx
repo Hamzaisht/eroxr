@@ -97,14 +97,14 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
       </Avatar>
       
       {isOwnProfile && (
-        <div className="absolute inset-0 bg-luxury-darker/60 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px] flex items-center justify-center">
+        <div className="absolute inset-0 bg-luxury-darker/60 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px]">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: isHovering ? 1 : 0 }}
-            className="text-luxury-primary flex flex-col items-center gap-2"
+            className="absolute top-4 right-4 bg-luxury-darker/80 backdrop-blur-sm px-4 py-2 rounded-lg flex items-center gap-2 text-luxury-primary"
           >
-            <UserRound className="w-8 h-8 animate-pulse" />
-            <span className="text-sm font-medium text-white">
+            <UserRound className="w-5 h-5 animate-pulse" />
+            <span className="text-sm font-medium text-white whitespace-nowrap">
               {isUploading ? "Uploading..." : "Change Profile Picture"}
             </span>
           </motion.div>
