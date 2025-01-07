@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AvatarStatus } from "./avatar/AvatarStatus";
 import { AvatarImage } from "./avatar/AvatarImage";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { X } from "lucide-react";
 
 interface ProfileAvatarProps {
   profile: any;
@@ -25,7 +26,6 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
   useEffect(() => {
     if (!profile?.id) return;
 
-    // Create and subscribe to the channel
     const channel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState<PresenceState>();
@@ -52,15 +52,16 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.id, isOwnProfile]);
+  }, [profile?.id, isOwnProfile, availability]);
 
   return (
     <>
-      <div className="relative inline-block group">
+      <div className="relative inline-block">
         <AvatarImage
           src={profile?.avatar_url}
           username={profile?.username}
           onClick={() => profile?.avatar_url && setShowPreview(true)}
+          status={availability}
         />
         
         <div className="absolute -bottom-1 -right-1">
@@ -74,7 +75,13 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
       </div>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-transparent backdrop-blur-xl border-none">
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-transparent border-none">
+          <button
+            onClick={() => setShowPreview(false)}
+            className="absolute right-4 top-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-50"
+          >
+            <X className="h-5 w-5 text-white" />
+          </button>
           {getMediaType(profile?.avatar_url) === 'video' ? (
             <video
               src={profile?.avatar_url}
