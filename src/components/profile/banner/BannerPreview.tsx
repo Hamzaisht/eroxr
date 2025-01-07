@@ -1,26 +1,26 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
-interface AvatarPreviewModalProps {
+interface BannerPreviewProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   mediaUrl?: string;
   mediaType: 'video' | 'gif' | 'image';
 }
 
-export const AvatarPreviewModal = ({
+export const BannerPreview = ({
   isOpen,
   onOpenChange,
   mediaUrl,
   mediaType,
-}: AvatarPreviewModalProps) => {
+}: BannerPreviewProps) => {
   if (!mediaUrl) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-transparent border-none">
+      <DialogContent className="sm:max-w-7xl p-0 overflow-hidden bg-transparent border-none">
         <VisuallyHidden>
-          <DialogTitle>Profile Picture Preview</DialogTitle>
+          <DialogTitle>Profile Banner Preview</DialogTitle>
         </VisuallyHidden>
         {mediaType === 'video' ? (
           <video
@@ -34,7 +34,7 @@ export const AvatarPreviewModal = ({
         ) : (
           <img
             src={mediaUrl}
-            alt="Profile Picture Preview"
+            alt="Profile Banner"
             className="w-full rounded-lg"
           />
         )}
