@@ -30,10 +30,8 @@ export const AvatarStatus = ({
     try {
       const channel = supabase.channel('online-users');
       
-      // Subscribe first to ensure the channel is ready
       await channel.subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // Then track the new status
           await channel.track({
             user_id: profileId,
             status: newStatus,

@@ -95,7 +95,11 @@ export default {
         "spin-slow": {
           "0%": { transform: "rotate(0deg)" },
           "100%": { transform: "rotate(360deg)" }
-        }
+        },
+        "pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
       },
       animation: {
         "logo-spin": "logo-spin 1.5s ease-in-out",
@@ -103,7 +107,8 @@ export default {
         "float": "float 6s ease-in-out infinite",
         "pulse-ring": "pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "neon-glow": "neon-pulse 2s ease-in-out infinite",
-        "spin-slow": "spin-slow 3s linear infinite"
+        "spin-slow": "spin-slow 3s linear infinite",
+        "pulse": "pulse 20s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
     },
   },

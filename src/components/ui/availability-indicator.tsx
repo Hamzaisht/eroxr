@@ -8,29 +8,49 @@ interface AvailabilityIndicatorProps {
   className?: string;
 }
 
-const statusStyles = {
-  online: "bg-emerald-500/90 shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-pulse",
-  offline: "bg-gray-500/80 shadow-[0_0_8px_rgba(107,114,128,0.3)]",
-  away: "bg-amber-500/90 shadow-[0_0_12px_rgba(245,158,11,0.6)] animate-pulse",
-  busy: "bg-rose-500/90 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse"
-};
-
-export const AvailabilityIndicator = ({ 
-  status, 
+export const AvailabilityIndicator = ({
+  status,
   size = 8,
-  className 
+  className,
 }: AvailabilityIndicatorProps) => {
+  const getStatusColor = (status: AvailabilityStatus) => {
+    switch (status) {
+      case "online":
+        return "bg-emerald-500";
+      case "away":
+        return "bg-amber-500";
+      case "busy":
+        return "bg-rose-500";
+      case "offline":
+        return "bg-gray-500";
+    }
+  };
+
   return (
-    <span 
+    <div
       className={cn(
-        "block rounded-full transition-all duration-300",
-        statusStyles[status],
+        "relative flex items-center justify-center",
         className
       )}
-      style={{ 
-        width: size,
-        height: size
-      }}
-    />
+      style={{ width: size, height: size }}
+    >
+      <div
+        className={cn(
+          "absolute inset-0 rounded-full",
+          getStatusColor(status),
+          status === "online" && "animate-[pulse_20s_ease-in-out_infinite]"
+        )}
+      />
+      <div
+        className={cn(
+          "absolute inset-0 rounded-full bg-black/5 backdrop-blur-sm",
+          status === "online" && "animate-[pulse_20s_ease-in-out_infinite_0.5s]"
+        )}
+        style={{
+          transform: "scale(1.2)",
+          opacity: status === "online" ? 0.3 : 0
+        }}
+      />
+    </div>
   );
 };
