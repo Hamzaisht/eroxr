@@ -25,6 +25,8 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
   const [lastUsernameChange, setLastUsernameChange] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
 
+  console.log("Current session:", session); // Debug log
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -39,7 +41,12 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
   // Load initial profile data and username change timestamp
   useEffect(() => {
     const loadProfile = async () => {
-      if (!session?.user?.id) return;
+      if (!session?.user?.id) {
+        console.log("No session user ID found"); // Debug log
+        return;
+      }
+
+      console.log("Loading profile for user:", session.user.id); // Debug log
 
       const { data: profile, error } = await supabase
         .from("profiles")
@@ -48,6 +55,7 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
         .single();
 
       if (error) {
+        console.error("Error loading profile:", error); // Debug log
         toast({
           title: "Error",
           description: "Failed to load profile",
@@ -55,6 +63,8 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
         });
         return;
       }
+
+      console.log("Loaded profile:", profile); // Debug log
 
       if (profile) {
         setCurrentUsername(profile.username || "");
@@ -77,12 +87,17 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
     };
 
     loadProfile();
-  }, [session?.user?.id]);
+  }, [session?.user?.id, form]);
 
   const onSubmit = async (values: ProfileFormValues) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      console.log("No session user ID found during submit"); // Debug log
+      return;
+    }
     
+    console.log("Submitting values:", values); // Debug log
     setIsLoading(true);
+
     try {
       const updates = {
         username: values.username,
@@ -95,12 +110,17 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
         }),
       };
 
+      console.log("Updating profile with:", updates); // Debug log
+
       const { error } = await supabase
         .from("profiles")
         .update(updates)
         .eq("id", session.user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating profile:", error); // Debug log
+        throw error;
+      }
 
       toast({
         title: "Profile updated",
@@ -109,6 +129,7 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
       
       onSave?.();
     } catch (error) {
+      console.error("Error in form submission:", error); // Debug log
       toast({
         variant: "destructive",
         title: "Error",
