@@ -11,11 +11,13 @@ export const HeroSection = () => {
   const { toast } = useToast();
 
   const handleGetStarted = () => {
-    if (!session) {
+    if (session) {
+      navigate("/home");
+    } else {
       navigate("/login");
       toast({
-        title: "Join Our Community",
-        description: "Create your account to get started!",
+        title: "Welcome!",
+        description: "Create your account to get started.",
       });
     }
   };
@@ -59,7 +61,7 @@ export const HeroSection = () => {
         className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-luxury-accent/20 blur-3xl"
       />
 
-      <div className="container relative z-10 mx-auto px-4 pt-20 pb-32">
+      <div className="container relative z-10 mx-auto px-4 pt-32 pb-20 md:pt-40 md:pb-32">
         <div className="mx-auto max-w-[64rem] text-center">
           {/* Main Content */}
           <motion.div
@@ -68,11 +70,24 @@ export const HeroSection = () => {
             transition={{ duration: 0.8 }}
             className="space-y-8"
           >
-            <h1 className="bg-gradient-to-r from-luxury-neutral via-luxury-primary to-luxury-accent bg-clip-text text-5xl font-bold text-transparent sm:text-7xl md:text-8xl">
-              Connect with Verified Members
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex justify-center items-center gap-2 mb-4"
+            >
+              <span className="px-4 py-2 rounded-full bg-luxury-primary/10 text-luxury-primary text-sm font-medium">
+                Join Our Community
+              </span>
+            </motion.div>
+
+            <h1 className="bg-gradient-to-r from-luxury-neutral via-luxury-primary to-luxury-accent bg-clip-text text-4xl font-bold text-transparent sm:text-6xl md:text-7xl">
+              Connect with Amazing Creators
             </h1>
-            <p className="mx-auto max-w-2xl text-xl text-luxury-neutral/80">
-              A secure and private platform for open-minded adults to connect and meet.
+            
+            <p className="mx-auto max-w-2xl text-lg text-luxury-neutral/80 md:text-xl">
+              Join a thriving community of passionate creators and their dedicated fans.
+              Share exclusive content, engage with your audience, and grow your following.
             </p>
 
             {/* CTA Buttons */}
@@ -96,8 +111,8 @@ export const HeroSection = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full rounded-full border-luxury-primary/20 px-8 py-6 text-lg backdrop-blur-sm sm:w-auto"
                 onClick={() => navigate("/about")}
+                className="w-full rounded-full border-luxury-primary/20 px-8 py-6 text-lg backdrop-blur-sm sm:w-auto"
               >
                 Learn More
               </Button>
@@ -118,14 +133,14 @@ export const HeroSection = () => {
                 description: "Your privacy and security are our top priorities."
               },
               {
-                icon: Lock,
-                title: "Verified Members",
-                description: "All members are verified for your safety."
-              },
-              {
                 icon: Users,
                 title: "Active Community",
                 description: "Connect with like-minded individuals."
+              },
+              {
+                icon: Lock,
+                title: "Verified Members",
+                description: "All members are verified for your safety."
               }
             ].map((feature, index) => (
               <motion.div
