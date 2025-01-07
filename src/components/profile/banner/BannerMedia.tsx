@@ -12,9 +12,7 @@ export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProp
   return mediaType === 'video' ? (
     <video
       src={mediaUrl}
-      className={`w-full h-full object-cover transform transition-transform duration-700 ${
-        isHovering ? 'scale-105' : 'scale-100'
-      }`}
+      className="w-full h-full object-cover"
       autoPlay
       loop
       muted
@@ -24,9 +22,7 @@ export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProp
     <img
       src={mediaUrl}
       alt="Profile Banner"
-      className={`w-full h-full object-cover transform transition-transform duration-700 ${
-        isHovering ? 'scale-105' : 'scale-100'
-      }`}
+      className="w-full h-full object-cover"
     />
   );
 };
