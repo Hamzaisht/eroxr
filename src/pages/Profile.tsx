@@ -68,10 +68,6 @@ const Profile = () => {
           <ProfileHeader profile={profile} isOwnProfile={true} />
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold text-luxury-neutral">Profile Settings</h2>
-              </div>
-              
               <Tabs defaultValue="profile" className="space-y-6">
                 <TabsList className="bg-luxury-dark/50 backdrop-blur-lg">
                   <TabsTrigger value="profile">Profile</TabsTrigger>
