@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,8 +23,13 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [showCropDialog, setShowCropDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [tempImageUrl, setTempImageUrl] = useState<string>('');
-  const [currentBannerUrl, setCurrentBannerUrl] = useState(profile?.banner_url);
+  const [currentBannerUrl, setCurrentBannerUrl] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Update currentBannerUrl when profile changes
+  useEffect(() => {
+    setCurrentBannerUrl(profile?.banner_url);
+  }, [profile?.banner_url]);
 
   const defaultVideoUrl = "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766";
   const bannerUrl = currentBannerUrl || defaultVideoUrl;
@@ -77,6 +82,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
 
       if (updateError) throw updateError;
 
+      // Update the local state with the new URL
       setCurrentBannerUrl(publicUrl);
       
       toast({
