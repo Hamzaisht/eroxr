@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { CircuitBoard } from "lucide-react";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface ProfileInfoProps {
-  profile: any;
+  profile: Profile;
 }
 
 export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
