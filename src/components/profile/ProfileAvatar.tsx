@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { AvatarStatus } from "./avatar/AvatarStatus";
 import { ProfileAvatarImage } from "./avatar/AvatarImage";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { X } from "lucide-react";
 import { ImageCropDialog } from "./ImageCropDialog";
 import { useAvatarUpload } from "./avatar/AvatarUpload";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface ProfileAvatarProps {
   profile: any;
@@ -50,7 +51,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
           .find((presence: PresenceState) => presence.user_id === profile.id);
         
         if (userState?.status) {
-          setAvailability(userState.status as AvailabilityStatus);
+          setAvailability(userState.status);
         } else {
           setAvailability("offline");
         }
@@ -102,6 +103,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-transparent border-none">
+          <DialogTitle className="sr-only">Profile Image Preview</DialogTitle>
           <button
             onClick={() => setShowPreview(false)}
             className="absolute right-4 top-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-50"
