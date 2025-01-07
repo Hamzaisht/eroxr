@@ -37,7 +37,6 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
       })
       .subscribe();
 
-    // If it's the current user's profile, track their presence
     if (isOwnProfile) {
       channel.track({
         user_id: profile.id,
@@ -71,11 +70,11 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
       </div>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-transparent border-none">
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-transparent backdrop-blur-xl border-none">
           {getMediaType(profile?.avatar_url) === 'video' ? (
             <video
               src={profile?.avatar_url}
-              className="w-full rounded-lg"
+              className="w-full rounded-2xl"
               controls
               autoPlay
               loop
@@ -85,7 +84,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
             <img
               src={profile?.avatar_url}
               alt="Profile"
-              className="w-full rounded-lg"
+              className="w-full rounded-2xl"
             />
           )}
         </DialogContent>

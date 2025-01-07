@@ -9,10 +9,10 @@ interface AvailabilityIndicatorProps {
 }
 
 const statusStyles = {
-  online: "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]",
+  online: "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]",
   offline: "bg-gray-400",
-  away: "bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]",
-  busy: "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+  away: "bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)]",
+  busy: "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.5)]"
 };
 
 export const AvailabilityIndicator = ({ 

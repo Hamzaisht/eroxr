@@ -37,32 +37,32 @@ export const AvatarStatus = ({
   return isOwnProfile ? (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="p-0.5 h-auto rounded-full bg-white/90 shadow-md hover:bg-white">
-          <AvailabilityIndicator status={status} size={14} />
+        <Button variant="ghost" className="p-1 h-auto rounded-full bg-black/20 backdrop-blur-lg hover:bg-black/30 transition-all duration-300">
+          <AvailabilityIndicator status={status} size={12} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={() => updateStatus("online")} className="gap-2">
-          <AvailabilityIndicator status="online" size={12} />
-          <span>Online</span>
+      <DropdownMenuContent align="end" className="w-48 bg-black/40 backdrop-blur-xl border-none shadow-2xl">
+        <DropdownMenuItem onClick={() => updateStatus("online")} className="gap-2 hover:bg-white/5">
+          <AvailabilityIndicator status="online" size={10} />
+          <span className="text-white/90">Online</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => updateStatus("away")} className="gap-2">
-          <AvailabilityIndicator status="away" size={12} />
-          <span>Away</span>
+        <DropdownMenuItem onClick={() => updateStatus("away")} className="gap-2 hover:bg-white/5">
+          <AvailabilityIndicator status="away" size={10} />
+          <span className="text-white/90">Away</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => updateStatus("busy")} className="gap-2">
-          <AvailabilityIndicator status="busy" size={12} />
-          <span>Busy</span>
+        <DropdownMenuItem onClick={() => updateStatus("busy")} className="gap-2 hover:bg-white/5">
+          <AvailabilityIndicator status="busy" size={10} />
+          <span className="text-white/90">Busy</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => updateStatus("offline")} className="gap-2">
-          <AvailabilityIndicator status="offline" size={12} />
-          <span>Appear Offline</span>
+        <DropdownMenuItem onClick={() => updateStatus("offline")} className="gap-2 hover:bg-white/5">
+          <AvailabilityIndicator status="offline" size={10} />
+          <span className="text-white/90">Appear Offline</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   ) : (
-    <div className="p-0.5 rounded-full bg-white/90 shadow-md">
-      <AvailabilityIndicator status={status} size={14} />
+    <div className="p-1 rounded-full bg-black/20 backdrop-blur-lg">
+      <AvailabilityIndicator status={status} size={12} />
     </div>
   );
 };
