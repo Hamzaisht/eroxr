@@ -48,10 +48,14 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
         const state = channel.presenceState();
         const userState = Object.values(state)
           .flat()
-          .find((presence: PresenceState) => presence.user_id === profile.id);
+          .find((presence: any) => {
+            const presenceState = presence as PresenceState;
+            return presenceState.user_id === profile.id;
+          });
         
-        if (userState?.status) {
-          setAvailability(userState.status);
+        if (userState && 'status' in userState) {
+          const typedState = userState as PresenceState;
+          setAvailability(typedState.status);
         } else {
           setAvailability("offline");
         }
