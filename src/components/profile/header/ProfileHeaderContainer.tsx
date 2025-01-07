@@ -6,7 +6,6 @@ import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { PreviewModals } from "./PreviewModals";
-import { CreatePostDialog } from "@/components/CreatePostDialog";
 import type { Profile } from "@/integrations/supabase/types/profile";
 import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
@@ -43,16 +42,6 @@ export const ProfileHeaderContainer = ({
   onCreatePost,
   onGoLive,
 }: ProfileHeaderContainerProps) => {
-  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-
-  const handleCreatePost = () => {
-    setIsPostDialogOpen(true);
-    if (onCreatePost) {
-      onCreatePost();
-    }
-  };
-
   return (
     <div className="relative">
       <ProfileBanner 
@@ -94,7 +83,7 @@ export const ProfileHeaderContainer = ({
                   onEdit={() => setIsEditing(true)}
                   onSave={handleSave}
                   onCancel={handleClose}
-                  onCreatePost={handleCreatePost}
+                  onCreatePost={onCreatePost}
                   onGoLive={onGoLive}
                 />
               </div>
@@ -110,13 +99,6 @@ export const ProfileHeaderContainer = ({
         showBannerPreview={showBannerPreview}
         setShowAvatarPreview={setShowAvatarPreview}
         setShowBannerPreview={setShowBannerPreview}
-      />
-
-      <CreatePostDialog
-        open={isPostDialogOpen}
-        onOpenChange={setIsPostDialogOpen}
-        selectedFiles={selectedFiles}
-        onFileSelect={setSelectedFiles}
       />
     </div>
   );

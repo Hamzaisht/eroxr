@@ -2,25 +2,22 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { ProfileHeaderContainer } from "./header/ProfileHeaderContainer";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
 
 interface ProfileHeaderProps {
   profile: any;
   isOwnProfile: boolean;
-  onCreatePost?: () => void;
   onGoLive?: () => void;
 }
 
-interface PresenceState {
-  presence_ref: string;
-  status?: AvailabilityStatus;
-}
-
-export const ProfileHeader = ({ profile, isOwnProfile, onCreatePost, onGoLive }: ProfileHeaderProps) => {
+export const ProfileHeader = ({ profile, isOwnProfile, onGoLive }: ProfileHeaderProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const [showBannerPreview, setShowBannerPreview] = useState(false);
   const [channel, setChannel] = useState<any>(null);
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -28,7 +25,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onCreatePost, onGoLive }:
     const presenceChannel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState();
-        const userState = state[profile.id] as PresenceState[];
+        const userState = state[profile.id] as any[];
         
         if (userState && userState.length > 0) {
           const status = userState[0]?.status || "offline";
@@ -63,21 +60,30 @@ export const ProfileHeader = ({ profile, isOwnProfile, onCreatePost, onGoLive }:
   };
 
   return (
-    <ProfileHeaderContainer
-      profile={profile}
-      isOwnProfile={isOwnProfile}
-      isEditing={isEditing}
-      availability={availability}
-      showAvatarPreview={showAvatarPreview}
-      showBannerPreview={showBannerPreview}
-      setShowAvatarPreview={setShowAvatarPreview}
-      setShowBannerPreview={setShowBannerPreview}
-      setAvailability={setAvailability}
-      handleSave={handleSave}
-      handleClose={handleClose}
-      setIsEditing={setIsEditing}
-      onCreatePost={onCreatePost}
-      onGoLive={onGoLive}
-    />
+    <>
+      <ProfileHeaderContainer
+        profile={profile}
+        isOwnProfile={isOwnProfile}
+        isEditing={isEditing}
+        availability={availability}
+        showAvatarPreview={showAvatarPreview}
+        showBannerPreview={showBannerPreview}
+        setShowAvatarPreview={setShowAvatarPreview}
+        setShowBannerPreview={setShowBannerPreview}
+        setAvailability={setAvailability}
+        handleSave={handleSave}
+        handleClose={handleClose}
+        setIsEditing={setIsEditing}
+        onCreatePost={() => setIsCreatePostOpen(true)}
+        onGoLive={onGoLive}
+      />
+
+      <CreatePostDialog
+        open={isCreatePostOpen}
+        onOpenChange={setIsCreatePostOpen}
+        selectedFiles={selectedFiles}
+        onFileSelect={setSelectedFiles}
+      />
+    </>
   );
 };
