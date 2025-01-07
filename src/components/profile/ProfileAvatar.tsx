@@ -61,17 +61,18 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
           src={profile?.avatar_url}
           username={profile?.username}
           onClick={() => profile?.avatar_url && setShowPreview(true)}
-          status={availability}
         />
         
-        <div className="absolute -bottom-1 -right-1">
-          <AvatarStatus
-            profileId={profile?.id}
-            isOwnProfile={!!isOwnProfile}
-            status={availability}
-            onStatusChange={setAvailability}
-          />
-        </div>
+        {isOwnProfile && (
+          <div className="absolute -bottom-1 -right-1">
+            <AvatarStatus
+              profileId={profile?.id}
+              isOwnProfile={!!isOwnProfile}
+              status={availability}
+              onStatusChange={setAvailability}
+            />
+          </div>
+        )}
       </div>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
