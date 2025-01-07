@@ -105,7 +105,7 @@ export const CreatorCard = ({
                   className="h-full w-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-1 -right-1 ring-2 ring-white rounded-full">
+              <div className="absolute -bottom-1 -right-1 rounded-full bg-white p-1 shadow-md">
                 <AvailabilityIndicator status={availability} size={12} />
               </div>
             </div>

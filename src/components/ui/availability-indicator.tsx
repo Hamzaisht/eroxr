@@ -14,29 +14,32 @@ export function AvailabilityIndicator({
   className,
   size = 10 
 }: AvailabilityIndicatorProps) {
-  const getStatusColor = (status: AvailabilityStatus) => {
+  const getStatusStyles = (status: AvailabilityStatus) => {
+    const baseStyles = "fill-current transition-all duration-300";
     switch (status) {
       case "online":
-        return "text-green-500";
+        return cn(baseStyles, "text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]");
       case "away":
-        return "text-orange-500";
+        return cn(baseStyles, "text-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]");
       case "busy":
-        return "text-red-500";
+        return cn(baseStyles, "text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]");
       case "offline":
-        return "text-gray-400";
+        return cn(baseStyles, "text-gray-400");
       default:
-        return "text-gray-400";
+        return cn(baseStyles, "text-gray-400");
     }
   };
 
   return (
-    <Circle
-      className={cn(
-        "fill-current",
-        getStatusColor(status),
-        className
-      )}
-      size={size}
-    />
+    <div className={cn(
+      "relative flex items-center justify-center",
+      "after:absolute after:inset-0 after:rounded-full after:blur-sm after:opacity-50",
+      className
+    )}>
+      <Circle
+        className={cn(getStatusStyles(status))}
+        size={size}
+      />
+    </div>
   );
 }

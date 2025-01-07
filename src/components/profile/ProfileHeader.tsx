@@ -112,42 +112,42 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
           >
             <div className="relative group">
               <ProfileAvatar profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
-              <div className="absolute -bottom-1 -right-1">
+              <div className="absolute -bottom-2 -right-2">
                 {isOwnProfile ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="p-0 h-auto rounded-full ring-2 ring-white">
+                      <Button variant="ghost" className="p-1.5 h-auto rounded-full bg-white shadow-md hover:bg-white/90">
                         <AvailabilityIndicator status={availability} size={16} />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => updateStatus("online")}>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => updateStatus("online")} className="gap-2">
                         <AvailabilityIndicator status="online" size={12} />
-                        <span className="ml-2">Online</span>
+                        <span>Online</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateStatus("away")}>
+                      <DropdownMenuItem onClick={() => updateStatus("away")} className="gap-2">
                         <AvailabilityIndicator status="away" size={12} />
-                        <span className="ml-2">Away</span>
+                        <span>Away</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateStatus("busy")}>
+                      <DropdownMenuItem onClick={() => updateStatus("busy")} className="gap-2">
                         <AvailabilityIndicator status="busy" size={12} />
-                        <span className="ml-2">Busy</span>
+                        <span>Busy</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateStatus("offline")}>
+                      <DropdownMenuItem onClick={() => updateStatus("offline")} className="gap-2">
                         <AvailabilityIndicator status="offline" size={12} />
-                        <span className="ml-2">Appear Offline</span>
+                        <span>Appear Offline</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <div className="ring-2 ring-white rounded-full">
+                  <div className="p-1.5 rounded-full bg-white shadow-md">
                     <AvailabilityIndicator status={availability} size={16} />
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="mt-6 flex justify-between items-start">
+            <div className="mt-8 flex justify-between items-start">
               <ProfileInfo profile={profile} />
               <ProfileActions 
                 isOwnProfile={isOwnProfile}
