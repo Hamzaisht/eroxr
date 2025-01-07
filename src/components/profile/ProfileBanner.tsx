@@ -1,13 +1,11 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Profile } from "@/integrations/supabase/types/profile";
 import { BannerMedia } from "./banner/BannerMedia";
 import { BannerEditButton } from "./banner/BannerEditButton";
 import { BannerPreview } from "./banner/BannerPreview";
-import { ImageCropDialog } from "./ImageCropDialog";
+import { BannerUploadDialog } from "./banner/BannerUploadDialog";
+import { useBannerUpload } from "./banner/useBannerUpload";
 
 interface ProfileBannerProps {
   profile: Profile;
@@ -17,98 +15,23 @@ interface ProfileBannerProps {
 
 export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBannerProps) => {
   const [isHovering, setIsHovering] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [showCropDialog, setShowCropDialog] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [tempImageUrl, setTempImageUrl] = useState<string>('');
   const [currentBannerUrl, setCurrentBannerUrl] = useState<string | null>(null);
-  const { toast } = useToast();
 
   // Update currentBannerUrl when profile changes
   useEffect(() => {
     setCurrentBannerUrl(profile?.banner_url);
   }, [profile?.banner_url]);
 
+  const { isUploading, handleFileChange } = useBannerUpload(profile, (url) => {
+    setCurrentBannerUrl(url);
+    setShowUploadModal(false);
+  });
+
   const defaultVideoUrl = "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766";
   const bannerUrl = currentBannerUrl || defaultVideoUrl;
   const bannerMediaType = currentBannerUrl ? getMediaType(currentBannerUrl) : 'video';
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 20 * 1024 * 1024) {
-      toast({
-        variant: "destructive",
-        title: "File too large",
-        description: "Please upload a file smaller than 20MB",
-      });
-      return;
-    }
-
-    if (file.type.startsWith('image/')) {
-      setSelectedFile(file);
-      setTempImageUrl(URL.createObjectURL(file));
-      setShowCropDialog(true);
-      setShowUploadModal(false);
-    } else {
-      handleUpload(file);
-    }
-  };
-
-  const handleUpload = async (file: File) => {
-    try {
-      setIsUploading(true);
-      
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${profile.id}/banner.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('banners')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('banners')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ banner_url: publicUrl })
-        .eq('id', profile.id);
-
-      if (updateError) throw updateError;
-
-      // Update the local state with the new URL
-      setCurrentBannerUrl(publicUrl);
-      
-      toast({
-        title: "Success",
-        description: "Banner updated successfully",
-      });
-
-    } catch (error) {
-      console.error('Error uploading banner:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update banner. Please try again.",
-      });
-    } finally {
-      setIsUploading(false);
-      setShowUploadModal(false);
-    }
-  };
-
-  const handleCropComplete = async (croppedImageBlob: Blob) => {
-    const file = new File([croppedImageBlob], selectedFile?.name || 'banner.jpg', {
-      type: 'image/jpeg'
-    });
-    await handleUpload(file);
-  };
 
   return (
     <>
@@ -137,37 +60,12 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         )}
       </motion.div>
 
-      <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Update Banner</DialogTitle>
-            <DialogDescription>
-              Upload a new banner image or video. For best results:
-              <ul className="list-disc pl-4 mt-2 space-y-1">
-                <li>Minimum dimensions: 1500x500 pixels</li>
-                <li>Maximum file size: 20MB</li>
-                <li>Supported formats: JPG, PNG, GIF, MP4</li>
-              </ul>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <input
-              type="file"
-              id="banner-upload"
-              className="hidden"
-              accept="image/*,video/*"
-              onChange={handleFileChange}
-              disabled={isUploading}
-            />
-            <label
-              htmlFor="banner-upload"
-              className="cursor-pointer bg-luxury-primary/10 hover:bg-luxury-primary/20 text-luxury-primary px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
-            >
-              <span>{isUploading ? "Uploading..." : "Choose File"}</span>
-            </label>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <BannerUploadDialog
+        isOpen={showUploadModal}
+        onOpenChange={setShowUploadModal}
+        isUploading={isUploading}
+        onFileChange={handleFileChange}
+      />
 
       <BannerPreview
         isOpen={showPreview}
@@ -175,21 +73,6 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         mediaUrl={bannerUrl}
         mediaType={bannerMediaType}
       />
-
-      {showCropDialog && tempImageUrl && (
-        <ImageCropDialog
-          isOpen={showCropDialog}
-          onClose={() => {
-            setShowCropDialog(false);
-            setTempImageUrl('');
-            setSelectedFile(null);
-          }}
-          imageUrl={tempImageUrl}
-          onCropComplete={handleCropComplete}
-          aspectRatio={3}
-          isCircular={false}
-        />
-      )}
     </>
   );
 };
