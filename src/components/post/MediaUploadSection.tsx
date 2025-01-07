@@ -1,6 +1,7 @@
 import { ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface MediaUploadSectionProps {
   selectedFiles: FileList | null;
@@ -15,6 +16,49 @@ export const MediaUploadSection = ({
   isPayingCustomer,
   handleFileSelect
 }: MediaUploadSectionProps) => {
+  const { toast } = useToast();
+
+  const validateVideoFile = async (file: File): Promise<boolean> => {
+    if (file.type.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+
+      return new Promise((resolve) => {
+        video.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(video.src);
+          const duration = video.duration;
+          if (duration > 1200) { // 20 minutes = 1200 seconds
+            toast({
+              title: "Video too long",
+              description: "Videos must be 20 minutes or shorter",
+              variant: "destructive",
+            });
+            resolve(false);
+          }
+          resolve(true);
+        };
+        video.src = URL.createObjectURL(file);
+      });
+    }
+    return true;
+  };
+
+  const handleFileValidation = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const isValid = await validateVideoFile(file);
+      if (!isValid) {
+        e.target.value = '';
+        return;
+      }
+    }
+
+    handleFileSelect(e);
+  };
+
   return (
     <div className="space-y-2">
       <Label>Media</Label>
@@ -34,7 +78,7 @@ export const MediaUploadSection = ({
           multiple
           accept="image/*,video/*"
           className="hidden"
-          onChange={handleFileSelect}
+          onChange={handleFileValidation}
           disabled={!isPayingCustomer}
         />
       </div>
@@ -43,6 +87,9 @@ export const MediaUploadSection = ({
           Upgrade to upload media files
         </p>
       )}
+      <p className="text-sm text-muted-foreground">
+        Supported formats: Images (JPG, PNG, GIF) and Videos (MP4, WebM) up to 20 minutes
+      </p>
     </div>
   );
 };
