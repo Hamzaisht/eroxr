@@ -23,11 +23,12 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [showCropDialog, setShowCropDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [tempImageUrl, setTempImageUrl] = useState<string>('');
+  const [currentBannerUrl, setCurrentBannerUrl] = useState(profile?.banner_url);
   const { toast } = useToast();
 
   const defaultVideoUrl = "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766";
-  const bannerUrl = profile?.banner_url || defaultVideoUrl;
-  const bannerMediaType = profile?.banner_url ? getMediaType(profile.banner_url) : 'video';
+  const bannerUrl = currentBannerUrl || defaultVideoUrl;
+  const bannerMediaType = currentBannerUrl ? getMediaType(currentBannerUrl) : 'video';
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -76,12 +77,12 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
 
       if (updateError) throw updateError;
 
+      setCurrentBannerUrl(publicUrl);
+      
       toast({
         title: "Success",
         description: "Banner updated successfully",
       });
-
-      window.location.reload();
 
     } catch (error) {
       console.error('Error uploading banner:', error);
