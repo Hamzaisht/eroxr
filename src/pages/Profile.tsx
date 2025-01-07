@@ -1,18 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { ProfileForm } from "@/components/profile/ProfileForm";
-import { VerificationForm } from "@/components/profile/VerificationForm";
-import { PricingForm } from "@/components/profile/PricingForm";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
-import { ProfileTabs } from "@/components/profile/ProfileTabs";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContainer } from "@/components/profile/tabs/TabsContainer";
+import { ProfileDialogs } from "@/components/profile/dialogs/ProfileDialogs";
 import { useToast } from "@/hooks/use-toast";
-import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { GoLiveDialog } from "@/components/home/GoLiveDialog";
-import { CreatorsFeed } from "@/components/CreatorsFeed";
 
 const Profile = () => {
   const { id } = useParams();
@@ -82,47 +76,21 @@ const Profile = () => {
           />
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
-              <Tabs defaultValue="profile" className="space-y-6">
-                <TabsList className="bg-luxury-dark/50 backdrop-blur-lg">
-                  <TabsTrigger value="profile">Profile</TabsTrigger>
-                  <TabsTrigger value="verification">Verification</TabsTrigger>
-                  <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="profile">
-                  {isEditing ? (
-                    <ProfileForm onSave={handleSave} />
-                  ) : (
-                    <>
-                      <ProfileTabs profile={profile} />
-                      <div className="mt-8">
-                        <CreatorsFeed />
-                      </div>
-                    </>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="verification">
-                  <VerificationForm />
-                </TabsContent>
-                
-                <TabsContent value="pricing">
-                  <PricingForm />
-                </TabsContent>
-              </Tabs>
+              <TabsContainer 
+                profile={profile}
+                isEditing={isEditing}
+                onSave={handleSave}
+              />
             </div>
           </div>
 
-          <CreatePostDialog
-            open={isPostDialogOpen}
-            onOpenChange={setIsPostDialogOpen}
+          <ProfileDialogs 
+            isPostDialogOpen={isPostDialogOpen}
+            isLiveDialogOpen={isLiveDialogOpen}
+            setIsPostDialogOpen={setIsPostDialogOpen}
+            setIsLiveDialogOpen={setIsLiveDialogOpen}
             selectedFiles={selectedFiles}
             onFileSelect={handleFileSelect}
-          />
-
-          <GoLiveDialog
-            open={isLiveDialogOpen}
-            onOpenChange={setIsLiveDialogOpen}
           />
         </main>
       </div>
@@ -140,10 +108,11 @@ const Profile = () => {
               isOwnProfile={session?.user?.id === profile.id} 
             />
             <div className="container mx-auto px-4 py-8">
-              <ProfileTabs profile={profile} />
-              <div className="mt-8">
-                <CreatorsFeed />
-              </div>
+              <TabsContainer 
+                profile={profile}
+                isEditing={isEditing}
+                onSave={handleSave}
+              />
             </div>
           </>
         ) : (
