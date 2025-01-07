@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Share2, CircuitBoard } from "lucide-react";
+import { Share2, CircuitBoard, Edit } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { ProfileBanner } from "./ProfileBanner";
 import { ProfileStats } from "./ProfileStats";
+import { ProfileForm } from "./ProfileForm";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -12,6 +13,7 @@ interface ProfileHeaderProps {
 }
 
 export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => {
+  const [isEditing, setIsEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 200], [1, 0]);
@@ -24,6 +26,24 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
     if (extension === 'gif') return 'gif';
     return 'image';
   };
+
+  if (isEditing && isOwnProfile) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gradient">Edit Profile</h1>
+          <Button
+            variant="outline"
+            onClick={() => setIsEditing(false)}
+            className="neo-blur"
+          >
+            Cancel
+          </Button>
+        </div>
+        <ProfileForm />
+      </div>
+    );
+  }
 
   return (
     <div className="relative" ref={containerRef}>
@@ -40,7 +60,19 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
             transition={{ type: "spring", stiffness: 100 }}
             className="relative"
           >
-            <ProfileAvatar profile={profile} getMediaType={getMediaType} />
+            <div className="relative group">
+              <ProfileAvatar profile={profile} getMediaType={getMediaType} />
+              {isOwnProfile && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-0 right-0 m-2 bg-luxury-darker/80 hover:bg-luxury-primary/20 transition-all duration-300 opacity-0 group-hover:opacity-100"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit className="h-4 w-4 text-luxury-primary" />
+                </Button>
+              )}
+            </div>
 
             <div className="mt-6 flex justify-between items-start">
               <motion.div
@@ -49,9 +81,21 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
                 transition={{ delay: 0.2 }}
                 className="space-y-3"
               >
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
-                  {profile?.username}
-                </h1>
+                <div className="flex items-center gap-4">
+                  <h1 className="text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
+                    {profile?.username}
+                  </h1>
+                  {isOwnProfile && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="bg-luxury-darker/80 hover:bg-luxury-primary/20 transition-all duration-300"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit className="h-4 w-4 text-luxury-primary" />
+                    </Button>
+                  )}
+                </div>
                 <p className="text-luxury-neutral/80 mt-2 max-w-2xl text-lg leading-relaxed backdrop-blur-sm">
                   {profile?.bio || "No bio yet"}
                 </p>
