@@ -22,9 +22,14 @@ export const BannerUploadDialog = ({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
-      setCropPreviewUrl(URL.createObjectURL(file));
-      setShowCropDialog(true);
+      if (file.type.startsWith('image/')) {
+        setSelectedFile(file);
+        setCropPreviewUrl(URL.createObjectURL(file));
+        setShowCropDialog(true);
+      } else {
+        // If it's not an image (e.g., video), pass it directly
+        onFileChange(file);
+      }
     }
   };
 
