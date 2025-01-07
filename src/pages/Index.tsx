@@ -1,7 +1,6 @@
 import { MainNav } from "@/components/MainNav";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { Features3D } from "@/components/landing/Features3D";
-import { InteractiveFeatures } from "@/components/landing/InteractiveFeatures";
 import { AnimatedStats } from "@/components/landing/AnimatedStats";
 import { CreatorShowcase } from "@/components/landing/CreatorShowcase";
 import { CategorySection } from "@/components/CategorySection";
@@ -13,36 +12,22 @@ import { motion } from "framer-motion";
 
 const Index = () => {
   return (
-    <>
-      <SplashScreen />
-      <div className="min-h-screen bg-luxury-dark">
-        <MainNav />
-        <motion.main
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Hero Section with main value proposition */}
-          <HeroSection />
-          
-          {/* Platform Statistics */}
-          <AnimatedStats />
-          
-          {/* Feature Showcases */}
-          <Features3D />
-          <InteractiveFeatures />
-          
-          {/* Content Discovery Sections */}
-          <CategorySection />
-          <CreatorShowcase />
-          <FeaturedCreators />
-          
-          {/* Call to Action */}
-          <CTASection />
-        </motion.main>
-        <Footer />
-      </div>
-    </>
+    <div className="min-h-screen bg-luxury-dark">
+      <MainNav />
+      <motion.main
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <HeroSection />
+        <AnimatedStats />
+        <Features3D />
+        <CreatorShowcase />
+        <FeaturedCreators />
+        <CTASection />
+      </motion.main>
+      <Footer />
+    </div>
   );
 };
 
