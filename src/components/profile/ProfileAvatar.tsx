@@ -54,22 +54,14 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
     };
   }, [profile?.id, isOwnProfile, availability]);
 
-  const handleAvatarClick = (e: React.MouseEvent) => {
-    // Only open preview if clicking directly on the avatar
-    if (profile?.avatar_url && e.target === e.currentTarget) {
-      setShowPreview(true);
-    }
-  };
-
   return (
     <>
       <div className="relative inline-block">
-        <div onClick={handleAvatarClick}>
-          <ProfileAvatarImage
-            src={profile?.avatar_url}
-            username={profile?.username}
-          />
-        </div>
+        <ProfileAvatarImage
+          src={profile?.avatar_url}
+          username={profile?.username}
+          onImageClick={() => profile?.avatar_url && setShowPreview(true)}
+        />
         
         {isOwnProfile && (
           <div className="absolute -bottom-1 -right-1 z-10">
