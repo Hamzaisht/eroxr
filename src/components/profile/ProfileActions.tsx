@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Edit, Save, X, Video, PenSquare } from "lucide-react";
+import { Edit, Save, X, Video } from "lucide-react";
 
 interface ProfileActionsProps {
   isOwnProfile: boolean;
@@ -7,7 +7,6 @@ interface ProfileActionsProps {
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
-  onCreatePost?: () => void;
   onGoLive?: () => void;
 }
 
@@ -17,7 +16,6 @@ export const ProfileActions = ({
   onEdit,
   onSave,
   onCancel,
-  onCreatePost,
   onGoLive,
 }: ProfileActionsProps) => {
   if (!isOwnProfile) return null;
@@ -39,12 +37,6 @@ export const ProfileActions = ({
 
   return (
     <div className="flex gap-2">
-      {onCreatePost && (
-        <Button variant="outline" size="sm" onClick={onCreatePost}>
-          <PenSquare className="h-4 w-4 mr-2" />
-          Create Post
-        </Button>
-      )}
       {onGoLive && (
         <Button variant="outline" size="sm" onClick={onGoLive}>
           <Video className="h-4 w-4 mr-2" />

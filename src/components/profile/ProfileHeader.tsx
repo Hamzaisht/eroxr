@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { useState } from "react";
 import { ProfileHeaderContainer } from "./header/ProfileHeaderContainer";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { CreatePostArea } from "@/components/home/CreatePostArea";
+import type { Profile } from "@/integrations/supabase/types";
 
 interface ProfileHeaderProps {
-  profile: any;
+  profile: Profile;
   isOwnProfile: boolean;
   onGoLive?: () => void;
 }
@@ -15,49 +15,8 @@ export const ProfileHeader = ({ profile, isOwnProfile, onGoLive }: ProfileHeader
   const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const [showBannerPreview, setShowBannerPreview] = useState(false);
-  const [channel, setChannel] = useState<any>(null);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-
-  useEffect(() => {
-    if (!profile?.id) return;
-
-    const presenceChannel = supabase.channel('online-users')
-      .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
-        const userState = state[profile.id] as any[];
-        
-        if (userState && userState.length > 0) {
-          const status = userState[0]?.status || "offline";
-          setAvailability(status as AvailabilityStatus);
-        } else {
-          setAvailability("offline");
-        }
-      })
-      .subscribe();
-
-    setChannel(presenceChannel);
-
-    if (isOwnProfile) {
-      presenceChannel.track({
-        user_id: profile.id,
-        status: "online",
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
-  }, [profile?.id, isOwnProfile]);
-
-  const handleSave = () => {
-    setIsEditing(false);
-  };
-
-  const handleClose = () => {
-    setIsEditing(false);
-  };
 
   return (
     <>
@@ -71,12 +30,22 @@ export const ProfileHeader = ({ profile, isOwnProfile, onGoLive }: ProfileHeader
         setShowAvatarPreview={setShowAvatarPreview}
         setShowBannerPreview={setShowBannerPreview}
         setAvailability={setAvailability}
-        handleSave={handleSave}
-        handleClose={handleClose}
+        handleSave={() => setIsEditing(false)}
+        handleClose={() => setIsEditing(false)}
         setIsEditing={setIsEditing}
-        onCreatePost={() => setIsCreatePostOpen(true)}
         onGoLive={onGoLive}
       />
+
+      {isOwnProfile && (
+        <div className="container mx-auto px-4 -mt-4 mb-8">
+          <CreatePostArea
+            onOpenCreatePost={() => setIsCreatePostOpen(true)}
+            onFileSelect={setSelectedFiles}
+            onOpenGoLive={onGoLive || (() => {})}
+            isPayingCustomer={profile.is_paying_customer}
+          />
+        </div>
+      )}
 
       <CreatePostDialog
         open={isCreatePostOpen}

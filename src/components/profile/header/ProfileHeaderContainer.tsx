@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ProfileBanner } from "@/components/profile/ProfileBanner";
 import { ProfileInfo } from "@/components/profile/ProfileInfo";
 import { ProfileStats } from "@/components/profile/ProfileStats";
@@ -6,7 +5,7 @@ import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { PreviewModals } from "./PreviewModals";
-import type { Profile } from "@/integrations/supabase/types/profile";
+import type { Profile } from "@/integrations/supabase/types";
 import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 interface ProfileHeaderContainerProps {
@@ -22,7 +21,6 @@ interface ProfileHeaderContainerProps {
   handleSave: () => void;
   handleClose: () => void;
   setIsEditing: (editing: boolean) => void;
-  onCreatePost?: () => void;
   onGoLive?: () => void;
 }
 
@@ -39,7 +37,6 @@ export const ProfileHeaderContainer = ({
   handleSave,
   handleClose,
   setIsEditing,
-  onCreatePost,
   onGoLive,
 }: ProfileHeaderContainerProps) => {
   return (
@@ -83,7 +80,6 @@ export const ProfileHeaderContainer = ({
                   onEdit={() => setIsEditing(true)}
                   onSave={handleSave}
                   onCancel={handleClose}
-                  onCreatePost={onCreatePost}
                   onGoLive={onGoLive}
                 />
               </div>
