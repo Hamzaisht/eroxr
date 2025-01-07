@@ -16,14 +16,14 @@ export const AvailabilityIndicator = ({
   const getStatusColor = (status: AvailabilityStatus) => {
     switch (status) {
       case "online":
-        return "bg-emerald-500";
-      case "away":
-        return "bg-amber-500";
+        return "bg-emerald-500"; // Active on website
       case "busy":
-        return "bg-rose-500";
+        return "bg-rose-500";    // In call/video
+      case "away":
+        return "bg-amber-500";   // Messaging
       case "offline":
       default:
-        return "bg-gray-500/80";
+        return "bg-gray-500/80"; // Inactive/stagnant
     }
   };
 

@@ -10,7 +10,12 @@ import type { ProfileAvatarProps } from "./avatar/types";
 export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAvatarProps) => {
   const [showPreview, setShowPreview] = useState(false);
   
-  const { availability, setAvailability } = usePresence(profile?.id, !!isOwnProfile);
+  const { 
+    availability, 
+    setAvailability,
+    setIsInCall,
+    setIsMessaging
+  } = usePresence(profile?.id, !!isOwnProfile);
   
   const {
     showCropDialog,
