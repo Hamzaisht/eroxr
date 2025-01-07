@@ -25,21 +25,12 @@ export const MainFeed = ({
     >
       <FeedHeader />
 
-      <AnimatePresence mode="wait">
+      <div className="flex flex-col gap-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           className="w-full"
-        >
-          <StoryReel />
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="w-full bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-neutral/10 p-4 shadow-lg"
         >
           <CreatePostArea
             onOpenCreatePost={onOpenCreatePost}
@@ -55,9 +46,18 @@ export const MainFeed = ({
           exit={{ opacity: 0, y: -10 }}
           className="w-full"
         >
+          <StoryReel />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="w-full"
+        >
           <CreatorsFeed />
         </motion.div>
-      </AnimatePresence>
+      </div>
     </motion.div>
   );
 };
