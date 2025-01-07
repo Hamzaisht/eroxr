@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Image } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProfileBannerProps {
   profile: any;
@@ -10,19 +12,60 @@ interface ProfileBannerProps {
 
 export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBannerProps) => {
   const [isHovering, setIsHovering] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
   const bannerMediaType = getMediaType(profile?.banner_url);
 
   const handleBannerClick = () => {
-    if (isOwnProfile) {
+    if (isOwnProfile && !isUploading) {
       document.getElementById('banner-upload')?.click();
     }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Handle file upload logic here
-      console.log("Banner file selected:", file);
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      
+      // Upload file to Supabase storage
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${profile.id}/banner.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('banners')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('banners')
+        .getPublicUrl(filePath);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ banner_url: publicUrl })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Success",
+        description: "Banner updated successfully",
+      });
+
+    } catch (error) {
+      console.error('Error uploading banner:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update banner. Please try again.",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -68,7 +111,9 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
             className="bg-luxury-darker/80 backdrop-blur-sm px-4 py-2 rounded-lg flex items-center gap-2 text-white"
           >
             <Image className="w-5 h-5" />
-            <span className="text-sm font-medium">Edit Banner</span>
+            <span className="text-sm font-medium">
+              {isUploading ? "Uploading..." : "Edit Banner"}
+            </span>
           </motion.div>
         </div>
       )}
@@ -79,6 +124,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         className="hidden"
         accept="image/*,video/*"
         onChange={handleFileChange}
+        disabled={isUploading}
       />
     </motion.div>
   );

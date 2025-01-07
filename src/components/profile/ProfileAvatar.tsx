@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserRound } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProfileAvatarProps {
   profile: any;
@@ -11,18 +13,59 @@ interface ProfileAvatarProps {
 
 export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAvatarProps) => {
   const [isHovering, setIsHovering] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
   const handleAvatarClick = () => {
-    if (isOwnProfile) {
+    if (isOwnProfile && !isUploading) {
       document.getElementById('avatar-upload')?.click();
     }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Handle file upload logic here
-      console.log("Avatar file selected:", file);
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      
+      // Upload file to Supabase storage
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${profile.id}/avatar.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully",
+      });
+
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update profile picture. Please try again.",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -62,7 +105,9 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
             className="text-luxury-primary flex flex-col items-center gap-2"
           >
             <UserRound className="w-8 h-8 animate-pulse" />
-            <span className="text-sm font-medium text-white">Change Avatar</span>
+            <span className="text-sm font-medium text-white">
+              {isUploading ? "Uploading..." : "Change Avatar"}
+            </span>
           </motion.div>
         </div>
       )}
@@ -73,6 +118,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
         className="hidden"
         accept="image/*,video/*"
         onChange={handleFileChange}
+        disabled={isUploading}
       />
     </div>
   );
