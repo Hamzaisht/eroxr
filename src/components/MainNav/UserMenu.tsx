@@ -20,10 +20,6 @@ export const UserMenu = () => {
 
   const handleLogin = () => {
     navigate("/login");
-    toast({
-      title: "Welcome back!",
-      description: "Please sign in to continue.",
-    });
   };
 
   const handleSignUp = () => {

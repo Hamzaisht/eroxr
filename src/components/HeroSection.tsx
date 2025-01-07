@@ -10,10 +10,8 @@ export const HeroSection = () => {
   const { toast } = useToast();
 
   const handleGetStarted = () => {
-    if (session) {
-      navigate("/profile");
-    } else {
-      navigate("/login");
+    navigate("/login");
+    if (!session) {
       toast({
         title: "Welcome!",
         description: "Create your account to get started.",
@@ -22,7 +20,6 @@ export const HeroSection = () => {
   };
 
   const handleLearnMore = () => {
-    // Smooth scroll to features section
     document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" });
   };
 
