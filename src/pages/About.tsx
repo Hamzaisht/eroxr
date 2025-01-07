@@ -1,4 +1,3 @@
-import { MainNav } from "@/components/MainNav";
 import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-luxury-dark">
-      <MainNav />
       <motion.main
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

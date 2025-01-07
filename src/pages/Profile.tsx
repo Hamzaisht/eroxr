@@ -1,5 +1,4 @@
 import { useParams } from "react-router-dom";
-import { MainNav } from "@/components/MainNav";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { VerificationForm } from "@/components/profile/VerificationForm";
 import { PricingForm } from "@/components/profile/PricingForm";
@@ -50,7 +49,6 @@ const Profile = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-luxury-gradient">
-        <MainNav />
         <div className="animate-pulse space-y-4">
           <div className="h-80 w-full bg-luxury-dark/50" />
           <div className="container mx-auto px-4">
@@ -67,12 +65,8 @@ const Profile = () => {
   if (!id || (session?.user && session.user.id === id)) {
     return (
       <div className="min-h-screen bg-luxury-gradient">
-        <MainNav />
         <main className="w-full">
-          {/* Profile Header with Banner, Avatar, and Stats */}
           <ProfileHeader profile={profile} isOwnProfile={true} />
-          
-          {/* Profile Content */}
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
               <div className="flex justify-between items-center mb-8">
@@ -140,7 +134,6 @@ const Profile = () => {
   // Public profile view
   return (
     <div className="min-h-screen bg-luxury-gradient">
-      <MainNav />
       <main className="w-full">
         {profile ? (
           <>

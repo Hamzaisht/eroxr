@@ -45,30 +45,32 @@ const Search = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">
-        Search Results for "{query}"
-      </h1>
-      
-      {searchResults?.length === 0 ? (
-        <p className="text-center text-gray-500">
-          No results found for "{query}"
-        </p>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {searchResults?.map((profile) => (
-            <CreatorCard
-              key={profile.id}
-              name={profile.username || "Anonymous"}
-              image={profile.avatar_url || "/placeholder.svg"}
-              banner="https://images.unsplash.com/photo-1605810230434-7631ac76ec81"
-              description={profile.bio || "No bio available"}
-              subscribers={0}
-              creatorId={profile.id}
-            />
-          ))}
-        </div>
-      )}
+    <div className="min-h-screen bg-luxury-dark pt-20">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6">
+          Search Results for "{query}"
+        </h1>
+        
+        {searchResults?.length === 0 ? (
+          <p className="text-center text-gray-500">
+            No results found for "{query}"
+          </p>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {searchResults?.map((profile) => (
+              <CreatorCard
+                key={profile.id}
+                name={profile.username || "Anonymous"}
+                image={profile.avatar_url || "/placeholder.svg"}
+                banner="https://images.unsplash.com/photo-1605810230434-7631ac76ec81"
+                description={profile.bio || "No bio available"}
+                subscribers={0}
+                creatorId={profile.id}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
