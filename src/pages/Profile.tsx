@@ -45,6 +45,13 @@ const Profile = () => {
 
   const handleFileSelect = (files: FileList | null) => {
     setSelectedFiles(files);
+    if (files && files.length > 0) {
+      setIsPostDialogOpen(true);
+    }
+  };
+
+  const handleCreatePost = () => {
+    setIsPostDialogOpen(true);
   };
 
   // Loading state
@@ -71,7 +78,7 @@ const Profile = () => {
           <ProfileHeader 
             profile={profile} 
             isOwnProfile={true}
-            onCreatePost={() => setIsPostDialogOpen(true)}
+            onCreatePost={handleCreatePost}
             onGoLive={() => setIsLiveDialogOpen(true)}
           />
           <div className="container mx-auto px-4 py-8">

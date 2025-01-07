@@ -1,13 +1,12 @@
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ProfileBanner } from "../banner/ProfileBanner";
-import { ProfileStats } from "../ProfileStats";
-import { ProfileAvatar } from "../ProfileAvatar";
-import { ProfileInfo } from "../ProfileInfo";
-import { ProfileActions } from "../ProfileActions";
-import { ProfileEditModal } from "../ProfileEditModal";
+import { useState } from "react";
+import { ProfileActions } from "@/components/profile/ProfileActions";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { ProfileBanner } from "@/components/profile/ProfileBanner";
+import { ProfileInfo } from "@/components/profile/ProfileInfo";
+import { ProfileStats } from "@/components/profile/ProfileStats";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { PreviewModals } from "./PreviewModals";
+import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 
 interface ProfileHeaderContainerProps {
   profile: any;
@@ -42,80 +41,46 @@ export const ProfileHeaderContainer = ({
   onCreatePost,
   onGoLive,
 }: ProfileHeaderContainerProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll();
-  const opacity = useTransform(scrollY, [0, 200], [1, 0]);
-  const scale = useTransform(scrollY, [0, 200], [1, 0.95]);
-
-  const getMediaType = (url: string) => {
-    if (!url) return 'image';
-    const extension = url.split('.').pop()?.toLowerCase();
-    if (['mp4', 'mov', 'webm'].includes(extension || '')) return 'video';
-    if (extension === 'gif') return 'gif';
-    return 'image';
-  };
-
   return (
-    <>
-      <div className="relative" ref={containerRef}>
-        <motion.div style={{ opacity, scale }}>
-          <div 
-            onClick={() => profile?.banner_url && setShowBannerPreview(true)}
-            className="cursor-pointer"
-          >
-            <ProfileBanner profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
-          </div>
-          <ProfileStats />
-        </motion.div>
-
-        <div className="-mt-32 pb-4 z-30">
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 100 }}
-            className="relative px-4"
-          >
-            <div className="relative group">
-              <div onClick={() => profile?.avatar_url && setShowAvatarPreview(true)} className="cursor-pointer">
-                <ProfileAvatar 
-                  profile={profile} 
-                  getMediaType={getMediaType} 
-                  isOwnProfile={isOwnProfile} 
-                />
+    <div className="relative">
+      <ProfileBanner profile={profile} isEditing={isEditing} />
+      
+      <div className="container mx-auto px-4">
+        <div className="relative -mt-20 mb-8">
+          <div className="flex flex-col lg:flex-row items-start lg:items-end gap-6">
+            <ProfileAvatar profile={profile} isEditing={isEditing} />
+            
+            <div className="flex-1 space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8">
+                <ProfileInfo profile={profile} />
+                <ProfileHeaderStatus availability={availability} />
+              </div>
+              
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                <ProfileStats profile={profile} />
+                <div className="lg:ml-auto">
+                  <ProfileActions
+                    isOwnProfile={isOwnProfile}
+                    isEditing={isEditing}
+                    onEdit={() => setIsEditing(true)}
+                    onSave={handleSave}
+                    onCancel={handleClose}
+                    onCreatePost={onCreatePost}
+                    onGoLive={onGoLive}
+                  />
+                </div>
               </div>
             </div>
-
-            <div className="mt-8 flex justify-between items-start">
-              <ProfileInfo profile={profile} />
-              <ProfileActions 
-                isOwnProfile={isOwnProfile}
-                isEditing={isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={handleSave}
-                onCancel={() => setIsEditing(false)}
-                onCreatePost={onCreatePost}
-                onGoLive={onGoLive}
-              />
-            </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
-      <PreviewModals 
-        profile={profile}
+      <PreviewModals
         showAvatarPreview={showAvatarPreview}
         showBannerPreview={showBannerPreview}
         setShowAvatarPreview={setShowAvatarPreview}
         setShowBannerPreview={setShowBannerPreview}
-        getMediaType={getMediaType}
       />
-
-      {isEditing && isOwnProfile && (
-        <ProfileEditModal 
-          onSave={handleSave}
-          onClose={handleClose}
-        />
-      )}
-    </>
+    </div>
   );
 };
