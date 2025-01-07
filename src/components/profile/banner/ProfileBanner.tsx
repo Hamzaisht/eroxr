@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { PencilIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 import type { Profile } from "@/integrations/supabase/types/profile";
-import { BannerUploadModal } from "./BannerUploadModal";
-import { BannerPreviewModal } from "./BannerPreviewModal";
+import { BannerMedia } from "./BannerMedia";
+import { BannerEditButton } from "./BannerEditButton";
+import { BannerPreview } from "./BannerPreview";
+import { BannerUploadDialog } from "./BannerUploadDialog";
 import { useBannerUpload } from "./useBannerUpload";
 
 interface ProfileBannerProps {
@@ -16,14 +17,21 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [isHovering, setIsHovering] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [currentBannerUrl, setCurrentBannerUrl] = useState<string | null>(profile?.banner_url);
-  
-  const { isUploading, handleFileChange } = useBannerUpload(profile, (url: string) => {
+  const [currentBannerUrl, setCurrentBannerUrl] = useState<string | null>(null);
+
+  // Update currentBannerUrl when profile changes
+  useEffect(() => {
+    setCurrentBannerUrl(profile?.banner_url);
+  }, [profile?.banner_url]);
+
+  const { isUploading, handleFileChange } = useBannerUpload(profile, (url) => {
     setCurrentBannerUrl(url);
     setShowUploadModal(false);
   });
 
-  const bannerMediaType = getMediaType(currentBannerUrl || '');
+  const defaultVideoUrl = "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766";
+  const bannerUrl = currentBannerUrl || defaultVideoUrl;
+  const bannerMediaType = currentBannerUrl ? getMediaType(currentBannerUrl) : 'video';
 
   return (
     <>
@@ -36,49 +44,33 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         onHoverEnd={() => setIsHovering(false)}
         onClick={() => setShowPreview(true)}
       >
-        {bannerMediaType === 'video' ? (
-          <video
-            src={currentBannerUrl || "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766"}
-            className="w-full h-full object-cover"
-            autoPlay
-            loop
-            muted
-            playsInline
-          />
-        ) : (
-          <img
-            src={currentBannerUrl || "https://images.unsplash.com/photo-1605810230434-7631ac76ec81"}
-            alt="Profile Banner"
-            className="w-full h-full object-cover"
-          />
-        )}
+        <BannerMedia 
+          mediaUrl={bannerUrl}
+          mediaType={bannerMediaType}
+          isHovering={isHovering}
+        />
 
         {isOwnProfile && isHovering && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="absolute top-4 right-4 bg-luxury-primary hover:bg-luxury-primary/90 p-3 rounded-full flex items-center justify-center cursor-pointer z-30"
+          <BannerEditButton 
             onClick={(e) => {
               e.stopPropagation();
               setShowUploadModal(true);
             }}
-          >
-            <PencilIcon className="w-6 h-6 text-white" />
-          </motion.div>
+          />
         )}
       </motion.div>
 
-      <BannerUploadModal
+      <BannerUploadDialog
         isOpen={showUploadModal}
         onOpenChange={setShowUploadModal}
         isUploading={isUploading}
         onFileChange={handleFileChange}
       />
 
-      <BannerPreviewModal
+      <BannerPreview
         isOpen={showPreview}
         onOpenChange={setShowPreview}
-        mediaUrl={currentBannerUrl}
+        mediaUrl={bannerUrl}
         mediaType={bannerMediaType}
       />
     </>

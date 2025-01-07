@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface AvatarStatusProps {
   profileId: string;
@@ -56,6 +56,8 @@ export const AvatarStatus = ({
     }
   };
 
+  const displayStatus = status === "offline" ? "offline" : status;
+
   return isOwnProfile ? (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -63,7 +65,7 @@ export const AvatarStatus = ({
           variant="ghost" 
           className="p-1.5 h-auto rounded-full bg-black/10 backdrop-blur-xl hover:bg-black/20 transition-all duration-300"
         >
-          <AvailabilityIndicator status={status} size={12} />
+          <AvailabilityIndicator status={displayStatus} size={12} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
@@ -90,7 +92,7 @@ export const AvatarStatus = ({
     </DropdownMenu>
   ) : (
     <div className="p-1.5 rounded-full bg-black/10 backdrop-blur-xl">
-      <AvailabilityIndicator status={status} size={12} />
+      <AvailabilityIndicator status={displayStatus} size={12} />
     </div>
   );
 };
