@@ -7,7 +7,6 @@ import { ProfileInfo } from "../ProfileInfo";
 import { ProfileActions } from "../ProfileActions";
 import { ProfileEditModal } from "../ProfileEditModal";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
-import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import { PreviewModals } from "./PreviewModals";
 
 interface ProfileHeaderContainerProps {
@@ -74,13 +73,12 @@ export const ProfileHeaderContainer = ({
           >
             <div className="relative group">
               <div onClick={() => profile?.avatar_url && setShowAvatarPreview(true)} className="cursor-pointer">
-                <ProfileAvatar profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
+                <ProfileAvatar 
+                  profile={profile} 
+                  getMediaType={getMediaType} 
+                  isOwnProfile={isOwnProfile} 
+                />
               </div>
-              <ProfileHeaderStatus 
-                isOwnProfile={isOwnProfile}
-                availability={availability}
-                setAvailability={setAvailability}
-              />
             </div>
 
             <div className="mt-8 flex justify-between items-start">
