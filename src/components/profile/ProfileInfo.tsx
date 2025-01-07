@@ -14,6 +14,9 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
     });
   };
 
+  // Add a check for profile and username
+  const displayName = profile?.username || "Anonymous";
+
   return (
     <motion.div
       initial={{ x: -20, opacity: 0 }}
@@ -23,7 +26,7 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
     >
       <div className="flex items-center gap-4">
         <h1 className="text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
-          @{profile?.username || "Anonymous"}
+          @{displayName}
         </h1>
       </div>
       <p className="text-luxury-neutral/80 mt-2 max-w-2xl text-lg leading-relaxed backdrop-blur-sm">
