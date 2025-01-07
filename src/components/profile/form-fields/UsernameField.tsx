@@ -43,16 +43,15 @@ export const UsernameField = ({
           .from("profiles")
           .select("username")
           .eq("username", debouncedUsername)
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== "PGRST116") {
+        if (error) {
+          console.error("Error checking username:", error);
           form.setError("username", {
             type: "manual",
             message: "Failed to check username availability",
           });
-        }
-
-        if (existingUser) {
+        } else if (existingUser) {
           form.setError("username", {
             type: "manual",
             message: "Username is already taken",
