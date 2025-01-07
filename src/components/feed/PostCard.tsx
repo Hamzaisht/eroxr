@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostHeader } from "./PostHeader";
-import { getImageStyles } from "@/lib/image-utils";
+import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { MediaViewer } from "@/components/media/MediaViewer";
 import { Post } from "@/integrations/supabase/types/post";
 
@@ -49,7 +49,10 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
                     src={url}
                     alt={`Post media ${index + 1}`}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
+                    loading="eager"
+                    decoding="sync"
+                    srcSet={generateSrcSet(url)}
+                    sizes={getResponsiveSizes()}
                     style={getImageStyles(720, 720)}
                   />
                 </div>

@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 
 interface MediaViewerProps {
   media: string | null;
@@ -36,9 +37,11 @@ export const MediaViewer = ({ media, onClose }: MediaViewerProps) => {
                   "max-w-[95%] max-h-[95vh] object-contain",
                   "rounded-lg shadow-2xl"
                 )}
-                style={{
-                  imageRendering: "crisp-edges",
-                }}
+                style={getEnlargedImageStyles()}
+                srcSet={generateSrcSet(media)}
+                sizes={getResponsiveSizes()}
+                loading="eager"
+                decoding="sync"
               />
             </motion.div>
           </div>
