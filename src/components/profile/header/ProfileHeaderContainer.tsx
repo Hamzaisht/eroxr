@@ -23,6 +23,7 @@ interface ProfileHeaderContainerProps {
   handleSave: () => void;
   handleClose: () => void;
   setIsEditing: (editing: boolean) => void;
+  onCreatePost?: () => void;
   onGoLive?: () => void;
 }
 
@@ -39,6 +40,7 @@ export const ProfileHeaderContainer = ({
   handleSave,
   handleClose,
   setIsEditing,
+  onCreatePost,
   onGoLive,
 }: ProfileHeaderContainerProps) => {
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
@@ -46,6 +48,9 @@ export const ProfileHeaderContainer = ({
 
   const handleCreatePost = () => {
     setIsPostDialogOpen(true);
+    if (onCreatePost) {
+      onCreatePost();
+    }
   };
 
   return (
