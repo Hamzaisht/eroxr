@@ -1,8 +1,7 @@
-import { useParams } from "react-router-dom";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useState } from "react"; // Added missing import
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { TabsContainer } from "@/components/profile/tabs/TabsContainer";
 import { ProfileDialogs } from "@/components/profile/dialogs/ProfileDialogs";
@@ -51,11 +50,11 @@ const Profile = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>; // Add a proper loading component
+    return <div>Loading...</div>;
   }
 
   if (error) {
-    return <div>Error loading profile</div>; // Add a proper error component
+    return <div>Error loading profile</div>;
   }
 
   const isOwnProfile = session?.user?.id === (id || session?.user?.id);
