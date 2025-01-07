@@ -25,6 +25,13 @@ interface ProfileHeaderContainerProps {
   onGoLive?: () => void;
 }
 
+const getMediaType = (url: string): 'video' | 'gif' | 'image' => {
+  if (!url) return 'image';
+  if (url.match(/\.(mp4|webm|ogg)$/i)) return 'video';
+  if (url.match(/\.gif$/i)) return 'gif';
+  return 'image';
+};
+
 export const ProfileHeaderContainer = ({
   profile,
   isOwnProfile,
@@ -43,17 +50,29 @@ export const ProfileHeaderContainer = ({
 }: ProfileHeaderContainerProps) => {
   return (
     <div className="relative">
-      <ProfileBanner profile={profile} isEditing={isEditing} />
+      <ProfileBanner 
+        profile={profile} 
+        getMediaType={getMediaType}
+        isOwnProfile={isOwnProfile}
+      />
       
       <div className="container mx-auto px-4">
         <div className="relative -mt-20 mb-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-end gap-6">
-            <ProfileAvatar profile={profile} isEditing={isEditing} />
+            <ProfileAvatar 
+              profile={profile}
+              getMediaType={getMediaType}
+              isOwnProfile={isOwnProfile}
+            />
             
             <div className="flex-1 space-y-4">
               <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8">
                 <ProfileInfo profile={profile} />
-                <ProfileHeaderStatus availability={availability} />
+                <ProfileHeaderStatus 
+                  isOwnProfile={isOwnProfile}
+                  availability={availability}
+                  setAvailability={setAvailability}
+                />
               </div>
               
               <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -76,6 +95,8 @@ export const ProfileHeaderContainer = ({
       </div>
 
       <PreviewModals
+        profile={profile}
+        getMediaType={getMediaType}
         showAvatarPreview={showAvatarPreview}
         showBannerPreview={showBannerPreview}
         setShowAvatarPreview={setShowAvatarPreview}

@@ -3,20 +3,20 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface PreviewModalsProps {
   profile: any;
+  getMediaType: (url: string) => 'video' | 'gif' | 'image';
   showAvatarPreview: boolean;
   showBannerPreview: boolean;
   setShowAvatarPreview: (show: boolean) => void;
   setShowBannerPreview: (show: boolean) => void;
-  getMediaType: (url: string) => 'video' | 'gif' | 'image';
 }
 
 export const PreviewModals = ({
   profile,
+  getMediaType,
   showAvatarPreview,
   showBannerPreview,
   setShowAvatarPreview,
   setShowBannerPreview,
-  getMediaType,
 }: PreviewModalsProps) => {
   return (
     <>
