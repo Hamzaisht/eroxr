@@ -14,6 +14,8 @@ interface ProfileAvatarProps {
 interface PresenceState {
   presence_ref: string;
   status?: AvailabilityStatus;
+  user_id?: string;
+  timestamp?: string;
 }
 
 export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAvatarProps) => {
@@ -23,27 +25,29 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
   useEffect(() => {
     if (!profile?.id) return;
 
+    // Create and subscribe to the channel
     const channel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const userState = state[profile.id] as PresenceState[];
+        const state = channel.presenceState<PresenceState>();
+        const userState = Object.values(state).flat().find(
+          presence => presence.user_id === profile.id
+        );
         
-        if (userState && userState.length > 0) {
-          const status = userState[0]?.status || "offline";
-          setAvailability(status as AvailabilityStatus);
+        if (userState?.status) {
+          setAvailability(userState.status as AvailabilityStatus);
         } else {
           setAvailability("offline");
         }
       })
-      .subscribe();
-
-    if (isOwnProfile) {
-      channel.track({
-        user_id: profile.id,
-        status: availability,
-        timestamp: new Date().toISOString()
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && isOwnProfile) {
+          await channel.track({
+            user_id: profile.id,
+            status: availability,
+            timestamp: new Date().toISOString()
+          });
+        }
       });
-    }
 
     return () => {
       supabase.removeChannel(channel);

@@ -29,17 +29,24 @@ export const AvatarStatus = ({
     
     try {
       const channel = supabase.channel('online-users');
-      await channel.track({
-        user_id: profileId,
-        status: newStatus,
-        timestamp: new Date().toISOString()
-      });
       
-      onStatusChange?.(newStatus);
-      
-      toast({
-        description: `Status updated to ${newStatus}`,
-        duration: 2000,
+      // Subscribe first to ensure the channel is ready
+      await channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Then track the new status
+          await channel.track({
+            user_id: profileId,
+            status: newStatus,
+            timestamp: new Date().toISOString()
+          });
+          
+          onStatusChange?.(newStatus);
+          
+          toast({
+            description: `Status updated to ${newStatus}`,
+            duration: 2000,
+          });
+        }
       });
     } catch (error) {
       console.error('Error updating status:', error);
