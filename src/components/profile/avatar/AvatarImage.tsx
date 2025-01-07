@@ -1,19 +1,14 @@
 import { Avatar, AvatarFallback, AvatarImage as UIAvatarImage } from "@/components/ui/avatar";
-import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
-import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 interface AvatarImageProps {
   src?: string | null;
   username?: string | null;
-  onClick?: () => void;
-  status?: AvailabilityStatus;
 }
 
-export const ProfileAvatarImage = ({ src, username, onClick }: AvatarImageProps) => {
+export const ProfileAvatarImage = ({ src, username }: AvatarImageProps) => {
   return (
     <Avatar 
       className="h-48 w-48 rounded-full overflow-hidden bg-luxury-darker cursor-pointer [&:hover]:shadow-[0_0_50px_rgba(217,70,239,0.25)]"
-      onClick={onClick}
     >
       <UIAvatarImage 
         src={src || ""} 
