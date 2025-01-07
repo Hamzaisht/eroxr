@@ -3,9 +3,12 @@ import { useState } from "react";
 import { Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 interface ProfileBannerProps {
-  profile: any;
+  profile: Profile;
   getMediaType: (url: string) => 'video' | 'gif' | 'image';
   isOwnProfile?: boolean;
 }
@@ -14,7 +17,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [isHovering, setIsHovering] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const bannerMediaType = getMediaType(profile?.banner_url);
+  const bannerMediaType = getMediaType(profile?.banner_url || '');
 
   const handleBannerClick = () => {
     if (isOwnProfile && !isUploading) {
