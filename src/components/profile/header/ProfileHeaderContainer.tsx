@@ -6,9 +6,10 @@ import { ProfileStats } from "@/components/profile/ProfileStats";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { PreviewModals } from "./PreviewModals";
 import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface ProfileHeaderContainerProps {
-  profile: any;
+  profile: Profile;
   isOwnProfile: boolean;
   isEditing: boolean;
   availability: AvailabilityStatus;

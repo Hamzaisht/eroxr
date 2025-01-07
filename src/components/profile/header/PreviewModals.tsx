@@ -1,8 +1,9 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface PreviewModalsProps {
-  profile: any;
+  profile: Profile;
   getMediaType: (url: string) => 'video' | 'gif' | 'image';
   showAvatarPreview: boolean;
   showBannerPreview: boolean;
