@@ -8,20 +8,18 @@ interface ImageDimensions {
 }
 
 const ASPECT_RATIO_DIMENSIONS: Record<AspectRatio, ImageDimensions> = {
-  '1:1': { width: 1080, height: 1080 },   // Square
-  '4:5': { width: 1080, height: 1350 },   // Vertical portrait
-  '9:16': { width: 1080, height: 1920 },  // Vertical full
+  '1:1': { width: 1080, height: 1080 },   // Square - optimal for profile pictures and grid views
+  '4:5': { width: 1080, height: 1350 },   // Vertical portrait - Instagram's preferred ratio
+  '9:16': { width: 1080, height: 1920 },  // Vertical full - Stories/TikTok style
 };
 
-export const getImageStyles = (aspectRatio: AspectRatio = '1:1'): CSSProperties => {
+export const getImageStyles = (aspectRatio: AspectRatio = '4:5'): CSSProperties => {
   const dimensions = ASPECT_RATIO_DIMENSIONS[aspectRatio];
   return {
     imageRendering: "auto" as const,
-    width: `${dimensions.width}px`,
-    height: `${dimensions.height}px`,
+    width: '100%',
+    height: '100%',
     objectFit: "cover" as const,
-    minWidth: `${dimensions.width}px`,
-    minHeight: `${dimensions.height}px`,
   };
 };
 
@@ -29,14 +27,14 @@ export const getEnlargedImageStyles = (): CSSProperties => ({
   imageRendering: "auto" as const,
   maxWidth: "95vw",
   maxHeight: "95vh",
+  objectFit: "contain" as const,
 });
 
-// Helper function to generate srcSet for responsive images
-export const generateSrcSet = (url: string, aspectRatio: AspectRatio = '1:1') => {
+export const generateSrcSet = (url: string, aspectRatio: AspectRatio = '4:5') => {
   if (!url) return undefined;
   
   const dimensions = ASPECT_RATIO_DIMENSIONS[aspectRatio];
-  const widths = [dimensions.width, dimensions.width * 1.5, dimensions.width * 2]; // For retina and high-DPI displays
+  const widths = [dimensions.width, dimensions.width * 1.5, dimensions.width * 2];
   
   return widths
     .map((w) => {
@@ -48,17 +46,15 @@ export const generateSrcSet = (url: string, aspectRatio: AspectRatio = '1:1') =>
     .join(', ');
 };
 
-// Helper to get optimal sizes attribute based on aspect ratio
-export const getResponsiveSizes = (aspectRatio: AspectRatio = '1:1') => {
+export const getResponsiveSizes = (aspectRatio: AspectRatio = '4:5') => {
   const dimensions = ASPECT_RATIO_DIMENSIONS[aspectRatio];
   return `(max-width: ${dimensions.width}px) 100vw, ${dimensions.width}px`;
 };
 
-// Helper to determine aspect ratio from dimensions
 export const getAspectRatioFromDimensions = (width: number, height: number): AspectRatio => {
   const ratio = width / height;
   if (ratio === 1) return '1:1';
   if (Math.abs(ratio - 4/5) < 0.1) return '4:5';
   if (Math.abs(ratio - 9/16) < 0.1) return '9:16';
-  return '1:1'; // Default to square if no match
+  return '4:5'; // Default to 4:5 for social feed optimization
 };

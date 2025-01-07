@@ -55,7 +55,7 @@ export const MediaGrid = ({ items, onImageClick }: MediaGridProps) => {
         {items.map((mediaItem) => {
           const aspectRatio = mediaItem.width && mediaItem.height 
             ? getAspectRatioFromDimensions(mediaItem.width, mediaItem.height)
-            : '1:1';
+            : '4:5';
 
           return (
             <motion.div
@@ -64,7 +64,9 @@ export const MediaGrid = ({ items, onImageClick }: MediaGridProps) => {
               whileHover={{ scale: 1.02 }}
               className={cn(
                 "relative cursor-pointer overflow-hidden",
-                "aspect-square" // Default to square
+                aspectRatio === '1:1' ? 'aspect-square' : 
+                aspectRatio === '4:5' ? 'aspect-[4/5]' : 
+                'aspect-[9/16]'
               )}
               onClick={() => !mediaItem.isPremium && handleImageClick(mediaItem.url)}
             >
@@ -73,7 +75,7 @@ export const MediaGrid = ({ items, onImageClick }: MediaGridProps) => {
                   src={mediaItem.url}
                   alt="Media content"
                   className={cn(
-                    "w-full h-full",
+                    "w-full h-full object-cover",
                     mediaItem.isPremium ? "blur-lg" : "",
                     "hover:opacity-90 transition-opacity duration-200"
                   )}
