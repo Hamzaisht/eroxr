@@ -12,7 +12,7 @@ interface AvatarImageProps {
 export const ProfileAvatarImage = ({ src, username, onClick }: AvatarImageProps) => {
   return (
     <Avatar 
-      className="h-48 w-48 rounded-full overflow-hidden bg-luxury-darker transition-all duration-500 hover:shadow-[0_0_50px_rgba(217,70,239,0.25)] cursor-pointer"
+      className="h-48 w-48 rounded-full overflow-hidden bg-luxury-darker hover:shadow-[0_0_50px_rgba(217,70,239,0.25)] cursor-pointer transition-shadow duration-500"
       onClick={onClick}
     >
       <UIAvatarImage 
