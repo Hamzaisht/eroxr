@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import type { Profile } from "@/integrations/supabase/types";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface ProfileBannerProps {
   profile: Profile;
