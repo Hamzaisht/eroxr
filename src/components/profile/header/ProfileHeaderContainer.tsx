@@ -23,7 +23,6 @@ interface ProfileHeaderContainerProps {
   handleSave: () => void;
   handleClose: () => void;
   setIsEditing: (editing: boolean) => void;
-  onCreatePost?: () => void;
   onGoLive?: () => void;
 }
 
