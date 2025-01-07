@@ -8,8 +8,7 @@ export const ProfileStats = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        whileHover={{ scale: 1.05, y: -5 }}
-        className="neo-blur rounded-2xl p-4 flex items-center gap-3 hover:bg-luxury-darker/60 transition-all duration-300"
+        className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-darker/60 backdrop-blur-lg transition-colors duration-300 hover:bg-luxury-darker/80"
       >
         <Users className="h-5 w-5 text-luxury-primary animate-pulse" />
         <div className="flex flex-col">
@@ -22,8 +21,7 @@ export const ProfileStats = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3 }}
-        whileHover={{ scale: 1.05, y: -5 }}
-        className="neo-blur rounded-2xl p-4 flex items-center gap-3 hover:bg-luxury-darker/60 transition-all duration-300"
+        className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-darker/60 backdrop-blur-lg transition-colors duration-300 hover:bg-luxury-darker/80"
       >
         <Heart className="h-5 w-5 text-luxury-accent animate-pulse" />
         <div className="flex flex-col">
@@ -36,8 +34,7 @@ export const ProfileStats = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4 }}
-        whileHover={{ scale: 1.05, y: -5 }}
-        className="neo-blur rounded-2xl p-4 flex items-center gap-3 hover:bg-luxury-darker/60 transition-all duration-300"
+        className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-darker/60 backdrop-blur-lg transition-colors duration-300 hover:bg-luxury-darker/80"
       >
         <Image className="h-5 w-5 text-luxury-neutral animate-pulse" />
         <div className="flex flex-col">
