@@ -1,20 +1,17 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { PostSubmitButtons } from "./post/PostSubmitButtons";
-import { usePostSubmission } from "./post/usePostSubmission";
 import { useToast } from "@/hooks/use-toast";
-import { TagInput } from "./post/TagInput";
-import { VisibilitySelect } from "./post/VisibilitySelect";
-import { ContentPreview } from "./post/ContentPreview";
-import { PPVSettings } from "./post/PPVSettings";
-import { MediaUploadSection } from "./post/MediaUploadSection";
-import { SuccessOverlay } from "./post/SuccessOverlay";
 import { AnimatePresence } from "framer-motion";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { PostDialogHeader } from "./post/PostDialogHeader";
+import { PostContentInput } from "./post/PostContentInput";
+import { PostSettings } from "./post/PostSettings";
+import { ContentPreview } from "./post/ContentPreview";
+import { MediaUploadSection } from "./post/MediaUploadSection";
+import { PostSubmitButtons } from "./post/PostSubmitButtons";
+import { SuccessOverlay } from "./post/SuccessOverlay";
+import { usePostSubmission } from "./post/usePostSubmission";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -83,20 +80,6 @@ export const CreatePostDialog = ({
     return null;
   }
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setContent(newContent);
-    
-    // Extract hashtags from content
-    const hashtagRegex = /#[^\s#]+/g;
-    const foundTags = newContent.match(hashtagRegex)?.map(tag => tag.slice(1)) || [];
-    
-    // Update tags if new ones are found
-    if (foundTags.length > 0) {
-      setTags([...new Set([...tags, ...foundTags])]);
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] relative overflow-hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -104,45 +87,25 @@ export const CreatePostDialog = ({
           {showSuccess && <SuccessOverlay show={showSuccess} />}
         </AnimatePresence>
 
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Create New Post</DialogTitle>
-        </DialogHeader>
+        <PostDialogHeader />
 
         <div className="space-y-6">
-          <Textarea
-            placeholder="What's on your mind? Use #hashtags to categorize your post..."
-            value={content}
-            onChange={handleContentChange}
-            className="min-h-[120px] bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40 resize-none"
-            autoFocus
+          <PostContentInput
+            content={content}
+            setContent={setContent}
+            tags={tags}
+            setTags={setTags}
           />
           
-          <TagInput tags={tags} onTagsChange={setTags} />
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            <VisibilitySelect 
-              visibility={visibility} 
-              onVisibilityChange={setVisibility}
-            />
-
-            {isPayingCustomer && (
-              <PPVSettings
-                isPPV={isPPV}
-                setIsPPV={setIsPPV}
-                ppvAmount={ppvAmount}
-                setPpvAmount={setPpvAmount}
-              />
-            )}
-          </div>
-
-          {!isPayingCustomer && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                Upgrade to a creator account to unlock premium features like PPV content and media uploads.
-              </AlertDescription>
-            </Alert>
-          )}
+          <PostSettings
+            isPayingCustomer={isPayingCustomer}
+            visibility={visibility}
+            setVisibility={setVisibility}
+            isPPV={isPPV}
+            setIsPPV={setIsPPV}
+            ppvAmount={ppvAmount}
+            setPpvAmount={setPpvAmount}
+          />
 
           <ContentPreview content={content} />
           
