@@ -35,7 +35,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
 
     // Validate dimensions for images
     if (file.type.startsWith('image/')) {
-      const img = new Image();
+      const img = document.createElement('img');
       img.src = URL.createObjectURL(file);
       await new Promise((resolve) => {
         img.onload = () => {

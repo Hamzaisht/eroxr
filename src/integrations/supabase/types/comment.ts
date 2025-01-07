@@ -8,7 +8,6 @@ export type Comment = {
 };
 
 export type CommentInsert = {
-  id?: string;
   post_id: string;
   user_id: string;
   content: string;
@@ -17,7 +16,6 @@ export type CommentInsert = {
 };
 
 export type CommentUpdate = {
-  id?: string;
   post_id?: string;
   user_id?: string;
   content?: string;
