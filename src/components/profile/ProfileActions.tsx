@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Edit, Save, X, Video } from "lucide-react";
+import { ProfileEditModal } from "./ProfileEditModal";
+import { useState } from "react";
 
 interface ProfileActionsProps {
   isOwnProfile: boolean;
@@ -18,6 +20,8 @@ export const ProfileActions = ({
   onCancel,
   onGoLive,
 }: ProfileActionsProps) => {
+  const [showEditModal, setShowEditModal] = useState(false);
+
   if (!isOwnProfile) return null;
 
   if (isEditing) {
@@ -36,17 +40,29 @@ export const ProfileActions = ({
   }
 
   return (
-    <div className="flex gap-2">
-      {onGoLive && (
-        <Button variant="outline" size="sm" onClick={onGoLive}>
-          <Video className="h-4 w-4 mr-2" />
-          Go Live
+    <>
+      <div className="flex gap-2">
+        {onGoLive && (
+          <Button variant="outline" size="sm" onClick={onGoLive}>
+            <Video className="h-4 w-4 mr-2" />
+            Go Live
+          </Button>
+        )}
+        <Button size="sm" onClick={() => setShowEditModal(true)}>
+          <Edit className="h-4 w-4 mr-2" />
+          Edit Profile
         </Button>
+      </div>
+
+      {showEditModal && (
+        <ProfileEditModal 
+          onSave={() => {
+            onSave();
+            setShowEditModal(false);
+          }}
+          onClose={() => setShowEditModal(false)}
+        />
       )}
-      <Button size="sm" onClick={onEdit}>
-        <Edit className="h-4 w-4 mr-2" />
-        Edit Profile
-      </Button>
-    </div>
+    </>
   );
 };
