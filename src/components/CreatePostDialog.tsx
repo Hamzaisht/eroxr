@@ -13,6 +13,8 @@ import { PPVSettings } from "./post/PPVSettings";
 import { MediaUploadSection } from "./post/MediaUploadSection";
 import { SuccessOverlay } from "./post/SuccessOverlay";
 import { AnimatePresence } from "framer-motion";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -81,40 +83,65 @@ export const CreatePostDialog = ({
     return null;
   }
 
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setContent(newContent);
+    
+    // Extract hashtags from content
+    const hashtagRegex = /#[^\s#]+/g;
+    const foundTags = newContent.match(hashtagRegex)?.map(tag => tag.slice(1)) || [];
+    
+    // Update tags if new ones are found
+    if (foundTags.length > 0) {
+      setTags([...new Set([...tags, ...foundTags])]);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] relative overflow-hidden">
+      <DialogContent className="sm:max-w-[600px] relative overflow-hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <AnimatePresence>
           {showSuccess && <SuccessOverlay show={showSuccess} />}
         </AnimatePresence>
 
         <DialogHeader>
-          <DialogTitle>Create Post</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Create New Post</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Textarea
-            placeholder="What's on your mind?"
+            placeholder="What's on your mind? Use #hashtags to categorize your post..."
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[100px] bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40"
+            onChange={handleContentChange}
+            className="min-h-[120px] bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40 resize-none"
             autoFocus
           />
           
           <TagInput tags={tags} onTagsChange={setTags} />
           
-          <VisibilitySelect 
-            visibility={visibility} 
-            onVisibilityChange={setVisibility}
-          />
-
-          {isPayingCustomer && (
-            <PPVSettings
-              isPPV={isPPV}
-              setIsPPV={setIsPPV}
-              ppvAmount={ppvAmount}
-              setPpvAmount={setPpvAmount}
+          <div className="grid gap-6 md:grid-cols-2">
+            <VisibilitySelect 
+              visibility={visibility} 
+              onVisibilityChange={setVisibility}
             />
+
+            {isPayingCustomer && (
+              <PPVSettings
+                isPPV={isPPV}
+                setIsPPV={setIsPPV}
+                ppvAmount={ppvAmount}
+                setPpvAmount={setPpvAmount}
+              />
+            )}
+          </div>
+
+          {!isPayingCustomer && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Upgrade to a creator account to unlock premium features like PPV content and media uploads.
+              </AlertDescription>
+            </Alert>
           )}
 
           <ContentPreview content={content} />
