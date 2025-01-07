@@ -118,6 +118,10 @@ export const PromotedAds = () => {
     },
   });
 
+  const handleCountryChange = (country: NordicCountry | null) => {
+    setSelectedCountry(country);
+  };
+
   return (
     <section className="py-8 bg-gradient-to-br from-[#1A1F2C] to-[#2A1F3D]">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -135,7 +139,7 @@ export const PromotedAds = () => {
             <div className="lg:w-1/4">
               <AdFilters
                 selectedCountry={selectedCountry}
-                setSelectedCountry={setSelectedCountry}
+                setSelectedCountry={handleCountryChange}
                 selectedSeeker={selectedSeeker}
                 selectedLookingFor={selectedLookingFor}
                 setSelectedSeeker={setSelectedSeeker}
@@ -151,7 +155,7 @@ export const PromotedAds = () => {
               <div className="flex flex-wrap gap-4 items-center justify-between mb-4">
                 <CountrySelect
                   selectedCountry={selectedCountry}
-                  setSelectedCountry={setSelectedCountry}
+                  setSelectedCountry={handleCountryChange}
                   countries={countries}
                 />
                 <Button className="bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] hover:from-[#7E69AB] hover:to-[#9b87f5] text-white border-none transition-all duration-300">
