@@ -39,11 +39,11 @@ export const UsernameField = ({
       
       setIsCheckingUsername(true);
       try {
-        const { data: existingUser, error } = await supabase
+        const { data, error } = await supabase
           .from("profiles")
           .select("username")
-          .eq("username", debouncedUsername)
-          .maybeSingle();
+          .ilike("username", debouncedUsername)
+          .limit(1);
 
         if (error) {
           console.error("Error checking username:", error);
@@ -51,7 +51,7 @@ export const UsernameField = ({
             type: "manual",
             message: "Failed to check username availability",
           });
-        } else if (existingUser) {
+        } else if (data && data.length > 0) {
           form.setError("username", {
             type: "manual",
             message: "Username is already taken",
