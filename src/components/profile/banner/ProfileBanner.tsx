@@ -16,8 +16,14 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [isHovering, setIsHovering] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const { isUploading, handleFileChange } = useBannerUpload(profile);
-  const bannerMediaType = getMediaType(profile?.banner_url || '');
+  const [currentBannerUrl, setCurrentBannerUrl] = useState<string | null>(profile?.banner_url);
+  
+  const { isUploading, handleFileChange } = useBannerUpload(profile, (url: string) => {
+    setCurrentBannerUrl(url);
+    setShowUploadModal(false);
+  });
+
+  const bannerMediaType = getMediaType(currentBannerUrl || '');
 
   return (
     <>
@@ -32,7 +38,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
       >
         {bannerMediaType === 'video' ? (
           <video
-            src={profile?.banner_url || "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766"}
+            src={currentBannerUrl || "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766"}
             className="w-full h-full object-cover"
             autoPlay
             loop
@@ -41,7 +47,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
           />
         ) : (
           <img
-            src={profile?.banner_url || "https://images.unsplash.com/photo-1605810230434-7631ac76ec81"}
+            src={currentBannerUrl || "https://images.unsplash.com/photo-1605810230434-7631ac76ec81"}
             alt="Profile Banner"
             className="w-full h-full object-cover"
           />
@@ -72,7 +78,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
       <BannerPreviewModal
         isOpen={showPreview}
         onOpenChange={setShowPreview}
-        mediaUrl={profile?.banner_url}
+        mediaUrl={currentBannerUrl}
         mediaType={bannerMediaType}
       />
     </>
