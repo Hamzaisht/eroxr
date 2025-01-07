@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AvatarStatusProps {
   profileId: string;
@@ -21,27 +22,49 @@ export const AvatarStatus = ({
   status, 
   onStatusChange 
 }: AvatarStatusProps) => {
+  const { toast } = useToast();
+
   const updateStatus = async (newStatus: AvailabilityStatus) => {
     if (!isOwnProfile) return;
     
-    const channel = supabase.channel('online-users');
-    await channel.track({
-      user_id: profileId,
-      status: newStatus,
-      timestamp: new Date().toISOString()
-    });
-    
-    onStatusChange?.(newStatus);
+    try {
+      const channel = supabase.channel('online-users');
+      await channel.track({
+        user_id: profileId,
+        status: newStatus,
+        timestamp: new Date().toISOString()
+      });
+      
+      onStatusChange?.(newStatus);
+      
+      toast({
+        description: `Status updated to ${newStatus}`,
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        variant: "destructive",
+        description: "Failed to update status",
+        duration: 2000,
+      });
+    }
   };
 
   return isOwnProfile ? (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="p-1 h-auto rounded-full bg-black/20 backdrop-blur-lg hover:bg-black/30 transition-all duration-300">
+        <Button 
+          variant="ghost" 
+          className="p-1.5 h-auto rounded-full bg-black/10 backdrop-blur-xl hover:bg-black/20 transition-all duration-300"
+        >
           <AvailabilityIndicator status={status} size={12} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 bg-black/40 backdrop-blur-xl border-none shadow-2xl">
+      <DropdownMenuContent 
+        align="end" 
+        className="w-48 bg-black/30 backdrop-blur-2xl border-none shadow-[0_0_15px_rgba(0,0,0,0.3)] rounded-xl"
+      >
         <DropdownMenuItem onClick={() => updateStatus("online")} className="gap-2 hover:bg-white/5">
           <AvailabilityIndicator status="online" size={10} />
           <span className="text-white/90">Online</span>
@@ -61,7 +84,7 @@ export const AvatarStatus = ({
       </DropdownMenuContent>
     </DropdownMenu>
   ) : (
-    <div className="p-1 rounded-full bg-black/20 backdrop-blur-lg">
+    <div className="p-1.5 rounded-full bg-black/10 backdrop-blur-xl">
       <AvailabilityIndicator status={status} size={12} />
     </div>
   );
