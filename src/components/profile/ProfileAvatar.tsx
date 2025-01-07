@@ -16,6 +16,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
   const [isHovering, setIsHovering] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,8 +83,8 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
         onMouseLeave={() => setIsHovering(false)}
       >
         <Avatar 
-          className="h-48 w-48 shadow-[0_0_30px_rgba(155,135,245,0.15)] rounded-3xl overflow-hidden bg-luxury-darker transition-all duration-500 hover:shadow-[0_0_50px_rgba(217,70,239,0.25)]"
-          onClick={() => isOwnProfile && setShowUploadModal(true)}
+          className="h-48 w-48 shadow-[0_0_30px_rgba(155,135,245,0.15)] rounded-3xl overflow-hidden bg-luxury-darker transition-all duration-500 hover:shadow-[0_0_50px_rgba(217,70,239,0.25)] cursor-pointer"
+          onClick={() => setShowPreview(true)}
         >
           {getMediaType(profile?.avatar_url) === 'video' ? (
             <video
@@ -109,14 +110,18 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute top-3 right-3 bg-luxury-primary hover:bg-luxury-primary/90 p-2.5 rounded-full flex items-center justify-center shadow-luxury cursor-pointer backdrop-blur-sm"
-            onClick={() => setShowUploadModal(true)}
+            className="absolute top-3 right-3 bg-luxury-primary hover:bg-luxury-primary/90 p-2.5 rounded-full flex items-center justify-center shadow-luxury cursor-pointer backdrop-blur-sm z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowUploadModal(true);
+            }}
           >
             <PencilIcon className="w-5 h-5 text-white" />
           </motion.div>
         )}
       </div>
 
+      {/* Upload Modal */}
       <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -149,6 +154,28 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
               </label>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Modal */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-transparent border-none">
+          {getMediaType(profile?.avatar_url) === 'video' ? (
+            <video
+              src={profile?.avatar_url}
+              className="w-full rounded-lg"
+              controls
+              autoPlay
+              loop
+              playsInline
+            />
+          ) : (
+            <img
+              src={profile?.avatar_url}
+              alt="Profile"
+              className="w-full rounded-lg"
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>

@@ -16,6 +16,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [isHovering, setIsHovering] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
   const bannerMediaType = getMediaType(profile?.banner_url || '');
 
@@ -104,7 +105,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         transition={{ duration: 0.5 }}
         onHoverStart={() => setIsHovering(true)}
         onHoverEnd={() => setIsHovering(false)}
-        onClick={() => isOwnProfile && setShowUploadModal(true)}
+        onClick={() => setShowPreview(true)}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to opacity-90 z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(155,135,245,0.1)_0%,transparent_70%)] animate-pulse z-20" />
@@ -145,6 +146,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         )}
       </motion.div>
 
+      {/* Upload Modal */}
       <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -177,6 +179,28 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
               </label>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Modal */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="sm:max-w-7xl p-0 overflow-hidden bg-transparent border-none">
+          {bannerMediaType === 'video' ? (
+            <video
+              src={profile?.banner_url}
+              className="w-full rounded-lg"
+              controls
+              autoPlay
+              loop
+              playsInline
+            />
+          ) : (
+            <img
+              src={profile?.banner_url}
+              alt="Banner"
+              className="w-full rounded-lg"
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>
