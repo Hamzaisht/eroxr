@@ -1,5 +1,3 @@
-import { Profile, ProfileInsert, ProfileUpdate } from './profile';
-
 export type Json =
   | string
   | number
@@ -7,6 +5,16 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
+
+export * from './profile';
+export * from './comment';
+export * from './creator';
+export * from './dating';
+export * from './message';
+export * from './post';
+export * from './story';
+export * from './subscription';
+export * from './verification';
 
 export type Database = {
   public: {
@@ -18,30 +26,9 @@ export type Database = {
         Relationships: []
       },
       comments: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          post_id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          post_id: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          post_id?: string
-          updated_at?: string
-          user_id?: string
-        }
+        Row: Comment;
+        Insert: CommentInsert;
+        Update: CommentUpdate;
         Relationships: [
           {
             foreignKeyName: "comments_post_id_fkey"
@@ -55,20 +42,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_with_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
           }
         ]
@@ -828,8 +801,7 @@ export type Database = {
           updated_at: string | null
           username: string | null
         }
-        Relationships: []
-      }
+      },
       top_creators_by_earnings: {
         Row: {
           avatar_url: string | null
@@ -840,7 +812,6 @@ export type Database = {
           total_earnings: number | null
           username: string | null
         }
-        Relationships: []
       }
     },
     Functions: {
@@ -850,23 +821,12 @@ export type Database = {
       }
     },
     Enums: {
-      body_type:
-        | "athletic"
-        | "average"
-        | "slim"
-        | "curvy"
-        | "muscular"
-        | "plus_size"
+      body_type: "athletic" | "average" | "slim" | "curvy" | "muscular" | "plus_size"
       drinking_status: "non_drinker" | "occasional" | "regular"
       education_level: "high_school" | "college" | "bachelor" | "master" | "phd"
       nordic_country: "denmark" | "finland" | "iceland" | "norway" | "sweden"
       relationship_status: "single" | "couple" | "other"
       smoking_status: "non_smoker" | "occasional" | "regular"
-    },
-    CompositeTypes: {
-      [_ in never]: never
     }
   }
 }
-
-export type { Profile, ProfileInsert, ProfileUpdate };
