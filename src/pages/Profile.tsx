@@ -49,6 +49,10 @@ const Profile = () => {
     });
   };
 
+  const handleFileSelect = (files: FileList | null) => {
+    setSelectedFiles(files);
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -113,7 +117,7 @@ const Profile = () => {
             open={isPostDialogOpen}
             onOpenChange={setIsPostDialogOpen}
             selectedFiles={selectedFiles}
-            onFileSelect={setSelectedFiles}
+            onFileSelect={handleFileSelect}
           />
 
           <GoLiveDialog
