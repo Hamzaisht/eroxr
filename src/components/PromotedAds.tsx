@@ -6,6 +6,9 @@ import { AdFilters } from "./ads/AdFilters";
 import { AdList } from "./ads/AdList";
 import { CountrySelect } from "./ads/CountrySelect";
 import { type SearchCategory, type FilterOptions, type DatingAd } from "./ads/types/dating";
+import { type Database } from "@/integrations/supabase/types";
+
+type NordicCountry = Database['public']['Enums']['nordic_country'];
 
 const searchCategories: SearchCategory[] = [
   { seeker: "couple", looking_for: "male" },
@@ -19,7 +22,7 @@ const searchCategories: SearchCategory[] = [
   { seeker: "male", looking_for: "female" },
 ];
 
-const countries = ["denmark", "finland", "iceland", "norway", "sweden"];
+const countries: NordicCountry[] = ["denmark", "finland", "iceland", "norway", "sweden"];
 
 // Define the type for raw data from Supabase
 type RawDatingAd = Omit<DatingAd, 'age_range' | 'preferred_age_range'> & {
@@ -28,7 +31,7 @@ type RawDatingAd = Omit<DatingAd, 'age_range' | 'preferred_age_range'> & {
 };
 
 export const PromotedAds = () => {
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<NordicCountry | null>(null);
   const [selectedSeeker, setSelectedSeeker] = useState<string | null>(null);
   const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
