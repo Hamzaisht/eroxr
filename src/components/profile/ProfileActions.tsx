@@ -26,8 +26,7 @@ export const ProfileActions = ({
           className="border-luxury-primary/20 bg-luxury-darker/40 hover:bg-luxury-primary/20"
           onClick={onEdit}
         >
-          <Settings className="h-4 w-4 mr-2" />
-          Edit Profile
+          <Settings className="h-4 w-4" />
         </Button>
       ) : (
         <>
