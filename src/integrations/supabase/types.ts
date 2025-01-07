@@ -668,6 +668,7 @@ export type Database = {
           interests: string[] | null
           is_age_verified: boolean | null
           is_paying_customer: boolean | null
+          last_username_change: string | null
           location: string | null
           profile_visibility: boolean | null
           social_links: Json | null
@@ -685,6 +686,7 @@ export type Database = {
           interests?: string[] | null
           is_age_verified?: boolean | null
           is_paying_customer?: boolean | null
+          last_username_change?: string | null
           location?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null
@@ -702,6 +704,7 @@ export type Database = {
           interests?: string[] | null
           is_age_verified?: boolean | null
           is_paying_customer?: boolean | null
+          last_username_change?: string | null
           location?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null
