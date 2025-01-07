@@ -16,18 +16,21 @@ interface ProfileTabsProps {
 export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  const { data: creatorPrice, isError } = useQuery({
+  const { data: creatorPrice } = useQuery({
     queryKey: ["creator-price", profile?.id],
     queryFn: async () => {
+      if (!profile?.id) return null;
+      
       const { data, error } = await supabase
         .from("creator_content_prices")
         .select("*")
-        .eq("creator_id", profile?.id)
+        .eq("creator_id", profile.id)
         .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data;
     },
+    enabled: !!profile?.id, // Only run query when profile.id exists
   });
 
   const mediaItems = [
