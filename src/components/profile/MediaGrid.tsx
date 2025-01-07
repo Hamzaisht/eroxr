@@ -83,7 +83,7 @@ export const MediaGrid = ({ items, onImageClick }: MediaGridProps) => {
                 loading="lazy"
                 style={{ 
                   minWidth: "360px",
-                  imageRendering: "high-quality"
+                  imageRendering: "crisp-edges"
                 }}
               />
               {mediaItem.isPremium && (
@@ -119,7 +119,7 @@ export const MediaGrid = ({ items, onImageClick }: MediaGridProps) => {
                   src={selectedMedia}
                   alt="Enlarged media"
                   className="max-w-full max-h-[95vh] object-contain"
-                  style={{ imageRendering: "high-quality" }}
+                  style={{ imageRendering: "crisp-edges" }}
                 />
               </motion.div>
             )}

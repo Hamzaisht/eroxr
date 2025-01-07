@@ -60,7 +60,7 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
                         alt={`Post media ${index + 1}`}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         loading="lazy"
-                        style={{ minHeight: "720px", objectFit: "cover" }}
+                        style={{ minHeight: "720px", objectFit: "cover", imageRendering: "crisp-edges" }}
                       />
                     </div>
                   ))}
@@ -118,7 +118,7 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
                   src={selectedMedia}
                   alt="Enlarged media"
                   className="max-w-full max-h-[95vh] object-contain"
-                  style={{ imageRendering: "high-quality" }}
+                  style={{ imageRendering: "crisp-edges" }}
                 />
               </motion.div>
             )}
