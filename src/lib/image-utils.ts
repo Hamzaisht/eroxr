@@ -1,17 +1,17 @@
-export const getImageStyles = (minWidth?: number, minHeight?: number) => ({
-  imageRendering: "high-quality" as const,
+import { CSSProperties } from 'react';
+
+export const getImageStyles = (minWidth?: number, minHeight?: number): CSSProperties => ({
+  imageRendering: "auto" as const,
   minWidth: minWidth ? `${minWidth}px` : undefined,
   minHeight: minHeight ? `${minHeight}px` : undefined,
   objectFit: "cover" as const,
-  quality: 100,
   loading: "eager" as const,
 });
 
-export const getEnlargedImageStyles = () => ({
-  imageRendering: "high-quality" as const,
+export const getEnlargedImageStyles = (): CSSProperties => ({
+  imageRendering: "auto" as const,
   maxWidth: "95vw",
   maxHeight: "95vh",
-  quality: 100,
   loading: "eager" as const,
 });
 
