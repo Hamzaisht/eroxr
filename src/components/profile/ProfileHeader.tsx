@@ -39,30 +39,28 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
           <ProfileStats />
         </motion.div>
 
-        <div className="container mx-auto px-4">
-          <div className="relative -mt-32 pb-4 z-30">
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 100 }}
-              className="relative"
-            >
-              <div className="relative group">
-                <ProfileAvatar profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
-              </div>
+        <div className="-mt-32 pb-4 z-30">
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 100 }}
+            className="relative px-4"
+          >
+            <div className="relative group">
+              <ProfileAvatar profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
+            </div>
 
-              <div className="mt-6 flex justify-between items-start">
-                <ProfileInfo profile={profile} />
-                <ProfileActions 
-                  isOwnProfile={isOwnProfile}
-                  isEditing={isEditing}
-                  onEdit={() => setIsEditing(true)}
-                  onSave={handleSave}
-                  onCancel={() => setIsEditing(false)}
-                />
-              </div>
-            </motion.div>
-          </div>
+            <div className="mt-6 flex justify-between items-start">
+              <ProfileInfo profile={profile} />
+              <ProfileActions 
+                isOwnProfile={isOwnProfile}
+                isEditing={isEditing}
+                onEdit={() => setIsEditing(true)}
+                onSave={handleSave}
+                onCancel={() => setIsEditing(false)}
+              />
+            </div>
+          </motion.div>
         </div>
       </div>
 
