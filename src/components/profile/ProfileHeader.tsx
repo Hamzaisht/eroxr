@@ -31,6 +31,10 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
     setIsEditing(false);
   };
 
+  const handleClose = () => {
+    setIsEditing(false);
+  };
+
   return (
     <>
       <div className="relative" ref={containerRef}>
@@ -65,7 +69,10 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
       </div>
 
       {isEditing && isOwnProfile && (
-        <ProfileEditModal onSave={handleSave} />
+        <ProfileEditModal 
+          onSave={handleSave}
+          onClose={handleClose}
+        />
       )}
     </>
   );
