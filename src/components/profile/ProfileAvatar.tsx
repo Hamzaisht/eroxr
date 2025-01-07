@@ -33,35 +33,62 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
       return;
     }
 
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please upload a JPG, PNG, or GIF file",
+      });
+      return;
+    }
+
     try {
       setIsUploading(true);
       
+      // Create a unique filename
+      const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
-      const filePath = `${profile.id}/avatar.${fileExt}`;
+      const filePath = `${profile.id}/${timestamp}.${fileExt}`;
       
+      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type
+        });
 
       if (uploadError) throw uploadError;
 
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
+      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', profile.id);
 
       if (updateError) throw updateError;
 
+      // Show success message
       toast({
         title: "Success",
         description: "Profile picture updated successfully",
       });
 
+      // Close the upload modal
       setShowUploadModal(false);
+
+      // Force a page reload to show the new avatar
+      window.location.reload();
 
     } catch (error) {
       console.error('Error uploading avatar:', error);
@@ -84,7 +111,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
       >
         <Avatar 
           className="h-48 w-48 shadow-[0_0_30px_rgba(155,135,245,0.15)] rounded-3xl overflow-hidden bg-luxury-darker transition-all duration-500 hover:shadow-[0_0_50px_rgba(217,70,239,0.25)] cursor-pointer"
-          onClick={() => setShowPreview(true)}
+          onClick={() => profile?.avatar_url && setShowPreview(true)}
         >
           {getMediaType(profile?.avatar_url) === 'video' ? (
             <video
@@ -98,7 +125,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
           ) : (
             <AvatarImage 
               src={profile?.avatar_url} 
-              className="transition-transform duration-500" 
+              className="h-full w-full object-cover transition-transform duration-500"
             />
           )}
           <AvatarFallback className="text-4xl bg-luxury-darker text-luxury-primary">
