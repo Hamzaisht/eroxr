@@ -65,20 +65,8 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 20 * 1024 * 1024) {
-      toast({
-        variant: "destructive",
-        title: "File too large",
-        description: "Please upload a file smaller than 20MB",
-      });
-      return;
-    }
-
-    await handleUpload(file);
+  const handleFileChange = (file: File) => {
+    handleUpload(file);
   };
 
   return {
