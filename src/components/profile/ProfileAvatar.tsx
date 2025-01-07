@@ -14,6 +14,14 @@ interface ProfileAvatarProps {
   isOwnProfile?: boolean;
 }
 
+// Define the type for presence state
+interface PresenceState {
+  user_id: string;
+  status: AvailabilityStatus;
+  timestamp: string;
+  presence_ref: string;
+}
+
 export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAvatarProps) => {
   const [showPreview, setShowPreview] = useState(false);
   const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
@@ -37,9 +45,9 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
     const channel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
-        const userState = Object.values(state).flat().find(
-          presence => presence.user_id === profile.id
-        );
+        const userState = Object.values(state)
+          .flat()
+          .find((presence: PresenceState) => presence.user_id === profile.id);
         
         if (userState?.status) {
           setAvailability(userState.status as AvailabilityStatus);
