@@ -1,7 +1,31 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/hooks/use-toast";
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
+  const session = useSession();
+  const { toast } = useToast();
+
+  const handleGetStarted = () => {
+    if (session) {
+      navigate("/profile");
+    } else {
+      navigate("/login");
+      toast({
+        title: "Welcome!",
+        description: "Create your account to get started.",
+      });
+    }
+  };
+
+  const handleLearnMore = () => {
+    // Smooth scroll to features section
+    document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <section className="relative overflow-hidden bg-luxury-gradient py-20 lg:py-32">
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
@@ -33,10 +57,19 @@ export const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="mt-8 flex flex-col gap-4 sm:flex-row justify-center"
           >
-            <Button size="lg" className="bg-button-gradient hover:bg-hover-gradient text-white">
-              Get Started
+            <Button 
+              size="lg" 
+              onClick={handleGetStarted}
+              className="bg-button-gradient hover:bg-hover-gradient text-white transition-all duration-300 hover:scale-105"
+            >
+              Join Now
             </Button>
-            <Button size="lg" variant="outline" className="border-luxury-neutral text-luxury-neutral hover:bg-luxury-neutral/10">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              onClick={handleLearnMore}
+              className="border-luxury-neutral text-luxury-neutral hover:bg-luxury-neutral/10 transition-all duration-300 hover:scale-105"
+            >
               Learn More
             </Button>
           </motion.div>

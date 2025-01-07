@@ -18,6 +18,22 @@ export const UserMenu = () => {
   const session = useSession();
   const { toast } = useToast();
 
+  const handleLogin = () => {
+    navigate("/login");
+    toast({
+      title: "Welcome back!",
+      description: "Please sign in to continue.",
+    });
+  };
+
+  const handleSignUp = () => {
+    navigate("/login");
+    toast({
+      title: "Join our community!",
+      description: "Create your account to get started.",
+    });
+  };
+
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -41,14 +57,14 @@ export const UserMenu = () => {
       <div className="flex items-center gap-2">
         <Button 
           variant="ghost" 
-          onClick={() => navigate("/login")}
-          className="hover:bg-luxury-neutral/10"
+          onClick={handleLogin}
+          className="hover:bg-luxury-neutral/10 transition-all duration-300"
         >
           Log in
         </Button>
         <Button 
-          onClick={() => navigate("/login")}
-          className="bg-button-gradient hover:bg-hover-gradient text-white"
+          onClick={handleSignUp}
+          className="bg-button-gradient hover:bg-hover-gradient text-white transition-all duration-300 hover:scale-105"
         >
           Sign up
         </Button>
