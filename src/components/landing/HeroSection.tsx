@@ -22,7 +22,6 @@ export const HeroSection = () => {
   };
 
   const handleLearnMore = () => {
-    // Smooth scroll to features section
     document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -38,7 +37,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.5 }}
             className="bg-gradient-to-r from-luxury-neutral to-luxury-primary bg-clip-text text-4xl font-bold text-transparent sm:text-6xl"
           >
-            Turn Your Passion Into a Thriving Business
+            Connect with Verified Members
           </motion.h1>
           
           <motion.p 
@@ -47,8 +46,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mt-6 text-lg text-luxury-neutral/80 sm:text-xl"
           >
-            Join thousands of successful creators who are building their empire, 
-            connecting with passionate fans, and earning from what they love.
+            A secure and private platform for open-minded adults to connect and meet.
           </motion.p>
           
           <motion.div 
@@ -60,21 +58,15 @@ export const HeroSection = () => {
             <Button 
               size="lg" 
               onClick={handleGetStarted}
-              className="bg-button-gradient hover:bg-hover-gradient text-white group relative overflow-hidden"
+              className="bg-button-gradient hover:bg-hover-gradient text-white transition-all duration-300 hover:scale-105"
             >
-              <span className="relative z-10">Get Started Now</span>
-              <motion.div
-                className="absolute inset-0 bg-white/10"
-                initial={{ scale: 0, opacity: 0 }}
-                whileHover={{ scale: 1.5, opacity: 0.4 }}
-                transition={{ duration: 0.5 }}
-              />
+              Get Started
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
               onClick={handleLearnMore}
-              className="border-luxury-neutral text-luxury-neutral hover:bg-luxury-neutral/10"
+              className="border-luxury-neutral text-luxury-neutral hover:bg-luxury-neutral/10 transition-all duration-300 hover:scale-105"
             >
               Learn More
             </Button>
@@ -87,7 +79,7 @@ export const HeroSection = () => {
             className="mt-16 rounded-lg border border-luxury-neutral/10 bg-luxury-dark/50 p-8 backdrop-blur-xl"
           >
             <img
-              src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"
+              src="/lovable-uploads/210f4161-ff9f-4874-8aad-93edd31b6e01.png"
               alt="Platform Preview"
               className="rounded-lg shadow-2xl"
             />

@@ -13,10 +13,6 @@ export const Hero = () => {
     }
   }, [session, navigate]);
 
-  if (session) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-luxury-gradient flex items-center justify-center p-4">
       <AuthForm />
