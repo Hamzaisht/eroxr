@@ -6,6 +6,7 @@ import { CreatorStats } from "./creator/CreatorStats";
 import { CheckCircle } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
+import { AvailabilityIndicator, AvailabilityStatus } from "./ui/availability-indicator";
 
 interface CreatorCardProps {
   name: string;
@@ -26,6 +27,7 @@ export const CreatorCard = ({
 }: CreatorCardProps) => {
   const [subscribers, setSubscribers] = useState(initialSubscribers);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
   const session = useSession();
 
   useEffect(() => {
@@ -39,12 +41,31 @@ export const CreatorCard = ({
         .eq('following_id', creatorId)
         .single();
 
-      if (!error && data) {
+      if (!data && !error) {
         setIsFollowing(true);
       }
     };
 
     checkFollowingStatus();
+
+    // Subscribe to presence changes
+    const channel = supabase.channel('online-users')
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const userState = state[creatorId];
+        
+        if (userState) {
+          const status = userState[0]?.status || "offline";
+          setAvailability(status as AvailabilityStatus);
+        } else {
+          setAvailability("offline");
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [session?.user?.id, creatorId]);
 
   const handleSubscriberChange = (change: number) => {
@@ -71,12 +92,15 @@ export const CreatorCard = ({
             />
           </div>
           <div className="absolute -bottom-10 left-4">
-            <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-white">
+            <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-white">
               <img
                 src={image}
                 alt={name}
                 className="h-full w-full object-cover"
               />
+              <div className="absolute bottom-0 right-0">
+                <AvailabilityIndicator status={availability} size={12} />
+              </div>
             </div>
           </div>
         </div>
