@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Image, Users, CircuitBoard } from "lucide-react";
+import { Heart, Image, Users, CircuitBoard, MessageCircle } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionBanner } from "./SubscriptionBanner";
 import { MediaGrid } from "./MediaGrid";
 import { EmptyState } from "./EmptyState";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProfileTabsProps {
   profile: any;
@@ -30,8 +31,10 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.id, // Only run query when profile.id exists
+    enabled: !!profile?.id,
   });
+
+  const canAccessBodyContact = profile?.is_paying_customer || profile?.id_verification_status === 'verified';
 
   const mediaItems = [
     { id: 1, type: "image", url: "https://picsum.photos/400/300?random=1", isPremium: true },
@@ -66,6 +69,14 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
             <Heart className="h-4 w-4" />
             Likes
           </TabsTrigger>
+          <TabsTrigger 
+            value="bodycontact" 
+            className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2"
+            disabled={!canAccessBodyContact}
+          >
+            <MessageCircle className="h-4 w-4" />
+            Body Contact
+          </TabsTrigger>
         </TabsList>
 
         <AnimatePresence mode="wait">
@@ -92,6 +103,24 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
               icon={Heart}
               message="No liked content yet"
             />
+          </TabsContent>
+
+          <TabsContent value="bodycontact" className="mt-8">
+            {!canAccessBodyContact ? (
+              <Alert>
+                <AlertDescription>
+                  Body Contact is only available for verified content creators or paying members. 
+                  {!profile?.is_paying_customer && (
+                    <span> Subscribe for $4.99/month to access this feature.</span>
+                  )}
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <EmptyState 
+                icon={MessageCircle}
+                message="No body contact ads yet"
+              />
+            )}
           </TabsContent>
         </AnimatePresence>
       </Tabs>
