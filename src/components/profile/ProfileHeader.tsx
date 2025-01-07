@@ -5,7 +5,7 @@ import { CreatePostArea } from "@/components/home/CreatePostArea";
 import type { Profile, AvailabilityStatus } from "./types";
 
 interface ProfileHeaderProps {
-  profile: Profile;
+  profile: Profile | undefined;
   isOwnProfile: boolean;
   onGoLive?: () => void;
 }
@@ -17,6 +17,10 @@ export const ProfileHeader = ({ profile, isOwnProfile, onGoLive }: ProfileHeader
   const [showBannerPreview, setShowBannerPreview] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+
+  if (!profile) {
+    return null; // Or a loading state
+  }
 
   return (
     <>
@@ -42,7 +46,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onGoLive }: ProfileHeader
             onOpenCreatePost={() => setIsCreatePostOpen(true)}
             onFileSelect={setSelectedFiles}
             onOpenGoLive={onGoLive || (() => {})}
-            isPayingCustomer={profile.is_paying_customer}
+            isPayingCustomer={profile.is_paying_customer || false}
           />
         </div>
       )}

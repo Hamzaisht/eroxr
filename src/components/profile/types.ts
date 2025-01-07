@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import type { Json } from "@/integrations/supabase/types";
-import type { Profile as SupabaseProfile } from "@/integrations/supabase/types/profile";
+import type { Profile as BaseProfile } from "@/integrations/supabase/types/profile";
 
 // Profile form schema
 export const profileSchema = z.object({
@@ -18,10 +18,8 @@ export const profileSchema = z.object({
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;
 
-// Extend the Supabase Profile type to handle JSON data
-export interface Profile extends Omit<SupabaseProfile, 'social_links'> {
-  social_links?: Json | null;
-}
+// Use the same Profile type everywhere to ensure consistency
+export type Profile = BaseProfile;
 
 export interface ProfileHeaderProps {
   profile: Profile;
