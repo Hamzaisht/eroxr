@@ -15,7 +15,6 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
     });
   };
 
-  // Add a check for profile and username
   const displayName = profile?.username || "Anonymous";
 
   return (
@@ -23,14 +22,14 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ delay: 0.2 }}
-      className="space-y-3"
+      className="space-y-3 max-w-2xl"
     >
       <div className="flex items-center gap-4">
-        <h1 className="text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
+        <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent">
           @{displayName}
         </h1>
       </div>
-      <p className="text-luxury-neutral/80 mt-2 max-w-2xl text-lg leading-relaxed backdrop-blur-sm">
+      <p className="text-luxury-neutral/80 mt-2 text-base lg:text-lg leading-relaxed backdrop-blur-sm">
         {profile?.bio || "No bio yet"}
       </p>
       <div className="flex gap-2 items-center text-luxury-neutral/60">

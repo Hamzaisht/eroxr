@@ -3,10 +3,10 @@ import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileBanner } from "@/components/profile/ProfileBanner";
 import { ProfileInfo } from "@/components/profile/ProfileInfo";
 import { ProfileStats } from "@/components/profile/ProfileStats";
-import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { PreviewModals } from "./PreviewModals";
 import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import type { Profile } from "@/integrations/supabase/types/profile";
+import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 interface ProfileHeaderContainerProps {
   profile: Profile;
@@ -57,37 +57,41 @@ export const ProfileHeaderContainer = ({
       />
       
       <div className="container mx-auto px-4">
-        <div className="relative -mt-20 mb-8">
-          <div className="flex flex-col lg:flex-row items-start lg:items-end gap-6">
+        <div className="relative -mt-24 mb-8 flex flex-col lg:flex-row items-start lg:items-end gap-6 z-20">
+          <div className="flex-shrink-0">
             <ProfileAvatar 
               profile={profile}
               getMediaType={getMediaType}
               isOwnProfile={isOwnProfile}
             />
-            
-            <div className="flex-1 space-y-4">
-              <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8">
-                <ProfileInfo profile={profile} />
+          </div>
+          
+          <div className="flex-1 min-w-0 space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+              <ProfileInfo profile={profile} />
+              <div className="lg:ml-4">
                 <ProfileHeaderStatus 
                   isOwnProfile={isOwnProfile}
                   availability={availability}
                   setAvailability={setAvailability}
                 />
               </div>
-              
-              <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                <ProfileStats profile={profile} />
-                <div className="lg:ml-auto">
-                  <ProfileActions
-                    isOwnProfile={isOwnProfile}
-                    isEditing={isEditing}
-                    onEdit={() => setIsEditing(true)}
-                    onSave={handleSave}
-                    onCancel={handleClose}
-                    onCreatePost={onCreatePost}
-                    onGoLive={onGoLive}
-                  />
-                </div>
+            </div>
+            
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+              <div className="flex-1">
+                <ProfileStats />
+              </div>
+              <div className="lg:ml-auto">
+                <ProfileActions
+                  isOwnProfile={isOwnProfile}
+                  isEditing={isEditing}
+                  onEdit={() => setIsEditing(true)}
+                  onSave={handleSave}
+                  onCancel={handleClose}
+                  onCreatePost={onCreatePost}
+                  onGoLive={onGoLive}
+                />
               </div>
             </div>
           </div>

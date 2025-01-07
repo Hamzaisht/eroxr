@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 export const ProfileStats = () => {
   return (
-    <div className="absolute bottom-8 right-4 flex gap-4 z-30">
+    <div className="flex gap-4">
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
