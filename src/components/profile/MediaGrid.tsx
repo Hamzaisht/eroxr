@@ -25,6 +25,7 @@ interface MediaGridProps {
 
 export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const session = useSession();
 
   const { data: mediaItems = [], isLoading } = useQuery({
@@ -33,7 +34,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
       console.log("Fetching media for user:", session?.user?.id);
       const { data: posts, error } = await supabase
         .from("posts")
-        .select("id, media_url, is_ppv, created_at")
+        .select("id, media_url, video_urls, is_ppv, created_at")
         .eq("creator_id", session?.user?.id)
         .order("created_at", { ascending: false });
 
@@ -44,17 +45,18 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
 
       console.log("Fetched posts:", posts);
 
-      // Flatten media_url arrays into individual items
-      const media = posts?.flatMap(post => 
-        (post.media_url || []).map(url => ({
+      // Flatten media_url and video_urls arrays into individual items
+      const media = posts?.flatMap(post => {
+        const mediaUrls = [...(post.media_url || []), ...(post.video_urls || [])];
+        return mediaUrls.map(url => ({
           id: post.id,
           type: url.toLowerCase().endsWith('.mp4') ? 'video' : 'image',
           url: url,
           isPremium: post.is_ppv || false,
           width: 1080,
           height: 1350
-        }))
-      ) || [];
+        }));
+      }) || [];
 
       console.log("Processed media items:", media);
       return media;
@@ -77,9 +79,10 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     show: { y: 0, opacity: 1 }
   };
 
-  const handleImageClick = (url: string) => {
+  const handleImageClick = (url: string, index: number) => {
     if (!url) return;
     setSelectedMedia(url);
+    setSelectedIndex(index);
     onImageClick(url);
   };
 
@@ -95,6 +98,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     );
   }
 
+  const allMediaUrls = mediaItems.map(item => item.url);
+
   return (
     <>
       <motion.div
@@ -103,7 +108,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         animate="show"
         className="grid grid-cols-3 gap-1"
       >
-        {mediaItems.map((mediaItem) => {
+        {mediaItems.map((mediaItem, index) => {
           const aspectRatio = mediaItem.width && mediaItem.height 
             ? getAspectRatioFromDimensions(mediaItem.width, mediaItem.height)
             : '4:5';
@@ -119,7 +124,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
                 aspectRatio === '4:5' ? 'aspect-[4/5]' : 
                 'aspect-[9/16]'
               )}
-              onClick={() => !mediaItem.isPremium && handleImageClick(mediaItem.url)}
+              onClick={() => !mediaItem.isPremium && handleImageClick(mediaItem.url, index)}
             >
               <div className="relative w-full h-full">
                 {mediaItem.type === 'video' ? (
@@ -167,8 +172,10 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
       </motion.div>
 
       <MediaViewer 
-        media={selectedMedia} 
-        onClose={() => setSelectedMedia(null)} 
+        media={selectedMedia}
+        allMedia={allMediaUrls}
+        initialIndex={selectedIndex}
+        onClose={() => setSelectedMedia(null)}
       />
     </>
   );
