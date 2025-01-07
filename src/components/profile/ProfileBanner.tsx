@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Image, X } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -131,18 +131,17 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         )}
 
         {isOwnProfile && isHovering && (
-          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="bg-luxury-darker/80 backdrop-blur-sm px-4 py-2 rounded-lg flex items-center gap-2 text-white hover:bg-luxury-darker/90"
-            >
-              <Image className="w-5 h-5" />
-              <span className="text-sm font-medium">
-                {isUploading ? "Uploading..." : "Edit Banner"}
-              </span>
-            </motion.div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute top-4 right-4 bg-luxury-primary hover:bg-luxury-primary/90 p-3 rounded-full flex items-center justify-center shadow-luxury cursor-pointer z-30 backdrop-blur-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowUploadModal(true);
+            }}
+          >
+            <PencilIcon className="w-6 h-6 text-white" />
+          </motion.div>
         )}
       </motion.div>
 
@@ -173,7 +172,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
                 htmlFor="banner-upload"
                 className="cursor-pointer bg-luxury-primary/10 hover:bg-luxury-primary/20 text-luxury-primary px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
               >
-                <Image className="w-4 h-4" />
+                <PencilIcon className="w-4 h-4" />
                 <span>{isUploading ? "Uploading..." : "Choose File"}</span>
               </label>
             </div>

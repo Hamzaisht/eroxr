@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserRound, Image } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -109,13 +109,10 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute top-2 right-2 bg-luxury-darker/90 backdrop-blur-md px-3 py-1.5 rounded-lg flex items-center gap-2 text-white border border-luxury-primary/20 shadow-luxury cursor-pointer"
+            className="absolute top-3 right-3 bg-luxury-primary hover:bg-luxury-primary/90 p-2.5 rounded-full flex items-center justify-center shadow-luxury cursor-pointer backdrop-blur-sm"
             onClick={() => setShowUploadModal(true)}
           >
-            <Image className="w-4 h-4 text-luxury-primary" />
-            <span className="text-sm font-medium whitespace-nowrap">
-              Change Picture
-            </span>
+            <PencilIcon className="w-5 h-5 text-white" />
           </motion.div>
         )}
       </div>
@@ -147,7 +144,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
                 htmlFor="avatar-upload"
                 className="cursor-pointer bg-luxury-primary/10 hover:bg-luxury-primary/20 text-luxury-primary px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
               >
-                <Image className="w-4 h-4" />
+                <PencilIcon className="w-4 h-4" />
                 <span>{isUploading ? "Uploading..." : "Choose File"}</span>
               </label>
             </div>
