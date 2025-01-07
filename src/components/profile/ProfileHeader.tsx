@@ -15,6 +15,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -29,6 +31,8 @@ interface PresenceState {
 export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
+  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const [showBannerPreview, setShowBannerPreview] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 200], [1, 0]);
@@ -99,7 +103,12 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
     <>
       <div className="relative" ref={containerRef}>
         <motion.div style={{ opacity, scale }}>
-          <ProfileBanner profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
+          <div 
+            onClick={() => profile?.banner_url && setShowBannerPreview(true)}
+            className="cursor-pointer"
+          >
+            <ProfileBanner profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
+          </div>
           <ProfileStats />
         </motion.div>
 
@@ -111,7 +120,9 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
             className="relative px-4"
           >
             <div className="relative group">
-              <ProfileAvatar profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
+              <div onClick={() => profile?.avatar_url && setShowAvatarPreview(true)} className="cursor-pointer">
+                <ProfileAvatar profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
+              </div>
               <div className="absolute -bottom-2 -right-2">
                 {isOwnProfile ? (
                   <DropdownMenu>
@@ -160,6 +171,60 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
           </motion.div>
         </div>
       </div>
+
+      {/* Avatar Preview Modal */}
+      <Dialog open={showAvatarPreview} onOpenChange={setShowAvatarPreview}>
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-transparent border-none">
+          <VisuallyHidden>
+            <div>Profile Picture Preview</div>
+          </VisuallyHidden>
+          {profile?.avatar_url && (
+            getMediaType(profile.avatar_url) === 'video' ? (
+              <video
+                src={profile.avatar_url}
+                className="w-full rounded-lg"
+                controls
+                autoPlay
+                loop
+                playsInline
+              />
+            ) : (
+              <img
+                src={profile.avatar_url}
+                alt="Profile Picture"
+                className="w-full rounded-lg"
+              />
+            )
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Banner Preview Modal */}
+      <Dialog open={showBannerPreview} onOpenChange={setShowBannerPreview}>
+        <DialogContent className="sm:max-w-7xl p-0 overflow-hidden bg-transparent border-none">
+          <VisuallyHidden>
+            <div>Profile Banner Preview</div>
+          </VisuallyHidden>
+          {profile?.banner_url && (
+            getMediaType(profile.banner_url) === 'video' ? (
+              <video
+                src={profile.banner_url}
+                className="w-full rounded-lg"
+                controls
+                autoPlay
+                loop
+                playsInline
+              />
+            ) : (
+              <img
+                src={profile.banner_url}
+                alt="Profile Banner"
+                className="w-full rounded-lg"
+              />
+            )
+          )}
+        </DialogContent>
+      </Dialog>
 
       {isEditing && isOwnProfile && (
         <ProfileEditModal 
