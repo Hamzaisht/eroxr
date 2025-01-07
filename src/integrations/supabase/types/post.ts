@@ -7,11 +7,17 @@ export type Post = {
   comments_count: number | null;
   created_at: string;
   updated_at: string;
-  visibility: string | null;
+  visibility: 'public' | 'subscribers_only';
   tags: string[] | null;
   ppv_amount: number | null;
   is_ppv: boolean | null;
   video_urls: string[] | null;
+  has_liked: boolean;
+  has_purchased?: boolean;
+  creator: {
+    username: string | null;
+    avatar_url: string | null;
+  };
 };
 
 export type PostLike = {
