@@ -28,7 +28,6 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
   };
 
   const handleSave = () => {
-    // This will be handled by the ProfileForm component
     setIsEditing(false);
   };
 
