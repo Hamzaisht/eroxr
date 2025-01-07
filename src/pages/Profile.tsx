@@ -7,6 +7,7 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { TabsContainer } from "@/components/profile/tabs/TabsContainer";
 import { ProfileDialogs } from "@/components/profile/dialogs/ProfileDialogs";
 import { useToast } from "@/hooks/use-toast";
+import type { Profile } from "@/components/profile/types";
 
 const Profile = () => {
   const { id } = useParams();
@@ -30,7 +31,7 @@ const Profile = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Profile;
     },
     enabled: !!(id || session?.user?.id),
   });
@@ -72,14 +73,14 @@ const Profile = () => {
       <div className="min-h-screen bg-luxury-gradient">
         <main className="w-full">
           <ProfileHeader 
-            profile={profile} 
+            profile={profile!} 
             isOwnProfile={true}
             onGoLive={() => setIsLiveDialogOpen(true)}
           />
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
               <TabsContainer 
-                profile={profile}
+                profile={profile!}
                 isEditing={isEditing}
                 onSave={handleSave}
               />
