@@ -8,8 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Edit, Save, X } from "lucide-react";
+import { Save, X } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -71,34 +70,6 @@ const Profile = () => {
             <div className="max-w-4xl mx-auto">
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-bold text-luxury-neutral">Profile Settings</h2>
-                {!isEditing ? (
-                  <Button
-                    variant="outline"
-                    className="border-luxury-primary/20 bg-luxury-darker/40 hover:bg-luxury-primary/20"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsEditing(false)}
-                      className="border-luxury-primary/20 bg-luxury-darker/40 hover:bg-luxury-primary/20"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSave}
-                      className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </div>
-                )}
               </div>
               
               <Tabs defaultValue="profile" className="space-y-6">
