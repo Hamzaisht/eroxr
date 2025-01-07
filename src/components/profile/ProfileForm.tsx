@@ -43,55 +43,74 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
     const loadProfile = async () => {
       if (!session?.user?.id) {
         console.log("No session user ID found"); // Debug log
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Please sign in to edit your profile",
+        });
         return;
       }
 
       console.log("Loading profile for user:", session.user.id); // Debug log
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
+      try {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .maybeSingle();
 
-      if (error) {
-        console.error("Error loading profile:", error); // Debug log
-        toast({
-          title: "Error",
-          description: "Failed to load profile",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log("Loaded profile:", profile); // Debug log
-
-      if (profile) {
-        setCurrentUsername(profile.username || "");
-        form.reset({
-          username: profile.username || "",
-          bio: profile.bio || "",
-          location: profile.location || "",
-          interests: profile.interests?.join(", ") || "",
-          profile_visibility: profile.profile_visibility ?? true,
-        });
-
-        // Check if username can be changed
-        const lastChange = profile.last_username_change;
-        setLastUsernameChange(lastChange);
-        if (lastChange) {
-          const daysSinceChange = Math.floor((Date.now() - new Date(lastChange).getTime()) / (1000 * 60 * 60 * 24));
-          setCanChangeUsername(daysSinceChange >= 60);
+        if (error) {
+          console.error("Error loading profile:", error); // Debug log
+          toast({
+            title: "Error",
+            description: "Failed to load profile",
+            variant: "destructive",
+          });
+          return;
         }
+
+        console.log("Loaded profile:", profile); // Debug log
+
+        if (profile) {
+          setCurrentUsername(profile.username || "");
+          form.reset({
+            username: profile.username || "",
+            bio: profile.bio || "",
+            location: profile.location || "",
+            interests: profile.interests?.join(", ") || "",
+            profile_visibility: profile.profile_visibility ?? true,
+          });
+
+          // Check if username can be changed
+          const lastChange = profile.last_username_change;
+          setLastUsernameChange(lastChange);
+          if (lastChange) {
+            const daysSinceChange = Math.floor((Date.now() - new Date(lastChange).getTime()) / (1000 * 60 * 60 * 24));
+            setCanChangeUsername(daysSinceChange >= 60);
+          }
+        }
+      } catch (error) {
+        console.error("Error in loadProfile:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load profile data",
+        });
       }
     };
 
     loadProfile();
-  }, [session?.user?.id, form]);
+  }, [session?.user?.id, form, toast]);
 
   const onSubmit = async (values: ProfileFormValues) => {
     if (!session?.user?.id) {
       console.log("No session user ID found during submit"); // Debug log
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Please sign in to update your profile",
+      });
       return;
     }
     
