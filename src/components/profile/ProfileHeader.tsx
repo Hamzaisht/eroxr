@@ -35,7 +35,7 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
     <>
       <div className="relative" ref={containerRef}>
         <motion.div style={{ opacity, scale }}>
-          <ProfileBanner profile={profile} getMediaType={getMediaType} />
+          <ProfileBanner profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
           <ProfileStats />
         </motion.div>
 
@@ -48,17 +48,7 @@ export const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => 
               className="relative"
             >
               <div className="relative group">
-                <ProfileAvatar profile={profile} getMediaType={getMediaType} />
-                {isOwnProfile && !isEditing && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 bg-luxury-darker/80 hover:bg-luxury-primary/20 transition-all duration-300 opacity-0 group-hover:opacity-100"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit className="h-4 w-4 text-luxury-primary" />
-                  </Button>
-                )}
+                <ProfileAvatar profile={profile} getMediaType={getMediaType} isOwnProfile={isOwnProfile} />
               </div>
 
               <div className="mt-6 flex justify-between items-start">
