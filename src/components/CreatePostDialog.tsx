@@ -77,23 +77,15 @@ export const CreatePostDialog = ({
     }
   }, [open, session?.user?.id]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isPayingCustomer) {
-      toast({
-        title: "Premium feature",
-        description: "Only paying customers can upload media",
-        variant: "destructive",
-      });
-      return;
-    }
-    onFileSelect(e.target.files);
-  };
+  if (!session) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] relative overflow-hidden">
         <AnimatePresence>
-          <SuccessOverlay show={showSuccess} />
+          {showSuccess && <SuccessOverlay show={showSuccess} />}
         </AnimatePresence>
 
         <DialogHeader>
@@ -106,6 +98,7 @@ export const CreatePostDialog = ({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="min-h-[100px] bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40"
+            autoFocus
           />
           
           <TagInput tags={tags} onTagsChange={setTags} />
@@ -130,20 +123,48 @@ export const CreatePostDialog = ({
             selectedFiles={selectedFiles}
             onFileSelect={onFileSelect}
             isPayingCustomer={isPayingCustomer}
-            handleFileSelect={handleFileSelect}
+            handleFileSelect={(e) => {
+              if (!isPayingCustomer) {
+                toast({
+                  title: "Premium feature",
+                  description: "Only paying customers can upload media",
+                  variant: "destructive",
+                });
+                return;
+              }
+              onFileSelect(e.target.files);
+            }}
           />
           
           <PostSubmitButtons
             isLoading={isLoading}
-            onCancel={() => onOpenChange(false)}
-            onSubmit={() => handleSubmit(
-              content, 
-              selectedFiles, 
-              isPayingCustomer, 
-              tags, 
-              visibility,
-              isPPV ? ppvAmount : null
-            )}
+            onCancel={() => {
+              setContent("");
+              onFileSelect(null);
+              setTags([]);
+              setVisibility("public");
+              setIsPPV(false);
+              setPpvAmount(null);
+              onOpenChange(false);
+            }}
+            onSubmit={() => {
+              if (!content.trim() && !selectedFiles?.length) {
+                toast({
+                  title: "Content required",
+                  description: "Please add some text or media to your post",
+                  variant: "destructive",
+                });
+                return;
+              }
+              handleSubmit(
+                content, 
+                selectedFiles, 
+                isPayingCustomer, 
+                tags, 
+                visibility,
+                isPPV ? ppvAmount : null
+              );
+            }}
           />
         </div>
       </DialogContent>

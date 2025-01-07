@@ -24,6 +24,15 @@ export const CreatePostArea = ({
   const { toast } = useToast();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!session) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upload media",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!isPayingCustomer) {
       toast({
         title: "Premium feature",
@@ -33,6 +42,7 @@ export const CreatePostArea = ({
       return;
     }
     onFileSelect(e.target.files);
+    onOpenCreatePost(); // Open dialog after file selection
   };
 
   const handleGoLive = () => {
@@ -74,11 +84,16 @@ export const CreatePostArea = ({
             </AvatarFallback>
           </Avatar>
         </Link>
-        <Input
-          placeholder="Share something with your followers..."
-          className="flex-1 bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40 hover:bg-luxury-dark/40 focus:bg-luxury-dark/50 transition-all"
+        <div 
           onClick={onOpenCreatePost}
-        />
+          className="flex-1 cursor-pointer"
+        >
+          <Input
+            placeholder="Share something with your followers..."
+            className="flex-1 bg-luxury-dark/30 border-luxury-neutral/10 text-luxury-neutral placeholder:text-luxury-neutral/40 hover:bg-luxury-dark/40 focus:bg-luxury-dark/50 transition-all cursor-pointer"
+            readOnly
+          />
+        </div>
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
