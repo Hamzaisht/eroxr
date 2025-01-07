@@ -3,9 +3,7 @@ import { useState } from "react";
 import { Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import type { Database } from "@/integrations/supabase/types";
-
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+import type { Profile } from "@/integrations/supabase/types";
 
 interface ProfileBannerProps {
   profile: Profile;
