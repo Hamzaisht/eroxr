@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ProfileBanner } from "../banner/ProfileBanner";
 import { ProfileStats } from "../ProfileStats";
-import { ProfileAvatar } from "../avatar/ProfileAvatar";
+import { ProfileAvatar } from "../ProfileAvatar";
 import { ProfileInfo } from "../ProfileInfo";
 import { ProfileActions } from "../ProfileActions";
 import { ProfileEditModal } from "../ProfileEditModal";
