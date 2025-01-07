@@ -32,7 +32,8 @@ export const UserMenu = () => {
     }
   };
 
-  console.log("Session status:", !!session, "User email:", session?.user?.email);
+  console.log("User ID:", session?.user?.id);
+  console.log("Full session:", session);
 
   if (!session) {
     return (
@@ -47,6 +48,9 @@ export const UserMenu = () => {
 
   return (
     <div className="flex items-center gap-4">
+      <div className="text-sm text-muted-foreground">
+        ID: {session.user.id}
+      </div>
       <Button 
         variant="default"
         onClick={() => navigate("/profile")}
