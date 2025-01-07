@@ -1,12 +1,14 @@
 import { Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface MediaItem {
   id: number;
   type: string;
   url: string;
   isPremium: boolean;
+  aspectRatio?: "square" | "landscape" | "portrait"; // 1:1, 1.91:1, 4:5
 }
 
 interface MediaGridProps {
@@ -30,6 +32,17 @@ export const MediaGrid = ({ items, onImageClick }: MediaGridProps) => {
     show: { y: 0, opacity: 1 }
   };
 
+  const getAspectRatioClass = (ratio?: string) => {
+    switch (ratio) {
+      case "landscape":
+        return "aspect-[1.91/1]"; // 1080x566
+      case "portrait":
+        return "aspect-[4/5]"; // 1080x1350
+      default:
+        return "aspect-square"; // 1080x1080
+    }
+  };
+
   return (
     <motion.div
       variants={container}
@@ -42,16 +55,20 @@ export const MediaGrid = ({ items, onImageClick }: MediaGridProps) => {
           key={mediaItem.id}
           variants={item}
           whileHover={{ scale: 1.02 }}
-          className="relative aspect-square cursor-pointer"
+          className={cn(
+            "relative cursor-pointer overflow-hidden",
+            getAspectRatioClass(mediaItem.aspectRatio)
+          )}
           onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
         >
           <div className="relative w-full h-full">
             <img
               src={mediaItem.url}
               alt="Media content"
-              className={`w-full h-full object-cover ${
+              className={cn(
+                "w-full h-full object-cover",
                 mediaItem.isPremium ? "blur-lg" : ""
-              }`}
+              )}
             />
             {mediaItem.isPremium && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
