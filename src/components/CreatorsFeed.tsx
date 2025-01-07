@@ -44,6 +44,7 @@ export const CreatorsFeed = () => {
                   visibility: post.visibility || 'public',
                   is_ppv: post.is_ppv || false,
                   has_liked: post.has_liked || false,
+                  updated_at: post.updated_at || post.created_at, // Add fallback for updated_at
                   creator: {
                     username: post.creator?.username || null,
                     avatar_url: post.creator?.avatar_url || null
