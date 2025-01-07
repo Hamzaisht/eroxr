@@ -11,11 +11,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Save, X } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { GoLiveDialog } from "@/components/home/GoLiveDialog";
+import { CreatorsFeed } from "@/components/CreatorsFeed";
 
 const Profile = () => {
   const { id } = useParams();
   const session = useSession();
   const [isEditing, setIsEditing] = useState(false);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [isLiveDialogOpen, setIsLiveDialogOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const { toast } = useToast();
 
   const { data: profile, isLoading } = useQuery({
@@ -65,7 +71,12 @@ const Profile = () => {
     return (
       <div className="min-h-screen bg-luxury-gradient">
         <main className="w-full">
-          <ProfileHeader profile={profile} isOwnProfile={true} />
+          <ProfileHeader 
+            profile={profile} 
+            isOwnProfile={true}
+            onCreatePost={() => setIsPostDialogOpen(true)}
+            onGoLive={() => setIsLiveDialogOpen(true)}
+          />
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
               <Tabs defaultValue="profile" className="space-y-6">
@@ -79,7 +90,12 @@ const Profile = () => {
                   {isEditing ? (
                     <ProfileForm onSave={handleSave} />
                   ) : (
-                    <ProfileTabs profile={profile} />
+                    <>
+                      <ProfileTabs profile={profile} />
+                      <div className="mt-8">
+                        <CreatorsFeed />
+                      </div>
+                    </>
                   )}
                 </TabsContent>
                 
@@ -93,6 +109,18 @@ const Profile = () => {
               </Tabs>
             </div>
           </div>
+
+          <CreatePostDialog
+            open={isPostDialogOpen}
+            onOpenChange={setIsPostDialogOpen}
+            selectedFiles={selectedFiles}
+            onFileSelect={setSelectedFiles}
+          />
+
+          <GoLiveDialog
+            open={isLiveDialogOpen}
+            onOpenChange={setIsLiveDialogOpen}
+          />
         </main>
       </div>
     );
@@ -104,8 +132,16 @@ const Profile = () => {
       <main className="w-full">
         {profile ? (
           <>
-            <ProfileHeader profile={profile} isOwnProfile={session?.user?.id === profile.id} />
-            <ProfileTabs profile={profile} />
+            <ProfileHeader 
+              profile={profile} 
+              isOwnProfile={session?.user?.id === profile.id} 
+            />
+            <div className="container mx-auto px-4 py-8">
+              <ProfileTabs profile={profile} />
+              <div className="mt-8">
+                <CreatorsFeed />
+              </div>
+            </div>
           </>
         ) : (
           <div className="container mx-auto px-4">
