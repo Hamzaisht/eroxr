@@ -5,24 +5,7 @@ import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { PreviewModals } from "./PreviewModals";
-import type { Profile } from "@/integrations/supabase/types";
-import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
-
-interface ProfileHeaderContainerProps {
-  profile: Profile;
-  isOwnProfile: boolean;
-  isEditing: boolean;
-  availability: AvailabilityStatus;
-  showAvatarPreview: boolean;
-  showBannerPreview: boolean;
-  setShowAvatarPreview: (show: boolean) => void;
-  setShowBannerPreview: (show: boolean) => void;
-  setAvailability: (status: AvailabilityStatus) => void;
-  handleSave: () => void;
-  handleClose: () => void;
-  setIsEditing: (editing: boolean) => void;
-  onGoLive?: () => void;
-}
+import type { ProfileHeaderProps } from "../types";
 
 export const ProfileHeaderContainer = ({
   profile,
@@ -38,7 +21,14 @@ export const ProfileHeaderContainer = ({
   handleClose,
   setIsEditing,
   onGoLive,
-}: ProfileHeaderContainerProps) => {
+}: ProfileHeaderProps) => {
+  const getMediaType = (url: string): 'video' | 'gif' | 'image' => {
+    if (!url) return 'image';
+    if (url.match(/\.(mp4|webm|ogg)$/i)) return 'video';
+    if (url.match(/\.gif$/i)) return 'gif';
+    return 'image';
+  };
+
   return (
     <div className="relative">
       <ProfileBanner 
@@ -98,11 +88,4 @@ export const ProfileHeaderContainer = ({
       />
     </div>
   );
-};
-
-const getMediaType = (url: string): 'video' | 'gif' | 'image' => {
-  if (!url) return 'image';
-  if (url.match(/\.(mp4|webm|ogg)$/i)) return 'video';
-  if (url.match(/\.gif$/i)) return 'gif';
-  return 'image';
 };

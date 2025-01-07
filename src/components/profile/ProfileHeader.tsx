@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ProfileHeaderContainer } from "./header/ProfileHeaderContainer";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
-import type { Profile } from "@/integrations/supabase/types";
+import type { Profile, AvailabilityStatus } from "./types";
 
 interface ProfileHeaderProps {
   profile: Profile;
