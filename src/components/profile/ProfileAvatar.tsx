@@ -5,6 +5,8 @@ import { AvatarStatus } from "./avatar/AvatarStatus";
 import { ProfileAvatarImage } from "./avatar/AvatarImage";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { X } from "lucide-react";
+import { ImageCropDialog } from "./ImageCropDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileAvatarProps {
   profile: any;
@@ -21,7 +23,11 @@ interface PresenceState {
 
 export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAvatarProps) => {
   const [showPreview, setShowPreview] = useState(false);
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [tempImageUrl, setTempImageUrl] = useState<string>('');
   const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -60,6 +66,74 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please upload a file smaller than 5MB",
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    setTempImageUrl(URL.createObjectURL(file));
+    setShowCropDialog(true);
+  };
+
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
+    try {
+      const file = new File([croppedImageBlob], selectedFile?.name || 'avatar.jpg', {
+        type: 'image/jpeg'
+      });
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${profile.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully",
+      });
+
+      // Force a page reload to show the new avatar
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update profile picture. Please try again.",
+      });
+    }
+  };
+
   return (
     <>
       <div className="relative inline-block">
@@ -68,6 +142,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
             src={profile?.avatar_url}
             username={profile?.username}
             onImageClick={handleAvatarClick}
+            onFileSelect={isOwnProfile ? handleFileSelect : undefined}
           />
           
           {isOwnProfile && (
@@ -109,6 +184,20 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
           )}
         </DialogContent>
       </Dialog>
+
+      {showCropDialog && tempImageUrl && (
+        <ImageCropDialog
+          isOpen={showCropDialog}
+          onClose={() => {
+            setShowCropDialog(false);
+            setTempImageUrl('');
+            setSelectedFile(null);
+          }}
+          imageUrl={tempImageUrl}
+          onCropComplete={handleCropComplete}
+          aspectRatio={1}
+        />
+      )}
     </>
   );
 };

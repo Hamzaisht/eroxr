@@ -7,6 +7,7 @@ import type { Profile } from "@/integrations/supabase/types/profile";
 import { BannerMedia } from "./banner/BannerMedia";
 import { BannerEditButton } from "./banner/BannerEditButton";
 import { BannerPreview } from "./banner/BannerPreview";
+import { ImageCropDialog } from "./ImageCropDialog";
 
 interface ProfileBannerProps {
   profile: Profile;
@@ -19,6 +20,9 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [isUploading, setIsUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [tempImageUrl, setTempImageUrl] = useState<string>('');
   const { toast } = useToast();
 
   const defaultVideoUrl = "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766";
@@ -38,6 +42,17 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
       return;
     }
 
+    if (file.type.startsWith('image/')) {
+      setSelectedFile(file);
+      setTempImageUrl(URL.createObjectURL(file));
+      setShowCropDialog(true);
+      setShowUploadModal(false);
+    } else {
+      handleUpload(file);
+    }
+  };
+
+  const handleUpload = async (file: File) => {
     try {
       setIsUploading(true);
       
@@ -66,7 +81,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         description: "Banner updated successfully",
       });
 
-      setShowUploadModal(false);
+      window.location.reload();
 
     } catch (error) {
       console.error('Error uploading banner:', error);
@@ -77,7 +92,15 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
       });
     } finally {
       setIsUploading(false);
+      setShowUploadModal(false);
     }
+  };
+
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
+    const file = new File([croppedImageBlob], selectedFile?.name || 'banner.jpg', {
+      type: 'image/jpeg'
+    });
+    await handleUpload(file);
   };
 
   return (
@@ -145,6 +168,20 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         mediaUrl={bannerUrl}
         mediaType={bannerMediaType}
       />
+
+      {showCropDialog && tempImageUrl && (
+        <ImageCropDialog
+          isOpen={showCropDialog}
+          onClose={() => {
+            setShowCropDialog(false);
+            setTempImageUrl('');
+            setSelectedFile(null);
+          }}
+          imageUrl={tempImageUrl}
+          onCropComplete={handleCropComplete}
+          aspectRatio={3}
+        />
+      )}
     </>
   );
 };
