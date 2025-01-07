@@ -37,25 +37,29 @@ export const CreatorsFeed = () => {
             <LoadingSkeleton />
           ) : (
             <div className="space-y-8">
-              {posts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  post={{
-                    ...post,
-                    updated_at: post.updated_at || post.created_at, // Ensure updated_at is always present
-                    visibility: post.visibility || 'public',
-                    is_ppv: post.is_ppv || false,
-                    has_liked: post.has_liked || false,
-                    creator: {
-                      username: post.creator?.username || null,
-                      avatar_url: post.creator?.avatar_url || null
-                    }
-                  }}
-                  onLike={handleLike}
-                  onDelete={handleDelete}
-                  currentUserId={session?.user?.id}
-                />
-              ))}
+              {posts.map((post) => {
+                // Create a properly typed post object with all required fields
+                const processedPost = {
+                  ...post,
+                  visibility: post.visibility || 'public',
+                  is_ppv: post.is_ppv || false,
+                  has_liked: post.has_liked || false,
+                  creator: {
+                    username: post.creator?.username || null,
+                    avatar_url: post.creator?.avatar_url || null
+                  }
+                };
+
+                return (
+                  <PostCard 
+                    key={post.id} 
+                    post={processedPost}
+                    onLike={handleLike}
+                    onDelete={handleDelete}
+                    currentUserId={session?.user?.id}
+                  />
+                );
+              })}
               {posts.length === 0 && <EmptyFeed />}
               {hasNextPage && (
                 <div ref={ref} className="h-8 flex items-center justify-center">
