@@ -11,7 +11,7 @@ export const HeroSection = () => {
 
   const handleGetStarted = () => {
     if (session) {
-      navigate("/profile");
+      navigate("/home");
     } else {
       navigate("/login");
       toast({
@@ -60,7 +60,7 @@ export const HeroSection = () => {
               onClick={handleGetStarted}
               className="bg-button-gradient hover:bg-hover-gradient text-white transition-all duration-300 hover:scale-105"
             >
-              Get Started
+              {session ? "Go to Dashboard" : "Join Now"}
             </Button>
             <Button 
               size="lg" 
