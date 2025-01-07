@@ -27,7 +27,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
   };
 
   return (
-    <div className="relative group">
+    <div className="relative inline-block">
       <Avatar 
         className="h-48 w-48 shadow-[0_0_30px_rgba(155,135,245,0.15)] rounded-3xl overflow-hidden bg-luxury-darker transition-all duration-500 group-hover:shadow-[0_0_50px_rgba(217,70,239,0.25)] cursor-pointer"
         onMouseEnter={() => setIsHovering(true)}
@@ -55,7 +55,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
       </Avatar>
       
       {isOwnProfile && (
-        <div className="absolute inset-0 bg-gradient-to-t from-luxury-darker/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px] flex items-center justify-center">
+        <div className="absolute inset-0 bg-luxury-darker/60 opacity-0 hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px] flex items-center justify-center">
           <motion.div
             initial={{ scale: 0 }}
             whileHover={{ scale: 1.1 }}

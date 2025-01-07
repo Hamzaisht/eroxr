@@ -61,14 +61,14 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
       )}
 
       {isOwnProfile && (
-        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center z-30">
+        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30">
           <motion.div
             initial={{ scale: 0 }}
             whileHover={{ scale: 1.1 }}
-            className="text-white flex flex-col items-center gap-2"
+            className="bg-luxury-darker/80 backdrop-blur-sm px-4 py-2 rounded-lg flex items-center gap-2 text-white"
           >
-            <Image className="w-12 h-12 animate-pulse" />
-            <span className="text-lg font-medium">Change Banner</span>
+            <Image className="w-5 h-5" />
+            <span className="text-sm font-medium">Edit Banner</span>
           </motion.div>
         </div>
       )}

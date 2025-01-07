@@ -19,7 +19,7 @@ export const ProfileActions = ({
   if (!isOwnProfile) return null;
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 absolute top-0 right-0">
       {!isEditing ? (
         <Button
           variant="outline"
