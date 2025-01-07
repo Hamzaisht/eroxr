@@ -1,31 +1,16 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
 import { AvatarStatus } from "./avatar/AvatarStatus";
 import { ProfileAvatarImage } from "./avatar/AvatarImage";
-import { AvailabilityStatus } from "@/components/ui/availability-indicator";
-import { X } from "lucide-react";
 import { ImageCropDialog } from "./ImageCropDialog";
 import { useAvatarUpload } from "./avatar/AvatarUpload";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-
-interface ProfileAvatarProps {
-  profile: any;
-  getMediaType: (url: string) => 'video' | 'gif' | 'image';
-  isOwnProfile?: boolean;
-}
-
-// Define the type for presence state
-interface PresenceState {
-  user_id: string;
-  status: AvailabilityStatus;
-  timestamp: string;
-  presence_ref: string;
-}
+import { usePresence } from "./avatar/usePresence";
+import { AvatarPreview } from "./avatar/AvatarPreview";
+import type { ProfileAvatarProps } from "./avatar/types";
 
 export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAvatarProps) => {
   const [showPreview, setShowPreview] = useState(false);
-  const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
+  
+  const { availability, setAvailability } = usePresence(profile?.id, !!isOwnProfile);
   
   const {
     showCropDialog,
@@ -39,43 +24,6 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
     profile,
     onSuccess: () => window.location.reload()
   });
-
-  useEffect(() => {
-    if (!profile?.id) return;
-
-    const channel = supabase.channel('online-users')
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const userState = Object.values(state)
-          .flat()
-          .find((presence: any) => {
-            if (typeof presence === 'object' && presence !== null) {
-              return 'user_id' in presence && presence.user_id === profile.id;
-            }
-            return false;
-          });
-        
-        if (userState && 'status' in userState) {
-          const typedState = userState as PresenceState;
-          setAvailability(typedState.status);
-        } else {
-          setAvailability("offline");
-        }
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED' && isOwnProfile) {
-          await channel.track({
-            user_id: profile.id,
-            status: availability,
-            timestamp: new Date().toISOString()
-          });
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [profile?.id, isOwnProfile, availability]);
 
   const handleAvatarClick = () => {
     if (profile?.avatar_url) {
@@ -107,33 +55,12 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
         </div>
       </div>
 
-      <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-transparent border-none">
-          <DialogTitle className="sr-only">Profile Image Preview</DialogTitle>
-          <button
-            onClick={() => setShowPreview(false)}
-            className="absolute right-4 top-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-50"
-          >
-            <X className="h-5 w-5 text-white" />
-          </button>
-          {getMediaType(profile?.avatar_url) === 'video' ? (
-            <video
-              src={profile?.avatar_url}
-              className="w-full rounded-2xl"
-              controls
-              autoPlay
-              loop
-              playsInline
-            />
-          ) : (
-            <img
-              src={profile?.avatar_url}
-              alt="Profile"
-              className="w-full rounded-2xl"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <AvatarPreview
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        mediaUrl={profile?.avatar_url}
+        mediaType={getMediaType(profile?.avatar_url)}
+      />
 
       {showCropDialog && tempImageUrl && (
         <ImageCropDialog
