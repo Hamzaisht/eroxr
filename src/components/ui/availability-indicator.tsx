@@ -22,35 +22,23 @@ export const AvailabilityIndicator = ({
       case "busy":
         return "bg-rose-500";
       case "offline":
-        return "bg-gray-500";
+      default:
+        return "bg-gray-500/80";
     }
   };
 
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center",
+        "rounded-full",
+        getStatusColor(status),
+        status === "online" && "animate-[pulse_20s_ease-in-out_infinite]",
         className
       )}
-      style={{ width: size, height: size }}
-    >
-      <div
-        className={cn(
-          "absolute inset-0 rounded-full",
-          getStatusColor(status),
-          status === "online" && "animate-[pulse_20s_ease-in-out_infinite]"
-        )}
-      />
-      <div
-        className={cn(
-          "absolute inset-0 rounded-full bg-black/5 backdrop-blur-sm",
-          status === "online" && "animate-[pulse_20s_ease-in-out_infinite_0.5s]"
-        )}
-        style={{
-          transform: "scale(1.2)",
-          opacity: status === "online" ? 0.3 : 0
-        }}
-      />
-    </div>
+      style={{ 
+        width: size,
+        height: size,
+      }}
+    />
   );
 };
