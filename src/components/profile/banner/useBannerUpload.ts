@@ -7,7 +7,10 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const handleUpload = async (file: File) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     try {
       setIsUploading(true);
       
@@ -31,7 +34,10 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
       
       const { error: uploadError } = await supabase.storage
         .from('banners')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type
+        });
 
       if (uploadError) throw uploadError;
 
@@ -63,10 +69,6 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
     } finally {
       setIsUploading(false);
     }
-  };
-
-  const handleFileChange = (file: File) => {
-    handleUpload(file);
   };
 
   return {

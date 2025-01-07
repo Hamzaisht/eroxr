@@ -6,7 +6,7 @@ interface BannerUploadDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   isUploading: boolean;
-  onFileChange: (file: File) => void;
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const BannerUploadDialog = ({
@@ -20,16 +20,16 @@ export const BannerUploadDialog = ({
   const [cropPreviewUrl, setCropPreviewUrl] = useState<string>("");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        setSelectedFile(file);
-        setCropPreviewUrl(URL.createObjectURL(file));
-        setShowCropDialog(true);
-      } else {
-        // If it's not an image (e.g., video), pass it directly
-        onFileChange(file);
-      }
+    if (!e.target.files?.length) return;
+    
+    const file = e.target.files[0];
+    if (file.type.startsWith('image/')) {
+      setSelectedFile(file);
+      setCropPreviewUrl(URL.createObjectURL(file));
+      setShowCropDialog(true);
+    } else {
+      // If it's not an image (e.g., video), pass the event directly
+      onFileChange(e);
     }
   };
 
@@ -37,7 +37,18 @@ export const BannerUploadDialog = ({
     const file = new File([croppedImageBlob], selectedFile?.name || 'banner.jpg', {
       type: 'image/jpeg'
     });
-    onFileChange(file);
+    
+    // Create a new change event with the cropped file
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    
+    const event = {
+      target: {
+        files: dataTransfer.files,
+      },
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    onFileChange(event);
     setShowCropDialog(false);
     URL.revokeObjectURL(cropPreviewUrl);
   };
