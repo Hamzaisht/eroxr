@@ -105,7 +105,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
           >
             <UserRound className="w-8 h-8 animate-pulse" />
             <span className="text-sm font-medium text-white">
-              {isUploading ? "Uploading..." : "Change Avatar"}
+              {isUploading ? "Uploading..." : "Change Profile Picture"}
             </span>
           </motion.div>
         </div>
