@@ -50,10 +50,6 @@ const Profile = () => {
     }
   };
 
-  const handleCreatePost = () => {
-    setIsPostDialogOpen(true);
-  };
-
   // Loading state
   if (isLoading) {
     return (
@@ -78,7 +74,6 @@ const Profile = () => {
           <ProfileHeader 
             profile={profile} 
             isOwnProfile={true}
-            onCreatePost={handleCreatePost}
             onGoLive={() => setIsLiveDialogOpen(true)}
           />
           <div className="container mx-auto px-4 py-8">
