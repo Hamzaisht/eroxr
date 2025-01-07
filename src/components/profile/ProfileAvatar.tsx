@@ -77,18 +77,18 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
   return (
     <>
       <div 
-        className="relative inline-block group"
+        className="relative inline-block"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
-        onClick={() => isOwnProfile && setShowUploadModal(true)}
       >
         <Avatar 
-          className="h-48 w-48 shadow-[0_0_30px_rgba(155,135,245,0.15)] rounded-3xl overflow-hidden bg-luxury-darker transition-all duration-500 group-hover:shadow-[0_0_50px_rgba(217,70,239,0.25)] cursor-pointer"
+          className="h-48 w-48 shadow-[0_0_30px_rgba(155,135,245,0.15)] rounded-3xl overflow-hidden bg-luxury-darker transition-all duration-500 hover:shadow-[0_0_50px_rgba(217,70,239,0.25)]"
+          onClick={() => isOwnProfile && setShowUploadModal(true)}
         >
           {getMediaType(profile?.avatar_url) === 'video' ? (
             <video
               src={profile?.avatar_url}
-              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="h-full w-full object-cover transition-transform duration-500"
               autoPlay={isHovering}
               loop
               muted
@@ -97,7 +97,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
           ) : (
             <AvatarImage 
               src={profile?.avatar_url} 
-              className="group-hover:scale-105 transition-transform duration-500" 
+              className="transition-transform duration-500" 
             />
           )}
           <AvatarFallback className="text-4xl bg-luxury-darker text-luxury-primary">
@@ -105,19 +105,18 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
           </AvatarFallback>
         </Avatar>
         
-        {isOwnProfile && (
-          <div className="absolute inset-0 bg-luxury-darker/60 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-3xl backdrop-blur-[1px]">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: isHovering ? 1 : 0 }}
-              className="absolute top-4 right-4 bg-luxury-darker/90 backdrop-blur-md px-4 py-2 rounded-lg flex items-center gap-2 text-white border border-luxury-primary/20 shadow-luxury"
-            >
-              <UserRound className="w-5 h-5 text-luxury-primary animate-pulse" />
-              <span className="text-sm font-medium whitespace-nowrap">
-                Change Profile Picture
-              </span>
-            </motion.div>
-          </div>
+        {isOwnProfile && isHovering && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute top-2 right-2 bg-luxury-darker/90 backdrop-blur-md px-3 py-1.5 rounded-lg flex items-center gap-2 text-white border border-luxury-primary/20 shadow-luxury cursor-pointer"
+            onClick={() => setShowUploadModal(true)}
+          >
+            <Image className="w-4 h-4 text-luxury-primary" />
+            <span className="text-sm font-medium whitespace-nowrap">
+              Change Picture
+            </span>
+          </motion.div>
         )}
       </div>
 
