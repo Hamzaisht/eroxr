@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile } from "@/integrations/supabase/types/profile";
 
@@ -11,6 +11,21 @@ export const useBannerUpload = (profile: Profile, onSuccess: (url: string) => vo
     try {
       setIsUploading(true);
       
+      // First, delete the existing banner if it exists
+      if (profile.banner_url) {
+        const oldFilePath = profile.banner_url.split('/').pop();
+        if (oldFilePath) {
+          const { error: deleteError } = await supabase.storage
+            .from('banners')
+            .remove([oldFilePath]);
+
+          if (deleteError) {
+            console.error('Error deleting old banner:', deleteError);
+          }
+        }
+      }
+      
+      // Upload new banner
       const fileExt = file.name.split('.').pop();
       const filePath = `${profile.id}/banner.${fileExt}`;
       

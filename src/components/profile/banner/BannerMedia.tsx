@@ -9,10 +9,15 @@ interface BannerMediaProps {
 export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProps) => {
   if (!mediaUrl) return null;
 
+  const commonProps = {
+    key: mediaUrl, // Add key to force re-render when URL changes
+    className: "w-full h-full object-cover",
+  };
+
   return mediaType === 'video' ? (
     <video
+      {...commonProps}
       src={mediaUrl}
-      className="w-full h-full object-cover"
       autoPlay
       loop
       muted
@@ -20,9 +25,9 @@ export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProp
     />
   ) : (
     <img
+      {...commonProps}
       src={mediaUrl}
       alt="Profile Banner"
-      className="w-full h-full object-cover"
     />
   );
 };
