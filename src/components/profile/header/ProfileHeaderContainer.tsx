@@ -1,9 +1,9 @@
-import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileBanner } from "@/components/profile/ProfileBanner";
 import { ProfileInfo } from "@/components/profile/ProfileInfo";
 import { ProfileStats } from "@/components/profile/ProfileStats";
 import { PreviewModals } from "./PreviewModals";
 import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
+import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import type { Profile } from "@/integrations/supabase/types/profile";
 import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
