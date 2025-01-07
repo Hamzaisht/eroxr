@@ -56,23 +56,25 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
 
   return (
     <>
-      <div className="relative inline-block">
-        <ProfileAvatarImage
-          src={profile?.avatar_url}
-          username={profile?.username}
-          onImageClick={() => profile?.avatar_url && setShowPreview(true)}
-        />
-        
-        {isOwnProfile && (
-          <div className="absolute -bottom-1 -right-1 z-10">
-            <AvatarStatus
-              profileId={profile?.id}
-              isOwnProfile={!!isOwnProfile}
-              status={availability}
-              onStatusChange={setAvailability}
-            />
-          </div>
-        )}
+      <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+        <div className="relative">
+          <ProfileAvatarImage
+            src={profile?.avatar_url}
+            username={profile?.username}
+            onImageClick={() => profile?.avatar_url && setShowPreview(true)}
+          />
+          
+          {isOwnProfile && (
+            <div className="absolute -bottom-1 -right-1 z-10">
+              <AvatarStatus
+                profileId={profile?.id}
+                isOwnProfile={!!isOwnProfile}
+                status={availability}
+                onStatusChange={setAvailability}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
