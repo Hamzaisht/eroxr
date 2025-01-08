@@ -34,6 +34,7 @@ export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
   const latestStory = stories[0];
   const timeAgo = formatDistanceToNow(new Date(latestStory.created_at), { addSuffix: true });
   const { toast } = useToast();
+  const currentUser = supabase.auth.getSession();
 
   const handleEdit = async (storyId: string) => {
     // For now just show a toast - edit functionality can be added later
@@ -91,7 +92,7 @@ export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
             </Link>
 
             {/* Three dots menu */}
-            {creator.id === supabase.auth.getUser()?.data?.user?.id && (
+            {creator.id === supabase.auth.getUser().user?.id && (
               <div className="absolute -top-2 -right-2 z-10" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

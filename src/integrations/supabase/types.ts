@@ -784,7 +784,7 @@ export type Database = {
           expires_at: string
           id: string
           is_active: boolean | null
-          media_url: string
+          media_url: string | null
           screenshot_disabled: boolean | null
           video_url: string | null
         }
@@ -795,7 +795,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_active?: boolean | null
-          media_url: string
+          media_url?: string | null
           screenshot_disabled?: boolean | null
           video_url?: string | null
         }
@@ -806,7 +806,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_active?: boolean | null
-          media_url?: string
+          media_url?: string | null
           screenshot_disabled?: boolean | null
           video_url?: string | null
         }
