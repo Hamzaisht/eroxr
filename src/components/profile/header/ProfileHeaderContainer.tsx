@@ -12,16 +12,7 @@ export const ProfileHeaderContainer = ({
   profile,
   isOwnProfile,
   isEditing,
-  availability = "offline" as AvailabilityStatus,
-  showAvatarPreview,
-  showBannerPreview,
-  setShowAvatarPreview,
-  setShowBannerPreview,
-  setAvailability,
-  handleSave,
-  handleClose,
   setIsEditing,
-  onGoLive,
 }: ProfileHeaderProps) => {
   const getMediaType = (url: string): 'video' | 'gif' | 'image' => {
     if (!url) return 'image';
@@ -50,8 +41,7 @@ export const ProfileHeaderContainer = ({
             <div className="mt-4">
               <ProfileHeaderStatus 
                 isOwnProfile={isOwnProfile}
-                availability={availability}
-                setAvailability={setAvailability}
+                availability={"offline"}
               />
             </div>
           </div>
@@ -69,24 +59,14 @@ export const ProfileHeaderContainer = ({
                   isOwnProfile={isOwnProfile}
                   isEditing={isEditing}
                   onEdit={() => setIsEditing?.(true)}
-                  onSave={handleSave}
-                  onCancel={handleClose}
-                  onGoLive={onGoLive}
+                  onSave={() => setIsEditing?.(false)}
+                  onCancel={() => setIsEditing?.(false)}
                 />
               </div>
             )}
           </div>
         </div>
       </div>
-
-      <PreviewModals
-        profile={profile}
-        getMediaType={getMediaType}
-        showAvatarPreview={showAvatarPreview}
-        showBannerPreview={showBannerPreview}
-        setShowAvatarPreview={setShowAvatarPreview}
-        setShowBannerPreview={setShowBannerPreview}
-      />
     </div>
   );
 };

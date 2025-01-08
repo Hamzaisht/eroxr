@@ -6,15 +6,6 @@ export const ProfileHeader = ({
   isOwnProfile,
   isEditing = false,
   setIsEditing = () => {},
-  availability = "offline",
-  showAvatarPreview = false,
-  showBannerPreview = false,
-  setShowAvatarPreview = () => {},
-  setShowBannerPreview = () => {},
-  setAvailability = () => {},
-  handleSave = () => {},
-  handleClose = () => {},
-  onGoLive = () => {},
 }: ProfileHeaderProps) => {
   return (
     <ProfileHeaderContainer
@@ -22,15 +13,6 @@ export const ProfileHeader = ({
       isOwnProfile={isOwnProfile}
       isEditing={isEditing}
       setIsEditing={setIsEditing}
-      availability={availability}
-      showAvatarPreview={showAvatarPreview}
-      showBannerPreview={showBannerPreview}
-      setShowAvatarPreview={setShowAvatarPreview}
-      setShowBannerPreview={setShowBannerPreview}
-      setAvailability={setAvailability}
-      handleSave={handleSave}
-      handleClose={handleClose}
-      onGoLive={onGoLive}
     />
   );
 };

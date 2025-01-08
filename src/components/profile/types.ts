@@ -9,15 +9,6 @@ export interface ProfileHeaderProps {
   isOwnProfile: boolean;
   isEditing?: boolean;
   setIsEditing?: (value: boolean) => void;
-  availability?: AvailabilityStatus;
-  showAvatarPreview?: boolean;
-  showBannerPreview?: boolean;
-  setShowAvatarPreview?: (value: boolean) => void;
-  setShowBannerPreview?: (value: boolean) => void;
-  setAvailability?: (value: AvailabilityStatus) => void;
-  handleSave?: () => void;
-  handleClose?: () => void;
-  onGoLive?: () => void;
 }
 
 export const profileSchema = z.object({
