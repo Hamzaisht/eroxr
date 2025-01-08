@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isSignup, setIsSignup] = useState(true);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -22,6 +23,10 @@ const Login = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
+
+  const handleToggleMode = () => {
+    setIsSignup(!isSignup);
+  };
 
   return (
     <div className="min-h-screen bg-luxury-gradient flex items-center justify-center p-4">
@@ -43,7 +48,7 @@ const Login = () => {
         <div className="relative backdrop-blur-xl bg-white/5 rounded-2xl p-8 shadow-2xl border border-luxury-primary/20">
           <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/10 via-luxury-accent/5 to-transparent rounded-2xl" />
           <div className="relative">
-            <SignupForm />
+            <SignupForm onToggleMode={handleToggleMode} />
           </div>
         </div>
 
