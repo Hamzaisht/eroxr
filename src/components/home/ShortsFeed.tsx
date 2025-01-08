@@ -17,7 +17,7 @@ export const ShortsFeed = () => {
     {
       id: "123e4567-e89b-12d3-a456-426614174000",
       creator: {
-        username: "Eros",
+        username: "@Eros",
         avatar_url: null,
       },
       video_url: "https://player.vimeo.com/progressive_redirect/playback/789015921/rendition/1080p/file.mp4?loc=external&signature=7d4a4f1c48b8e1e8c2f7d6c1f6e0c0c0",
@@ -30,7 +30,7 @@ export const ShortsFeed = () => {
     {
       id: "223e4567-e89b-12d3-a456-426614174001",
       creator: {
-        username: "Eros",
+        username: "@Eros",
         avatar_url: null,
       },
       video_url: "https://player.vimeo.com/progressive_redirect/playback/699437074/rendition/1080p/file.mp4?loc=external&signature=7d4a4f1c48b8e1e8c2f7d6c1f6e0c0c0",
@@ -43,7 +43,7 @@ export const ShortsFeed = () => {
     {
       id: "323e4567-e89b-12d3-a456-426614174002",
       creator: {
-        username: "Eros",
+        username: "@Eros",
         avatar_url: null,
       },
       video_url: "https://player.vimeo.com/progressive_redirect/playback/699435778/rendition/1080p/file.mp4?loc=external&signature=7d4a4f1c48b8e1e8c2f7d6c1f6e0c0c0",
@@ -56,14 +56,19 @@ export const ShortsFeed = () => {
   ];
 
   useEffect(() => {
+    console.log("Setting up video intersection observer");
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const video = entry.target as HTMLVideoElement;
           if (entry.isIntersecting) {
-            video.play().catch(() => {});
+            console.log("Video in view, attempting to play:", video.src);
+            video.play().catch((error) => {
+              console.error("Error playing video:", error);
+            });
             setCurrentVideoIndex(Number(video.dataset.index));
           } else {
+            console.log("Video out of view, pausing:", video.src);
             video.pause();
           }
         });
@@ -72,10 +77,16 @@ export const ShortsFeed = () => {
     );
 
     Object.values(videoRefs.current).forEach((video) => {
-      if (video) observer.observe(video);
+      if (video) {
+        console.log("Observing video:", video.src);
+        observer.observe(video);
+      }
     });
 
-    return () => observer.disconnect();
+    return () => {
+      console.log("Cleaning up video observer");
+      observer.disconnect();
+    };
   }, []);
 
   const handleShare = (shortId: string) => {
@@ -97,7 +108,14 @@ export const ShortsFeed = () => {
             >
               <video
                 ref={(el) => {
-                  if (el) videoRefs.current[index] = el;
+                  if (el) {
+                    console.log("Setting up video ref for index:", index);
+                    videoRefs.current[index] = el;
+                    // Preload the video metadata
+                    el.preload = "metadata";
+                    // Add error handling
+                    el.onerror = (e) => console.error("Video error:", e);
+                  }
                 }}
                 data-index={index}
                 className="h-full w-full object-cover"
@@ -107,7 +125,13 @@ export const ShortsFeed = () => {
                 playsInline
                 onClick={(e) => {
                   const video = e.target as HTMLVideoElement;
-                  video.paused ? video.play() : video.pause();
+                  if (video.paused) {
+                    console.log("Playing video on click");
+                    video.play().catch(e => console.error("Error playing video:", e));
+                  } else {
+                    console.log("Pausing video on click");
+                    video.pause();
+                  }
                 }}
               />
               
@@ -125,11 +149,11 @@ export const ShortsFeed = () => {
                   <Avatar className="h-10 w-10 ring-2 ring-white/20">
                     <AvatarImage src={short.creator.avatar_url ?? ""} />
                     <AvatarFallback className="bg-luxury-primary/20">
-                      {short.creator.username[0]}
+                      {short.creator.username[1]}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <span className="font-semibold">@{short.creator.username}</span>
+                    <span className="font-semibold">{short.creator.username}</span>
                     <p className="text-sm text-white/80">{short.description}</p>
                   </div>
                 </div>
