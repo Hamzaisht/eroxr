@@ -36,106 +36,104 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
 
   const canAccessBodyContact = profile?.is_paying_customer || profile?.id_verification_status === 'verified';
 
-  const mediaItems = [
-    { id: 1, type: "image", url: "https://picsum.photos/400/300?random=1", isPremium: true },
-    { id: 2, type: "image", url: "https://picsum.photos/400/300?random=2", isPremium: false },
-    { id: 3, type: "image", url: "https://picsum.photos/400/300?random=3", isPremium: true },
-  ];
-
   const displayPrice = creatorPrice?.monthly_price || 9.99;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <SubscriptionBanner 
-        username={profile?.username} 
-        price={displayPrice}
-      />
+    <div className="w-full">
+      <div className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-8">
+        <SubscriptionBanner 
+          username={profile?.username} 
+          price={displayPrice}
+        />
 
-      <Tabs defaultValue="showcase" className="w-full">
-        <TabsList className="w-full justify-start bg-luxury-dark/50 backdrop-blur-lg rounded-2xl p-2">
-          <TabsTrigger value="showcase" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
-            <CircuitBoard className="h-4 w-4" />
-            Showcase
-          </TabsTrigger>
-          <TabsTrigger value="media" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
-            <Image className="h-4 w-4" />
-            Media
-          </TabsTrigger>
-          <TabsTrigger value="subscribers" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Subscribers
-          </TabsTrigger>
-          <TabsTrigger value="likes" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
-            <Heart className="h-4 w-4" />
-            Likes
-          </TabsTrigger>
-          <TabsTrigger 
-            value="bodycontact" 
-            className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2"
-            disabled={!canAccessBodyContact}
-          >
-            <MessageCircle className="h-4 w-4" />
-            Body Contact
-          </TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="showcase" className="w-full">
+          <TabsList className="w-full justify-start bg-luxury-dark/50 backdrop-blur-lg rounded-2xl p-2 sticky top-0 z-10">
+            <TabsTrigger value="showcase" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
+              <CircuitBoard className="h-4 w-4" />
+              Showcase
+            </TabsTrigger>
+            <TabsTrigger value="media" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              Media
+            </TabsTrigger>
+            <TabsTrigger value="subscribers" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Subscribers
+            </TabsTrigger>
+            <TabsTrigger value="likes" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
+              <Heart className="h-4 w-4" />
+              Likes
+            </TabsTrigger>
+            <TabsTrigger 
+              value="bodycontact" 
+              className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2"
+              disabled={!canAccessBodyContact}
+            >
+              <MessageCircle className="h-4 w-4" />
+              Body Contact
+            </TabsTrigger>
+          </TabsList>
 
-        <AnimatePresence mode="wait">
-          <TabsContent value="media" className="mt-8">
-            <MediaGrid items={mediaItems} onImageClick={setSelectedImage} />
-          </TabsContent>
+          <div className="mt-8">
+            <AnimatePresence mode="wait">
+              <TabsContent value="media" className="space-y-8">
+                <MediaGrid items={mediaItems} onImageClick={setSelectedImage} />
+              </TabsContent>
 
-          <TabsContent value="showcase" className="mt-8">
-            <EmptyState 
-              icon={CircuitBoard}
-              message="No created content yet"
-            />
-          </TabsContent>
+              <TabsContent value="showcase" className="space-y-8">
+                <EmptyState 
+                  icon={CircuitBoard}
+                  message="No created content yet"
+                />
+              </TabsContent>
 
-          <TabsContent value="subscribers" className="mt-8">
-            <EmptyState 
-              icon={Users}
-              message="No subscribers yet"
-            />
-          </TabsContent>
+              <TabsContent value="subscribers" className="space-y-8">
+                <EmptyState 
+                  icon={Users}
+                  message="No subscribers yet"
+                />
+              </TabsContent>
 
-          <TabsContent value="likes" className="mt-8">
-            <EmptyState 
-              icon={Heart}
-              message="No liked content yet"
-            />
-          </TabsContent>
+              <TabsContent value="likes" className="space-y-8">
+                <EmptyState 
+                  icon={Heart}
+                  message="No liked content yet"
+                />
+              </TabsContent>
 
-          <TabsContent value="bodycontact" className="mt-8">
-            {!canAccessBodyContact ? (
-              <Alert>
-                <AlertDescription>
-                  Body Contact is only available for verified content creators or paying members. 
-                  {!profile?.is_paying_customer && (
-                    <span> Subscribe for $4.99/month to access this feature.</span>
-                  )}
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <EmptyState 
-                icon={MessageCircle}
-                message="No body contact ads yet"
-              />
-            )}
-          </TabsContent>
-        </AnimatePresence>
-      </Tabs>
-
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="max-w-4xl bg-luxury-dark/95 border-luxury-primary/20">
-          <div className="relative aspect-video">
-            <img
-              src={selectedImage || ""}
-              alt="Full screen media"
-              className="w-full h-full object-contain"
-            />
+              <TabsContent value="bodycontact" className="space-y-8">
+                {!canAccessBodyContact ? (
+                  <Alert>
+                    <AlertDescription>
+                      Body Contact is only available for verified content creators or paying members. 
+                      {!profile?.is_paying_customer && (
+                        <span> Subscribe for $4.99/month to access this feature.</span>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <EmptyState 
+                    icon={MessageCircle}
+                    message="No body contact ads yet"
+                  />
+                )}
+              </TabsContent>
+            </AnimatePresence>
           </div>
-        </DialogContent>
-      </Dialog>
+        </Tabs>
+
+        <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+          <DialogContent className="max-w-4xl bg-luxury-dark/95 border-luxury-primary/20">
+            <div className="relative aspect-video">
+              <img
+                src={selectedImage || ""}
+                alt="Full screen media"
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };

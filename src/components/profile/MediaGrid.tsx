@@ -9,20 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 
-interface MediaItem {
-  id: number;
-  type: string;
-  url: string;
-  isPremium: boolean;
-  width?: number;
-  height?: number;
-}
-
-interface MediaGridProps {
-  items?: MediaItem[];
-  onImageClick: (url: string) => void;
-}
-
 export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const session = useSession();
@@ -42,9 +28,6 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         throw error;
       }
 
-      console.log("Fetched posts:", posts);
-
-      // Flatten media_url and video_urls arrays into individual items
       const media = posts?.flatMap(post => {
         const mediaUrls = [...(post.media_url || []), ...(post.video_urls || [])];
         return mediaUrls.map(url => ({
@@ -57,35 +40,19 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         }));
       }) || [];
 
-      console.log("Processed media items:", media);
       return media;
     },
     enabled: !!session?.user?.id
   });
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1 }
-  };
-
-  const handleImageClick = (url: string) => {
-    if (!url) return;
-    setSelectedMedia(url);
-    onImageClick(url);
-  };
-
   if (isLoading) {
-    return <div className="text-center p-12">Loading media...</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Skeleton key={i} className="aspect-[4/5] rounded-lg" />
+        ))}
+      </div>
+    );
   }
 
   if (!mediaItems.length) {
@@ -99,72 +66,64 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   return (
     <>
       <motion.div
-        variants={container}
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+          }
+        }}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-3 gap-1"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
       >
-        {mediaItems.map((mediaItem, index) => {
-          const aspectRatio = mediaItem.width && mediaItem.height 
-            ? getAspectRatioFromDimensions(mediaItem.width, mediaItem.height)
-            : '4:5';
-
-          return (
-            <motion.div
-              key={`${mediaItem.id}-${mediaItem.url}`}
-              variants={item}
-              whileHover={{ scale: 1.02 }}
-              className={cn(
-                "relative cursor-pointer overflow-hidden",
-                aspectRatio === '1:1' ? 'aspect-square' : 
-                aspectRatio === '4:5' ? 'aspect-[4/5]' : 
-                'aspect-[9/16]'
-              )}
-              onClick={() => !mediaItem.isPremium && handleImageClick(mediaItem.url)}
-            >
-              <div className="relative w-full h-full">
-                {mediaItem.type === 'video' ? (
-                  <video
-                    src={mediaItem.url}
-                    className={cn(
-                      "w-full h-full object-cover",
-                      mediaItem.isPremium ? "blur-lg" : "",
-                      "hover:opacity-90 transition-opacity duration-200"
-                    )}
-                    style={getImageStyles(aspectRatio)}
-                    muted
-                    playsInline
-                  />
-                ) : (
-                  <img
-                    src={mediaItem.url}
-                    alt="Media content"
-                    className={cn(
-                      "w-full h-full object-cover",
-                      mediaItem.isPremium ? "blur-lg" : "",
-                      "hover:opacity-90 transition-opacity duration-200"
-                    )}
-                    style={getImageStyles(aspectRatio)}
-                    loading="lazy"
-                  />
+        {mediaItems.map((mediaItem, index) => (
+          <motion.div
+            key={`${mediaItem.id}-${mediaItem.url}`}
+            variants={{
+              hidden: { y: 20, opacity: 0 },
+              show: { y: 0, opacity: 1 }
+            }}
+            className="relative aspect-[4/5] rounded-lg overflow-hidden group cursor-pointer"
+            onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
+          >
+            {mediaItem.type === 'video' ? (
+              <video
+                src={mediaItem.url}
+                className={cn(
+                  "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                  mediaItem.isPremium ? "blur-lg" : ""
                 )}
-                {mediaItem.isPremium && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <Lock className="w-8 h-8 text-primary mb-2" />
-                    <p className="text-white font-medium text-sm">Premium Content</p>
-                    <Button 
-                      size="sm"
-                      variant="secondary"
-                      className="mt-2"
-                    >
-                      Subscribe to Unlock
-                    </Button>
-                  </div>
+                muted
+                playsInline
+              />
+            ) : (
+              <img
+                src={mediaItem.url}
+                alt="Media content"
+                className={cn(
+                  "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                  mediaItem.isPremium ? "blur-lg" : ""
                 )}
+                loading="lazy"
+              />
+            )}
+            
+            {mediaItem.isPremium && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                <Lock className="w-8 h-8 text-primary mb-2" />
+                <p className="text-white font-medium text-sm">Premium Content</p>
+                <Button 
+                  size="sm"
+                  variant="secondary"
+                  className="mt-2"
+                >
+                  Subscribe to Unlock
+                </Button>
               </div>
-            </motion.div>
-          );
-        })}
+            )}
+          </motion.div>
+        ))}
       </motion.div>
 
       <MediaViewer 
