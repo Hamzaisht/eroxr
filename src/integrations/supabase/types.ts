@@ -780,29 +780,35 @@ export type Database = {
         Row: {
           created_at: string
           creator_id: string
+          duration: number | null
           expires_at: string
           id: string
           is_active: boolean | null
           media_url: string
           screenshot_disabled: boolean | null
+          video_url: string | null
         }
         Insert: {
           created_at?: string
           creator_id: string
+          duration?: number | null
           expires_at?: string
           id?: string
           is_active?: boolean | null
           media_url: string
           screenshot_disabled?: boolean | null
+          video_url?: string | null
         }
         Update: {
           created_at?: string
           creator_id?: string
+          duration?: number | null
           expires_at?: string
           id?: string
           is_active?: boolean | null
           media_url?: string
           screenshot_disabled?: boolean | null
+          video_url?: string | null
         }
         Relationships: [
           {

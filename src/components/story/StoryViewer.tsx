@@ -1,12 +1,14 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { StoryProgress } from "./viewer/StoryProgress";
 import { StoryHeader } from "./viewer/StoryHeader";
 import { StoryImage } from "./viewer/StoryImage";
+import { StoryVideo } from "./viewer/StoryVideo";
 import { StoryControls } from "./viewer/StoryControls";
+import { X } from "lucide-react";
 
 interface StoryViewerProps {
   open: boolean;
@@ -14,6 +16,8 @@ interface StoryViewerProps {
   stories: Array<{
     id: string;
     media_url: string;
+    video_url?: string;
+    duration?: number;
     created_at: string;
     expires_at: string;
   }>;
@@ -29,22 +33,7 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
   const [isHoldingClick, setIsHoldingClick] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
-
-  // Prevent screenshots
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.key === 'PrintScreen') ||
-        (e.ctrlKey && e.key === 'p') ||
-        (e.metaKey && e.key === 'p')
-      ) {
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Update time remaining
   useEffect(() => {
@@ -67,11 +56,12 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
     return () => clearInterval(interval);
   }, [currentIndex, open, stories, onOpenChange]);
 
-  // Auto-advance timer
+  // Auto-advance timer for images
   useEffect(() => {
     let timer: NodeJS.Timeout;
+    const currentStory = stories[currentIndex];
     
-    if (open && !isHoldingClick && !isPaused) {
+    if (open && !isHoldingClick && !isPaused && !currentStory.video_url) {
       timer = setTimeout(() => {
         if (currentIndex < stories.length - 1) {
           setCurrentIndex(currentIndex + 1);
@@ -84,6 +74,15 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
 
     return () => clearTimeout(timer);
   }, [currentIndex, open, isHoldingClick, isPaused, stories.length, onOpenChange]);
+
+  const handleVideoEnd = () => {
+    if (currentIndex < stories.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      onOpenChange(false);
+      setCurrentIndex(0);
+    }
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -107,11 +106,17 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
   const handleTouchStart = () => {
     setIsHoldingClick(true);
     setIsPaused(true);
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
   };
 
   const handleTouchEnd = () => {
     setIsHoldingClick(false);
     setIsPaused(false);
+    if (videoRef.current) {
+      videoRef.current.play();
+    }
   };
 
   return (
@@ -140,11 +145,20 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
                 timeRemaining={timeRemaining}
               />
 
-              <StoryImage 
-                mediaUrl={stories[currentIndex].media_url}
-                username={creator.username}
-                isPaused={isPaused}
-              />
+              {stories[currentIndex].video_url ? (
+                <StoryVideo
+                  videoUrl={stories[currentIndex].video_url!}
+                  ref={videoRef}
+                  onEnded={handleVideoEnd}
+                  isPaused={isPaused}
+                />
+              ) : (
+                <StoryImage 
+                  mediaUrl={stories[currentIndex].media_url}
+                  username={creator.username}
+                  isPaused={isPaused}
+                />
+              )}
 
               <StoryControls 
                 onClick={handleClick}
@@ -154,6 +168,13 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
                 onMouseUp={handleTouchEnd}
                 onMouseLeave={handleTouchEnd}
               />
+
+              <button
+                onClick={() => onOpenChange(false)}
+                className="absolute right-4 top-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-50"
+              >
+                <X className="h-6 w-6 text-white" />
+              </button>
             </AspectRatio>
           </motion.div>
         </AnimatePresence>
