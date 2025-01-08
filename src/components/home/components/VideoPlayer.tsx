@@ -9,28 +9,30 @@ interface VideoPlayerProps {
 export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Reset video state
-    video.pause();
-    video.currentTime = 0;
+    // Reset state
     setIsLoading(true);
+    setError(null);
 
-    // Set up video event listeners
     const handleLoadedData = () => {
+      console.log("Video loaded:", src);
       setIsLoading(false);
       if (video.paused) {
         video.play().catch(error => {
           console.error("Error playing video:", error);
+          setError("Failed to play video");
         });
       }
     };
 
-    const handleError = (e: ErrorEvent) => {
-      console.error("Video loading error:", e);
+    const handleError = () => {
+      console.error("Video error for source:", src);
+      setError("Failed to load video");
       setIsLoading(false);
     };
 
@@ -39,14 +41,12 @@ export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => 
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            console.log("Video in view:", src);
             onIndexChange(index);
-            // Only set src and load when video comes into view
-            if (video.src !== src) {
-              video.src = src;
-              video.load();
-            }
+            video.load(); // Explicitly load the video
             video.play().catch(error => {
               console.error("Error playing video:", error);
+              setError("Failed to play video");
             });
           } else {
             video.pause();
@@ -55,8 +55,7 @@ export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => 
         });
       },
       {
-        threshold: 0.5,
-        rootMargin: "-10% 0px"
+        threshold: 0.7 // Increased threshold for better visibility detection
       }
     );
 
@@ -64,6 +63,12 @@ export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => 
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
     observer.observe(video);
+
+    // Set video source
+    if (video.src !== src) {
+      video.src = src;
+      video.load();
+    }
 
     // Cleanup
     return () => {
@@ -77,14 +82,14 @@ export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => 
   }, [src, index, onIndexChange]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full bg-black">
       <video
         ref={videoRef}
         className="h-full w-full object-cover"
         playsInline
         muted
         loop
-        preload="metadata"
+        preload="auto"
         onClick={(e) => {
           const video = e.currentTarget;
           if (video.paused) {
@@ -95,8 +100,15 @@ export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => 
         }}
       />
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <div className="w-8 h-8 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+          <div className="w-12 h-12 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <p className="text-white text-center px-4 py-2 bg-red-500/80 rounded">
+            {error}
+          </p>
         </div>
       )}
     </div>

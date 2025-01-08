@@ -56,12 +56,28 @@ export const ShortsFeed = () => {
   ];
 
   useEffect(() => {
-    // Preload videos
-    shorts.forEach(short => {
-      const video = new Audio(short.video_url);
-      video.preload = "metadata";
-    });
-    setIsLoading(false);
+    const preloadVideos = async () => {
+      try {
+        await Promise.all(
+          shorts.map(short => {
+            return new Promise((resolve, reject) => {
+              const video = document.createElement('video');
+              video.preload = "metadata";
+              video.onloadedmetadata = () => resolve(true);
+              video.onerror = () => reject(new Error(`Failed to load ${short.video_url}`));
+              video.src = short.video_url;
+            });
+          })
+        );
+        console.log("All videos preloaded successfully");
+      } catch (error) {
+        console.error("Error preloading videos:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    preloadVideos();
   }, []);
 
   const handleShare = (shortId: string) => {
