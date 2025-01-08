@@ -1,5 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
+import { useSession } from "@supabase/auth-helpers-react";
 import Home from "@/pages/Home";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
@@ -11,18 +12,41 @@ import Eroboard from "@/pages/Eroboard";
 import Settings from "@/pages/Settings";
 
 function App() {
+  const session = useSession();
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* Public routes */}
         <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/eroboard" element={<Eroboard />} />
-        <Route path="/settings" element={<Settings />} />
+
+        {/* Protected routes */}
+        <Route
+          path="/"
+          element={session ? <Home /> : <Navigate to="/landing" replace />}
+        />
+        <Route
+          path="/profile"
+          element={session ? <Profile /> : <Navigate to="/landing" replace />}
+        />
+        <Route
+          path="/messages"
+          element={session ? <Messages /> : <Navigate to="/landing" replace />}
+        />
+        <Route
+          path="/categories"
+          element={session ? <Categories /> : <Navigate to="/landing" replace />}
+        />
+        <Route
+          path="/eroboard"
+          element={session ? <Eroboard /> : <Navigate to="/landing" replace />}
+        />
+        <Route
+          path="/settings"
+          element={session ? <Settings /> : <Navigate to="/landing" replace />}
+        />
       </Routes>
       <Toaster />
     </Router>

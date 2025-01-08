@@ -10,7 +10,7 @@ export const Hero = () => {
 
   useEffect(() => {
     if (session) {
-      navigate("/home");
+      navigate("/"); // Changed from "/home" to "/"
     }
   }, [session, navigate]);
 
