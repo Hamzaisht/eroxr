@@ -17,6 +17,24 @@ export const usePostActions = () => {
     }
 
     try {
+      // First verify the post exists
+      const { data: post, error: postError } = await supabase
+        .from("posts")
+        .select()
+        .eq("id", postId)
+        .maybeSingle();
+
+      if (postError) throw postError;
+      
+      if (!post) {
+        toast({
+          title: "Error",
+          description: "This post no longer exists.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error: existingLikeError, data: existingLike } = await supabase
         .from("post_likes")
         .select()
@@ -49,6 +67,7 @@ export const usePostActions = () => {
         description: existingLike ? "You have unliked this post" : "You have liked this post",
       });
     } catch (error) {
+      console.error("Like error:", error);
       toast({
         title: "Error",
         description: "Failed to like post. Please try again.",
