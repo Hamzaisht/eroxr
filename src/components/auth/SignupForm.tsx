@@ -12,9 +12,10 @@ import { DateOfBirthField } from "./form-fields/DateOfBirthField";
 import { UsernameField } from "./form-fields/UsernameField";
 import { CountrySelect } from "./form-fields/CountrySelect";
 import { NameFields } from "./form-fields/NameFields";
+import { SocialLogin } from "./SocialLogin";
 import { motion } from "framer-motion";
 
-export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
+export const SignupForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supabase = useSupabaseClient();
@@ -67,6 +68,24 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
     }
   };
 
+  const handleSocialLogin = async (provider: 'google' | 'github') => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -74,12 +93,14 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
       transition={{ duration: 0.5 }}
       className="w-full space-y-6"
     >
+      <SocialLogin onSocialLogin={handleSocialLogin} isLoading={isLoading} />
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <EmailField form={form} isLoading={isLoading} />
-          
           <NameFields form={form} isLoading={isLoading} />
-
+          <UsernameField form={form} isLoading={isLoading} />
+          
           <div className="space-y-4">
             <PasswordField
               form={form}
@@ -95,7 +116,6 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
             />
           </div>
 
-          <UsernameField form={form} isLoading={isLoading} />
           <DateOfBirthField form={form} isLoading={isLoading} />
           <CountrySelect form={form} isLoading={isLoading} />
 
@@ -116,14 +136,11 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
         </form>
       </Form>
 
-      <div className="text-center space-y-4">
-        <p className="text-sm text-luxury-neutral/70">
-          By signing up, you confirm that you are at least 18 years old and agree to our Terms of Service and Privacy Policy
-        </p>
+      <div className="text-center">
         <p className="text-luxury-neutral/80">
           Already have an account?{" "}
           <button
-            onClick={onToggleMode}
+            onClick={() => {}} // TODO: Implement toggle to login view
             className="text-luxury-primary hover:text-luxury-accent transition-colors font-medium"
             disabled={isLoading}
           >
