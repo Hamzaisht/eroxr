@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Landing from "@/pages/Landing";
@@ -32,7 +32,13 @@ export default function App() {
       {/* Protected routes */}
       <Route
         element={
-          session ? <MainLayout /> : <Navigate to="/landing" replace />
+          session ? (
+            <MainLayout>
+              <Outlet />
+            </MainLayout>
+          ) : (
+            <Navigate to="/landing" replace />
+          )
         }
       >
         <Route path="/" element={<Home />} />
