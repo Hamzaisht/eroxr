@@ -14,7 +14,6 @@ import { useQuery } from "@tanstack/react-query";
 import { UserBadge } from "./UserBadge";
 import { UserAvatar } from "./UserAvatar";
 import { GuestButtons } from "./GuestButtons";
-import { Button } from "@/components/ui/button";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -67,23 +66,7 @@ export const UserMenu = () => {
   };
 
   if (!session) {
-    return (
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          onClick={handleLogin}
-          className="hover:bg-luxury-neutral/10 transition-all duration-300"
-        >
-          Log in
-        </Button>
-        <Button 
-          onClick={handleSignUp}
-          className="bg-button-gradient hover:bg-hover-gradient text-white transition-all duration-300 hover:scale-105"
-        >
-          Sign up
-        </Button>
-      </div>
-    );
+    return <GuestButtons onLogin={handleLogin} onSignUp={handleSignUp} />;
   }
 
   return (
@@ -116,7 +99,7 @@ export const UserMenu = () => {
             className="text-red-600 focus:text-red-600" 
             onClick={handleLogout}
           >
-            Log out
+            Sign out of your account
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

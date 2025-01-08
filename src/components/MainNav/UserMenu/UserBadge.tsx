@@ -18,10 +18,12 @@ export const UserBadge = ({ profile, fallbackEmail }: UserBadgeProps) => {
     return "Free User";
   };
 
+  const displayName = profile?.username || fallbackEmail?.split('@')[0] || 'Guest';
+
   return (
     <div className="flex flex-col items-end">
       <span className="text-sm font-medium">
-        @{profile?.username || fallbackEmail?.split('@')[0] || 'Guest'}
+        @{displayName}
       </span>
       <Badge 
         variant={profile?.is_paying_customer ? "default" : "secondary"}
