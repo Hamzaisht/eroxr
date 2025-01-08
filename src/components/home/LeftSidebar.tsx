@@ -17,10 +17,10 @@ export const LeftSidebar = () => {
     const checkUserStatus = async () => {
       if (!session?.user?.id) return;
       
-      console.log("Starting user status check for:", session.user.id);
+      console.log("Checking admin status for user:", session.user.id);
       
       try {
-        // Check admin role first - simplified query
+        // Check admin role first
         const { data: adminRole, error: adminError } = await supabase
           .from('user_roles')
           .select('*')
@@ -28,16 +28,15 @@ export const LeftSidebar = () => {
           .eq('role', 'admin')
           .maybeSingle();
 
-        console.log("Admin role check result:", adminRole);
+        console.log("Admin check result:", adminRole);
 
         if (adminError) {
-          console.error("Admin role check error:", adminError);
+          console.error("Admin check error:", adminError);
           return;
         }
 
-        // If admin role exists, set both admin and verified status
         if (adminRole) {
-          console.log("Admin role found - granting full access");
+          console.log("Admin role found - setting admin status");
           setIsAdmin(true);
           setIsVerifiedCreator(true);
           toast({
@@ -52,15 +51,15 @@ export const LeftSidebar = () => {
           .from('profiles')
           .select('id_verification_status')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
         
+        console.log("Profile verification check:", profile);
+
         if (profileError) {
           console.error("Profile check error:", profileError);
           return;
         }
 
-        console.log("Profile verification status:", profile?.id_verification_status);
-        
         const isVerified = profile?.id_verification_status === 'verified';
         setIsVerifiedCreator(isVerified);
         
@@ -87,9 +86,9 @@ export const LeftSidebar = () => {
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="hidden lg:block space-y-4"
+      className="hidden lg:block space-y-4 fixed left-0 top-0 h-full bg-luxury-dark/95 backdrop-blur-sm border-r border-luxury-neutral/10 w-64 p-4"
     >
-      <div className="sticky top-4 space-y-2">
+      <div className="space-y-2">
         <div 
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-luxury-neutral/5 transition-colors cursor-pointer"
           onClick={() => navigate('/')}
@@ -98,7 +97,6 @@ export const LeftSidebar = () => {
           <span className="font-medium">News Feed</span>
         </div>
 
-        {/* Always show Eroboard for admins */}
         {(isAdmin || isVerifiedCreator) && (
           <motion.div 
             initial={{ opacity: 0, x: -10 }}
@@ -111,7 +109,6 @@ export const LeftSidebar = () => {
           </motion.div>
         )}
 
-        {/* Admin-only sections */}
         {isAdmin && (
           <>
             <motion.div 

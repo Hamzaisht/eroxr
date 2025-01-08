@@ -63,7 +63,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <motion.div
         initial={false}
         animate={{ width: isSidebarCollapsed ? "64px" : "256px" }}
-        className="relative bg-[#0D0D0D] border-r border-gray-800"
+        className="relative bg-[#0D0D0D] border-r border-gray-800 min-h-screen"
       >
         {/* Logo */}
         <div className="p-4 border-b border-gray-800">
@@ -120,28 +120,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <ChevronLeft className="h-4 w-4" />
           )}
         </Button>
-
-        {/* User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/profile')}>
-            <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
-              <span className="text-gray-300">?</span>
-            </div>
-            {!isSidebarCollapsed && (
-              <div>
-                <p className="text-gray-200">Guest</p>
-                <p className="text-sm text-gray-500">View Profile</p>
-              </div>
-            )}
-          </div>
-        </div>
       </motion.div>
 
-      <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
+      <div className="flex-1 bg-luxury-dark">
         <main className="min-h-screen">
           {children}
         </main>
       </div>
     </div>
   );
-}
+};
