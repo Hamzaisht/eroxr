@@ -17,28 +17,43 @@ export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => 
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            console.log("Video in view, attempting to play:", video.src);
-            // Reset the video source to force reload
+            // Reset video source and load it
             video.src = src;
             video.load();
-            // Play after load
-            video.addEventListener('loadedmetadata', () => {
+            
+            // Play after metadata is loaded
+            const playVideo = () => {
               video.play().catch((error) => {
                 console.error("Error playing video:", error);
               });
-            }, { once: true });
+            };
+
+            // Remove any existing loadedmetadata listeners
+            video.removeEventListener('loadedmetadata', playVideo);
+            // Add new listener
+            video.addEventListener('loadedmetadata', playVideo, { once: true });
+            
             onIndexChange(index);
           } else {
-            console.log("Video out of view, pausing:", video.src);
+            // Pause and reset when out of view
             video.pause();
+            video.currentTime = 0;
           }
         });
       },
-      { threshold: 0.7 }
+      { 
+        threshold: 0.7,
+        root: null,
+        rootMargin: "0px"
+      }
     );
 
     observer.observe(video);
-    return () => observer.disconnect();
+    
+    return () => {
+      video.removeEventListener('loadedmetadata', () => {});
+      observer.disconnect();
+    };
   }, [src, index, onIndexChange]);
 
   return (
@@ -48,13 +63,12 @@ export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => 
       playsInline
       muted
       loop
+      preload="auto"
       onClick={(e) => {
         const video = e.currentTarget;
         if (video.paused) {
-          console.log("Playing video on click");
           video.play().catch(e => console.error("Error playing video:", e));
         } else {
-          console.log("Pausing video on click");
           video.pause();
         }
       }}
