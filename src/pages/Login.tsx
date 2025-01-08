@@ -12,11 +12,21 @@ const Login = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check current session
+    // Check current session and handle token refresh
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/home");
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error?.message?.includes('refresh_token_not_found')) {
+          await supabase.auth.signOut();
+          return;
+        }
+        
+        if (session) {
+          navigate("/home");
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
       }
     };
     
@@ -26,8 +36,11 @@ const Login = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         navigate("/home");
-      } else if (event === "SIGNED_OUT") {
-        navigate("/login");
+      } else if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
+        // Handle token refresh failure
+        if (!session) {
+          navigate("/login");
+        }
       }
     });
 
