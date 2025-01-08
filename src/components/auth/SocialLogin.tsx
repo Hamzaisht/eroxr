@@ -1,8 +1,8 @@
-import { Twitter, Mail } from "lucide-react";
+import { Twitter, Mail, Chrome, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SocialLoginProps {
-  onSocialLogin: (provider: 'twitter' | 'google') => void;
+  onSocialLogin: (provider: 'twitter' | 'google' | 'reddit') => void;
   isLoading: boolean;
 }
 
@@ -18,7 +18,16 @@ export const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
         </div>
       </div>
 
-      <div className="flex justify-center gap-6">
+      <div className="flex justify-center gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onSocialLogin('google')}
+          className="border-luxury-primary/20 bg-white/5 text-white hover:bg-luxury-primary/20 hover:border-luxury-primary/40 transition-all duration-300 w-14 h-14 rounded-full p-0 group"
+          disabled={isLoading}
+        >
+          <Chrome className="w-7 h-7 group-hover:text-luxury-primary transition-colors" />
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -31,11 +40,11 @@ export const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
         <Button
           type="button"
           variant="outline"
-          onClick={() => onSocialLogin('google')}
+          onClick={() => onSocialLogin('reddit')}
           className="border-luxury-primary/20 bg-white/5 text-white hover:bg-luxury-primary/20 hover:border-luxury-primary/40 transition-all duration-300 w-14 h-14 rounded-full p-0 group"
           disabled={isLoading}
         >
-          <Mail className="w-7 h-7 group-hover:text-luxury-primary transition-colors" />
+          <MessageSquare className="w-7 h-7 group-hover:text-luxury-primary transition-colors" />
         </Button>
       </div>
     </div>

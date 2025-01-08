@@ -72,7 +72,7 @@ export const SignupForm = ({ onToggleMode }: SignupFormProps) => {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'twitter') => {
+  const handleSocialLogin = async (provider: 'google' | 'twitter' | 'reddit') => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
