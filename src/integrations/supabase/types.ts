@@ -663,11 +663,13 @@ export type Database = {
           bio: string | null
           created_at: string
           date_of_birth: string | null
+          first_name: string | null
           id: string
           id_verification_status: string | null
           interests: string[] | null
           is_age_verified: boolean | null
           is_paying_customer: boolean | null
+          last_name: string | null
           last_username_change: string | null
           location: string | null
           profile_visibility: boolean | null
@@ -681,11 +683,13 @@ export type Database = {
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
+          first_name?: string | null
           id: string
           id_verification_status?: string | null
           interests?: string[] | null
           is_age_verified?: boolean | null
           is_paying_customer?: boolean | null
+          last_name?: string | null
           last_username_change?: string | null
           location?: string | null
           profile_visibility?: boolean | null
@@ -699,11 +703,13 @@ export type Database = {
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
+          first_name?: string | null
           id?: string
           id_verification_status?: string | null
           interests?: string[] | null
           is_age_verified?: boolean | null
           is_paying_customer?: boolean | null
+          last_name?: string | null
           last_username_change?: string | null
           location?: string | null
           profile_visibility?: boolean | null
