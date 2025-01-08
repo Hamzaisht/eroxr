@@ -1,4 +1,5 @@
 import type { Profile as SupabaseProfile } from "@/integrations/supabase/types/profile";
+import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { z } from "zod";
 
 export type Profile = SupabaseProfile;
@@ -8,12 +9,12 @@ export interface ProfileHeaderProps {
   isOwnProfile: boolean;
   isEditing?: boolean;
   setIsEditing?: (value: boolean) => void;
-  availability?: string;
+  availability?: AvailabilityStatus;
   showAvatarPreview?: boolean;
   showBannerPreview?: boolean;
   setShowAvatarPreview?: (value: boolean) => void;
   setShowBannerPreview?: (value: boolean) => void;
-  setAvailability?: (value: string) => void;
+  setAvailability?: (value: AvailabilityStatus) => void;
   handleSave?: () => void;
   handleClose?: () => void;
   onGoLive?: () => void;
