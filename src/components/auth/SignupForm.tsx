@@ -72,79 +72,64 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-md space-y-6"
+      className="w-full space-y-6"
     >
-      <div className="relative backdrop-blur-xl bg-white/5 rounded-2xl p-8 shadow-2xl border border-luxury-primary/20">
-        <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/10 via-luxury-accent/5 to-transparent rounded-2xl" />
-        
-        <div className="relative space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
-              Join EROXR
-            </h2>
-            <p className="text-luxury-neutral/80">Create your account</p>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <EmailField form={form} isLoading={isLoading} />
+          
+          <NameFields form={form} isLoading={isLoading} />
+
+          <div className="space-y-4">
+            <PasswordField
+              form={form}
+              name="password"
+              placeholder="Password"
+              isLoading={isLoading}
+            />
+            <PasswordField
+              form={form}
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              isLoading={isLoading}
+            />
           </div>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <EmailField form={form} isLoading={isLoading} />
-              
-              <NameFields form={form} isLoading={isLoading} />
+          <UsernameField form={form} isLoading={isLoading} />
+          <DateOfBirthField form={form} isLoading={isLoading} />
+          <CountrySelect form={form} isLoading={isLoading} />
 
-              <div className="space-y-4">
-                <PasswordField
-                  form={form}
-                  name="password"
-                  placeholder="Password"
-                  isLoading={isLoading}
-                />
-                <PasswordField
-                  form={form}
-                  name="confirmPassword"
-                  placeholder="Confirm Password"
-                  isLoading={isLoading}
-                />
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary text-white font-medium py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed h-12"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Creating account...</span>
               </div>
+            ) : (
+              "Create Account"
+            )}
+          </Button>
+        </form>
+      </Form>
 
-              <UsernameField form={form} isLoading={isLoading} />
-
-              <DateOfBirthField form={form} isLoading={isLoading} />
-              
-              <CountrySelect form={form} isLoading={isLoading} />
-
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary text-white font-medium py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed h-12"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Creating account...</span>
-                  </div>
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </form>
-          </Form>
-
-          <div className="text-center space-y-4">
-            <p className="text-sm text-luxury-neutral/70">
-              By signing up, you confirm that you are at least 18 years old and agree to our Terms of Service and Privacy Policy
-            </p>
-            <p className="text-luxury-neutral/80">
-              Already have an account?{" "}
-              <button
-                onClick={onToggleMode}
-                className="text-luxury-primary hover:text-luxury-accent transition-colors font-medium"
-                disabled={isLoading}
-              >
-                Sign in
-              </button>
-            </p>
-          </div>
-        </div>
+      <div className="text-center space-y-4">
+        <p className="text-sm text-luxury-neutral/70">
+          By signing up, you confirm that you are at least 18 years old and agree to our Terms of Service and Privacy Policy
+        </p>
+        <p className="text-luxury-neutral/80">
+          Already have an account?{" "}
+          <button
+            onClick={onToggleMode}
+            className="text-luxury-primary hover:text-luxury-accent transition-colors font-medium"
+            disabled={isLoading}
+          >
+            Sign in
+          </button>
+        </p>
       </div>
     </motion.div>
   );
