@@ -11,9 +11,12 @@ export const StoryReel = () => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const { data: stories } = useQuery({
+  const { data: stories, isLoading } = useQuery({
     queryKey: ["stories"],
     queryFn: async () => {
+      const twentyFourHoursAgo = new Date();
+      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
       const { data, error } = await supabase
         .from("stories")
         .select(`
@@ -28,9 +31,13 @@ export const StoryReel = () => {
           )
         `)
         .eq("is_active", true)
+        .gte("created_at", twentyFourHoursAgo.toISOString())
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching stories:", error);
+        throw error;
+      }
 
       // Group stories by creator
       const groupedStories = data.reduce((acc: any, story) => {
@@ -47,6 +54,7 @@ export const StoryReel = () => {
 
       return Object.values(groupedStories);
     },
+    refetchInterval: 30000, // Refetch every 30 seconds to keep stories fresh
   });
 
   const scroll = (direction: "left" | "right") => {
@@ -64,6 +72,19 @@ export const StoryReel = () => {
       setScrollPosition(newPosition);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex gap-4 overflow-x-auto scrollbar-hide py-4 px-2">
+        {[1, 2, 3, 4].map((i) => (
+          <div 
+            key={i}
+            className="w-28 h-40 rounded-xl bg-luxury-dark/50 animate-pulse"
+          />
+        ))}
+      </div>
+    );
+  }
 
   if (!stories?.length && !session) return null;
 

@@ -3,13 +3,14 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { StoryViewer } from "./StoryViewer";
+import { formatDistanceToNow } from "date-fns";
 
 interface StoryItemProps {
   stories: Array<{
     id: string;
     media_url: string;
-    created_at: string;  // Added this
-    expires_at: string;  // Added this
+    created_at: string;
+    expires_at: string;
   }>;
   creator: {
     id: string;
@@ -21,6 +22,8 @@ interface StoryItemProps {
 
 export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const latestStory = stories[0];
+  const timeAgo = formatDistanceToNow(new Date(latestStory.created_at), { addSuffix: true });
 
   return (
     <>
@@ -48,10 +51,15 @@ export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
               </div>
             </Link>
             <img 
-              src={stories[0].media_url} 
+              src={latestStory.media_url} 
               alt={`Story by ${creator.username}`}
               className="aspect-[3/4] rounded-lg object-cover group-hover:scale-105 transition-transform duration-300"
             />
+            <div className="absolute bottom-1 left-1 right-1">
+              <p className="text-[10px] text-white/70 truncate bg-black/30 rounded px-1">
+                {timeAgo}
+              </p>
+            </div>
           </div>
           <div className="text-center">
             <p className="text-sm text-luxury-neutral truncate group-hover:text-luxury-primary transition-colors">
