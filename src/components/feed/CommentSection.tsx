@@ -30,11 +30,12 @@ interface CommentSectionProps {
 export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const session = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: comments = [], isLoading } = useQuery<Comment[]>({
+  const { data: comments = [], isLoading } = useQuery({
     queryKey: ["comments", postId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -75,6 +76,8 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       const { error } = await supabase
         .from("comments")
@@ -89,8 +92,8 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
       if (error) throw error;
 
       setNewComment("");
-      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      await queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
 
       toast({
         title: "Comment posted",
@@ -102,6 +105,8 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
         description: "Failed to post comment. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -126,8 +131,14 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 className="min-h-[80px]"
+                disabled={isSubmitting}
               />
-              <Button onClick={handleSubmitComment}>Post Comment</Button>
+              <Button 
+                onClick={handleSubmitComment}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Posting..." : "Post Comment"}
+              </Button>
             </div>
           )}
 

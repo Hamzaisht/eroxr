@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, Download, Camera } from "lucide-react";
+import { Heart, MessageCircle, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostHeader } from "./PostHeader";
 import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
@@ -11,6 +11,8 @@ import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
+import { CommentSection } from "./CommentSection";
+import { ShareDialog } from "./ShareDialog";
 
 interface PostCardProps {
   post: Post;
@@ -22,53 +24,31 @@ interface PostCardProps {
 export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProps) => {
   const [liked, setLiked] = useState(post.has_liked);
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const { toast } = useToast();
   const session = useSession();
 
   const handleLike = async () => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to like posts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (onLike) {
       await onLike(post.id);
       setLiked(!liked);
     }
   };
 
-  const handleMediaAction = async (actionType: 'screenshot' | 'download') => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to perform this action.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('post_media_actions')
-        .insert([{
-          post_id: post.id,
-          user_id: session.user.id,
-          action_type: actionType
-        }]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Media ${actionType} recorded`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to record ${actionType}`,
-        variant: "destructive",
-      });
-    }
-  };
-
   const isVideo = (url: string) => {
     return url.match(/\.(mp4|webm|ogg)$/i);
   };
+
+  const showMediaControls = post.media_url && post.media_url.length > 0;
 
   return (
     <Card className="overflow-hidden bg-luxury-dark border-luxury-primary/10">
@@ -137,39 +117,13 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
             {post.likes_count || 0}
           </Button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/10"
-          >
-            <MessageCircle className="w-5 h-5 mr-1.5" />
-            {post.comments_count || 0}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/10"
-            onClick={() => handleMediaAction('screenshot')}
-          >
-            <Camera className="w-5 h-5 mr-1.5" />
-            {post.screenshots_count || 0}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/10"
-            onClick={() => handleMediaAction('download')}
-          >
-            <Download className="w-5 h-5 mr-1.5" />
-            {post.downloads_count || 0}
-          </Button>
+          <CommentSection postId={post.id} commentsCount={post.comments_count} />
           
           <Button
             variant="ghost"
             size="sm"
             className="text-white/70 hover:text-white hover:bg-white/10"
+            onClick={() => setIsShareDialogOpen(true)}
           >
             <Share2 className="w-5 h-5 mr-1.5" />
             Share
@@ -180,6 +134,12 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
       <MediaViewer 
         media={selectedMedia} 
         onClose={() => setSelectedMedia(null)} 
+      />
+
+      <ShareDialog 
+        open={isShareDialogOpen} 
+        onOpenChange={setIsShareDialogOpen}
+        postId={post.id}
       />
     </Card>
   );
