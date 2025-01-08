@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { forwardRef } from "react";
+import { forwardRef, useEffect } from "react";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -9,6 +9,20 @@ interface StoryVideoProps {
 
 export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
   ({ videoUrl, onEnded, isPaused }, ref) => {
+    useEffect(() => {
+      const videoElement = ref as React.MutableRefObject<HTMLVideoElement>;
+      if (videoElement?.current) {
+        if (isPaused) {
+          videoElement.current.pause();
+        } else {
+          // Use play().catch to handle any autoplay restrictions
+          videoElement.current.play().catch(error => {
+            console.error("Error playing video:", error);
+          });
+        }
+      }
+    }, [isPaused, ref]);
+
     return (
       <motion.video
         ref={ref}

@@ -53,6 +53,8 @@ export const StoryReel = () => {
         .select(`
           id,
           media_url,
+          video_url,
+          duration,
           created_at,
           expires_at,
           creator:profiles(
