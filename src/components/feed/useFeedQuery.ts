@@ -60,14 +60,16 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
           comments_count,
           media_url,
           video_urls,
-          has_liked:post_likes!inner(id),
+          post_likes!inner (
+            id
+          ),
           visibility,
           tags,
           is_ppv,
           ppv_amount,
           screenshots_count,
           downloads_count
-        `)
+        `, { count: 'exact' })
         .order("created_at", { ascending: false })
         .range(from, to);
 
@@ -104,7 +106,19 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
           break;
         default:
           if (userId) {
-            query = query.or(`creator_id.eq.${userId},has_liked.eq.true`);
+            // For the feed, show posts from creators the user follows or has liked
+            const { data: likedPosts } = await supabase
+              .from('post_likes')
+              .select('post_id')
+              .eq('user_id', userId);
+
+            const likedPostIds = likedPosts?.map(like => like.post_id) || [];
+            
+            if (likedPostIds.length > 0) {
+              query = query.or(`creator_id.eq.${userId},id.in.(${likedPostIds.join(',')})`);
+            } else {
+              query = query.eq('creator_id', userId);
+            }
           }
       }
 
@@ -120,7 +134,7 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
         throw error;
       }
 
-      // If there are posts and a user is logged in, check for PPV purchases
+      // If there are posts and a user is logged in, check for PPV purchases and likes
       if (posts && posts.length > 0 && userId) {
         const { data: purchases } = await supabase
           .from('post_purchases')
@@ -128,11 +142,18 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
           .eq('user_id', userId)
           .in('post_id', posts.map(post => post.id));
 
+        const { data: likes } = await supabase
+          .from('post_likes')
+          .select('post_id')
+          .eq('user_id', userId)
+          .in('post_id', posts.map(post => post.id));
+
         const purchasedPostIds = new Set(purchases?.map(p => p.post_id) || []);
+        const likedPostIds = new Set(likes?.map(l => l.post_id) || []);
 
         return posts.map(post => ({
           ...post,
-          has_liked: post.has_liked?.length > 0,
+          has_liked: likedPostIds.has(post.id),
           visibility: post.visibility as "subscribers_only" | "public",
           has_purchased: purchasedPostIds.has(post.id),
           screenshots_count: post.screenshots_count || 0,
@@ -142,7 +163,7 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
 
       return posts?.map(post => ({
         ...post,
-        has_liked: post.has_liked?.length > 0,
+        has_liked: false,
         visibility: post.visibility as "subscribers_only" | "public",
         has_purchased: false,
         screenshots_count: post.screenshots_count || 0,
