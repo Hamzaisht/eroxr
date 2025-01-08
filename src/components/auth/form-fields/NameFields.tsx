@@ -63,7 +63,7 @@ export const NameFields = ({ form, isLoading }: NameFieldsProps) => {
         />
       </div>
       <p className="text-sm text-luxury-neutral/70 text-center">
-        Your first and last name are private and will only be used internally. Only your username will be visible to other users on the platform.
+        This information is for Eroxr and is not shown publically
       </p>
     </div>
   );

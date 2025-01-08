@@ -6,7 +6,9 @@ import { motion } from "framer-motion";
 export const AuthForm = () => {
   const [isSignup, setIsSignup] = useState(true);
 
-  const toggleMode = () => setIsSignup(!isSignup);
+  const toggleMode = () => {
+    setIsSignup(!isSignup);
+  };
 
   return (
     <motion.div
