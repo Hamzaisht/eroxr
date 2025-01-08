@@ -7,6 +7,7 @@ import { useFeedQuery } from "./feed/useFeedQuery";
 import { usePostActions } from "./feed/usePostActions";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
+import { useParams } from "react-router-dom";
 
 interface CreatorsFeedProps {
   feedType?: 'feed' | 'popular' | 'recent';
@@ -16,6 +17,7 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   const session = useSession();
   const { handleLike, handleDelete } = usePostActions();
   const { ref, inView } = useInView();
+  const { id } = useParams();
 
   const {
     data,
@@ -23,7 +25,7 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
-  } = useFeedQuery(session?.user?.id, feedType);
+  } = useFeedQuery(id || session?.user?.id, feedType);
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -34,9 +36,9 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   const posts = data?.pages.flat() || [];
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto">
+    <div className="w-full">
       <ScrollArea className="h-[calc(100vh-220px)]">
-        <div className="space-y-8 px-4">
+        <div className="space-y-8">
           {isLoading ? (
             <LoadingSkeleton />
           ) : (

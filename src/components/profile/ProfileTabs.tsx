@@ -1,51 +1,21 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Image, Users, CircuitBoard, MessageCircle } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { SubscriptionBanner } from "./SubscriptionBanner";
 import { MediaGrid } from "./MediaGrid";
 import { EmptyState } from "./EmptyState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CreatorsFeed } from "@/components/CreatorsFeed";
+import { useParams } from "react-router-dom";
 
-interface ProfileTabsProps {
-  profile: any;
-}
-
-export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
+export const ProfileTabs = ({ profile }: { profile: any }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  
-  const { data: creatorPrice } = useQuery({
-    queryKey: ["creator-price", profile?.id],
-    queryFn: async () => {
-      if (!profile?.id) return null;
-      
-      const { data, error } = await supabase
-        .from("creator_content_prices")
-        .select("*")
-        .eq("creator_id", profile.id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!profile?.id,
-  });
-
+  const { id } = useParams();
   const canAccessBodyContact = profile?.is_paying_customer || profile?.id_verification_status === 'verified';
-
-  const displayPrice = creatorPrice?.monthly_price || 9.99;
 
   return (
     <div className="w-full">
-      <div className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-8">
-        <SubscriptionBanner 
-          username={profile?.username} 
-          price={displayPrice}
-        />
-
+      <div className="max-w-screen-2xl mx-auto">
         <Tabs defaultValue="showcase" className="w-full">
           <TabsList className="w-full justify-start bg-luxury-dark/50 backdrop-blur-lg rounded-2xl p-2 sticky top-0 z-10">
             <TabsTrigger value="showcase" className="data-[state=active]:bg-luxury-primary data-[state=active]:text-white px-6 py-3 rounded-xl flex items-center gap-2">
@@ -76,15 +46,14 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
 
           <div className="mt-8">
             <AnimatePresence mode="wait">
-              <TabsContent value="media" className="space-y-8">
-                <MediaGrid onImageClick={setSelectedImage} />
+              <TabsContent value="showcase" className="space-y-8">
+                <div className="w-full">
+                  <CreatorsFeed feedType="recent" />
+                </div>
               </TabsContent>
 
-              <TabsContent value="showcase" className="space-y-8">
-                <EmptyState 
-                  icon={CircuitBoard}
-                  message="No created content yet"
-                />
+              <TabsContent value="media" className="space-y-8">
+                <MediaGrid onImageClick={setSelectedImage} />
               </TabsContent>
 
               <TabsContent value="subscribers" className="space-y-8">
@@ -121,18 +90,6 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
             </AnimatePresence>
           </div>
         </Tabs>
-
-        <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-          <DialogContent className="max-w-4xl bg-luxury-dark/95 border-luxury-primary/20">
-            <div className="relative aspect-video">
-              <img
-                src={selectedImage || ""}
-                alt="Full screen media"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
