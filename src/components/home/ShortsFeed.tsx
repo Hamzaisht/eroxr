@@ -1,38 +1,21 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Share2, Bookmark, Play } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
 import { ShareDialog } from "@/components/feed/ShareDialog";
-
-interface Short {
-  id: number;
-  creator: {
-    username: string;
-    avatar_url: string | null;
-  };
-  video_url: string;
-  description: string;
-  likes: number;
-  comments: number;
-  has_liked?: boolean;
-  has_saved?: boolean;
-}
+import { Short } from "./types/short";
+import { useShortActions } from "./hooks/useShortActions";
+import { ShortActions } from "./components/ShortActions";
 
 export const ShortsFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [selectedShortId, setSelectedShortId] = useState<number | null>(null);
+  const [selectedShortId, setSelectedShortId] = useState<string | null>(null);
   const videoRefs = useRef<{ [key: number]: HTMLVideoElement }>({});
-  const { toast } = useToast();
-  const session = useSession();
+  const { handleLike, handleSave } = useShortActions();
 
   const shorts: Short[] = [
     {
-      id: 1,
+      id: "1",
       creator: {
         username: "ArtisticSoul",
         avatar_url: null,
@@ -45,7 +28,7 @@ export const ShortsFeed = () => {
       has_saved: false,
     },
     {
-      id: 2,
+      id: "2",
       creator: {
         username: "TravelBlogger",
         avatar_url: null,
@@ -56,7 +39,7 @@ export const ShortsFeed = () => {
       comments: 34,
     },
     {
-      id: 3,
+      id: "3",
       creator: {
         username: "FitnessGuru",
         avatar_url: null,
@@ -91,103 +74,7 @@ export const ShortsFeed = () => {
     return () => observer.disconnect();
   }, []);
 
-  const handleLike = async (shortId: number) => {
-    if (!session) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to like shorts",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { data: existingLike } = await supabase
-        .from("post_likes")
-        .select()
-        .eq("post_id", shortId)
-        .eq("user_id", session.user.id)
-        .single();
-
-      if (existingLike) {
-        await supabase
-          .from("post_likes")
-          .delete()
-          .eq("post_id", shortId)
-          .eq("user_id", session.user.id);
-
-        toast({
-          title: "Like removed",
-          description: "Your like has been removed",
-        });
-      } else {
-        await supabase
-          .from("post_likes")
-          .insert([{ post_id: shortId, user_id: session.user.id }]);
-
-        toast({
-          title: "Short liked",
-          description: "Added to your liked shorts",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update like status",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSave = async (shortId: number) => {
-    if (!session) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to save shorts",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { data: existingSave } = await supabase
-        .from("post_saves")
-        .select()
-        .eq("post_id", shortId)
-        .eq("user_id", session.user.id)
-        .single();
-
-      if (existingSave) {
-        await supabase
-          .from("post_saves")
-          .delete()
-          .eq("post_id", shortId)
-          .eq("user_id", session.user.id);
-
-        toast({
-          title: "Removed from saved",
-          description: "Short has been removed from your saved items",
-        });
-      } else {
-        await supabase
-          .from("post_saves")
-          .insert([{ post_id: shortId, user_id: session.user.id }]);
-
-        toast({
-          title: "Short saved",
-          description: "Added to your saved shorts",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update save status",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleShare = (shortId: number) => {
+  const handleShare = (shortId: string) => {
     setSelectedShortId(shortId);
     setIsShareOpen(true);
   };
@@ -244,81 +131,16 @@ export const ShortsFeed = () => {
                 </div>
               </motion.div>
 
-              {/* Action buttons */}
-              <div className="absolute bottom-20 right-4 z-10 flex flex-col gap-6">
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
-                    onClick={() => handleLike(short.id)}
-                  >
-                    <Heart 
-                      className={`h-6 w-6 transition-colors ${
-                        short.has_liked 
-                          ? "text-red-500 fill-red-500" 
-                          : "text-white group-hover:text-red-500"
-                      }`} 
-                    />
-                  </Button>
-                  <span className="mt-1 text-center text-xs text-white block">
-                    {short.likes}
-                  </span>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
-                  >
-                    <MessageCircle className="h-6 w-6 text-white group-hover:text-luxury-primary" />
-                  </Button>
-                  <span className="mt-1 text-center text-xs text-white block">
-                    {short.comments}
-                  </span>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
-                    onClick={() => handleSave(short.id)}
-                  >
-                    <Bookmark 
-                      className={`h-6 w-6 transition-colors ${
-                        short.has_saved 
-                          ? "text-luxury-primary fill-luxury-primary" 
-                          : "text-white group-hover:text-luxury-primary"
-                      }`} 
-                    />
-                  </Button>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
-                    onClick={() => handleShare(short.id)}
-                  >
-                    <Share2 className="h-6 w-6 text-white group-hover:text-luxury-primary" />
-                  </Button>
-                </motion.div>
-              </div>
+              <ShortActions
+                shortId={short.id}
+                likes={short.likes}
+                comments={short.comments}
+                hasLiked={short.has_liked}
+                hasSaved={short.has_saved}
+                onLike={handleLike}
+                onSave={handleSave}
+                onShare={handleShare}
+              />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -328,7 +150,7 @@ export const ShortsFeed = () => {
         <ShareDialog
           open={isShareOpen}
           onOpenChange={setIsShareOpen}
-          postId={selectedShortId.toString()}
+          postId={selectedShortId}
         />
       )}
 
