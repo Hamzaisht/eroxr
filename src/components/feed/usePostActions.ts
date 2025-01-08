@@ -24,7 +24,10 @@ export const usePostActions = () => {
         .eq("id", postId)
         .maybeSingle();
 
-      if (postError) throw postError;
+      if (postError) {
+        console.error("Post fetch error:", postError);
+        throw postError;
+      }
       
       if (!post) {
         toast({
@@ -42,7 +45,10 @@ export const usePostActions = () => {
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (existingLikeError) throw existingLikeError;
+      if (existingLikeError) {
+        console.error("Existing like check error:", existingLikeError);
+        throw existingLikeError;
+      }
 
       if (existingLike) {
         const { error: deleteError } = await supabase
@@ -51,13 +57,19 @@ export const usePostActions = () => {
           .eq("post_id", postId)
           .eq("user_id", userId);
 
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error("Delete like error:", deleteError);
+          throw deleteError;
+        }
       } else {
         const { error: insertError } = await supabase
           .from("post_likes")
           .insert([{ post_id: postId, user_id: userId }]);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Insert like error:", insertError);
+          throw insertError;
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -92,7 +104,10 @@ export const usePostActions = () => {
         .delete()
         .eq("id", postId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Delete post error:", error);
+        throw error;
+      }
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       
@@ -101,6 +116,7 @@ export const usePostActions = () => {
         description: "Your post has been successfully deleted.",
       });
     } catch (error) {
+      console.error("Delete error:", error);
       toast({
         title: "Error",
         description: "Failed to delete post. Please try again.",
