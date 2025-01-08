@@ -15,41 +15,41 @@ export const ShortsFeed = () => {
 
   const shorts: Short[] = [
     {
-      id: "123e4567-e89b-12d3-a456-426614174000", // Using proper UUID format
+      id: "123e4567-e89b-12d3-a456-426614174000",
       creator: {
         username: "Eros",
         avatar_url: null,
       },
-      video_url: "https://player.vimeo.com/external/477721948.sd.mp4?s=eff38937a0f1748eee72d5ee4f1b123a63963e72&profile_id=165&oauth2_token_id=57447761",
-      description: "Mesmerizing ocean waves crashing on the shore 🌊",
-      likes: 1234,
-      comments: 89,
+      video_url: "https://player.vimeo.com/progressive_redirect/playback/789015921/rendition/1080p/file.mp4?loc=external&signature=7d4a4f1c48b8e1e8c2f7d6c1f6e0c0c0",
+      description: "Stunning aerial view of a misty mountain landscape at sunrise 🌄",
+      likes: 2345,
+      comments: 156,
       has_liked: false,
       has_saved: false,
     },
     {
-      id: "223e4567-e89b-12d3-a456-426614174001", // Using proper UUID format
+      id: "223e4567-e89b-12d3-a456-426614174001",
       creator: {
         username: "Eros",
         avatar_url: null,
       },
-      video_url: "https://player.vimeo.com/external/434045526.sd.mp4?s=c27eecc69a27dbc4ff2b87d38afc35f1a9e7c02d&profile_id=165&oauth2_token_id=57447761",
-      description: "Stunning aerial view of a forest landscape 🌲",
-      likes: 567,
-      comments: 34,
+      video_url: "https://player.vimeo.com/progressive_redirect/playback/699437074/rendition/1080p/file.mp4?loc=external&signature=7d4a4f1c48b8e1e8c2f7d6c1f6e0c0c0",
+      description: "Crystal clear waters of the Nordic fjords reflecting the sky ⛰️",
+      likes: 1876,
+      comments: 92,
       has_liked: false,
       has_saved: false,
     },
     {
-      id: "323e4567-e89b-12d3-a456-426614174002", // Using proper UUID format
+      id: "323e4567-e89b-12d3-a456-426614174002",
       creator: {
         username: "Eros",
         avatar_url: null,
       },
-      video_url: "https://player.vimeo.com/external/517090081.sd.mp4?s=60b46bb7d721cd06e1e6ed30e2965a31d3bc37d1&profile_id=165&oauth2_token_id=57447761",
-      description: "Beautiful sunset timelapse over the city 🌅",
-      likes: 890,
-      comments: 45,
+      video_url: "https://player.vimeo.com/progressive_redirect/playback/699435778/rendition/1080p/file.mp4?loc=external&signature=7d4a4f1c48b8e1e8c2f7d6c1f6e0c0c0",
+      description: "Northern lights dancing across the Nordic sky 🌌",
+      likes: 3421,
+      comments: 187,
       has_liked: false,
       has_saved: false,
     },

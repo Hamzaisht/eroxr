@@ -47,19 +47,46 @@ export const UserMenu = () => {
 
   const handleLogout = async () => {
     try {
+      // First check if we have a valid session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession) {
+        // If no valid session, just clear local state and redirect
+        navigate("/login");
+        toast({
+          title: "Session expired",
+          description: "Please log in again.",
+        });
+        return;
+      }
+
+      // Proceed with logout if we have a valid session
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+
       navigate("/");
       toast({
         title: "Signed out successfully",
         description: "Come back soon!",
       });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error signing out",
-        description: "Please try again later",
-      });
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      
+      // Handle specific error cases
+      if (error.message?.includes("session_not_found")) {
+        navigate("/login");
+        toast({
+          title: "Session expired",
+          description: "Please log in again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error signing out",
+          description: "Please try again later",
+        });
+      }
     }
   };
 
