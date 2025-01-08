@@ -17,31 +17,32 @@ export const LeftSidebar = () => {
     const checkUserStatus = async () => {
       if (!session?.user?.id) return;
       
-      console.log("Checking user status for:", session.user.id);
+      console.log("Starting user status check for:", session.user.id);
       
       try {
-        // First check admin role using maybeSingle to avoid errors
-        const { data: roleData, error: roleError } = await supabase
+        // Check admin role first - simplified query
+        const { data: adminRole, error: adminError } = await supabase
           .from('user_roles')
-          .select('role')
+          .select('*')
           .eq('user_id', session.user.id)
           .eq('role', 'admin')
           .maybeSingle();
 
-        console.log("Role data:", roleData);
+        console.log("Admin role check result:", adminRole);
 
-        if (roleError) {
-          console.error("Error fetching role:", roleError);
+        if (adminError) {
+          console.error("Admin role check error:", adminError);
+          return;
         }
 
-        // If user is admin, they automatically get access
-        if (roleData?.role === 'admin') {
-          console.log("User is admin, granting access");
+        // If admin role exists, set both admin and verified status
+        if (adminRole) {
+          console.log("Admin role found - granting full access");
           setIsAdmin(true);
           setIsVerifiedCreator(true);
           toast({
-            title: "Admin Access Granted",
-            description: "You have full access to all features",
+            title: "Admin Access",
+            description: "Full platform access granted",
           });
           return;
         }
@@ -54,7 +55,7 @@ export const LeftSidebar = () => {
           .single();
         
         if (profileError) {
-          console.error("Error fetching profile:", profileError);
+          console.error("Profile check error:", profileError);
           return;
         }
 
@@ -70,7 +71,12 @@ export const LeftSidebar = () => {
           });
         }
       } catch (error) {
-        console.error("Error checking user status:", error);
+        console.error("Error in checkUserStatus:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to check user status",
+        });
       }
     };
 
@@ -92,7 +98,8 @@ export const LeftSidebar = () => {
           <span className="font-medium">News Feed</span>
         </div>
 
-        {(isVerifiedCreator || isAdmin) && (
+        {/* Always show Eroboard for admins */}
+        {(isAdmin || isVerifiedCreator) && (
           <motion.div 
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -104,6 +111,7 @@ export const LeftSidebar = () => {
           </motion.div>
         )}
 
+        {/* Admin-only sections */}
         {isAdmin && (
           <>
             <motion.div 
