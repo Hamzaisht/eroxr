@@ -69,6 +69,13 @@ export const MediaUploadSection = ({
     handleFileSelect(e);
   };
 
+  const handleButtonClick = () => {
+    const input = document.getElementById('post-file-upload') as HTMLInputElement;
+    if (input) {
+      input.click();
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label>Media</Label>
@@ -76,7 +83,7 @@ export const MediaUploadSection = ({
         <Button
           type="button"
           variant="outline"
-          onClick={() => document.getElementById('post-file-upload')?.click()}
+          onClick={handleButtonClick}
           className="w-full"
         >
           <ImagePlus className="h-4 w-4 mr-2" />
@@ -87,9 +94,13 @@ export const MediaUploadSection = ({
           id="post-file-upload"
           multiple
           accept="image/*,video/*"
-          className="hidden"
           onChange={handleFileValidation}
           disabled={!isPayingCustomer}
+          style={{ display: 'none' }}
+          onClick={(e) => {
+            // Reset the value to allow selecting the same file again
+            (e.target as HTMLInputElement).value = '';
+          }}
         />
       </div>
       {!isPayingCustomer && (
