@@ -9,6 +9,7 @@ import { ErrorState } from "../ui/ErrorState";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "../ui/button";
 
 interface ProfileContainerProps {
   id?: string;
@@ -22,11 +23,17 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
   const navigate = useNavigate();
   const userId = id || session?.user?.id;
 
-  // Check authentication status
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Session error:", error);
+        navigate('/login');
+        return;
+      }
+
+      if (!currentSession) {
         navigate('/login');
         toast({
           title: "Authentication required",
@@ -37,6 +44,14 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
     };
 
     checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/login');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
   const { data: profile, isLoading, error } = useQuery({
@@ -54,20 +69,10 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
 
       if (error) {
         console.error("Error fetching profile:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load profile. Please try again.",
-          variant: "destructive",
-        });
         throw error;
       }
 
       if (!data) {
-        toast({
-          title: "Not Found",
-          description: "Profile not found.",
-          variant: "destructive",
-        });
         throw new Error("Profile not found");
       }
 
@@ -78,7 +83,14 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
   });
 
   if (!session) {
-    return <ErrorState message="Please sign in to view profiles" />;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <ErrorState message="Please sign in to view profiles" />
+        <Button onClick={() => navigate('/login')}>
+          Sign In
+        </Button>
+      </div>
+    );
   }
 
   if (isLoading) {
