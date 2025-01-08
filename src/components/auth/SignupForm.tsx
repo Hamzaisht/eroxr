@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { Provider } from "@supabase/supabase-js";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { signupSchema, type SignupFormValues } from "./types";
@@ -75,7 +76,7 @@ export const SignupForm = ({ onToggleMode }: SignupFormProps) => {
   const handleSocialLogin = async (provider: 'google' | 'twitter' | 'reddit') => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider,
+        provider: provider as Provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
