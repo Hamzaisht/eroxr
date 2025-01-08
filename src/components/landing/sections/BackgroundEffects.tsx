@@ -1,10 +1,13 @@
 import { motion } from "framer-motion";
+import { NordicMap } from "./NordicMap";
 
 export const BackgroundEffects = () => {
   return (
     <>
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
       <div className="absolute inset-0 bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark opacity-90" />
+      
+      <NordicMap />
       
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
