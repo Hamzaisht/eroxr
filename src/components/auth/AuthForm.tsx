@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { SignupForm } from "./SignupForm";
+import { EmailLogin } from "./EmailLogin";
 import { motion } from "framer-motion";
-import { useToast } from "@/hooks/use-toast";
 
 export const AuthForm = () => {
   const [isSignup, setIsSignup] = useState(true);
-  const { toast } = useToast();
 
   const toggleMode = () => setIsSignup(!isSignup);
 
@@ -19,17 +18,7 @@ export const AuthForm = () => {
       {isSignup ? (
         <SignupForm onToggleMode={toggleMode} />
       ) : (
-        <div className="text-center">
-          <p className="text-luxury-neutral/80">
-            Already have an account?{" "}
-            <button
-              onClick={toggleMode}
-              className="text-luxury-primary hover:text-luxury-accent transition-colors font-medium"
-            >
-              Sign in
-            </button>
-          </p>
-        </div>
+        <EmailLogin onToggleMode={toggleMode} />
       )}
     </motion.div>
   );
