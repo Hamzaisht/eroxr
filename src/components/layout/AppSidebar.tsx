@@ -1,10 +1,12 @@
-import { MessageSquare, Settings, User, Users } from "lucide-react";
+import { MessageSquare, Settings, User, Users, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/MainNav/Logo";
 import { SidebarMenuItem } from "@/components/ui/sidebar/SidebarMenuItem";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -41,6 +43,25 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useSession();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate("/");
+      toast({
+        title: "Signed out successfully",
+        description: "Come back soon!",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error signing out",
+        description: "Please try again later",
+      });
+    }
+  };
 
   return (
     <motion.aside
@@ -84,6 +105,27 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                 </SidebarMenuItem>
               </motion.li>
             ))}
+
+            {/* Logout Button */}
+            <motion.li
+              whileHover={{ x: 4 }}
+              transition={{ duration: 0.2 }}
+            >
+              <SidebarMenuItem
+                onClick={handleLogout}
+                className="w-full text-red-500 hover:bg-red-500/5 hover:text-red-600"
+              >
+                <LogOut className="h-5 w-5" />
+                {!collapsed && (
+                  <div className="flex flex-col">
+                    <span className="font-medium">Logout</span>
+                    <span className="text-xs text-red-500/70">
+                      Sign out of your account
+                    </span>
+                  </div>
+                )}
+              </SidebarMenuItem>
+            </motion.li>
           </ul>
         </nav>
 
