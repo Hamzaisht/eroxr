@@ -71,7 +71,6 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
                   >
                     {isVideo(url) ? (
                       <video
-                        src={url}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         controls
                         playsInline
