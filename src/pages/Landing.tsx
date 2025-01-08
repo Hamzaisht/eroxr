@@ -1,67 +1,13 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Shield, Users, Lock, CheckCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
+import { Navbar } from "@/components/landing/Navbar";
 
 const Landing = () => {
-  const navigate = useNavigate();
-  const session = useSession();
-  const { toast } = useToast();
-
-  const handleLogin = () => {
-    navigate("/login");
-  };
-
-  const handleJoinNow = () => {
-    if (session) {
-      navigate("/home");
-    } else {
-      navigate("/login");
-      toast({
-        title: "Welcome!",
-        description: "Create your account to get started.",
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-luxury-dark">
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-luxury-dark/80 backdrop-blur-lg border-b border-luxury-neutral/10">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-2xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-secondary bg-clip-text text-transparent"
-          >
-            Eroxr
-          </motion.div>
-          <div className="hidden md:flex items-center gap-8 text-luxury-neutral/80">
-            <a href="#features" className="hover:text-luxury-neutral transition-colors">Features</a>
-            <a href="#safety" className="hover:text-luxury-neutral transition-colors">Safety</a>
-            <a href="#verification" className="hover:text-luxury-neutral transition-colors">Verification</a>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              className="text-luxury-neutral hover:text-white hover:bg-luxury-neutral/10"
-              onClick={handleLogin}
-            >
-              Log in
-            </Button>
-            <Button 
-              className="bg-button-gradient hover:bg-hover-gradient"
-              onClick={handleJoinNow}
-            >
-              Join Now
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </nav>
-
+      <Navbar />
+      
       {/* Hero Section */}
       <section className="pt-32 pb-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
