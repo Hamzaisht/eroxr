@@ -15,7 +15,6 @@ import { motion } from "framer-motion";
 
 export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const { toast } = useToast();
   const supabase = useSupabaseClient();
 
@@ -31,37 +30,9 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
     },
   });
 
-  const checkUsername = async (username: string) => {
-    setIsCheckingUsername(true);
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("username")
-        .ilike("username", username)
-        .limit(1);
-
-      if (error) throw error;
-      return data.length === 0;
-    } catch (error) {
-      console.error("Error checking username:", error);
-      return false;
-    } finally {
-      setIsCheckingUsername(false);
-    }
-  };
-
   const onSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
     try {
-      const isUsernameAvailable = await checkUsername(values.username);
-      if (!isUsernameAvailable) {
-        form.setError("username", {
-          type: "manual",
-          message: "Username is already taken",
-        });
-        return;
-      }
-
       const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -131,9 +102,6 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
               <UsernameField
                 form={form}
                 isLoading={isLoading}
-                canChangeUsername={true}
-                currentUsername=""
-                lastUsernameChange={null}
               />
 
               <DateOfBirthField form={form} isLoading={isLoading} />
