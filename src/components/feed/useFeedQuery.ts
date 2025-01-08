@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 const POSTS_PER_PAGE = 5;
 
-export const useFeedQuery = (userId?: string) => {
+export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 'recent' = 'feed') => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -26,9 +26,8 @@ export const useFeedQuery = (userId?: string) => {
         async (payload) => {
           console.log("Received real-time update:", payload);
           
-          // Invalidate and refetch queries to get fresh data
           queryClient.invalidateQueries({
-            queryKey: ["posts"]
+            queryKey: ["posts", feedType]
           });
         }
       )
@@ -39,18 +38,17 @@ export const useFeedQuery = (userId?: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, feedType]);
 
   return useInfiniteQuery({
-    queryKey: ["posts", userId],
+    queryKey: ["posts", userId, feedType],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * POSTS_PER_PAGE;
       const to = from + POSTS_PER_PAGE - 1;
 
-      console.log(`Fetching posts from ${from} to ${to}`);
+      console.log(`Fetching ${feedType} posts from ${from} to ${to}`);
 
-      // First get the posts
-      const { data: posts, error } = await supabase
+      let query = supabase
         .from("posts")
         .select(`
           id,
@@ -72,6 +70,31 @@ export const useFeedQuery = (userId?: string) => {
         `)
         .order("created_at", { ascending: false })
         .range(from, to);
+
+      // Apply different filters based on feed type
+      switch (feedType) {
+        case 'popular':
+          query = query
+            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+            .order('likes_count', { ascending: false });
+          break;
+        case 'recent':
+          if (userId) {
+            query = query.in('creator_id', 
+              supabase
+                .from('creator_subscriptions')
+                .select('creator_id')
+                .eq('user_id', userId)
+            );
+          }
+          break;
+        default:
+          if (userId) {
+            query = query.or(`creator_id.eq.${userId},has_liked.eq.true`);
+          }
+      }
+
+      const { data: posts, error } = await query;
 
       if (error) {
         console.error("Error fetching posts:", error);
@@ -103,7 +126,6 @@ export const useFeedQuery = (userId?: string) => {
         }));
       }
 
-      // If no user is logged in or no posts, just return the posts without purchase info
       return posts?.map(post => ({
         ...post,
         has_liked: post.has_liked?.length > 0,

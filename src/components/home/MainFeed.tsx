@@ -23,8 +23,36 @@ export const MainFeed = ({
 
   const renderFeedContent = () => {
     switch (activeTab) {
+      case "popular":
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <CreatorsFeed feedType="popular" />
+          </motion.div>
+        );
+      case "recent":
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <CreatorsFeed feedType="recent" />
+          </motion.div>
+        );
       case "shorts":
-        return <ShortsFeed />;
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <ShortsFeed />
+          </motion.div>
+        );
       default:
         return (
           <div className="flex flex-col gap-6">
@@ -57,7 +85,7 @@ export const MainFeed = ({
               exit={{ opacity: 0, y: -10 }}
               className="w-full"
             >
-              <CreatorsFeed />
+              <CreatorsFeed feedType="feed" />
             </motion.div>
           </div>
         );
@@ -70,7 +98,7 @@ export const MainFeed = ({
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <FeedHeader />
+      <FeedHeader activeTab={activeTab} onTabChange={setActiveTab} />
       <AnimatePresence mode="wait">
         {renderFeedContent()}
       </AnimatePresence>

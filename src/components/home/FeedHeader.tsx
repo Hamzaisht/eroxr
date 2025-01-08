@@ -1,9 +1,14 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const FeedHeader = () => {
+interface FeedHeaderProps {
+  activeTab: string;
+  onTabChange: (value: string) => void;
+}
+
+export const FeedHeader = ({ activeTab, onTabChange }: FeedHeaderProps) => {
   return (
     <div className="flex items-center justify-between mb-4">
-      <Tabs defaultValue="feed" className="w-full">
+      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
         <TabsList className="w-full justify-start h-12 bg-transparent border-b rounded-none p-0">
           <TabsTrigger 
             value="feed"

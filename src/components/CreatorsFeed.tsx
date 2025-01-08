@@ -8,7 +8,11 @@ import { usePostActions } from "./feed/usePostActions";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 
-export const CreatorsFeed = () => {
+interface CreatorsFeedProps {
+  feedType?: 'feed' | 'popular' | 'recent';
+}
+
+export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   const session = useSession();
   const { handleLike, handleDelete } = usePostActions();
   const { ref, inView } = useInView();
@@ -19,7 +23,7 @@ export const CreatorsFeed = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
-  } = useFeedQuery(session?.user?.id);
+  } = useFeedQuery(session?.user?.id, feedType);
 
   useEffect(() => {
     if (inView && hasNextPage) {
