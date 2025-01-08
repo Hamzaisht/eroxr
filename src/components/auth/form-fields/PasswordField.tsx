@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,9 @@ export const PasswordField = ({ form, name, placeholder, isLoading }: PasswordFi
       name={name}
       render={({ field }) => (
         <FormItem>
+          <FormLabel className="text-luxury-neutral">
+            {name === "password" ? "Password" : "Confirm Password"} <span className="text-red-500">*</span>
+          </FormLabel>
           <FormControl>
             <div className="relative">
               <Input
@@ -30,6 +33,7 @@ export const PasswordField = ({ form, name, placeholder, isLoading }: PasswordFi
                 placeholder={placeholder}
                 className="pl-3 pr-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50 focus:ring-luxury-primary/30 focus:border-luxury-primary/30"
                 disabled={isLoading}
+                required
               />
               <Button
                 type="button"

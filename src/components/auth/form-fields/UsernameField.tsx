@@ -1,4 +1,4 @@
-import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { User } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
@@ -60,6 +60,9 @@ export const UsernameField = ({ form, isLoading }: UsernameFieldProps) => {
       name="username"
       render={({ field }) => (
         <FormItem>
+          <FormLabel className="text-luxury-neutral">
+            Username <span className="text-red-500">*</span>
+          </FormLabel>
           <FormControl>
             <div className="relative">
               <User className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
@@ -68,6 +71,7 @@ export const UsernameField = ({ form, isLoading }: UsernameFieldProps) => {
                 placeholder="Username"
                 className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50"
                 disabled={isLoading}
+                required
               />
               {isCheckingUsername ? (
                 <Loader2 className="absolute right-3 top-3.5 h-5 w-5 animate-spin text-luxury-neutral/50" />

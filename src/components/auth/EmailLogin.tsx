@@ -11,6 +11,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -142,6 +143,9 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
             name="email"
             render={({ field }) => (
               <FormItem>
+                <FormLabel className="text-luxury-neutral">
+                  Email <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
@@ -152,6 +156,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
                       className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50 focus:ring-luxury-primary/30 focus:border-luxury-primary/30"
                       disabled={isLoading}
                       autoComplete="email"
+                      required
                     />
                   </div>
                 </FormControl>
@@ -165,6 +170,9 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
             name="password"
             render={({ field }) => (
               <FormItem>
+                <FormLabel className="text-luxury-neutral">
+                  Password <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3.5 h-5 w-5 text-luxury-neutral/50" />
@@ -175,6 +183,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
                       className="pl-10 h-12 bg-white/5 border-luxury-primary/20 text-white placeholder:text-white/50 focus:ring-luxury-primary/30 focus:border-luxury-primary/30"
                       disabled={isLoading}
                       autoComplete="current-password"
+                      required
                     />
                   </div>
                 </FormControl>
