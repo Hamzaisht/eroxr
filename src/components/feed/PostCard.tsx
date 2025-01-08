@@ -7,6 +7,7 @@ import { PostHeader } from "./PostHeader";
 import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { MediaViewer } from "@/components/media/MediaViewer";
 import { Post } from "@/components/feed/types";
+import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 
 interface PostCardProps {
   post: Post;
@@ -36,46 +37,48 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
       />
       
       {post.media_url && post.media_url.length > 0 && (
-        <div className="relative">
-          <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex">
-              {post.media_url.map((url, index) => (
-                <div
-                  key={index}
-                  className="min-w-full h-full cursor-pointer"
-                  onClick={() => setSelectedMedia(url)}
-                >
-                  <img
-                    src={url}
-                    alt={`Post media ${index + 1}`}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    loading="eager"
-                    decoding="sync"
-                    srcSet={generateSrcSet(url)}
-                    sizes={getResponsiveSizes()}
-                    style={getImageStyles()}
+        <ProtectedMedia contentOwnerId={post.creator_id}>
+          <div className="relative">
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="flex">
+                {post.media_url.map((url, index) => (
+                  <div
+                    key={index}
+                    className="min-w-full h-full cursor-pointer"
+                    onClick={() => setSelectedMedia(url)}
+                  >
+                    <img
+                      src={url}
+                      alt={`Post media ${index + 1}`}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      loading="eager"
+                      decoding="sync"
+                      srcSet={generateSrcSet(url)}
+                      sizes={getResponsiveSizes()}
+                      style={getImageStyles()}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {post.media_url.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1">
+                {post.media_url.map((_, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      currentImageIndex === index
+                        ? "bg-white"
+                        : "bg-white/50"
+                    )}
                   />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
-          
-          {post.media_url.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1">
-              {post.media_url.map((_, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    "w-2 h-2 rounded-full",
-                    currentImageIndex === index
-                      ? "bg-white"
-                      : "bg-white/50"
-                  )}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        </ProtectedMedia>
       )}
 
       <CardContent className="space-y-4">
