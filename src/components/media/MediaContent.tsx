@@ -25,7 +25,13 @@ export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
           controls
           autoPlay
           playsInline
-          preload="metadata"
+          preload="auto"
+          onLoadedMetadata={(e) => {
+            const video = e.currentTarget;
+            video.play().catch(error => {
+              console.error("Error playing video:", error);
+            });
+          }}
         />
       ) : (
         <img
