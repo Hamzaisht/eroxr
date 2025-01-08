@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { SignupForm } from "./SignupForm";
+import { SignupForm } from "./signup/SignupForm";
 import { EmailLogin } from "./EmailLogin";
 import { motion } from "framer-motion";
 
 export const AuthForm = () => {
-  const [isSignup, setIsSignup] = useState(true);
+  const [isSignup, setIsSignup] = useState(false);
 
   const toggleMode = () => {
     setIsSignup(!isSignup);
