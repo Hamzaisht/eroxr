@@ -15,68 +15,56 @@ export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => 
     const video = videoRef.current;
     if (!video) return;
 
-    // Reset state
     setIsLoading(true);
     setError(null);
 
     const handleLoadedData = () => {
-      console.log("Video loaded:", src);
       setIsLoading(false);
-      if (video.paused) {
-        video.play().catch(error => {
-          console.error("Error playing video:", error);
-          setError("Failed to play video");
-        });
-      }
+      video.play().catch(err => {
+        console.error("Play error:", err);
+        setError("Failed to play video");
+      });
     };
 
     const handleError = () => {
-      console.error("Video error for source:", src);
+      console.error("Video error:", src);
       setError("Failed to load video");
       setIsLoading(false);
     };
 
-    // Create intersection observer
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            console.log("Video in view:", src);
             onIndexChange(index);
-            video.load(); // Explicitly load the video
-            video.play().catch(error => {
-              console.error("Error playing video:", error);
-              setError("Failed to play video");
-            });
+            if (video.paused) {
+              video.play().catch(err => {
+                console.error("Play error:", err);
+                setError("Failed to play video");
+              });
+            }
           } else {
             video.pause();
-            video.currentTime = 0;
           }
         });
       },
-      {
-        threshold: 0.7 // Increased threshold for better visibility detection
-      }
+      { threshold: 0.5 }
     );
 
-    // Add event listeners
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
     observer.observe(video);
 
-    // Set video source
-    if (video.src !== src) {
-      video.src = src;
-      video.load();
-    }
+    // Set source and load
+    video.src = src;
+    video.load();
 
-    // Cleanup
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
       observer.disconnect();
       video.pause();
-      video.src = '';
+      video.removeAttribute('src');
       video.load();
     };
   }, [src, index, onIndexChange]);
@@ -89,11 +77,12 @@ export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => 
         playsInline
         muted
         loop
+        controls={false}
         preload="auto"
         onClick={(e) => {
           const video = e.currentTarget;
           if (video.paused) {
-            video.play().catch(e => console.error("Error playing video:", e));
+            video.play().catch(console.error);
           } else {
             video.pause();
           }

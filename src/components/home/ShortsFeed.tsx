@@ -13,6 +13,7 @@ export const ShortsFeed = () => {
   const { handleLike, handleSave } = useShortActions();
   const [isLoading, setIsLoading] = useState(true);
 
+  // Updated with working video URLs
   const shorts: Short[] = [
     {
       id: "123e4567-e89b-12d3-a456-426614174000",
@@ -20,7 +21,7 @@ export const ShortsFeed = () => {
         username: "@ArtisticSoul",
         avatar_url: null,
       },
-      video_url: "https://cdn.lovable.dev/sample-videos/mountain-aerial.mp4",
+      video_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
       description: "Stunning aerial view of a misty mountain landscape at sunrise 🌄",
       likes: 2345,
       comments: 156,
@@ -33,7 +34,7 @@ export const ShortsFeed = () => {
         username: "@TechGuru",
         avatar_url: null,
       },
-      video_url: "https://cdn.lovable.dev/sample-videos/nordic-fjords.mp4",
+      video_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
       description: "Crystal clear waters of the Nordic fjords reflecting the sky ⛰️",
       likes: 1876,
       comments: 92,
@@ -46,7 +47,7 @@ export const ShortsFeed = () => {
         username: "@FitnessPro",
         avatar_url: null,
       },
-      video_url: "https://cdn.lovable.dev/sample-videos/northern-lights.mp4",
+      video_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
       description: "Northern lights dancing across the Nordic sky 🌌",
       likes: 3421,
       comments: 187,
@@ -60,18 +61,21 @@ export const ShortsFeed = () => {
       try {
         await Promise.all(
           shorts.map(short => {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
               const video = document.createElement('video');
-              video.preload = "metadata";
-              video.onloadedmetadata = () => resolve(true);
-              video.onerror = () => reject(new Error(`Failed to load ${short.video_url}`));
+              video.preload = "auto";
+              video.onloadeddata = () => resolve(true);
+              video.onerror = () => {
+                console.error(`Failed to load ${short.video_url}`);
+                resolve(false); // Resolve anyway to not block other videos
+              };
               video.src = short.video_url;
             });
           })
         );
-        console.log("All videos preloaded successfully");
+        console.log("Videos preloaded");
       } catch (error) {
-        console.error("Error preloading videos:", error);
+        console.error("Error during preload:", error);
       } finally {
         setIsLoading(false);
       }
