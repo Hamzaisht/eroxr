@@ -32,7 +32,7 @@ export const FeedHeader = ({ activeTab, onTabChange }: FeedHeaderProps) => {
             value="shorts"
             className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-luxury-primary rounded-none px-8"
           >
-            Shorts
+            Eros
           </TabsTrigger>
         </TabsList>
       </Tabs>
