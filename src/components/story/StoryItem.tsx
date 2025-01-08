@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface StoryItemProps {
   stories: Array<{
@@ -34,7 +35,7 @@ export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
   const latestStory = stories[0];
   const timeAgo = formatDistanceToNow(new Date(latestStory.created_at), { addSuffix: true });
   const { toast } = useToast();
-  const currentUser = supabase.auth.getSession();
+  const session = useSession();
 
   const handleEdit = async (storyId: string) => {
     // For now just show a toast - edit functionality can be added later
@@ -92,7 +93,7 @@ export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
             </Link>
 
             {/* Three dots menu */}
-            {creator.id === supabase.auth.getUser().user?.id && (
+            {creator.id === session?.user?.id && (
               <div className="absolute -top-2 -right-2 z-10" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
