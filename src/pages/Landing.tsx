@@ -2,8 +2,21 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Shield, Users, Lock, CheckCircle } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
+import { useNavigate } from "react-router-dom";
+import { useSession } from "@supabase/auth-helpers-react";
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const session = useSession();
+
+  const handleGetStarted = () => {
+    if (session) {
+      navigate("/home");
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-luxury-dark">
       <Navbar />
@@ -24,11 +37,20 @@ const Landing = () => {
               A secure and private platform for open-minded adults to connect and meet.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-button-gradient hover:bg-hover-gradient">
+              <Button 
+                size="lg" 
+                className="bg-button-gradient hover:bg-hover-gradient"
+                onClick={handleGetStarted}
+              >
                 Get Started
                 <ChevronRight className="h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="border-luxury-neutral text-luxury-neutral">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-luxury-neutral text-luxury-neutral"
+                onClick={() => navigate("/about")}
+              >
                 Learn More
               </Button>
             </div>
@@ -124,33 +146,33 @@ const Landing = () => {
             <div>
               <h3 className="text-luxury-neutral font-semibold mb-4">Platform</h3>
               <ul className="space-y-2 text-luxury-neutral/60">
-                <li><a href="#" className="hover:text-luxury-neutral">Features</a></li>
-                <li><a href="#" className="hover:text-luxury-neutral">Safety</a></li>
-                <li><a href="#" className="hover:text-luxury-neutral">Verification</a></li>
+                <li><button onClick={() => navigate("/features")} className="hover:text-luxury-neutral">Features</button></li>
+                <li><button onClick={() => navigate("/safety")} className="hover:text-luxury-neutral">Safety</button></li>
+                <li><button onClick={() => navigate("/verification")} className="hover:text-luxury-neutral">Verification</button></li>
               </ul>
             </div>
             <div>
               <h3 className="text-luxury-neutral font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-luxury-neutral/60">
-                <li><a href="#" className="hover:text-luxury-neutral">About</a></li>
-                <li><a href="#" className="hover:text-luxury-neutral">Blog</a></li>
-                <li><a href="#" className="hover:text-luxury-neutral">Contact</a></li>
+                <li><button onClick={() => navigate("/about")} className="hover:text-luxury-neutral">About</button></li>
+                <li><button onClick={() => navigate("/blog")} className="hover:text-luxury-neutral">Blog</button></li>
+                <li><button onClick={() => navigate("/contact")} className="hover:text-luxury-neutral">Contact</button></li>
               </ul>
             </div>
             <div>
               <h3 className="text-luxury-neutral font-semibold mb-4">Legal</h3>
               <ul className="space-y-2 text-luxury-neutral/60">
-                <li><a href="#" className="hover:text-luxury-neutral">Privacy</a></li>
-                <li><a href="#" className="hover:text-luxury-neutral">Terms</a></li>
-                <li><a href="#" className="hover:text-luxury-neutral">Guidelines</a></li>
+                <li><button onClick={() => navigate("/privacy")} className="hover:text-luxury-neutral">Privacy</button></li>
+                <li><button onClick={() => navigate("/terms")} className="hover:text-luxury-neutral">Terms</button></li>
+                <li><button onClick={() => navigate("/guidelines")} className="hover:text-luxury-neutral">Guidelines</button></li>
               </ul>
             </div>
             <div>
               <h3 className="text-luxury-neutral font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-luxury-neutral/60">
-                <li><a href="#" className="hover:text-luxury-neutral">Help Center</a></li>
-                <li><a href="#" className="hover:text-luxury-neutral">Safety Tips</a></li>
-                <li><a href="#" className="hover:text-luxury-neutral">Report</a></li>
+                <li><button onClick={() => navigate("/help")} className="hover:text-luxury-neutral">Help Center</button></li>
+                <li><button onClick={() => navigate("/safety-tips")} className="hover:text-luxury-neutral">Safety Tips</button></li>
+                <li><button onClick={() => navigate("/report")} className="hover:text-luxury-neutral">Report</button></li>
               </ul>
             </div>
           </div>
