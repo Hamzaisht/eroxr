@@ -18,50 +18,49 @@ const Profile = () => {
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
+  console.log("Profile page - User ID:", id || session?.user?.id);
+
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ["profile", id || session?.user?.id],
     queryFn: async () => {
+      console.log("Fetching profile for:", id || session?.user?.id);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", id || session?.user?.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
+
+      console.log("Fetched profile:", data);
       return data as Profile;
     },
     enabled: !!(id || session?.user?.id),
   });
 
-  const handleSave = async () => {
-    try {
-      setIsEditing(false);
-      toast({
-        title: "Changes saved",
-        description: "Your profile has been updated successfully.",
-      });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-      });
-    }
-  };
-
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-luxury-dark flex items-center justify-center">
+        <div className="text-luxury-primary">Loading...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error loading profile</div>;
+    return (
+      <div className="min-h-screen bg-luxury-dark flex items-center justify-center">
+        <div className="text-red-500">Error loading profile</div>
+      </div>
+    );
   }
 
   const isOwnProfile = session?.user?.id === (id || session?.user?.id);
 
   return (
-    <div className="min-h-screen bg-luxury-gradient">
+    <div className="min-h-screen bg-luxury-dark">
       <main className="w-full">
         <ProfileHeader 
           profile={profile} 
@@ -74,7 +73,7 @@ const Profile = () => {
               <TabsContainer 
                 profile={profile}
                 isEditing={isEditing}
-                onSave={handleSave}
+                onSave={() => setIsEditing(false)}
               />
             )}
           </div>

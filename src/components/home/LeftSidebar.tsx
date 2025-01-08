@@ -15,20 +15,21 @@ export const LeftSidebar = () => {
 
   useEffect(() => {
     const checkUserStatus = async () => {
-      if (!session?.user?.id) return;
-      
-      console.log("Checking admin status for user:", session.user.id);
+      if (!session?.user?.id) {
+        console.log("No user session found");
+        return;
+      }
       
       try {
-        // Check admin role first
+        // Check admin role
         const { data: adminRole, error: adminError } = await supabase
           .from('user_roles')
-          .select('*')
+          .select('role')
           .eq('user_id', session.user.id)
           .eq('role', 'admin')
           .maybeSingle();
 
-        console.log("Admin check result:", adminRole);
+        console.log("Admin role check result:", adminRole);
 
         if (adminError) {
           console.error("Admin check error:", adminError);
@@ -36,13 +37,9 @@ export const LeftSidebar = () => {
         }
 
         if (adminRole) {
-          console.log("Admin role found - setting admin status");
+          console.log("Setting admin status to true");
           setIsAdmin(true);
           setIsVerifiedCreator(true);
-          toast({
-            title: "Admin Access",
-            description: "Full platform access granted",
-          });
           return;
         }
 
@@ -52,7 +49,7 @@ export const LeftSidebar = () => {
           .select('id_verification_status')
           .eq('id', session.user.id)
           .maybeSingle();
-        
+
         console.log("Profile verification check:", profile);
 
         if (profileError) {
@@ -62,20 +59,8 @@ export const LeftSidebar = () => {
 
         const isVerified = profile?.id_verification_status === 'verified';
         setIsVerifiedCreator(isVerified);
-        
-        if (isVerified) {
-          toast({
-            title: "Verified Creator",
-            description: "You have access to the Eroboard",
-          });
-        }
       } catch (error) {
         console.error("Error in checkUserStatus:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to check user status",
-        });
       }
     };
 
@@ -86,7 +71,7 @@ export const LeftSidebar = () => {
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="hidden lg:block space-y-4 fixed left-0 top-0 h-full bg-luxury-dark/95 backdrop-blur-sm border-r border-luxury-neutral/10 w-64 p-4"
+      className="fixed left-0 top-0 h-full bg-luxury-dark/95 backdrop-blur-sm border-r border-luxury-neutral/10 w-64 p-4 z-50"
     >
       <div className="space-y-2">
         <div 
