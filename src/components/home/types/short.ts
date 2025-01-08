@@ -1,5 +1,5 @@
 export interface Short {
-  id: string;
+  id: string;  // Changed from number to string to match UUID format
   creator: {
     username: string;
     avatar_url: string | null;

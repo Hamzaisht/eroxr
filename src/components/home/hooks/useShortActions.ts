@@ -46,6 +46,7 @@ export const useShortActions = () => {
         });
       }
     } catch (error) {
+      console.error("Like error:", error);
       toast({
         title: "Error",
         description: "Failed to update like status",
@@ -94,6 +95,7 @@ export const useShortActions = () => {
         });
       }
     } catch (error) {
+      console.error("Save error:", error);
       toast({
         title: "Error",
         description: "Failed to update save status",

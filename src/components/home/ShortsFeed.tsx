@@ -15,7 +15,7 @@ export const ShortsFeed = () => {
 
   const shorts: Short[] = [
     {
-      id: "1",
+      id: "short-1", // Using string IDs instead of numbers
       creator: {
         username: "Eros",
         avatar_url: null,
@@ -28,7 +28,7 @@ export const ShortsFeed = () => {
       has_saved: false,
     },
     {
-      id: "2",
+      id: "short-2",
       creator: {
         username: "Eros",
         avatar_url: null,
@@ -41,7 +41,7 @@ export const ShortsFeed = () => {
       has_saved: false,
     },
     {
-      id: "3",
+      id: "short-3",
       creator: {
         username: "Eros",
         avatar_url: null,
