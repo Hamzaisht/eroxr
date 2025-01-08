@@ -15,7 +15,7 @@ export const ShortsFeed = () => {
 
   const shorts: Short[] = [
     {
-      id: "short-1", // Using string IDs instead of numbers
+      id: "123e4567-e89b-12d3-a456-426614174000", // Using proper UUID format
       creator: {
         username: "Eros",
         avatar_url: null,
@@ -28,7 +28,7 @@ export const ShortsFeed = () => {
       has_saved: false,
     },
     {
-      id: "short-2",
+      id: "223e4567-e89b-12d3-a456-426614174001", // Using proper UUID format
       creator: {
         username: "Eros",
         avatar_url: null,
@@ -41,7 +41,7 @@ export const ShortsFeed = () => {
       has_saved: false,
     },
     {
-      id: "short-3",
+      id: "323e4567-e89b-12d3-a456-426614174002", // Using proper UUID format
       creator: {
         username: "Eros",
         avatar_url: null,
