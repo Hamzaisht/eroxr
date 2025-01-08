@@ -66,7 +66,9 @@ export const useFeedQuery = (userId?: string) => {
           visibility,
           tags,
           is_ppv,
-          ppv_amount
+          ppv_amount,
+          screenshots_count,
+          downloads_count
         `)
         .order("created_at", { ascending: false })
         .range(from, to);
