@@ -26,7 +26,7 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data as Profile;
@@ -49,6 +49,8 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
       <ProfileHeader
         profile={profile}
         isOwnProfile={isOwnProfile}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
       />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
