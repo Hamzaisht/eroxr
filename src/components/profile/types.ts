@@ -1,6 +1,5 @@
 import type { Profile as SupabaseProfile } from "@/integrations/supabase/types/profile";
 import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
-import { z } from "zod";
 
 export type Profile = SupabaseProfile;
 

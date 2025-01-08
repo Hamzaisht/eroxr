@@ -1,11 +1,10 @@
-import { ProfileBanner } from "@/components/profile/ProfileBanner";
+import { ProfileBanner } from "@/components/profile/banner/ProfileBanner";
 import { ProfileInfo } from "@/components/profile/ProfileInfo";
 import { ProfileStats } from "@/components/profile/ProfileStats";
 import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import type { ProfileHeaderProps } from "../types";
-import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 export const ProfileHeaderContainer = ({
   profile,
