@@ -12,11 +12,27 @@ import { UserBadge } from "./UserBadge";
 import { UserAvatar } from "./UserAvatar";
 import { GuestButtons } from "./GuestButtons";
 import { UserMenuItems } from "./UserMenuItems";
+import { useEffect } from "react";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
   const session = useSession();
   const { toast } = useToast();
+
+  // Set up session refresh handling
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully');
+      } else if (event === 'SIGNED_OUT') {
+        navigate('/login');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", session?.user?.id],
@@ -62,7 +78,20 @@ export const UserMenu = () => {
 
       // Proceed with logout if we have a valid session
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('refresh_token_not_found')) {
+          // Handle expired refresh token
+          await supabase.auth.signOut(); // Force sign out
+          navigate("/login");
+          toast({
+            title: "Session expired",
+            description: "Please log in again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       navigate("/");
       toast({
@@ -73,7 +102,8 @@ export const UserMenu = () => {
       console.error("Logout error:", error);
       
       // Handle specific error cases
-      if (error.message?.includes("session_not_found")) {
+      if (error.message?.includes("session_not_found") || 
+          error.message?.includes("refresh_token_not_found")) {
         navigate("/login");
         toast({
           title: "Session expired",
