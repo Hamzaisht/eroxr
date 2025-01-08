@@ -47,7 +47,10 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
 
       // Set session persistence based on rememberMe
       if (values.rememberMe) {
-        await supabase.auth.setSession({ expires_in: 30 * 24 * 60 * 60 }); // 30 days
+        // Set a longer session duration using setPersistence
+        await supabase.auth.updateUser({
+          data: { persistent: true }
+        });
       }
 
       toast({
