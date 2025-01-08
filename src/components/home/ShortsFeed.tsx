@@ -17,10 +17,10 @@ export const ShortsFeed = () => {
     {
       id: "123e4567-e89b-12d3-a456-426614174000",
       creator: {
-        username: "@Eros",
+        username: "@ArtisticSoul",
         avatar_url: null,
       },
-      video_url: "https://player.vimeo.com/progressive_redirect/playback/789015921/rendition/1080p/file.mp4?loc=external&signature=7d4a4f1c48b8e1e8c2f7d6c1f6e0c0c0",
+      video_url: "https://cdn.lovable.dev/sample-videos/mountain-aerial.mp4",
       description: "Stunning aerial view of a misty mountain landscape at sunrise 🌄",
       likes: 2345,
       comments: 156,
@@ -30,10 +30,10 @@ export const ShortsFeed = () => {
     {
       id: "223e4567-e89b-12d3-a456-426614174001",
       creator: {
-        username: "@Eros",
+        username: "@TechGuru",
         avatar_url: null,
       },
-      video_url: "https://player.vimeo.com/progressive_redirect/playback/699437074/rendition/1080p/file.mp4?loc=external&signature=7d4a4f1c48b8e1e8c2f7d6c1f6e0c0c0",
+      video_url: "https://cdn.lovable.dev/sample-videos/nordic-fjords.mp4",
       description: "Crystal clear waters of the Nordic fjords reflecting the sky ⛰️",
       likes: 1876,
       comments: 92,
@@ -43,10 +43,10 @@ export const ShortsFeed = () => {
     {
       id: "323e4567-e89b-12d3-a456-426614174002",
       creator: {
-        username: "@Eros",
+        username: "@FitnessPro",
         avatar_url: null,
       },
-      video_url: "https://player.vimeo.com/progressive_redirect/playback/699435778/rendition/1080p/file.mp4?loc=external&signature=7d4a4f1c48b8e1e8c2f7d6c1f6e0c0c0",
+      video_url: "https://cdn.lovable.dev/sample-videos/northern-lights.mp4",
       description: "Northern lights dancing across the Nordic sky 🌌",
       likes: 3421,
       comments: 187,
@@ -63,9 +63,12 @@ export const ShortsFeed = () => {
           const video = entry.target as HTMLVideoElement;
           if (entry.isIntersecting) {
             console.log("Video in view, attempting to play:", video.src);
-            video.play().catch((error) => {
-              console.error("Error playing video:", error);
-            });
+            // Add a small delay to ensure the video has loaded
+            setTimeout(() => {
+              video.play().catch((error) => {
+                console.error("Error playing video:", error);
+              });
+            }, 100);
             setCurrentVideoIndex(Number(video.dataset.index));
           } else {
             console.log("Video out of view, pausing:", video.src);
@@ -111,9 +114,7 @@ export const ShortsFeed = () => {
                   if (el) {
                     console.log("Setting up video ref for index:", index);
                     videoRefs.current[index] = el;
-                    // Preload the video metadata
                     el.preload = "metadata";
-                    // Add error handling
                     el.onerror = (e) => console.error("Video error:", e);
                   }
                 }}
