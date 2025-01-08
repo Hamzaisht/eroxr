@@ -97,7 +97,9 @@ export const useFeedQuery = (userId?: string) => {
           ...post,
           has_liked: post.has_liked?.length > 0,
           visibility: post.visibility as "subscribers_only" | "public",
-          has_purchased: purchasedPostIds.has(post.id)
+          has_purchased: purchasedPostIds.has(post.id),
+          screenshots_count: post.screenshots_count || 0,
+          downloads_count: post.downloads_count || 0
         }));
       }
 
@@ -106,7 +108,9 @@ export const useFeedQuery = (userId?: string) => {
         ...post,
         has_liked: post.has_liked?.length > 0,
         visibility: post.visibility as "subscribers_only" | "public",
-        has_purchased: false
+        has_purchased: false,
+        screenshots_count: post.screenshots_count || 0,
+        downloads_count: post.downloads_count || 0
       })) || [];
     },
     getNextPageParam: (lastPage, allPages) => {
