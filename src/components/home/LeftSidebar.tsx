@@ -20,20 +20,22 @@ export const LeftSidebar = () => {
       console.log("Checking user status for:", session.user.id);
       
       try {
-        // First check admin role
+        // First check admin role using maybeSingle to avoid errors
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
           .eq('role', 'admin')
-          .single();
+          .maybeSingle();
 
-        if (roleError && roleError.code !== 'PGRST116') {
+        console.log("Role data:", roleData);
+
+        if (roleError) {
           console.error("Error fetching role:", roleError);
         }
 
         // If user is admin, they automatically get access
-        if (roleData) {
+        if (roleData?.role === 'admin') {
           console.log("User is admin, granting access");
           setIsAdmin(true);
           setIsVerifiedCreator(true);
