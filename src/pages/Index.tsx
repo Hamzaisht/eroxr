@@ -17,12 +17,9 @@ const Index = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="relative overflow-hidden"
+        className="relative"
       >
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5 pointer-events-none" />
-        <div className="fixed inset-0 z-0">
-          <NordicMap />
-        </div>
+        <NordicMap />
         <div className="relative z-10">
           <HeroSection />
           <AnimatedStats />
