@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { EmailLogin } from "./EmailLogin";
-import { SignupForm } from "./SignupForm";
+import { SignupForm } from "./signup/SignupForm";
 import { SocialLogin } from "./SocialLogin";
 import { AuthLinks } from "./AuthLinks";
 import { supabase } from "@/integrations/supabase/client";
