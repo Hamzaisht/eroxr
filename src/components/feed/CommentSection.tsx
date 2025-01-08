@@ -111,11 +111,11 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
   };
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       <Button
         variant="ghost"
         size="sm"
-        className="flex items-center gap-2"
+        className="flex items-center gap-2 w-full justify-start"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <MessageSquare className="h-4 w-4" />
@@ -123,19 +123,19 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
       </Button>
 
       {isExpanded && (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
           {session && (
-            <div className="space-y-2">
+            <div className="space-y-2 w-full">
               <Textarea
                 placeholder="Write a comment..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                className="min-h-[80px]"
-                disabled={isSubmitting}
+                className="min-h-[80px] w-full bg-luxury-dark border-luxury-primary/20"
               />
               <Button 
                 onClick={handleSubmitComment}
                 disabled={isSubmitting}
+                className="w-full sm:w-auto"
               >
                 {isSubmitting ? "Posting..." : "Post Comment"}
               </Button>
@@ -143,12 +143,12 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
           )}
 
           {isLoading ? (
-            <div>Loading comments...</div>
+            <div className="w-full text-center">Loading comments...</div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full">
               {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3">
-                  <Avatar className="h-8 w-8">
+                <div key={comment.id} className="flex gap-3 w-full">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarImage
                       src={comment.creator.avatar_url || ""}
                       alt={comment.creator.username || ""}
@@ -159,14 +159,14 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">
+                      <span className="font-medium text-luxury-neutral">
                         {comment.creator.username || "Anonymous"}
                       </span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-luxury-neutral/60">
                         {new Date(comment.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-sm">{comment.content}</p>
+                    <p className="text-sm text-luxury-neutral/80">{comment.content}</p>
                   </div>
                 </div>
               ))}

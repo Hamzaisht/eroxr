@@ -51,7 +51,7 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
   const hasMedia = post.media_url && post.media_url.length > 0;
 
   return (
-    <Card className="overflow-hidden bg-luxury-dark border-luxury-primary/10">
+    <Card className="w-full bg-luxury-dark border-luxury-primary/10">
       <PostHeader 
         post={post} 
         isOwner={currentUserId === post.creator_id}
@@ -60,9 +60,9 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
       
       {hasMedia && (
         <ProtectedMedia contentOwnerId={post.creator_id}>
-          <div className="relative">
-            <div className="overflow-x-auto scrollbar-hide">
-              <div className="flex">
+          <div className="relative w-full">
+            <div className="overflow-x-auto scrollbar-hide w-full">
+              <div className="flex w-full">
                 {post.media_url.map((url, index) => (
                   <div
                     key={index}
@@ -99,15 +99,15 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
         </ProtectedMedia>
       )}
 
-      <CardContent className="space-y-4">
-        <p className="text-white/90">{post.content}</p>
+      <CardContent className="space-y-4 w-full">
+        <p className="text-white/90 w-full">{post.content}</p>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 w-full">
           <Button
             variant="ghost"
             size="sm"
             className={cn(
-              "text-white/70 hover:text-white hover:bg-white/10",
+              "text-white/70 hover:text-white hover:bg-white/10 flex-1",
               liked && "text-red-500 hover:text-red-600"
             )}
             onClick={handleLike}
@@ -116,12 +116,14 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
             {post.likes_count || 0}
           </Button>
           
-          <CommentSection postId={post.id} commentsCount={post.comments_count} />
+          <div className="flex-1">
+            <CommentSection postId={post.id} commentsCount={post.comments_count} />
+          </div>
           
           <Button
             variant="ghost"
             size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/10"
+            className="text-white/70 hover:text-white hover:bg-white/10 flex-1"
             onClick={() => setIsShareDialogOpen(true)}
           >
             <Share2 className="w-5 h-5 mr-1.5" />
