@@ -8,6 +8,11 @@ import { getImageStyles, getAspectRatioFromDimensions } from "@/lib/image-utils"
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface MediaGridProps {
+  onImageClick: (url: string) => void;
+}
 
 export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);

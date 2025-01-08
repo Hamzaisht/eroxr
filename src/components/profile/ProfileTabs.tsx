@@ -77,7 +77,7 @@ export const ProfileTabs = ({ profile }: ProfileTabsProps) => {
           <div className="mt-8">
             <AnimatePresence mode="wait">
               <TabsContent value="media" className="space-y-8">
-                <MediaGrid items={mediaItems} onImageClick={setSelectedImage} />
+                <MediaGrid onImageClick={setSelectedImage} />
               </TabsContent>
 
               <TabsContent value="showcase" className="space-y-8">
