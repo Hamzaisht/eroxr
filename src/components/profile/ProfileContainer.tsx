@@ -7,6 +7,8 @@ import { TabsContainer } from "./tabs/TabsContainer";
 import { LoadingState } from "../ui/LoadingState";
 import { ErrorState } from "../ui/ErrorState";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileContainerProps {
   id?: string;
@@ -17,7 +19,25 @@ interface ProfileContainerProps {
 export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContainerProps) => {
   const session = useSession();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const userId = id || session?.user?.id;
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        navigate('/login');
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to view profiles",
+          variant: "destructive",
+        });
+      }
+    };
+
+    checkAuth();
+  }, [navigate, toast]);
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ["profile", userId],
@@ -53,7 +73,7 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
 
       return data as Profile;
     },
-    enabled: !!userId,
+    enabled: !!userId && !!session,
     retry: 1,
   });
 

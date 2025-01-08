@@ -31,10 +31,19 @@ export const UserMenu = () => {
       }
     });
 
+    // Check session on mount
+    const checkSession = async () => {
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      if (error || !currentSession) {
+        navigate('/login');
+      }
+    };
+    
+    checkSession();
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -42,8 +51,12 @@ export const UserMenu = () => {
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
-        .single();
-      if (error) throw error;
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Profile fetch error:", error);
+        throw error;
+      }
       return data;
     },
     enabled: !!session?.user?.id,
@@ -63,37 +76,10 @@ export const UserMenu = () => {
 
   const handleLogout = async () => {
     try {
-      // First check if we have a valid session
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (!currentSession) {
-        // If no valid session, just clear local state and redirect
-        navigate("/login");
-        toast({
-          title: "Session expired",
-          description: "Please log in again.",
-        });
-        return;
-      }
-
-      // Proceed with logout if we have a valid session
       const { error } = await supabase.auth.signOut();
-      if (error) {
-        if (error.message?.includes('refresh_token_not_found')) {
-          // Handle expired refresh token
-          await supabase.auth.signOut(); // Force sign out
-          navigate("/login");
-          toast({
-            title: "Session expired",
-            description: "Please log in again.",
-            variant: "destructive",
-          });
-          return;
-        }
-        throw error;
-      }
+      if (error) throw error;
 
-      navigate("/");
+      navigate("/login");
       toast({
         title: "Signed out successfully",
         description: "Come back soon!",
@@ -101,9 +87,9 @@ export const UserMenu = () => {
     } catch (error: any) {
       console.error("Logout error:", error);
       
-      // Handle specific error cases
-      if (error.message?.includes("session_not_found") || 
-          error.message?.includes("refresh_token_not_found")) {
+      if (error.message?.includes('refresh_token_not_found')) {
+        // Force sign out on client side if token is invalid
+        await supabase.auth.signOut();
         navigate("/login");
         toast({
           title: "Session expired",
@@ -120,7 +106,7 @@ export const UserMenu = () => {
     }
   };
 
-  if (!session) {
+  if (!session || isLoading) {
     return <GuestButtons onLogin={handleLogin} onSignUp={handleSignUp} />;
   }
 
