@@ -1,4 +1,4 @@
-import { Twitter, Mail, Chrome, MessageSquare } from "lucide-react";
+import { Chrome, Twitter, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SocialLoginProps {
