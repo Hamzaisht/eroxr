@@ -1,18 +1,53 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Post } from "./types";
+import { useEffect } from "react";
 
 const POSTS_PER_PAGE = 5;
 
 export const useFeedQuery = (userId?: string) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Set up real-time subscription for new posts
+  useEffect(() => {
+    console.log("Setting up real-time subscription for posts");
+    
+    const channel = supabase
+      .channel('public:posts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'posts'
+        },
+        async (payload) => {
+          console.log("Received real-time update:", payload);
+          
+          // Invalidate and refetch queries to get fresh data
+          queryClient.invalidateQueries({
+            queryKey: ["posts"]
+          });
+        }
+      )
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   return useInfiniteQuery({
     queryKey: ["posts", userId],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * POSTS_PER_PAGE;
       const to = from + POSTS_PER_PAGE - 1;
+
+      console.log(`Fetching posts from ${from} to ${to}`);
 
       // First get the posts
       const { data: posts, error } = await supabase
@@ -37,6 +72,7 @@ export const useFeedQuery = (userId?: string) => {
         .range(from, to);
 
       if (error) {
+        console.error("Error fetching posts:", error);
         toast({
           title: "Error fetching posts",
           description: "Could not load posts. Please try again.",

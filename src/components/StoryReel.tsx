@@ -1,7 +1,7 @@
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { StoryUploader } from "./story/StoryUploader";
 import { StoryItem } from "./story/StoryItem";
 import { StoryNavigation } from "./story/StoryNavigation";
@@ -10,10 +10,41 @@ export const StoryReel = () => {
   const session = useSession();
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  // Set up real-time subscription for stories
+  useEffect(() => {
+    console.log("Setting up real-time subscription for stories");
+    
+    const channel = supabase
+      .channel('public:stories')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stories'
+        },
+        (payload) => {
+          console.log("Received story update:", payload);
+          queryClient.invalidateQueries({
+            queryKey: ["stories"]
+          });
+        }
+      )
+      .subscribe((status) => {
+        console.log("Story subscription status:", status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: stories, isLoading } = useQuery({
     queryKey: ["stories"],
     queryFn: async () => {
+      console.log("Fetching stories");
       const twentyFourHoursAgo = new Date();
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
@@ -53,8 +84,7 @@ export const StoryReel = () => {
       }, {});
 
       return Object.values(groupedStories);
-    },
-    refetchInterval: 30000, // Refetch every 30 seconds to keep stories fresh
+    }
   });
 
   const scroll = (direction: "left" | "right") => {
