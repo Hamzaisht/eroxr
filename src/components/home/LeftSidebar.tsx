@@ -26,7 +26,9 @@ export const LeftSidebar = () => {
           .eq('role', 'admin')
           .single();
 
-        if (adminError) throw adminError;
+        if (adminError && adminError.code !== 'PGRST116') {
+          throw adminError;
+        }
 
         if (adminRole) {
           setIsAdmin(true);
@@ -41,7 +43,9 @@ export const LeftSidebar = () => {
           .eq('id', session.user.id)
           .single();
 
-        if (profileError) throw profileError;
+        if (profileError && profileError.code !== 'PGRST116') {
+          throw profileError;
+        }
 
         setIsVerifiedCreator(profile?.id_verification_status === 'verified');
 

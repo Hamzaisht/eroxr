@@ -18,16 +18,17 @@ const Profile = () => {
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
-  console.log("Profile page - User ID:", id || session?.user?.id);
+  const userId = id || session?.user?.id;
 
   const { data: profile, isLoading, error } = useQuery({
-    queryKey: ["profile", id || session?.user?.id],
+    queryKey: ["profile", userId],
     queryFn: async () => {
-      console.log("Fetching profile for:", id || session?.user?.id);
+      if (!userId) return null;
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", id || session?.user?.id)
+        .eq("id", userId)
         .single();
 
       if (error) {
@@ -35,21 +36,20 @@ const Profile = () => {
         throw error;
       }
 
-      console.log("Fetched profile:", data);
       return data as Profile;
     },
-    enabled: !!(id || session?.user?.id),
+    enabled: !!userId,
   });
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-luxury-dark flex items-center justify-center">
-        <div className="text-luxury-primary">Loading...</div>
+        <div className="text-luxury-primary">Loading profile...</div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !profile) {
     return (
       <div className="min-h-screen bg-luxury-dark flex items-center justify-center">
         <div className="text-red-500">Error loading profile</div>
@@ -57,7 +57,7 @@ const Profile = () => {
     );
   }
 
-  const isOwnProfile = session?.user?.id === (id || session?.user?.id);
+  const isOwnProfile = session?.user?.id === userId;
 
   return (
     <div className="min-h-screen bg-luxury-dark">
@@ -69,13 +69,11 @@ const Profile = () => {
         />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
-            {profile && (
-              <TabsContainer 
-                profile={profile}
-                isEditing={isEditing}
-                onSave={() => setIsEditing(false)}
-              />
-            )}
+            <TabsContainer 
+              profile={profile}
+              isEditing={isEditing}
+              onSave={() => setIsEditing(false)}
+            />
           </div>
         </div>
       </main>
