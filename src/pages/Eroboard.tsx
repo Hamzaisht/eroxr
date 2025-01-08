@@ -75,12 +75,17 @@ export default function Eroboard() {
         const subscriberCount = subscribersData?.length || 0;
         const followerCount = followersData?.length || 0;
 
+        // Calculate engagement rate as a number
+        const engagementRate = followerCount > 0 
+          ? Number(((subscriberCount / followerCount) * 100).toFixed(1))
+          : 0;
+
         setStats(prev => ({
           ...prev,
           totalEarnings: totalEarnings * stats.revenueShare,
           totalSubscribers: subscriberCount,
           followers: followerCount,
-          engagementRate: ((subscriberCount / (followerCount || 1)) * 100).toFixed(1)
+          engagementRate // Now storing as a number
         }));
 
         // Mock data for content types (replace with real data)
