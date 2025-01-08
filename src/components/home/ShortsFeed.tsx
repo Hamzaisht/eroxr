@@ -45,7 +45,7 @@ export const ShortsFeed = () => {
 
   return (
     <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-black">
-      <div className="snap-y snap-mandatory h-full overflow-y-auto">
+      <div className="snap-y snap-mandatory h-full overflow-y-auto scrollbar-hide">
         {shorts.map((short, index) => (
           <div
             key={short.id}
@@ -144,6 +144,16 @@ export const ShortsFeed = () => {
           </div>
         ))}
       </div>
+
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 };
