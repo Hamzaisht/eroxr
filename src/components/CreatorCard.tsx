@@ -7,6 +7,7 @@ import { CheckCircle } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AvailabilityIndicator, AvailabilityStatus } from "./ui/availability-indicator";
+import { useToast } from "./ui/use-toast";
 
 interface CreatorCardProps {
   name: string;
@@ -32,26 +33,37 @@ export const CreatorCard = ({
 }: CreatorCardProps) => {
   const [subscribers, setSubscribers] = useState(initialSubscribers);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
   const session = useSession();
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkFollowingStatus = async () => {
       if (!session?.user?.id) return;
       
-      const { data, error } = await supabase
+      const { data: followData } = await supabase
         .from('followers')
         .select('*')
         .eq('follower_id', session.user.id)
         .eq('following_id', creatorId)
         .single();
 
-      if (!data && !error) {
-        setIsFollowing(true);
-      }
+      setIsFollowing(!!followData);
     };
 
-    checkFollowingStatus();
+    const checkSubscriptionStatus = async () => {
+      if (!session?.user?.id) return;
+      
+      const { data: subscriptionData } = await supabase
+        .from('creator_subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('creator_id', creatorId)
+        .single();
+
+      setIsSubscribed(!!subscriptionData);
+    };
 
     // Subscribe to presence changes
     const channel = supabase.channel('online-users')
@@ -68,10 +80,58 @@ export const CreatorCard = ({
       })
       .subscribe();
 
+    checkFollowingStatus();
+    checkSubscriptionStatus();
+
+    // Subscribe to realtime changes for follows and subscriptions
+    const followsChannel = supabase
+      .channel('follows-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'followers',
+          filter: `follower_id=eq.${session?.user?.id} AND following_id=eq.${creatorId}`
+        },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            setIsFollowing(false);
+          } else if (payload.eventType === 'INSERT') {
+            setIsFollowing(true);
+          }
+        }
+      )
+      .subscribe();
+
+    const subscriptionsChannel = supabase
+      .channel('subscriptions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'creator_subscriptions',
+          filter: `user_id=eq.${session?.user?.id} AND creator_id=eq.${creatorId}`
+        },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            setIsSubscribed(false);
+            setSubscribers(prev => prev - 1);
+          } else if (payload.eventType === 'INSERT') {
+            setIsSubscribed(true);
+            setSubscribers(prev => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(followsChannel);
+      supabase.removeChannel(subscriptionsChannel);
     };
-  }, [session?.user?.id, creatorId]);
+  }, [session?.user?.id, creatorId, toast]);
 
   const handleSubscriberChange = (change: number) => {
     setSubscribers(prev => prev + change);
@@ -86,6 +146,8 @@ export const CreatorCard = ({
             name={name}
             subscribers={subscribers}
             onSubscriberChange={handleSubscriberChange}
+            isFollowing={isFollowing}
+            isSubscribed={isSubscribed}
           />
         </div>
         <div className="relative">

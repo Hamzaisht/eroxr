@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,47 +10,21 @@ interface CreatorActionsProps {
   name: string;
   subscribers: number;
   onSubscriberChange: (change: number) => void;
+  isFollowing: boolean;
+  isSubscribed: boolean;
 }
 
 export const CreatorActions = ({ 
   creatorId, 
-  name, 
+  name,
   subscribers,
-  onSubscriberChange 
+  onSubscriberChange,
+  isFollowing,
+  isSubscribed
 }: CreatorActionsProps) => {
   const [isLiked, setIsLiked] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const { toast } = useToast();
   const session = useSession();
-
-  useEffect(() => {
-    if (!session?.user) return;
-
-    const checkLikeStatus = async () => {
-      const { data: likes } = await supabase
-        .from('creator_likes')
-        .select()
-        .eq('user_id', session.user.id)
-        .eq('creator_id', creatorId)
-        .maybeSingle();
-      
-      setIsLiked(!!likes);
-    };
-
-    const checkSubscriptionStatus = async () => {
-      const { data: subscription } = await supabase
-        .from('creator_subscriptions')
-        .select()
-        .eq('user_id', session.user.id)
-        .eq('creator_id', creatorId)
-        .maybeSingle();
-      
-      setIsSubscribed(!!subscription);
-    };
-
-    checkLikeStatus();
-    checkSubscriptionStatus();
-  }, [session, creatorId]);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -121,7 +95,6 @@ export const CreatorActions = ({
         onSubscriberChange(1);
       }
 
-      setIsSubscribed(!isSubscribed);
       toast({
         title: isSubscribed ? "Unsubscribed" : "Subscribed!",
         description: isSubscribed 
