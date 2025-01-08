@@ -1,26 +1,31 @@
 import { useSession } from "@supabase/auth-helpers-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { motion } from "framer-motion";
-import { Video } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Video, Heart, MessageCircle, Bookmark, Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface Short {
   id: string;
-  video_url: string;
+  video_urls: string[];
   creator: {
     username: string;
     avatar_url: string;
   };
   created_at: string;
   likes_count: number;
-  views_count: number;
+  comments_count: number;
+  content: string;
 }
 
 export const ShortsFeed = () => {
   const session = useSession();
   const { ref, inView } = useInView();
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
   const {
     data,
@@ -36,20 +41,22 @@ export const ShortsFeed = () => {
         .select(`
           id,
           video_urls,
+          content,
           created_at,
           likes_count,
+          comments_count,
           creator:profiles(username, avatar_url)
         `)
         .eq("visibility", "public")
         .not("video_urls", "is", null)
         .order("created_at", { ascending: false })
-        .range(pageParam * 10, (pageParam + 1) * 10 - 1);
+        .range(pageParam * 5, (pageParam + 1) * 5 - 1);
 
       if (error) throw error;
       return shorts;
     },
     getNextPageParam: (lastPage, allPages) => {
-      return lastPage?.length === 10 ? allPages.length : undefined;
+      return lastPage?.length === 5 ? allPages.length : undefined;
     },
     initialPageParam: 0
   });
@@ -80,31 +87,84 @@ export const ShortsFeed = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-      {shorts.map((short) => (
-        <motion.div
+    <div className="h-[calc(100vh-80px)] snap-y snap-mandatory overflow-y-scroll">
+      {shorts.map((short, index) => (
+        <div
           key={short.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative aspect-[9/16] rounded-lg overflow-hidden bg-black"
+          className="h-[calc(100vh-80px)] snap-start relative flex items-center justify-center bg-black"
         >
           <video
             src={short.video_urls?.[0]}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-contain"
             controls
             playsInline
             loop
+            autoPlay={index === currentVideoIndex}
+            onPlay={() => setCurrentVideoIndex(index)}
           >
             <source src={short.video_urls?.[0]} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-            <p className="text-white font-medium">{short.creator?.username}</p>
+          
+          {/* Overlay Content */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Avatar className="h-10 w-10 border-2 border-luxury-primary">
+                    <AvatarImage src={short.creator?.avatar_url} />
+                    <AvatarFallback>{short.creator?.username?.[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-white">{short.creator?.username}</p>
+                    <p className="text-sm text-white/70">{short.content}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-4 items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40"
+                >
+                  <Heart className="h-6 w-6 text-white" />
+                </Button>
+                <span className="text-white text-sm">{short.likes_count || 0}</span>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40"
+                >
+                  <MessageCircle className="h-6 w-6 text-white" />
+                </Button>
+                <span className="text-white text-sm">{short.comments_count || 0}</span>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40"
+                >
+                  <Bookmark className="h-6 w-6 text-white" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40"
+                >
+                  <Share2 className="h-6 w-6 text-white" />
+                </Button>
+              </div>
+            </div>
           </div>
-        </motion.div>
+        </div>
       ))}
+      
       {hasNextPage && (
-        <div ref={ref} className="col-span-full h-20 flex items-center justify-center">
+        <div ref={ref} className="h-20 flex items-center justify-center">
           {isFetchingNextPage && (
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-luxury-primary" />
           )}
