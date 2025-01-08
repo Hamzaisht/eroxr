@@ -496,6 +496,33 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_likes: {
         Row: {
           created_at: string
@@ -669,11 +696,13 @@ export type Database = {
           interests: string[] | null
           is_age_verified: boolean | null
           is_paying_customer: boolean | null
+          is_suspended: boolean | null
           last_name: string | null
           last_username_change: string | null
           location: string | null
           profile_visibility: boolean | null
           social_links: Json | null
+          suspended_at: string | null
           updated_at: string
           username: string | null
         }
@@ -689,11 +718,13 @@ export type Database = {
           interests?: string[] | null
           is_age_verified?: boolean | null
           is_paying_customer?: boolean | null
+          is_suspended?: boolean | null
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null
+          suspended_at?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -709,13 +740,39 @@ export type Database = {
           interests?: string[] | null
           is_age_verified?: boolean | null
           is_paying_customer?: boolean | null
+          is_suspended?: boolean | null
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null
+          suspended_at?: string | null
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      security_violations: {
+        Row: {
+          content_owner_id: string
+          created_at: string
+          id: string
+          violation_type: string
+          violator_id: string
+        }
+        Insert: {
+          content_owner_id: string
+          created_at?: string
+          id?: string
+          violation_type: string
+          violator_id: string
+        }
+        Update: {
+          content_owner_id?: string
+          created_at?: string
+          id?: string
+          violation_type?: string
+          violator_id?: string
         }
         Relationships: []
       }

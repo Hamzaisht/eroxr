@@ -53,7 +53,7 @@ export const reportSecurityViolation = async (
       .insert([{
         violator_id: violatorId,
         content_owner_id: contentOwnerId,
-        violation_type: violationType,
+        violation_type: violationType
       }]);
 
     if (violationError) throw violationError;
@@ -63,7 +63,7 @@ export const reportSecurityViolation = async (
       .from('security_violations')
       .select('*')
       .eq('violator_id', violatorId)
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()); // Last 30 days
+      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
     if (countError) throw countError;
 
@@ -71,7 +71,10 @@ export const reportSecurityViolation = async (
     if (violations && violations.length >= 3) {
       const { error: suspensionError } = await supabase
         .from('profiles')
-        .update({ is_suspended: true, suspended_at: new Date().toISOString() })
+        .update({ 
+          is_suspended: true,
+          suspended_at: new Date().toISOString()
+        })
         .eq('id', violatorId);
 
       if (suspensionError) throw suspensionError;
@@ -82,7 +85,7 @@ export const reportSecurityViolation = async (
         .insert([{
           user_id: contentOwnerId,
           type: 'security_violation',
-          content: `A user has been suspended for attempting to steal your content`,
+          content: `A user has been suspended for attempting to steal your content`
         }]);
 
       if (notificationError) throw notificationError;
