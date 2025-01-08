@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,11 +13,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
   const session = useSession();
   const { toast } = useToast();
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
 
   const handleLogin = () => {
     navigate("/login");
@@ -48,6 +65,17 @@ export const UserMenu = () => {
     }
   };
 
+  const getUserType = () => {
+    if (!profile) return "Guest";
+    if (profile.id_verification_status === "verified" && profile.is_paying_customer) {
+      return "Verified Creator • Premium";
+    }
+    if (profile.is_paying_customer) {
+      return "Premium User";
+    }
+    return "Free User";
+  };
+
   if (!session) {
     return (
       <div className="flex items-center gap-2">
@@ -70,13 +98,17 @@ export const UserMenu = () => {
 
   return (
     <div className="flex items-center gap-4">
-      <Button 
-        variant="default"
-        onClick={() => navigate("/profile")}
-        className="bg-button-gradient hover:bg-hover-gradient text-white font-semibold px-6"
-      >
-        My Profile
-      </Button>
+      <div className="flex flex-col items-end">
+        <span className="text-sm font-medium">
+          @{profile?.username || session.user.email?.split('@')[0] || 'Guest'}
+        </span>
+        <Badge 
+          variant={profile?.is_paying_customer ? "default" : "secondary"}
+          className="text-xs"
+        >
+          {getUserType()}
+        </Badge>
+      </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -94,11 +126,8 @@ export const UserMenu = () => {
         <DropdownMenuContent className="w-56" align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate("/")}>
-            Home
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate("/profile")}>
-            My Profile
+            Profile
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate("/settings")}>
             Settings
