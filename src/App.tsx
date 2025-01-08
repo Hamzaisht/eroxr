@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { useSession } from "@supabase/auth-helpers-react";
 import Home from "@/pages/Home";
@@ -15,7 +15,7 @@ function App() {
   const session = useSession();
 
   return (
-    <Router>
+    <>
       <Routes>
         {/* Public routes */}
         <Route path="/landing" element={<Landing />} />
@@ -55,7 +55,7 @@ function App() {
         />
       </Routes>
       <Toaster />
-    </Router>
+    </>
   );
 }
 
