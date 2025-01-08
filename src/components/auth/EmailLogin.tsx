@@ -1,47 +1,47 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { SocialLoginSection } from "./sections/SocialLoginSection";
 import { DividerWithText } from "./sections/DividerWithText";
 import { LoginForm } from "./sections/LoginForm";
+import { AuthError } from "@supabase/supabase-js";
 
 export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const supabase = useSupabaseClient();
 
   const handleSubmit = async (values: { identifier: string; password: string; rememberMe: boolean }) => {
     try {
       setIsLoading(true);
       
-      // Try to sign in with email first
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      // First try email login
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: values.identifier,
         password: values.password,
       });
 
-      if (signInError) {
-        // If email login fails, try username
-        const { data: profiles, error: profileError } = await supabase
+      if (error) {
+        // If email login fails, check if it's a username
+        const { data: profiles } = await supabase
           .from('profiles')
           .select('id')
           .eq('username', values.identifier)
           .single();
 
-        if (profileError || !profiles) {
-          throw signInError;
+        if (profiles) {
+          // Try to sign in with the found user's email
+          const { error: finalError } = await supabase.auth.signInWithPassword({
+            email: profiles.id,
+            password: values.password,
+          });
+
+          if (finalError) throw finalError;
+        } else {
+          throw error;
         }
-
-        // Try to sign in with the found user's email
-        const { error: finalError } = await supabase.auth.signInWithPassword({
-          email: profiles.id,
-          password: values.password,
-        });
-
-        if (finalError) throw finalError;
       }
 
       toast({
@@ -51,9 +51,25 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       navigate("/home");
     } catch (error: any) {
       console.error("Login error:", error);
+      
+      let errorMessage = "An error occurred during sign in";
+      
+      if (error instanceof AuthError) {
+        switch (error.message) {
+          case "Invalid login credentials":
+            errorMessage = "Invalid email/username or password";
+            break;
+          case "Email not confirmed":
+            errorMessage = "Please verify your email before signing in";
+            break;
+          default:
+            errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
