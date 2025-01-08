@@ -17,6 +17,8 @@ export const LeftSidebar = () => {
     const checkUserStatus = async () => {
       if (!session?.user?.id) return;
       
+      console.log("Checking user status for:", session.user.id);
+      
       // Check verification and premium status
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -24,10 +26,17 @@ export const LeftSidebar = () => {
         .eq('id', session.user.id)
         .single();
       
-      if (!profileError && profile) {
-        setIsVerifiedCreator(
-          profile.id_verification_status === 'verified'
-        );
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        return;
+      }
+
+      console.log("Profile data:", profile);
+      
+      if (profile) {
+        const isVerified = profile.id_verification_status === 'verified';
+        console.log("Is verified creator:", isVerified);
+        setIsVerifiedCreator(isVerified);
       }
 
       // Check admin role
@@ -38,8 +47,14 @@ export const LeftSidebar = () => {
         .eq('role', 'admin')
         .single();
 
-      if (!roleError && roleData) {
+      if (roleError) {
+        console.error("Error fetching role:", roleError);
+        return;
+      }
+
+      if (roleData) {
         setIsAdmin(true);
+        console.log("User is admin");
       }
     };
 
