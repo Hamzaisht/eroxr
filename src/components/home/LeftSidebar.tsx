@@ -19,47 +19,58 @@ export const LeftSidebar = () => {
       
       console.log("Checking user status for:", session.user.id);
       
-      // Check verification and premium status
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id_verification_status, is_paying_customer')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        return;
-      }
+      try {
+        // Check verification status directly from profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id_verification_status')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          return;
+        }
 
-      console.log("Profile data:", profile);
-      
-      if (profile) {
-        const isVerified = profile.id_verification_status === 'verified';
-        console.log("Is verified creator:", isVerified);
-        setIsVerifiedCreator(isVerified);
-      }
+        console.log("Profile data:", profile);
+        
+        if (profile) {
+          const isVerified = profile.id_verification_status === 'verified';
+          console.log("Is verified creator:", isVerified);
+          setIsVerifiedCreator(isVerified);
+          
+          if (isVerified) {
+            toast({
+              title: "Verified Creator",
+              description: "You have access to the Eroboard",
+            });
+          }
+        }
 
-      // Check admin role
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .eq('role', 'admin')
-        .single();
+        // Check admin role
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin')
+          .single();
 
-      if (roleError) {
-        console.error("Error fetching role:", roleError);
-        return;
-      }
+        if (roleError && roleError.code !== 'PGRST116') {
+          console.error("Error fetching role:", roleError);
+          return;
+        }
 
-      if (roleData) {
-        setIsAdmin(true);
-        console.log("User is admin");
+        if (roleData) {
+          setIsAdmin(true);
+          console.log("User is admin");
+        }
+      } catch (error) {
+        console.error("Error checking user status:", error);
       }
     };
 
     checkUserStatus();
-  }, [session?.user?.id]);
+  }, [session?.user?.id, toast]);
 
   return (
     <motion.div
