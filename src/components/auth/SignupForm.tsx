@@ -15,7 +15,11 @@ import { NameFields } from "./form-fields/NameFields";
 import { SocialLogin } from "./SocialLogin";
 import { motion } from "framer-motion";
 
-export const SignupForm = () => {
+interface SignupFormProps {
+  onToggleMode: () => void;
+}
+
+export const SignupForm = ({ onToggleMode }: SignupFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supabase = useSupabaseClient();
@@ -68,7 +72,7 @@ export const SignupForm = () => {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'github') => {
+  const handleSocialLogin = async (provider: 'google' | 'twitter') => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -140,7 +144,7 @@ export const SignupForm = () => {
         <p className="text-luxury-neutral/80">
           Already have an account?{" "}
           <button
-            onClick={() => {}} // TODO: Implement toggle to login view
+            onClick={onToggleMode}
             className="text-luxury-primary hover:text-luxury-accent transition-colors font-medium"
             disabled={isLoading}
           >
