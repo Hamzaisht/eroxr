@@ -15,10 +15,7 @@ export const LeftSidebar = () => {
 
   useEffect(() => {
     const checkUserStatus = async () => {
-      if (!session?.user?.id) {
-        console.log("No user session found");
-        return;
-      }
+      if (!session?.user?.id) return;
       
       try {
         // Check admin role
@@ -27,19 +24,13 @@ export const LeftSidebar = () => {
           .select('role')
           .eq('user_id', session.user.id)
           .eq('role', 'admin')
-          .maybeSingle();
+          .single();
 
-        if (adminError) {
-          console.error("Admin check error:", adminError);
-          return;
-        }
-
-        console.log("Admin role check result:", adminRole);
+        if (adminError) throw adminError;
 
         if (adminRole) {
           setIsAdmin(true);
           setIsVerifiedCreator(true);
-          console.log("User is admin");
           return;
         }
 
@@ -48,20 +39,14 @@ export const LeftSidebar = () => {
           .from('profiles')
           .select('id_verification_status')
           .eq('id', session.user.id)
-          .maybeSingle();
+          .single();
 
-        if (profileError) {
-          console.error("Profile check error:", profileError);
-          return;
-        }
+        if (profileError) throw profileError;
 
-        console.log("Profile verification check:", profile);
-        const isVerified = profile?.id_verification_status === 'verified';
-        setIsVerifiedCreator(isVerified);
-        console.log("Is verified creator:", isVerified);
+        setIsVerifiedCreator(profile?.id_verification_status === 'verified');
 
       } catch (error) {
-        console.error("Error in checkUserStatus:", error);
+        console.error("Error checking user status:", error);
       }
     };
 

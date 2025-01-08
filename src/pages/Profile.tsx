@@ -18,49 +18,38 @@ const Profile = () => {
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
-  const userId = id || session?.user?.id;
-  console.log("Profile page - User ID:", userId);
+  console.log("Profile page - User ID:", id || session?.user?.id);
 
   const { data: profile, isLoading, error } = useQuery({
-    queryKey: ["profile", userId],
+    queryKey: ["profile", id || session?.user?.id],
     queryFn: async () => {
-      if (!userId) {
-        console.log("No user ID available");
-        return null;
-      }
-
-      console.log("Fetching profile for:", userId);
+      console.log("Fetching profile for:", id || session?.user?.id);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", userId)
-        .maybeSingle();
+        .eq("id", id || session?.user?.id)
+        .single();
 
       if (error) {
         console.error("Error fetching profile:", error);
-        toast({
-          variant: "destructive",
-          title: "Error loading profile",
-          description: "Please try again later",
-        });
         throw error;
       }
 
       console.log("Fetched profile:", data);
       return data as Profile;
     },
-    enabled: !!userId,
+    enabled: !!(id || session?.user?.id),
   });
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-luxury-dark flex items-center justify-center">
-        <div className="text-luxury-primary">Loading profile...</div>
+        <div className="text-luxury-primary">Loading...</div>
       </div>
     );
   }
 
-  if (error || !profile) {
+  if (error) {
     return (
       <div className="min-h-screen bg-luxury-dark flex items-center justify-center">
         <div className="text-red-500">Error loading profile</div>
@@ -68,7 +57,7 @@ const Profile = () => {
     );
   }
 
-  const isOwnProfile = session?.user?.id === userId;
+  const isOwnProfile = session?.user?.id === (id || session?.user?.id);
 
   return (
     <div className="min-h-screen bg-luxury-dark">
@@ -80,11 +69,13 @@ const Profile = () => {
         />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
-            <TabsContainer 
-              profile={profile}
-              isEditing={isEditing}
-              onSave={() => setIsEditing(false)}
-            />
+            {profile && (
+              <TabsContainer 
+                profile={profile}
+                isEditing={isEditing}
+                onSave={() => setIsEditing(false)}
+              />
+            )}
           </div>
         </div>
       </main>
