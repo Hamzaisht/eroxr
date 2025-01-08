@@ -17,4 +17,6 @@ export type Post = {
   is_ppv: boolean;
   ppv_amount: number | null;
   has_purchased?: boolean;
+  screenshots_count: number | null;
+  downloads_count: number | null;
 };

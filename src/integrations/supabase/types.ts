@@ -552,6 +552,38 @@ export type Database = {
           },
         ]
       }
+      post_media_actions: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          post_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_media_actions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_purchases: {
         Row: {
           amount: number
@@ -619,11 +651,13 @@ export type Database = {
           content: string
           created_at: string
           creator_id: string
+          downloads_count: number | null
           id: string
           is_ppv: boolean | null
           likes_count: number | null
           media_url: string[] | null
           ppv_amount: number | null
+          screenshots_count: number | null
           tags: string[] | null
           updated_at: string
           video_urls: string[] | null
@@ -634,11 +668,13 @@ export type Database = {
           content: string
           created_at?: string
           creator_id: string
+          downloads_count?: number | null
           id?: string
           is_ppv?: boolean | null
           likes_count?: number | null
           media_url?: string[] | null
           ppv_amount?: number | null
+          screenshots_count?: number | null
           tags?: string[] | null
           updated_at?: string
           video_urls?: string[] | null
@@ -649,11 +685,13 @@ export type Database = {
           content?: string
           created_at?: string
           creator_id?: string
+          downloads_count?: number | null
           id?: string
           is_ppv?: boolean | null
           likes_count?: number | null
           media_url?: string[] | null
           ppv_amount?: number | null
+          screenshots_count?: number | null
           tags?: string[] | null
           updated_at?: string
           video_urls?: string[] | null

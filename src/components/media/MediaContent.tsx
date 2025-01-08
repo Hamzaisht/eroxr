@@ -25,6 +25,7 @@ export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
           controls
           autoPlay
           playsInline
+          preload="metadata"
         />
       ) : (
         <img
