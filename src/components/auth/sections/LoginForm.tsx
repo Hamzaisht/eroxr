@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email or username is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(1, "Password is required"),
   rememberMe: z.boolean().default(false),
 });
 
@@ -31,9 +31,13 @@ export const LoginForm = ({ onSubmit, isLoading }: LoginFormProps) => {
     },
   });
 
+  const handleSubmit = async (values: LoginValues) => {
+    await onSubmit(values);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="identifier"

@@ -18,14 +18,13 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       setIsLoading(true);
       
       // Try to sign in with email first
-      const { error: emailError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: values.identifier,
         password: values.password,
       });
 
-      // If email login fails, try username
-      if (emailError) {
-        // Get the email associated with the username
+      if (signInError) {
+        // If email login fails, try username
         const { data: profiles, error: profileError } = await supabase
           .from('profiles')
           .select('id')
@@ -33,10 +32,10 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
           .single();
 
         if (profileError || !profiles) {
-          throw emailError;
+          throw signInError;
         }
 
-        // Try to sign in with the found user
+        // Try to sign in with the found user's email
         const { error: finalError } = await supabase.auth.signInWithPassword({
           email: profiles.id,
           password: values.password,
@@ -45,19 +44,13 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         if (finalError) throw finalError;
       }
 
-      // Set session persistence based on rememberMe
-      if (values.rememberMe) {
-        await supabase.auth.updateUser({
-          data: { persistent: true }
-        });
-      }
-
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
       navigate("/home");
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Error",
         description: error.message,
@@ -73,7 +66,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-md space-y-8 p-8 rounded-2xl neo-blur"
+      className="w-full max-w-md space-y-8"
     >
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold text-gradient">
