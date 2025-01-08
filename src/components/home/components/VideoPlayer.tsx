@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface VideoPlayerProps {
   src: string;
@@ -8,70 +8,97 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!videoRef.current) return;
-
     const video = videoRef.current;
+    if (!video) return;
+
+    // Reset video state
+    video.pause();
+    video.currentTime = 0;
+    setIsLoading(true);
+
+    // Set up video event listeners
+    const handleLoadedData = () => {
+      setIsLoading(false);
+      if (video.paused) {
+        video.play().catch(error => {
+          console.error("Error playing video:", error);
+        });
+      }
+    };
+
+    const handleError = (e: ErrorEvent) => {
+      console.error("Video loading error:", e);
+      setIsLoading(false);
+    };
+
+    // Create intersection observer
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Reset video source and load it
-            video.src = src;
-            video.load();
-            
-            // Play after metadata is loaded
-            const playVideo = () => {
-              video.play().catch((error) => {
-                console.error("Error playing video:", error);
-              });
-            };
-
-            // Remove any existing loadedmetadata listeners
-            video.removeEventListener('loadedmetadata', playVideo);
-            // Add new listener
-            video.addEventListener('loadedmetadata', playVideo, { once: true });
-            
             onIndexChange(index);
+            // Only set src and load when video comes into view
+            if (video.src !== src) {
+              video.src = src;
+              video.load();
+            }
+            video.play().catch(error => {
+              console.error("Error playing video:", error);
+            });
           } else {
-            // Pause and reset when out of view
             video.pause();
             video.currentTime = 0;
           }
         });
       },
-      { 
-        threshold: 0.7,
-        root: null,
-        rootMargin: "0px"
+      {
+        threshold: 0.5,
+        rootMargin: "-10% 0px"
       }
     );
 
+    // Add event listeners
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('error', handleError);
     observer.observe(video);
-    
+
+    // Cleanup
     return () => {
-      video.removeEventListener('loadedmetadata', () => {});
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('error', handleError);
       observer.disconnect();
+      video.pause();
+      video.src = '';
+      video.load();
     };
   }, [src, index, onIndexChange]);
 
   return (
-    <video
-      ref={videoRef}
-      className="h-full w-full object-cover"
-      playsInline
-      muted
-      loop
-      preload="auto"
-      onClick={(e) => {
-        const video = e.currentTarget;
-        if (video.paused) {
-          video.play().catch(e => console.error("Error playing video:", e));
-        } else {
-          video.pause();
-        }
-      }}
-    />
+    <div className="relative w-full h-full">
+      <video
+        ref={videoRef}
+        className="h-full w-full object-cover"
+        playsInline
+        muted
+        loop
+        preload="metadata"
+        onClick={(e) => {
+          const video = e.currentTarget;
+          if (video.paused) {
+            video.play().catch(e => console.error("Error playing video:", e));
+          } else {
+            video.pause();
+          }
+        }}
+      />
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="w-8 h-8 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+    </div>
   );
 };

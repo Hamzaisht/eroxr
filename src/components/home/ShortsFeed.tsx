@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShareDialog } from "@/components/feed/ShareDialog";
 import { Short } from "./types/short";
 import { useShortActions } from "./hooks/useShortActions";
@@ -11,6 +11,7 @@ export const ShortsFeed = () => {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [selectedShortId, setSelectedShortId] = useState<string | null>(null);
   const { handleLike, handleSave } = useShortActions();
+  const [isLoading, setIsLoading] = useState(true);
 
   const shorts: Short[] = [
     {
@@ -54,10 +55,27 @@ export const ShortsFeed = () => {
     },
   ];
 
+  useEffect(() => {
+    // Preload videos
+    shorts.forEach(short => {
+      const video = new Audio(short.video_url);
+      video.preload = "metadata";
+    });
+    setIsLoading(false);
+  }, []);
+
   const handleShare = (shortId: string) => {
     setSelectedShortId(shortId);
     setIsShareOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="relative h-[calc(100vh-4rem)] w-full flex items-center justify-center bg-black">
+        <div className="w-12 h-12 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-black">
