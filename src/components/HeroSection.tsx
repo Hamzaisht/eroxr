@@ -10,8 +10,8 @@ export const HeroSection = () => {
   const { toast } = useToast();
 
   const handleGetStarted = () => {
-    navigate("/login");
     if (!session) {
+      navigate("/login");
       toast({
         title: "Welcome!",
         description: "Create your account to get started.",
