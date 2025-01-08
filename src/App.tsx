@@ -19,8 +19,14 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/landing" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route 
+          path="/login" 
+          element={!session ? <Login /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/register" 
+          element={!session ? <Register /> : <Navigate to="/" replace />} 
+        />
 
         {/* Protected routes */}
         <Route
