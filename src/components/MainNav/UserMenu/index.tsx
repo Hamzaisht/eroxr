@@ -3,9 +3,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { UserBadge } from "./UserBadge";
 import { UserAvatar } from "./UserAvatar";
 import { GuestButtons } from "./GuestButtons";
+import { UserMenuItems } from "./UserMenuItems";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -83,24 +81,7 @@ export const UserMenu = () => {
           />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate("/profile")}>
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/settings")}>
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
-            Subscriptions
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            className="text-red-600 focus:text-red-600" 
-            onClick={handleLogout}
-          >
-            Sign out of your account
-          </DropdownMenuItem>
+          <UserMenuItems onLogout={handleLogout} />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
