@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 const POSTS_PER_PAGE = 5;
 
-export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 'recent' = 'feed') => {
+export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 'recent' | 'shorts' = 'feed') => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -80,13 +80,27 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
           break;
         case 'recent':
           if (userId) {
-            query = query.in('creator_id', 
-              supabase
-                .from('creator_subscriptions')
-                .select('creator_id')
-                .eq('user_id', userId)
-            );
+            // First get the creator IDs the user is subscribed to
+            const { data: subscriptions } = await supabase
+              .from('creator_subscriptions')
+              .select('creator_id')
+              .eq('user_id', userId);
+            
+            const creatorIds = subscriptions?.map(sub => sub.creator_id) || [];
+            
+            // Then filter posts by these creator IDs
+            if (creatorIds.length > 0) {
+              query = query.in('creator_id', creatorIds);
+            } else {
+              // If user isn't subscribed to anyone, return empty array
+              return [];
+            }
           }
+          break;
+        case 'shorts':
+          query = query
+            .not('video_urls', 'is', null)
+            .eq('visibility', 'public');
           break;
         default:
           if (userId) {
