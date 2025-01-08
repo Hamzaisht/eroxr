@@ -1,4 +1,4 @@
-import { Bell, BarChart2 } from "lucide-react";
+import { BarChart2, Bell, Shield, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
@@ -10,24 +10,40 @@ export const LeftSidebar = () => {
   const session = useSession();
   const navigate = useNavigate();
   const [isVerifiedCreator, setIsVerifiedCreator] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkVerificationStatus = async () => {
+    const checkUserStatus = async () => {
       if (!session?.user?.id) return;
       
-      const { data, error } = await supabase
+      // Check verification and premium status
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id_verification_status')
+        .select('id_verification_status, is_paying_customer')
         .eq('id', session.user.id)
         .single();
       
-      if (!error && data) {
-        setIsVerifiedCreator(data.id_verification_status === 'verified');
+      if (!profileError && profile) {
+        setIsVerifiedCreator(
+          profile.id_verification_status === 'verified'
+        );
+      }
+
+      // Check admin role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .eq('role', 'admin')
+        .single();
+
+      if (!roleError && roleData) {
+        setIsAdmin(true);
       }
     };
 
-    checkVerificationStatus();
+    checkUserStatus();
   }, [session?.user?.id]);
 
   return (
@@ -55,6 +71,30 @@ export const LeftSidebar = () => {
             <BarChart2 className="h-5 w-5 text-luxury-primary" />
             <span className="font-medium text-luxury-primary">Eroboard</span>
           </motion.div>
+        )}
+
+        {isAdmin && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer"
+              onClick={() => navigate('/admin/users')}
+            >
+              <Users className="h-5 w-5 text-red-500" />
+              <span className="font-medium text-red-500">User Management</span>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer"
+              onClick={() => navigate('/admin/moderation')}
+            >
+              <Shield className="h-5 w-5 text-red-500" />
+              <span className="font-medium text-red-500">Content Moderation</span>
+            </motion.div>
+          </>
         )}
       </div>
     </motion.div>
