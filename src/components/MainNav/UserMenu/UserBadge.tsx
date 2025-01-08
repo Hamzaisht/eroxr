@@ -21,13 +21,13 @@ export const UserBadge = ({ profile, fallbackEmail }: UserBadgeProps) => {
   const displayName = profile?.username || fallbackEmail?.split('@')[0] || 'Guest';
 
   return (
-    <div className="flex flex-col items-end">
-      <span className="text-sm font-medium">
+    <div className="flex flex-col items-end gap-0.5">
+      <span className="text-sm font-medium text-foreground">
         @{displayName}
       </span>
       <Badge 
         variant={profile?.is_paying_customer ? "default" : "secondary"}
-        className="text-xs whitespace-nowrap"
+        className="text-[10px] px-2 py-0 h-4 whitespace-nowrap"
       >
         {getUserType()}
       </Badge>
