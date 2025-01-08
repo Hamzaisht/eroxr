@@ -1,3 +1,5 @@
+import type { Json } from './database.types';
+
 export type Profile = {
   id: string;
   username?: string | null;
@@ -11,9 +13,13 @@ export type Profile = {
   bio?: string | null;
   location?: string | null;
   interests?: string[] | null;
-  social_links?: Record<string, any> | null;
+  social_links?: Json | null;
   profile_visibility?: boolean | null;
   is_paying_customer?: boolean | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  is_suspended?: boolean | null;
+  suspended_at?: string | null;
 };
 
 export type ProfileInsert = {
@@ -29,9 +35,13 @@ export type ProfileInsert = {
   bio?: string | null;
   location?: string | null;
   interests?: string[] | null;
-  social_links?: Record<string, any> | null;
+  social_links?: Json | null;
   profile_visibility?: boolean | null;
   is_paying_customer?: boolean | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  is_suspended?: boolean | null;
+  suspended_at?: string | null;
 };
 
 export type ProfileUpdate = {
@@ -47,7 +57,11 @@ export type ProfileUpdate = {
   bio?: string | null;
   location?: string | null;
   interests?: string[] | null;
-  social_links?: Record<string, any> | null;
+  social_links?: Json | null;
   profile_visibility?: boolean | null;
   is_paying_customer?: boolean | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  is_suspended?: boolean | null;
+  suspended_at?: string | null;
 };
