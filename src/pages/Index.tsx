@@ -7,6 +7,7 @@ import { FeaturesSection } from "@/components/FeaturesSection";
 import { CTASection } from "@/components/CTASection";
 import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
+import { NordicMap } from "@/components/landing/sections/NordicMap";
 
 const Index = () => {
   return (
@@ -19,12 +20,17 @@ const Index = () => {
         className="relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5 pointer-events-none" />
-        <HeroSection />
-        <AnimatedStats />
-        <Features3D />
-        <CreatorShowcase />
-        <FeaturesSection />
-        <CTASection />
+        <div className="fixed inset-0 z-0">
+          <NordicMap />
+        </div>
+        <div className="relative z-10">
+          <HeroSection />
+          <AnimatedStats />
+          <Features3D />
+          <CreatorShowcase />
+          <FeaturesSection />
+          <CTASection />
+        </div>
       </motion.main>
       <Footer />
     </div>
