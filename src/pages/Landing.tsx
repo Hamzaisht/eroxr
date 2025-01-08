@@ -1,8 +1,31 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Shield, Users, Lock, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const session = useSession();
+  const { toast } = useToast();
+
+  const handleLogin = () => {
+    navigate("/login");
+  };
+
+  const handleJoinNow = () => {
+    if (session) {
+      navigate("/home");
+    } else {
+      navigate("/login");
+      toast({
+        title: "Welcome!",
+        description: "Create your account to get started.",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-luxury-dark">
       {/* Navbar */}
@@ -21,10 +44,17 @@ const Landing = () => {
             <a href="#verification" className="hover:text-luxury-neutral transition-colors">Verification</a>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" className="text-luxury-neutral">
+            <Button 
+              variant="ghost" 
+              className="text-luxury-neutral hover:text-white hover:bg-luxury-neutral/10"
+              onClick={handleLogin}
+            >
               Log in
             </Button>
-            <Button className="bg-button-gradient hover:bg-hover-gradient">
+            <Button 
+              className="bg-button-gradient hover:bg-hover-gradient"
+              onClick={handleJoinNow}
+            >
               Join Now
               <ChevronRight className="h-4 w-4" />
             </Button>
