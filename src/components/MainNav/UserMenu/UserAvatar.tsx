@@ -8,7 +8,7 @@ interface UserAvatarProps {
 
 export const UserAvatar = ({ avatarUrl, email }: UserAvatarProps) => {
   return (
-    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 hover:bg-muted/50">
       <Avatar className="h-10 w-10">
         <AvatarImage src={avatarUrl} alt={email} />
         <AvatarFallback className="bg-primary/10">
