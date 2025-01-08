@@ -27,7 +27,7 @@ export const UserBadge = ({ profile, fallbackEmail }: UserBadgeProps) => {
       </span>
       <Badge 
         variant={profile?.is_paying_customer ? "default" : "secondary"}
-        className="text-xs"
+        className="text-xs whitespace-nowrap"
       >
         {getUserType()}
       </Badge>
