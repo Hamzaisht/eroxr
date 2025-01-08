@@ -20,7 +20,31 @@ export const LeftSidebar = () => {
       console.log("Checking user status for:", session.user.id);
       
       try {
-        // Check verification status directly from profiles table
+        // First check admin role
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin')
+          .single();
+
+        if (roleError && roleError.code !== 'PGRST116') {
+          console.error("Error fetching role:", roleError);
+        }
+
+        // If user is admin, they automatically get access
+        if (roleData) {
+          console.log("User is admin, granting access");
+          setIsAdmin(true);
+          setIsVerifiedCreator(true);
+          toast({
+            title: "Admin Access Granted",
+            description: "You have full access to all features",
+          });
+          return;
+        }
+
+        // If not admin, check verification status
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id_verification_status')
@@ -32,37 +56,16 @@ export const LeftSidebar = () => {
           return;
         }
 
-        console.log("Profile data:", profile);
+        console.log("Profile verification status:", profile?.id_verification_status);
         
-        if (profile) {
-          const isVerified = profile.id_verification_status === 'verified';
-          console.log("Is verified creator:", isVerified);
-          setIsVerifiedCreator(isVerified);
-          
-          if (isVerified) {
-            toast({
-              title: "Verified Creator",
-              description: "You have access to the Eroboard",
-            });
-          }
-        }
-
-        // Check admin role
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'admin')
-          .single();
-
-        if (roleError && roleError.code !== 'PGRST116') {
-          console.error("Error fetching role:", roleError);
-          return;
-        }
-
-        if (roleData) {
-          setIsAdmin(true);
-          console.log("User is admin");
+        const isVerified = profile?.id_verification_status === 'verified';
+        setIsVerifiedCreator(isVerified);
+        
+        if (isVerified) {
+          toast({
+            title: "Verified Creator",
+            description: "You have access to the Eroboard",
+          });
         }
       } catch (error) {
         console.error("Error checking user status:", error);
@@ -87,7 +90,7 @@ export const LeftSidebar = () => {
           <span className="font-medium">News Feed</span>
         </div>
 
-        {isVerifiedCreator && (
+        {(isVerifiedCreator || isAdmin) && (
           <motion.div 
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
