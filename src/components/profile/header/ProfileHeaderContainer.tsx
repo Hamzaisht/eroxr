@@ -4,7 +4,6 @@ import { ProfileStats } from "@/components/profile/ProfileStats";
 import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
-import { PreviewModals } from "./PreviewModals";
 import type { ProfileHeaderProps } from "../types";
 import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
@@ -20,6 +19,8 @@ export const ProfileHeaderContainer = ({
     if (url.match(/\.gif$/i)) return 'gif';
     return 'image';
   };
+
+  const defaultAvailability: AvailabilityStatus = "offline";
 
   return (
     <div className="relative">
@@ -41,7 +42,7 @@ export const ProfileHeaderContainer = ({
             <div className="mt-4">
               <ProfileHeaderStatus 
                 isOwnProfile={isOwnProfile}
-                availability={"offline"}
+                availability={defaultAvailability}
               />
             </div>
           </div>
