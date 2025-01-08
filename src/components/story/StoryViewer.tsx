@@ -1,10 +1,12 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Link } from "react-router-dom";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { StoryProgress } from "./viewer/StoryProgress";
+import { StoryHeader } from "./viewer/StoryHeader";
+import { StoryImage } from "./viewer/StoryImage";
+import { StoryControls } from "./viewer/StoryControls";
 
 interface StoryViewerProps {
   open: boolean;
@@ -65,6 +67,7 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
     return () => clearInterval(interval);
   }, [currentIndex, open, stories, onOpenChange]);
 
+  // Auto-advance timer
   useEffect(() => {
     let timer: NodeJS.Timeout;
     
@@ -126,109 +129,30 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
             onContextMenu={(e) => e.preventDefault()}
           >
             <AspectRatio ratio={9/16} className="bg-black">
-              {/* Story Header with Animation */}
-              <motion.div 
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/50 to-transparent"
-              >
-                <div className="flex items-center justify-between">
-                  <Link to={`/profile/${creator.id}`} className="flex items-center gap-2">
-                    <div className="relative">
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.1, 1],
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          repeatType: "reverse"
-                        }}
-                        className="absolute inset-0 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent opacity-75 blur-sm"
-                      />
-                      <Avatar className="h-10 w-10 ring-2 ring-luxury-primary relative z-10">
-                        <AvatarImage src={creator.avatar_url} />
-                        <AvatarFallback>
-                          {creator.username?.[0]?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-white font-medium">{creator.username}</span>
-                      <span className="text-xs text-white/70">{timeRemaining}</span>
-                    </div>
-                  </Link>
-                </div>
-              </motion.div>
+              <StoryProgress 
+                stories={stories}
+                currentIndex={currentIndex}
+                isPaused={isPaused}
+              />
+              
+              <StoryHeader 
+                creator={creator}
+                timeRemaining={timeRemaining}
+              />
 
-              {/* Story Progress Bars */}
-              <div className="absolute top-0 left-0 right-0 z-10 p-2">
-                <div className="flex gap-1">
-                  {stories.map((_, index) => (
-                    <div
-                      key={index}
-                      className="relative h-1 flex-1 bg-luxury-neutral/20 overflow-hidden rounded-full"
-                    >
-                      <motion.div
-                        initial={{ scaleX: 0 }}
-                        animate={{ 
-                          scaleX: index < currentIndex ? 1 : index === currentIndex && !isPaused ? 1 : 0 
-                        }}
-                        transition={{ 
-                          duration: index === currentIndex && !isPaused ? 5 : 0,
-                          ease: "linear"
-                        }}
-                        className="absolute inset-0 bg-luxury-primary origin-left"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <StoryImage 
+                mediaUrl={stories[currentIndex].media_url}
+                username={creator.username}
+                isPaused={isPaused}
+              />
 
-              {/* Interactive Story Area */}
-              <div 
-                className="absolute inset-0 z-20"
+              <StoryControls 
                 onClick={handleClick}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
                 onMouseDown={handleTouchStart}
                 onMouseUp={handleTouchEnd}
                 onMouseLeave={handleTouchEnd}
-              >
-                <motion.div
-                  initial={false}
-                  whileHover={{ 
-                    background: "linear-gradient(90deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 100%)" 
-                  }}
-                  className="w-full h-full"
-                />
-              </div>
-
-              {/* Story Image with Animation */}
-              <motion.img
-                key={stories[currentIndex].media_url}
-                src={stories[currentIndex].media_url}
-                alt={`Story by ${creator.username}`}
-                className="h-full w-full object-cover"
-                initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: isPaused ? 1.05 : 1,
-                }}
-                exit={{ opacity: 0 }}
-                transition={{ 
-                  duration: 0.3,
-                  scale: {
-                    duration: 0.2,
-                  }
-                }}
-                style={{ 
-                  pointerEvents: 'none',
-                  WebkitUserSelect: 'none',
-                  userSelect: 'none'
-                }}
-                onContextMenu={(e) => e.preventDefault()}
               />
             </AspectRatio>
           </motion.div>
