@@ -20,8 +20,6 @@ export const ProfileHeaderContainer = ({
     return 'image';
   };
 
-  const defaultAvailability: AvailabilityStatus = "offline";
-
   return (
     <div className="relative">
       <ProfileBanner 
@@ -42,7 +40,7 @@ export const ProfileHeaderContainer = ({
             <div className="mt-4">
               <ProfileHeaderStatus 
                 isOwnProfile={isOwnProfile}
-                availability={defaultAvailability}
+                availability="online"
               />
             </div>
           </div>

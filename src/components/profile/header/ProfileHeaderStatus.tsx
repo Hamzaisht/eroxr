@@ -1,4 +1,4 @@
-import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { AvailabilityIndicator, type AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 interface ProfileHeaderStatusProps {
   isOwnProfile: boolean;
