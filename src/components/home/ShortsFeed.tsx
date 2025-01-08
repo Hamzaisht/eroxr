@@ -17,11 +17,11 @@ export const ShortsFeed = () => {
     {
       id: "1",
       creator: {
-        username: "ArtisticSoul",
+        username: "Eros",
         avatar_url: null,
       },
-      video_url: "/path/to/video1.mp4",
-      description: "Cooking my favorite recipe 👩‍🍳",
+      video_url: "https://player.vimeo.com/external/477721948.sd.mp4?s=eff38937a0f1748eee72d5ee4f1b123a63963e72&profile_id=165&oauth2_token_id=57447761",
+      description: "Mesmerizing ocean waves crashing on the shore 🌊",
       likes: 1234,
       comments: 89,
       has_liked: false,
@@ -30,24 +30,28 @@ export const ShortsFeed = () => {
     {
       id: "2",
       creator: {
-        username: "TravelBlogger",
+        username: "Eros",
         avatar_url: null,
       },
-      video_url: "/path/to/video2.mp4",
-      description: "Exploring the beautiful mountains 🏔️",
+      video_url: "https://player.vimeo.com/external/434045526.sd.mp4?s=c27eecc69a27dbc4ff2b87d38afc35f1a9e7c02d&profile_id=165&oauth2_token_id=57447761",
+      description: "Stunning aerial view of a forest landscape 🌲",
       likes: 567,
       comments: 34,
+      has_liked: false,
+      has_saved: false,
     },
     {
       id: "3",
       creator: {
-        username: "FitnessGuru",
+        username: "Eros",
         avatar_url: null,
       },
-      video_url: "/path/to/video3.mp4",
-      description: "My daily workout routine 💪",
+      video_url: "https://player.vimeo.com/external/517090081.sd.mp4?s=60b46bb7d721cd06e1e6ed30e2965a31d3bc37d1&profile_id=165&oauth2_token_id=57447761",
+      description: "Beautiful sunset timelapse over the city 🌅",
       likes: 890,
       comments: 45,
+      has_liked: false,
+      has_saved: false,
     },
   ];
 
