@@ -12,6 +12,9 @@ interface NameFieldsProps {
 export const NameFields = ({ form, isLoading }: NameFieldsProps) => {
   return (
     <div className="space-y-6">
+      <p className="text-sm text-luxury-neutral/70 text-center">
+        This information is for Eroxr and is not shown publically
+      </p>
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={form.control}
@@ -62,9 +65,6 @@ export const NameFields = ({ form, isLoading }: NameFieldsProps) => {
           )}
         />
       </div>
-      <p className="text-sm text-luxury-neutral/70 text-center">
-        This information is for Eroxr and is not shown publically
-      </p>
     </div>
   );
 };
