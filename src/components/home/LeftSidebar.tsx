@@ -4,11 +4,13 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export const LeftSidebar = () => {
   const session = useSession();
   const navigate = useNavigate();
   const [isVerifiedCreator, setIsVerifiedCreator] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkVerificationStatus = async () => {
@@ -44,13 +46,15 @@ export const LeftSidebar = () => {
         </div>
 
         {isVerifiedCreator && (
-          <div 
+          <motion.div 
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-luxury-primary/10 transition-colors cursor-pointer"
             onClick={() => navigate('/eroboard')}
           >
             <BarChart2 className="h-5 w-5 text-luxury-primary" />
             <span className="font-medium text-luxury-primary">Eroboard</span>
-          </div>
+          </motion.div>
         )}
       </div>
     </motion.div>
