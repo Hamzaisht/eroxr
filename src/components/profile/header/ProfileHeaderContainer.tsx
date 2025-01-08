@@ -6,12 +6,13 @@ import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { PreviewModals } from "./PreviewModals";
 import type { ProfileHeaderProps } from "../types";
+import type { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 export const ProfileHeaderContainer = ({
   profile,
   isOwnProfile,
   isEditing,
-  availability,
+  availability = "offline" as AvailabilityStatus,
   showAvatarPreview,
   showBannerPreview,
   setShowAvatarPreview,
@@ -67,7 +68,7 @@ export const ProfileHeaderContainer = ({
                 <ProfileActions
                   isOwnProfile={isOwnProfile}
                   isEditing={isEditing}
-                  onEdit={() => setIsEditing(true)}
+                  onEdit={() => setIsEditing?.(true)}
                   onSave={handleSave}
                   onCancel={handleClose}
                   onGoLive={onGoLive}

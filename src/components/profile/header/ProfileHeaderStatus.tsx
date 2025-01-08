@@ -1,9 +1,9 @@
-import { AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 interface ProfileHeaderStatusProps {
   isOwnProfile: boolean;
   availability: AvailabilityStatus;
-  setAvailability: (status: AvailabilityStatus) => void;
+  setAvailability?: (status: AvailabilityStatus) => void;
 }
 
 export const ProfileHeaderStatus = ({
