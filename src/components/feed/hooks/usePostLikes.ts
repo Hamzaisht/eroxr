@@ -1,12 +1,23 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 
 export const usePostLikes = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const session = useSession();
 
-  const handleLike = async (postId: string, userId: string) => {
+  const handleLike = async (postId: string) => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to like posts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // First check if post exists
       const { data: post, error: postError } = await supabase
@@ -34,7 +45,7 @@ export const usePostLikes = () => {
         .from("post_likes")
         .select()
         .eq("post_id", postId)
-        .eq("user_id", userId)
+        .eq("user_id", session.user.id)
         .maybeSingle();
 
       if (existingLikeError) {
@@ -48,7 +59,7 @@ export const usePostLikes = () => {
           .from("post_likes")
           .delete()
           .eq("post_id", postId)
-          .eq("user_id", userId);
+          .eq("user_id", session.user.id);
 
         if (deleteError) {
           console.error("Delete like error:", deleteError);
@@ -58,7 +69,7 @@ export const usePostLikes = () => {
         // Like the post
         const { error: insertError } = await supabase
           .from("post_likes")
-          .insert([{ post_id: postId, user_id: userId }]);
+          .insert([{ post_id: postId, user_id: session.user.id }]);
 
         if (insertError) {
           console.error("Insert like error:", insertError);
