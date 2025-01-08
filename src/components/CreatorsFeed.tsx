@@ -43,7 +43,9 @@ export const CreatorsFeed = () => {
                   visibility: post.visibility || 'public',
                   is_ppv: post.is_ppv || false,
                   has_liked: post.has_liked || false,
-                  updated_at: post.created_at, // Use created_at as updated_at if not present
+                  updated_at: post.created_at,
+                  screenshots_count: post.screenshots_count || 0,
+                  downloads_count: post.downloads_count || 0,
                   creator: {
                     username: post.creator?.username || null,
                     avatar_url: post.creator?.avatar_url || null

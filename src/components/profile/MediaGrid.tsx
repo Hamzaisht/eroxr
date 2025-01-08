@@ -2,7 +2,7 @@ import { Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { MediaViewer } from "@/components/media/MediaViewer";
 import { getImageStyles, getAspectRatioFromDimensions } from "@/lib/image-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +25,6 @@ interface MediaGridProps {
 
 export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const session = useSession();
 
   const { data: mediaItems = [], isLoading } = useQuery({
@@ -79,10 +78,9 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     show: { y: 0, opacity: 1 }
   };
 
-  const handleImageClick = (url: string, index: number) => {
+  const handleImageClick = (url: string) => {
     if (!url) return;
     setSelectedMedia(url);
-    setSelectedIndex(index);
     onImageClick(url);
   };
 
@@ -97,8 +95,6 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
       </div>
     );
   }
-
-  const allMediaUrls = mediaItems.map(item => item.url);
 
   return (
     <>
@@ -124,7 +120,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
                 aspectRatio === '4:5' ? 'aspect-[4/5]' : 
                 'aspect-[9/16]'
               )}
-              onClick={() => !mediaItem.isPremium && handleImageClick(mediaItem.url, index)}
+              onClick={() => !mediaItem.isPremium && handleImageClick(mediaItem.url)}
             >
               <div className="relative w-full h-full">
                 {mediaItem.type === 'video' ? (
@@ -173,8 +169,6 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
 
       <MediaViewer 
         media={selectedMedia}
-        allMedia={allMediaUrls}
-        initialIndex={selectedIndex}
         onClose={() => setSelectedMedia(null)}
       />
     </>
