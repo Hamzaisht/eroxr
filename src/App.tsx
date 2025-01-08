@@ -1,74 +1,31 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import { SessionContextProvider, useSession } from '@supabase/auth-helpers-react';
-import { useEffect } from "react";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Profile from "./pages/Profile";
-import Landing from "./pages/Landing";
-import Home from "./pages/Home";
-import Categories from "./pages/Categories";
-import About from "./pages/About";
-import Messages from "./pages/Messages";
-import Search from "./pages/Search";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { supabase } from "@/integrations/supabase/client";
-
-// Session timeout wrapper component
-const SessionTimeoutWrapper = ({ children }: { children: React.ReactNode }) => {
-  const session = useSession();
-  const navigate = useNavigate();
-  let inactivityTimer: NodeJS.Timeout;
-
-  const resetInactivityTimer = () => {
-    if (inactivityTimer) clearTimeout(inactivityTimer);
-    if (session) {
-      inactivityTimer = setTimeout(() => {
-        supabase.auth.signOut();
-        navigate('/login');
-      }, 10 * 60 * 1000); // 10 minutes
-    }
-  };
-
-  useEffect(() => {
-    const events = ['mousedown', 'keydown', 'touchstart', 'mousemove'];
-    
-    events.forEach(event => {
-      window.addEventListener(event, resetInactivityTimer);
-    });
-
-    resetInactivityTimer();
-
-    return () => {
-      if (inactivityTimer) clearTimeout(inactivityTimer);
-      events.forEach(event => {
-        window.removeEventListener(event, resetInactivityTimer);
-      });
-    };
-  }, [session]);
-
-  return <>{children}</>;
-};
+import Home from "@/pages/Home";
+import Landing from "@/pages/Landing";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import Profile from "@/pages/Profile";
+import Settings from "@/pages/Settings";
+import Messages from "@/pages/Messages";
+import Categories from "@/pages/Categories";
+import Eroboard from "@/pages/Eroboard";
 
 function App() {
   return (
-    <SessionContextProvider supabaseClient={supabase}>
-      <Router>
-        <SessionTimeoutWrapper>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:id" element={<Profile />} />
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/search" element={<Search />} />
-          </Routes>
-          <Toaster />
-        </SessionTimeoutWrapper>
-      </Router>
-    </SessionContextProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/landing" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/eroboard" element={<Eroboard />} />
+      </Routes>
+      <Toaster />
+    </Router>
   );
 }
 
