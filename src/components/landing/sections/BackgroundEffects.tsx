@@ -4,10 +4,12 @@ import { NordicMap } from "./NordicMap";
 export const BackgroundEffects = () => {
   return (
     <>
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
-      <div className="absolute inset-0 bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark opacity-90" />
+      <div className="fixed inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
+      <div className="fixed inset-0 bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark opacity-90" />
       
-      <NordicMap />
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <NordicMap />
+      </div>
       
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -22,7 +24,7 @@ export const BackgroundEffects = () => {
           repeat: Infinity,
           repeatType: "reverse"
         }}
-        className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-luxury-primary/20 blur-3xl"
+        className="fixed -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-luxury-primary/20 blur-3xl"
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -38,7 +40,7 @@ export const BackgroundEffects = () => {
           repeatType: "reverse",
           delay: 1
         }}
-        className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-luxury-accent/20 blur-3xl"
+        className="fixed -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-luxury-accent/20 blur-3xl"
       />
     </>
   );
