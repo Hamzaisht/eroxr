@@ -6,6 +6,7 @@ import { ProfileHeader } from "./ProfileHeader";
 import { TabsContainer } from "./tabs/TabsContainer";
 import { LoadingState } from "../ui/LoadingState";
 import { ErrorState } from "../ui/ErrorState";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileContainerProps {
   id?: string;
@@ -15,12 +16,15 @@ interface ProfileContainerProps {
 
 export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContainerProps) => {
   const session = useSession();
+  const { toast } = useToast();
   const userId = id || session?.user?.id;
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
-      if (!userId) return null;
+      if (!userId) {
+        throw new Error("No user ID provided");
+      }
 
       const { data, error } = await supabase
         .from("profiles")
@@ -30,13 +34,32 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
 
       if (error) {
         console.error("Error fetching profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load profile. Please try again.",
+          variant: "destructive",
+        });
         throw error;
+      }
+
+      if (!data) {
+        toast({
+          title: "Not Found",
+          description: "Profile not found.",
+          variant: "destructive",
+        });
+        throw new Error("Profile not found");
       }
 
       return data as Profile;
     },
     enabled: !!userId,
+    retry: 1,
   });
+
+  if (!session) {
+    return <ErrorState message="Please sign in to view profiles" />;
+  }
 
   if (isLoading) {
     return <LoadingState message="Loading profile..." />;
