@@ -48,7 +48,7 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
     return url.match(/\.(mp4|webm|ogg)$/i);
   };
 
-  const showMediaControls = post.media_url && post.media_url.length > 0;
+  const hasMedia = post.media_url && post.media_url.length > 0;
 
   return (
     <Card className="overflow-hidden bg-luxury-dark border-luxury-primary/10">
@@ -58,7 +58,7 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
         onDelete={onDelete}
       />
       
-      {post.media_url && post.media_url.length > 0 && (
+      {hasMedia && (
         <ProtectedMedia contentOwnerId={post.creator_id}>
           <div className="relative">
             <div className="overflow-x-auto scrollbar-hide">

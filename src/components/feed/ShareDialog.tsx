@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Share, Link, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface ShareDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface ShareDialogProps {
 
 export const ShareDialog = ({ open, onOpenChange, postId }: ShareDialogProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const postUrl = `${window.location.origin}/post/${postId}`;
 
   const handleCopyLink = async () => {
@@ -60,8 +62,7 @@ export const ShareDialog = ({ open, onOpenChange, postId }: ShareDialogProps) =>
   };
 
   const handleMessageShare = () => {
-    // Navigate to messages with pre-filled content
-    window.location.href = `/messages/new?content=${encodeURIComponent(postUrl)}`;
+    navigate(`/messages/new?content=${encodeURIComponent(postUrl)}`);
     onOpenChange(false);
   };
 
