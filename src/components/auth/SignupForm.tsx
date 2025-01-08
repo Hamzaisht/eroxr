@@ -11,6 +11,7 @@ import { PasswordField } from "./form-fields/PasswordField";
 import { DateOfBirthField } from "./form-fields/DateOfBirthField";
 import { UsernameField } from "./form-fields/UsernameField";
 import { CountrySelect } from "./form-fields/CountrySelect";
+import { NameFields } from "./form-fields/NameFields";
 import { motion } from "framer-motion";
 
 export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
@@ -24,6 +25,8 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
       email: "",
       password: "",
       confirmPassword: "",
+      firstName: "",
+      lastName: "",
       username: "",
       dateOfBirth: "",
       country: "",
@@ -38,6 +41,8 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
         password: values.password,
         options: {
           data: {
+            first_name: values.firstName,
+            last_name: values.lastName,
             username: values.username,
             date_of_birth: values.dateOfBirth,
             country: values.country,
@@ -84,6 +89,8 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <EmailField form={form} isLoading={isLoading} />
               
+              <NameFields form={form} isLoading={isLoading} />
+
               <div className="space-y-4">
                 <PasswordField
                   form={form}
@@ -99,10 +106,7 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
                 />
               </div>
 
-              <UsernameField
-                form={form}
-                isLoading={isLoading}
-              />
+              <UsernameField form={form} isLoading={isLoading} />
 
               <DateOfBirthField form={form} isLoading={isLoading} />
               
