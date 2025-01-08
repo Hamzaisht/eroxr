@@ -8,7 +8,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { ProfileFormValues } from "../types";
+import type { ProfileFormValues } from "../types";
 
 interface BioFieldProps {
   form: UseFormReturn<ProfileFormValues>;

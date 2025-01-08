@@ -8,7 +8,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ProfileFormValues } from "../types";
+import type { ProfileFormValues } from "../types";
 
 interface InterestsFieldProps {
   form: UseFormReturn<ProfileFormValues>;

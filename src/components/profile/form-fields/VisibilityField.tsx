@@ -7,7 +7,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { ProfileFormValues } from "../types";
+import type { ProfileFormValues } from "../types";
 
 interface VisibilityFieldProps {
   form: UseFormReturn<ProfileFormValues>;
