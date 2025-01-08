@@ -29,17 +29,17 @@ export const LeftSidebar = () => {
           .eq('role', 'admin')
           .maybeSingle();
 
-        console.log("Admin role check result:", adminRole);
-
         if (adminError) {
           console.error("Admin check error:", adminError);
           return;
         }
 
+        console.log("Admin role check result:", adminRole);
+
         if (adminRole) {
-          console.log("Setting admin status to true");
           setIsAdmin(true);
           setIsVerifiedCreator(true);
+          console.log("User is admin");
           return;
         }
 
@@ -50,22 +50,23 @@ export const LeftSidebar = () => {
           .eq('id', session.user.id)
           .maybeSingle();
 
-        console.log("Profile verification check:", profile);
-
         if (profileError) {
           console.error("Profile check error:", profileError);
           return;
         }
 
+        console.log("Profile verification check:", profile);
         const isVerified = profile?.id_verification_status === 'verified';
         setIsVerifiedCreator(isVerified);
+        console.log("Is verified creator:", isVerified);
+
       } catch (error) {
         console.error("Error in checkUserStatus:", error);
       }
     };
 
     checkUserStatus();
-  }, [session?.user?.id, toast]);
+  }, [session?.user?.id]);
 
   return (
     <motion.div
