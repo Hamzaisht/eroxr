@@ -28,6 +28,10 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
     }
   };
 
+  const isVideo = (url: string) => {
+    return url.match(/\.(mp4|webm|ogg)$/i);
+  };
+
   return (
     <Card className="overflow-hidden bg-luxury-dark border-luxury-primary/10">
       <PostHeader 
@@ -47,16 +51,29 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
                     className="min-w-full h-full cursor-pointer"
                     onClick={() => setSelectedMedia(url)}
                   >
-                    <img
-                      src={url}
-                      alt={`Post media ${index + 1}`}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      loading="eager"
-                      decoding="sync"
-                      srcSet={generateSrcSet(url)}
-                      sizes={getResponsiveSizes()}
-                      style={getImageStyles()}
-                    />
+                    {isVideo(url) ? (
+                      <video
+                        src={url}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        controls
+                        playsInline
+                        preload="metadata"
+                      >
+                        <source src={url} type="video/mp4" />
+                        Your browser does not support the video tag.
+                      </video>
+                    ) : (
+                      <img
+                        src={url}
+                        alt={`Post media ${index + 1}`}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        loading="eager"
+                        decoding="sync"
+                        srcSet={generateSrcSet(url)}
+                        sizes={getResponsiveSizes()}
+                        style={getImageStyles()}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
