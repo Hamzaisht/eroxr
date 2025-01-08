@@ -3,10 +3,12 @@ import { MediaContent } from "./MediaContent";
 
 interface MediaViewerProps {
   media: string | null;
+  allMedia?: string[];
+  initialIndex?: number;
   onClose: () => void;
 }
 
-export const MediaViewer = ({ media, onClose }: MediaViewerProps) => {
+export const MediaViewer = ({ media, allMedia, initialIndex = 0, onClose }: MediaViewerProps) => {
   if (!media) return null;
 
   const isVideo = media.match(/\.(mp4|webm|ogg)$/i);
