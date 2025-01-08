@@ -8,6 +8,7 @@ import Profile from "@/pages/Profile";
 import Messages from "@/pages/Messages";
 import Categories from "@/pages/Categories";
 import Eroboard from "@/pages/Eroboard";
+import Settings from "@/pages/Settings";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/messages" element={<Messages />} />
         <Route path="/categories" element={<Categories />} />
         <Route path="/eroboard" element={<Eroboard />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
       <Toaster />
     </Router>
