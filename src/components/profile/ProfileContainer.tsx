@@ -28,7 +28,11 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
         .eq("id", userId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
+
       return data as Profile;
     },
     enabled: !!userId,
@@ -38,8 +42,13 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
     return <LoadingState message="Loading profile..." />;
   }
 
-  if (error || !profile) {
+  if (error) {
+    console.error("Profile error:", error);
     return <ErrorState message="Error loading profile" />;
+  }
+
+  if (!profile) {
+    return <ErrorState message="Profile not found" />;
   }
 
   const isOwnProfile = session?.user?.id === userId;
