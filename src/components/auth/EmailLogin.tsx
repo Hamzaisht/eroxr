@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { SocialLoginSection } from "./sections/SocialLoginSection";
 import { DividerWithText } from "./sections/DividerWithText";
 import { LoginForm } from "./sections/LoginForm";
-import { AuthError } from "@supabase/supabase-js";
+import { AuthError, Provider } from "@supabase/supabase-js";
 
 export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -77,7 +77,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'twitter' | 'reddit') => {
+  const handleSocialLogin = async (provider: Provider) => {
     try {
       setIsLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
@@ -117,7 +117,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       <SocialLoginSection 
         onGoogleLogin={() => handleSocialLogin('google')}
         onTwitterLogin={() => handleSocialLogin('twitter')}
-        onRedditLogin={() => handleSocialLogin('reddit')}
+        onRedditLogin={() => handleSocialLogin('github')}
         isLoading={isLoading}
       />
       
