@@ -9,31 +9,18 @@ interface ChatHeaderProps {
   recipientProfile: any;
   recipientId: string;
   onBack?: () => void;
+  onVoiceCall: () => void;  // Added this prop
+  onVideoCall: () => void;  // Added this prop
 }
 
 export const ChatHeader = ({ 
   recipientProfile, 
   recipientId,
-  onBack
+  onBack,
+  onVoiceCall,
+  onVideoCall
 }: ChatHeaderProps) => {
   const { availability, lastActive } = usePresence(recipientId, false);
-  const { toast } = useToast();
-
-  const handleVoiceCall = () => {
-    toast({
-      title: "Starting voice call...",
-      description: "This feature is coming soon!",
-      duration: 3000,
-    });
-  };
-
-  const handleVideoCall = () => {
-    toast({
-      title: "Starting video call...",
-      description: "This feature is coming soon!",
-      duration: 3000,
-    });
-  };
 
   return (
     <div className="flex items-center justify-between p-3 border-b border-luxury-neutral/10 bg-white/5 backdrop-blur-sm">
@@ -70,7 +57,7 @@ export const ChatHeader = ({
           variant="ghost"
           size="icon"
           className="hover:bg-luxury-neutral/10 text-luxury-neutral/70 hover:text-luxury-primary"
-          onClick={handleVoiceCall}
+          onClick={onVoiceCall}
         >
           <PhoneCall className="h-4 w-4" />
         </Button>
@@ -78,7 +65,7 @@ export const ChatHeader = ({
           variant="ghost"
           size="icon"
           className="hover:bg-luxury-neutral/10 text-luxury-neutral/70 hover:text-luxury-primary"
-          onClick={handleVideoCall}
+          onClick={onVideoCall}
         >
           <Video className="h-4 w-4" />
         </Button>
