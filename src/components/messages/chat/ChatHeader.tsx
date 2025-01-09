@@ -1,26 +1,39 @@
 import { PhoneCall, Video, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
+import { useToast } from "@/components/ui/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { usePresence } from "@/components/profile/avatar/usePresence";
 
 interface ChatHeaderProps {
   recipientProfile: any;
   recipientId: string;
-  onVoiceCall: () => void;
-  onVideoCall: () => void;
   onBack?: () => void;
 }
 
 export const ChatHeader = ({ 
   recipientProfile, 
   recipientId,
-  onVoiceCall,
-  onVideoCall,
   onBack
 }: ChatHeaderProps) => {
   const { availability, lastActive } = usePresence(recipientId, false);
+  const { toast } = useToast();
+
+  const handleVoiceCall = () => {
+    toast({
+      title: "Starting voice call...",
+      description: "This feature is coming soon!",
+      duration: 3000,
+    });
+  };
+
+  const handleVideoCall = () => {
+    toast({
+      title: "Starting video call...",
+      description: "This feature is coming soon!",
+      duration: 3000,
+    });
+  };
 
   return (
     <div className="flex items-center justify-between p-3 border-b border-luxury-neutral/10 bg-white/5 backdrop-blur-sm">
@@ -57,7 +70,7 @@ export const ChatHeader = ({
           variant="ghost"
           size="icon"
           className="hover:bg-luxury-neutral/10 text-luxury-neutral/70 hover:text-luxury-primary"
-          onClick={onVoiceCall}
+          onClick={handleVoiceCall}
         >
           <PhoneCall className="h-4 w-4" />
         </Button>
@@ -65,7 +78,7 @@ export const ChatHeader = ({
           variant="ghost"
           size="icon"
           className="hover:bg-luxury-neutral/10 text-luxury-neutral/70 hover:text-luxury-primary"
-          onClick={onVideoCall}
+          onClick={handleVideoCall}
         >
           <Video className="h-4 w-4" />
         </Button>

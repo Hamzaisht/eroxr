@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Image, Camera, Smile } from "lucide-react";
+import { Send, Image, Camera, Paperclip } from "lucide-react";
 import { MediaDialog } from "./MediaDialog";
+import { EmojiPicker } from "./chat/EmojiPicker";
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
@@ -26,6 +27,10 @@ export const MessageInput = ({
     }
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setMessage(prev => prev + emoji);
+  };
+
   return (
     <>
       <form onSubmit={handleSubmit} className="p-3 border-t border-luxury-neutral/10 bg-white/5 backdrop-blur-sm">
@@ -46,7 +51,7 @@ export const MessageInput = ({
             className="hover:bg-luxury-neutral/10 text-luxury-neutral/70"
             onClick={() => setIsMediaDialogOpen(true)}
           >
-            <Image className="h-5 w-5" />
+            <Paperclip className="h-5 w-5" />
           </Button>
           <div className="flex-1 relative">
             <Input
@@ -55,14 +60,9 @@ export const MessageInput = ({
               placeholder="Send a chat"
               className="pr-10 bg-white/5 border-luxury-neutral/20 text-luxury-neutral placeholder:text-luxury-neutral/50"
             />
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent text-luxury-neutral/50"
-            >
-              <Smile className="h-5 w-5" />
-            </Button>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+            </div>
           </div>
           <Button 
             type="submit" 
