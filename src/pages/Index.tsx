@@ -18,7 +18,8 @@ const Index = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to">
+    <div className="min-h-screen bg-gradient-to-b from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to">
+      {/* Grid overlay */}
       <div className="fixed inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
       
       <MainNav />
@@ -38,7 +39,7 @@ const Index = () => {
             className="hidden lg:block"
           >
             <div className="sticky top-20">
-              <div className="glass-effect rounded-xl p-6">
+              <div className="glass-effect rounded-xl p-6 backdrop-blur-xl border border-luxury-primary/10">
                 <LeftSidebar />
               </div>
             </div>
@@ -53,10 +54,10 @@ const Index = () => {
           >
             {session && (
               <>
-                <div className="glass-effect rounded-xl p-6 backdrop-blur-xl">
+                <div className="glass-effect rounded-xl p-6 backdrop-blur-xl border border-luxury-primary/10">
                   <StoryReel />
                 </div>
-                <div className="neo-blur rounded-xl">
+                <div className="neo-blur rounded-xl border border-luxury-primary/5">
                   <CreatePostArea
                     onOpenCreatePost={() => setIsCreatePostOpen(true)}
                     onFileSelect={setSelectedFiles}
@@ -82,7 +83,7 @@ const Index = () => {
             className="hidden lg:block"
           >
             <div className="sticky top-20">
-              <div className="glass-effect rounded-xl p-6">
+              <div className="glass-effect rounded-xl p-6 backdrop-blur-xl border border-luxury-primary/10">
                 <RightSidebar />
               </div>
             </div>

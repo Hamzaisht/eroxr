@@ -52,7 +52,7 @@ export const PostCard = ({
   const hasMedia = post.media_url && post.media_url.length > 0;
 
   return (
-    <Card className="w-full bg-luxury-dark border-luxury-primary/10">
+    <Card className="w-full bg-luxury-dark/30 border-luxury-primary/10 backdrop-blur-xl hover:shadow-luxury transition-all duration-300">
       <PostHeader 
         post={post} 
         isOwner={currentUserId === post.creator_id}
@@ -67,12 +67,12 @@ export const PostCard = ({
                 {post.media_url.map((url, index) => (
                   <div
                     key={index}
-                    className="min-w-full h-full cursor-pointer"
+                    className="min-w-full h-full cursor-pointer group"
                     onClick={() => setSelectedMedia(url)}
                   >
                     {isVideo(url) ? (
                       <video
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         controls
                         playsInline
                         preload="metadata"
@@ -84,7 +84,7 @@ export const PostCard = ({
                       <img
                         src={url}
                         alt={`Post media ${index + 1}`}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         loading="eager"
                         decoding="sync"
                         srcSet={generateSrcSet(url)}
@@ -100,27 +100,27 @@ export const PostCard = ({
         </ProtectedMedia>
       )}
 
-      <CardContent className="space-y-4 w-full">
-        <p className="text-white/90 w-full">{post.content}</p>
+      <CardContent className="space-y-4 w-full p-6">
+        <p className="text-luxury-neutral/90 w-full">{post.content}</p>
         
         <div className="flex items-center gap-4 w-full">
           <Button
             variant="ghost"
             size="sm"
             className={cn(
-              "text-white/70 hover:text-white hover:bg-white/10 flex-1",
-              liked && "text-red-500 hover:text-red-600"
+              "text-luxury-neutral/70 hover:text-luxury-neutral hover:bg-luxury-primary/10 flex-1 transition-colors duration-300",
+              liked && "text-luxury-primary hover:text-luxury-primary/80"
             )}
             onClick={handleLike}
           >
-            <Heart className="w-5 h-5 mr-1.5" />
+            <Heart className={cn("w-5 h-5 mr-1.5", liked && "fill-current")} />
             {post.likes_count || 0}
           </Button>
           
           <Button
             variant="ghost"
             size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/10 flex-1"
+            className="text-luxury-neutral/70 hover:text-luxury-neutral hover:bg-luxury-primary/10 flex-1 transition-colors duration-300"
             onClick={handleCommentClick}
           >
             <MessageCircle className="w-5 h-5 mr-1.5" />
@@ -130,7 +130,7 @@ export const PostCard = ({
           <Button
             variant="ghost"
             size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/10 flex-1"
+            className="text-luxury-neutral/70 hover:text-luxury-neutral hover:bg-luxury-primary/10 flex-1 transition-colors duration-300"
             onClick={() => setIsShareDialogOpen(true)}
           >
             <Share2 className="w-5 h-5 mr-1.5" />

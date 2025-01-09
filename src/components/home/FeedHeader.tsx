@@ -12,10 +12,10 @@ export const FeedHeader = ({ activeTab, onTabChange }: FeedHeaderProps) => {
   return (
     <div className="flex items-center justify-between mb-4">
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className="w-full justify-start h-12 bg-transparent border-b border-luxury-primary/10 rounded-none p-0">
+        <TabsList className="w-full justify-start h-14 bg-transparent border-b border-luxury-primary/10 rounded-none p-0">
           <TabsTrigger 
             value="feed"
-            className="relative data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary rounded-none px-8 group"
+            className="relative data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary rounded-none px-8 group h-14"
           >
             <span className="relative z-10">Feed</span>
             <motion.div
@@ -30,7 +30,7 @@ export const FeedHeader = ({ activeTab, onTabChange }: FeedHeaderProps) => {
           </TabsTrigger>
           <TabsTrigger 
             value="popular"
-            className="relative data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary rounded-none px-8 group"
+            className="relative data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary rounded-none px-8 group h-14"
           >
             <span className="relative z-10">Popular</span>
             <motion.div
@@ -45,7 +45,7 @@ export const FeedHeader = ({ activeTab, onTabChange }: FeedHeaderProps) => {
           </TabsTrigger>
           <TabsTrigger 
             value="recent"
-            className="relative data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary rounded-none px-8 group"
+            className="relative data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary rounded-none px-8 group h-14"
           >
             <span className="relative z-10">Recent</span>
             <motion.div
@@ -60,7 +60,7 @@ export const FeedHeader = ({ activeTab, onTabChange }: FeedHeaderProps) => {
           </TabsTrigger>
           <TabsTrigger 
             value="shorts"
-            className="relative data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary rounded-none px-8 group"
+            className="relative data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary rounded-none px-8 group h-14"
           >
             <span className="relative z-10">Eros</span>
             <motion.div
