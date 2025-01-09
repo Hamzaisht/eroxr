@@ -1,101 +1,105 @@
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Image, Camera, Paperclip } from "lucide-react";
-import { MediaDialog } from "./MediaDialog";
-import { EmojiPicker } from "./chat/EmojiPicker";
+import { Input } from "@/components/ui/input";
+import { Send, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MessageInputProps {
-  onSendMessage: (message: string) => void;
-  onMediaSelect: (files: FileList) => Promise<void>;
-  onSnapStart: () => void;
+  onSendMessage: (content: string, mediaUrl?: string[]) => void;
+  isLoading?: boolean;
 }
 
-export const MessageInput = ({ 
-  onSendMessage, 
-  onMediaSelect,
-  onSnapStart
-}: MessageInputProps) => {
+export const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
   const [message, setMessage] = useState("");
-  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (message.trim()) {
-      onSendMessage(message);
-      setMessage("");
-    }
-  };
-
-  const handleMediaSelectWrapper = async (files: FileList) => {
+  const handleSend = async () => {
+    if (!message.trim() && !fileInputRef.current?.files?.length) return;
+    
     try {
-      await onMediaSelect(files);
-      setIsMediaDialogOpen(false);
-    } catch (error) {
-      console.error('Error uploading media:', error);
+      let mediaUrls: string[] = [];
+      
+      if (fileInputRef.current?.files?.length) {
+        setIsUploading(true);
+        const file = fileInputRef.current.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('messages')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        if (uploadData) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('messages')
+            .getPublicUrl(fileName);
+          
+          mediaUrls = [publicUrl];
+        }
+      }
+
+      onSendMessage(message, mediaUrls);
+      setMessage("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (error: any) {
+      console.error("Upload error:", error);
       toast({
         title: "Error",
-        description: "Failed to upload media. Please try again.",
+        description: "Failed to upload image. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleEmojiSelect = (emoji: string) => {
-    setMessage(prev => prev + emoji);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit} className="p-3 border-t border-luxury-neutral/10 bg-white/5 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="hover:bg-luxury-neutral/10 text-luxury-neutral/70"
-            onClick={onSnapStart}
-          >
-            <Camera className="h-5 w-5" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="hover:bg-luxury-neutral/10 text-luxury-neutral/70"
-            onClick={() => setIsMediaDialogOpen(true)}
-          >
-            <Paperclip className="h-5 w-5" />
-          </Button>
-          <div className="flex-1 relative">
-            <Input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Send a chat"
-              className="pr-10 bg-white/5 border-luxury-neutral/20 text-luxury-neutral placeholder:text-luxury-neutral/50"
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2">
-              <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-            </div>
-          </div>
-          <Button 
-            type="submit" 
-            size="icon"
-            className="bg-[#0B84FF] hover:bg-[#0B84FF]/90"
-            disabled={!message.trim()}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </form>
-
-      <MediaDialog
-        isOpen={isMediaDialogOpen}
-        onClose={() => setIsMediaDialogOpen(false)}
-        onMediaSelect={handleMediaSelectWrapper}
+    <div className="flex items-center gap-2 p-4 border-t border-border bg-background">
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        className="hidden"
+        onChange={() => {
+          if (fileInputRef.current?.files?.length) {
+            handleSend();
+          }
+        }}
       />
-    </>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isLoading || isUploading}
+      >
+        <Image className="h-5 w-5" />
+      </Button>
+      <Input
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onKeyPress={handleKeyPress}
+        placeholder="Type a message..."
+        disabled={isLoading || isUploading}
+        className="flex-1"
+      />
+      <Button
+        onClick={handleSend}
+        disabled={isLoading || isUploading || (!message.trim() && !fileInputRef.current?.files?.length)}
+      >
+        <Send className="h-5 w-5" />
+      </Button>
+    </div>
   );
 };

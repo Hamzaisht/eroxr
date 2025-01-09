@@ -1,90 +1,83 @@
 import { useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Toaster } from "@/components/ui/toaster";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import Home from "@/pages/Home";
+import { MainLayout } from "@/components/layout/MainLayout";
 import Landing from "@/pages/Landing";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import Profile from "@/pages/Profile";
+import Home from "@/pages/Home";
 import Messages from "@/pages/Messages";
-import Categories from "@/pages/Categories";
-import Eroboard from "@/pages/Eroboard";
+import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
+import { useToast } from "@/hooks/use-toast";
 
-function App() {
-  const session = useSession();
-  const navigate = useNavigate();
+const App = () => {
+  const user = useUser();
+  const supabase = useSupabaseClient();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error checking session:', error);
-        navigate('/login');
-        return;
-      }
-
-      if (!currentSession && window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/landing') {
-        navigate('/login');
-      }
-    };
-
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session && window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/landing') {
-        navigate('/login');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        toast({
+          title: "Signed out",
+          description: "You have been signed out successfully.",
+        });
+      } else if (event === 'SIGNED_IN') {
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        });
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase, toast]);
 
   return (
-    <>
+    <Router>
       <Routes>
-        {/* Public routes */}
-        <Route path="/landing" element={<Landing />} />
-        <Route 
-          path="/login" 
-          element={!session ? <Login /> : <Navigate to="/" replace />} 
-        />
-        <Route 
-          path="/register" 
-          element={!session ? <Register /> : <Navigate to="/" replace />} 
-        />
-
-        {/* Protected routes */}
         <Route
           path="/"
-          element={session ? <Home /> : <Navigate to="/landing" replace />}
+          element={user ? <Navigate to="/home" replace /> : <Landing />}
         />
         <Route
-          path="/profile"
-          element={session ? <Profile /> : <Navigate to="/landing" replace />}
+          path="/home"
+          element={
+            <MainLayout>
+              <Home />
+            </MainLayout>
+          }
         />
         <Route
           path="/messages"
-          element={session ? <Messages /> : <Navigate to="/landing" replace />}
+          element={
+            <MainLayout>
+              <Messages />
+            </MainLayout>
+          }
         />
         <Route
-          path="/categories"
-          element={session ? <Categories /> : <Navigate to="/landing" replace />}
-        />
-        <Route
-          path="/eroboard"
-          element={session ? <Eroboard /> : <Navigate to="/landing" replace />}
+          path="/profile"
+          element={
+            <MainLayout>
+              <Profile />
+            </MainLayout>
+          }
         />
         <Route
           path="/settings"
-          element={session ? <Settings /> : <Navigate to="/landing" replace />}
+          element={
+            <MainLayout>
+              <Settings />
+            </MainLayout>
+          }
         />
       </Routes>
       <Toaster />
-    </>
+    </Router>
   );
-}
+};
 
 export default App;
