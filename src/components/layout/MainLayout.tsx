@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { Menu } from "lucide-react";
@@ -6,7 +6,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 
-export const MainLayout = () => {
+interface MainLayoutProps {
+  children?: ReactNode;
+}
+
+export const MainLayout = ({ children }: MainLayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const isMobile = useIsMobile();
@@ -68,7 +72,7 @@ export const MainLayout = () => {
           </button>
         )}
         <div className="container mx-auto p-4 pt-16 lg:pt-4">
-          <Outlet />
+          {children || <Outlet />}
         </div>
       </main>
     </div>
