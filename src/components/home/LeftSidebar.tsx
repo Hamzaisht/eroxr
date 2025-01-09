@@ -88,54 +88,54 @@ export const LeftSidebar = () => {
         </motion.div>
 
         {/* Main Menu */}
-        <motion.nav 
+        <motion.div 
           variants={container}
           initial="hidden"
           animate="show"
           className="space-y-2"
         >
-          {menuItems.map((item) => (
-            <motion.div key={item.path} variants={item}>
+          {menuItems.map((menuItem, index) => (
+            <motion.div key={menuItem.path} variants={item}>
               <Button
                 variant="ghost"
                 asChild
                 className="w-full justify-start text-sm hover:bg-luxury-primary/10 hover:text-luxury-primary rounded-xl h-12"
               >
-                <Link to={item.path} className="flex items-center gap-3">
-                  <item.icon className={`h-5 w-5 ${item.color}`} />
-                  <span className="font-medium">{item.label}</span>
+                <Link to={menuItem.path} className="flex items-center gap-3">
+                  <menuItem.icon className={`h-5 w-5 ${menuItem.color}`} />
+                  <span className="font-medium">{menuItem.label}</span>
                 </Link>
               </Button>
             </motion.div>
           ))}
-        </motion.nav>
+        </motion.div>
 
         {/* Library Section */}
         <div className="mt-8">
           <h4 className="text-xs font-medium text-luxury-neutral/40 px-2 mb-4 uppercase tracking-wider">
             Library
           </h4>
-          <motion.nav 
+          <motion.div 
             variants={container}
             initial="hidden"
             animate="show"
             className="space-y-2"
           >
-            {libraryItems.map((item) => (
-              <motion.div key={item.path} variants={item}>
+            {libraryItems.map((libraryItem, index) => (
+              <motion.div key={libraryItem.path} variants={item}>
                 <Button
                   variant="ghost"
                   asChild
                   className="w-full justify-start text-sm hover:bg-luxury-primary/10 hover:text-luxury-primary rounded-xl h-12"
                 >
-                  <Link to={item.path} className="flex items-center gap-3">
-                    <item.icon className={`h-5 w-5 ${item.color}`} />
-                    <span className="font-medium">{item.label}</span>
+                  <Link to={libraryItem.path} className="flex items-center gap-3">
+                    <libraryItem.icon className={`h-5 w-5 ${libraryItem.color}`} />
+                    <span className="font-medium">{libraryItem.label}</span>
                   </Link>
                 </Button>
               </motion.div>
             ))}
-          </motion.nav>
+          </motion.div>
         </div>
       </ScrollArea>
     </div>
