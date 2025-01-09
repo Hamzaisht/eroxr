@@ -48,12 +48,12 @@ export default function Index() {
       
       <MainNav />
       
-      <div className="flex min-h-screen pt-16">
+      <div className="flex min-h-screen">
         {/* Left Sidebar */}
         <motion.aside 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block w-72 bg-[#0D1117] border-r border-luxury-neutral/10 sticky top-16 h-[calc(100vh-4rem)]"
+          className="hidden lg:block w-72 bg-[#0D1117] border-r border-luxury-neutral/10 fixed top-16 h-[calc(100vh-4rem)] z-10"
         >
           <ScrollArea className="h-full">
             <LeftSidebar />
@@ -61,8 +61,8 @@ export default function Index() {
         </motion.aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-[calc(100vh-4rem)]">
-          <div className="w-full max-w-[1800px] mx-auto px-4 lg:px-8 py-6">
+        <main className="flex-1 min-h-[calc(100vh-4rem)] ml-0 lg:ml-72 mr-0 xl:mr-80">
+          <div className="w-full px-4 lg:px-8 py-6 mt-16">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -94,7 +94,7 @@ export default function Index() {
         <motion.aside 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden xl:block w-80 bg-[#0D1117] border-l border-luxury-neutral/10 sticky top-16 h-[calc(100vh-4rem)]"
+          className="hidden xl:block w-80 bg-[#0D1117] border-l border-luxury-neutral/10 fixed right-0 top-16 h-[calc(100vh-4rem)] z-10"
         >
           <ScrollArea className="h-full p-4">
             <div className="space-y-6">
