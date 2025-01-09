@@ -8,9 +8,21 @@ import { useFeedQuery } from "../feed/useFeedQuery";
 import { LoadingSkeleton } from "../feed/LoadingSkeleton";
 import { EmptyFeed } from "../feed/EmptyFeed";
 
-export const MainFeed = () => {
-  const [activeTab, setActiveTab] = useState("feed");
-  const { data: posts, isLoading } = useFeedQuery(activeTab);
+interface MainFeedProps {
+  isPayingCustomer: boolean | null;
+  onOpenCreatePost: () => void;
+  onFileSelect: (files: FileList | null) => void;
+  onOpenGoLive: () => void;
+}
+
+export const MainFeed = ({
+  isPayingCustomer,
+  onOpenCreatePost,
+  onFileSelect,
+  onOpenGoLive,
+}: MainFeedProps) => {
+  const [activeTab, setActiveTab] = useState<'feed' | 'popular' | 'recent' | 'shorts'>('feed');
+  const { data, isLoading } = useFeedQuery(undefined, activeTab);
   const { handleLike, handleDelete } = usePostActions();
 
   if (isLoading) {
@@ -21,14 +33,21 @@ export const MainFeed = () => {
     );
   }
 
-  if (!posts?.length) {
+  const posts = data?.pages.flatMap(page => page) ?? [];
+
+  if (!posts.length) {
     return <EmptyFeed />;
   }
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <FeedHeader activeTab={activeTab} onTabChange={setActiveTab} />
-      <CreatePostArea />
+      <CreatePostArea 
+        onOpenCreatePost={onOpenCreatePost}
+        onFileSelect={onFileSelect}
+        onOpenGoLive={onOpenGoLive}
+        isPayingCustomer={isPayingCustomer}
+      />
       
       <motion.div 
         className="space-y-6"
