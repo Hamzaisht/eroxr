@@ -7,10 +7,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface MessageInputProps {
   onSendMessage: (content: string, mediaUrl?: string[]) => void;
+  onMediaSelect?: (files: FileList) => Promise<void>;
+  onSnapStart?: () => void;
   isLoading?: boolean;
 }
 
-export const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
+export const MessageInput = ({ 
+  onSendMessage, 
+  onMediaSelect, 
+  onSnapStart,
+  isLoading 
+}: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -23,23 +30,27 @@ export const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) =>
       let mediaUrls: string[] = [];
       
       if (fileInputRef.current?.files?.length) {
-        setIsUploading(true);
-        const file = fileInputRef.current.files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('messages')
-          .upload(fileName, file);
-
-        if (uploadError) throw uploadError;
-
-        if (uploadData) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('messages')
-            .getPublicUrl(fileName);
+        if (onMediaSelect) {
+          await onMediaSelect(fileInputRef.current.files);
+        } else {
+          setIsUploading(true);
+          const file = fileInputRef.current.files[0];
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
           
-          mediaUrls = [publicUrl];
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('messages')
+            .upload(fileName, file);
+
+          if (uploadError) throw uploadError;
+
+          if (uploadData) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('messages')
+              .getPublicUrl(fileName);
+            
+            mediaUrls = [publicUrl];
+          }
         }
       }
 

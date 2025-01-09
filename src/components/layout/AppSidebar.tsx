@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface AppSidebarProps {
-  collapsed: boolean;
+  collapsed?: boolean;
+  onClose?: () => void;
 }
 
 const menuItems = [
@@ -39,7 +40,7 @@ const menuItems = [
   },
 ];
 
-export function AppSidebar({ collapsed }: AppSidebarProps) {
+export function AppSidebar({ collapsed, onClose }: AppSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useSession();
