@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -36,7 +36,7 @@ const App = () => {
   }, [supabase, toast]);
 
   return (
-    <Router>
+    <>
       <Routes>
         <Route
           path="/"
@@ -76,7 +76,7 @@ const App = () => {
         />
       </Routes>
       <Toaster />
-    </Router>
+    </>
   );
 };
 
