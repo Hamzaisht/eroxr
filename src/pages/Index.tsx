@@ -6,8 +6,6 @@ import { LeftSidebar } from "@/components/home/LeftSidebar";
 import { RightSidebar } from "@/components/home/RightSidebar";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { MainFeed } from "@/components/home/MainFeed";
-import { TrendingTopics } from "@/components/home/TrendingTopics";
-import { SuggestedCreators } from "@/components/home/SuggestedCreators";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,67 +40,67 @@ export default function Index() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D1117]">
+    <div className="min-h-screen bg-[#0D1117] relative">
       {/* Grid overlay */}
       <div className="fixed inset-0 bg-[url('/grid.svg')] bg-center opacity-5 pointer-events-none" />
       
-      <MainNav />
+      {/* Fixed Navigation */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <MainNav />
+      </div>
       
-      <div className="flex min-h-[calc(100vh-4rem)] mt-16">
-        {/* Left Sidebar */}
+      {/* Main Layout */}
+      <div className="flex pt-16 min-h-screen">
+        {/* Left Sidebar - Fixed */}
         <motion.aside 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block w-72 bg-[#0D1117] border-r border-luxury-neutral/10 fixed top-16 left-0 h-[calc(100vh-4rem)] z-10"
+          className="hidden lg:block fixed left-0 top-16 w-72 h-[calc(100vh-4rem)] bg-[#0D1117] border-r border-luxury-neutral/10 z-40"
         >
           <ScrollArea className="h-full">
             <LeftSidebar />
           </ScrollArea>
         </motion.aside>
 
-        {/* Main Content */}
-        <main className="flex-1 min-h-[calc(100vh-4rem)] lg:ml-72 xl:mr-80">
-          <div className="h-full w-full px-4 lg:px-8 py-6">
-            <div className="max-w-3xl mx-auto">
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <CreatePostArea 
-                  onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                  onFileSelect={setSelectedFiles}
-                  onOpenGoLive={() => setIsGoLiveOpen(true)}
-                  isPayingCustomer={isPayingCustomer}
-                />
-              </motion.div>
+        {/* Main Content - Centered with margins */}
+        <main className="flex-1 w-full lg:ml-72 xl:mr-80">
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <CreatePostArea 
+                onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                onFileSelect={setSelectedFiles}
+                onOpenGoLive={() => setIsGoLiveOpen(true)}
+                isPayingCustomer={isPayingCustomer}
+              />
+            </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <MainFeed 
-                  isPayingCustomer={isPayingCustomer}
-                  onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                  onFileSelect={setSelectedFiles}
-                  onOpenGoLive={() => setIsGoLiveOpen(true)}
-                />
-              </motion.div>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mt-6"
+            >
+              <MainFeed 
+                isPayingCustomer={isPayingCustomer}
+                onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                onFileSelect={setSelectedFiles}
+                onOpenGoLive={() => setIsGoLiveOpen(true)}
+              />
+            </motion.div>
           </div>
         </main>
 
-        {/* Right Sidebar */}
+        {/* Right Sidebar - Fixed */}
         <motion.aside 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden xl:block w-80 bg-[#0D1117] border-l border-luxury-neutral/10 fixed right-0 top-16 h-[calc(100vh-4rem)] z-10"
+          className="hidden xl:block fixed right-0 top-16 w-80 h-[calc(100vh-4rem)] bg-[#0D1117] border-l border-luxury-neutral/10 z-40"
         >
           <ScrollArea className="h-full p-4">
-            <div className="space-y-6">
-              <TrendingTopics />
-              <SuggestedCreators />
-            </div>
+            <RightSidebar />
           </ScrollArea>
         </motion.aside>
       </div>
