@@ -48,12 +48,12 @@ export default function Index() {
       
       <MainNav />
       
-      <div className="flex">
+      <div className="flex pt-16">
         {/* Left Sidebar */}
         <motion.aside 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block fixed left-0 top-16 bottom-0 z-30 w-72 bg-[#0D1117] border-r border-luxury-neutral/10"
+          className="hidden lg:block w-72 min-h-[calc(100vh-4rem)] bg-[#0D1117] border-r border-luxury-neutral/10 overflow-y-auto"
         >
           <ScrollArea className="h-full">
             <LeftSidebar />
@@ -61,7 +61,7 @@ export default function Index() {
         </motion.aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-[calc(100vh-4rem)] w-full lg:ml-72 lg:mr-80">
+        <main className="flex-1 min-h-[calc(100vh-4rem)]">
           <div className="max-w-[900px] mx-auto px-4 py-6 space-y-6">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -94,16 +94,14 @@ export default function Index() {
         <motion.aside 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block w-80 fixed right-0 top-16 bottom-0 z-30"
+          className="hidden lg:block w-80 min-h-[calc(100vh-4rem)] bg-[#0D1117] border-l border-luxury-neutral/10 overflow-y-auto"
         >
-          <div className="h-full bg-[#0D1117] border-l border-luxury-neutral/10">
-            <ScrollArea className="h-full p-4">
-              <div className="space-y-6">
-                <TrendingTopics />
-                <SuggestedCreators />
-              </div>
-            </ScrollArea>
-          </div>
+          <ScrollArea className="h-full p-4">
+            <div className="space-y-6">
+              <TrendingTopics />
+              <SuggestedCreators />
+            </div>
+          </ScrollArea>
         </motion.aside>
       </div>
     </div>
