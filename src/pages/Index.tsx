@@ -39,9 +39,9 @@ export default function Index() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D1117]">
+    <div className="min-h-screen">
       {/* Fixed Navigation */}
-      <div className="fixed top-0 left-0 right-0 z-50">
+      <div className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-luxury-dark/50 border-b border-luxury-primary/10">
         <MainNav />
       </div>
       
@@ -49,10 +49,11 @@ export default function Index() {
       <div className="flex min-h-screen pt-16">
         {/* Main Content Area */}
         <main className="flex-1 w-full xl:mr-[320px]">
-          <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="max-w-3xl mx-auto px-4 py-6">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              className="glass-effect rounded-xl overflow-hidden"
             >
               <CreatePostArea 
                 onOpenCreatePost={() => setIsCreatePostOpen(true)}
@@ -82,7 +83,7 @@ export default function Index() {
         <motion.aside 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden xl:block fixed right-0 top-16 w-[320px] h-[calc(100vh-4rem)] bg-[#0D1117] border-l border-luxury-neutral/10 z-40"
+          className="hidden xl:block fixed right-0 top-16 w-[320px] h-[calc(100vh-4rem)] neo-blur border-l border-luxury-primary/10 z-40"
         >
           <ScrollArea className="h-full p-4">
             <RightSidebar />
