@@ -117,7 +117,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       <SocialLoginSection 
         onGoogleLogin={() => handleSocialLogin('google')}
         onTwitterLogin={() => handleSocialLogin('twitter')}
-        onRedditLogin={() => handleSocialLogin('github')}
+        onGithubLogin={() => handleSocialLogin('github')}
         isLoading={isLoading}
       />
       

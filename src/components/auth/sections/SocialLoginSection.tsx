@@ -4,14 +4,14 @@ import { LogIn } from "lucide-react";
 interface SocialLoginSectionProps {
   onGoogleLogin: () => Promise<void>;
   onTwitterLogin: () => Promise<void>;
-  onRedditLogin: () => Promise<void>;
+  onGithubLogin: () => Promise<void>;
   isLoading: boolean;
 }
 
 export const SocialLoginSection = ({ 
   onGoogleLogin, 
   onTwitterLogin, 
-  onRedditLogin, 
+  onGithubLogin, 
   isLoading 
 }: SocialLoginSectionProps) => {
   return (
@@ -47,19 +47,16 @@ export const SocialLoginSection = ({
 
       <Button 
         variant="outline"
-        onClick={onRedditLogin}
+        onClick={onGithubLogin}
         className="w-full h-12 bg-white/5 hover:bg-white/10 border-luxury-primary/20 group"
         disabled={isLoading}
       >
-        <div className="w-5 h-5 mr-2 text-[#FF4500]">
-          <svg viewBox="0 0 20 20" className="fill-current">
-            <g>
-              <circle cx="10" cy="10" r="10"/>
-              <path fill="white" d="M16.67,10A1.46,1.46,0,0,0,14.2,9a7.12,7.12,0,0,0-3.85-1.23L11,4.65,13.14,5.1a1,1,0,1,0,.13-0.61L10.82,4a0.31,0.31,0,0,0-.37.24L9.71,7.71a7.14,7.14,0,0,0-3.9,1.23A1.46,1.46,0,1,0,4.2,11.33a2.87,2.87,0,0,0,0,.44c0,2.24,2.61,4.06,5.83,4.06s5.83-1.82,5.83-4.06a2.87,2.87,0,0,0,0-.44A1.46,1.46,0,0,0,16.67,10Zm-10,1a1,1,0,1,1,1,1A1,1,0,0,1,6.67,11Zm5.81,2.75a3.84,3.84,0,0,1-2.47.77,3.84,3.84,0,0,1-2.47-.77,0.27,0.27,0,0,1,.38-0.38A3.27,3.27,0,0,0,10,14a3.28,3.28,0,0,0,2.09-.61A0.27,0.27,0,1,1,12.48,13.79Zm-0.18-1.71a1,1,0,1,1,1-1A1,1,0,0,1,12.29,12.08Z"/>
-            </g>
+        <div className="w-5 h-5 mr-2">
+          <svg viewBox="0 0 24 24" className="fill-current">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
           </svg>
         </div>
-        <span className="flex-1">Continue with Reddit</span>
+        <span className="flex-1">Continue with GitHub</span>
         <LogIn className="w-5 h-5 transition-transform group-hover:translate-x-1 opacity-0 group-hover:opacity-100" />
       </Button>
     </div>
