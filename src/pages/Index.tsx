@@ -39,20 +39,17 @@ export default function Index() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D1117] relative">
-      {/* Grid overlay */}
-      <div className="fixed inset-0 bg-[url('/grid.svg')] bg-center opacity-5 pointer-events-none" />
-      
+    <div className="min-h-screen bg-[#0D1117]">
       {/* Fixed Navigation */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <MainNav />
       </div>
       
       {/* Main Layout */}
-      <div className="flex pt-16 min-h-screen">
-        {/* Main Content - Full width with right margin for sidebar */}
-        <main className="flex-1 w-full xl:mr-80">
-          <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className="flex min-h-screen pt-16">
+        {/* Main Content Area */}
+        <main className="flex-1 w-full xl:mr-[320px]">
+          <div className="max-w-2xl mx-auto px-4 py-6">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -85,7 +82,7 @@ export default function Index() {
         <motion.aside 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden xl:block fixed right-0 top-16 w-80 h-[calc(100vh-4rem)] bg-[#0D1117] border-l border-luxury-neutral/10 z-40"
+          className="hidden xl:block fixed right-0 top-16 w-[320px] h-[calc(100vh-4rem)] bg-[#0D1117] border-l border-luxury-neutral/10 z-40"
         >
           <ScrollArea className="h-full p-4">
             <RightSidebar />
