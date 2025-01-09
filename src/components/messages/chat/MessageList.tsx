@@ -1,6 +1,7 @@
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { MessageBubble } from "../MessageBubble";
 import { useEffect, useRef } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MessageListProps {
   messages: DirectMessage[];
@@ -20,17 +21,19 @@ export const MessageList = ({ messages, currentUserId, recipientProfile }: Messa
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-luxury-dark/50 to-luxury-dark">
-      {messages.map((message) => (
-        <MessageBubble
-          key={message.id}
-          message={message}
-          isOwnMessage={message.sender_id === currentUserId}
-          currentUserId={currentUserId}
-          profile={recipientProfile}
-        />
-      ))}
-      <div ref={messagesEndRef} />
-    </div>
+    <ScrollArea className="flex-1 p-4">
+      <div className="space-y-4">
+        {messages.map((message) => (
+          <MessageBubble
+            key={message.id}
+            message={message}
+            isOwnMessage={message.sender_id === currentUserId}
+            currentUserId={currentUserId}
+            profile={recipientProfile}
+          />
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+    </ScrollArea>
   );
 };
