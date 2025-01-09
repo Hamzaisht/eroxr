@@ -77,12 +77,33 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
     }
   };
 
+  const handleSocialLogin = async (provider: 'google' | 'twitter' | 'reddit') => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-md space-y-8"
+      className="w-full space-y-8"
     >
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold text-gradient">
@@ -93,8 +114,15 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         </p>
       </div>
 
-      <SocialLoginSection isLoading={isLoading} />
+      <SocialLoginSection 
+        onGoogleLogin={() => handleSocialLogin('google')}
+        onTwitterLogin={() => handleSocialLogin('twitter')}
+        onRedditLogin={() => handleSocialLogin('reddit')}
+        isLoading={isLoading}
+      />
+      
       <DividerWithText text="Or continue with" />
+      
       <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
 
       <div className="text-center space-y-2">
