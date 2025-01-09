@@ -43,7 +43,7 @@ export const MessageBubble = ({
         ));
       case 'snap':
         return (
-          <div className="italic text-sm">
+          <div className="italic text-sm text-luxury-neutral/70">
             {message.viewed_at ? "Ero snap opened" : "Ero snap sent"}
           </div>
         );
