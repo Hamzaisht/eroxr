@@ -1,105 +1,66 @@
-import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { forwardRef, useEffect, useRef } from "react";
 
 interface VideoPlayerProps {
   src: string;
   index: number;
   onIndexChange: (index: number) => void;
+  className?: string;
 }
 
-export const VideoPlayer = ({ src, index, onIndexChange }: VideoPlayerProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
+  ({ src, index, onIndexChange, className }, ref) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const observerRef = useRef<IntersectionObserver | null>(null);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video) return;
 
-    setIsLoading(true);
-    setError(null);
-
-    const handleLoadedData = () => {
-      setIsLoading(false);
-      video.play().catch(err => {
-        console.error("Play error:", err);
-        setError("Failed to play video");
-      });
-    };
-
-    const handleError = () => {
-      console.error("Video error:", src);
-      setError("Failed to load video");
-      setIsLoading(false);
-    };
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            onIndexChange(index);
-            if (video.paused) {
-              video.play().catch(err => {
-                console.error("Play error:", err);
-                setError("Failed to play video");
-              });
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              onIndexChange(index);
+              video.play().catch(console.error);
+            } else {
+              video.pause();
+              video.currentTime = 0;
             }
-          } else {
-            video.pause();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
+          });
+        },
+        { threshold: 0.7 }
+      );
 
-    video.addEventListener('loadeddata', handleLoadedData);
-    video.addEventListener('error', handleError);
-    observer.observe(video);
+      observerRef.current.observe(video);
 
-    // Set source and load
-    video.src = src;
-    video.load();
+      return () => {
+        if (observerRef.current) {
+          observerRef.current.disconnect();
+        }
+      };
+    }, [index, onIndexChange]);
 
-    return () => {
-      video.removeEventListener('loadeddata', handleLoadedData);
-      video.removeEventListener('error', handleError);
-      observer.disconnect();
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-    };
-  }, [src, index, onIndexChange]);
-
-  return (
-    <div className="relative w-full h-full bg-black">
-      <video
+    return (
+      <motion.video
         ref={videoRef}
-        className="h-full w-full object-cover"
+        src={src}
+        className={className}
+        initial={{ scale: 1.2, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
         playsInline
-        muted
         loop
+        muted
         controls={false}
-        preload="auto"
-        onClick={(e) => {
-          const video = e.currentTarget;
-          if (video.paused) {
-            video.play().catch(console.error);
-          } else {
-            video.pause();
-          }
+        style={{ 
+          pointerEvents: 'none',
+          WebkitUserSelect: 'none',
+          userSelect: 'none'
         }}
       />
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-          <div className="w-12 h-12 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-      {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-          <p className="text-white text-center px-4 py-2 bg-red-500/80 rounded">
-            {error}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-};
+    );
+  }
+);
+
+VideoPlayer.displayName = "VideoPlayer";

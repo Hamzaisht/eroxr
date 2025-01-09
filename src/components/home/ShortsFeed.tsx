@@ -5,6 +5,8 @@ import { Short } from "./types/short";
 import { useShortActions } from "./hooks/useShortActions";
 import { VideoPlayer } from "./components/VideoPlayer";
 import { ShortContent } from "./components/ShortContent";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useFeedQuery } from "../feed/useFeedQuery";
 
 export const ShortsFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -12,49 +14,10 @@ export const ShortsFeed = () => {
   const [selectedShortId, setSelectedShortId] = useState<string | null>(null);
   const { handleLike, handleSave } = useShortActions();
   const [isLoading, setIsLoading] = useState(true);
+  const session = useSession();
+  const { data } = useFeedQuery(session?.user?.id, 'shorts');
 
-  // Updated with working video URLs
-  const shorts: Short[] = [
-    {
-      id: "123e4567-e89b-12d3-a456-426614174000",
-      creator: {
-        username: "@ArtisticSoul",
-        avatar_url: null,
-      },
-      video_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      description: "Stunning aerial view of a misty mountain landscape at sunrise 🌄",
-      likes: 2345,
-      comments: 156,
-      has_liked: false,
-      has_saved: false,
-    },
-    {
-      id: "223e4567-e89b-12d3-a456-426614174001",
-      creator: {
-        username: "@TechGuru",
-        avatar_url: null,
-      },
-      video_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-      description: "Crystal clear waters of the Nordic fjords reflecting the sky ⛰️",
-      likes: 1876,
-      comments: 92,
-      has_liked: false,
-      has_saved: false,
-    },
-    {
-      id: "323e4567-e89b-12d3-a456-426614174002",
-      creator: {
-        username: "@FitnessPro",
-        avatar_url: null,
-      },
-      video_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-      description: "Northern lights dancing across the Nordic sky 🌌",
-      likes: 3421,
-      comments: 187,
-      has_liked: false,
-      has_saved: false,
-    },
-  ];
+  const shorts = data?.pages.flatMap(page => page) ?? [];
 
   useEffect(() => {
     const preloadVideos = async () => {
@@ -62,14 +25,15 @@ export const ShortsFeed = () => {
         await Promise.all(
           shorts.map(short => {
             return new Promise((resolve) => {
+              if (!short.video_urls?.[0]) return resolve(true);
               const video = document.createElement('video');
               video.preload = "auto";
               video.onloadeddata = () => resolve(true);
               video.onerror = () => {
-                console.error(`Failed to load ${short.video_url}`);
-                resolve(false); // Resolve anyway to not block other videos
+                console.error(`Failed to load ${short.video_urls?.[0]}`);
+                resolve(false);
               };
-              video.src = short.video_url;
+              video.src = short.video_urls[0];
             });
           })
         );
@@ -82,7 +46,7 @@ export const ShortsFeed = () => {
     };
 
     preloadVideos();
-  }, []);
+  }, [shorts]);
 
   const handleShare = (shortId: string) => {
     setSelectedShortId(shortId);
@@ -91,16 +55,16 @@ export const ShortsFeed = () => {
 
   if (isLoading) {
     return (
-      <div className="relative h-[calc(100vh-4rem)] w-full flex items-center justify-center bg-black">
+      <div className="relative h-[calc(100vh-4rem)] w-full flex items-center justify-center bg-gradient-to-b from-luxury-dark to-black">
         <div className="w-12 h-12 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-black">
+    <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-gradient-to-b from-luxury-dark to-black">
       <div className="snap-y snap-mandatory h-full overflow-y-auto scrollbar-hide">
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {shorts.map((short, index) => (
             <motion.div
               key={short.id}
@@ -109,16 +73,27 @@ export const ShortsFeed = () => {
               exit={{ opacity: 0 }}
               className="relative h-full w-full snap-start snap-always"
             >
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
               <VideoPlayer
-                src={short.video_url}
+                src={short.video_urls?.[0] ?? ""}
                 index={index}
                 onIndexChange={setCurrentVideoIndex}
+                className="h-full w-full object-cover"
               />
               <ShortContent
-                short={short}
+                short={{
+                  id: short.id,
+                  creator: short.creator,
+                  description: short.content,
+                  likes: short.likes_count ?? 0,
+                  comments: short.comments_count ?? 0,
+                  has_liked: short.has_liked,
+                  has_saved: false
+                }}
                 onShare={handleShare}
                 handleLike={handleLike}
                 handleSave={handleSave}
+                className="absolute bottom-0 left-0 right-0 z-20 p-6"
               />
             </motion.div>
           ))}
