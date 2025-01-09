@@ -4,17 +4,15 @@ import { AppSidebar } from "./AppSidebar";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/hooks/use-toast";
 
-interface MainLayoutProps {
-  children?: React.ReactNode;
-}
-
-export const MainLayout = ({ children }: MainLayoutProps) => {
+export const MainLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const isMobile = useIsMobile();
   const session = useSession();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!session) {
@@ -22,16 +20,22 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       return;
     }
     
+    // Show welcome toast on successful login
+    toast({
+      title: "Welcome back!",
+      description: "You have successfully signed in.",
+    });
+    
     // Delay initialization to prevent flash of content
     const timer = setTimeout(() => {
       setIsInitialized(true);
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [session, navigate]);
+  }, [session, navigate, toast]);
 
-  if (!isInitialized) {
-    return null; // Return null during initialization to prevent flash
+  if (!isInitialized || !session) {
+    return null;
   }
 
   return (
@@ -64,7 +68,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           </button>
         )}
         <div className="container mx-auto p-4 pt-16 lg:pt-4">
-          {children || <Outlet />}
+          <Outlet />
         </div>
       </main>
     </div>

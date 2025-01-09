@@ -1,27 +1,19 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthLayout } from "@/components/auth/layout/AuthLayout";
-import { AuthContainer } from "@/components/auth/layout/AuthContainer";
-import { AuthForm } from "@/components/auth/AuthForm";
 import { useSession } from "@supabase/auth-helpers-react";
+import { Hero } from "@/components/Hero";
 
 const Login = () => {
-  const navigate = useNavigate();
   const session = useSession();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (session) {
-      navigate("/");
+      navigate("/", { replace: true });
     }
   }, [session, navigate]);
 
-  return (
-    <AuthLayout>
-      <AuthContainer>
-        <AuthForm />
-      </AuthContainer>
-    </AuthLayout>
-  );
+  return <Hero />;
 };
 
 export default Login;
