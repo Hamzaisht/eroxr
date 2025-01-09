@@ -7,9 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { Button } from "@/components/ui/button";
-import { PhoneCall } from "lucide-react";
+import { PhoneCall, Video } from "lucide-react";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { usePresence } from "@/components/profile/avatar/usePresence";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
 
 interface ChatWindowProps {
   recipientId: string;
@@ -18,6 +20,7 @@ interface ChatWindowProps {
 
 export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) => {
   const [messages, setMessages] = useState<DirectMessage[]>([]);
+  const [recipientProfile, setRecipientProfile] = useState<any>(null);
   const session = useSession();
   const { toast } = useToast();
   const { isRecording, startRecording, stopRecording } = useVideoRecording(recipientId, () => {
@@ -28,11 +31,18 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   });
 
   // Get recipient's presence status
-  const { availability } = usePresence(recipientId, false);
+  const { availability, lastActive } = usePresence(recipientId, false);
 
-  const handleCall = () => {
+  const handleVoiceCall = () => {
     toast({
-      title: "Starting call...",
+      title: "Starting voice call...",
+      description: "This feature is coming soon!",
+    });
+  };
+
+  const handleVideoCall = () => {
+    toast({
+      title: "Starting video call...",
       description: "This feature is coming soon!",
     });
   };
@@ -113,6 +123,22 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   };
 
   useEffect(() => {
+    const fetchRecipientProfile = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', recipientId)
+        .single();
+
+      if (!error && data) {
+        setRecipientProfile(data);
+      }
+    };
+
+    fetchRecipientProfile();
+  }, [recipientId]);
+
+  useEffect(() => {
     const fetchMessages = async () => {
       const { data, error } = await supabase
         .from('direct_messages')
@@ -147,22 +173,45 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with status and call button */}
+      {/* Header with profile, status and call buttons */}
       <div className="flex items-center justify-between p-4 border-b border-luxury-neutral/10">
-        <div className="flex items-center gap-2">
-          <AvailabilityIndicator status={availability} size={10} />
-          <span className="text-sm text-luxury-neutral/70 capitalize">
-            {availability}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={recipientProfile?.avatar_url} />
+              <AvatarFallback>{recipientProfile?.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+            </Avatar>
+            <div className="absolute -bottom-1 -right-1">
+              <AvailabilityIndicator status={availability} size={10} />
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-medium">{recipientProfile?.username}</span>
+            <span className="text-xs text-luxury-neutral/70">
+              {availability === 'offline' && lastActive 
+                ? `Last seen ${formatDistanceToNow(new Date(lastActive), { addSuffix: true })}` 
+                : availability}
+            </span>
+          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="hover:bg-luxury-neutral/10"
-          onClick={handleCall}
-        >
-          <PhoneCall className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:bg-luxury-neutral/10"
+            onClick={handleVoiceCall}
+          >
+            <PhoneCall className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:bg-luxury-neutral/10"
+            onClick={handleVideoCall}
+          >
+            <Video className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Messages area */}
@@ -173,6 +222,7 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
             message={message}
             isOwnMessage={message.sender_id === session?.user?.id}
             currentUserId={session?.user?.id}
+            profile={recipientProfile}
           />
         ))}
       </div>
