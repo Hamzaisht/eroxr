@@ -1,19 +1,20 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
-import { PresenceState } from "./types";
+import { PresenceState, UsePresenceReturn } from "./types";
 
 const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const PRESENCE_INTERVAL = 30 * 1000; // 30 seconds
 
-export const usePresence = (profileId: string, isOwnProfile: boolean) => {
+export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresenceReturn => {
   const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
+  const [lastActive, setLastActive] = useState<string>();
   const [isInCall, setIsInCall] = useState(false);
   const [isMessaging, setIsMessaging] = useState(false);
 
   useEffect(() => {
-    if (!profileId || !isOwnProfile) return;
+    if (!profileId) return;
 
     let inactivityTimeout: NodeJS.Timeout;
     let presenceInterval: NodeJS.Timeout;
@@ -38,19 +39,28 @@ export const usePresence = (profileId: string, isOwnProfile: boolean) => {
       }
     };
 
-    // Activity listeners
-    const handleActivity = () => {
-      setLastActivity(Date.now());
-      if (availability === "offline") {
-        setAvailability("online");
-      }
-    };
+    // Activity listeners for own profile
+    if (isOwnProfile) {
+      const handleActivity = () => {
+        setLastActivity(Date.now());
+        if (availability === "offline") {
+          setAvailability("online");
+        }
+      };
 
-    // Set up activity tracking
-    const activityEvents = ['mousedown', 'keydown', 'touchstart', 'mousemove'];
-    activityEvents.forEach(event => {
-      window.addEventListener(event, handleActivity);
-    });
+      const activityEvents = ['mousedown', 'keydown', 'touchstart', 'mousemove'];
+      activityEvents.forEach(event => {
+        window.addEventListener(event, handleActivity);
+      });
+
+      // Set up intervals
+      presenceInterval = setInterval(updatePresence, PRESENCE_INTERVAL);
+      inactivityTimeout = setTimeout(() => {
+        if (!isInCall && !isMessaging) {
+          setAvailability("offline");
+        }
+      }, INACTIVITY_TIMEOUT);
+    }
 
     // Subscribe to presence channel
     const channel = supabase.channel('online-users')
@@ -65,9 +75,10 @@ export const usePresence = (profileId: string, isOwnProfile: boolean) => {
             return false;
           });
         
-        if (userState && 'status' in userState) {
+        if (userState && typeof userState === 'object' && 'timestamp' in userState) {
           const typedState = userState as PresenceState;
           setAvailability(typedState.status);
+          setLastActive(typedState.timestamp);
         }
       })
       .subscribe(async (status) => {
@@ -80,21 +91,16 @@ export const usePresence = (profileId: string, isOwnProfile: boolean) => {
         }
       });
 
-    // Set up intervals
-    presenceInterval = setInterval(updatePresence, PRESENCE_INTERVAL);
-    inactivityTimeout = setTimeout(() => {
-      if (!isInCall && !isMessaging) {
-        setAvailability("offline");
-      }
-    }, INACTIVITY_TIMEOUT);
-
     // Cleanup
     return () => {
-      activityEvents.forEach(event => {
-        window.removeEventListener(event, handleActivity);
-      });
-      clearInterval(presenceInterval);
-      clearTimeout(inactivityTimeout);
+      if (isOwnProfile) {
+        const activityEvents = ['mousedown', 'keydown', 'touchstart', 'mousemove'];
+        activityEvents.forEach(event => {
+          window.removeEventListener(event, handleActivity);
+        });
+        clearInterval(presenceInterval);
+        clearTimeout(inactivityTimeout);
+      }
       supabase.removeChannel(channel);
     };
   }, [profileId, isOwnProfile, availability, lastActivity, isInCall, isMessaging]);
@@ -103,6 +109,7 @@ export const usePresence = (profileId: string, isOwnProfile: boolean) => {
     availability, 
     setAvailability,
     setIsInCall,
-    setIsMessaging
+    setIsMessaging,
+    lastActive
   };
 };
