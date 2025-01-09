@@ -1,17 +1,12 @@
 import { useState, useEffect } from "react";
-import { MessageBubble } from "./MessageBubble";
-import { MessageInput } from "./MessageInput";
-import { useVideoRecording } from "./useVideoRecording";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DirectMessage } from "@/integrations/supabase/types/message";
-import { Button } from "@/components/ui/button";
-import { PhoneCall, Video } from "lucide-react";
-import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
-import { usePresence } from "@/components/profile/avatar/usePresence";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
+import { MessageInput } from "./MessageInput";
+import { ChatHeader } from "./chat/ChatHeader";
+import { MessageList } from "./chat/MessageList";
+import { SnapCamera } from "./chat/SnapCamera";
 
 interface ChatWindowProps {
   recipientId: string;
@@ -21,17 +16,9 @@ interface ChatWindowProps {
 export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) => {
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [recipientProfile, setRecipientProfile] = useState<any>(null);
+  const [showCamera, setShowCamera] = useState(false);
   const session = useSession();
   const { toast } = useToast();
-  const { isRecording, startRecording, stopRecording } = useVideoRecording(recipientId, () => {
-    toast({
-      title: "Success",
-      description: "Video message sent successfully",
-    });
-  });
-
-  // Get recipient's presence status
-  const { availability, lastActive } = usePresence(recipientId, false);
 
   const handleVoiceCall = () => {
     toast({
@@ -112,14 +99,47 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     }
   };
 
-  const handleSnapStart = () => {
-    // Start camera preview
-    // This will be implemented in a separate component
-  };
+  const handleSnapCapture = async (blob: Blob) => {
+    if (!session?.user?.id) return;
 
-  const handleSnapEnd = () => {
-    // Stop camera preview and send snap
-    // This will be implemented in a separate component
+    const fileName = `${crypto.randomUUID()}.${blob.type.includes('video') ? 'webm' : 'jpg'}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('messages')
+      .upload(fileName, blob);
+
+    if (uploadError) {
+      toast({
+        title: "Error",
+        description: "Failed to upload snap",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('messages')
+      .getPublicUrl(fileName);
+
+    const { error: messageError } = await supabase
+      .from('direct_messages')
+      .insert([{
+        sender_id: session.user.id,
+        recipient_id: recipientId,
+        media_url: [publicUrl],
+        message_type: blob.type.includes('video') ? 'video' : 'image',
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+      }]);
+
+    if (messageError) {
+      toast({
+        title: "Error",
+        description: "Failed to send snap",
+        variant: "destructive",
+      });
+    }
+
+    setShowCamera(false);
   };
 
   useEffect(() => {
@@ -153,7 +173,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
 
     fetchMessages();
 
-    // Subscribe to new messages
     const channel = supabase
       .channel('messages')
       .on('postgres_changes', {
@@ -172,71 +191,32 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   }, [session?.user?.id, recipientId]);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header with profile, status and call buttons */}
-      <div className="flex items-center justify-between p-4 border-b border-luxury-neutral/10">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={recipientProfile?.avatar_url} />
-              <AvatarFallback>{recipientProfile?.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
-            </Avatar>
-            <div className="absolute -bottom-1 -right-1">
-              <AvailabilityIndicator status={availability} size={10} />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-medium">{recipientProfile?.username}</span>
-            <span className="text-xs text-luxury-neutral/70">
-              {availability === 'offline' && lastActive 
-                ? `Last seen ${formatDistanceToNow(new Date(lastActive), { addSuffix: true })}` 
-                : availability}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hover:bg-luxury-neutral/10"
-            onClick={handleVoiceCall}
-          >
-            <PhoneCall className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hover:bg-luxury-neutral/10"
-            onClick={handleVideoCall}
-          >
-            <Video className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col h-full bg-luxury-dark">
+      <ChatHeader
+        recipientProfile={recipientProfile}
+        recipientId={recipientId}
+        onVoiceCall={handleVoiceCall}
+        onVideoCall={handleVideoCall}
+      />
+      
+      <MessageList
+        messages={messages}
+        currentUserId={session?.user?.id}
+        recipientProfile={recipientProfile}
+      />
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            isOwnMessage={message.sender_id === session?.user?.id}
-            currentUserId={session?.user?.id}
-            profile={recipientProfile}
-          />
-        ))}
-      </div>
-
-      {/* Input area */}
       <MessageInput
         onSendMessage={handleSendMessage}
-        onStartRecording={startRecording}
-        onStopRecording={stopRecording}
-        isRecording={isRecording}
         onMediaSelect={handleMediaSelect}
-        onSnapStart={handleSnapStart}
-        onSnapEnd={handleSnapEnd}
+        onSnapStart={() => setShowCamera(true)}
       />
+
+      {showCamera && (
+        <SnapCamera
+          onCapture={handleSnapCapture}
+          onClose={() => setShowCamera(false)}
+        />
+      )}
     </div>
   );
 };
