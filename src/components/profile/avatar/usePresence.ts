@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { AvailabilityStatus } from "./types";
 import { PresenceState, UsePresenceReturn } from "./types";
 
 const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
@@ -18,6 +18,7 @@ export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresen
 
     let inactivityTimeout: NodeJS.Timeout;
     let presenceInterval: NodeJS.Timeout;
+    let handleActivity: () => void;
 
     const updatePresence = async () => {
       const currentTime = Date.now();
@@ -25,7 +26,6 @@ export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresen
       
       let newStatus: AvailabilityStatus = "online";
 
-      // Determine status based on activity
       if (isInCall) {
         newStatus = "busy";
       } else if (isMessaging) {
@@ -41,7 +41,7 @@ export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresen
 
     // Activity listeners for own profile
     if (isOwnProfile) {
-      const handleActivity = () => {
+      handleActivity = () => {
         setLastActivity(Date.now());
         if (availability === "offline") {
           setAvailability("online");
@@ -73,12 +73,11 @@ export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresen
               return 'user_id' in presence && presence.user_id === profileId;
             }
             return false;
-          });
+          }) as PresenceState | undefined;
         
-        if (userState && typeof userState === 'object' && 'timestamp' in userState) {
-          const typedState = userState as PresenceState;
-          setAvailability(typedState.status);
-          setLastActive(typedState.timestamp);
+        if (userState) {
+          setAvailability(userState.status);
+          setLastActive(userState.timestamp);
         }
       })
       .subscribe(async (status) => {
@@ -87,13 +86,13 @@ export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresen
             user_id: profileId,
             status: availability,
             timestamp: new Date().toISOString()
-          });
+          } as PresenceState);
         }
       });
 
     // Cleanup
     return () => {
-      if (isOwnProfile) {
+      if (isOwnProfile && handleActivity) {
         const activityEvents = ['mousedown', 'keydown', 'touchstart', 'mousemove'];
         activityEvents.forEach(event => {
           window.removeEventListener(event, handleActivity);
