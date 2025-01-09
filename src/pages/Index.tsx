@@ -1,22 +1,20 @@
-import { MainNav } from "@/components/MainNav";
+import { useSession } from "@supabase/auth-helpers-react";
+import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { StoryReel } from "@/components/StoryReel";
+import { MainNav } from "@/components/MainNav";
+import { LeftSidebar } from "@/components/home/LeftSidebar";
+import { RightSidebar } from "@/components/home/RightSidebar";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { MainFeed } from "@/components/home/MainFeed";
-import { RightSidebar } from "@/components/home/RightSidebar";
-import { LeftSidebar } from "@/components/home/LeftSidebar";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useState } from "react";
-import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { GoLiveDialog } from "@/components/home/GoLiveDialog";
-import { UploadShortButton } from "@/components/home/UploadShortButton";
+import { TrendingTopics } from "@/components/home/TrendingTopics";
+import { SuggestedCreators } from "@/components/home/SuggestedCreators";
 
-const Index = () => {
+export default function Index() {
   const session = useSession();
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
-  const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
+
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-[#0D1117]">
@@ -25,49 +23,33 @@ const Index = () => {
       
       <MainNav />
       
-      <div className="flex pt-16">
+      <div className="flex">
         {/* Left Sidebar */}
         <motion.aside 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block w-64 fixed left-0 top-16 bottom-0 z-30"
+          className="hidden lg:block fixed left-0 top-16 bottom-0 z-30"
         >
           <LeftSidebar />
         </motion.aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-[calc(100vh-4rem)] w-full lg:ml-64 lg:mr-80">
-          <div className="max-w-[800px] mx-auto px-4 py-6 space-y-6">
-            {session && (
-              <>
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="neo-blur rounded-xl p-4"
-                >
-                  <StoryReel />
-                </motion.div>
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="neo-blur rounded-xl p-4"
-                >
-                  <CreatePostArea
-                    onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                    onFileSelect={setSelectedFiles}
-                    onOpenGoLive={() => setIsGoLiveOpen(true)}
-                    isPayingCustomer={isPayingCustomer}
-                  />
-                </motion.div>
-              </>
-            )}
-            <MainFeed
-              isPayingCustomer={isPayingCustomer}
-              onOpenCreatePost={() => setIsCreatePostOpen(true)}
-              onFileSelect={setSelectedFiles}
-              onOpenGoLive={() => setIsGoLiveOpen(true)}
-            />
+        <main className="flex-1 min-h-[calc(100vh-4rem)] w-full lg:ml-72 lg:mr-80">
+          <div className="max-w-[900px] mx-auto px-4 py-6 space-y-6">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <CreatePostArea />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <MainFeed />
+            </motion.div>
           </div>
         </main>
 
@@ -77,27 +59,16 @@ const Index = () => {
           animate={{ opacity: 1, x: 0 }}
           className="hidden lg:block w-80 fixed right-0 top-16 bottom-0 z-30"
         >
-          <div className="h-full overflow-hidden">
-            <RightSidebar />
+          <div className="h-full bg-luxury-dark/95 backdrop-blur-lg border-l border-luxury-neutral/5">
+            <ScrollArea className="h-full p-4">
+              <div className="space-y-6">
+                <TrendingTopics />
+                <SuggestedCreators />
+              </div>
+            </ScrollArea>
           </div>
         </motion.aside>
       </div>
-
-      <UploadShortButton />
-
-      <CreatePostDialog
-        open={isCreatePostOpen}
-        onOpenChange={setIsCreatePostOpen}
-        selectedFiles={selectedFiles}
-        onFileSelect={setSelectedFiles}
-      />
-
-      <GoLiveDialog 
-        open={isGoLiveOpen}
-        onOpenChange={setIsGoLiveOpen}
-      />
     </div>
   );
-};
-
-export default Index;
+}
