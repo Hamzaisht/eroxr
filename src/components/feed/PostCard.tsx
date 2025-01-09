@@ -18,13 +18,21 @@ interface PostCardProps {
   post: Post;
   onLike?: (postId: string) => Promise<void>;
   onDelete?: (postId: string, creatorId: string) => Promise<void>;
+  onComment?: () => void;
   currentUserId?: string;
 }
 
-export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProps) => {
+export const PostCard = ({ 
+  post, 
+  onLike, 
+  onDelete,
+  onComment,
+  currentUserId 
+}: PostCardProps) => {
   const [liked, setLiked] = useState(post.has_liked);
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const { toast } = useToast();
   const session = useSession();
 
@@ -42,6 +50,13 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
       await onLike(post.id);
       setLiked(!liked);
     }
+  };
+
+  const handleCommentClick = () => {
+    if (onComment) {
+      onComment();
+    }
+    setShowComments(!showComments);
   };
 
   const isVideo = (url: string) => {
@@ -116,9 +131,15 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
             {post.likes_count || 0}
           </Button>
           
-          <div className="flex-1">
-            <CommentSection postId={post.id} commentsCount={post.comments_count} />
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white/70 hover:text-white hover:bg-white/10 flex-1"
+            onClick={handleCommentClick}
+          >
+            <MessageCircle className="w-5 h-5 mr-1.5" />
+            {post.comments_count || 0}
+          </Button>
           
           <Button
             variant="ghost"
@@ -130,6 +151,13 @@ export const PostCard = ({ post, onLike, onDelete, currentUserId }: PostCardProp
             Share
           </Button>
         </div>
+
+        {showComments && (
+          <CommentSection 
+            postId={post.id} 
+            commentsCount={post.comments_count} 
+          />
+        )}
       </CardContent>
 
       <MediaViewer 
