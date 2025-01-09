@@ -8,9 +8,6 @@ import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-
 import { MediaViewer } from "@/components/media/MediaViewer";
 import { Post } from "@/components/feed/types";
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useSession } from "@supabase/auth-helpers-react";
 import { CommentSection } from "./CommentSection";
 import { ShareDialog } from "./ShareDialog";
 
@@ -33,19 +30,8 @@ export const PostCard = ({
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const { toast } = useToast();
-  const session = useSession();
 
   const handleLike = async () => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to like posts.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (onLike) {
       await onLike(post.id);
       setLiked(!liked);

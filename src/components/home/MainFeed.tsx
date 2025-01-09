@@ -31,16 +31,6 @@ export const MainFeed = ({
   const session = useSession();
   const { toast } = useToast();
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <LoadingSkeleton />
-      </div>
-    );
-  }
-
-  const posts = data?.pages.flatMap(page => page) ?? [];
-
   const handleComment = () => {
     if (!session) {
       toast({
@@ -51,6 +41,16 @@ export const MainFeed = ({
       return;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <LoadingSkeleton />
+      </div>
+    );
+  }
+
+  const posts = data?.pages.flatMap(page => page) ?? [];
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
