@@ -84,7 +84,7 @@ const Index = () => {
               <div className="sticky top-20 glass-effect rounded-xl p-4">
                 <RightSidebar />
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
