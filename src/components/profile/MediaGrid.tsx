@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { MediaViewer } from "@/components/media/MediaViewer";
-import { getImageStyles, getAspectRatioFromDimensions } from "@/lib/image-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -52,8 +51,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <Skeleton key={i} className="aspect-[4/5] rounded-lg" />
         ))}
       </div>
@@ -80,7 +79,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         }}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
       >
         {mediaItems.map((mediaItem, index) => (
           <motion.div

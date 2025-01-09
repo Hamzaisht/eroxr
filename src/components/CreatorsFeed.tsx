@@ -36,13 +36,13 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   const posts = data?.pages.flat() || [];
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <ScrollArea className="h-[calc(100vh-280px)]">
-        <div className="space-y-8">
+    <div className="w-full mx-auto">
+      <ScrollArea className="h-[calc(100vh-20rem)]">
+        <div className="space-y-6 max-w-3xl mx-auto">
           {isLoading ? (
             <LoadingSkeleton />
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {posts.map((post) => {
                 const processedPost = {
                   ...post,
