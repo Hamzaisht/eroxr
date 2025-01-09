@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Send, Image, Camera, Paperclip } from "lucide-react";
 import { MediaDialog } from "./MediaDialog";
 import { EmojiPicker } from "./chat/EmojiPicker";
+import { useToast } from "@/hooks/use-toast";
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
-  onMediaSelect: (files: FileList) => void;
+  onMediaSelect: (files: FileList) => Promise<void>;
   onSnapStart: () => void;
 }
 
@@ -18,12 +19,27 @@ export const MessageInput = ({
 }: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
       onSendMessage(message);
       setMessage("");
+    }
+  };
+
+  const handleMediaSelectWrapper = async (files: FileList) => {
+    try {
+      await onMediaSelect(files);
+      setIsMediaDialogOpen(false);
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload media. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -78,7 +94,7 @@ export const MessageInput = ({
       <MediaDialog
         isOpen={isMediaDialogOpen}
         onClose={() => setIsMediaDialogOpen(false)}
-        onMediaSelect={onMediaSelect}
+        onMediaSelect={handleMediaSelectWrapper}
       />
     </>
   );

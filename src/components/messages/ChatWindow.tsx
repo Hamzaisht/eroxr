@@ -17,6 +17,7 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [recipientProfile, setRecipientProfile] = useState<any>(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
 
@@ -57,24 +58,68 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
 
   const handleMediaSelect = async (files: FileList) => {
     if (!session?.user?.id) return;
+    setIsUploading(true);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
+        // Upload file to storage
+        const { error: uploadError, data } = await supabase.storage
+          .from('messages')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL after successful upload
+        const { data: { publicUrl } } = supabase.storage
+          .from('messages')
+          .getPublicUrl(fileName);
+
+        // Create message record
+        const { error: messageError } = await supabase
+          .from('direct_messages')
+          .insert([{
+            sender_id: session.user.id,
+            recipient_id: recipientId,
+            media_url: [publicUrl],
+            message_type: file.type.startsWith('image/') ? 'image' : 'video'
+          }]);
+
+        if (messageError) throw messageError;
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload media",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSnapCapture = async (blob: Blob) => {
+    if (!session?.user?.id) return;
+    setIsUploading(true);
+
+    try {
+      const fileName = `${crypto.randomUUID()}.${blob.type.includes('video') ? 'webm' : 'jpg'}`;
+      
       const { error: uploadError } = await supabase.storage
         .from('messages')
-        .upload(fileName, file);
-
-      if (uploadError) {
-        toast({
-          title: "Error",
-          description: "Failed to upload media",
-          variant: "destructive",
+        .upload(fileName, blob, {
+          cacheControl: '3600',
+          upsert: false
         });
-        continue;
-      }
+
+      if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('messages')
@@ -86,60 +131,22 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
           sender_id: session.user.id,
           recipient_id: recipientId,
           media_url: [publicUrl],
-          message_type: file.type.startsWith('image/') ? 'image' : 'video'
+          message_type: blob.type.includes('video') ? 'video' : 'image',
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         }]);
 
-      if (messageError) {
-        toast({
-          title: "Error",
-          description: "Failed to send media message",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleSnapCapture = async (blob: Blob) => {
-    if (!session?.user?.id) return;
-
-    const fileName = `${crypto.randomUUID()}.${blob.type.includes('video') ? 'webm' : 'jpg'}`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from('messages')
-      .upload(fileName, blob);
-
-    if (uploadError) {
-      toast({
-        title: "Error",
-        description: "Failed to upload snap",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('messages')
-      .getPublicUrl(fileName);
-
-    const { error: messageError } = await supabase
-      .from('direct_messages')
-      .insert([{
-        sender_id: session.user.id,
-        recipient_id: recipientId,
-        media_url: [publicUrl],
-        message_type: blob.type.includes('video') ? 'video' : 'image',
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
-      }]);
-
-    if (messageError) {
+      if (messageError) throw messageError;
+      setShowCamera(false);
+    } catch (error) {
+      console.error('Error uploading snap:', error);
       toast({
         title: "Error",
         description: "Failed to send snap",
         variant: "destructive",
       });
+    } finally {
+      setIsUploading(false);
     }
-
-    setShowCamera(false);
   };
 
   useEffect(() => {
