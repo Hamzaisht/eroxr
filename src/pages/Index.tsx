@@ -48,12 +48,12 @@ export default function Index() {
       
       <MainNav />
       
-      <div className="flex min-h-screen">
+      <div className="flex min-h-[calc(100vh-4rem)] mt-16">
         {/* Left Sidebar */}
         <motion.aside 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block w-72 bg-[#0D1117] border-r border-luxury-neutral/10 fixed top-16 h-[calc(100vh-4rem)] z-10"
+          className="hidden lg:block w-72 bg-[#0D1117] border-r border-luxury-neutral/10 fixed top-16 left-0 h-[calc(100vh-4rem)] z-10"
         >
           <ScrollArea className="h-full">
             <LeftSidebar />
@@ -61,32 +61,34 @@ export default function Index() {
         </motion.aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-[calc(100vh-4rem)] ml-0 lg:ml-72 mr-0 xl:mr-80">
-          <div className="w-full px-4 lg:px-8 py-6 mt-16">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <CreatePostArea 
-                onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                onFileSelect={setSelectedFiles}
-                onOpenGoLive={() => setIsGoLiveOpen(true)}
-                isPayingCustomer={isPayingCustomer}
-              />
-            </motion.div>
+        <main className="flex-1 min-h-[calc(100vh-4rem)] lg:ml-72 xl:mr-80">
+          <div className="h-full w-full px-4 lg:px-8 py-6">
+            <div className="max-w-3xl mx-auto">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <CreatePostArea 
+                  onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                  onFileSelect={setSelectedFiles}
+                  onOpenGoLive={() => setIsGoLiveOpen(true)}
+                  isPayingCustomer={isPayingCustomer}
+                />
+              </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <MainFeed 
-                isPayingCustomer={isPayingCustomer}
-                onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                onFileSelect={setSelectedFiles}
-                onOpenGoLive={() => setIsGoLiveOpen(true)}
-              />
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <MainFeed 
+                  isPayingCustomer={isPayingCustomer}
+                  onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                  onFileSelect={setSelectedFiles}
+                  onOpenGoLive={() => setIsGoLiveOpen(true)}
+                />
+              </motion.div>
+            </div>
           </div>
         </main>
 
