@@ -2,7 +2,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MainNav } from "@/components/MainNav";
-import { LeftSidebar } from "@/components/home/LeftSidebar";
 import { RightSidebar } from "@/components/home/RightSidebar";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { MainFeed } from "@/components/home/MainFeed";
@@ -51,19 +50,8 @@ export default function Index() {
       
       {/* Main Layout */}
       <div className="flex pt-16 min-h-screen">
-        {/* Left Sidebar - Fixed */}
-        <motion.aside 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block fixed left-0 top-16 w-72 h-[calc(100vh-4rem)] bg-[#0D1117] border-r border-luxury-neutral/10 z-40"
-        >
-          <ScrollArea className="h-full">
-            <LeftSidebar />
-          </ScrollArea>
-        </motion.aside>
-
-        {/* Main Content - Centered with margins */}
-        <main className="flex-1 w-full lg:ml-72 xl:mr-80">
+        {/* Main Content - Full width with right margin for sidebar */}
+        <main className="flex-1 w-full xl:mr-80">
           <div className="max-w-3xl mx-auto px-4 py-6">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
