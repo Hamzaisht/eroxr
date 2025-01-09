@@ -52,7 +52,7 @@ export const PostCard = ({
   const hasMedia = post.media_url && post.media_url.length > 0;
 
   return (
-    <Card className="w-full bg-luxury-dark/30 border-luxury-primary/10 backdrop-blur-xl hover:shadow-luxury transition-all duration-300">
+    <Card className="post-card">
       <PostHeader 
         post={post} 
         isOwner={currentUserId === post.creator_id}
@@ -61,7 +61,7 @@ export const PostCard = ({
       
       {hasMedia && (
         <ProtectedMedia contentOwnerId={post.creator_id}>
-          <div className="relative w-full">
+          <div className="relative w-full mt-4 overflow-hidden rounded-xl">
             <div className="overflow-x-auto scrollbar-hide w-full">
               <div className="flex w-full">
                 {post.media_url.map((url, index) => (
@@ -100,40 +100,37 @@ export const PostCard = ({
         </ProtectedMedia>
       )}
 
-      <CardContent className="space-y-4 w-full p-6">
-        <p className="text-luxury-neutral/90 w-full">{post.content}</p>
+      <CardContent className="space-y-4 pt-4">
+        <p className="text-luxury-neutral/90">{post.content}</p>
         
-        <div className="flex items-center gap-4 w-full">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            className={cn(
-              "text-luxury-neutral/70 hover:text-luxury-neutral hover:bg-luxury-primary/10 flex-1 transition-colors duration-300",
-              liked && "text-luxury-primary hover:text-luxury-primary/80"
-            )}
+            className="post-action"
             onClick={handleLike}
           >
-            <Heart className={cn("w-5 h-5 mr-1.5", liked && "fill-current")} />
-            {post.likes_count || 0}
+            <Heart className={cn("w-5 h-5", liked && "fill-current text-luxury-primary")} />
+            <span>{post.likes_count || 0}</span>
           </Button>
           
           <Button
             variant="ghost"
             size="sm"
-            className="text-luxury-neutral/70 hover:text-luxury-neutral hover:bg-luxury-primary/10 flex-1 transition-colors duration-300"
+            className="post-action"
             onClick={handleCommentClick}
           >
-            <MessageCircle className="w-5 h-5 mr-1.5" />
-            {post.comments_count || 0}
+            <MessageCircle className="w-5 h-5" />
+            <span>{post.comments_count || 0}</span>
           </Button>
           
           <Button
             variant="ghost"
             size="sm"
-            className="text-luxury-neutral/70 hover:text-luxury-neutral hover:bg-luxury-primary/10 flex-1 transition-colors duration-300"
+            className="post-action"
             onClick={() => setIsShareDialogOpen(true)}
           >
-            <Share2 className="w-5 h-5 mr-1.5" />
+            <Share2 className="w-5 h-5" />
             Share
           </Button>
         </div>
