@@ -1,25 +1,30 @@
 import { useState, useEffect } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSession } from "@supabase/auth-helpers-react";
 
-interface MainLayoutProps {
-  children: React.ReactNode;
-}
-
-export const MainLayout = ({ children }: MainLayoutProps) => {
+export const MainLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const isMobile = useIsMobile();
+  const session = useSession();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (!session) {
+      navigate('/login');
+      return;
+    }
+    
     // Delay initialization to prevent flash of content
     const timer = setTimeout(() => {
       setIsInitialized(true);
     }, 100);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [session, navigate]);
 
   if (!isInitialized) {
     return null; // Return null during initialization to prevent flash
@@ -58,7 +63,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           </button>
         )}
         <div className="container mx-auto p-4 pt-16 lg:pt-4">
-          {children}
+          <Outlet />
         </div>
       </main>
     </div>

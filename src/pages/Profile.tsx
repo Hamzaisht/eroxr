@@ -7,7 +7,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
 
   return (
-    <div className="min-h-screen bg-luxury-dark">
+    <div className="min-h-screen">
       <ProfileContainer
         id={id}
         isEditing={isEditing}
