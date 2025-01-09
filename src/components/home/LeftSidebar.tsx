@@ -47,7 +47,7 @@ const container = {
   }
 };
 
-const item = {
+const itemVariant = {
   hidden: { opacity: 0, x: -20 },
   show: { opacity: 1, x: 0 }
 };
@@ -58,7 +58,7 @@ export const LeftSidebar = () => {
   if (!session) return null;
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full bg-luxury-dark/50 backdrop-blur-sm border-r border-luxury-neutral/10">
       <ScrollArea className="h-[calc(100vh-5rem)] px-4">
         {/* User Profile Section */}
         <motion.div
@@ -68,7 +68,7 @@ export const LeftSidebar = () => {
         >
           <Link 
             to={`/profile/${session.user.id}`} 
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-luxury-primary/10 transition-all group neo-blur"
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-luxury-primary/10 transition-all group"
           >
             <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/20">
               <AvatarImage src={session.user.user_metadata?.avatar_url} />
@@ -94,8 +94,8 @@ export const LeftSidebar = () => {
           animate="show"
           className="space-y-2"
         >
-          {menuItems.map((menuItem, index) => (
-            <motion.div key={menuItem.path} variants={item}>
+          {menuItems.map((menuItem) => (
+            <motion.div key={menuItem.path} variants={itemVariant}>
               <Button
                 variant="ghost"
                 asChild
@@ -121,8 +121,8 @@ export const LeftSidebar = () => {
             animate="show"
             className="space-y-2"
           >
-            {libraryItems.map((libraryItem, index) => (
-              <motion.div key={libraryItem.path} variants={item}>
+            {libraryItems.map((libraryItem) => (
+              <motion.div key={libraryItem.path} variants={itemVariant}>
                 <Button
                   variant="ghost"
                   asChild

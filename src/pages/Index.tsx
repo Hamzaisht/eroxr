@@ -21,25 +21,23 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#0D1117]">
       {/* Grid overlay */}
-      <div className="fixed inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
+      <div className="fixed inset-0 bg-[url('/grid.svg')] bg-center opacity-5 pointer-events-none" />
       
       <MainNav />
       
-      <div className="flex">
+      <div className="flex pt-16">
         {/* Left Sidebar */}
         <motion.aside 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block w-64 min-h-screen bg-[#0D1117] border-r border-luxury-neutral/10 pt-16 fixed left-0"
+          className="hidden lg:block w-64 fixed left-0 top-16 bottom-0 z-30"
         >
-          <div className="p-4">
-            <LeftSidebar />
-          </div>
+          <LeftSidebar />
         </motion.aside>
 
         {/* Main Content */}
-        <main className="flex-1 pt-16 lg:ml-64 lg:mr-80">
-          <div className="max-w-[680px] mx-auto px-4 py-6 space-y-6">
+        <main className="flex-1 min-h-[calc(100vh-4rem)] w-full lg:ml-64 lg:mr-80">
+          <div className="max-w-[800px] mx-auto px-4 py-6 space-y-6">
             {session && (
               <>
                 <motion.div 
@@ -77,9 +75,9 @@ const Index = () => {
         <motion.aside 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block w-80 min-h-screen bg-[#0D1117] pt-16 fixed right-0"
+          className="hidden lg:block w-80 fixed right-0 top-16 bottom-0 z-30"
         >
-          <div className="p-4">
+          <div className="h-full overflow-hidden">
             <RightSidebar />
           </div>
         </motion.aside>
