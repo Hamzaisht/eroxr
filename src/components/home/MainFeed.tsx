@@ -1,107 +1,59 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { StoryReel } from "@/components/StoryReel";
-import { CreatePostArea } from "./CreatePostArea";
-import { CreatorsFeed } from "@/components/CreatorsFeed";
-import { FeedHeader } from "./FeedHeader";
-import { ShortsFeed } from "./ShortsFeed";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { FeedHeader } from "./FeedHeader";
+import { CreatePostArea } from "./CreatePostArea";
+import { PostCard } from "../feed/PostCard";
+import { usePostActions } from "../feed/usePostActions";
+import { useFeedQuery } from "../feed/useFeedQuery";
+import { LoadingSkeleton } from "../feed/LoadingSkeleton";
+import { EmptyFeed } from "../feed/EmptyFeed";
 
-interface MainFeedProps {
-  isPayingCustomer: boolean | null;
-  onOpenCreatePost: () => void;
-  onFileSelect: (files: FileList | null) => void;
-  onOpenGoLive: () => void;
-}
-
-export const MainFeed = ({
-  isPayingCustomer,
-  onOpenCreatePost,
-  onFileSelect,
-  onOpenGoLive,
-}: MainFeedProps) => {
+export const MainFeed = () => {
   const [activeTab, setActiveTab] = useState("feed");
+  const { data: posts, isLoading } = useFeedQuery(activeTab);
+  const { handleLike, handleDelete } = usePostActions();
 
-  const renderFeedContent = () => {
-    switch (activeTab) {
-      case "popular":
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-          >
-            <CreatorsFeed feedType="popular" />
-          </motion.div>
-        );
-      case "recent":
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-          >
-            <CreatorsFeed feedType="recent" />
-          </motion.div>
-        );
-      case "shorts":
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-          >
-            <ShortsFeed />
-          </motion.div>
-        );
-      default:
-        return (
-          <div className="flex flex-col gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="w-full"
-            >
-              <CreatePostArea
-                onOpenCreatePost={onOpenCreatePost}
-                onFileSelect={onFileSelect}
-                onOpenGoLive={onOpenGoLive}
-                isPayingCustomer={isPayingCustomer}
-              />
-            </motion.div>
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <LoadingSkeleton />
+      </div>
+    );
+  }
 
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="w-full"
-            >
-              <StoryReel />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="w-full"
-            >
-              <CreatorsFeed feedType="feed" />
-            </motion.div>
-          </div>
-        );
-    }
-  };
+  if (!posts?.length) {
+    return <EmptyFeed />;
+  }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6 max-w-3xl mx-auto">
       <FeedHeader activeTab={activeTab} onTabChange={setActiveTab} />
-      <AnimatePresence mode="wait">
-        {renderFeedContent()}
-      </AnimatePresence>
-    </motion.div>
+      <CreatePostArea />
+      
+      <motion.div 
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        {posts.map((post) => (
+          <motion.div
+            key={post.id}
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PostCard
+              post={post}
+              onLike={handleLike}
+              onDelete={handleDelete}
+              currentUserId={post.creator_id}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
   );
 };

@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Users, Settings, MessageSquare, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const navigate = useNavigate();
   const session = useSession();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     try {
@@ -58,75 +60,93 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     },
   ];
 
+  const sidebarWidth = isSidebarCollapsed ? "w-16" : "w-64";
+  const sidebarClass = `fixed top-0 left-0 h-full z-50 transition-all duration-300 ${sidebarWidth}`;
+
   return (
     <div className="min-h-screen bg-luxury-dark flex">
-      <motion.div
+      {/* Sidebar */}
+      <motion.aside
         initial={false}
-        animate={{ width: isSidebarCollapsed ? "64px" : "256px" }}
-        className="relative bg-[#0D0D0D] border-r border-gray-800 min-h-screen"
+        animate={{ width: isSidebarCollapsed ? 64 : 256 }}
+        className={`${sidebarClass} bg-[#0D0D0D] border-r border-gray-800`}
       >
         {/* Logo */}
         <div className="p-4 border-b border-gray-800">
-          <h1 className="text-luxury-primary text-xl font-bold">Eroxr</h1>
+          <h1 className="text-luxury-primary text-xl font-bold truncate">
+            {!isSidebarCollapsed && "Eroxr"}
+          </h1>
         </div>
 
         {/* Menu Items */}
-        <div className="py-4">
-          {menuItems.map((item, index) => (
+        <nav className="py-4">
+          <AnimatePresence mode="wait">
+            {menuItems.map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ delay: index * 0.1 }}
+                className="px-4 py-3 cursor-pointer hover:bg-gray-800/50 transition-colors"
+                onClick={item.onClick}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  {!isSidebarCollapsed && (
+                    <div className="min-w-0">
+                      <p className="text-gray-200 truncate">{item.title}</p>
+                      <p className="text-sm text-gray-500 truncate">{item.subtitle}</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+
+            {/* Logout Button */}
             <motion.div
-              key={index}
-              className="px-4 py-3 cursor-pointer hover:bg-gray-800/50 transition-colors"
-              onClick={item.onClick}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="px-4 py-3 cursor-pointer hover:bg-gray-800/50 transition-colors mt-4"
+              onClick={handleLogout}
             >
               <div className="flex items-center gap-3">
-                <item.icon className="w-5 h-5 text-gray-400" />
+                <LogOut className="w-5 h-5 text-red-500 flex-shrink-0" />
                 {!isSidebarCollapsed && (
-                  <div>
-                    <p className="text-gray-200">{item.title}</p>
-                    <p className="text-sm text-gray-500">{item.subtitle}</p>
+                  <div className="min-w-0">
+                    <p className="text-red-500 truncate">Logout</p>
+                    <p className="text-sm text-gray-500 truncate">Sign out of your account</p>
                   </div>
                 )}
               </div>
             </motion.div>
-          ))}
-
-          {/* Logout Button */}
-          <motion.div
-            className="px-4 py-3 cursor-pointer hover:bg-gray-800/50 transition-colors mt-4"
-            onClick={handleLogout}
-          >
-            <div className="flex items-center gap-3">
-              <LogOut className="w-5 h-5 text-red-500" />
-              {!isSidebarCollapsed && (
-                <div>
-                  <p className="text-red-500">Logout</p>
-                  <p className="text-sm text-gray-500">Sign out of your account</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
+          </AnimatePresence>
+        </nav>
 
         {/* Collapse Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute -right-4 top-8 z-50 bg-luxury-dark/50 backdrop-blur-sm border border-luxury-neutral/10 rounded-full shadow-lg"
-          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        >
-          {isSidebarCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
-      </motion.div>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute -right-4 top-8 z-50 bg-luxury-dark/50 backdrop-blur-sm border border-luxury-neutral/10 rounded-full shadow-lg"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          >
+            {isSidebarCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+        )}
+      </motion.aside>
 
-      <div className="flex-1 bg-luxury-dark">
-        <main className="min-h-screen">
+      {/* Main Content */}
+      <div className={`flex-1 ${isMobile ? 'ml-0' : (isSidebarCollapsed ? 'ml-16' : 'ml-64')} transition-all duration-300`}>
+        <main className="min-h-screen container-fluid py-4 sm:py-6 lg:py-8">
           {children}
         </main>
       </div>
     </div>
   );
-};
+}

@@ -31,11 +31,80 @@
   * {
     @apply border-border;
   }
+  
+  html, body {
+    @apply h-full antialiased overflow-x-hidden;
+  }
+
   body {
-    @apply bg-luxury-dark text-luxury-neutral antialiased;
+    @apply bg-luxury-dark text-luxury-neutral min-h-screen;
+  }
+
+  #root {
+    @apply min-h-screen flex flex-col;
   }
 }
 
+/* Responsive container classes */
+.container-fluid {
+  @apply w-full px-4 mx-auto sm:px-6 lg:px-8;
+  max-width: 2000px;
+}
+
+.page-container {
+  @apply flex-grow w-full max-w-[2000px] mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Grid system */
+.grid-cols-responsive {
+  @apply grid gap-4 sm:gap-6 lg:gap-8;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* Card layouts */
+.card-grid {
+  @apply grid gap-4 sm:gap-6;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+/* Media aspect ratios */
+.media-square {
+  @apply relative w-full pb-[100%];
+}
+
+.media-portrait {
+  @apply relative w-full pb-[133.33%];
+}
+
+.media-content {
+  @apply absolute inset-0 w-full h-full object-cover;
+}
+
+/* Common spacing utilities */
+.section-spacing {
+  @apply py-6 sm:py-8 lg:py-12;
+}
+
+.content-spacing {
+  @apply space-y-4 sm:space-y-6 lg:space-y-8;
+}
+
+/* Mobile optimizations */
+.touch-target {
+  @apply min-h-[44px] min-w-[44px];
+}
+
+/* Scrollbar styling */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Glass effect */
 .glass-effect {
   @apply backdrop-blur-md bg-luxury-darker/30 border border-luxury-primary/10;
 }
@@ -44,6 +113,54 @@
   @apply backdrop-blur-sm bg-luxury-darker/40 border border-luxury-primary/5;
 }
 
+/* Text gradients */
 .text-gradient {
   @apply bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent;
+}
+
+/* Mobile menu transitions */
+.mobile-menu-enter {
+  @apply transform translate-x-full;
+}
+
+.mobile-menu-enter-active {
+  @apply transform translate-x-0 transition-transform duration-300 ease-in-out;
+}
+
+.mobile-menu-exit {
+  @apply transform translate-x-0;
+}
+
+.mobile-menu-exit-active {
+  @apply transform translate-x-full transition-transform duration-300 ease-in-out;
+}
+
+/* Loading states */
+.skeleton {
+  @apply animate-pulse bg-luxury-softgray/20 rounded;
+}
+
+/* Responsive typography */
+.h1 {
+  @apply text-2xl sm:text-3xl lg:text-4xl font-bold;
+}
+
+.h2 {
+  @apply text-xl sm:text-2xl lg:text-3xl font-bold;
+}
+
+.h3 {
+  @apply text-lg sm:text-xl lg:text-2xl font-bold;
+}
+
+.body-large {
+  @apply text-base sm:text-lg;
+}
+
+.body {
+  @apply text-sm sm:text-base;
+}
+
+.caption {
+  @apply text-xs sm:text-sm text-luxury-muted;
 }
