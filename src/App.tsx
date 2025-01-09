@@ -7,6 +7,9 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
+import Messages from "@/pages/Messages";
+import Settings from "@/pages/Settings";
+import Eroboard from "@/pages/Eroboard";
 
 const queryClient = new QueryClient();
 
@@ -20,10 +23,13 @@ function App() {
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Home />} />
               <Route path="/profile/:id?" element={<Profile />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/eroboard" element={<Eroboard />} />
             </Route>
           </Routes>
+          <Toaster />
         </Router>
-        <Toaster />
       </QueryClientProvider>
     </SessionContextProvider>
   );
