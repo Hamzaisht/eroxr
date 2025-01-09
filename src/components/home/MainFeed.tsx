@@ -8,6 +8,8 @@ import { useFeedQuery } from "../feed/useFeedQuery";
 import { LoadingSkeleton } from "../feed/LoadingSkeleton";
 import { EmptyFeed } from "../feed/EmptyFeed";
 
+type TabValue = 'feed' | 'popular' | 'recent' | 'shorts';
+
 interface MainFeedProps {
   isPayingCustomer: boolean | null;
   onOpenCreatePost: () => void;
@@ -21,7 +23,7 @@ export const MainFeed = ({
   onFileSelect,
   onOpenGoLive,
 }: MainFeedProps) => {
-  const [activeTab, setActiveTab] = useState<'feed' | 'popular' | 'recent' | 'shorts'>('feed');
+  const [activeTab, setActiveTab] = useState<TabValue>('feed');
   const { data, isLoading } = useFeedQuery(undefined, activeTab);
   const { handleLike, handleDelete } = usePostActions();
 

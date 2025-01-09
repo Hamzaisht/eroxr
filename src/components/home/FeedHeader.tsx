@@ -1,8 +1,10 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+type TabValue = 'feed' | 'popular' | 'recent' | 'shorts';
+
 interface FeedHeaderProps {
-  activeTab: string;
-  onTabChange: (value: string) => void;
+  activeTab: TabValue;
+  onTabChange: (value: TabValue) => void;
 }
 
 export const FeedHeader = ({ activeTab, onTabChange }: FeedHeaderProps) => {
