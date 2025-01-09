@@ -26,31 +26,44 @@ const Index = () => {
       <MainNav />
       
       <div className="pt-16"> {/* Add padding top to account for fixed navbar */}
-        <div className="container mx-auto px-4">
-          <div className="flex gap-4">
+        <div className="container mx-auto">
+          <div className="flex gap-6">
             {/* Left Sidebar - Hidden on mobile, shown on lg screens */}
-            <div className="hidden lg:block w-[280px] flex-shrink-0">
-              <div className="sticky top-20">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="hidden lg:block w-[280px] flex-shrink-0"
+            >
+              <div className="sticky top-20 glass-effect rounded-xl p-4">
                 <LeftSidebar />
               </div>
-            </div>
+            </motion.div>
 
             {/* Main Content */}
-            <main className="flex-1 max-w-[680px] mx-auto">
+            <main className="flex-1 max-w-[680px] mx-auto w-full px-4 lg:px-0">
               <div className="space-y-4">
                 {session && (
                   <>
-                    <div className="glass-effect rounded-xl p-4">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="glass-effect rounded-xl p-4"
+                    >
                       <StoryReel />
-                    </div>
-                    <div className="glass-effect rounded-xl p-4">
+                    </motion.div>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="glass-effect rounded-xl p-4"
+                    >
                       <CreatePostArea
                         onOpenCreatePost={() => setIsCreatePostOpen(true)}
                         onFileSelect={setSelectedFiles}
                         onOpenGoLive={() => setIsGoLiveOpen(true)}
                         isPayingCustomer={isPayingCustomer}
                       />
-                    </div>
+                    </motion.div>
                   </>
                 )}
                 <MainFeed
@@ -63,11 +76,13 @@ const Index = () => {
             </main>
 
             {/* Right Sidebar - Hidden on mobile, shown on lg screens */}
-            <div className="hidden lg:block w-[320px] flex-shrink-0">
-              <div className="sticky top-20">
-                <div className="glass-effect rounded-xl p-4">
-                  <RightSidebar />
-                </div>
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="hidden lg:block w-[320px] flex-shrink-0"
+            >
+              <div className="sticky top-20 glass-effect rounded-xl p-4">
+                <RightSidebar />
               </div>
             </div>
           </div>

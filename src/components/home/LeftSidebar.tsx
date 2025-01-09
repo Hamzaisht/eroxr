@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Home, 
   Compass, 
-  ShoppingBag, 
   Users, 
   Heart, 
   MessageCircle, 
@@ -16,14 +15,16 @@ import {
   Clock,
   Star,
   Music,
-  Menu
+  Menu,
+  Video,
+  TrendingUp
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const menuItems = [
   { icon: Home, label: "Feed", path: "/home" },
   { icon: Compass, label: "Explore", path: "/explore" },
-  { icon: ShoppingBag, label: "Marketplace", path: "/marketplace" },
+  { icon: Video, label: "Shorts", path: "/shorts" },
   { icon: Users, label: "Groups", path: "/groups" },
   { icon: PlayCircle, label: "Live", path: "/live" },
 ];
@@ -33,7 +34,7 @@ const libraryItems = [
   { icon: Bookmark, label: "Saved", path: "/saved" },
   { icon: Clock, label: "Recent", path: "/recent" },
   { icon: Star, label: "Featured", path: "/featured" },
-  { icon: Music, label: "Playlists", path: "/playlists" },
+  { icon: TrendingUp, label: "Trending", path: "/trending" },
 ];
 
 export const LeftSidebar = () => {
@@ -43,9 +44,9 @@ export const LeftSidebar = () => {
 
   return (
     <div className="w-full">
-      <ScrollArea className="h-[calc(100vh-5rem)]">
+      <ScrollArea className="h-[calc(100vh-5rem)] pr-4">
         {/* User Profile Section */}
-        <Link to={`/profile/${session.user.id}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-luxury-neutral/5 transition-all group">
+        <Link to={`/profile/${session.user.id}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-luxury-primary/10 transition-all group">
           <Avatar className="h-8 w-8 ring-2 ring-luxury-primary/20">
             <AvatarImage src={session.user.user_metadata?.avatar_url} />
             <AvatarFallback className="bg-luxury-primary/20">
@@ -59,7 +60,7 @@ export const LeftSidebar = () => {
 
         {/* Main Menu */}
         <nav className="mt-4 space-y-1">
-          {menuItems.map((item, index) => (
+          {menuItems.map((item) => (
             <Button
               key={item.path}
               variant="ghost"
