@@ -2,14 +2,17 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Shield, Users, Lock, CheckCircle } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Landing = () => {
+  const isMobile = useIsMobile();
+
   return (
     <div className="min-h-screen bg-luxury-dark">
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-20 relative overflow-hidden">
+      <section className="pt-24 md:pt-32 pb-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
         <div className="container mx-auto px-4">
           <motion.div
@@ -17,18 +20,25 @@ const Landing = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-3xl mx-auto text-center"
           >
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-luxury-neutral to-luxury-primary bg-clip-text text-transparent mb-6">
+            <h1 className="text-3xl md:text-6xl font-bold bg-gradient-to-r from-luxury-neutral to-luxury-primary bg-clip-text text-transparent mb-6">
               Connect with Verified Members
             </h1>
-            <p className="text-xl text-luxury-neutral/80 mb-8">
+            <p className="text-lg md:text-xl text-luxury-neutral/80 mb-8">
               A secure and private platform for open-minded adults to connect and meet.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-button-gradient hover:bg-hover-gradient">
+              <Button 
+                size={isMobile ? "default" : "lg"} 
+                className="w-full sm:w-auto bg-button-gradient hover:bg-hover-gradient"
+              >
                 Get Started
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-5 w-5 ml-1" />
               </Button>
-              <Button size="lg" variant="outline" className="border-luxury-neutral text-luxury-neutral">
+              <Button 
+                size={isMobile ? "default" : "lg"} 
+                variant="outline" 
+                className="w-full sm:w-auto border-luxury-neutral text-luxury-neutral"
+              >
                 Learn More
               </Button>
             </div>
@@ -37,12 +47,13 @@ const Landing = () => {
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-luxury-dark/95" id="features">
+      <section className="py-16 md:py-20 bg-luxury-dark/95" id="features">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
               className="text-center p-6"
             >
               <div className="h-12 w-12 rounded-full bg-luxury-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -54,6 +65,7 @@ const Landing = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
               transition={{ delay: 0.1 }}
               className="text-center p-6"
             >
@@ -66,6 +78,7 @@ const Landing = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
               transition={{ delay: 0.2 }}
               className="text-center p-6"
             >
@@ -85,9 +98,10 @@ const Landing = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
             className="max-w-3xl mx-auto text-center"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-luxury-neutral mb-6">
+            <h2 className="text-2xl md:text-4xl font-bold text-luxury-neutral mb-6">
               Your Safety Matters
             </h2>
             <p className="text-luxury-neutral/60 mb-8">
