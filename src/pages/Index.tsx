@@ -19,33 +19,33 @@ const Index = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
 
   return (
-    <div className="min-h-screen bg-luxury-dark">
+    <div className="min-h-screen bg-[#0D1117]">
       {/* Grid overlay */}
       <div className="fixed inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
       
       <MainNav />
       
-      <div className="flex min-h-screen pt-16">
-        {/* Left Sidebar - Fixed width, always visible on desktop */}
-        <motion.div 
+      <div className="flex">
+        {/* Left Sidebar */}
+        <motion.aside 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block w-[280px] flex-shrink-0 p-4"
+          className="hidden lg:block w-64 min-h-screen bg-[#0D1117] border-r border-luxury-neutral/10 pt-16 fixed left-0"
         >
-          <div className="sticky top-20">
+          <div className="p-4">
             <LeftSidebar />
           </div>
-        </motion.div>
+        </motion.aside>
 
-        {/* Main Content - Fixed width, centered */}
-        <main className="flex-1 max-w-[680px] mx-auto w-full px-4 lg:px-6">
-          <div className="space-y-4 py-4">
+        {/* Main Content */}
+        <main className="flex-1 pt-16 lg:ml-64 lg:mr-80">
+          <div className="max-w-[680px] mx-auto px-4 py-6 space-y-6">
             {session && (
               <>
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="glass-effect rounded-xl p-4"
+                  className="neo-blur rounded-xl p-4"
                 >
                   <StoryReel />
                 </motion.div>
@@ -53,7 +53,7 @@ const Index = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="glass-effect rounded-xl p-4"
+                  className="neo-blur rounded-xl p-4"
                 >
                   <CreatePostArea
                     onOpenCreatePost={() => setIsCreatePostOpen(true)}
@@ -73,16 +73,16 @@ const Index = () => {
           </div>
         </main>
 
-        {/* Right Sidebar - Fixed width, always visible on desktop */}
-        <motion.div 
+        {/* Right Sidebar */}
+        <motion.aside 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block w-[320px] flex-shrink-0 p-4"
+          className="hidden lg:block w-80 min-h-screen bg-[#0D1117] pt-16 fixed right-0"
         >
-          <div className="sticky top-20">
+          <div className="p-4">
             <RightSidebar />
           </div>
-        </motion.div>
+        </motion.aside>
       </div>
 
       <UploadShortButton />
