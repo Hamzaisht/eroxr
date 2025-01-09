@@ -18,13 +18,16 @@ const Index = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to">
+      <div className="fixed inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
+      
       <MainNav />
+      
       <motion.main
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="container mx-auto px-4 py-6 max-w-[2000px]"
+        className="container mx-auto px-4 py-6 max-w-[2000px] relative z-10"
       >
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_340px] gap-6">
           {/* Left Sidebar */}
@@ -34,7 +37,11 @@ const Index = () => {
             transition={{ delay: 0.2 }}
             className="hidden lg:block"
           >
-            <LeftSidebar />
+            <div className="sticky top-20">
+              <div className="glass-effect rounded-xl p-6">
+                <LeftSidebar />
+              </div>
+            </div>
           </motion.div>
 
           {/* Main Content */}
@@ -46,13 +53,17 @@ const Index = () => {
           >
             {session && (
               <>
-                <StoryReel />
-                <CreatePostArea
-                  onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                  onFileSelect={setSelectedFiles}
-                  onOpenGoLive={() => setIsGoLiveOpen(true)}
-                  isPayingCustomer={isPayingCustomer}
-                />
+                <div className="glass-effect rounded-xl p-6 backdrop-blur-xl">
+                  <StoryReel />
+                </div>
+                <div className="neo-blur rounded-xl">
+                  <CreatePostArea
+                    onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                    onFileSelect={setSelectedFiles}
+                    onOpenGoLive={() => setIsGoLiveOpen(true)}
+                    isPayingCustomer={isPayingCustomer}
+                  />
+                </div>
               </>
             )}
             <MainFeed
@@ -70,7 +81,11 @@ const Index = () => {
             transition={{ delay: 0.4 }}
             className="hidden lg:block"
           >
-            <RightSidebar />
+            <div className="sticky top-20">
+              <div className="glass-effect rounded-xl p-6">
+                <RightSidebar />
+              </div>
+            </div>
           </motion.div>
         </div>
       </motion.main>

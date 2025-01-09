@@ -54,7 +54,9 @@ export const MainFeed = ({
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      <FeedHeader activeTab={activeTab} onTabChange={setActiveTab} />
+      <div className="glass-effect rounded-xl p-4">
+        <FeedHeader activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
       
       {session && (
         <CreatePostArea 
@@ -72,7 +74,9 @@ export const MainFeed = ({
         transition={{ duration: 0.5 }}
       >
         {posts.length === 0 ? (
-          <EmptyFeed />
+          <div className="glass-effect rounded-xl p-8">
+            <EmptyFeed />
+          </div>
         ) : (
           posts.map((post) => (
             <motion.div
@@ -82,6 +86,7 @@ export const MainFeed = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
+              className="glass-effect rounded-xl overflow-hidden hover:shadow-luxury hover:scale-[1.02] transition-all duration-300"
             >
               <PostCard
                 post={post}
