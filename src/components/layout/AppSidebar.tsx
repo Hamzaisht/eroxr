@@ -1,6 +1,6 @@
+import { motion } from "framer-motion";
 import { MessageSquare, Settings, User, Users, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Logo } from "@/components/MainNav/Logo";
 import { SidebarMenuItem } from "@/components/ui/sidebar/SidebarMenuItem";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface AppSidebarProps {
-  collapsed?: boolean;
   onClose?: () => void;
 }
 
@@ -40,17 +39,25 @@ const menuItems = [
   },
 ];
 
-export function AppSidebar({ collapsed, onClose }: AppSidebarProps) {
+export function AppSidebar({ onClose }: AppSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useSession();
   const { toast } = useToast();
+
+  const handleNavigation = (url: string) => {
+    navigate(url);
+    if (onClose) {
+      onClose();
+    }
+  };
 
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       navigate("/");
+      if (onClose) onClose();
       toast({
         title: "Signed out successfully",
         description: "Come back soon!",
@@ -68,7 +75,7 @@ export function AppSidebar({ collapsed, onClose }: AppSidebarProps) {
     <motion.aside
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="fixed left-0 top-0 z-50 h-screen bg-gradient-to-b from-luxury-dark via-luxury-dark/95 to-luxury-dark border-r border-luxury-neutral/10"
+      className="h-screen bg-gradient-to-b from-luxury-dark via-luxury-dark/95 to-luxury-dark border-r border-luxury-neutral/10"
     >
       <div className="flex h-full flex-col">
         {/* Logo Area */}
@@ -87,7 +94,7 @@ export function AppSidebar({ collapsed, onClose }: AppSidebarProps) {
               >
                 <SidebarMenuItem
                   variant={location.pathname === item.url ? "active" : "default"}
-                  onClick={() => navigate(item.url)}
+                  onClick={() => handleNavigation(item.url)}
                   className={`w-full ${
                     location.pathname === item.url
                       ? "bg-luxury-primary/10 text-luxury-primary"
@@ -95,14 +102,12 @@ export function AppSidebar({ collapsed, onClose }: AppSidebarProps) {
                   }`}
                 >
                   <item.icon className="h-5 w-5" />
-                  {!collapsed && (
-                    <div className="flex flex-col">
-                      <span className="font-medium">{item.title}</span>
-                      <span className="text-xs text-luxury-neutral/70">
-                        {item.description}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex flex-col">
+                    <span className="font-medium">{item.title}</span>
+                    <span className="text-xs text-luxury-neutral/70">
+                      {item.description}
+                    </span>
+                  </div>
                 </SidebarMenuItem>
               </motion.li>
             ))}
@@ -117,42 +122,38 @@ export function AppSidebar({ collapsed, onClose }: AppSidebarProps) {
                 className="w-full text-red-500 hover:bg-red-500/5 hover:text-red-600"
               >
                 <LogOut className="h-5 w-5" />
-                {!collapsed && (
-                  <div className="flex flex-col">
-                    <span className="font-medium">Logout</span>
-                    <span className="text-xs text-red-500/70">
-                      Sign out of your account
-                    </span>
-                  </div>
-                )}
+                <div className="flex flex-col">
+                  <span className="font-medium">Logout</span>
+                  <span className="text-xs text-red-500/70">
+                    Sign out of your account
+                  </span>
+                </div>
               </SidebarMenuItem>
             </motion.li>
           </ul>
         </nav>
 
         {/* User Profile Section */}
-        {!collapsed && (
-          <div className="mt-auto border-t border-luxury-neutral/10 p-4">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="flex items-center gap-3 rounded-lg bg-luxury-primary/5 p-3 cursor-pointer"
-              onClick={() => navigate("/profile")}
-            >
-              <Avatar className="h-10 w-10 border-2 border-luxury-primary/20">
-                <AvatarImage src={session?.user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-luxury-primary/20">
-                  {session?.user?.email?.[0]?.toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="font-medium text-luxury-neutral">
-                  {session?.user?.user_metadata?.username || "Guest"}
-                </span>
-                <span className="text-xs text-luxury-neutral/70">View Profile</span>
-              </div>
-            </motion.div>
-          </div>
-        )}
+        <div className="mt-auto border-t border-luxury-neutral/10 p-4">
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="flex items-center gap-3 rounded-lg bg-luxury-primary/5 p-3 cursor-pointer"
+            onClick={() => handleNavigation("/profile")}
+          >
+            <Avatar className="h-10 w-10 border-2 border-luxury-primary/20">
+              <AvatarImage src={session?.user?.user_metadata?.avatar_url} />
+              <AvatarFallback className="bg-luxury-primary/20">
+                {session?.user?.email?.[0]?.toUpperCase() || "?"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="font-medium text-luxury-neutral">
+                {session?.user?.user_metadata?.username || "Guest"}
+              </span>
+              <span className="text-xs text-luxury-neutral/70">View Profile</span>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </motion.aside>
   );
