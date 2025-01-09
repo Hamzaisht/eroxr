@@ -36,8 +36,8 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   const posts = data?.pages.flat() || [];
 
   return (
-    <div className="w-full">
-      <ScrollArea className="h-[calc(100vh-220px)]">
+    <div className="w-full max-w-3xl mx-auto">
+      <ScrollArea className="h-[calc(100vh-280px)]">
         <div className="space-y-8">
           {isLoading ? (
             <LoadingSkeleton />

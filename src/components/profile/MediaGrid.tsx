@@ -52,8 +52,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
           <Skeleton key={i} className="aspect-[4/5] rounded-lg" />
         ))}
       </div>
@@ -80,7 +80,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         }}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
       >
         {mediaItems.map((mediaItem, index) => (
           <motion.div
