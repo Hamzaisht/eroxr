@@ -62,7 +62,7 @@ export default function Index() {
 
         {/* Main Content */}
         <main className="flex-1 min-h-[calc(100vh-4rem)]">
-          <div className="max-w-[900px] mx-auto px-4 py-6 space-y-6">
+          <div className="container max-w-[1200px] mx-auto px-4 py-6 space-y-6">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
