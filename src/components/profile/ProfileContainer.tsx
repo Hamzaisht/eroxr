@@ -48,12 +48,12 @@ export const ProfileContainer = ({ id, isEditing = false, setIsEditing }: Profil
   if (loading) {
     return (
       <div className="w-full min-h-screen bg-luxury-dark">
-        <div className="h-[60vh] w-full bg-luxury-darker/50 animate-pulse" />
-        <div className="max-w-screen-2xl mx-auto px-4 lg:px-8">
-          <div className="relative -mt-24 flex flex-col items-center gap-6">
-            <Skeleton className="w-40 h-40 rounded-full" />
-            <Skeleton className="w-2/3 h-8" />
-            <Skeleton className="w-1/2 h-4" />
+        <div className="h-[40vh] sm:h-[50vh] md:h-[60vh] w-full bg-luxury-darker/50 animate-pulse" />
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative -mt-16 sm:-mt-20 md:-mt-24 flex flex-col items-center gap-4 sm:gap-6">
+            <Skeleton className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full" />
+            <Skeleton className="w-3/4 sm:w-2/3 md:w-1/2 h-8" />
+            <Skeleton className="w-2/3 sm:w-1/2 md:w-1/3 h-4" />
           </div>
         </div>
       </div>

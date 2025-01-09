@@ -10,52 +10,52 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
   const canAccessBodyContact = profile?.is_paying_customer || profile?.id_verification_status === 'verified';
 
   return (
-    <div className="w-full min-h-[calc(100vh-24rem)] bg-luxury-dark">
+    <div className="w-full min-h-[calc(100vh-24rem)]">
       <Tabs defaultValue="showcase" className="w-full">
         <div className="sticky top-16 z-50 bg-luxury-dark/95 backdrop-blur-lg border-b border-luxury-primary/10">
-          <div className="max-w-[1400px] mx-auto">
-            <TabsList className="w-full justify-start rounded-none bg-transparent h-16 px-4">
+          <div className="max-w-[1400px] mx-auto px-4">
+            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap rounded-none bg-transparent h-14 sm:h-16 -mb-px">
               <TabsTrigger 
                 value="showcase" 
-                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-6 py-3 rounded-xl flex items-center gap-2"
+                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center gap-2 whitespace-nowrap"
               >
                 <CircuitBoard className="h-4 w-4" />
-                Showcase
+                <span className="hidden sm:inline">Showcase</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="media" 
-                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-6 py-3 rounded-xl flex items-center gap-2"
+                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center gap-2 whitespace-nowrap"
               >
                 <Image className="h-4 w-4" />
-                Media
+                <span className="hidden sm:inline">Media</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="subscribers" 
-                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-6 py-3 rounded-xl flex items-center gap-2"
+                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center gap-2 whitespace-nowrap"
               >
                 <Users className="h-4 w-4" />
-                Subscribers
+                <span className="hidden sm:inline">Subscribers</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="likes" 
-                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-6 py-3 rounded-xl flex items-center gap-2"
+                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center gap-2 whitespace-nowrap"
               >
                 <Heart className="h-4 w-4" />
-                Likes
+                <span className="hidden sm:inline">Likes</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="bodycontact" 
-                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-6 py-3 rounded-xl flex items-center gap-2"
+                className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center gap-2 whitespace-nowrap"
                 disabled={!canAccessBodyContact}
               >
                 <MessageCircle className="h-4 w-4" />
-                Body Contact
+                <span className="hidden sm:inline">Body Contact</span>
               </TabsTrigger>
             </TabsList>
           </div>
         </div>
 
-        <div className="max-w-[1400px] mx-auto px-4 py-8">
+        <div className="max-w-[1400px] mx-auto px-4 py-4 sm:py-6 md:py-8">
           <AnimatePresence mode="wait">
             <TabsContent value="showcase" className="mt-0 min-h-[300px]">
               <CreatorsFeed feedType="recent" />

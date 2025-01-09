@@ -20,17 +20,13 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const { data: mediaItems = [], isLoading } = useQuery({
     queryKey: ["profile-media", session?.user?.id],
     queryFn: async () => {
-      console.log("Fetching media for user:", session?.user?.id);
       const { data: posts, error } = await supabase
         .from("posts")
         .select("id, media_url, video_urls, is_ppv, created_at")
         .eq("creator_id", session?.user?.id)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching posts:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       const media = posts?.flatMap(post => {
         const mediaUrls = [...(post.media_url || []), ...(post.video_urls || [])];
@@ -51,7 +47,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-4">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <Skeleton key={i} className="aspect-[4/5] rounded-lg" />
         ))}
@@ -61,7 +57,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
 
   if (!mediaItems.length) {
     return (
-      <div className="text-center text-muted-foreground p-12">
+      <div className="text-center text-muted-foreground p-6 sm:p-12">
         No media content yet
       </div>
     );
@@ -79,7 +75,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         }}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-4"
       >
         {mediaItems.map((mediaItem, index) => (
           <motion.div
@@ -115,12 +111,12 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
             
             {mediaItem.isPremium && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-                <Lock className="w-8 h-8 text-primary mb-2" />
-                <p className="text-white font-medium text-sm">Premium Content</p>
+                <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+                <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
                 <Button 
                   size="sm"
                   variant="secondary"
-                  className="mt-2"
+                  className="mt-2 text-xs sm:text-sm"
                 >
                   Subscribe to Unlock
                 </Button>
