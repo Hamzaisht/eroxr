@@ -53,7 +53,7 @@ export default function Index() {
         <motion.aside 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block fixed left-0 top-16 bottom-0 z-30 w-72 bg-luxury-dark/95 backdrop-blur-lg border-r border-luxury-neutral/5"
+          className="hidden lg:block fixed left-0 top-16 bottom-0 z-30 w-72 bg-[#0D1117] border-r border-luxury-neutral/10"
         >
           <ScrollArea className="h-full">
             <LeftSidebar />
@@ -96,7 +96,7 @@ export default function Index() {
           animate={{ opacity: 1, x: 0 }}
           className="hidden lg:block w-80 fixed right-0 top-16 bottom-0 z-30"
         >
-          <div className="h-full bg-luxury-dark/95 backdrop-blur-lg border-l border-luxury-neutral/5">
+          <div className="h-full bg-[#0D1117] border-l border-luxury-neutral/10">
             <ScrollArea className="h-full p-4">
               <div className="space-y-6">
                 <TrendingTopics />
