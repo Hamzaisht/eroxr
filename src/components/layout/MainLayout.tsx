@@ -35,8 +35,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen bg-luxury-dark">
       {/* Main Content */}
-      <main className="flex-1">
-        <div className="container mx-auto p-4 pt-16 lg:pt-4 min-h-screen">
+      <main className="min-h-screen">
+        <div className="min-h-screen">
           {children || <Outlet />}
         </div>
       </main>
