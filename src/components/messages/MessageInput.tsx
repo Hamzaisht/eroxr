@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Video, Image } from "lucide-react";
+import { Send, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MediaDialog } from "./MediaDialog";
 import { SnapButton } from "./SnapButton";
@@ -59,14 +59,6 @@ export const MessageInput = ({
             placeholder="Type a message..."
             className="flex-1"
           />
-          <Button
-            type="button"
-            size="icon"
-            variant={isRecording ? "destructive" : "secondary"}
-            onClick={isRecording ? onStopRecording : onStartRecording}
-          >
-            <Video className={cn("h-4 w-4", isRecording && "animate-pulse")} />
-          </Button>
           <Button type="submit" size="icon">
             <Send className="h-4 w-4" />
           </Button>

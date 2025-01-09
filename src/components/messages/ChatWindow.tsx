@@ -6,6 +6,10 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DirectMessage } from "@/integrations/supabase/types/message";
+import { Button } from "@/components/ui/button";
+import { PhoneCall } from "lucide-react";
+import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
+import { usePresence } from "@/components/profile/avatar/usePresence";
 
 interface ChatWindowProps {
   recipientId: string;
@@ -22,6 +26,16 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
       description: "Video message sent successfully",
     });
   });
+
+  // Get recipient's presence status
+  const { availability } = usePresence(recipientId, false);
+
+  const handleCall = () => {
+    toast({
+      title: "Starting call...",
+      description: "This feature is coming soon!",
+    });
+  };
 
   const handleSendMessage = async (content: string) => {
     if (!session?.user?.id) return;
@@ -133,6 +147,25 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
 
   return (
     <div className="flex flex-col h-full">
+      {/* Header with status and call button */}
+      <div className="flex items-center justify-between p-4 border-b border-luxury-neutral/10">
+        <div className="flex items-center gap-2">
+          <AvailabilityIndicator status={availability} size={10} />
+          <span className="text-sm text-luxury-neutral/70 capitalize">
+            {availability}
+          </span>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hover:bg-luxury-neutral/10"
+          onClick={handleCall}
+        >
+          <PhoneCall className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <MessageBubble
@@ -143,6 +176,8 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
           />
         ))}
       </div>
+
+      {/* Input area */}
       <MessageInput
         onSendMessage={handleSendMessage}
         onStartRecording={startRecording}
