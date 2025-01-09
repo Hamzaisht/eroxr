@@ -4,11 +4,11 @@ import { StoryReel } from "@/components/StoryReel";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { MainFeed } from "@/components/home/MainFeed";
 import { RightSidebar } from "@/components/home/RightSidebar";
-import { LeftSidebar } from "@/components/home/LeftSidebar";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { GoLiveDialog } from "@/components/home/GoLiveDialog";
+import { UploadShortButton } from "@/components/home/UploadShortButton";
 
 const Index = () => {
   const session = useSession();
@@ -30,21 +30,7 @@ const Index = () => {
         transition={{ duration: 0.5 }}
         className="container mx-auto px-4 py-6 max-w-[2000px] relative z-10"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_340px] gap-6">
-          {/* Left Sidebar */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="hidden lg:block"
-          >
-            <div className="sticky top-20">
-              <div className="glass-effect rounded-xl p-6">
-                <LeftSidebar />
-              </div>
-            </div>
-          </motion.div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
           {/* Main Content */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -90,6 +76,8 @@ const Index = () => {
           </motion.div>
         </div>
       </motion.main>
+
+      <UploadShortButton />
 
       <CreatePostDialog
         open={isCreatePostOpen}
