@@ -20,6 +20,15 @@ export const UserMenu = () => {
   const session = useSession();
   const { toast } = useToast();
 
+  const handleLogin = () => navigate('/login');
+  const handleSignUp = () => {
+    navigate('/login');
+    toast({
+      title: "Join our community!",
+      description: "Create your account to get started.",
+    });
+  };
+
   // Set up session refresh handling
   useEffect(() => {
     const {
@@ -50,7 +59,6 @@ export const UserMenu = () => {
       if (!session?.user?.id) return null;
       
       try {
-        // First fetch the profile
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
@@ -62,7 +70,6 @@ export const UserMenu = () => {
           throw profileError;
         }
 
-        // Then fetch user roles
         const { data: roleData, error: rolesError } = await supabase
           .from("user_roles")
           .select("role")
@@ -74,10 +81,8 @@ export const UserMenu = () => {
           throw rolesError;
         }
 
-        // Get the role or default to 'user'
         const userRole = roleData?.role || 'user';
 
-        // Combine the data and ensure status is a valid AvailabilityStatus
         return profileData ? {
           ...profileData,
           role: userRole,
@@ -118,8 +123,25 @@ export const UserMenu = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/login');
+      toast({
+        title: "Signed out successfully",
+        description: "Come back soon!",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error signing out",
+        description: "Please try again later",
+      });
+    }
+  };
+
   if (!session || isLoading) {
-    return <GuestButtons />;
+    return <GuestButtons onLogin={handleLogin} onSignUp={handleSignUp} />;
   }
 
   return (
@@ -140,10 +162,7 @@ export const UserMenu = () => {
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end">
-          <UserMenuItems onLogout={() => {
-            supabase.auth.signOut();
-            navigate('/login');
-          }} />
+          <UserMenuItems onLogout={handleLogout} />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
