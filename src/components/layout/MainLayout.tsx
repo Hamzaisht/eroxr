@@ -42,22 +42,17 @@ export const MainLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D1117] relative">
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-[0.02]" />
+    <div className="min-h-screen bg-[#0D1117]">
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
       <div className="absolute inset-0">
-        <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-luxury-primary/5 blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-luxury-accent/5 blur-3xl animate-pulse" />
+        <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-luxury-primary/10 blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-luxury-accent/10 blur-3xl animate-pulse" />
       </div>
       
       <InteractiveNav />
       
-      <motion.main 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="relative min-h-screen pl-20 w-full"
-      >
-        <div className="min-h-screen w-full backdrop-blur-sm px-4 py-6">
+      <main className="relative min-h-screen pl-20 w-full backdrop-blur-sm">
+        <div className="min-h-screen w-full px-4 py-6">
           <Outlet />
         </div>
 
@@ -102,7 +97,7 @@ export const MainLayout = () => {
             <Video className="h-6 w-6 text-white" />
           </motion.button>
         </div>
-      </motion.main>
+      </main>
 
       <CreatePostDialog 
         open={isCreatePostOpen} 
