@@ -63,7 +63,7 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
                 visibility: (post.visibility || 'public') as 'public' | 'subscribers_only',
                 is_ppv: post.is_ppv || false,
                 has_liked: post.has_liked || false,
-                updated_at: post.created_at,
+                updated_at: post.updated_at || post.created_at,
                 screenshots_count: post.screenshots_count || 0,
                 downloads_count: post.downloads_count || 0,
                 creator: {

@@ -85,7 +85,8 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
         has_liked: false,
         visibility: post.visibility || 'public',
         screenshots_count: post.screenshots_count || 0,
-        downloads_count: post.downloads_count || 0
+        downloads_count: post.downloads_count || 0,
+        updated_at: post.updated_at || post.created_at
       })) || [];
     },
     getNextPageParam: (lastPage, allPages) => {

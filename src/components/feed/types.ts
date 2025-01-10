@@ -2,6 +2,7 @@ export type Post = {
   id: string;
   content: string;
   created_at: string;
+  updated_at: string;
   creator_id: string;
   creator: {
     username: string | null;
