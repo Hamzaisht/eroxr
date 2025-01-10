@@ -8,7 +8,7 @@ export const NavLinks = () => {
       <NavLink 
         to="/home" 
         className={({ isActive }) => 
-          `group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-300 hover:bg-luxury-primary/10 ${
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
           }`
         }
@@ -17,7 +17,7 @@ export const NavLinks = () => {
         <motion.span 
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         >
           Home
         </motion.span>
@@ -26,7 +26,7 @@ export const NavLinks = () => {
       <NavLink 
         to="/dating" 
         className={({ isActive }) => 
-          `group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-300 hover:bg-luxury-primary/10 ${
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
           }`
         }
@@ -35,7 +35,7 @@ export const NavLinks = () => {
         <motion.span 
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         >
           Dating
         </motion.span>
@@ -44,7 +44,7 @@ export const NavLinks = () => {
       <NavLink 
         to="/shorts" 
         className={({ isActive }) => 
-          `group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-300 hover:bg-luxury-primary/10 ${
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
           }`
         }
@@ -53,7 +53,7 @@ export const NavLinks = () => {
         <motion.span 
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         >
           Shorts
         </motion.span>
