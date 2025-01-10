@@ -96,6 +96,9 @@ export const InteractiveNav = () => {
     }
   };
 
+  const badgeInfo = getBadgeVariant();
+  const BadgeIcon = badgeInfo.icon;
+
   return (
     <motion.nav
       initial={false}
@@ -135,10 +138,10 @@ export const InteractiveNav = () => {
                   @{profile?.username || "Guest"}
                 </p>
                 <Badge 
-                  variant={getBadgeVariant().variant as any}
+                  variant={badgeInfo.variant as any}
                   className="text-xs flex items-center gap-1"
                 >
-                  {getBadgeVariant().icon && <getBadgeVariant().icon className="w-3 h-3" />}
+                  {BadgeIcon && <BadgeIcon className="w-3 h-3" />}
                   {getUserType()}
                 </Badge>
               </motion.div>
