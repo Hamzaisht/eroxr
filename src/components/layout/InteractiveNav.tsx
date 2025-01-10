@@ -62,14 +62,29 @@ export const InteractiveNav = () => {
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
-      const { data, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*, user_roles(role)")
+        .select("*")
         .eq("id", session.user.id)
         .single();
       
-      if (error) throw error;
-      return data;
+      if (profileError) throw profileError;
+
+      // Fetch user role in a separate query
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (roleError && roleError.code !== 'PGRST116') { // Ignore "no rows returned" error
+        throw roleError;
+      }
+
+      return {
+        ...profileData,
+        role: roleData?.role || 'user'
+      };
     },
     enabled: !!session?.user?.id,
   });
@@ -88,16 +103,15 @@ export const InteractiveNav = () => {
   const getBadgeVariant = () => {
     switch (getUserType()) {
       case "Verified Creator":
-        return { variant: "default", icon: Crown };
+        return { variant: "default", Icon: Crown };
       case "Premium":
-        return { variant: "secondary", icon: Star };
+        return { variant: "secondary", Icon: Star };
       default:
-        return { variant: "outline", icon: null };
+        return { variant: "outline", Icon: null };
     }
   };
 
   const badgeInfo = getBadgeVariant();
-  const BadgeIcon = badgeInfo.icon;
 
   return (
     <motion.nav
@@ -138,10 +152,10 @@ export const InteractiveNav = () => {
                   @{profile?.username || "Guest"}
                 </p>
                 <Badge 
-                  variant={badgeInfo.variant as any}
+                  variant={badgeInfo.variant}
                   className="text-xs flex items-center gap-1"
                 >
-                  {BadgeIcon && <BadgeIcon className="w-3 h-3" />}
+                  {badgeInfo.Icon && <badgeInfo.Icon className="w-3 h-3" />}
                   {getUserType()}
                 </Badge>
               </motion.div>
