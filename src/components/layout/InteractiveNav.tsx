@@ -16,7 +16,7 @@ import {
   LogOut
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
+import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -88,11 +88,34 @@ export const InteractiveNav = () => {
 
       return {
         ...profileData,
-        role: (roleData?.role || 'user') as UserRole
+        role: (roleData?.role || 'user') as UserRole,
+        status: (profileData.status as AvailabilityStatus) || 'offline'
       };
     },
     enabled: !!session?.user?.id,
   });
+
+  const handleStatusChange = async (newStatus: AvailabilityStatus) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: newStatus })
+        .eq('id', session?.user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Status updated",
+        description: `You are now ${newStatus}`,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error updating status",
+        description: "Please try again later",
+      });
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -140,7 +163,7 @@ export const InteractiveNav = () => {
               </Avatar>
               <div className="absolute -bottom-1 -right-1">
                 <AvailabilityIndicator 
-                  status={profile?.status || "offline"} 
+                  status={profile?.status || "offline"}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleStatusChange(profile?.status === 'online' ? 'offline' : 'online');
