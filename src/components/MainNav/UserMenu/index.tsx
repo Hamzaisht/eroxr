@@ -63,20 +63,19 @@ export const UserMenu = () => {
         }
 
         // Then fetch user roles
-        const { data: roles, error: rolesError } = await supabase
+        const { data: roleData, error: rolesError } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", session.user.id)
           .maybeSingle();
 
-        // Handle roles error, but don't throw for no rows
         if (rolesError && rolesError.code !== 'PGRST116') {
           console.error("Roles fetch error:", rolesError);
           throw rolesError;
         }
 
         // Get the role or default to 'user'
-        const userRole = roles?.role || 'user';
+        const userRole = roleData?.role || 'user';
 
         // Combine the data and ensure status is a valid AvailabilityStatus
         return profileData ? {
