@@ -18,9 +18,10 @@ export const useUserStatus = () => {
           .select('role')
           .eq('user_id', session.user.id)
           .eq('role', 'admin')
-          .single();
+          .maybeSingle();
 
         if (adminError && adminError.code !== 'PGRST116') {
+          console.error("Error checking admin role:", adminError);
           throw adminError;
         }
 
@@ -35,9 +36,10 @@ export const useUserStatus = () => {
           .from('profiles')
           .select('id_verification_status')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError && profileError.code !== 'PGRST116') {
+          console.error("Error checking profile status:", profileError);
           throw profileError;
         }
 
@@ -45,6 +47,9 @@ export const useUserStatus = () => {
 
       } catch (error) {
         console.error("Error checking user status:", error);
+        // Reset states to default values in case of error
+        setIsAdmin(false);
+        setIsVerifiedCreator(false);
       }
     };
 
