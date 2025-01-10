@@ -24,12 +24,12 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       });
 
       if (error) {
-        // If email login fails, check if it's a username
+        // If email login fails, try to find the user by username
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id')
           .eq('username', values.identifier)
-          .single();
+          .maybeSingle();
 
         if (profiles) {
           // Try to sign in with the found user's email
@@ -48,7 +48,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      navigate("/home");
+      navigate("/");
     } catch (error: any) {
       console.error("Login error:", error);
       

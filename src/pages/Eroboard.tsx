@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -106,36 +105,32 @@ export default function Eroboard() {
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
-        </div>
-      </MainLayout>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-luxury-primary">Creator Dashboard</h1>
-          <Button 
-            onClick={handleRequestPayout}
-            className="bg-luxury-primary hover:bg-luxury-primary/90"
-          >
-            Request Payout
-          </Button>
-        </div>
-        
-        <StatsOverview stats={stats} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <EngagementChart data={engagementData} />
-          <ContentDistribution data={contentTypeData} />
-        </div>
-
-        <RevenueChart data={earningsData} />
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-luxury-primary">Creator Dashboard</h1>
+        <Button 
+          onClick={handleRequestPayout}
+          className="bg-luxury-primary hover:bg-luxury-primary/90"
+        >
+          Request Payout
+        </Button>
       </div>
-    </MainLayout>
+      
+      <StatsOverview stats={stats} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <EngagementChart data={engagementData} />
+        <ContentDistribution data={contentTypeData} />
+      </div>
+
+      <RevenueChart data={earningsData} />
+    </div>
   );
 }
