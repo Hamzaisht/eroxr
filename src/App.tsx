@@ -4,6 +4,7 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "./integrations/supabase/client";
 import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { useEffect } from "react";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
