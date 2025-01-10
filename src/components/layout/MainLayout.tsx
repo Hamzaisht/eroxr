@@ -51,7 +51,7 @@ export const MainLayout = () => {
       
       <InteractiveNav />
       
-      <main className="relative min-h-screen pl-20 w-full backdrop-blur-sm">
+      <main className="relative min-h-screen pl-20 w-full">
         <div className="min-h-screen w-full px-4 py-6">
           <Outlet />
         </div>
