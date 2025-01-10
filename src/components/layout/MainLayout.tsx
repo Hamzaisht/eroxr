@@ -68,21 +68,21 @@ export const MainLayout = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="absolute bottom-full right-0 mb-4 space-y-2 min-w-[180px]"
+                className="absolute bottom-full right-0 mb-4 space-y-2"
               >
                 <Button
-                  onClick={() => setIsErosDialogOpen(true)}
-                  className="w-full flex items-center gap-2 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary"
-                >
-                  <Video className="h-4 w-4" />
-                  Create Eros
-                </Button>
-                <Button
                   onClick={() => setIsCreatePostOpen(true)}
-                  className="w-full flex items-center gap-2 bg-[#0D1117]/80 hover:bg-[#0D1117] backdrop-blur-sm"
+                  className="w-full flex items-center gap-2 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary"
                 >
                   <Plus className="h-4 w-4" />
                   Create Post
+                </Button>
+                <Button
+                  onClick={() => setIsErosDialogOpen(true)}
+                  className="w-full flex items-center gap-2 bg-[#0D1117]/80 hover:bg-[#0D1117] backdrop-blur-sm"
+                >
+                  <Video className="h-4 w-4" />
+                  Create Eros
                 </Button>
               </motion.div>
             )}

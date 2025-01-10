@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PostHeader } from "./PostHeader";
 import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { MediaViewer } from "@/components/media/MediaViewer";
 import { Post } from "@/components/feed/types";
@@ -49,10 +48,10 @@ export const PostCard = ({
 
   return (
     <Card className="bg-[#0D1117] border-luxury-neutral/10 hover:border-luxury-neutral/20 transition-all duration-300">
-      <div className="p-4">
-        <div className="flex items-center gap-3 mb-4">
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/20">
-            <AvatarImage src={post.creator.avatar_url || ""} />
+            <AvatarImage src={post.creator.avatar_url || ""} alt={post.creator.username || "User"} />
             <AvatarFallback>{post.creator.username?.[0]?.toUpperCase()}</AvatarFallback>
           </Avatar>
           <div>
@@ -65,11 +64,11 @@ export const PostCard = ({
           </div>
         </div>
 
-        <p className="text-luxury-neutral/90 mb-4">{post.content}</p>
+        <p className="text-luxury-neutral/90">{post.content}</p>
         
         {hasMedia && (
           <ProtectedMedia contentOwnerId={post.creator_id}>
-            <div className="relative w-full overflow-hidden rounded-xl mb-4">
+            <div className="relative w-full overflow-hidden rounded-xl">
               <div className="overflow-x-auto scrollbar-hide w-full">
                 <div className="flex w-full">
                   {post.media_url.map((url, index) => (
@@ -104,7 +103,7 @@ export const PostCard = ({
             onClick={handleLike}
           >
             <Heart className={cn("h-5 w-5", post.has_liked && "fill-luxury-primary text-luxury-primary")} />
-            <span>{post.likes_count || 0}</span>
+            <span className="text-luxury-neutral/80">{post.likes_count || 0}</span>
           </Button>
           
           <Button
@@ -114,7 +113,7 @@ export const PostCard = ({
             onClick={handleCommentClick}
           >
             <MessageCircle className="h-5 w-5" />
-            <span>{post.comments_count || 0}</span>
+            <span className="text-luxury-neutral/80">{post.comments_count || 0}</span>
           </Button>
           
           <Button
@@ -124,7 +123,7 @@ export const PostCard = ({
             onClick={() => setIsShareDialogOpen(true)}
           >
             <Share2 className="h-5 w-5" />
-            <span>Share</span>
+            <span className="text-luxury-neutral/80">Share</span>
           </Button>
         </div>
 
