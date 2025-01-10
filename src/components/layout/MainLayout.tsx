@@ -94,7 +94,7 @@ export const MainLayout = () => {
             className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg flex items-center justify-center"
             onClick={() => setShowFloatingMenu(!showFloatingMenu)}
           >
-            <Video className="h-6 w-6 text-white" />
+            <Plus className="h-6 w-6 text-white" />
           </motion.button>
         </div>
       </main>

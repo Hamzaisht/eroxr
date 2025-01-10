@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, Edit2 } from "lucide-react";
+import { Heart, MessageCircle, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostHeader } from "./PostHeader";
 import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
@@ -11,6 +11,7 @@ import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { CommentSection } from "./CommentSection";
 import { ShareDialog } from "./ShareDialog";
 import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface PostCardProps {
   post: Post;
@@ -27,17 +28,13 @@ export const PostCard = ({
   onComment,
   currentUserId 
 }: PostCardProps) => {
-  const [liked, setLiked] = useState(post.has_liked);
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
-  const isEdited = post.updated_at !== post.created_at;
-
   const handleLike = async () => {
     if (onLike) {
       await onLike(post.id);
-      setLiked(!liked);
     }
   };
 
@@ -48,42 +45,39 @@ export const PostCard = ({
     setShowComments(!showComments);
   };
 
-  const isVideo = (url: string) => {
-    return url.match(/\.(mp4|webm|ogg)$/i);
-  };
-
   const hasMedia = post.media_url && post.media_url.length > 0;
 
   return (
-    <Card className="neo-card hover:shadow-luxury transition-all duration-300">
-      <PostHeader 
-        post={post} 
-        isOwner={currentUserId === post.creator_id}
-        onDelete={onDelete}
-      />
-      
-      {hasMedia && (
-        <ProtectedMedia contentOwnerId={post.creator_id}>
-          <div className="relative w-full mt-4 overflow-hidden rounded-xl">
-            <div className="overflow-x-auto scrollbar-hide w-full">
-              <div className="flex w-full">
-                {post.media_url.map((url, index) => (
-                  <div
-                    key={index}
-                    className="min-w-full h-full cursor-pointer group"
-                    onClick={() => setSelectedMedia(url)}
-                  >
-                    {isVideo(url) ? (
-                      <video
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        controls
-                        playsInline
-                        preload="metadata"
-                      >
-                        <source src={url} type="video/mp4" />
-                        Your browser does not support the video tag.
-                      </video>
-                    ) : (
+    <Card className="bg-[#0D1117] border-luxury-neutral/10 hover:border-luxury-neutral/20 transition-all duration-300">
+      <div className="p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/20">
+            <AvatarImage src={post.creator.avatar_url || ""} />
+            <AvatarFallback>{post.creator.username?.[0]?.toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-semibold text-luxury-neutral">
+              {post.creator.username}
+            </h3>
+            <p className="text-sm text-luxury-neutral/60">
+              {format(new Date(post.created_at), 'MMM d, yyyy')}
+            </p>
+          </div>
+        </div>
+
+        <p className="text-luxury-neutral/90 mb-4">{post.content}</p>
+        
+        {hasMedia && (
+          <ProtectedMedia contentOwnerId={post.creator_id}>
+            <div className="relative w-full overflow-hidden rounded-xl mb-4">
+              <div className="overflow-x-auto scrollbar-hide w-full">
+                <div className="flex w-full">
+                  {post.media_url.map((url, index) => (
+                    <div
+                      key={index}
+                      className="min-w-full h-full cursor-pointer group"
+                      onClick={() => setSelectedMedia(url)}
+                    >
                       <img
                         src={url}
                         alt={`Post media ${index + 1}`}
@@ -94,18 +88,14 @@ export const PostCard = ({
                         sizes={getResponsiveSizes()}
                         style={getImageStyles()}
                       />
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </ProtectedMedia>
-      )}
+          </ProtectedMedia>
+        )}
 
-      <CardContent className="space-y-4 pt-4">
-        <p className="text-luxury-neutral/90">{post.content}</p>
-        
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -113,7 +103,7 @@ export const PostCard = ({
             className="flex items-center gap-2 hover:bg-luxury-primary/10"
             onClick={handleLike}
           >
-            <Heart className={cn("h-5 w-5", liked && "fill-luxury-primary text-luxury-primary")} />
+            <Heart className={cn("h-5 w-5", post.has_liked && "fill-luxury-primary text-luxury-primary")} />
             <span>{post.likes_count || 0}</span>
           </Button>
           
@@ -136,13 +126,6 @@ export const PostCard = ({
             <Share2 className="h-5 w-5" />
             <span>Share</span>
           </Button>
-
-          {isEdited && (
-            <div className="flex items-center text-sm text-luxury-neutral/60">
-              <Edit2 className="h-4 w-4 mr-1" />
-              <span>edited {format(new Date(post.updated_at), 'MMM d, yyyy')}</span>
-            </div>
-          )}
         </div>
 
         {showComments && (
@@ -151,7 +134,7 @@ export const PostCard = ({
             commentsCount={post.comments_count} 
           />
         )}
-      </CardContent>
+      </div>
 
       <MediaViewer 
         media={selectedMedia} 
