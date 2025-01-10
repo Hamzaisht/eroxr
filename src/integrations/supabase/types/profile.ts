@@ -20,6 +20,7 @@ export type Profile = {
   last_name?: string | null;
   is_suspended?: boolean | null;
   suspended_at?: string | null;
+  status?: 'online' | 'offline' | 'away' | 'busy' | null;
 };
 
 export type ProfileInsert = {
