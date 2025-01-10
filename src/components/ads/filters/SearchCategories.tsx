@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Filter, HelpCircle } from "lucide-react";
+import { Search, Filter, HelpCircle, X, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,33 @@ export const SearchCategories = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [showGuide, setShowGuide] = useState(true);
+  const [currentGuideStep, setCurrentGuideStep] = useState(0);
+
+  const guideSteps = [
+    {
+      title: "Welcome to Quick Shortcuts!",
+      description: "Let's learn how to use our simple shortcut system for finding matches.",
+      examples: []
+    },
+    {
+      title: "Couple Seeking",
+      description: "When couples are looking for someone:",
+      examples: [
+        { code: "MF4F", meaning: "Couple seeking Female" },
+        { code: "MF4M", meaning: "Couple seeking Male" },
+        { code: "MF4MF", meaning: "Couple seeking Couple" }
+      ]
+    },
+    {
+      title: "Single Seeking",
+      description: "When singles are looking for someone:",
+      examples: [
+        { code: "M4F", meaning: "Male seeking Female" },
+        { code: "F4M", meaning: "Female seeking Male" },
+        { code: "F4F", meaning: "Female seeking Female" }
+      ]
+    }
+  ];
 
   const filteredCategories = searchCategories.filter((category) => {
     const shortcut = getShortcutFromCategory(category.seeker, category.looking_for);
@@ -81,28 +108,82 @@ export const SearchCategories = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-luxury-darker/80 backdrop-blur-sm rounded-lg p-4 border border-luxury-primary/20"
+            className="relative overflow-hidden"
           >
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-luxury-primary">Quick Guide to Shortcuts</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-luxury-neutral">
-                  <div>MF4F: Couple → Female</div>
-                  <div>M4F: Male → Female</div>
-                  <div>F4M: Female → Male</div>
-                  <div>MF4M: Couple → Male</div>
-                  <div>F4F: Female → Female</div>
-                  <div>M4M: Male → Male</div>
+            <div className="neo-card p-6 space-y-4">
+              <div className="flex justify-between items-start">
+                <motion.div
+                  key={currentGuideStep}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-4 flex-1"
+                >
+                  <h3 className="text-xl font-semibold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
+                    {guideSteps[currentGuideStep].title}
+                  </h3>
+                  
+                  <p className="text-luxury-neutral text-sm">
+                    {guideSteps[currentGuideStep].description}
+                  </p>
+
+                  {guideSteps[currentGuideStep].examples.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {guideSteps[currentGuideStep].examples.map((example) => (
+                        <div
+                          key={example.code}
+                          className="glass-card p-3 space-y-1 hover:scale-105 transition-transform duration-300"
+                        >
+                          <div className="text-luxury-primary font-semibold">
+                            {example.code}
+                          </div>
+                          <div className="text-xs text-luxury-neutral">
+                            {example.meaning}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+
+                <div className="flex gap-2">
+                  {currentGuideStep < guideSteps.length - 1 ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentGuideStep(currentGuideStep + 1)}
+                      className="text-luxury-primary hover:text-luxury-accent hover:bg-luxury-primary/10"
+                    >
+                      Next <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowGuide(false)}
+                      className="text-luxury-primary hover:text-luxury-accent hover:bg-luxury-primary/10"
+                    >
+                      Got it! <X className="w-4 h-4 ml-1" />
+                    </Button>
+                  )}
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowGuide(false)}
-                className="text-luxury-muted hover:text-luxury-primary"
-              >
-                Got it
-              </Button>
+
+              {currentGuideStep > 0 && (
+                <div className="flex justify-center gap-1 pt-2">
+                  {guideSteps.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentGuideStep(index)}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        currentGuideStep === index
+                          ? "bg-luxury-primary w-4"
+                          : "bg-luxury-primary/30"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
