@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { NavMenuItem } from "./nav/NavMenuItem";
 import { UserProfileSection } from "./nav/UserProfileSection";
-import type { UserRole } from "@/integrations/supabase/types";
+
+type Role = 'admin' | 'user' | 'moderator';
 
 const menuItems = [
   { 
@@ -84,7 +85,7 @@ export const InteractiveNav = () => {
 
       return {
         ...profileData,
-        role: (roleData?.role || 'user') as UserRole,
+        role: (roleData?.role || 'user') as Role,
         status: (profileData.status as AvailabilityStatus) || 'offline'
       };
     },

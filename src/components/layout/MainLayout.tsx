@@ -35,7 +35,7 @@ export const MainLayout = () => {
 
   if (!isInitialized || !session) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-luxury-dark">
+      <div className="flex items-center justify-center min-h-screen bg-[#0D1117]">
         <div className="w-8 h-8 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -43,7 +43,7 @@ export const MainLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#0D1117] relative">
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-[0.02]" />
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-[0.02]" />
       <div className="absolute inset-0">
         <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-luxury-primary/5 blur-3xl animate-pulse" />
         <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-luxury-accent/5 blur-3xl animate-pulse" />
@@ -61,9 +61,9 @@ export const MainLayout = () => {
           <Outlet />
         </div>
 
-        {/* Floating Action Button */}
+        {/* Single Floating Action Button */}
         <div 
-          className="fixed bottom-6 right-6 z-50 group"
+          className="fixed bottom-6 right-6 z-50"
           onMouseEnter={() => setShowFloatingMenu(true)}
           onMouseLeave={() => setShowFloatingMenu(false)}
         >
@@ -84,7 +84,7 @@ export const MainLayout = () => {
                 </Button>
                 <Button
                   onClick={() => setIsCreatePostOpen(true)}
-                  className="w-full flex items-center gap-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm"
+                  className="w-full flex items-center gap-2 bg-[#0D1117]/80 hover:bg-[#0D1117] backdrop-blur-sm"
                 >
                   <Plus className="h-4 w-4" />
                   Create Post
@@ -97,6 +97,7 @@ export const MainLayout = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg flex items-center justify-center"
+            onClick={() => setShowFloatingMenu(!showFloatingMenu)}
           >
             <Video className="h-6 w-6 text-white" />
           </motion.button>
@@ -136,7 +137,7 @@ export const MainLayout = () => {
               />
               <Button
                 onClick={() => document.getElementById('eros-upload')?.click()}
-                className="w-full h-32 rounded-lg border-2 border-dashed border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors bg-black/20"
+                className="w-full h-32 rounded-lg border-2 border-dashed border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors bg-[#0D1117]/20"
               >
                 <div className="flex flex-col items-center gap-2">
                   <Video className="h-8 w-8" />
