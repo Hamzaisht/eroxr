@@ -35,7 +35,7 @@
   }
 
   body {
-    @apply bg-gradient-to-br from-luxury-dark via-luxury-darker to-luxury-dark text-white min-h-screen;
+    @apply bg-gradient-to-b from-black/95 via-black/98 to-black/95 text-white min-h-screen;
   }
 
   #root {
@@ -46,7 +46,7 @@
 @layer components {
   .neo-card {
     @apply relative overflow-hidden rounded-xl bg-black/20 backdrop-blur-xl border border-white/10 
-           transition-all duration-300 hover:border-luxury-primary/50 hover:shadow-luxury;
+           transition-all duration-300 hover:border-white/20;
   }
 
   .glass-effect {
@@ -56,7 +56,7 @@
 
   .glass-card {
     @apply backdrop-blur-xl bg-black/20 border border-white/10 rounded-xl 
-           transition-all duration-300 hover:bg-black/30 hover:border-luxury-primary/20;
+           transition-all duration-300 hover:bg-black/30 hover:border-white/20;
   }
 
   .profile-container {

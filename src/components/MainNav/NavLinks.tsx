@@ -1,32 +1,32 @@
-import { Button } from "@/components/ui/button";
-import { useNavigate, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 export const NavLinks = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  const isActive = (path: string) => location.pathname === path;
-  
   return (
-    <div className="hidden md:flex items-center gap-6">
-      <Button 
-        variant={isActive("/home") ? "default" : "ghost"} 
-        onClick={() => navigate("/home")}
+    <nav className="hidden md:flex items-center space-x-8">
+      <NavLink 
+        to="/home" 
+        className={({ isActive }) => 
+          `text-sm hover:text-white transition-colors ${isActive ? 'text-white' : 'text-white/60'}`
+        }
       >
         Home
-      </Button>
-      <Button 
-        variant={isActive("/categories") ? "default" : "ghost"} 
-        onClick={() => navigate("/categories")}
+      </NavLink>
+      <NavLink 
+        to="/dating" 
+        className={({ isActive }) => 
+          `text-sm hover:text-white transition-colors ${isActive ? 'text-white' : 'text-white/60'}`
+        }
       >
-        Categories
-      </Button>
-      <Button 
-        variant={isActive("/about") ? "default" : "ghost"} 
-        onClick={() => navigate("/about")}
+        Dating
+      </NavLink>
+      <NavLink 
+        to="/shorts" 
+        className={({ isActive }) => 
+          `text-sm hover:text-white transition-colors ${isActive ? 'text-white' : 'text-white/60'}`
+        }
       >
-        About
-      </Button>
-    </div>
+        Shorts
+      </NavLink>
+    </nav>
   );
 };
