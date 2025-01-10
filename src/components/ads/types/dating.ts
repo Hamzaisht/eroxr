@@ -25,6 +25,8 @@ export type DatingAd = {
   profile_completion_score?: number;
   latitude?: number;
   longitude?: number;
+  video_url?: string;
+  user_type: 'couple_mf' | 'couple_ff' | 'couple_mm' | 'male' | 'female' | 'other' | 'ota';
 };
 
 export type SearchCategory = {
@@ -50,4 +52,5 @@ export type FilterOptions = {
   maxDistance?: number;
   latitude?: number;
   longitude?: number;
+  userType?: string[];
 };

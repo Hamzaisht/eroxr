@@ -1,7 +1,8 @@
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MediaUploadSectionProps {
   selectedFiles: FileList | null;
@@ -20,11 +21,11 @@ export const MediaUploadSection = ({
 
   const validateVideoFile = async (file: File): Promise<boolean> => {
     if (file.type.startsWith('video/')) {
-      // Check file size (20MB = 20 * 1024 * 1024 bytes)
-      if (file.size > 20 * 1024 * 1024) {
+      // Check file size (50MB = 50 * 1024 * 1024 bytes)
+      if (file.size > 50 * 1024 * 1024) {
         toast({
           title: "File too large",
-          description: "Videos must be 20MB or smaller",
+          description: "Videos must be 50MB or smaller",
           variant: "destructive",
         });
         return false;
@@ -37,10 +38,10 @@ export const MediaUploadSection = ({
         video.onloadedmetadata = () => {
           window.URL.revokeObjectURL(video.src);
           const duration = video.duration;
-          if (duration > 1200) { // 20 minutes = 1200 seconds
+          if (duration > 300) { // 5 minutes = 300 seconds
             toast({
               title: "Video too long",
-              description: "Videos must be 20 minutes or shorter",
+              description: "Videos must be 5 minutes or shorter",
               variant: "destructive",
             });
             resolve(false);
@@ -86,14 +87,13 @@ export const MediaUploadSection = ({
           onClick={handleButtonClick}
           className="w-full"
         >
-          <ImagePlus className="h-4 w-4 mr-2" />
-          {selectedFiles?.length ? `${selectedFiles.length} file(s) selected` : 'Add Media'}
+          <Video className="h-4 w-4 mr-2" />
+          {selectedFiles?.length ? `${selectedFiles.length} file(s) selected` : 'Upload Video'}
         </Button>
         <input
           type="file"
           id="post-file-upload"
-          multiple
-          accept="image/*,video/*"
+          accept="video/*"
           onChange={handleFileValidation}
           disabled={!isPayingCustomer}
           style={{ display: 'none' }}
@@ -105,11 +105,11 @@ export const MediaUploadSection = ({
       </div>
       {!isPayingCustomer && (
         <p className="text-sm text-muted-foreground">
-          Upgrade to upload media files
+          Upgrade to upload video files
         </p>
       )}
       <p className="text-sm text-muted-foreground">
-        Supported formats: Images (JPG, PNG, GIF) and Videos (MP4, WebM) up to 20MB
+        Supported formats: MP4, WebM up to 50MB and 5 minutes
       </p>
     </div>
   );
