@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,6 @@ import { UserBadge } from "./UserBadge";
 import { UserAvatar } from "./UserAvatar";
 import { GuestButtons } from "./GuestButtons";
 import { UserMenuItems } from "./UserMenuItems";
-import { useEffect } from "react";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 export const UserMenu = () => {
