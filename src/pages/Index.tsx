@@ -18,22 +18,39 @@ export default function Index() {
   const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const { toast } = useToast();
 
-  // Fetch user profile data
+  // Fetch user profile data with proper error handling
   const { data: profile } = useQuery({
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
       try {
+        // First fetch the profile
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("*, user_roles!left(role)")
+          .select("*")
           .eq("id", session.user.id)
-          .maybeSingle();
+          .single();
 
         if (profileError) throw profileError;
 
-        return profileData;
+        // Then fetch user roles separately
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        // Only throw error if it's not a "no rows returned" error
+        if (roleError && roleError.code !== 'PGRST116') {
+          throw roleError;
+        }
+
+        // Combine the data
+        return {
+          ...profileData,
+          role: roleData?.role || 'user' // Default to 'user' if no role found
+        };
       } catch (error: any) {
         console.error("Error fetching profile:", error);
         toast({
