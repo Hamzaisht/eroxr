@@ -96,52 +96,30 @@ export const UserMenu = () => {
     enabled: !!session?.user?.id,
   });
 
-  const handleLogin = () => {
-    navigate("/login");
-  };
-
-  const handleSignUp = () => {
-    navigate("/login");
-    toast({
-      title: "Join our community!",
-      description: "Create your account to get started.",
-    });
-  };
-
-  const handleLogout = async () => {
+  const handleStatusChange = async (newStatus: AvailabilityStatus) => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: newStatus })
+        .eq('id', session?.user?.id);
+
       if (error) throw error;
 
-      navigate("/login");
       toast({
-        title: "Signed out successfully",
-        description: "Come back soon!",
+        title: "Status updated",
+        description: `You are now ${newStatus}`,
       });
-    } catch (error: any) {
-      console.error("Logout error:", error);
-      
-      if (error.message?.includes('refresh_token_not_found')) {
-        // Force sign out on client side if token is invalid
-        await supabase.auth.signOut();
-        navigate("/login");
-        toast({
-          title: "Session expired",
-          description: "Please log in again.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error signing out",
-          description: "Please try again later",
-        });
-      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error updating status",
+        description: "Please try again later",
+      });
     }
   };
 
   if (!session || isLoading) {
-    return <GuestButtons onLogin={handleLogin} onSignUp={handleSignUp} />;
+    return <GuestButtons />;
   }
 
   return (
@@ -152,13 +130,20 @@ export const UserMenu = () => {
       />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <UserAvatar 
-            avatarUrl={session.user.user_metadata.avatar_url}
-            email={session.user.email}
-          />
+          <div onClick={() => navigate(`/profile/${session.user.id}`)}>
+            <UserAvatar 
+              avatarUrl={profile?.avatar_url}
+              email={session.user.email}
+              status={profile?.status}
+              onStatusChange={handleStatusChange}
+            />
+          </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end">
-          <UserMenuItems onLogout={handleLogout} />
+          <UserMenuItems onLogout={() => {
+            supabase.auth.signOut();
+            navigate('/login');
+          }} />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

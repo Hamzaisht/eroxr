@@ -1,27 +1,41 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 interface UserAvatarProps {
-  avatarUrl?: string;
-  email?: string;
+  avatarUrl?: string | null;
+  email?: string | null;
+  status?: AvailabilityStatus;
+  onStatusChange?: (status: AvailabilityStatus) => void;
 }
 
-export const UserAvatar = ({ avatarUrl, email }: UserAvatarProps) => {
+export const UserAvatar = ({ avatarUrl, email, status = 'offline', onStatusChange }: UserAvatarProps) => {
   return (
     <Button 
       variant="ghost" 
-      className="relative h-10 w-10 rounded-full p-0 hover:bg-muted/50 transition-colors duration-200"
+      className="relative h-10 w-10 rounded-full p-0 hover:bg-white/5"
     >
-      <Avatar className="h-10 w-10 ring-2 ring-primary/10 transition-all duration-200 hover:ring-primary/20">
+      <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/10 transition-all duration-200 hover:ring-luxury-primary/20">
         <AvatarImage 
-          src={avatarUrl} 
-          alt={email || 'User avatar'} 
+          src={avatarUrl || ""} 
+          alt={email || "User avatar"} 
           className="object-cover"
         />
-        <AvatarFallback className="bg-primary/10 text-primary">
-          {email?.charAt(0).toUpperCase()}
+        <AvatarFallback className="bg-luxury-darker text-luxury-primary">
+          {email?.[0]?.toUpperCase() || "?"}
         </AvatarFallback>
       </Avatar>
+      {onStatusChange && (
+        <div className="absolute -bottom-1 -right-1">
+          <AvailabilityIndicator 
+            status={status} 
+            onClick={(e) => {
+              e.stopPropagation();
+              onStatusChange(status === 'online' ? 'offline' : 'online');
+            }}
+          />
+        </div>
+      )}
     </Button>
   );
 };
