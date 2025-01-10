@@ -740,6 +740,7 @@ export type Database = {
           location: string | null
           profile_visibility: boolean | null
           social_links: Json | null
+          status: string | null
           suspended_at: string | null
           updated_at: string
           username: string | null
@@ -762,6 +763,7 @@ export type Database = {
           location?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null
+          status?: string | null
           suspended_at?: string | null
           updated_at?: string
           username?: string | null
@@ -784,6 +786,7 @@ export type Database = {
           location?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null
+          status?: string | null
           suspended_at?: string | null
           updated_at?: string
           username?: string | null
