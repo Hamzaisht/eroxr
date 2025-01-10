@@ -32,24 +32,30 @@ export default function Index() {
           .eq("id", session.user.id)
           .single();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          throw profileError;
+        }
 
-        // Then fetch user roles separately
-        const { data: roleData, error: roleError } = await supabase
+        // Then fetch user roles
+        const { data: roles, error: rolesError } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
+          .eq("user_id", session.user.id);
 
-        // Only throw error if it's not a "no rows returned" error
-        if (roleError && roleError.code !== 'PGRST116') {
-          throw roleError;
+        // Handle roles error, but don't throw for no rows
+        if (rolesError && rolesError.code !== 'PGRST116') {
+          console.error("Roles fetch error:", rolesError);
+          throw rolesError;
         }
+
+        // Get the first role or default to 'user'
+        const userRole = roles && roles.length > 0 ? roles[0].role : 'user';
 
         // Combine the data
         return {
           ...profileData,
-          role: roleData?.role || 'user' // Default to 'user' if no role found
+          role: userRole
         };
       } catch (error: any) {
         console.error("Error fetching profile:", error);
