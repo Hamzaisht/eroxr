@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 import { FeedHeader } from "./FeedHeader";
 import { CreatePostArea } from "./CreatePostArea";
 import { PostCard } from "../feed/PostCard";
@@ -26,10 +27,17 @@ export const MainFeed = ({
   onOpenGoLive,
 }: MainFeedProps) => {
   const [activeTab, setActiveTab] = useState<TabValue>('feed');
-  const { data, isLoading, fetchNextPage } = useFeedQuery(undefined, activeTab);
+  const { ref, inView } = useInView();
+  const { data, isLoading, fetchNextPage, hasNextPage } = useFeedQuery(undefined, activeTab);
   const { handleLike, handleDelete } = usePostActions();
   const session = useSession();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (inView && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, fetchNextPage]);
 
   const handleComment = () => {
     if (!session) {
@@ -53,28 +61,38 @@ export const MainFeed = ({
   const posts = data?.pages.flatMap(page => page) ?? [];
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="glass-effect rounded-xl p-4">
+    <div className="space-y-6 max-w-3xl mx-auto px-4">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="glass-effect p-4"
+      >
         <FeedHeader activeTab={activeTab} onTabChange={setActiveTab} />
-      </div>
+      </motion.div>
       
       {session && (
-        <CreatePostArea 
-          onOpenCreatePost={onOpenCreatePost}
-          onFileSelect={onFileSelect}
-          onOpenGoLive={onOpenGoLive}
-          isPayingCustomer={isPayingCustomer}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-effect"
+        >
+          <CreatePostArea 
+            onOpenCreatePost={onOpenCreatePost}
+            onFileSelect={onFileSelect}
+            onOpenGoLive={onOpenGoLive}
+            isPayingCustomer={isPayingCustomer}
+          />
+        </motion.div>
       )}
       
       <motion.div 
-        className="space-y-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6 infinite-scroll-container"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         {posts.length === 0 ? (
-          <div className="glass-effect rounded-xl p-8">
+          <div className="glass-effect p-8">
             <EmptyFeed />
           </div>
         ) : (
@@ -86,7 +104,7 @@ export const MainFeed = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="glass-effect rounded-xl overflow-hidden hover:shadow-luxury hover:scale-[1.02] transition-all duration-300"
+              className="glass-card hover-scale"
             >
               <PostCard
                 post={post}
@@ -97,6 +115,12 @@ export const MainFeed = ({
               />
             </motion.div>
           ))
+        )}
+        
+        {hasNextPage && (
+          <div ref={ref} className="h-20 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
         )}
       </motion.div>
     </div>
