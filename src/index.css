@@ -65,12 +65,12 @@
     @apply relative flex items-center gap-3 w-full overflow-visible rounded-lg;
     
     .nav-item-content {
-      @apply relative z-20 flex items-center gap-3 w-full;
+      @apply relative z-30 flex items-center gap-3 w-full;
     }
     
     &::before {
       content: '';
-      @apply absolute -inset-[1px] opacity-0 transition-all duration-500 ease-out rounded-lg;
+      @apply absolute -inset-[1px] opacity-0 transition-all duration-500 ease-out rounded-lg z-10;
       background: 
         linear-gradient(90deg, 
           transparent 0%,
@@ -84,23 +84,25 @@
       mask-composite: xor;
       transform-origin: var(--mouse-x) var(--mouse-y);
       transform: scale(0.98) translateZ(0);
+      filter: drop-shadow(0 0 8px rgba(155, 135, 245, 0.3));
     }
     
     &::after {
       content: '';
-      @apply absolute -inset-[1px] opacity-0 transition-all duration-300 rounded-lg;
+      @apply absolute -inset-[1px] opacity-0 transition-all duration-300 rounded-lg z-20;
       background: 
         linear-gradient(90deg,
           transparent 0%,
-          rgba(155, 135, 245, 0.25) 20%,
-          rgba(217, 70, 239, 0.3) 50%,
-          rgba(155, 135, 245, 0.25) 80%,
+          rgba(155, 135, 245, 0.3) 20%,
+          rgba(217, 70, 239, 0.4) 50%,
+          rgba(155, 135, 245, 0.3) 80%,
           transparent 100%
         );
       mask: linear-gradient(black, black) padding-box,
             linear-gradient(black, black) border-box;
       mask-composite: xor;
       transform: translateZ(0);
+      filter: drop-shadow(0 0 12px rgba(217, 70, 239, 0.4));
     }
     
     &:hover::before {
@@ -140,32 +142,35 @@
     0% {
       opacity: 0.5;
       transform: scale(0.98) translateZ(0);
+      filter: drop-shadow(0 0 8px rgba(155, 135, 245, 0.3));
     }
     50% {
       opacity: 1;
       transform: scale(1.02) translateZ(0);
+      filter: drop-shadow(0 0 16px rgba(217, 70, 239, 0.5));
     }
     100% {
       opacity: 0.5;
       transform: scale(0.98) translateZ(0);
+      filter: drop-shadow(0 0 8px rgba(155, 135, 245, 0.3));
     }
   }
 
   @keyframes edge-glow {
     0% {
-      filter: blur(2px);
+      filter: blur(2px) drop-shadow(0 0 10px rgba(155, 135, 245, 0.3));
       opacity: 0.5;
-      box-shadow: 0 0 10px rgba(155, 135, 245, 0.3);
+      box-shadow: 0 0 15px rgba(155, 135, 245, 0.3);
     }
     50% {
-      filter: blur(3px);
+      filter: blur(3px) drop-shadow(0 0 20px rgba(217, 70, 239, 0.5));
       opacity: 0.8;
-      box-shadow: 0 0 20px rgba(217, 70, 239, 0.4);
+      box-shadow: 0 0 30px rgba(217, 70, 239, 0.4);
     }
     100% {
-      filter: blur(2px);
+      filter: blur(2px) drop-shadow(0 0 10px rgba(155, 135, 245, 0.3));
       opacity: 0.5;
-      box-shadow: 0 0 10px rgba(155, 135, 245, 0.3);
+      box-shadow: 0 0 15px rgba(155, 135, 245, 0.3);
     }
   }
 }
