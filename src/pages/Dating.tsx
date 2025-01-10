@@ -26,6 +26,8 @@ export default function Dating() {
     { seeker: "male", looking_for: "female" },
     { seeker: "male", looking_for: "male" },
     { seeker: "male", looking_for: "couple" },
+    { seeker: "any", looking_for: "any" }, // A4A - Anyone for Anyone
+    { seeker: "couple", looking_for: "couple" }, // MF4MF - Couple for Couple
   ];
 
   if (isLoading) {
