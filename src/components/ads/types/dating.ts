@@ -28,6 +28,12 @@ export type DatingAd = {
   video_url?: string;
   user_type: 'couple_mf' | 'couple_ff' | 'couple_mm' | 'male' | 'female' | 'other' | 'ota';
   avatar_url?: string;
+  // Add the new properties to match database schema
+  view_count?: number;
+  message_count?: number;
+  click_count?: number;
+  user_id?: string;
+  is_active?: boolean;
 };
 
 export type SearchCategory = {
