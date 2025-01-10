@@ -13,6 +13,7 @@ import { UserAvatar } from "./UserAvatar";
 import { GuestButtons } from "./GuestButtons";
 import { UserMenuItems } from "./UserMenuItems";
 import { useEffect } from "react";
+import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -57,7 +58,12 @@ export const UserMenu = () => {
         console.error("Profile fetch error:", error);
         throw error;
       }
-      return data;
+      
+      // Ensure status is a valid AvailabilityStatus
+      return data ? {
+        ...data,
+        status: (data.status as AvailabilityStatus) || 'offline'
+      } : null;
     },
     enabled: !!session?.user?.id,
   });

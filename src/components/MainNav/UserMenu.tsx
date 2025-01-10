@@ -14,7 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
+import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -63,18 +63,18 @@ export const UserMenu = () => {
     }
   };
 
-  const handleStatusChange = async (status: string) => {
+  const handleStatusChange = async (newStatus: AvailabilityStatus) => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ status })
+        .update({ status: newStatus })
         .eq('id', session?.user?.id);
 
       if (error) throw error;
 
       toast({
         title: "Status updated",
-        description: `You are now ${status}`,
+        description: `You are now ${newStatus}`,
       });
     } catch (error) {
       toast({
@@ -140,7 +140,7 @@ export const UserMenu = () => {
             </Avatar>
             <div className="absolute -bottom-1 -right-1">
               <AvailabilityIndicator 
-                status={profile?.status || 'offline'} 
+                status={(profile?.status as AvailabilityStatus) || 'offline'} 
                 onClick={(e) => {
                   e.stopPropagation();
                   handleStatusChange(profile?.status === 'online' ? 'offline' : 'online');
