@@ -3,8 +3,21 @@ import { motion } from 'framer-motion';
 import { DatingAd } from './types/dating';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Crown, CheckCircle2, Heart, MapPin, Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { 
+  MessageCircle, 
+  Crown, 
+  CheckCircle2, 
+  Heart, 
+  MapPin, 
+  Volume2, 
+  VolumeX, 
+  Play, 
+  Pause,
+  Share2,
+  Flag
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface VideoProfileCardProps {
   ad: DatingAd;
@@ -47,30 +60,17 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
     }
   };
 
-  const getUserTypeLabel = (userType: string) => {
-    const types: Record<string, string> = {
-      'couple_mf': 'Couple (M+F)',
-      'couple_ff': 'Couple (F+F)',
-      'couple_mm': 'Couple (M+M)',
-      'male': 'Male',
-      'female': 'Female',
-      'other': 'Other',
-      'ota': 'Open to All'
-    };
-    return types[userType] || userType;
-  };
-
   return (
     <motion.div
       className={cn(
-        "relative w-full max-w-3xl h-full rounded-xl overflow-hidden",
+        "relative w-full max-w-4xl h-full rounded-xl overflow-hidden",
         "group cursor-pointer transform-gpu",
-        "transition-transform duration-500"
       )}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       whileHover={{ scale: 1.02 }}
     >
+      {/* Video Background */}
       {ad.video_url ? (
         <video
           ref={videoRef}
@@ -81,20 +81,22 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
           playsInline
         />
       ) : (
-        <div className="h-full w-full bg-luxury-dark flex items-center justify-center">
+        <div className="h-full w-full bg-luxury-dark/50 backdrop-blur-xl flex items-center justify-center">
           <p className="text-luxury-neutral">No video available</p>
         </div>
       )}
       
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-luxury-dark/90" />
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-luxury-dark/95" />
       
-      <div className="absolute top-4 right-4 flex gap-2">
+      {/* Video Controls */}
+      <div className="absolute top-6 right-6 flex gap-3 z-20">
         {ad.video_url && (
           <>
             <Button
               variant="ghost"
               size="icon"
-              className="bg-luxury-dark/50 hover:bg-luxury-dark/70"
+              className="bg-luxury-dark/50 hover:bg-luxury-dark/70 backdrop-blur-md border border-luxury-primary/20"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleMute();
@@ -105,7 +107,7 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="bg-luxury-dark/50 hover:bg-luxury-dark/70"
+              className="bg-luxury-dark/50 hover:bg-luxury-dark/70 backdrop-blur-md border border-luxury-primary/20"
               onClick={(e) => {
                 e.stopPropagation();
                 togglePlay();
@@ -117,52 +119,65 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
         )}
       </div>
 
-      <div className="absolute inset-0 flex flex-col justify-end p-8">
+      {/* Content */}
+      <div className="absolute inset-x-0 bottom-0 p-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="space-y-4"
+          className="space-y-6"
         >
+          {/* Profile Header */}
           <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                {ad.title}
-                {ad.is_premium && (
-                  <Crown className="h-5 w-5 text-yellow-500 animate-pulse" />
-                )}
-                {ad.is_verified && (
-                  <CheckCircle2 className="h-5 w-5 text-luxury-primary" />
-                )}
-              </h2>
-              <div className="flex items-center gap-2 text-luxury-neutral mt-1">
-                <MapPin className="h-4 w-4 text-luxury-primary" />
-                <span>{ad.city}, {ad.country}</span>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16 ring-2 ring-luxury-primary/20 ring-offset-2 ring-offset-luxury-dark">
+                <AvatarImage src={ad.avatar_url} />
+                <AvatarFallback className="bg-luxury-primary/10">
+                  {ad.title.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  {ad.title}
+                  {ad.is_premium && (
+                    <Crown className="h-5 w-5 text-yellow-500 animate-pulse" />
+                  )}
+                  {ad.is_verified && (
+                    <CheckCircle2 className="h-5 w-5 text-luxury-primary" />
+                  )}
+                </h2>
+                <div className="flex items-center gap-2 text-luxury-neutral mt-1">
+                  <MapPin className="h-4 w-4 text-luxury-primary" />
+                  <span>{ad.city}, {ad.country}</span>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Tags */}
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary">
-              {getUserTypeLabel(ad.user_type)}
+            <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
+              {ad.user_type}
             </Badge>
-            <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary">
+            <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
               {ad.relationship_status}
             </Badge>
-            <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary">
+            <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
               {ad.age_range.lower}-{ad.age_range.upper} years
             </Badge>
             {ad.body_type && (
-              <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary">
+              <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
                 {ad.body_type}
               </Badge>
             )}
           </div>
 
-          <p className="text-luxury-neutral line-clamp-2">
+          {/* Description */}
+          <p className="text-luxury-neutral line-clamp-2 text-lg">
             {ad.description}
           </p>
 
+          {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4">
             <div className="flex gap-2">
               {ad.interests?.slice(0, 3).map((interest, index) => (
@@ -178,17 +193,30 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
             <div className="flex gap-2">
               <Button 
                 variant="ghost" 
-                size="sm"
+                size="icon"
                 className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
               >
-                <Heart className="h-4 w-4" />
+                <Share2 className="h-5 w-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
+              >
+                <Flag className="h-5 w-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
+              >
+                <Heart className="h-5 w-5" />
               </Button>
               <Button 
                 variant="default"
-                size="sm"
                 className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white"
               >
-                <MessageCircle className="h-4 w-4 mr-1" />
+                <MessageCircle className="h-4 w-4 mr-2" />
                 Contact
               </Button>
             </div>

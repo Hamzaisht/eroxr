@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DatingAd } from './types/dating';
 import { VideoProfileCard } from './VideoProfileCard';
-import { ChevronLeft, ChevronRight, Play, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VideoProfileCarouselProps {
@@ -26,8 +26,8 @@ export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
   };
 
   return (
-    <div className="relative w-full h-[85vh] overflow-hidden bg-luxury-dark/50 backdrop-blur-xl rounded-2xl">
-      <div className="absolute inset-0 bg-neon-glow opacity-20" />
+    <div className="relative w-full h-[85vh] overflow-hidden rounded-2xl bg-gradient-to-br from-luxury-dark/80 to-luxury-darker/80 backdrop-blur-xl">
+      <div className="absolute inset-0 bg-neon-glow opacity-10"></div>
       
       <div 
         ref={containerRef}
@@ -46,8 +46,12 @@ export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
                   zIndex: index === currentIndex ? 10 : 0,
                 }}
                 exit={{ scale: 0.8, opacity: 0, x: '-100%' }}
-                transition={{ duration: 0.5 }}
-                className="absolute w-full h-full flex items-center justify-center"
+                transition={{ 
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30
+                }}
+                className="absolute w-full h-full flex items-center justify-center px-8"
               >
                 <VideoProfileCard ad={ad} isActive={index === currentIndex} />
               </motion.div>
@@ -55,31 +59,53 @@ export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
           </div>
         </AnimatePresence>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={handlePrev}
           className={cn(
-            "absolute left-4 z-20 p-3 rounded-full bg-luxury-dark/50 backdrop-blur-md",
+            "absolute left-6 z-20 p-4 rounded-full",
+            "bg-luxury-dark/50 backdrop-blur-md border border-luxury-primary/20",
             "text-luxury-primary hover:text-white transition-colors",
             "hover:bg-luxury-primary/20 disabled:opacity-50 disabled:cursor-not-allowed",
-            "transform hover:scale-110 active:scale-95"
+            "group"
           )}
           disabled={currentIndex === 0}
         >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
+          <ChevronLeft className="w-6 h-6 transition-transform group-hover:-translate-x-1" />
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={handleNext}
           className={cn(
-            "absolute right-4 z-20 p-3 rounded-full bg-luxury-dark/50 backdrop-blur-md",
+            "absolute right-6 z-20 p-4 rounded-full",
+            "bg-luxury-dark/50 backdrop-blur-md border border-luxury-primary/20",
             "text-luxury-primary hover:text-white transition-colors",
             "hover:bg-luxury-primary/20 disabled:opacity-50 disabled:cursor-not-allowed",
-            "transform hover:scale-110 active:scale-95"
+            "group"
           )}
           disabled={currentIndex === ads.length - 1}
         >
-          <ChevronRight className="w-6 h-6" />
-        </button>
+          <ChevronRight className="w-6 h-6 transition-transform group-hover:translate-x-1" />
+        </motion.button>
+
+        {/* Progress Indicator */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+          {ads.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={cn(
+                "w-2 h-2 rounded-full transition-all duration-300",
+                index === currentIndex 
+                  ? "bg-luxury-primary w-6" 
+                  : "bg-luxury-primary/30 hover:bg-luxury-primary/50"
+              )}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
