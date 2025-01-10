@@ -34,14 +34,14 @@ export const ProfileHeader = ({ ad }: ProfileHeaderProps) => {
             </div>
             <div className="flex items-center gap-2 text-sm text-luxury-neutral/80">
               <User className="h-4 w-4 text-luxury-primary/80" />
-              <span>@{ad.user_id?.split('-')[0]}</span>
+              <span>@{ad.user_id?.split('-')[0] || 'anonymous'}</span>
             </div>
           </div>
         </div>
       </div>
       <div className={cn(
         "w-3 h-3 rounded-full animate-pulse",
-        ad.last_active ? "bg-green-500" : "bg-gray-500"
+        ad.is_active ? "bg-green-500" : "bg-gray-500"
       )} />
     </div>
   );

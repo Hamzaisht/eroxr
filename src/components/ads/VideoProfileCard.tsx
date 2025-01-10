@@ -15,7 +15,6 @@ interface VideoProfileCardProps {
 export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -41,13 +40,6 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
     }
   };
 
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
   return (
     <motion.div
       className="relative w-full h-[85vh] rounded-xl overflow-hidden group cursor-pointer transform-gpu bg-luxury-dark/50 backdrop-blur-xl"
@@ -63,8 +55,9 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
             src={ad.video_url}
             className="h-full w-full object-cover"
             loop
-            muted={isMuted}
+            muted
             playsInline
+            autoPlay={isActive}
             poster={ad.avatar_url || undefined}
           />
         ) : (
@@ -81,9 +74,7 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
       {/* Video Controls */}
       <VideoControls
         isPlaying={isPlaying}
-        isMuted={isMuted}
         onPlayToggle={togglePlay}
-        onMuteToggle={toggleMute}
         hasVideo={!!ad.video_url}
       />
 
