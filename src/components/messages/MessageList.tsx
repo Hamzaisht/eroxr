@@ -1,8 +1,10 @@
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MessagePreview } from "./MessagePreview";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface MessageListProps {
   onSelectUser: (userId: string) => void;
@@ -10,6 +12,41 @@ interface MessageListProps {
 
 export const MessageList = ({ onSelectUser }: MessageListProps) => {
   const session = useSession();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const channel = supabase
+      .channel('public:direct_messages')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `recipient_id=eq.${session.user.id}`
+        },
+        (payload) => {
+          console.log("Received message update:", payload);
+          queryClient.invalidateQueries({ queryKey: ['messages', session.user.id] });
+
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "New message",
+              description: "You have received a new message!",
+              duration: 3000,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id, queryClient, toast]);
 
   const { data: messages, error } = useQuery({
     queryKey: ['messages', session?.user?.id],
@@ -40,6 +77,7 @@ export const MessageList = ({ onSelectUser }: MessageListProps) => {
       return data || [];
     },
     enabled: !!session?.user?.id,
+    staleTime: 0,
   });
 
   if (error) {

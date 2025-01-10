@@ -19,16 +19,26 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'posts'
         },
         async (payload) => {
           console.log("Received real-time update:", payload);
           
-          queryClient.invalidateQueries({
+          // Immediately invalidate the query to trigger a refresh
+          await queryClient.invalidateQueries({
             queryKey: ["posts", feedType]
           });
+
+          // Show a toast notification for new posts
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "New post",
+              description: "Someone just shared something new!",
+              duration: 3000,
+            });
+          }
         }
       )
       .subscribe((status) => {
@@ -38,7 +48,7 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, feedType]);
+  }, [queryClient, feedType, toast]);
 
   return useInfiniteQuery({
     queryKey: ["posts", userId, feedType],
@@ -174,5 +184,7 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
       return lastPage.length === POSTS_PER_PAGE ? allPages.length : undefined;
     },
     initialPageParam: 0,
+    refetchInterval: 0, // Disable polling since we're using real-time
+    staleTime: 0, // Consider data immediately stale to allow real-time updates
   });
 };
