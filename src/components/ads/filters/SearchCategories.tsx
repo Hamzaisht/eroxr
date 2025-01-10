@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { Search, Filter } from "lucide-react";
-import { motion } from "framer-motion";
+import { Search, Filter, HelpCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { type SearchCategory } from "../types/dating";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface SearchCategoriesProps {
   selectedSeeker: string | null;
@@ -13,6 +18,26 @@ interface SearchCategoriesProps {
   setSelectedLookingFor: (lookingFor: string | null) => void;
   searchCategories: SearchCategory[];
 }
+
+const shortcutMap = {
+  "MF4F": { seeker: "couple", looking_for: "female" },
+  "MF4M": { seeker: "couple", looking_for: "male" },
+  "MF4MF": { seeker: "couple", looking_for: "couple" },
+  "F4M": { seeker: "female", looking_for: "male" },
+  "F4F": { seeker: "female", looking_for: "female" },
+  "F4MF": { seeker: "female", looking_for: "couple" },
+  "M4F": { seeker: "male", looking_for: "female" },
+  "M4M": { seeker: "male", looking_for: "male" },
+  "M4MF": { seeker: "male", looking_for: "couple" },
+};
+
+const getShortcutFromCategory = (seeker: string, looking_for: string) => {
+  const entries = Object.entries(shortcutMap);
+  const found = entries.find(([_, value]) => 
+    value.seeker === seeker && value.looking_for === looking_for
+  );
+  return found ? found[0] : `${seeker} → ${looking_for}`;
+};
 
 export const SearchCategories = ({
   selectedSeeker,
@@ -23,9 +48,11 @@ export const SearchCategories = ({
 }: SearchCategoriesProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [showGuide, setShowGuide] = useState(true);
 
   const filteredCategories = searchCategories.filter((category) => {
-    const searchString = `${category.seeker} → ${category.looking_for}`.toLowerCase();
+    const shortcut = getShortcutFromCategory(category.seeker, category.looking_for);
+    const searchString = `${shortcut} ${category.seeker} ${category.looking_for}`.toLowerCase();
     return searchString.includes(searchTerm.toLowerCase());
   });
 
@@ -48,6 +75,39 @@ export const SearchCategories = ({
 
   return (
     <div className="space-y-4">
+      <AnimatePresence>
+        {showGuide && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-luxury-darker/80 backdrop-blur-sm rounded-lg p-4 border border-luxury-primary/20"
+          >
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-luxury-primary">Quick Guide to Shortcuts</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-luxury-neutral">
+                  <div>MF4F: Couple → Female</div>
+                  <div>M4F: Male → Female</div>
+                  <div>F4M: Female → Male</div>
+                  <div>MF4M: Couple → Male</div>
+                  <div>F4F: Female → Female</div>
+                  <div>M4M: Male → Male</div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowGuide(false)}
+                className="text-luxury-muted hover:text-luxury-primary"
+              >
+                Got it
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="relative">
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -60,6 +120,26 @@ export const SearchCategories = ({
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-luxury-muted" />
           </div>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-luxury-darker/50 border-luxury-primary/20 hover:bg-luxury-darker hover:border-luxury-primary text-luxury-muted"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80">
+              <div className="space-y-2">
+                <h4 className="font-medium">Understanding Shortcuts</h4>
+                <p className="text-sm text-muted-foreground">
+                  MF4F means a couple (Male+Female) looking for a Female.
+                  M4F means a Male looking for a Female, and so on.
+                </p>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
           <Button
             variant="outline"
             size="icon"
@@ -84,6 +164,8 @@ export const SearchCategories = ({
             const isSelected =
               selectedSeeker === category.seeker &&
               selectedLookingFor === category.looking_for;
+
+            const shortcut = getShortcutFromCategory(category.seeker, category.looking_for);
 
             return (
               <motion.div
@@ -111,9 +193,7 @@ export const SearchCategories = ({
                   }}
                 >
                   <Search className="w-3 h-3 mr-2" />
-                  <span className="capitalize">
-                    {category.seeker} → {category.looking_for}
-                  </span>
+                  <span className="font-medium">{shortcut}</span>
                 </Button>
               </motion.div>
             );
