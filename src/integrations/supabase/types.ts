@@ -210,6 +210,7 @@ export type Database = {
           avatar_url: string | null
           body_type: string | null
           city: string
+          click_count: number | null
           country: Database["public"]["Enums"]["nordic_country"]
           created_at: string | null
           description: string
@@ -224,6 +225,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           looking_for: string[]
+          message_count: number | null
           occupation: string | null
           preferred_age_range: unknown | null
           profile_completion_score: number | null
@@ -235,6 +237,7 @@ export type Database = {
           user_id: string | null
           user_type: string
           video_url: string | null
+          view_count: number | null
           views_count: number | null
         }
         Insert: {
@@ -243,6 +246,7 @@ export type Database = {
           avatar_url?: string | null
           body_type?: string | null
           city: string
+          click_count?: number | null
           country: Database["public"]["Enums"]["nordic_country"]
           created_at?: string | null
           description: string
@@ -257,6 +261,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           looking_for: string[]
+          message_count?: number | null
           occupation?: string | null
           preferred_age_range?: unknown | null
           profile_completion_score?: number | null
@@ -268,6 +273,7 @@ export type Database = {
           user_id?: string | null
           user_type: string
           video_url?: string | null
+          view_count?: number | null
           views_count?: number | null
         }
         Update: {
@@ -276,6 +282,7 @@ export type Database = {
           avatar_url?: string | null
           body_type?: string | null
           city?: string
+          click_count?: number | null
           country?: Database["public"]["Enums"]["nordic_country"]
           created_at?: string | null
           description?: string
@@ -290,6 +297,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           looking_for?: string[]
+          message_count?: number | null
           occupation?: string | null
           preferred_age_range?: unknown | null
           profile_completion_score?: number | null
@@ -301,6 +309,7 @@ export type Database = {
           user_id?: string | null
           user_type?: string
           video_url?: string | null
+          view_count?: number | null
           views_count?: number | null
         }
         Relationships: []

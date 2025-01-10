@@ -38,7 +38,7 @@ export default function Dating() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container-fluid px-4 py-8 max-w-none">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -93,7 +93,7 @@ export default function Dating() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="flex-1 space-y-6"
+              className="flex-1"
             >
               {ads && ads.length > 0 ? (
                 <VideoProfileCarousel ads={ads} />

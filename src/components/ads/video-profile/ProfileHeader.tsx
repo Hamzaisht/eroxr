@@ -1,7 +1,7 @@
-import { Crown, CheckCircle2, MapPin } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Crown, CheckCircle2, MapPin, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DatingAd } from "../types/dating";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ProfileHeaderProps {
   ad: DatingAd;
@@ -12,7 +12,7 @@ export const ProfileHeader = ({ ad }: ProfileHeaderProps) => {
     <div className="flex items-start justify-between">
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16 ring-2 ring-luxury-primary/20 ring-offset-2 ring-offset-luxury-dark">
-          <AvatarImage src={ad.avatar_url} />
+          <AvatarImage src={ad.avatar_url || undefined} />
           <AvatarFallback className="bg-luxury-primary/10">
             {ad.title.charAt(0)}
           </AvatarFallback>
@@ -27,9 +27,15 @@ export const ProfileHeader = ({ ad }: ProfileHeaderProps) => {
               <CheckCircle2 className="h-5 w-5 text-luxury-primary" />
             )}
           </h2>
-          <div className="flex items-center gap-2 text-luxury-neutral mt-1">
-            <MapPin className="h-4 w-4 text-luxury-primary" />
-            <span>{ad.city}, {ad.country}</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-sm text-luxury-neutral">
+              <MapPin className="h-4 w-4 text-luxury-primary" />
+              <span>{ad.city}, {ad.country}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-luxury-neutral/80">
+              <User className="h-4 w-4 text-luxury-primary/80" />
+              <span>@{ad.user_id?.split('-')[0]}</span>
+            </div>
           </div>
         </div>
       </div>
