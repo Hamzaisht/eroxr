@@ -9,6 +9,7 @@ export interface ProfileHeaderProps {
   isOwnProfile: boolean;
   isEditing?: boolean;
   setIsEditing?: (value: boolean) => void;
+  availability?: AvailabilityStatus;
 }
 
 export const profileSchema = z.object({
@@ -17,6 +18,7 @@ export const profileSchema = z.object({
   location: z.string().max(100).optional(),
   interests: z.string().optional(),
   profile_visibility: z.boolean().default(true),
+  status: z.enum(['online', 'offline', 'away', 'busy']).optional(),
 });
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;

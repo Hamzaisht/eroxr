@@ -1,21 +1,31 @@
 import { cn } from "@/lib/utils";
 
+export type AvailabilityStatus = "online" | "offline" | "away" | "busy";
+
 export interface AvailabilityIndicatorProps {
-  status: 'online' | 'offline' | 'away' | 'busy';
+  status: AvailabilityStatus;
+  size?: number;
   onClick?: (e: React.MouseEvent) => void;
+  className?: string;
 }
 
-export const AvailabilityIndicator = ({ status, onClick }: AvailabilityIndicatorProps) => {
-  const getStatusColor = () => {
+export const AvailabilityIndicator = ({ 
+  status, 
+  size = 8,
+  onClick,
+  className 
+}: AvailabilityIndicatorProps) => {
+  const getStatusColor = (status: AvailabilityStatus) => {
     switch (status) {
-      case 'online':
-        return 'bg-green-500';
-      case 'away':
-        return 'bg-yellow-500';
-      case 'busy':
-        return 'bg-red-500';
+      case "online":
+        return "bg-emerald-500"; // Active on website
+      case "busy":
+        return "bg-rose-500";    // In call/video
+      case "away":
+        return "bg-amber-500";   // Messaging
+      case "offline":
       default:
-        return 'bg-gray-500';
+        return "bg-gray-500/80"; // Inactive/stagnant
     }
   };
 
@@ -23,9 +33,15 @@ export const AvailabilityIndicator = ({ status, onClick }: AvailabilityIndicator
     <div
       onClick={onClick}
       className={cn(
-        "w-3 h-3 rounded-full border-2 border-white cursor-pointer",
-        getStatusColor()
+        "rounded-full cursor-pointer border-2 border-white",
+        getStatusColor(status),
+        status === "online" && "animate-[pulse_20s_ease-in-out_infinite]",
+        className
       )}
+      style={{ 
+        width: size,
+        height: size,
+      }}
     />
   );
 };
