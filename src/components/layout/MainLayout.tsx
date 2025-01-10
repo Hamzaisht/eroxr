@@ -2,17 +2,16 @@ import { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { InteractiveNav } from "./InteractiveNav";
-import { Button } from "@/components/ui/button";
-import { Plus, Video, ChevronUp, ChevronDown } from "lucide-react";
-import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { Video } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
 
 export const MainLayout = () => {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [showFloatingMenu, setShowFloatingMenu] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
@@ -102,50 +101,6 @@ export const MainLayout = () => {
       <main className="relative min-h-screen pl-20 w-full">
         <div className="min-h-screen w-full px-4 py-6">
           <Outlet />
-        </div>
-
-        {/* Single Floating Action Button */}
-        <div 
-          className="fixed bottom-6 right-6 z-50"
-          onMouseEnter={() => setShowFloatingMenu(true)}
-          onMouseLeave={() => setShowFloatingMenu(false)}
-        >
-          <AnimatePresence>
-            {showFloatingMenu && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="absolute bottom-full right-0 mb-4 space-y-2"
-              >
-                <Button
-                  onClick={() => setIsCreatePostOpen(true)}
-                  className="w-full flex items-center gap-2 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Post
-                </Button>
-                <Button
-                  onClick={() => setIsErosDialogOpen(true)}
-                  className="w-full flex items-center gap-2 bg-[#0D1117]/80 hover:bg-[#0D1117] backdrop-blur-sm"
-                >
-                  <Video className="h-4 w-4" />
-                  Create Eros
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          <Button
-            onClick={() => setShowFloatingMenu(!showFloatingMenu)}
-            className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg"
-          >
-            {showFloatingMenu ? (
-              <ChevronDown className="h-6 w-6" />
-            ) : (
-              <ChevronUp className="h-6 w-6" />
-            )}
-          </Button>
         </div>
       </main>
 
