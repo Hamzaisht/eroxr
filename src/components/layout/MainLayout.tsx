@@ -16,7 +16,6 @@ export const MainLayout = () => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [uploadedErosId, setUploadedErosId] = useState<string | null>(null);
   const session = useSession();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -67,7 +66,6 @@ export const MainLayout = () => {
 
       if (postError) throw postError;
 
-      setUploadedErosId(post.id);
       toast({
         title: "Video uploaded successfully",
         description: "Your Eros video is ready to be edited",

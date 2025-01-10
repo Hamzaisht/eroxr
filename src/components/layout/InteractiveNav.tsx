@@ -51,6 +51,8 @@ export const InteractiveNav = () => {
         <div className="space-y-2 px-4">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const Icon = item.icon;
+            
             return (
               <motion.button
                 key={item.path}
@@ -63,7 +65,7 @@ export const InteractiveNav = () => {
                 whileHover={{ x: 5 }}
                 transition={{ duration: 0.2 }}
               >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <Icon className="w-5 h-5 flex-shrink-0" />
                 {isExpanded && (
                   <motion.span
                     initial={{ opacity: 0 }}
