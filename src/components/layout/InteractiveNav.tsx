@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { LucideIcon } from "lucide-react";
 
+type UserRole = 'admin' | 'moderator' | 'user' | 'creator';
+
 const menuItems = [
   { 
     icon: LayoutDashboard, 
@@ -33,7 +35,7 @@ const menuItems = [
     icon: ChartBar, 
     label: "Eroboard", 
     path: "/eroboard",
-    requiresCreator: true 
+    requiresAdmin: true 
   },
   { 
     icon: Video, 
@@ -86,7 +88,7 @@ export const InteractiveNav = () => {
 
       return {
         ...profileData,
-        role: roleData?.role || 'user'
+        role: (roleData?.role || 'user') as UserRole
       };
     },
     enabled: !!session?.user?.id,
@@ -159,7 +161,7 @@ export const InteractiveNav = () => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
 
-            if (item.requiresCreator && profile?.role !== "creator") {
+            if (item.requiresAdmin && profile?.role !== "admin") {
               return null;
             }
 
