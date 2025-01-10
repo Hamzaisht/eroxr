@@ -4,6 +4,7 @@ import { AdFilters } from "@/components/ads/AdFilters";
 import { useAdsQuery } from "@/components/ads/useAdsQuery";
 import { FilterOptions, SearchCategory } from "@/components/ads/types/dating";
 import { NewMessageDialog } from "@/components/messages/NewMessageDialog";
+import { CreateBodyContactDialog } from "@/components/ads/CreateBodyContactDialog";
 
 export default function Dating() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -55,11 +56,14 @@ export default function Dating() {
 
           {/* Main Content - Video Profile Carousel */}
           <div className="flex-1 space-y-6">
-            <div className="flex items-center justify-between bg-luxury-dark/50 backdrop-blur-sm p-4 rounded-xl">
+            <div className="flex items-center justify-between bg-luxury-dark/50 backdrop-blur-lg p-4 rounded-xl">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
                 Video Profiles
               </h1>
-              <NewMessageDialog onSelectUser={() => {}} />
+              <div className="flex gap-2">
+                <CreateBodyContactDialog />
+                <NewMessageDialog onSelectUser={() => {}} />
+              </div>
             </div>
             
             {ads && ads.length > 0 ? (
