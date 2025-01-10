@@ -13,19 +13,19 @@ export const useUserStatus = () => {
       
       try {
         // Check admin role
-        const { data: adminRole, error: adminError } = await supabase
+        const { data: roles, error: rolesError } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
+          .eq('role', 'admin');
 
-        if (adminError && adminError.code !== 'PGRST116') {
-          console.error("Error checking admin role:", adminError);
-          throw adminError;
+        if (rolesError) {
+          console.error("Error checking admin role:", rolesError);
+          throw rolesError;
         }
 
-        if (adminRole) {
+        // If we found any admin roles, set both flags
+        if (roles && roles.length > 0) {
           setIsAdmin(true);
           setIsVerifiedCreator(true);
           return;
@@ -38,7 +38,7 @@ export const useUserStatus = () => {
           .eq('id', session.user.id)
           .maybeSingle();
 
-        if (profileError && profileError.code !== 'PGRST116') {
+        if (profileError) {
           console.error("Error checking profile status:", profileError);
           throw profileError;
         }
