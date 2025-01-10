@@ -37,7 +37,7 @@
   }
 
   body {
-    @apply bg-gradient-to-b from-black via-black to-black text-white min-h-screen;
+    @apply bg-gradient-to-b from-[#1A1F2C] via-[#221F26] to-[#1A1F2C] text-white min-h-screen;
   }
 
   #root {
@@ -61,54 +61,40 @@
            transition-all duration-300 hover:bg-black/30 hover:border-white/20;
   }
 
-  .profile-container {
-    @apply container mx-auto px-4 py-8 max-w-7xl;
-  }
-
-  .profile-header {
-    @apply flex flex-col items-center justify-center space-y-6 mb-12;
-  }
-
-  .profile-content {
-    @apply grid gap-8 md:grid-cols-2 lg:grid-cols-3;
-  }
-
-  .infinite-scroll-container {
-    @apply overflow-y-auto scrollbar-hide;
-    scroll-behavior: smooth;
-  }
-
   .nav-item-liquid {
-    @apply relative flex items-center gap-3 w-full overflow-hidden;
+    @apply relative flex items-center gap-3 w-full overflow-hidden rounded-lg;
     &::before {
       content: '';
       @apply absolute inset-0 opacity-0 transition-all duration-500 ease-out;
       background: radial-gradient(
-        600px circle at var(--mouse-x) var(--mouse-y),
-        rgba(155, 135, 245, 0.15),
+        800px circle at var(--mouse-x) var(--mouse-y),
+        rgba(155, 135, 245, 0.25),
+        rgba(217, 70, 239, 0.15),
         transparent 40%
       );
-      filter: blur(2px);
+      filter: blur(3px);
       transform-origin: var(--mouse-x) var(--mouse-y);
-      transform: scale(0.95);
+      transform: scale(0.95) translateZ(0);
     }
     &::after {
       content: '';
       @apply absolute inset-0 opacity-0 transition-all duration-300;
       background: radial-gradient(
-        300px circle at var(--mouse-x) var(--mouse-y),
-        rgba(155, 135, 245, 0.1),
+        400px circle at var(--mouse-x) var(--mouse-y),
+        rgba(155, 135, 245, 0.2),
+        rgba(217, 70, 239, 0.1),
         transparent 40%
       );
       transform: translateZ(0);
     }
     &:hover::before {
       @apply opacity-100;
-      transform: scale(1.05);
+      transform: scale(1.1) translateZ(0);
+      animation: liquid-float 4s ease-in-out infinite;
     }
     &:hover::after {
       @apply opacity-100;
-      animation: liquid-pulse 2s ease-out infinite;
+      animation: liquid-pulse 3s ease-out infinite;
     }
   }
 }
@@ -142,6 +128,18 @@
     }
     100% {
       transform: scale(0.95) translateZ(0);
+    }
+  }
+
+  @keyframes liquid-float {
+    0% {
+      transform: translateY(0) scale(1.1) translateZ(0);
+    }
+    50% {
+      transform: translateY(-5px) scale(1.15) translateZ(0);
+    }
+    100% {
+      transform: translateY(0) scale(1.1) translateZ(0);
     }
   }
 }

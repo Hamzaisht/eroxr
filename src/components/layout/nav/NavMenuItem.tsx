@@ -17,7 +17,7 @@ export const NavMenuItem = ({ icon: Icon, label, isActive, isExpanded, onClick }
       className={`
         w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 relative group 
         ${isActive 
-          ? "text-luxury-primary bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10" 
+          ? "text-luxury-primary bg-gradient-to-r from-luxury-primary/20 to-luxury-accent/20" 
           : "text-white/60 hover:text-white"
         }
       `}
@@ -48,7 +48,7 @@ export const NavMenuItem = ({ icon: Icon, label, isActive, isExpanded, onClick }
       </div>
       {isActive && (
         <motion.div
-          className="absolute left-0 w-1 h-full bg-gradient-to-b from-luxury-primary to-luxury-accent rounded-full"
+          className="absolute left-0 w-1 h-full bg-gradient-to-b from-luxury-primary via-luxury-accent to-luxury-primary rounded-full"
           layoutId="activeIndicator"
           transition={{ duration: 0.3 }}
         />
