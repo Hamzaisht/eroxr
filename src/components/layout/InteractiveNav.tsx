@@ -2,38 +2,16 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { 
-  Home,
-  Video,
-  Users,
-  Heart,
-  LogOut
-} from "lucide-react";
+import { Home, Video, Users, Heart, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const menuItems = [
-  { 
-    icon: Home, 
-    label: "Home", 
-    path: "/home",
-  },
-  { 
-    icon: Video, 
-    label: "Eros Shorts", 
-    path: "/shorts",
-  },
-  { 
-    icon: Users, 
-    label: "Categories", 
-    path: "/categories",
-  },
-  { 
-    icon: Heart,
-    label: "Dating Ads", 
-    path: "/dating",
-  }
+  { icon: Home, label: "Home", path: "/home" },
+  { icon: Video, label: "Eros Shorts", path: "/shorts" },
+  { icon: Users, label: "Categories", path: "/categories" },
+  { icon: Heart, label: "Dating Ads", path: "/dating" }
 ];
 
 export const InteractiveNav = () => {
@@ -47,7 +25,6 @@ export const InteractiveNav = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
       navigate("/login");
       toast({
         title: "Logged out successfully",
@@ -86,15 +63,17 @@ export const InteractiveNav = () => {
                 whileHover={{ x: 5 }}
                 transition={{ duration: 0.2 }}
               >
-                <item.icon className="w-5 h-5" />
-                <motion.span
-                  className="font-medium"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {item.label}
-                </motion.span>
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                {isExpanded && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="font-medium whitespace-nowrap"
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
                 {isActive && (
                   <motion.div
                     className="absolute left-0 w-1 h-full bg-luxury-primary rounded-full"

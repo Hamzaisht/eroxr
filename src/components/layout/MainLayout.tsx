@@ -5,18 +5,18 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { InteractiveNav } from "./InteractiveNav";
 import { Button } from "@/components/ui/button";
-import { Plus, Video } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Plus, Video, ChevronUp, ChevronDown } from "lucide-react";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { GoLiveDialog } from "@/components/home/GoLiveDialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 export const MainLayout = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [showFloatingMenu, setShowFloatingMenu] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [uploadedErosId, setUploadedErosId] = useState<string | null>(null);
   const session = useSession();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -32,6 +32,58 @@ export const MainLayout = () => {
 
     checkSession();
   }, [session, navigate]);
+
+  const handleErosUpload = async (file: File) => {
+    if (!session?.user?.id) return;
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${session.user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('posts')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('posts')
+        .getPublicUrl(filePath);
+
+      // Create post record for the Eros video
+      const { data: post, error: postError } = await supabase
+        .from('posts')
+        .insert([
+          {
+            creator_id: session.user.id,
+            content: "New Eros video",
+            video_urls: [publicUrl],
+            visibility: 'public'
+          }
+        ])
+        .select()
+        .single();
+
+      if (postError) throw postError;
+
+      setUploadedErosId(post.id);
+      toast({
+        title: "Video uploaded successfully",
+        description: "Your Eros video is ready to be edited",
+      });
+      
+      // Navigate to the editing page
+      navigate(`/shorts/edit/${post.id}`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload video. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (!isInitialized || !session) {
     return (
@@ -88,14 +140,16 @@ export const MainLayout = () => {
             )}
           </AnimatePresence>
           
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg flex items-center justify-center"
+          <Button
             onClick={() => setShowFloatingMenu(!showFloatingMenu)}
+            className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg"
           >
-            <Video className="h-6 w-6 text-white" />
-          </motion.button>
+            {showFloatingMenu ? (
+              <ChevronDown className="h-6 w-6" />
+            ) : (
+              <ChevronUp className="h-6 w-6" />
+            )}
+          </Button>
         </div>
       </main>
 
@@ -104,11 +158,6 @@ export const MainLayout = () => {
         onOpenChange={setIsCreatePostOpen}
         selectedFiles={selectedFiles}
         onFileSelect={setSelectedFiles}
-      />
-
-      <GoLiveDialog 
-        open={isGoLiveOpen}
-        onOpenChange={setIsGoLiveOpen}
       />
 
       <Dialog open={isErosDialogOpen} onOpenChange={setIsErosDialogOpen}>
@@ -123,10 +172,8 @@ export const MainLayout = () => {
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    toast({
-                      title: "Video selected",
-                      description: "Your Eros video is ready to be edited",
-                    });
+                    handleErosUpload(file);
+                    setIsErosDialogOpen(false);
                   }
                 }}
               />
