@@ -19,6 +19,7 @@ export const AuthForm = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
+          className="glass-effect rounded-xl p-8 border border-luxury-primary/10"
         >
           {isSignup ? (
             <SignupForm onToggleMode={toggleMode} />

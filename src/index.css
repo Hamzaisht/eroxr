@@ -43,6 +43,15 @@
   #root {
     @apply min-h-screen flex flex-col;
   }
+
+  /* Form styles for dark mode */
+  input, textarea, select {
+    @apply bg-luxury-dark/50 border-luxury-primary/20 text-luxury-neutral placeholder:text-luxury-neutral/50;
+  }
+
+  button {
+    @apply transition-all duration-300;
+  }
 }
 
 /* Glass effects */
@@ -54,44 +63,24 @@
   @apply backdrop-blur-sm bg-[#161B22]/40 border border-luxury-primary/5;
 }
 
-/* Feed tabs */
-.feed-tab {
-  @apply relative px-8 py-4 text-luxury-neutral/60 hover:text-luxury-neutral transition-colors;
+/* Interactive menu animations */
+.menu-item {
+  @apply relative overflow-hidden transition-all duration-300;
 }
 
-.feed-tab[data-state="active"] {
-  @apply text-luxury-primary;
+.menu-item::after {
+  @apply content-[''] absolute bottom-0 left-0 w-full h-0.5 bg-luxury-primary transform scale-x-0 transition-transform origin-left;
 }
 
-.feed-tab[data-state="active"]::after {
-  content: '';
-  @apply absolute bottom-0 left-0 w-full h-0.5 bg-luxury-primary;
-  animation: tabIndicator 0.2s ease forwards;
+.menu-item:hover::after {
+  @apply scale-x-100;
 }
 
-@keyframes tabIndicator {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
+/* Scroll animations */
+.scroll-section {
+  @apply transition-all duration-500;
 }
 
-/* Post cards */
-.post-card {
-  @apply bg-[#161B22]/40 backdrop-blur-md border border-luxury-primary/5 rounded-xl p-6 
-         transition-all duration-300 hover:border-luxury-primary/20 hover:shadow-luxury;
-}
-
-.post-action {
-  @apply flex items-center gap-2 text-luxury-neutral/60 hover:text-luxury-primary 
-         transition-colors px-4 py-2 rounded-full hover:bg-luxury-primary/10;
-}
-
-/* Creator cards */
-.creator-card {
-  @apply flex items-center gap-4 p-4 rounded-xl bg-[#161B22]/30 backdrop-blur-md 
-         border border-luxury-primary/5 hover:border-luxury-primary/20 
-         transition-all duration-300 cursor-pointer;
+.scroll-section.active {
+  @apply scale-105;
 }
