@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -12,20 +12,15 @@ import {
   Heart,
   ChartBar,
   Crown,
-  Star
+  Star,
+  LogOut
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import type { LucideIcon } from "lucide-react";
-
-type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
-
-type BadgeInfo = {
-  variant: BadgeVariant;
-  Icon: LucideIcon | null;
-};
 
 const menuItems = [
   { 
@@ -53,7 +48,7 @@ const menuItems = [
     requiresAuth: true 
   },
   { 
-    icon: Heart, // Changed from Phone to Heart for dating/bodycontact
+    icon: Heart,
     label: "Dating Ads", 
     path: "/dating",
     requiresAuth: true 
@@ -65,6 +60,7 @@ export const InteractiveNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useSession();
+  const { toast } = useToast();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", session?.user?.id],
@@ -78,14 +74,13 @@ export const InteractiveNav = () => {
       
       if (profileError) throw profileError;
 
-      // Fetch user role in a separate query
       const { data: roleData, error: roleError } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", session.user.id)
         .single();
 
-      if (roleError && roleError.code !== 'PGRST116') { // Ignore "no rows returned" error
+      if (roleError && roleError.code !== 'PGRST116') {
         throw roleError;
       }
 
@@ -97,29 +92,24 @@ export const InteractiveNav = () => {
     enabled: !!session?.user?.id,
   });
 
-  const getUserType = () => {
-    if (!profile) return "Guest";
-    if (profile.id_verification_status === "verified" && profile.is_paying_customer) {
-      return "Verified Creator";
-    }
-    if (profile.is_paying_customer) {
-      return "Premium";
-    }
-    return "Free";
-  };
-
-  const getBadgeVariant = (): BadgeInfo => {
-    switch (getUserType()) {
-      case "Verified Creator":
-        return { variant: "default", Icon: Crown };
-      case "Premium":
-        return { variant: "secondary", Icon: Star };
-      default:
-        return { variant: "outline", Icon: null };
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      navigate("/login");
+      toast({
+        title: "Logged out successfully",
+        description: "See you soon!",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error signing out",
+        description: "Please try again",
+      });
     }
   };
-
-  const badgeInfo = getBadgeVariant();
 
   return (
     <motion.nav
@@ -154,18 +144,11 @@ export const InteractiveNav = () => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-3 space-y-1"
+                className="mt-3"
               >
                 <p className="text-sm font-medium text-luxury-neutral">
-                  @{profile?.username || "Guest"}
+                  {profile?.username || "Guest"}
                 </p>
-                <Badge 
-                  variant={badgeInfo.variant}
-                  className="text-xs flex items-center gap-1"
-                >
-                  {badgeInfo.Icon && <badgeInfo.Icon className="w-3 h-3" />}
-                  {getUserType()}
-                </Badge>
               </motion.div>
             )}
           </motion.div>
@@ -176,12 +159,10 @@ export const InteractiveNav = () => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
 
-            // Skip Eroboard if user is not a verified creator
-            if (item.requiresCreator && getUserType() !== "Verified Creator") {
+            if (item.requiresCreator && profile?.role !== "creator") {
               return null;
             }
 
-            // Skip protected routes if user is not authenticated
             if (item.requiresAuth && !session) {
               return null;
             }
@@ -218,17 +199,18 @@ export const InteractiveNav = () => {
           })}
         </div>
 
-        {session && getUserType() === "Verified Creator" && (
+        {session && (
           <motion.div 
             className="px-4 mt-auto"
             animate={{ opacity: isExpanded ? 1 : 0.5 }}
           >
             <Button
-              onClick={() => navigate("/shorts/create")}
-              className="w-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:opacity-90 transition-opacity"
+              onClick={handleLogout}
+              variant="ghost"
+              className="w-full flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-500/10"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              {isExpanded && "Add Short"}
+              <LogOut className="w-5 h-5" />
+              {isExpanded && "Log out"}
             </Button>
           </motion.div>
         )}

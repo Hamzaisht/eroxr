@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const Home = () => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -18,6 +19,7 @@ const Home = () => {
   const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [showFloatingMenu, setShowFloatingMenu] = useState(false);
+  const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
   const session = useSession();
   const { toast } = useToast();
 
@@ -60,7 +62,7 @@ const Home = () => {
 
         {/* Floating Action Button */}
         <div 
-          className="fixed bottom-6 right-6 z-50"
+          className="fixed bottom-6 right-6 z-50 group"
           onMouseEnter={() => setShowFloatingMenu(true)}
           onMouseLeave={() => setShowFloatingMenu(false)}
         >
@@ -70,25 +72,33 @@ const Home = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="absolute bottom-full right-0 mb-4 space-y-2"
+                className="absolute bottom-full right-0 mb-4 space-y-2 min-w-[180px]"
               >
                 <Button
-                  onClick={() => setIsGoLiveOpen(true)}
-                  className="w-full flex items-center gap-2 bg-luxury-primary hover:bg-luxury-primary/90"
+                  onClick={() => setIsErosDialogOpen(true)}
+                  className="w-full flex items-center gap-2 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary"
                 >
                   <Video className="h-4 w-4" />
                   Create Eros
+                </Button>
+                <Button
+                  onClick={() => setIsCreatePostOpen(true)}
+                  className="w-full flex items-center gap-2 bg-luxury-dark hover:bg-luxury-dark/90"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Post
                 </Button>
               </motion.div>
             )}
           </AnimatePresence>
           
-          <Button
-            size="lg"
-            className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg"
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg flex items-center justify-center"
           >
-            <Plus className="h-6 w-6" />
-          </Button>
+            <Video className="h-6 w-6 text-white" />
+          </motion.button>
         </div>
       </div>
 
@@ -103,6 +113,43 @@ const Home = () => {
         open={isGoLiveOpen}
         onOpenChange={setIsGoLiveOpen}
       />
+
+      <Dialog open={isErosDialogOpen} onOpenChange={setIsErosDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col items-center gap-4">
+              <input
+                type="file"
+                id="eros-upload"
+                accept="video/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    // Handle video upload
+                    toast({
+                      title: "Video selected",
+                      description: "Your Eros video is ready to be edited",
+                    });
+                  }
+                }}
+              />
+              <Button
+                onClick={() => document.getElementById('eros-upload')?.click()}
+                className="w-full h-32 rounded-lg border-2 border-dashed border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors"
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <Video className="h-8 w-8" />
+                  <span>Upload video</span>
+                  <span className="text-sm text-luxury-neutral/60">
+                    Maximum length: 60 seconds
+                  </span>
+                </div>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </HomeLayout>
   );
 };
