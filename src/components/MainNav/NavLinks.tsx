@@ -1,12 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { Home, Heart, Play } from "lucide-react";
+import { Home, Heart, Play, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const NavLinks = () => {
   return (
     <nav className="hidden md:flex flex-col items-start space-y-6">
       <NavLink 
-        to="/home" 
+        to="/" 
         className={({ isActive }) => 
           `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
@@ -42,7 +42,25 @@ export const NavLinks = () => {
       </NavLink>
 
       <NavLink 
-        to="/shorts" 
+        to="/messages" 
+        className={({ isActive }) => 
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
+            isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
+          }`
+        }
+      >
+        <MessageSquare className="w-5 h-5" />
+        <motion.span 
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: "auto" }}
+          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        >
+          Messages
+        </motion.span>
+      </NavLink>
+
+      <NavLink 
+        to="/eroboard" 
         className={({ isActive }) => 
           `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
@@ -55,7 +73,7 @@ export const NavLinks = () => {
           animate={{ opacity: 1, width: "auto" }}
           className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         >
-          Shorts
+          Eroboard
         </motion.span>
       </NavLink>
     </nav>

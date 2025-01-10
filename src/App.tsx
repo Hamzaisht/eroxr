@@ -10,7 +10,7 @@ import Profile from "@/pages/Profile";
 import Messages from "@/pages/Messages";
 import Settings from "@/pages/Settings";
 import Eroboard from "@/pages/Eroboard";
-import { useEffect } from "react";
+import Dating from "@/pages/Dating";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +39,7 @@ function App() {
             <Route path="/messages" element={<Messages />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/eroboard" element={<Eroboard />} />
+            <Route path="/dating" element={<Dating />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
