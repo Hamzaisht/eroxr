@@ -16,6 +16,7 @@ export const MainLayout = () => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const session = useSession();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -105,6 +106,8 @@ export const MainLayout = () => {
       <CreatePostDialog 
         open={isCreatePostOpen} 
         onOpenChange={setIsCreatePostOpen}
+        selectedFiles={selectedFiles}
+        onFileSelect={setSelectedFiles}
       />
 
       <GoLiveDialog 
