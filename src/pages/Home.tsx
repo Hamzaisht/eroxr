@@ -20,8 +20,23 @@ const Home = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [showFloatingMenu, setShowFloatingMenu] = useState(false);
   const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
+  const [isButtonVisible, setIsButtonVisible] = useState(true);
   const session = useSession();
   const { toast } = useToast();
+
+  // Add scroll position tracking
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setIsButtonVisible(currentScrollY <= lastScrollY || currentScrollY < 100);
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const checkPayingCustomerStatus = async () => {
@@ -60,46 +75,54 @@ const Home = () => {
           <RightSidebar />
         </div>
 
-        {/* Floating Action Button */}
-        <div 
-          className="fixed bottom-6 right-6 z-50 group"
-          onMouseEnter={() => setShowFloatingMenu(true)}
-          onMouseLeave={() => setShowFloatingMenu(false)}
-        >
-          <AnimatePresence>
-            {showFloatingMenu && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="absolute bottom-full right-0 mb-4 space-y-2 min-w-[180px]"
+        {/* Floating Action Button with visibility animation */}
+        <AnimatePresence>
+          {isButtonVisible && (
+            <motion.div 
+              className="fixed bottom-6 right-6 z-50 group"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onMouseEnter={() => setShowFloatingMenu(true)}
+              onMouseLeave={() => setShowFloatingMenu(false)}
+            >
+              <AnimatePresence>
+                {showFloatingMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="absolute bottom-full right-0 mb-4 space-y-2 min-w-[180px]"
+                  >
+                    <Button
+                      onClick={() => setIsErosDialogOpen(true)}
+                      className="w-full flex items-center gap-2 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary"
+                    >
+                      <Video className="h-4 w-4" />
+                      Create Eros
+                    </Button>
+                    <Button
+                      onClick={() => setIsCreatePostOpen(true)}
+                      className="w-full flex items-center gap-2 bg-luxury-dark hover:bg-luxury-dark/90"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Create Post
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg flex items-center justify-center"
               >
-                <Button
-                  onClick={() => setIsErosDialogOpen(true)}
-                  className="w-full flex items-center gap-2 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary"
-                >
-                  <Video className="h-4 w-4" />
-                  Create Eros
-                </Button>
-                <Button
-                  onClick={() => setIsCreatePostOpen(true)}
-                  className="w-full flex items-center gap-2 bg-luxury-dark hover:bg-luxury-dark/90"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Post
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg flex items-center justify-center"
-          >
-            <Video className="h-6 w-6 text-white" />
-          </motion.button>
-        </div>
+                <Video className="h-6 w-6 text-white" />
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <CreatePostDialog 
@@ -126,11 +149,11 @@ const Home = () => {
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    // Handle video upload
                     toast({
                       title: "Video selected",
                       description: "Your Eros video is ready to be edited",
                     });
+                    setIsErosDialogOpen(false);
                   }
                 }}
               />
