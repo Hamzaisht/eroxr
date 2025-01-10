@@ -49,7 +49,7 @@ export const MainLayout = () => {
         transition={{ duration: 0.5 }}
         className="relative min-h-screen pl-20 w-full"
       >
-        <div className="min-h-screen w-full backdrop-blur-sm">
+        <div className="min-h-screen w-full backdrop-blur-sm px-4 py-6">
           <Outlet />
         </div>
       </motion.main>

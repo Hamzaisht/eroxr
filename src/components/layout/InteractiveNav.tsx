@@ -1,21 +1,100 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Grid, Info, Search, Settings, User, Menu } from "lucide-react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  LayoutDashboard, 
+  Video, 
+  Plus, 
+  Users, 
+  Phone,
+  ChartBar,
+  Crown,
+  Star
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const menuItems = [
-  { icon: Home, label: "Home", path: "/" },
-  { icon: Grid, label: "Categories", path: "/categories" },
-  { icon: Info, label: "About", path: "/about" },
-  { icon: Search, label: "Explore", path: "/search" },
-  { icon: Settings, label: "Settings", path: "/settings" },
-  { icon: User, label: "Profile", path: "/profile" },
+  { 
+    icon: LayoutDashboard, 
+    label: "Home", 
+    path: "/home",
+    requiresAuth: true 
+  },
+  { 
+    icon: ChartBar, 
+    label: "Eroboard", 
+    path: "/eroboard",
+    requiresCreator: true 
+  },
+  { 
+    icon: Video, 
+    label: "Eros Shorts", 
+    path: "/shorts",
+    requiresAuth: true 
+  },
+  { 
+    icon: Users, 
+    label: "Categories", 
+    path: "/categories",
+    requiresAuth: true 
+  },
+  { 
+    icon: Phone, 
+    label: "Ero Contact", 
+    path: "/dating",
+    requiresAuth: true 
+  }
 ];
 
 export const InteractiveNav = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const session = useSession();
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*, user_roles(role)")
+        .eq("id", session.user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  const getUserType = () => {
+    if (!profile) return "Guest";
+    if (profile.id_verification_status === "verified" && profile.is_paying_customer) {
+      return "Verified Creator";
+    }
+    if (profile.is_paying_customer) {
+      return "Premium";
+    }
+    return "Free";
+  };
+
+  const getBadgeVariant = () => {
+    switch (getUserType()) {
+      case "Verified Creator":
+        return { variant: "default", icon: Crown };
+      case "Premium":
+        return { variant: "secondary", icon: Star };
+      default:
+        return { variant: "outline", icon: null };
+    }
+  };
 
   return (
     <motion.nav
@@ -26,17 +105,61 @@ export const InteractiveNav = () => {
       onMouseLeave={() => setIsExpanded(false)}
     >
       <div className="flex flex-col h-full py-8">
-        <motion.div 
-          className="px-6 mb-8"
-          animate={{ opacity: isExpanded ? 1 : 0.5 }}
-        >
-          <Menu className="w-6 h-6 text-luxury-primary" />
-        </motion.div>
+        {session && (
+          <motion.div 
+            className="px-4 mb-8"
+            animate={{ opacity: isExpanded ? 1 : 0.5 }}
+          >
+            <div className="relative">
+              <Avatar className="w-12 h-12 border-2 border-luxury-primary/20">
+                <AvatarImage 
+                  src={profile?.avatar_url} 
+                  alt={profile?.username || "User"} 
+                />
+                <AvatarFallback className="bg-luxury-darker text-luxury-primary">
+                  {profile?.username?.[0]?.toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-1 -right-1">
+                <AvailabilityIndicator status="online" size={12} />
+              </div>
+            </div>
+            
+            {isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-3 space-y-1"
+              >
+                <p className="text-sm font-medium text-luxury-neutral">
+                  @{profile?.username || "Guest"}
+                </p>
+                <Badge 
+                  variant={getBadgeVariant().variant as any}
+                  className="text-xs flex items-center gap-1"
+                >
+                  {getBadgeVariant().icon && <getBadgeVariant().icon className="w-3 h-3" />}
+                  {getUserType()}
+                </Badge>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
 
         <div className="flex-1 px-4">
           {menuItems.map((item) => {
-            const Icon = item.icon;
             const isActive = location.pathname === item.path;
+            const Icon = item.icon;
+
+            // Skip Eroboard if user is not a verified creator
+            if (item.requiresCreator && getUserType() !== "Verified Creator") {
+              return null;
+            }
+
+            // Skip protected routes if user is not authenticated
+            if (item.requiresAuth && !session) {
+              return null;
+            }
 
             return (
               <motion.button
@@ -69,6 +192,21 @@ export const InteractiveNav = () => {
             );
           })}
         </div>
+
+        {session && getUserType() === "Verified Creator" && (
+          <motion.div 
+            className="px-4 mt-auto"
+            animate={{ opacity: isExpanded ? 1 : 0.5 }}
+          >
+            <Button
+              onClick={() => navigate("/shorts/create")}
+              className="w-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              {isExpanded && "Add Short"}
+            </Button>
+          </motion.div>
+        )}
       </div>
     </motion.nav>
   );
