@@ -9,7 +9,7 @@ import {
   Video, 
   Plus, 
   Users, 
-  Phone,
+  Heart,
   ChartBar,
   Crown,
   Star
@@ -53,8 +53,8 @@ const menuItems = [
     requiresAuth: true 
   },
   { 
-    icon: Phone, 
-    label: "Ero Contact", 
+    icon: Heart, // Changed from Phone to Heart for dating/bodycontact
+    label: "Dating Ads", 
     path: "/dating",
     requiresAuth: true 
   }
