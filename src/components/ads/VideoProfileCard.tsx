@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 
 interface VideoProfileCardProps {
   ad: DatingAd;
@@ -60,11 +61,38 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
     }
   };
 
+  // Format tags to match filters
+  const renderTags = () => {
+    const tags = [];
+    
+    // Add age range tag
+    if (ad.age_range) {
+      tags.push(`${ad.age_range.lower}-${ad.age_range.upper} y/o`);
+    }
+    
+    // Add body type tag if exists
+    if (ad.body_type) {
+      tags.push(ad.body_type);
+    }
+    
+    // Add verification status
+    if (ad.is_verified) {
+      tags.push('Verified');
+    }
+    
+    // Add education level if exists
+    if (ad.education_level) {
+      tags.push(ad.education_level);
+    }
+
+    return tags;
+  };
+
   return (
     <motion.div
       className={cn(
         "relative w-full max-w-4xl h-full rounded-xl overflow-hidden",
-        "group cursor-pointer transform-gpu",
+        "group cursor-pointer transform-gpu bg-luxury-dark/50 backdrop-blur-xl",
       )}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
@@ -75,7 +103,7 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
         <video
           ref={videoRef}
           src={ad.video_url}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover opacity-90"
           loop
           muted={isMuted}
           playsInline
@@ -156,20 +184,15 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
 
           {/* Tags */}
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
-              {ad.user_type}
-            </Badge>
-            <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
-              {ad.relationship_status}
-            </Badge>
-            <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
-              {ad.age_range.lower}-{ad.age_range.upper} years
-            </Badge>
-            {ad.body_type && (
-              <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
-                {ad.body_type}
+            {renderTags().map((tag, index) => (
+              <Badge 
+                key={index}
+                variant="secondary" 
+                className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20"
+              >
+                {tag}
               </Badge>
-            )}
+            ))}
           </div>
 
           {/* Description */}
@@ -181,13 +204,20 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
           <div className="flex items-center justify-between pt-4">
             <div className="flex gap-2">
               {ad.interests?.slice(0, 3).map((interest, index) => (
-                <Badge 
-                  key={index}
-                  variant="outline" 
-                  className="bg-luxury-primary/5 border-luxury-primary/20 text-luxury-neutral"
-                >
-                  {interest}
-                </Badge>
+                <>
+                  <Badge 
+                    key={index}
+                    variant="outline" 
+                    className="bg-luxury-primary/5 border-luxury-primary/20 text-luxury-neutral"
+                  >
+                    {interest}
+                  </Badge>
+                  {index < ad.interests!.length - 1 && (
+                    <span className="text-luxury-neutral/20 pointer-events-none select-none">
+                      |
+                    </span>
+                  )}
+                </>
               ))}
             </div>
             <div className="flex gap-2">
