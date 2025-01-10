@@ -10,34 +10,14 @@ export type Post = {
   visibility: 'public' | 'subscribers_only';
   tags: string[] | null;
   ppv_amount: number | null;
-  is_ppv: boolean | null;
+  is_ppv: boolean;
   video_urls: string[] | null;
   has_liked: boolean;
   has_purchased?: boolean;
+  screenshots_count: number;
+  downloads_count: number;
   creator: {
     username: string | null;
     avatar_url: string | null;
   };
-};
-
-export type PostLike = {
-  id: string;
-  post_id: string;
-  user_id: string;
-  created_at: string;
-};
-
-export type PostPurchase = {
-  id: string;
-  post_id: string | null;
-  user_id: string | null;
-  amount: number;
-  created_at: string;
-};
-
-export type PostSave = {
-  id: string;
-  post_id: string;
-  user_id: string;
-  created_at: string;
 };

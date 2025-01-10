@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, Edit2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostHeader } from "./PostHeader";
 import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
@@ -10,6 +10,7 @@ import { Post } from "@/components/feed/types";
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { CommentSection } from "./CommentSection";
 import { ShareDialog } from "./ShareDialog";
+import { format } from "date-fns";
 
 interface PostCardProps {
   post: Post;
@@ -30,6 +31,8 @@ export const PostCard = ({
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
+
+  const isEdited = post.updated_at !== post.created_at;
 
   const handleLike = async () => {
     if (onLike) {
@@ -52,7 +55,7 @@ export const PostCard = ({
   const hasMedia = post.media_url && post.media_url.length > 0;
 
   return (
-    <Card className="post-card">
+    <Card className="neo-card hover:shadow-luxury transition-all duration-300">
       <PostHeader 
         post={post} 
         isOwner={currentUserId === post.creator_id}
@@ -103,36 +106,43 @@ export const PostCard = ({
       <CardContent className="space-y-4 pt-4">
         <p className="text-luxury-neutral/90">{post.content}</p>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="sm"
-            className="post-action"
+            className="flex items-center gap-2 hover:bg-luxury-primary/10"
             onClick={handleLike}
           >
-            <Heart className={cn("w-5 h-5", liked && "fill-current text-luxury-primary")} />
+            <Heart className={cn("h-5 w-5", liked && "fill-luxury-primary text-luxury-primary")} />
             <span>{post.likes_count || 0}</span>
           </Button>
           
           <Button
             variant="ghost"
             size="sm"
-            className="post-action"
+            className="flex items-center gap-2 hover:bg-luxury-primary/10"
             onClick={handleCommentClick}
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageCircle className="h-5 w-5" />
             <span>{post.comments_count || 0}</span>
           </Button>
           
           <Button
             variant="ghost"
             size="sm"
-            className="post-action"
+            className="flex items-center gap-2 hover:bg-luxury-primary/10"
             onClick={() => setIsShareDialogOpen(true)}
           >
-            <Share2 className="w-5 h-5" />
-            Share
+            <Share2 className="h-5 w-5" />
+            <span>Share</span>
           </Button>
+
+          {isEdited && (
+            <div className="flex items-center text-sm text-luxury-neutral/60">
+              <Edit2 className="h-4 w-4 mr-1" />
+              <span>edited {format(new Date(post.updated_at), 'MMM d, yyyy')}</span>
+            </div>
+          )}
         </div>
 
         {showComments && (
