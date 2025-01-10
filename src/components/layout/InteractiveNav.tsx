@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -6,6 +6,9 @@ import { Home, Video, Users, Heart, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
@@ -20,6 +23,21 @@ export const InteractiveNav = () => {
   const location = useLocation();
   const session = useSession();
   const { toast } = useToast();
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
 
   const handleLogout = async () => {
     try {
@@ -88,10 +106,39 @@ export const InteractiveNav = () => {
         </div>
 
         {session && (
-          <motion.div 
-            className="mt-auto px-4"
-            animate={{ opacity: isExpanded ? 1 : 0.5 }}
-          >
+          <div className="mt-auto px-4 space-y-4">
+            <motion.div 
+              className="cursor-pointer"
+              onClick={() => navigate(`/profile/${session.user.id}`)}
+            >
+              <div className="relative group">
+                <Avatar className="w-12 h-12 ring-2 ring-luxury-primary/20 transition-all duration-200 group-hover:ring-luxury-primary/40">
+                  <AvatarImage 
+                    src={profile?.avatar_url} 
+                    alt={profile?.username || "User"} 
+                  />
+                  <AvatarFallback className="bg-luxury-darker text-luxury-primary">
+                    {profile?.username?.[0]?.toUpperCase() || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-1 -right-1">
+                  <AvailabilityIndicator 
+                    status={(profile?.status as AvailabilityStatus) || "offline"}
+                    size={12}
+                  />
+                </div>
+              </div>
+              {isExpanded && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mt-2 text-sm font-medium text-white/80 truncate"
+                >
+                  {profile?.username || "Guest"}
+                </motion.p>
+              )}
+            </motion.div>
+
             <Button
               onClick={handleLogout}
               variant="ghost"
@@ -100,7 +147,7 @@ export const InteractiveNav = () => {
               <LogOut className="w-5 h-5" />
               {isExpanded && "Log out"}
             </Button>
-          </motion.div>
+          </div>
         )}
       </div>
     </motion.nav>

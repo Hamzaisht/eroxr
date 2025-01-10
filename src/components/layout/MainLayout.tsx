@@ -50,7 +50,6 @@ export const MainLayout = () => {
         .from('posts')
         .getPublicUrl(filePath);
 
-      // Create post record for the Eros video
       const { data: post, error: postError } = await supabase
         .from('posts')
         .insert([
@@ -71,7 +70,6 @@ export const MainLayout = () => {
         description: "Your Eros video is ready to be edited",
       });
       
-      // Navigate to the editing page
       navigate(`/shorts/edit/${post.id}`);
     } catch (error) {
       console.error('Upload error:', error);
