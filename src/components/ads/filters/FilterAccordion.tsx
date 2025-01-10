@@ -19,8 +19,10 @@ export const FilterAccordion = ({
   setFilterOptions,
 }: FilterAccordionProps) => (
   <Accordion type="single" collapsible className="w-full">
-    <AccordionItem value="age">
-      <AccordionTrigger className="text-sm">Age Range</AccordionTrigger>
+    <AccordionItem value="age" className="border-luxury-primary/10">
+      <AccordionTrigger className="text-sm text-luxury-neutral hover:text-luxury-primary">
+        Age Range
+      </AccordionTrigger>
       <AccordionContent>
         <div className="space-y-4">
           <Slider
@@ -28,19 +30,22 @@ export const FilterAccordion = ({
             min={18}
             max={99}
             step={1}
+            className="[&_[role=slider]]:bg-luxury-primary [&_[role=slider]]:border-luxury-primary"
             onValueChange={([min, max]) => 
               setFilterOptions({ ...filterOptions, minAge: min, maxAge: max })
             }
           />
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-luxury-neutral">
             {filterOptions.minAge || 18} - {filterOptions.maxAge || 99} years
           </div>
         </div>
       </AccordionContent>
     </AccordionItem>
 
-    <AccordionItem value="location">
-      <AccordionTrigger className="text-sm">Distance</AccordionTrigger>
+    <AccordionItem value="location" className="border-luxury-primary/10">
+      <AccordionTrigger className="text-sm text-luxury-neutral hover:text-luxury-primary">
+        Distance
+      </AccordionTrigger>
       <AccordionContent>
         <div className="space-y-4">
           <Slider
@@ -48,19 +53,22 @@ export const FilterAccordion = ({
             min={1}
             max={500}
             step={1}
+            className="[&_[role=slider]]:bg-luxury-primary [&_[role=slider]]:border-luxury-primary"
             onValueChange={([value]) => 
               setFilterOptions({ ...filterOptions, maxDistance: value })
             }
           />
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-luxury-neutral">
             Within {filterOptions.maxDistance || 50} km
           </div>
         </div>
       </AccordionContent>
     </AccordionItem>
 
-    <AccordionItem value="body-type">
-      <AccordionTrigger className="text-sm">Body Type</AccordionTrigger>
+    <AccordionItem value="body-type" className="border-luxury-primary/10">
+      <AccordionTrigger className="text-sm text-luxury-neutral hover:text-luxury-primary">
+        Body Type
+      </AccordionTrigger>
       <AccordionContent>
         <div className="space-y-2">
           {bodyTypes.map((type) => (
@@ -74,8 +82,9 @@ export const FilterAccordion = ({
                     : filterOptions.bodyType?.filter((t) => t !== type) || [];
                   setFilterOptions({ ...filterOptions, bodyType: newTypes });
                 }}
+                className="border-luxury-primary/50 data-[state=checked]:bg-luxury-primary data-[state=checked]:border-luxury-primary"
               />
-              <Label htmlFor={type} className="text-sm capitalize">
+              <Label htmlFor={type} className="text-sm capitalize text-luxury-neutral">
                 {type.replace('_', ' ')}
               </Label>
             </div>
@@ -84,55 +93,10 @@ export const FilterAccordion = ({
       </AccordionContent>
     </AccordionItem>
 
-    <AccordionItem value="education">
-      <AccordionTrigger className="text-sm">Education</AccordionTrigger>
-      <AccordionContent>
-        <div className="space-y-2">
-          {educationLevels.map((level) => (
-            <div key={level} className="flex items-center space-x-2">
-              <Checkbox
-                id={level}
-                checked={filterOptions.educationLevel?.includes(level)}
-                onCheckedChange={(checked) => {
-                  const newLevels = checked
-                    ? [...(filterOptions.educationLevel || []), level]
-                    : filterOptions.educationLevel?.filter((l) => l !== level) || [];
-                  setFilterOptions({ ...filterOptions, educationLevel: newLevels });
-                }}
-              />
-              <Label htmlFor={level} className="text-sm capitalize">
-                {level.replace('_', ' ')}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </AccordionContent>
-    </AccordionItem>
-
-    <AccordionItem value="activity">
-      <AccordionTrigger className="text-sm">Last Active</AccordionTrigger>
-      <AccordionContent>
-        <Select
-          value={filterOptions.lastActive}
-          onValueChange={(value: 'today' | 'week' | 'month' | 'all') => 
-            setFilterOptions({ ...filterOptions, lastActive: value })
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select timeframe" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="week">This Week</SelectItem>
-            <SelectItem value="month">This Month</SelectItem>
-            <SelectItem value="all">All Time</SelectItem>
-          </SelectContent>
-        </Select>
-      </AccordionContent>
-    </AccordionItem>
-
-    <AccordionItem value="verification">
-      <AccordionTrigger className="text-sm">Verification</AccordionTrigger>
+    <AccordionItem value="verification" className="border-luxury-primary/10">
+      <AccordionTrigger className="text-sm text-luxury-neutral hover:text-luxury-primary">
+        Verification
+      </AccordionTrigger>
       <AccordionContent>
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
@@ -142,8 +106,9 @@ export const FilterAccordion = ({
               onCheckedChange={(checked) => 
                 setFilterOptions({ ...filterOptions, isVerified: !!checked })
               }
+              className="border-luxury-primary/50 data-[state=checked]:bg-luxury-primary data-[state=checked]:border-luxury-primary"
             />
-            <Label htmlFor="verified" className="text-sm">
+            <Label htmlFor="verified" className="text-sm text-luxury-neutral">
               Verified Profiles Only
             </Label>
           </div>
@@ -154,8 +119,9 @@ export const FilterAccordion = ({
               onCheckedChange={(checked) => 
                 setFilterOptions({ ...filterOptions, isPremium: !!checked })
               }
+              className="border-luxury-primary/50 data-[state=checked]:bg-luxury-primary data-[state=checked]:border-luxury-primary"
             />
-            <Label htmlFor="premium" className="text-sm">
+            <Label htmlFor="premium" className="text-sm text-luxury-neutral">
               Premium Profiles Only
             </Label>
           </div>
