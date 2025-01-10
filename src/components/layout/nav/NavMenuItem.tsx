@@ -17,7 +17,7 @@ export const NavMenuItem = ({ icon: Icon, label, isActive, isExpanded, onClick }
       className={`
         w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 relative group 
         ${isActive 
-          ? "text-luxury-primary bg-gradient-to-r from-luxury-primary/20 to-luxury-accent/20" 
+          ? "text-luxury-primary bg-gradient-to-r from-luxury-primary/5 to-luxury-accent/5" 
           : "text-white/60 hover:text-white"
         }
       `}
