@@ -14,20 +14,21 @@ export const NavMenuItem = ({ icon: Icon, label, isActive, isExpanded, onClick }
   return (
     <motion.button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors relative group ${
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 relative group ${
         isActive 
           ? "text-luxury-primary bg-luxury-primary/10" 
           : "text-white/60 hover:text-white hover:bg-white/5"
       }`}
       whileHover={{ x: 5 }}
+      whileTap={{ scale: 0.95 }}
       transition={{ duration: 0.2 }}
     >
       <Icon className="w-5 h-5 flex-shrink-0" />
       {isExpanded && (
         <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -10 }}
           className="font-medium whitespace-nowrap"
         >
           {label}
@@ -37,6 +38,7 @@ export const NavMenuItem = ({ icon: Icon, label, isActive, isExpanded, onClick }
         <motion.div
           className="absolute left-0 w-1 h-full bg-luxury-primary rounded-full"
           layoutId="activeIndicator"
+          transition={{ duration: 0.3 }}
         />
       )}
     </motion.button>

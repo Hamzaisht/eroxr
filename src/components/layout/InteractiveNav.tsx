@@ -22,12 +22,19 @@ export const InteractiveNav = () => {
   return (
     <motion.nav
       initial={false}
-      animate={{ width: isExpanded ? 240 : 80 }}
-      className="fixed left-0 top-0 h-screen bg-[#0D1117]/95 backdrop-blur-xl border-r border-luxury-primary/10 z-50"
+      animate={{ 
+        width: isExpanded ? 240 : 80,
+        transition: { duration: 0.3, ease: "easeInOut" }
+      }}
+      className="fixed left-0 top-0 h-screen bg-[#0D1117]/95 backdrop-blur-xl border-r border-luxury-primary/10 z-50 overflow-hidden"
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
-      <div className="flex flex-col h-full py-8">
+      <motion.div 
+        className="flex flex-col h-full py-8"
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="space-y-2 px-4">
           {menuItems.map((item) => (
             <NavMenuItem
@@ -43,7 +50,7 @@ export const InteractiveNav = () => {
         </div>
 
         {session && <UserProfileSection isExpanded={isExpanded} />}
-      </div>
+      </motion.div>
     </motion.nav>
   );
 };

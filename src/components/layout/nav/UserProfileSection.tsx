@@ -55,12 +55,14 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
 
   return (
     <div className="mt-auto px-4 space-y-4">
-      <motion.div 
-        className="cursor-pointer"
-        onClick={() => navigate(`/profile/${session.user.id}`)}
-      >
-        <div className="relative group">
-          <Avatar className="w-12 h-12 ring-2 ring-luxury-primary/20 transition-all duration-200 group-hover:ring-luxury-primary/40">
+      <div className="flex items-center gap-3">
+        <motion.div 
+          className="relative cursor-pointer"
+          onClick={() => navigate(`/profile/${session.user.id}`)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Avatar className="w-12 h-12 ring-2 ring-luxury-primary/20 transition-all duration-200 hover:ring-luxury-primary/40">
             <AvatarImage 
               src={profile?.avatar_url} 
               alt={profile?.username || "User"} 
@@ -69,23 +71,29 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
               {profile?.username?.[0]?.toUpperCase() || "?"}
             </AvatarFallback>
           </Avatar>
-          <div className="absolute -bottom-1 -right-1">
-            <AvailabilityIndicator 
-              status={(profile?.status as AvailabilityStatus) || "offline"}
-              size={12}
-            />
-          </div>
-        </div>
+        </motion.div>
+
         {isExpanded && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-2 text-sm font-medium text-white/80 truncate"
-          >
-            {profile?.username || "Guest"}
-          </motion.p>
+          <div className="flex flex-col">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-sm font-medium text-white/80 truncate"
+            >
+              {profile?.username || "Guest"}
+            </motion.p>
+            <div className="flex items-center gap-2">
+              <AvailabilityIndicator 
+                status={(profile?.status as AvailabilityStatus) || "offline"}
+                size={8}
+              />
+              <span className="text-xs text-white/60">
+                {profile?.status || "offline"}
+              </span>
+            </div>
+          </div>
         )}
-      </motion.div>
+      </div>
 
       <Button
         onClick={handleLogout}
