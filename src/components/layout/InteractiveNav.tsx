@@ -18,6 +18,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { LucideIcon } from "lucide-react";
+
+type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
+
+type BadgeInfo = {
+  variant: BadgeVariant;
+  Icon: LucideIcon | null;
+};
 
 const menuItems = [
   { 
@@ -100,7 +108,7 @@ export const InteractiveNav = () => {
     return "Free";
   };
 
-  const getBadgeVariant = () => {
+  const getBadgeVariant = (): BadgeInfo => {
     switch (getUserType()) {
       case "Verified Creator":
         return { variant: "default", Icon: Crown };
