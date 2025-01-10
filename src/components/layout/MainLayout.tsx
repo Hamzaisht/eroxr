@@ -42,11 +42,11 @@ export const MainLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to">
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
+    <div className="min-h-screen bg-[#0D1117] relative">
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-[0.02]" />
       <div className="absolute inset-0">
-        <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-luxury-primary/20 blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-luxury-accent/20 blur-3xl animate-pulse" />
+        <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-luxury-primary/5 blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-luxury-accent/5 blur-3xl animate-pulse" />
       </div>
       
       <InteractiveNav />
@@ -84,7 +84,7 @@ export const MainLayout = () => {
                 </Button>
                 <Button
                   onClick={() => setIsCreatePostOpen(true)}
-                  className="w-full flex items-center gap-2 bg-luxury-dark hover:bg-luxury-dark/90"
+                  className="w-full flex items-center gap-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm"
                 >
                   <Plus className="h-4 w-4" />
                   Create Post
@@ -116,7 +116,7 @@ export const MainLayout = () => {
       />
 
       <Dialog open={isErosDialogOpen} onOpenChange={setIsErosDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-[#0D1117]/95 backdrop-blur-xl border-luxury-primary/20">
           <div className="grid gap-4 py-4">
             <div className="flex flex-col items-center gap-4">
               <input
@@ -136,7 +136,7 @@ export const MainLayout = () => {
               />
               <Button
                 onClick={() => document.getElementById('eros-upload')?.click()}
-                className="w-full h-32 rounded-lg border-2 border-dashed border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors"
+                className="w-full h-32 rounded-lg border-2 border-dashed border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors bg-black/20"
               >
                 <div className="flex flex-col items-center gap-2">
                   <Video className="h-8 w-8" />

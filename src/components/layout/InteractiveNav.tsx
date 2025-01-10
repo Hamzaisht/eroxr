@@ -117,18 +117,19 @@ export const InteractiveNav = () => {
     <motion.nav
       initial={false}
       animate={{ width: isExpanded ? 240 : 80 }}
-      className="fixed left-0 top-0 h-screen bg-luxury-dark/50 backdrop-blur-xl border-r border-luxury-primary/10 z-50"
+      className="fixed left-0 top-0 h-screen bg-[#0D1117]/95 backdrop-blur-xl border-r border-luxury-primary/10 z-50"
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
       <div className="flex flex-col h-full py-8">
         {session && (
           <motion.div 
-            className="px-4 mb-8"
+            className="px-4 mb-8 cursor-pointer"
             animate={{ opacity: isExpanded ? 1 : 0.5 }}
+            onClick={() => navigate(`/profile/${session.user.id}`)}
           >
-            <div className="relative">
-              <Avatar className="w-12 h-12 border-2 border-luxury-primary/20">
+            <div className="relative group">
+              <Avatar className="w-12 h-12 ring-2 ring-luxury-primary/20 transition-all duration-200 group-hover:ring-luxury-primary/40">
                 <AvatarImage 
                   src={profile?.avatar_url} 
                   alt={profile?.username || "User"} 
@@ -138,7 +139,13 @@ export const InteractiveNav = () => {
                 </AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-1 -right-1">
-                <AvailabilityIndicator status="online" size={12} />
+                <AvailabilityIndicator 
+                  status={profile?.status || "offline"} 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(profile?.status === 'online' ? 'offline' : 'online');
+                  }}
+                />
               </div>
             </div>
             
@@ -156,50 +163,48 @@ export const InteractiveNav = () => {
           </motion.div>
         )}
 
-        <div className="flex-1 px-4">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const Icon = item.icon;
+        {menuItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          const Icon = item.icon;
 
-            if (item.requiresAdmin && profile?.role !== "admin") {
-              return null;
-            }
+          if (item.requiresAdmin && profile?.role !== "admin") {
+            return null;
+          }
 
-            if (item.requiresAuth && !session) {
-              return null;
-            }
+          if (item.requiresAuth && !session) {
+            return null;
+          }
 
-            return (
-              <motion.button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className={`w-full flex items-center px-4 py-3 mb-2 rounded-lg transition-colors relative group ${
-                  isActive 
-                    ? "text-luxury-primary bg-luxury-primary/10" 
-                    : "text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/5"
-                }`}
-                whileHover={{ x: 5 }}
+          return (
+            <motion.button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center px-4 py-3 mb-2 rounded-lg transition-colors relative group ${
+                isActive 
+                  ? "text-luxury-primary bg-luxury-primary/10" 
+                  : "text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/5"
+              }`}
+              whileHover={{ x: 5 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Icon className="w-5 h-5" />
+              <motion.span
+                className="ml-4 font-medium"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: isExpanded ? 1 : 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Icon className="w-5 h-5" />
-                <motion.span
-                  className="ml-4 font-medium"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {item.label}
-                </motion.span>
-                {isActive && (
-                  <motion.div
-                    className="absolute left-0 w-1 h-full bg-luxury-primary rounded-full"
-                    layoutId="activeIndicator"
-                  />
-                )}
-              </motion.button>
-            );
-          })}
-        </div>
+                {item.label}
+              </motion.span>
+              {isActive && (
+                <motion.div
+                  className="absolute left-0 w-1 h-full bg-luxury-primary rounded-full"
+                  layoutId="activeIndicator"
+                />
+              )}
+            </motion.button>
+          );
+        })}
 
         {session && (
           <motion.div 
