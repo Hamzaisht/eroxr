@@ -1,5 +1,9 @@
+import { useState } from "react";
+import { Search, Filter } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { type SearchCategory } from "../types/dating";
 
 interface SearchCategoriesProps {
@@ -16,37 +20,106 @@ export const SearchCategories = ({
   setSelectedSeeker,
   setSelectedLookingFor,
   searchCategories,
-}: SearchCategoriesProps) => (
-  <div className="space-y-3">
-    <h3 className="text-sm font-semibold bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] bg-clip-text text-transparent">
-      I am...
-    </h3>
-    <div className="space-y-1">
-      {searchCategories.map((category) => (
-        <Button
-          key={`${category.seeker}-${category.looking_for}`}
-          variant={
-            selectedSeeker === category.seeker &&
-            selectedLookingFor === category.looking_for
-              ? "default"
-              : "outline"
-          }
-          size="sm"
-          className={`w-full justify-start text-xs transition-all duration-300 ${
-            selectedSeeker === category.seeker &&
-            selectedLookingFor === category.looking_for
-              ? "bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] text-white border-none"
-              : "bg-[#2D2A34]/50 text-gray-300 hover:bg-[#3D3A44] border-none"
-          }`}
-          onClick={() => {
-            setSelectedSeeker(category.seeker);
-            setSelectedLookingFor(category.looking_for);
-          }}
+}: SearchCategoriesProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const filteredCategories = searchCategories.filter((category) => {
+    const searchString = `${category.seeker} → ${category.looking_for}`.toLowerCase();
+    return searchString.includes(searchTerm.toLowerCase());
+  });
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.3,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { opacity: 1, x: 0 }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Input
+              type="text"
+              placeholder="Search categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-luxury-darker/50 border-luxury-primary/20 text-luxury-neutral placeholder:text-luxury-muted focus:border-luxury-primary"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-luxury-muted" />
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`bg-luxury-darker/50 border-luxury-primary/20 hover:bg-luxury-darker hover:border-luxury-primary ${
+              showFilters ? 'text-luxury-primary' : 'text-luxury-muted'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <ScrollArea className="h-[300px] rounded-md border border-luxury-primary/20 bg-luxury-darker/50 p-4">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-2"
         >
-          <Search className="w-3 h-3 mr-1" />
-          {category.seeker} → {category.looking_for}
-        </Button>
-      ))}
+          {filteredCategories.map((category) => {
+            const isSelected =
+              selectedSeeker === category.seeker &&
+              selectedLookingFor === category.looking_for;
+
+            return (
+              <motion.div
+                key={`${category.seeker}-${category.looking_for}`}
+                variants={itemVariants}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  className={`w-full justify-start text-sm transition-all duration-300 ${
+                    isSelected
+                      ? "bg-gradient-to-r from-luxury-primary to-luxury-secondary text-white"
+                      : "bg-luxury-darker/50 text-luxury-neutral hover:bg-luxury-darker hover:text-luxury-primary border-luxury-primary/20"
+                  }`}
+                  onClick={() => {
+                    if (isSelected) {
+                      setSelectedSeeker(null);
+                      setSelectedLookingFor(null);
+                    } else {
+                      setSelectedSeeker(category.seeker);
+                      setSelectedLookingFor(category.looking_for);
+                    }
+                  }}
+                >
+                  <Search className="w-3 h-3 mr-2" />
+                  <span className="capitalize">
+                    {category.seeker} → {category.looking_for}
+                  </span>
+                </Button>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </ScrollArea>
     </div>
-  </div>
-);
+  );
+};
