@@ -220,6 +220,8 @@ export type Database = {
           is_active: boolean | null
           languages: string[] | null
           last_active: string | null
+          latitude: number | null
+          longitude: number | null
           looking_for: string[]
           occupation: string | null
           preferred_age_range: unknown | null
@@ -248,6 +250,8 @@ export type Database = {
           is_active?: boolean | null
           languages?: string[] | null
           last_active?: string | null
+          latitude?: number | null
+          longitude?: number | null
           looking_for: string[]
           occupation?: string | null
           preferred_age_range?: unknown | null
@@ -276,6 +280,8 @@ export type Database = {
           is_active?: boolean | null
           languages?: string[] | null
           last_active?: string | null
+          latitude?: number | null
+          longitude?: number | null
           looking_for?: string[]
           occupation?: string | null
           preferred_age_range?: unknown | null
@@ -1021,6 +1027,45 @@ export type Database = {
       }
     }
     Views: {
+      active_ads_with_location: {
+        Row: {
+          about_me: string | null
+          age_range: unknown | null
+          avatar_url: string | null
+          body_type: string | null
+          city: string | null
+          country: Database["public"]["Enums"]["nordic_country"] | null
+          created_at: string | null
+          description: string | null
+          drinking_status: string | null
+          education_level: string | null
+          height: number | null
+          id: string | null
+          id_verification_status: string | null
+          interests: string[] | null
+          is_active: boolean | null
+          is_age_verified: boolean | null
+          languages: string[] | null
+          last_active: string | null
+          latitude: number | null
+          longitude: number | null
+          looking_for: string[] | null
+          occupation: string | null
+          preferred_age_range: unknown | null
+          profile_completion_score: number | null
+          relationship_status:
+            | Database["public"]["Enums"]["relationship_status"]
+            | null
+          seeking_description: string | null
+          smoking_status: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+          username: string | null
+          views_count: number | null
+        }
+        Relationships: []
+      }
       profiles_with_stats: {
         Row: {
           avatar_url: string | null

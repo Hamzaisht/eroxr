@@ -23,6 +23,8 @@ export type DatingAd = {
   seeking_description?: string;
   last_active?: string;
   profile_completion_score?: number;
+  latitude?: number;
+  longitude?: number;
 };
 
 export type SearchCategory = {
@@ -45,4 +47,7 @@ export type FilterOptions = {
   isPremium?: boolean;
   lastActive?: 'today' | 'week' | 'month' | 'all';
   sortBy?: 'newest' | 'lastActive' | 'profileScore';
+  maxDistance?: number;
+  latitude?: number;
+  longitude?: number;
 };
