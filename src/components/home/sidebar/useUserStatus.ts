@@ -12,7 +12,7 @@ export const useUserStatus = () => {
       if (!session?.user?.id) return;
       
       try {
-        // Check admin role
+        // Check admin role - use select() to return an array instead of expecting a single row
         const { data: roles, error: rolesError } = await supabase
           .from('user_roles')
           .select('role')
@@ -21,7 +21,7 @@ export const useUserStatus = () => {
 
         if (rolesError) {
           console.error("Error checking admin role:", rolesError);
-          throw rolesError;
+          return;
         }
 
         // If we found any admin roles, set both flags
@@ -40,7 +40,7 @@ export const useUserStatus = () => {
 
         if (profileError) {
           console.error("Error checking profile status:", profileError);
-          throw profileError;
+          return;
         }
 
         setIsVerifiedCreator(profile?.id_verification_status === 'verified');

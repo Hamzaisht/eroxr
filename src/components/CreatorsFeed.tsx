@@ -8,6 +8,7 @@ import { usePostActions } from "./feed/usePostActions";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import { useParams } from "react-router-dom";
+import type { Post } from "@/integrations/supabase/types/post";
 
 interface CreatorsFeedProps {
   feedType?: 'feed' | 'popular' | 'recent';
@@ -55,27 +56,32 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
       <ScrollArea className="h-[calc(100vh-20rem)]">
         <div className="space-y-6 max-w-3xl mx-auto">
           <div className="space-y-6">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={{
-                  ...post,
-                  visibility: post.visibility || 'public',
-                  is_ppv: post.is_ppv || false,
-                  has_liked: post.has_liked || false,
-                  updated_at: post.created_at,
-                  screenshots_count: post.screenshots_count || 0,
-                  downloads_count: post.downloads_count || 0,
-                  creator: {
-                    username: post.creator?.username || null,
-                    avatar_url: post.creator?.avatar_url || null
-                  }
-                }}
-                onLike={handleLike}
-                onDelete={handleDelete}
-                currentUserId={session?.user?.id}
-              />
-            ))}
+            {posts.map((post) => {
+              // Ensure post visibility is correctly typed
+              const typedPost: Post = {
+                ...post,
+                visibility: (post.visibility || 'public') as 'public' | 'subscribers_only',
+                is_ppv: post.is_ppv || false,
+                has_liked: post.has_liked || false,
+                updated_at: post.created_at,
+                screenshots_count: post.screenshots_count || 0,
+                downloads_count: post.downloads_count || 0,
+                creator: {
+                  username: post.creator?.username || null,
+                  avatar_url: post.creator?.avatar_url || null
+                }
+              };
+
+              return (
+                <PostCard
+                  key={post.id}
+                  post={typedPost}
+                  onLike={handleLike}
+                  onDelete={handleDelete}
+                  currentUserId={session?.user?.id}
+                />
+              );
+            })}
             {hasNextPage && (
               <div ref={ref} className="h-8 flex items-center justify-center">
                 {isFetchingNextPage && (
