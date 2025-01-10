@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -7,22 +7,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   LayoutDashboard, 
   Video, 
-  Plus, 
   Users, 
   Heart,
   ChartBar,
-  Crown,
-  Star,
   LogOut
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import type { LucideIcon } from "lucide-react";
-
-type UserRole = 'admin' | 'moderator' | 'user' | 'creator';
+import { AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { NavMenuItem } from "./nav/NavMenuItem";
+import { UserProfileSection } from "./nav/UserProfileSection";
+import type { UserRole } from "@/integrations/supabase/types";
 
 const menuItems = [
   { 
@@ -68,6 +63,7 @@ export const InteractiveNav = () => {
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
+      
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -146,49 +142,16 @@ export const InteractiveNav = () => {
     >
       <div className="flex flex-col h-full py-8">
         {session && (
-          <motion.div 
-            className="px-4 mb-8 cursor-pointer"
-            animate={{ opacity: isExpanded ? 1 : 0.5 }}
-            onClick={() => navigate(`/profile/${session.user.id}`)}
-          >
-            <div className="relative group">
-              <Avatar className="w-12 h-12 ring-2 ring-luxury-primary/20 transition-all duration-200 group-hover:ring-luxury-primary/40">
-                <AvatarImage 
-                  src={profile?.avatar_url} 
-                  alt={profile?.username || "User"} 
-                />
-                <AvatarFallback className="bg-luxury-darker text-luxury-primary">
-                  {profile?.username?.[0]?.toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-1 -right-1">
-                <AvailabilityIndicator 
-                  status={profile?.status || "offline"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleStatusChange(profile?.status === 'online' ? 'offline' : 'online');
-                  }}
-                />
-              </div>
-            </div>
-            
-            {isExpanded && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-3"
-              >
-                <p className="text-sm font-medium text-luxury-neutral">
-                  {profile?.username || "Guest"}
-                </p>
-              </motion.div>
-            )}
-          </motion.div>
+          <UserProfileSection 
+            profile={profile}
+            isExpanded={isExpanded}
+            onProfileClick={() => navigate(`/profile/${session.user.id}`)}
+            onStatusChange={handleStatusChange}
+          />
         )}
 
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
-          const Icon = item.icon;
 
           if (item.requiresAdmin && profile?.role !== "admin") {
             return null;
@@ -199,33 +162,14 @@ export const InteractiveNav = () => {
           }
 
           return (
-            <motion.button
+            <NavMenuItem
               key={item.path}
+              icon={item.icon}
+              label={item.label}
+              path={item.path}
+              isActive={isActive}
               onClick={() => navigate(item.path)}
-              className={`w-full flex items-center px-4 py-3 mb-2 rounded-lg transition-colors relative group ${
-                isActive 
-                  ? "text-luxury-primary bg-luxury-primary/10" 
-                  : "text-luxury-neutral/60 hover:text-luxury-primary hover:bg-luxury-primary/5"
-              }`}
-              whileHover={{ x: 5 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Icon className="w-5 h-5" />
-              <motion.span
-                className="ml-4 font-medium"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isExpanded ? 1 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                {item.label}
-              </motion.span>
-              {isActive && (
-                <motion.div
-                  className="absolute left-0 w-1 h-full bg-luxury-primary rounded-full"
-                  layoutId="activeIndicator"
-                />
-              )}
-            </motion.button>
+            />
           );
         })}
 
