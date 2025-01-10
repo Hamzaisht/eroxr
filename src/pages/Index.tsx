@@ -6,7 +6,7 @@ import { RightSidebar } from "@/components/home/RightSidebar";
 import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { MainFeed } from "@/components/home/MainFeed";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -23,14 +23,26 @@ export default function Index() {
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*, user_roles(role)")
-        .eq("id", session.user.id)
-        .single();
+      
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*, user_roles!left(role)")
+          .eq("id", session.user.id)
+          .maybeSingle();
 
-      if (error) throw error;
-      return data;
+        if (profileError) throw profileError;
+
+        return profileData;
+      } catch (error: any) {
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load profile data",
+          variant: "destructive",
+        });
+        return null;
+      }
     },
     enabled: !!session?.user?.id,
   });
@@ -74,15 +86,6 @@ export default function Index() {
   if (!session) {
     return <Navigate to="/login" replace />;
   }
-
-  const handleError = (error: Error) => {
-    console.error("Error:", error);
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Something went wrong. Please try again later.",
-    });
-  };
 
   return (
     <div className="min-h-screen bg-luxury-dark">

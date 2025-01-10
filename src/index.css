@@ -25,9 +25,7 @@
     --ring: 252 87% 74%;
     --radius: 0.75rem;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -73,9 +71,24 @@
            transition-all duration-300 hover:bg-black/30 hover:border-primary/20;
   }
 
+  /* Profile page specific styles */
+  .profile-container {
+    @apply container mx-auto px-4 py-8 max-w-7xl;
+  }
+
+  .profile-header {
+    @apply flex flex-col items-center justify-center space-y-6 mb-12;
+  }
+
+  .profile-content {
+    @apply grid gap-8 md:grid-cols-2 lg:grid-cols-3;
+  }
+}
+
+@layer utilities {
   /* Infinite scroll container */
   .infinite-scroll-container {
-    @apply overflow-y-auto scrollbar-hide;
+    @apply overflow-y-auto;
     scroll-behavior: smooth;
   }
 
@@ -87,9 +100,7 @@
   .fade-in {
     @apply animate-[fadeIn_0.3s_ease-in-out];
   }
-}
 
-@layer utilities {
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -99,20 +110,5 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-}
-
-/* Profile page specific styles */
-@layer components {
-  .profile-container {
-    @apply container mx-auto px-4 py-8 max-w-7xl;
-  }
-
-  .profile-header {
-    @apply flex flex-col items-center justify-center space-y-6 mb-12;
-  }
-
-  .profile-content {
-    @apply grid gap-8 md:grid-cols-2 lg:grid-cols-3;
   }
 }
