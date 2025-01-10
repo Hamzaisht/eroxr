@@ -1,9 +1,14 @@
-import { Search } from "lucide-react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { type Database } from "@/integrations/supabase/types";
+
+type NordicCountry = Database['public']['Enums']['nordic_country'];
 
 interface CountrySelectProps {
-  selectedCountry: string | null;
-  setSelectedCountry: (country: string | null) => void;
-  countries: string[];
+  selectedCountry: NordicCountry | null;
+  setSelectedCountry: (country: NordicCountry | null) => void;
+  countries: NordicCountry[];
 }
 
 export const CountrySelect = ({
@@ -12,20 +17,23 @@ export const CountrySelect = ({
   countries,
 }: CountrySelectProps) => {
   return (
-    <div className="relative">
-      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-[#9b87f5] h-3 w-3" />
-      <select
-        className="pl-7 pr-3 py-1.5 bg-[#2D2A34]/50 text-white border-none rounded-lg focus:ring-2 focus:ring-[#9b87f5] focus:outline-none transition-all duration-300 text-sm"
-        value={selectedCountry || ""}
-        onChange={(e) => setSelectedCountry(e.target.value || null)}
-      >
-        <option value="">All Countries</option>
-        {countries.map((country) => (
-          <option key={country} value={country} className="capitalize">
-            {country.charAt(0).toUpperCase() + country.slice(1)}
-          </option>
-        ))}
-      </select>
+    <div className="flex flex-wrap gap-2">
+      {countries.map((country) => (
+        <Button
+          key={country}
+          variant={selectedCountry === country ? "default" : "outline"}
+          className={cn(
+            "capitalize transition-all duration-300",
+            selectedCountry === country
+              ? "bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] text-white border-none"
+              : "bg-[#2D2A34]/50 text-gray-300 hover:bg-[#3D3A44] border-none"
+          )}
+          onClick={() => setSelectedCountry(country === selectedCountry ? null : country)}
+        >
+          {country}
+          {selectedCountry === country && <Check className="ml-2 h-4 w-4" />}
+        </Button>
+      ))}
     </div>
   );
 };
