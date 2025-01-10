@@ -24,6 +24,8 @@
     --input: 217 19% 27%;
     --ring: 252 87% 74%;
     --radius: 0.75rem;
+    --mouse-x: 0px;
+    --mouse-y: 0px;
   }
 
   * {
@@ -74,6 +76,22 @@
   .infinite-scroll-container {
     @apply overflow-y-auto scrollbar-hide;
     scroll-behavior: smooth;
+  }
+
+  .nav-item-glow {
+    @apply relative overflow-hidden;
+    &::before {
+      content: '';
+      @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+      background: radial-gradient(
+        600px circle at var(--mouse-x) var(--mouse-y),
+        rgba(155, 135, 245, 0.15),
+        transparent 40%
+      );
+    }
+    &:hover::before {
+      @apply opacity-100;
+    }
   }
 }
 
