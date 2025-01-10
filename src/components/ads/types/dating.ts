@@ -27,30 +27,10 @@ export type DatingAd = {
   longitude?: number;
   video_url?: string;
   user_type: 'couple_mf' | 'couple_ff' | 'couple_mm' | 'male' | 'female' | 'other' | 'ota';
+  avatar_url?: string;
 };
 
 export type SearchCategory = {
   seeker: "couple" | "female" | "male";
   looking_for: "male" | "female" | "couple";
-};
-
-export type FilterOptions = {
-  minAge?: number;
-  maxAge?: number;
-  minHeight?: number;
-  maxHeight?: number;
-  bodyType?: string[];
-  smokingStatus?: string[];
-  drinkingStatus?: string[];
-  languages?: string[];
-  educationLevel?: string[];
-  hasPhoto?: boolean;
-  isVerified?: boolean;
-  isPremium?: boolean;
-  lastActive?: 'today' | 'week' | 'month' | 'all';
-  sortBy?: 'newest' | 'lastActive' | 'profileScore';
-  maxDistance?: number;
-  latitude?: number;
-  longitude?: number;
-  userType?: string[];
 };

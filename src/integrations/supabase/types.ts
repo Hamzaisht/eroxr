@@ -207,6 +207,7 @@ export type Database = {
         Row: {
           about_me: string | null
           age_range: unknown
+          avatar_url: string | null
           body_type: string | null
           city: string
           country: Database["public"]["Enums"]["nordic_country"]
@@ -239,6 +240,7 @@ export type Database = {
         Insert: {
           about_me?: string | null
           age_range: unknown
+          avatar_url?: string | null
           body_type?: string | null
           city: string
           country: Database["public"]["Enums"]["nordic_country"]
@@ -271,6 +273,7 @@ export type Database = {
         Update: {
           about_me?: string | null
           age_range?: unknown
+          avatar_url?: string | null
           body_type?: string | null
           city?: string
           country?: Database["public"]["Enums"]["nordic_country"]
