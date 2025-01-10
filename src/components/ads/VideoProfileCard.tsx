@@ -1,24 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DatingAd } from './types/dating';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { 
-  MessageCircle, 
-  Crown, 
-  CheckCircle2, 
-  Heart, 
-  MapPin, 
-  Volume2, 
-  VolumeX, 
-  Play, 
-  Pause,
-  Share2,
-  Flag
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import type { DatingAd } from './types/dating';
+import { VideoControls } from './video-profile/VideoControls';
+import { ProfileHeader } from './video-profile/ProfileHeader';
+import { ProfileTags } from './video-profile/ProfileTags';
+import { ProfileActions } from './video-profile/ProfileActions';
 
 interface VideoProfileCardProps {
   ad: DatingAd;
@@ -61,39 +47,9 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
     }
   };
 
-  // Format tags to match filters
-  const renderTags = () => {
-    const tags = [];
-    
-    // Add age range tag
-    if (ad.age_range) {
-      tags.push(`${ad.age_range.lower}-${ad.age_range.upper} y/o`);
-    }
-    
-    // Add body type tag if exists
-    if (ad.body_type) {
-      tags.push(ad.body_type);
-    }
-    
-    // Add verification status
-    if (ad.is_verified) {
-      tags.push('Verified');
-    }
-    
-    // Add education level if exists
-    if (ad.education_level) {
-      tags.push(ad.education_level);
-    }
-
-    return tags;
-  };
-
   return (
     <motion.div
-      className={cn(
-        "relative w-full max-w-4xl h-full rounded-xl overflow-hidden",
-        "group cursor-pointer transform-gpu bg-luxury-dark/50 backdrop-blur-xl",
-      )}
+      className="relative w-full max-w-4xl h-full rounded-xl overflow-hidden group cursor-pointer transform-gpu bg-luxury-dark/50 backdrop-blur-xl"
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       whileHover={{ scale: 1.02 }}
@@ -118,34 +74,13 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-luxury-dark/95" />
       
       {/* Video Controls */}
-      <div className="absolute top-6 right-6 flex gap-3 z-20">
-        {ad.video_url && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="bg-luxury-dark/50 hover:bg-luxury-dark/70 backdrop-blur-md border border-luxury-primary/20"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleMute();
-              }}
-            >
-              {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="bg-luxury-dark/50 hover:bg-luxury-dark/70 backdrop-blur-md border border-luxury-primary/20"
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlay();
-              }}
-            >
-              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-            </Button>
-          </>
-        )}
-      </div>
+      <VideoControls
+        isPlaying={isPlaying}
+        isMuted={isMuted}
+        onPlayToggle={togglePlay}
+        onMuteToggle={toggleMute}
+        hasVideo={!!ad.video_url}
+      />
 
       {/* Content */}
       <div className="absolute inset-x-0 bottom-0 p-8">
@@ -155,102 +90,15 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
           transition={{ duration: 0.5 }}
           className="space-y-6"
         >
-          {/* Profile Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16 ring-2 ring-luxury-primary/20 ring-offset-2 ring-offset-luxury-dark">
-                <AvatarImage src={ad.avatar_url} />
-                <AvatarFallback className="bg-luxury-primary/10">
-                  {ad.title.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  {ad.title}
-                  {ad.is_premium && (
-                    <Crown className="h-5 w-5 text-yellow-500 animate-pulse" />
-                  )}
-                  {ad.is_verified && (
-                    <CheckCircle2 className="h-5 w-5 text-luxury-primary" />
-                  )}
-                </h2>
-                <div className="flex items-center gap-2 text-luxury-neutral mt-1">
-                  <MapPin className="h-4 w-4 text-luxury-primary" />
-                  <span>{ad.city}, {ad.country}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2">
-            {renderTags().map((tag, index) => (
-              <Badge 
-                key={index}
-                variant="secondary" 
-                className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
+          <ProfileHeader ad={ad} />
+          <ProfileTags ad={ad} />
 
           {/* Description */}
           <p className="text-luxury-neutral line-clamp-2 text-lg">
             {ad.description}
           </p>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4">
-            <div className="flex gap-2">
-              {ad.interests?.slice(0, 3).map((interest, index) => (
-                <>
-                  <Badge 
-                    key={index}
-                    variant="outline" 
-                    className="bg-luxury-primary/5 border-luxury-primary/20 text-luxury-neutral"
-                  >
-                    {interest}
-                  </Badge>
-                  {index < ad.interests!.length - 1 && (
-                    <span className="text-luxury-neutral/20 pointer-events-none select-none">
-                      |
-                    </span>
-                  )}
-                </>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
-              >
-                <Share2 className="h-5 w-5" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
-              >
-                <Flag className="h-5 w-5" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
-              >
-                <Heart className="h-5 w-5" />
-              </Button>
-              <Button 
-                variant="default"
-                className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white"
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Contact
-              </Button>
-            </div>
-          </div>
+          <ProfileActions interests={ad.interests} />
         </motion.div>
       </div>
     </motion.div>
