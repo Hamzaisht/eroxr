@@ -48,22 +48,51 @@ export const UserMenu = () => {
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .maybeSingle();
       
-      if (error) {
-        console.error("Profile fetch error:", error);
-        throw error;
+      try {
+        // First fetch the profile
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          throw profileError;
+        }
+
+        // Then fetch user roles
+        const { data: roles, error: rolesError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        // Handle roles error, but don't throw for no rows
+        if (rolesError && rolesError.code !== 'PGRST116') {
+          console.error("Roles fetch error:", rolesError);
+          throw rolesError;
+        }
+
+        // Get the role or default to 'user'
+        const userRole = roles?.role || 'user';
+
+        // Combine the data and ensure status is a valid AvailabilityStatus
+        return profileData ? {
+          ...profileData,
+          role: userRole,
+          status: (profileData.status as AvailabilityStatus) || 'offline'
+        } : null;
+      } catch (error: any) {
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load profile data",
+          variant: "destructive",
+        });
+        return null;
       }
-      
-      // Ensure status is a valid AvailabilityStatus
-      return data ? {
-        ...data,
-        status: (data.status as AvailabilityStatus) || 'offline'
-      } : null;
     },
     enabled: !!session?.user?.id,
   });
