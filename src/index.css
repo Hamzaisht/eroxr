@@ -62,47 +62,53 @@
   }
 
   .nav-item-liquid {
-    @apply relative flex items-center gap-3 w-full overflow-hidden rounded-lg;
+    @apply relative flex items-center gap-3 w-full overflow-visible rounded-lg;
+    
+    .nav-item-content {
+      @apply relative z-20 flex items-center gap-3 w-full;
+    }
+    
     &::before {
       content: '';
-      @apply absolute inset-0 opacity-0 transition-all duration-500 ease-out;
+      @apply absolute -inset-[1px] opacity-0 transition-all duration-500 ease-out rounded-lg;
       background: 
         linear-gradient(90deg, 
           transparent 0%,
-          rgba(155, 135, 245, 0.1) 10%,
-          rgba(217, 70, 239, 0.15) 50%,
-          rgba(155, 135, 245, 0.1) 90%,
+          rgba(155, 135, 245, 0.15) 10%,
+          rgba(217, 70, 239, 0.2) 50%,
+          rgba(155, 135, 245, 0.15) 90%,
           transparent 100%
         );
-      mask: linear-gradient(black, black) content-box content-box,
-            linear-gradient(black, black);
+      mask: linear-gradient(black, black) padding-box,
+            linear-gradient(black, black) border-box;
       mask-composite: xor;
-      padding: 1px;
       transform-origin: var(--mouse-x) var(--mouse-y);
-      transform: scale(0.95) translateZ(0);
+      transform: scale(0.98) translateZ(0);
     }
+    
     &::after {
       content: '';
-      @apply absolute inset-0 opacity-0 transition-all duration-300;
+      @apply absolute -inset-[1px] opacity-0 transition-all duration-300 rounded-lg;
       background: 
         linear-gradient(90deg,
           transparent 0%,
-          rgba(155, 135, 245, 0.2) 20%,
-          rgba(217, 70, 239, 0.25) 50%,
-          rgba(155, 135, 245, 0.2) 80%,
+          rgba(155, 135, 245, 0.25) 20%,
+          rgba(217, 70, 239, 0.3) 50%,
+          rgba(155, 135, 245, 0.25) 80%,
           transparent 100%
         );
-      mask: linear-gradient(black, black) content-box content-box,
-            linear-gradient(black, black);
+      mask: linear-gradient(black, black) padding-box,
+            linear-gradient(black, black) border-box;
       mask-composite: xor;
-      padding: 1px;
       transform: translateZ(0);
     }
+    
     &:hover::before {
       @apply opacity-100;
       transform: scale(1.02) translateZ(0);
       animation: edge-glow 3s ease-in-out infinite;
     }
+    
     &:hover::after {
       @apply opacity-100;
       animation: edge-pulse 2s ease-out infinite;
@@ -149,14 +155,17 @@
     0% {
       filter: blur(2px);
       opacity: 0.5;
+      box-shadow: 0 0 10px rgba(155, 135, 245, 0.3);
     }
     50% {
       filter: blur(3px);
       opacity: 0.8;
+      box-shadow: 0 0 20px rgba(217, 70, 239, 0.4);
     }
     100% {
       filter: blur(2px);
       opacity: 0.5;
+      box-shadow: 0 0 10px rgba(155, 135, 245, 0.3);
     }
   }
 }

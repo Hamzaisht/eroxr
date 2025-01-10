@@ -34,17 +34,19 @@ export const NavMenuItem = ({ icon: Icon, label, isActive, isExpanded, onClick }
       }}
     >
       <div className="nav-item-liquid">
-        <Icon className="w-5 h-5 flex-shrink-0 relative z-10 transition-transform duration-300 group-hover:scale-110" />
-        {isExpanded && (
-          <motion.span
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            className="font-medium whitespace-nowrap relative z-10"
-          >
-            {label}
-          </motion.span>
-        )}
+        <div className="nav-item-content">
+          <Icon className="w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+          {isExpanded && (
+            <motion.span
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="font-medium whitespace-nowrap"
+            >
+              {label}
+            </motion.span>
+          )}
+        </div>
       </div>
       {isActive && (
         <motion.div
