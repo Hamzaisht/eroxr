@@ -323,6 +323,7 @@ export type Database = {
           id: string
           is_expired: boolean | null
           media_url: string[] | null
+          message_source: string | null
           message_type: string | null
           recipient_id: string | null
           sender_id: string | null
@@ -337,6 +338,7 @@ export type Database = {
           id?: string
           is_expired?: boolean | null
           media_url?: string[] | null
+          message_source?: string | null
           message_type?: string | null
           recipient_id?: string | null
           sender_id?: string | null
@@ -351,6 +353,7 @@ export type Database = {
           id?: string
           is_expired?: boolean | null
           media_url?: string[] | null
+          message_source?: string | null
           message_type?: string | null
           recipient_id?: string | null
           sender_id?: string | null

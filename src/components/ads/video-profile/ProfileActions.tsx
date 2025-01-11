@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { motion } from 'framer-motion';
 
 interface ProfileActionsProps {
   userId: string | null;
@@ -19,7 +20,6 @@ export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Check if user is authenticated
       if (!user) {
         toast({
           title: "Authentication required",
@@ -29,7 +29,6 @@ export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
         return;
       }
 
-      // Check if we have a valid userId to like
       if (!userId) {
         toast({
           title: "Error",
@@ -39,7 +38,6 @@ export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
         return;
       }
 
-      // First check if the like already exists
       const { data: existingLike } = await supabase
         .from('creator_likes')
         .select('id')
@@ -48,7 +46,6 @@ export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
         .single();
 
       if (existingLike) {
-        // Unlike if already liked
         const { error: deleteError } = await supabase
           .from('creator_likes')
           .delete()
@@ -63,7 +60,6 @@ export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
           description: "This profile has been removed from your likes",
         });
       } else {
-        // Create new like
         const { error } = await supabase
           .from('creator_likes')
           .insert([
@@ -92,37 +88,54 @@ export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
   };
 
   const handleContact = () => {
-    navigate(`/messages?recipient=${userId}`);
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Invalid profile",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigate(`/messages?recipient=${userId}&source=dating`);
   };
 
   return (
     <div className="flex items-center justify-between pt-4">
       <div className="flex gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
-          onClick={onShare}
-        >
-          <Eye className="h-5 w-5" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className={`${isLiked ? 'text-red-500' : 'text-luxury-primary'} hover:text-luxury-primary/80 hover:bg-luxury-primary/10`}
-          onClick={handleLike}
-        >
-          <MessageCircle className="h-5 w-5" />
-        </Button>
+        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10 transition-all duration-300"
+            onClick={onShare}
+          >
+            <Eye className="h-5 w-5 transition-transform hover:scale-110" />
+          </Button>
+        </motion.div>
+        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className={`${isLiked ? 'text-red-500' : 'text-luxury-primary'} hover:text-luxury-primary/80 hover:bg-luxury-primary/10 transition-all duration-300`}
+            onClick={handleLike}
+          >
+            <MessageCircle className="h-5 w-5 transition-transform hover:scale-110" />
+          </Button>
+        </motion.div>
       </div>
-      <Button 
-        variant="default"
-        className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white"
-        onClick={handleContact}
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
-        <MessageCircle className="h-4 w-4 mr-2" />
-        Contact
-      </Button>
+        <Button 
+          variant="default"
+          className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white transition-all duration-300 transform hover:-translate-y-1"
+          onClick={handleContact}
+        >
+          <MessageCircle className="h-4 w-4 mr-2" />
+          Contact
+        </Button>
+      </motion.div>
     </div>
   );
 };

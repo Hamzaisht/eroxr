@@ -47,7 +47,7 @@ export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProf
 
   return (
     <motion.div
-      className="relative w-full h-[85vh] rounded-xl overflow-hidden group cursor-pointer transform-gpu bg-luxury-dark/50 backdrop-blur-xl"
+      className="relative w-full h-[85vh] rounded-xl overflow-hidden group cursor-pointer transform-gpu"
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       whileHover={{ scale: 1.01 }}
@@ -61,15 +61,18 @@ export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProf
         }
       }}
     >
-      <VideoControls 
-        videoUrl={ad.video_url} 
-        avatarUrl={ad.avatar_url} 
-        isActive={isActive} 
-      />
+      {/* Video Background */}
+      <div className="absolute inset-0 bg-luxury-dark/50">
+        <VideoControls 
+          videoUrl={ad.video_url} 
+          avatarUrl={ad.avatar_url} 
+          isActive={isActive} 
+        />
+      </div>
       
       {/* Gradient Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-luxury-dark/95" />
-      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-luxury-dark/30" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-luxury-dark/95 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-luxury-dark/30 pointer-events-none" />
       
       <ProfileStats 
         viewCount={ad.view_count || 0}
@@ -78,7 +81,7 @@ export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProf
       />
 
       {/* Content */}
-      <div className="absolute inset-x-0 bottom-0 p-8">
+      <div className="absolute inset-x-0 bottom-0 p-8 z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

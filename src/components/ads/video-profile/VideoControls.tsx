@@ -15,6 +15,9 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
         videoRef.current.play().catch(console.error);
       } else {
         videoRef.current.pause();
+        if (videoRef.current.currentTime > 0) {
+          videoRef.current.currentTime = 0;
+        }
       }
     }
   }, [isActive]);
