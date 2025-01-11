@@ -1,5 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const categories = [
   {
@@ -45,22 +47,37 @@ export const CategorySection = () => {
             content that resonates with you
           </p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((category) => (
-            <Card
-              key={category.name}
-              className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer group"
-            >
-              <div className="text-4xl mb-4 transform group-hover:scale-110 transition-transform">
-                {category.icon}
-              </div>
-              <h3 className="font-semibold mb-2">{category.name}</h3>
-              <p className="text-sm text-muted-foreground">{category.count}</p>
-            </Card>
-          ))}
-        </div>
+
+        <ScrollArea className="w-full whitespace-nowrap rounded-xl">
+          <div className="flex w-max space-x-4 p-4">
+            {categories.map((category) => (
+              <motion.div
+                key={category.name}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex-none"
+              >
+                <Card className="w-[200px] p-6 text-center hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm border-luxury-primary/10">
+                  <div className="text-4xl mb-4 transform transition-transform duration-300">
+                    {category.icon}
+                  </div>
+                  <h3 className="font-semibold mb-2 text-luxury-primary">
+                    {category.name}
+                  </h3>
+                  <p className="text-sm text-luxury-neutral">{category.count}</p>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" className="bg-luxury-primary/10" />
+        </ScrollArea>
+
         <div className="text-center mt-8">
-          <Button size="lg" variant="outline">
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="hover:bg-luxury-primary hover:text-white transition-colors"
+          >
             View All Categories
           </Button>
         </div>
