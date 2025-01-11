@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Heart, Play, MessageSquare } from "lucide-react";
+import { Home, Heart, Play, MessageSquare, Film } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const NavLinks = () => {
@@ -20,6 +20,24 @@ export const NavLinks = () => {
           className="overflow-hidden whitespace-nowrap"
         >
           Home
+        </motion.span>
+      </NavLink>
+
+      <NavLink 
+        to="/shorts" 
+        className={({ isActive }) => 
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
+            isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
+          }`
+        }
+      >
+        <Film className="w-5 h-5 transition-transform group-hover:scale-110" />
+        <motion.span 
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: "auto" }}
+          className="overflow-hidden whitespace-nowrap"
+        >
+          Eros
         </motion.span>
       </NavLink>
 

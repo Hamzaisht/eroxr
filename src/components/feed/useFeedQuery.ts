@@ -60,6 +60,11 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
 
       // Apply different filters based on feed type
       switch (feedType) {
+        case 'shorts':
+          query = query
+            .not('video_urls', 'is', null)
+            .order('created_at', { ascending: false });
+          break;
         case 'popular':
           query = query
             .order('likes_count', { ascending: false });
