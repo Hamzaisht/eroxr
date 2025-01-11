@@ -1,62 +1,84 @@
-import { Share2, Flag, Heart, MessageCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useState } from 'react';
+import { Eye, MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileActionsProps {
-  interests?: string[];
+  userId: string | null;
+  onShare: () => Promise<void>;
 }
 
-export const ProfileActions = ({ interests }: ProfileActionsProps) => {
+export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleLike = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to like profiles",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('creator_likes')
+        .upsert([{ user_id: user.id, creator_id: userId }]);
+
+      if (error) throw error;
+
+      setIsLiked(true);
+      toast({
+        title: "Profile liked",
+        description: "This profile has been added to your likes",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not like profile",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleContact = () => {
+    navigate(`/messages?recipient=${userId}`);
+  };
+
   return (
     <div className="flex items-center justify-between pt-4">
       <div className="flex gap-2">
-        {interests?.slice(0, 3).map((interest, index) => (
-          <>
-            <Badge 
-              key={index}
-              variant="outline" 
-              className="bg-luxury-primary/5 border-luxury-primary/20 text-luxury-neutral"
-            >
-              {interest}
-            </Badge>
-            {index < interests.length - 1 && (
-              <span className="text-luxury-neutral/20 pointer-events-none select-none">
-                |
-              </span>
-            )}
-          </>
-        ))}
-      </div>
-      <div className="flex gap-2">
         <Button 
           variant="ghost" 
           size="icon"
           className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
+          onClick={onShare}
         >
-          <Share2 className="h-5 w-5" />
+          <Eye className="h-5 w-5" />
         </Button>
         <Button 
           variant="ghost" 
           size="icon"
-          className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
+          className={`${isLiked ? 'text-red-500' : 'text-luxury-primary'} hover:text-luxury-primary/80 hover:bg-luxury-primary/10`}
+          onClick={handleLike}
         >
-          <Flag className="h-5 w-5" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
-        >
-          <Heart className="h-5 w-5" />
-        </Button>
-        <Button 
-          variant="default"
-          className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white"
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          Contact
+          <MessageCircle className="h-5 w-5" />
         </Button>
       </div>
+      <Button 
+        variant="default"
+        className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white"
+        onClick={handleContact}
+      >
+        <MessageCircle className="h-4 w-4 mr-2" />
+        Contact
+      </Button>
     </div>
   );
 };

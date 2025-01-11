@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search, Filter, HelpCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type SearchCategory } from "../types/dating";
@@ -102,7 +102,7 @@ export const SearchCategories = ({
       </div>
 
       <div className="relative">
-        <div className="overflow-x-auto hide-scrollbar">
+        <div className="overflow-x-auto scrollbar-hide">
           <div 
             className="flex gap-3 py-4 px-2 overflow-x-auto scroll-smooth"
             style={{
