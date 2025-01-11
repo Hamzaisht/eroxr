@@ -18,14 +18,12 @@ export default function Index() {
   const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const { toast } = useToast();
 
-  // Fetch user profile data with proper error handling
   const { data: profile } = useQuery({
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
       try {
-        // First fetch the profile
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
@@ -37,22 +35,18 @@ export default function Index() {
           throw profileError;
         }
 
-        // Then fetch user roles
         const { data: roles, error: rolesError } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", session.user.id);
 
-        // Handle roles error, but don't throw for no rows
         if (rolesError && rolesError.code !== 'PGRST116') {
           console.error("Roles fetch error:", rolesError);
           throw rolesError;
         }
 
-        // Get the first role or default to 'user'
         const userRole = roles && roles.length > 0 ? roles[0].role : 'user';
 
-        // Combine the data
         return {
           ...profileData,
           role: userRole
@@ -70,7 +64,6 @@ export default function Index() {
     enabled: !!session?.user?.id,
   });
 
-  // Fetch trending data
   const { data: trendingData } = useQuery({
     queryKey: ["trending"],
     queryFn: async () => {
@@ -82,7 +75,6 @@ export default function Index() {
 
       if (postsError) throw postsError;
 
-      // Process tags to get trending hashtags
       const allTags = posts?.flatMap(post => post.tags || []) || [];
       const tagCounts = allTags.reduce((acc: Record<string, number>, tag: string) => {
         acc[tag] = (acc[tag] || 0) + 1;
@@ -95,7 +87,7 @@ export default function Index() {
         .map(([tag, count]) => ({
           tag,
           count,
-          percentageIncrease: Math.floor(Math.random() * 30) + 10 // Simulated growth for demo
+          percentageIncrease: Math.floor(Math.random() * 30) + 10
         }));
 
       return {
@@ -103,7 +95,7 @@ export default function Index() {
         posts
       };
     },
-    refetchInterval: 300000 // Refetch every 5 minutes
+    refetchInterval: 300000
   });
 
   if (!session) {
@@ -112,16 +104,13 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-luxury-dark">
-      {/* Fixed Navigation */}
       <div className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-luxury-dark/50 border-b border-luxury-primary/10">
         <MainNav />
       </div>
       
-      {/* Main Layout */}
       <div className="flex min-h-screen pt-16">
-        {/* Main Content Area */}
-        <main className="flex-1 w-full xl:mr-[320px]">
-          <div className="max-w-3xl mx-auto px-4 py-6">
+        <main className="flex-1 w-full">
+          <div className="max-w-full mx-auto px-4 py-6">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -139,7 +128,7 @@ export default function Index() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="mt-6"
+              className="mt-6 w-full"
             >
               <MainFeed 
                 isPayingCustomer={profile?.is_paying_customer}
@@ -150,18 +139,7 @@ export default function Index() {
             </motion.div>
           </div>
         </main>
-
-        {/* Right Sidebar - Fixed */}
-        <motion.aside 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="hidden xl:block fixed right-0 top-16 w-[320px] h-[calc(100vh-4rem)] neo-blur border-l border-luxury-primary/10 z-40"
-        >
-          <ScrollArea className="h-full p-4">
-            <RightSidebar trendingData={trendingData} />
-          </ScrollArea>
-        </motion.aside>
       </div>
     </div>
   );
-}
+};
