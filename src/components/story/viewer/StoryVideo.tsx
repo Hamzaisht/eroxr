@@ -15,7 +15,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         if (isPaused) {
           videoElement.current.pause();
         } else {
-          // Use play().catch to handle any autoplay restrictions
           videoElement.current.play().catch(error => {
             console.error("Error playing video:", error);
           });
@@ -33,6 +32,8 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         exit={{ opacity: 0 }}
         playsInline
         autoPlay
+        preload="auto"
+        poster={videoUrl + '?poster=true'}
         muted={false}
         controls={false}
         onEnded={onEnded}
