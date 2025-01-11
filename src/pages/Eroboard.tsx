@@ -32,13 +32,24 @@ export default function Eroboard() {
       if (!session?.user?.id) return;
 
       try {
-        // Fetch total earnings from PPV content and subscriptions
+        // Fetch total earnings from PPV content by joining posts and post_purchases
         const { data: earningsData, error: earningsError } = await supabase
-          .from('post_purchases')
-          .select('amount')
+          .from('posts')
+          .select(`
+            id,
+            post_purchases!inner (
+              amount
+            )
+          `)
           .eq('creator_id', session.user.id);
 
         if (earningsError) throw earningsError;
+
+        // Calculate total earnings from post purchases
+        const totalEarnings = earningsData?.reduce((sum, post) => {
+          const purchases = post.post_purchases || [];
+          return sum + purchases.reduce((postSum: number, purchase: any) => postSum + (purchase.amount || 0), 0);
+        }, 0) || 0;
 
         // Fetch subscriber count
         const { data: subscribersData, error: subscribersError } = await supabase
@@ -56,8 +67,6 @@ export default function Eroboard() {
 
         if (followersError) throw followersError;
 
-        // Calculate total earnings
-        const totalEarnings = earningsData?.reduce((sum, item) => sum + item.amount, 0) || 0;
         const subscriberCount = subscribersData?.length || 0;
         const followerCount = followersData?.length || 0;
 
