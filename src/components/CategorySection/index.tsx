@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const categories = [
   {
@@ -48,8 +47,15 @@ export const CategorySection = () => {
           </p>
         </div>
 
-        <ScrollArea className="w-full whitespace-nowrap rounded-xl">
-          <div className="flex w-max space-x-4 p-4">
+        <div className="relative overflow-x-auto hide-scrollbar">
+          <div 
+            className="flex gap-4 py-4 px-2 overflow-x-auto scroll-smooth"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
+          >
             {categories.map((category) => (
               <motion.div
                 key={category.name}
@@ -57,20 +63,21 @@ export const CategorySection = () => {
                 whileTap={{ scale: 0.95 }}
                 className="flex-none"
               >
-                <Card className="w-[200px] p-6 text-center hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm border-luxury-primary/10">
-                  <div className="text-4xl mb-4 transform transition-transform duration-300">
+                <Card className="w-[200px] p-6 text-center hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm border-luxury-primary/10 relative group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg" />
+                  <div className="text-4xl mb-4 transform transition-transform duration-300 relative">
                     {category.icon}
                   </div>
-                  <h3 className="font-semibold mb-2 text-luxury-primary">
+                  <h3 className="font-semibold mb-2 text-luxury-primary relative">
                     {category.name}
                   </h3>
-                  <p className="text-sm text-luxury-neutral">{category.count}</p>
+                  <p className="text-sm text-luxury-neutral relative">{category.count}</p>
                 </Card>
               </motion.div>
             ))}
           </div>
-          <ScrollBar orientation="horizontal" className="bg-luxury-primary/10" />
-        </ScrollArea>
+          <div className="absolute left-0 right-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-luxury-primary/20 to-transparent" />
+        </div>
 
         <div className="text-center mt-8">
           <Button 
