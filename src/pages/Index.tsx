@@ -1,20 +1,15 @@
+import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Navigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { MainNav } from "@/components/MainNav";
-import { RightSidebar } from "@/components/home/RightSidebar";
-import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { MainFeed } from "@/components/home/MainFeed";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState } from "react";
+import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Index() {
   const session = useSession();
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const { toast } = useToast();
 
@@ -51,14 +46,14 @@ export default function Index() {
           ...profileData,
           role: userRole
         };
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error fetching profile:", error);
         toast({
-          title: "Error",
-          description: "Failed to load profile data",
+          title: "Error fetching profile",
+          description: "Please try refreshing the page",
           variant: "destructive",
         });
-        return null;
+        throw error;
       }
     },
     enabled: !!session?.user?.id,
@@ -69,9 +64,9 @@ export default function Index() {
     queryFn: async () => {
       const { data: posts, error: postsError } = await supabase
         .from("posts")
-        .select("content, media_url, likes_count, comments_count, tags")
-        .order("likes_count", { ascending: false })
-        .limit(5);
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
 
       if (postsError) throw postsError;
 
@@ -99,7 +94,7 @@ export default function Index() {
   });
 
   if (!session) {
-    return <Navigate to="/login" replace />;
+    return null;
   }
 
   return (
@@ -114,17 +109,15 @@ export default function Index() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-effect rounded-xl overflow-hidden"
+              transition={{ duration: 0.5 }}
             >
               <CreatePostArea 
-                onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                onFileSelect={setSelectedFiles}
-                onOpenGoLive={() => setIsGoLiveOpen(true)}
                 isPayingCustomer={profile?.is_paying_customer}
+                onGoLive={() => setIsGoLiveOpen(true)}
               />
             </motion.div>
 
-            <motion.div
+            <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -132,9 +125,7 @@ export default function Index() {
             >
               <MainFeed 
                 isPayingCustomer={profile?.is_paying_customer}
-                onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                onFileSelect={setSelectedFiles}
-                onOpenGoLive={() => setIsGoLiveOpen(true)}
+                userRole={profile?.role}
               />
             </motion.div>
           </div>
@@ -142,4 +133,4 @@ export default function Index() {
       </div>
     </div>
   );
-};
+}
