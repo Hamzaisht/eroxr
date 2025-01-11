@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Search, Filter, HelpCircle, X, ArrowRight } from "lucide-react";
+import { Search, Filter, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { type SearchCategory } from "../types/dating";
 import {
   HoverCard,

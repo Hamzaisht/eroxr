@@ -6,6 +6,9 @@ import { ProfileTags } from './video-profile/ProfileTags';
 import { ProfileActions } from './video-profile/ProfileActions';
 import { Eye, MessageCircle, MousePointer, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VideoProfileCardProps {
   ad: DatingAd;
@@ -16,7 +19,10 @@ interface VideoProfileCardProps {
 
 export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProfileCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (videoRef.current) {
@@ -27,6 +33,73 @@ export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProf
       }
     }
   }, [isActive]);
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Check out this profile",
+          text: ad.description,
+          url: window.location.href
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link copied",
+          description: "Profile link copied to clipboard",
+        });
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name !== "AbortError") {
+        toast({
+          title: "Share failed",
+          description: "Could not share profile",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to like profiles",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('creator_likes')
+        .upsert([
+          {
+            user_id: user.id,
+            creator_id: ad.user_id,
+          }
+        ]);
+
+      if (error) throw error;
+
+      setIsLiked(true);
+      toast({
+        title: "Profile liked",
+        description: "This profile has been added to your likes",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not like profile",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleContact = () => {
+    navigate(`/messages?recipient=${ad.user_id}`);
+  };
 
   return (
     <motion.div
@@ -135,7 +208,34 @@ export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProf
             {ad.description}
           </p>
 
-          <ProfileActions interests={ad.interests} />
+          <div className="flex items-center justify-between pt-4">
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10"
+                onClick={handleShare}
+              >
+                <Eye className="h-5 w-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className={`${isLiked ? 'text-red-500' : 'text-luxury-primary'} hover:text-luxury-primary/80 hover:bg-luxury-primary/10`}
+                onClick={handleLike}
+              >
+                <MessageCircle className="h-5 w-5" />
+              </Button>
+            </div>
+            <Button 
+              variant="default"
+              className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white"
+              onClick={handleContact}
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Contact
+            </Button>
+          </div>
         </motion.div>
       </div>
     </motion.div>
