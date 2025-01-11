@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Index() {
   const session = useSession();
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const { toast } = useToast();
 
@@ -59,40 +61,6 @@ export default function Index() {
     enabled: !!session?.user?.id,
   });
 
-  const { data: trendingData } = useQuery({
-    queryKey: ["trending"],
-    queryFn: async () => {
-      const { data: posts, error: postsError } = await supabase
-        .from("posts")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (postsError) throw postsError;
-
-      const allTags = posts?.flatMap(post => post.tags || []) || [];
-      const tagCounts = allTags.reduce((acc: Record<string, number>, tag: string) => {
-        acc[tag] = (acc[tag] || 0) + 1;
-        return acc;
-      }, {});
-
-      const trendingTags = Object.entries(tagCounts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 5)
-        .map(([tag, count]) => ({
-          tag,
-          count,
-          percentageIncrease: Math.floor(Math.random() * 30) + 10
-        }));
-
-      return {
-        trendingTags,
-        posts
-      };
-    },
-    refetchInterval: 300000
-  });
-
   if (!session) {
     return null;
   }
@@ -113,7 +81,9 @@ export default function Index() {
             >
               <CreatePostArea 
                 isPayingCustomer={profile?.is_paying_customer}
-                onGoLive={() => setIsGoLiveOpen(true)}
+                onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                onFileSelect={setSelectedFiles}
+                onOpenGoLive={() => setIsGoLiveOpen(true)}
               />
             </motion.div>
 
@@ -126,6 +96,9 @@ export default function Index() {
               <MainFeed 
                 isPayingCustomer={profile?.is_paying_customer}
                 userRole={profile?.role}
+                onOpenCreatePost={() => setIsCreatePostOpen(true)}
+                onFileSelect={setSelectedFiles}
+                onOpenGoLive={() => setIsGoLiveOpen(true)}
               />
             </motion.div>
           </div>
