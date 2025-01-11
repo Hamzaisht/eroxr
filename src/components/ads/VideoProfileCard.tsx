@@ -1,17 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { DatingAd } from './types/dating';
 import { ProfileHeader } from './video-profile/ProfileHeader';
 import { ProfileTags } from './video-profile/ProfileTags';
 import { ProfileActions } from './video-profile/ProfileActions';
-import { Eye, MessageCircle, MousePointer } from 'lucide-react';
+import { Eye, MessageCircle, MousePointer, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface VideoProfileCardProps {
   ad: DatingAd;
   isActive: boolean;
+  onNext?: () => void;
+  onPrevious?: () => void;
 }
 
-export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
+export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProfileCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -51,6 +54,50 @@ export const VideoProfileCard = ({ ad, isActive }: VideoProfileCardProps) => {
           </div>
         )}
       </div>
+      
+      {/* Navigation Buttons */}
+      <AnimatePresence>
+        {isHovered && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30"
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPrevious?.();
+                }}
+              >
+                <ArrowLeft className="h-6 w-6" />
+              </Button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30"
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNext?.();
+                }}
+              >
+                <ArrowRight className="h-6 w-6" />
+              </Button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       
       {/* Gradient Overlays */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-luxury-dark/95" />
