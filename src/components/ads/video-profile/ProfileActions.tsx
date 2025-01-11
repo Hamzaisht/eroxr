@@ -18,6 +18,8 @@ export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
   const handleLike = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      
+      // Check if user is authenticated
       if (!user) {
         toast({
           title: "Authentication required",
@@ -27,21 +29,63 @@ export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
         return;
       }
 
-      const { error } = await supabase
+      // Check if we have a valid userId to like
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "Invalid profile",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // First check if the like already exists
+      const { data: existingLike } = await supabase
         .from('creator_likes')
-        .upsert([{ user_id: user.id, creator_id: userId }]);
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('creator_id', userId)
+        .single();
 
-      if (error) throw error;
+      if (existingLike) {
+        // Unlike if already liked
+        const { error: deleteError } = await supabase
+          .from('creator_likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('creator_id', userId);
 
-      setIsLiked(true);
-      toast({
-        title: "Profile liked",
-        description: "This profile has been added to your likes",
-      });
-    } catch (error) {
+        if (deleteError) throw deleteError;
+
+        setIsLiked(false);
+        toast({
+          title: "Profile unliked",
+          description: "This profile has been removed from your likes",
+        });
+      } else {
+        // Create new like
+        const { error } = await supabase
+          .from('creator_likes')
+          .insert([
+            { 
+              user_id: user.id, 
+              creator_id: userId 
+            }
+          ]);
+
+        if (error) throw error;
+
+        setIsLiked(true);
+        toast({
+          title: "Profile liked",
+          description: "This profile has been added to your likes",
+        });
+      }
+    } catch (error: any) {
+      console.error('Like error:', error);
       toast({
         title: "Error",
-        description: "Could not like profile",
+        description: error.message || "Could not process like action",
         variant: "destructive",
       });
     }
