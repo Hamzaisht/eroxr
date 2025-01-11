@@ -4,20 +4,20 @@ import { motion } from "framer-motion";
 
 export const NavLinks = () => {
   return (
-    <nav className="hidden md:flex flex-col items-start space-y-6">
+    <nav className="hidden md:flex items-center space-x-6">
       <NavLink 
         to="/" 
         className={({ isActive }) => 
-          `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
           }`
         }
       >
-        <Home className="w-5 h-5" />
+        <Home className="w-5 h-5 transition-transform group-hover:scale-110" />
         <motion.span 
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          className="overflow-hidden whitespace-nowrap"
         >
           Home
         </motion.span>
@@ -26,16 +26,16 @@ export const NavLinks = () => {
       <NavLink 
         to="/dating" 
         className={({ isActive }) => 
-          `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
           }`
         }
       >
-        <Heart className="w-5 h-5" />
+        <Heart className="w-5 h-5 transition-transform group-hover:scale-110" />
         <motion.span 
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          className="overflow-hidden whitespace-nowrap"
         >
           Dating
         </motion.span>
@@ -44,16 +44,16 @@ export const NavLinks = () => {
       <NavLink 
         to="/messages" 
         className={({ isActive }) => 
-          `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
           }`
         }
       >
-        <MessageSquare className="w-5 h-5" />
+        <MessageSquare className="w-5 h-5 transition-transform group-hover:scale-110" />
         <motion.span 
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          className="overflow-hidden whitespace-nowrap"
         >
           Messages
         </motion.span>
@@ -62,16 +62,16 @@ export const NavLinks = () => {
       <NavLink 
         to="/eroboard" 
         className={({ isActive }) => 
-          `nav-item-liquid group flex items-center gap-2 px-4 py-2 w-full rounded-lg transition-all duration-500 ${
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
           }`
         }
       >
-        <Play className="w-5 h-5" />
+        <Play className="w-5 h-5 transition-transform group-hover:scale-110" />
         <motion.span 
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          className="overflow-hidden whitespace-nowrap"
         >
           Eroboard
         </motion.span>

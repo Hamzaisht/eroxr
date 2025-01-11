@@ -12,7 +12,9 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
   useEffect(() => {
     if (videoRef.current) {
       if (isActive) {
-        videoRef.current.play().catch(console.error);
+        videoRef.current.play().catch(error => {
+          console.error('Video playback error:', error);
+        });
       } else {
         videoRef.current.pause();
         if (videoRef.current.currentTime > 0) {
