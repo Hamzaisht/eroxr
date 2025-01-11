@@ -10,7 +10,7 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
   const canAccessBodyContact = profile?.is_paying_customer || profile?.id_verification_status === 'verified';
 
   return (
-    <div className="w-full min-h-[calc(100vh-24rem)]">
+    <div className="w-full">
       <Tabs defaultValue="showcase" className="w-full">
         <div className="sticky top-16 z-50 bg-luxury-dark/95 backdrop-blur-lg border-b border-luxury-primary/10">
           <div className="max-w-[1400px] mx-auto px-4">
@@ -55,31 +55,31 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
           </div>
         </div>
 
-        <div className="max-w-[1400px] mx-auto px-4 py-4 sm:py-6 md:py-8">
+        <div className="w-full">
           <AnimatePresence mode="wait">
-            <TabsContent value="showcase" className="mt-0 min-h-[300px]">
+            <TabsContent value="showcase" className="mt-0">
               <CreatorsFeed feedType="recent" />
             </TabsContent>
 
-            <TabsContent value="media" className="mt-0 min-h-[300px]">
+            <TabsContent value="media" className="mt-0">
               <MediaGrid onImageClick={() => {}} />
             </TabsContent>
 
-            <TabsContent value="subscribers" className="mt-0 min-h-[300px]">
+            <TabsContent value="subscribers" className="mt-0">
               <EmptyState 
                 icon={Users}
                 message="No subscribers yet"
               />
             </TabsContent>
 
-            <TabsContent value="likes" className="mt-0 min-h-[300px]">
+            <TabsContent value="likes" className="mt-0">
               <EmptyState 
                 icon={Heart}
                 message="No liked content yet"
               />
             </TabsContent>
 
-            <TabsContent value="bodycontact" className="mt-0 min-h-[300px]">
+            <TabsContent value="bodycontact" className="mt-0">
               {!canAccessBodyContact ? (
                 <Alert>
                   <AlertDescription>
