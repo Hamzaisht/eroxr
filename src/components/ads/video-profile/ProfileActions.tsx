@@ -6,12 +6,27 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 
-interface ProfileActionsProps {
+export interface ProfileActionsProps {
   userId: string | null;
   onShare: () => Promise<void>;
+  source?: string;
+  isOwnProfile?: boolean;
+  isEditing?: boolean;
+  onEdit?: () => void;
+  onSave?: () => void;
+  onCancel?: () => void;
 }
 
-export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
+export const ProfileActions = ({ 
+  userId, 
+  onShare, 
+  source = 'regular',
+  isOwnProfile = false,
+  isEditing = false,
+  onEdit,
+  onSave,
+  onCancel 
+}: ProfileActionsProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -96,8 +111,41 @@ export const ProfileActions = ({ userId, onShare }: ProfileActionsProps) => {
       });
       return;
     }
-    navigate(`/messages?recipient=${userId}&source=dating`);
+    navigate(`/messages?recipient=${userId}&source=${source}`);
   };
+
+  if (isOwnProfile) {
+    return (
+      <div className="flex items-center justify-end gap-2 pt-4">
+        {isEditing ? (
+          <>
+            <Button 
+              variant="default" 
+              onClick={onSave}
+              className="bg-luxury-primary hover:bg-luxury-primary/80"
+            >
+              Save Changes
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={onCancel}
+              className="border-luxury-primary text-luxury-primary hover:bg-luxury-primary/10"
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button 
+            variant="default"
+            onClick={onEdit}
+            className="bg-luxury-primary hover:bg-luxury-primary/80"
+          >
+            Edit Profile
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-between pt-4">
