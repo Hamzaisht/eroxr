@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "@/components/ui/toaster";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Shorts from "@/pages/Shorts";
