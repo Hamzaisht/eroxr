@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
@@ -9,7 +9,7 @@ import Eroboard from "@/pages/Eroboard";
 
 function App() {
   return (
-    <Router>
+    <>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/home" element={<Home />} />
@@ -19,7 +19,7 @@ function App() {
         <Route path="/eroboard" element={<Eroboard />} />
       </Routes>
       <Toaster />
-    </Router>
+    </>
   );
 }
 
