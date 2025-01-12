@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Shorts from "@/pages/Shorts";
@@ -16,8 +17,34 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If user is not authenticated and not on landing or login page,
-    // redirect to login
+    // Set up session refresh handling
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully');
+      } else if (event === 'SIGNED_OUT') {
+        navigate('/login');
+      }
+    });
+
+    // Check session on mount
+    const checkSession = async () => {
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      if (error || !currentSession) {
+        const path = window.location.pathname;
+        if (path !== "/" && path !== "/login") {
+          navigate('/login');
+        }
+      }
+    };
+    
+    checkSession();
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Protect routes that require authentication
+  useEffect(() => {
     const path = window.location.pathname;
     if (!session && path !== "/" && path !== "/login") {
       navigate("/login");

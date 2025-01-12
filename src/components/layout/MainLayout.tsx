@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +11,11 @@ import { UploadDialog } from "./UploadDialog";
 import { FloatingActionMenu } from "./FloatingActionMenu";
 import { supabase } from "@/integrations/supabase/client";
 
-export const MainLayout = () => {
+interface MainLayoutProps {
+  children?: ReactNode;
+}
+
+export const MainLayout = ({ children }: MainLayoutProps) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -63,7 +67,7 @@ export const MainLayout = () => {
         
         <main className="flex-1 min-h-screen w-full pl-20 lg:pl-24">
           <div className="w-full min-h-screen">
-            <Outlet />
+            {children || <Outlet />}
           </div>
         </main>
       </div>
