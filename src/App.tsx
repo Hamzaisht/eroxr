@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
 import { Toaster } from '@/components/ui/toaster';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -33,7 +33,7 @@ const App = () => {
   }, [supabase.auth]);
 
   return (
-    <Router>
+    <>
       <Routes>
         <Route path="/login" element={!session ? <Login /> : <Navigate to="/home" />} />
         
@@ -51,7 +51,7 @@ const App = () => {
         </Route>
       </Routes>
       <Toaster />
-    </Router>
+    </>
   );
 };
 

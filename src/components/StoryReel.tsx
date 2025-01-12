@@ -6,13 +6,33 @@ import { StoryUploader } from "./story/StoryUploader";
 import { StoryItem } from "./story/StoryItem";
 import { StoryNavigation } from "./story/StoryNavigation";
 
+interface Creator {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+}
+
+interface Story {
+  id: string;
+  media_url: string;
+  video_url: string | null;
+  duration: number | null;
+  created_at: string;
+  expires_at: string;
+  creator: Creator;
+}
+
+interface GroupedStory {
+  creator: Creator;
+  stories: Story[];
+}
+
 export const StoryReel = () => {
   const session = useSession();
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  // Set up real-time subscription for stories
   useEffect(() => {
     console.log("Setting up real-time subscription for stories");
     
@@ -57,7 +77,7 @@ export const StoryReel = () => {
           duration,
           created_at,
           expires_at,
-          creator:profiles(
+          creator:profiles!stories_creator_id_fkey (
             id,
             username,
             avatar_url
@@ -73,7 +93,7 @@ export const StoryReel = () => {
       }
 
       // Group stories by creator
-      const groupedStories = data.reduce((acc: any, story) => {
+      const groupedStories = data.reduce((acc: Record<string, GroupedStory>, story: any) => {
         const creatorId = story.creator.id;
         if (!acc[creatorId]) {
           acc[creatorId] = {
@@ -81,11 +101,14 @@ export const StoryReel = () => {
             stories: []
           };
         }
-        acc[creatorId].stories.push(story);
+        acc[creatorId].stories.push({
+          ...story,
+          creator: story.creator
+        });
         return acc;
       }, {});
 
-      return Object.values(groupedStories);
+      return Object.values(groupedStories) as GroupedStory[];
     }
   });
 
@@ -130,12 +153,12 @@ export const StoryReel = () => {
       >
         {session && <StoryUploader />}
 
-        {stories?.map((groupedStory: any, index: number) => (
+        {stories?.map((groupedStory: GroupedStory) => (
           <StoryItem 
             key={groupedStory.creator.id} 
             stories={groupedStory.stories}
             creator={groupedStory.creator}
-            index={index} 
+            index={0}
           />
         ))}
       </div>
