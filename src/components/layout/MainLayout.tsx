@@ -10,6 +10,7 @@ import { BackgroundEffects } from "./BackgroundEffects";
 import { UploadDialog } from "./UploadDialog";
 import { FloatingActionMenu } from "./FloatingActionMenu";
 import { supabase } from "@/integrations/supabase/client";
+import { MainNav } from "@/components/MainNav";
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -61,8 +62,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#0D1117]">
       <BackgroundEffects />
+      <MainNav />
       
-      <div className="relative flex min-h-screen">
+      <div className="relative flex min-h-screen pt-16">
         <InteractiveNav />
         
         <main className="flex-1 min-h-screen w-full pl-20 lg:pl-24">

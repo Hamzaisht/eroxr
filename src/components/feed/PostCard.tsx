@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { MediaViewer } from "@/components/media/MediaViewer";
@@ -11,6 +11,16 @@ import { CommentSection } from "./CommentSection";
 import { ShareDialog } from "./ShareDialog";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PostCardProps {
   post: Post;
@@ -30,6 +40,10 @@ export const PostCard = ({
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editedContent, setEditedContent] = useState(post.content);
+  const { toast } = useToast();
+  const isOwner = currentUserId === post.creator_id;
 
   const handleLike = async () => {
     if (onLike) {
@@ -44,24 +58,77 @@ export const PostCard = ({
     setShowComments(!showComments);
   };
 
+  const handleEdit = async () => {
+    try {
+      const { error } = await supabase
+        .from("posts")
+        .update({ 
+          content: editedContent,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", post.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Post updated",
+        description: "Your post has been successfully updated.",
+      });
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update post. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const hasMedia = post.media_url && post.media_url.length > 0;
+  const isEdited = post.updated_at && post.updated_at !== post.created_at;
 
   return (
     <Card className="bg-[#0D1117] border-luxury-neutral/10 hover:border-luxury-neutral/20 transition-all duration-300">
       <div className="p-4 space-y-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/20">
-            <AvatarImage src={post.creator.avatar_url || ""} alt={post.creator.username || "User"} />
-            <AvatarFallback>{post.creator.username?.[0]?.toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-semibold text-luxury-neutral">
-              {post.creator.username}
-            </h3>
-            <p className="text-sm text-luxury-neutral/60">
-              {format(new Date(post.created_at), 'MMM d, yyyy')}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/20">
+              <AvatarImage src={post.creator.avatar_url || ""} alt={post.creator.username || "User"} />
+              <AvatarFallback>{post.creator.username?.[0]?.toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-luxury-neutral">
+                {post.creator.username}
+                {isEdited && (
+                  <span className="ml-2 text-sm text-luxury-neutral/60">(edited)</span>
+                )}
+              </h3>
+              <p className="text-sm text-luxury-neutral/60">
+                {format(new Date(post.created_at), 'MMM d, yyyy')}
+              </p>
+            </div>
           </div>
+
+          {isOwner && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                  Edit Post
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-red-500"
+                  onClick={() => onDelete && onDelete(post.id, post.creator_id)}
+                >
+                  Delete Post
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         <p className="text-luxury-neutral/90">{post.content}</p>
@@ -145,6 +212,30 @@ export const PostCard = ({
         onOpenChange={setIsShareDialogOpen}
         postId={post.id}
       />
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              placeholder="Edit your post..."
+              className="min-h-[100px]"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEdit}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
