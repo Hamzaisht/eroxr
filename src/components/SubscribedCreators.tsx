@@ -9,8 +9,8 @@ import { useToast } from "./ui/use-toast";
 
 interface Creator {
   id: string;
-  username: string;
-  avatar_url: string;
+  username: string | null;
+  avatar_url: string | null;
   subscriber_count: number;
 }
 
@@ -93,7 +93,7 @@ export const SubscribedCreators = () => {
           return {
             ...sub.creator,
             subscriber_count: count || 0,
-          };
+          } as Creator;
         })
       );
 

@@ -9,7 +9,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storage: localStorage // Explicitly set storage to ensure persistence
+    storage: localStorage
   },
   global: {
     headers: {
@@ -21,9 +21,4 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 // Add error logging for debugging
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session);
-});
-
-// Add request error logging
-supabase.handleRequestError((error) => {
-  console.error('Supabase request error:', error);
 });
