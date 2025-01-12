@@ -1,95 +1,58 @@
-import { Routes, Route } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import Landing from "@/pages/Landing";
-import Home from "@/pages/Home";
-import Shorts from "@/pages/Shorts";
-import Dating from "@/pages/Dating";
-import Messages from "@/pages/Messages";
-import Eroboard from "@/pages/Eroboard";
-import Login from "@/pages/Login";
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
+import { Toaster } from '@/components/ui/toaster';
+import { MainLayout } from '@/components/layout/MainLayout';
+import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import Profile from '@/pages/Profile';
+import Eroboard from '@/pages/Eroboard';
+import Messages from '@/pages/Messages';
+import Dating from '@/pages/Dating';
+import Search from '@/pages/Search';
+import Shorts from '@/pages/Shorts';
 
-function App() {
+const App = () => {
   const session = useSession();
-  const navigate = useNavigate();
+  const supabase = useSupabaseClient();
 
   useEffect(() => {
-    // Set up session refresh handling
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'TOKEN_REFRESHED') {
-        console.log('Token refreshed successfully');
-      } else if (event === 'SIGNED_OUT') {
-        navigate('/login');
+    const handleError = (error: any) => {
+      console.error('Supabase error:', error);
+    };
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event);
+      if (event === 'SIGNED_OUT') {
+        // Clear any cached data or state here
       }
     });
 
-    // Check session on mount
-    const checkSession = async () => {
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-      if (error || !currentSession) {
-        const path = window.location.pathname;
-        if (path !== "/" && path !== "/login") {
-          navigate('/login');
-        }
-      }
-    };
-    
-    checkSession();
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  // Protect routes that require authentication
-  useEffect(() => {
-    const path = window.location.pathname;
-    if (!session && path !== "/" && path !== "/login") {
-      navigate("/login");
-    }
-  }, [session, navigate]);
+    window.addEventListener('unhandledrejection', handleError);
+    return () => window.removeEventListener('unhandledrejection', handleError);
+  }, [supabase.auth]);
 
   return (
-    <>
+    <Router>
       <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route 
-          path="/home" 
-          element={
-            session ? <Home /> : <Login />
-          } 
-        />
-        <Route 
-          path="/shorts" 
-          element={
-            session ? <Shorts /> : <Login />
-          } 
-        />
-        <Route 
-          path="/dating" 
-          element={
-            session ? <Dating /> : <Login />
-          } 
-        />
-        <Route 
-          path="/messages" 
-          element={
-            session ? <Messages /> : <Login />
-          } 
-        />
-        <Route 
-          path="/eroboard" 
-          element={
-            session ? <Eroboard /> : <Login />
-          } 
-        />
+        <Route path="/login" element={!session ? <Login /> : <Navigate to="/home" />} />
+        
+        {/* Protected routes */}
+        <Route element={<MainLayout />}>
+          <Route path="/home" element={session ? <Home /> : <Navigate to="/login" />} />
+          <Route path="/profile/:id" element={session ? <Profile /> : <Navigate to="/login" />} />
+          <Route path="/eroboard" element={session ? <Eroboard /> : <Navigate to="/login" />} />
+          <Route path="/messages" element={session ? <Messages /> : <Navigate to="/login" />} />
+          <Route path="/dating" element={session ? <Dating /> : <Navigate to="/login" />} />
+          <Route path="/search" element={session ? <Search /> : <Navigate to="/login" />} />
+          <Route path="/shorts" element={session ? <Shorts /> : <Navigate to="/login" />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Route>
       </Routes>
       <Toaster />
-    </>
+    </Router>
   );
-}
+};
 
 export default App;
