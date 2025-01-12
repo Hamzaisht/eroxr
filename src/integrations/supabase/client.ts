@@ -11,3 +11,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true
   }
 });
+
+// Add error logging for debugging
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Auth state changed:', event, session);
+});
