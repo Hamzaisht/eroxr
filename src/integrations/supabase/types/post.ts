@@ -21,3 +21,15 @@ export type Post = {
     avatar_url: string | null;
   };
 };
+
+export type PostUpdate = {
+  content?: string;
+  media_url?: string[];
+  video_urls?: string[];
+  visibility?: 'public' | 'subscribers_only';
+  tags?: string[];
+  ppv_amount?: number;
+  is_ppv?: boolean;
+  updated_at?: string;
+  creator_id: string;
+};
