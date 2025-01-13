@@ -6,11 +6,9 @@ import { CreatorCard } from "./CreatorCard";
 import { Skeleton } from "./ui/skeleton";
 import { Users } from "lucide-react";
 import { useToast } from "./ui/use-toast";
+import { Creator } from "@/integrations/supabase/types";
 
-interface Creator {
-  id: string;
-  username: string | null;
-  avatar_url: string | null;
+interface CreatorWithStats extends Creator {
   subscriber_count: number;
 }
 
@@ -93,7 +91,7 @@ export const SubscribedCreators = () => {
           return {
             ...sub.creator,
             subscriber_count: count || 0,
-          } as Creator;
+          } as CreatorWithStats;
         })
       );
 

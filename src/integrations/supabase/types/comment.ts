@@ -1,3 +1,5 @@
+import { Creator } from './profile';
+
 export type Comment = {
   id: string;
   post_id: string;
@@ -5,6 +7,7 @@ export type Comment = {
   content: string;
   created_at: string;
   updated_at: string;
+  creator: Creator;
 };
 
 export type CommentInsert = {

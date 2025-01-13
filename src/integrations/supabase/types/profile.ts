@@ -21,10 +21,10 @@ export type Profile = {
   is_suspended?: boolean | null;
   suspended_at?: string | null;
   status?: 'online' | 'offline' | 'away' | 'busy' | null;
-  role?: 'user' | 'admin' | 'creator' | null;
 };
 
 export type Creator = {
+  id: string;
   username: string | null;
   avatar_url: string | null;
 };
