@@ -3,26 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
-
-interface Post {
-  id: string;
-  content: string;
-  media_url: string[];
-  creator: {
-    username: string;
-    avatar_url: string;
-  };
-  created_at: string;
-}
-
-interface Story {
-  id: string;
-  media_url: string;
-  creator: {
-    username: string;
-    avatar_url: string;
-  };
-}
+import { Post } from "@/integrations/supabase/types/post";
+import { Story } from "@/integrations/supabase/types/story";
 
 export const TempDemoContent = () => {
   const { data: posts } = useQuery({
@@ -35,13 +17,21 @@ export const TempDemoContent = () => {
           content,
           media_url,
           created_at,
-          creator:profiles(username, avatar_url)
+          creator:profiles(id, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(3);
 
       if (error) throw error;
-      return data as Post[];
+      
+      return (data || []).map(post => ({
+        ...post,
+        creator: {
+          id: post.creator?.id,
+          username: post.creator?.username || null,
+          avatar_url: post.creator?.avatar_url || null
+        }
+      })) as Post[];
     },
   });
 
@@ -53,13 +43,21 @@ export const TempDemoContent = () => {
         .select(`
           id,
           media_url,
-          creator:profiles(username, avatar_url)
+          creator:profiles(id, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(3);
 
       if (error) throw error;
-      return data as Story[];
+      
+      return (data || []).map(story => ({
+        ...story,
+        creator: {
+          id: story.creator?.id,
+          username: story.creator?.username || null,
+          avatar_url: story.creator?.avatar_url || null
+        }
+      })) as Story[];
     },
   });
 

@@ -6,7 +6,7 @@ import { CreatorCard } from "./CreatorCard";
 import { Skeleton } from "./ui/skeleton";
 import { Users } from "lucide-react";
 import { useToast } from "./ui/use-toast";
-import { Creator } from "@/integrations/supabase/types";
+import { Creator } from "@/integrations/supabase/types/profile";
 
 interface CreatorWithStats extends Creator {
   subscriber_count: number;
@@ -21,83 +21,93 @@ export const SubscribedCreators = () => {
     queryFn: async () => {
       if (!session?.user) return [];
       
-      // First verify the creator exists in profiles
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select()
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch profile data",
-          variant: "destructive",
-        });
-        throw profileError;
-      }
-
-      // If profile doesn't exist, create it
-      if (!profile) {
-        const { error: insertError } = await supabase
+      try {
+        // First verify the creator exists in profiles
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .insert([
-            { 
-              id: session.user.id,
-              username: session.user.email?.split('@')[0] || 'Anonymous User',
-              avatar_url: null 
-            }
-          ]);
+          .select()
+          .eq("id", session.user.id)
+          .maybeSingle();
 
-        if (insertError) {
+        if (profileError) {
           toast({
             title: "Error",
-            description: "Failed to create profile",
+            description: "Failed to fetch profile data",
             variant: "destructive",
           });
-          throw insertError;
+          throw profileError;
         }
-      }
 
-      // Now fetch subscriptions
-      const { data: subscriptions, error: subsError } = await supabase
-        .from("creator_subscriptions")
-        .select(`
-          creator:creator_id (
-            id,
-            username,
-            avatar_url
-          )
-        `)
-        .eq("user_id", session.user.id);
+        // If profile doesn't exist, create it
+        if (!profile) {
+          const { error: insertError } = await supabase
+            .from("profiles")
+            .insert([
+              { 
+                id: session.user.id,
+                username: session.user.email?.split('@')[0] || 'Anonymous User',
+                avatar_url: null 
+              }
+            ]);
 
-      if (subsError) {
+          if (insertError) {
+            toast({
+              title: "Error",
+              description: "Failed to create profile",
+              variant: "destructive",
+            });
+            throw insertError;
+          }
+        }
+
+        // Now fetch subscriptions
+        const { data: subscriptions, error: subsError } = await supabase
+          .from("creator_subscriptions")
+          .select(`
+            creator:creator_id (
+              id,
+              username,
+              avatar_url
+            )
+          `)
+          .eq("user_id", session.user.id);
+
+        if (subsError) {
+          toast({
+            title: "Error",
+            description: "Failed to fetch subscriptions",
+            variant: "destructive",
+          });
+          throw subsError;
+        }
+
+        // Get subscriber count for each creator
+        const creatorsWithCounts = await Promise.all(
+          (subscriptions || []).map(async (sub) => {
+            const { count } = await supabase
+              .from("creator_subscriptions")
+              .select("*", { count: "exact", head: true })
+              .eq("creator_id", sub.creator.id);
+
+            return {
+              ...sub.creator,
+              subscriber_count: count || 0,
+            } as CreatorWithStats;
+          })
+        );
+
+        return creatorsWithCounts;
+      } catch (error) {
+        console.error('Error in mutual followers query:', error);
         toast({
-          title: "Error",
-          description: "Failed to fetch subscriptions",
+          title: "Error loading mutual followers",
+          description: "Please try again later",
           variant: "destructive",
         });
-        throw subsError;
+        return [];
       }
-
-      // Get subscriber count for each creator
-      const creatorsWithCounts = await Promise.all(
-        (subscriptions || []).map(async (sub) => {
-          const { count } = await supabase
-            .from("creator_subscriptions")
-            .select("*", { count: "exact", head: true })
-            .eq("creator_id", sub.creator.id);
-
-          return {
-            ...sub.creator,
-            subscriber_count: count || 0,
-          } as CreatorWithStats;
-        })
-      );
-
-      return creatorsWithCounts;
     },
-    enabled: !!session?.user,
+    enabled: !!session?.user?.id,
   });
 
   if (error) {

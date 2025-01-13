@@ -57,7 +57,6 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
         <div className="space-y-6 max-w-3xl mx-auto">
           <div className="space-y-6">
             {posts.map((post) => {
-              // Ensure post visibility is correctly typed
               const typedPost: Post = {
                 ...post,
                 visibility: (post.visibility || 'public') as 'public' | 'subscribers_only',
@@ -67,6 +66,7 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
                 screenshots_count: post.screenshots_count || 0,
                 downloads_count: post.downloads_count || 0,
                 creator: {
+                  id: post.creator?.id,
                   username: post.creator?.username || null,
                   avatar_url: post.creator?.avatar_url || null
                 }

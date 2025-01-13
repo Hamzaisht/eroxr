@@ -73,7 +73,14 @@ export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
           throw mutualError;
         }
 
-        return mutualData as MutualFollower[];
+        return (mutualData || []).map(mutual => ({
+          following_id: mutual.following_id,
+          following: {
+            id: mutual.following?.id,
+            username: mutual.following?.username || null,
+            avatar_url: mutual.following?.avatar_url || null
+          }
+        }));
       } catch (error) {
         console.error('Error in mutual followers query:', error);
         toast({
