@@ -9,6 +9,7 @@ import { MessageSquare } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Creator {
+  id: string;
   username: string | null;
   avatar_url: string | null;
 }
@@ -56,11 +57,11 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
       return (data || []).map(comment => ({
         ...comment,
         creator: {
-          id: comment.creator?.id || null,
+          id: comment.creator?.id || '',
           username: comment.creator?.username || null,
           avatar_url: comment.creator?.avatar_url || null
         }
-      }));
+      })) as Comment[];
     },
     enabled: isExpanded,
   });
