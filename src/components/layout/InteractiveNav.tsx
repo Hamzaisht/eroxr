@@ -2,15 +2,17 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Home, Video, Heart, BarChart2 } from "lucide-react";
+import { Home, Video, Heart, MessageSquare, Play, Film } from "lucide-react";
 import { NavMenuItem } from "./nav/NavMenuItem";
 import { UserProfileSection } from "./nav/UserProfileSection";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
-  { icon: Video, label: "Eros Shorts", path: "/shorts" },
-  { icon: Heart, label: "Dating Ads", path: "/dating" },
-  { icon: BarChart2, label: "Eroboard", path: "/eroboard" }
+  { icon: Film, label: "Eros", path: "/shorts" },
+  { icon: Heart, label: "Dating", path: "/dating" },
+  { icon: MessageSquare, label: "Messages", path: "/messages" },
+  { icon: Play, label: "Eroboard", path: "/eroboard" },
+  { icon: Video, label: "Shorts", path: "/shorts" }
 ];
 
 export const InteractiveNav = () => {

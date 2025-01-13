@@ -11,10 +11,15 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
 
   useEffect(() => {
     if (videoRef.current) {
+      videoRef.current.load(); // Force reload the video
+      
       if (isActive) {
-        videoRef.current.play().catch(error => {
-          console.error('Video playback error:', error);
-        });
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error('Video playback error:', error);
+          });
+        }
       } else {
         videoRef.current.pause();
         if (videoRef.current.currentTime > 0) {
@@ -22,7 +27,7 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
         }
       }
     }
-  }, [isActive]);
+  }, [isActive, videoUrl]);
 
   return (
     <div className="absolute inset-0 w-full h-full">
@@ -34,8 +39,11 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
           loop
           muted
           playsInline
-          autoPlay={isActive}
+          preload="auto"
           poster={avatarUrl || undefined}
+          onError={(e) => {
+            console.error('Video loading error:', e);
+          }}
         />
       ) : (
         <div className="h-full w-full bg-luxury-dark/50 backdrop-blur-xl flex items-center justify-center">
