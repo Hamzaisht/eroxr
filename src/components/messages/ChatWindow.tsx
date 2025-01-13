@@ -99,6 +99,47 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     }
   };
 
+  const handleSnapCapture = async (blob: Blob) => {
+    if (!session?.user?.id) return;
+    setIsUploading(true);
+
+    try {
+      const fileName = `${crypto.randomUUID()}.${blob.type.includes('video') ? 'webm' : 'jpg'}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('messages')
+        .upload(fileName, blob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('messages')
+        .getPublicUrl(fileName);
+
+      const { error: messageError } = await supabase
+        .from('direct_messages')
+        .insert([{
+          sender_id: session.user.id,
+          recipient_id: recipientId,
+          media_url: [publicUrl],
+          message_type: blob.type.includes('video') ? 'video' : 'image',
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        }]);
+
+      if (messageError) throw messageError;
+      setShowCamera(false);
+    } catch (error) {
+      console.error('Error uploading snap:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send snap",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchRecipientProfile = async () => {
       const { data, error } = await supabase
@@ -175,7 +216,7 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         onSendMessage={handleSendMessage}
         onMediaSelect={handleMediaSelect}
         onSnapStart={() => setShowCamera(true)}
-        isUploading={isUploading}
+        isLoading={isUploading}
       />
 
       {showCamera && (
