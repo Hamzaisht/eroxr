@@ -502,6 +502,182 @@ export type Database = {
         }
         Relationships: []
       }
+      live_stream_chat: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          sender_id: string | null
+          stream_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          sender_id?: string | null
+          stream_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          sender_id?: string | null
+          stream_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stream_chat_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_stream_chat_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_stream_chat_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_stream_chat_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_stream_viewers: {
+        Row: {
+          id: string
+          joined_at: string | null
+          left_at: string | null
+          stream_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          stream_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          stream_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stream_viewers_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_stream_viewers_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_stream_viewers_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_stream_viewers_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_streams: {
+        Row: {
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          ended_at: string | null
+          id: string
+          is_private: boolean | null
+          playback_url: string | null
+          started_at: string | null
+          status: string
+          stream_key: string | null
+          title: string
+          updated_at: string | null
+          viewer_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          is_private?: boolean | null
+          playback_url?: string | null
+          started_at?: string | null
+          status?: string
+          stream_key?: string | null
+          title: string
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          is_private?: boolean | null
+          playback_url?: string | null
+          started_at?: string | null
+          status?: string
+          stream_key?: string | null
+          title?: string
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_streams_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_streams_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_streams_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nordic_cities: {
         Row: {
           city_name: string
