@@ -54,10 +54,14 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
 
       if (error) throw error;
       
-      return (data || []).map(comment => ({
+      return (data || []).map((comment: any) => ({
         ...comment,
-        creator: comment.creator as Creator
-      }));
+        creator: {
+          id: comment.creator.id,
+          username: comment.creator.username,
+          avatar_url: comment.creator.avatar_url
+        }
+      })) as Comment[];
     },
     enabled: isExpanded,
   });
