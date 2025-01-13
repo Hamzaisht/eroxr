@@ -56,8 +56,8 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
       
       return (data || []).map(comment => ({
         ...comment,
-        creator: comment.creator as Creator // Type assertion to ensure creator has correct shape
-      })) as Comment[];
+        creator: comment.creator as Creator
+      }));
     },
     enabled: isExpanded,
   });
