@@ -8,9 +8,10 @@ import { useQueryClient } from "@tanstack/react-query";
 interface PPVContentProps {
   postId: string;
   amount: number;
+  mediaUrl?: string;
 }
 
-export const PPVContent = ({ postId, amount }: PPVContentProps) => {
+export const PPVContent = ({ postId, amount, mediaUrl }: PPVContentProps) => {
   const { toast } = useToast();
   const session = useSession();
   const queryClient = useQueryClient();
@@ -54,19 +55,30 @@ export const PPVContent = ({ postId, amount }: PPVContentProps) => {
   };
 
   return (
-    <div className="space-y-4 p-6 text-center">
-      <Lock className="w-12 h-12 mx-auto text-luxury-primary" />
-      <div>
-        <h3 className="text-lg font-semibold">Premium Content</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Unlock this content for ${amount}
-        </p>
-        <Button
-          onClick={handlePurchase}
-          className="bg-luxury-primary hover:bg-luxury-primary/90"
-        >
-          Purchase Access
-        </Button>
+    <div className="relative w-full h-full min-h-[300px] group">
+      {mediaUrl && (
+        <div className="absolute inset-0">
+          <img 
+            src={mediaUrl} 
+            alt="Blurred preview" 
+            className="w-full h-full object-cover filter blur-xl brightness-50"
+          />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <Lock className="w-12 h-12 text-luxury-primary animate-pulse" />
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-2">Premium Content</h3>
+          <p className="text-sm text-gray-300 mb-4">
+            Unlock this exclusive content for ${amount}
+          </p>
+          <Button
+            onClick={handlePurchase}
+            className="bg-luxury-primary hover:bg-luxury-primary/90 text-white px-8 py-2 rounded-full transition-all duration-300 transform hover:scale-105"
+          >
+            Purchase Access
+          </Button>
+        </div>
       </div>
     </div>
   );

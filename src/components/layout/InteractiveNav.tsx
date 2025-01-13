@@ -37,6 +37,16 @@ export const InteractiveNav = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
+        <motion.div
+          className="px-4 mb-8"
+          whileHover={{ scale: 1.05 }}
+          onClick={() => navigate("/")}
+        >
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent cursor-pointer">
+            Eroxr
+          </h1>
+        </motion.div>
+
         <div className="space-y-2 px-4">
           {menuItems.map((item) => (
             <NavMenuItem
