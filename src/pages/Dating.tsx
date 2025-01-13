@@ -13,6 +13,7 @@ export default function Dating() {
   const [selectedSeeker, setSelectedSeeker] = useState<string | null>(null);
   const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
+  const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
 
   const { data: ads, isLoading } = useAdsQuery();
 
@@ -62,7 +63,11 @@ export default function Dating() {
                 </div>
                 <div className="flex gap-3">
                   <CreateBodyContactDialog />
-                  <NewMessageDialog onSelectUser={() => {}} />
+                  <NewMessageDialog 
+                    open={isNewMessageOpen} 
+                    onOpenChange={setIsNewMessageOpen} 
+                    onSelectUser={() => {}} 
+                  />
                 </div>
               </div>
             </div>

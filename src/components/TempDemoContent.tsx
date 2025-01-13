@@ -40,7 +40,7 @@ export const TempDemoContent = () => {
       
       return (data || []).map(post => ({
         ...post,
-        creator: post.creator as CreatorProfile
+        creator: post.creator as unknown as CreatorProfile
       })) as PostWithCreator[];
     },
   });
@@ -62,7 +62,7 @@ export const TempDemoContent = () => {
       
       return (data || []).map(story => ({
         ...story,
-        creator: story.creator as CreatorProfile
+        creator: story.creator as unknown as CreatorProfile
       })) as StoryWithCreator[];
     },
   });

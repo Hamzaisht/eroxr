@@ -50,9 +50,11 @@ export const SubscribedCreators = () => {
           throw subsError;
         }
 
+        const typedSubscriptions = subscriptions as unknown as SubscriptionData[];
+
         // Get subscriber count for each creator
         const creatorsWithCounts = await Promise.all(
-          (subscriptions as SubscriptionData[] || []).map(async (sub) => {
+          (typedSubscriptions || []).map(async (sub) => {
             const { count } = await supabase
               .from("creator_subscriptions")
               .select("*", { count: "exact", head: true })

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const Messages = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(true);
+  const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
 
   return (
     <div className="h-screen bg-luxury-dark">
@@ -15,7 +16,11 @@ const Messages = () => {
         {/* Left Sidebar - Chat List */}
         <div className="border-r border-luxury-neutral/10 bg-luxury-dark/50">
           <div className="p-4 space-y-4 border-b border-luxury-neutral/10">
-            <NewMessageDialog onSelectUser={setSelectedUserId} />
+            <NewMessageDialog 
+              open={isNewMessageOpen}
+              onOpenChange={setIsNewMessageOpen}
+              onSelectUser={setSelectedUserId} 
+            />
             <div className="relative">
               <input
                 type="text"

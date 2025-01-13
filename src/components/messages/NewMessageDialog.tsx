@@ -36,7 +36,7 @@ export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessag
 
       if (error) throw error;
 
-      return data as FollowerData[];
+      return data as unknown as FollowerData[];
     },
     enabled: !!session?.user?.id,
   });
