@@ -11,20 +11,20 @@ import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Post as PostType } from "@/components/feed/types";
 
-interface MainFeedProps {
-  isPayingCustomer: boolean | null;
-  onOpenCreatePost?: () => void;
-  onFileSelect?: (files: FileList | null) => void;
-  onOpenGoLive?: () => void;
-  onGoLive?: () => void;
-}
-
 interface PostWithProfiles extends PostType {
   profiles: {
     id: string;
     username: string;
     avatar_url: string | null;
   };
+}
+
+interface MainFeedProps {
+  isPayingCustomer: boolean | null;
+  onOpenCreatePost?: () => void;
+  onFileSelect?: (files: FileList | null) => void;
+  onOpenGoLive?: () => void;
+  onGoLive?: () => void;
 }
 
 export const MainFeed = ({
@@ -89,7 +89,7 @@ export const MainFeed = ({
         </TabsList>
         <TabsContent value="feed">
           <div className="space-y-6">
-            {status === "loading" ? (
+            {status === "pending" ? (
               <div className="flex justify-center p-4">
                 <Loader2 className="w-6 h-6 animate-spin" />
               </div>
