@@ -2,14 +2,14 @@ import { useState } from "react";
 import { CreatePostArea } from "./CreatePostArea";
 import { LiveStreams } from "./LiveStreams";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Post } from "@/components/Post";
+import { Post } from "@/components/feed/Post";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { Post as PostType } from "@/components/feed/types";
 
 interface MainFeedProps {
   isPayingCustomer: boolean | null;
@@ -17,6 +17,13 @@ interface MainFeedProps {
   onFileSelect?: (files: FileList | null) => void;
   onOpenGoLive?: () => void;
   onGoLive?: () => void;
+}
+
+interface PostWithProfiles extends PostType {
+  profiles: {
+    username: string;
+    avatar_url: string | null;
+  };
 }
 
 export const MainFeed = ({
@@ -52,8 +59,9 @@ export const MainFeed = ({
         .range(pageParam * 10, (pageParam + 1) * 10 - 1);
 
       if (error) throw error;
-      return data;
+      return data as PostWithProfiles[];
     },
+    initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
       if (lastPage && lastPage.length === 10) {
         return pages.length;
@@ -95,9 +103,9 @@ export const MainFeed = ({
               </div>
             ) : (
               <>
-                {feed.pages.map((page, i) => (
+                {feed?.pages.map((page, i) => (
                   <div key={i} className="space-y-6">
-                    {page.map((post) => (
+                    {page.map((post: PostWithProfiles) => (
                       <Post
                         key={post.id}
                         post={post}
