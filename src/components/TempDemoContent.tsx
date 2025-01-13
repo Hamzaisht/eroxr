@@ -6,6 +6,20 @@ import { Link } from "react-router-dom";
 import { Post } from "@/integrations/supabase/types/post";
 import { Story } from "@/integrations/supabase/types/story";
 
+interface CreatorProfile {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+}
+
+interface PostWithCreator extends Omit<Post, 'creator'> {
+  creator: CreatorProfile;
+}
+
+interface StoryWithCreator extends Omit<Story, 'creator'> {
+  creator: CreatorProfile;
+}
+
 export const TempDemoContent = () => {
   const { data: posts } = useQuery({
     queryKey: ["recent-posts"],
@@ -26,12 +40,8 @@ export const TempDemoContent = () => {
       
       return (data || []).map(post => ({
         ...post,
-        creator: {
-          id: post.creator?.id || null,
-          username: post.creator?.username || null,
-          avatar_url: post.creator?.avatar_url || null
-        }
-      })) as Post[];
+        creator: post.creator as CreatorProfile
+      })) as PostWithCreator[];
     },
   });
 
@@ -52,12 +62,8 @@ export const TempDemoContent = () => {
       
       return (data || []).map(story => ({
         ...story,
-        creator: {
-          id: story.creator?.id || null,
-          username: story.creator?.username || null,
-          avatar_url: story.creator?.avatar_url || null
-        }
-      })) as Story[];
+        creator: story.creator as CreatorProfile
+      })) as StoryWithCreator[];
     },
   });
 

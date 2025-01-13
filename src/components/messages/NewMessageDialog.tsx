@@ -8,9 +8,19 @@ import { supabase } from "@/integrations/supabase/client";
 interface NewMessageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSelectUser: (userId: string) => void;
 }
 
-export const NewMessageDialog = ({ open, onOpenChange }: NewMessageDialogProps) => {
+interface FollowerData {
+  following: {
+    id: string;
+    username: string | null;
+    avatar_url: string | null;
+  };
+  following_id: string;
+}
+
+export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessageDialogProps) => {
   const session = useSession();
 
   const { data: mutualFollowers = [] } = useQuery({
@@ -26,14 +36,7 @@ export const NewMessageDialog = ({ open, onOpenChange }: NewMessageDialogProps) 
 
       if (error) throw error;
 
-      return (data || []).map(follower => ({
-        following_id: follower.following_id,
-        following: {
-          id: follower.following?.id || null,
-          username: follower.following?.username || null,
-          avatar_url: follower.following?.avatar_url || null
-        }
-      }));
+      return data as FollowerData[];
     },
     enabled: !!session?.user?.id,
   });
@@ -51,7 +54,11 @@ export const NewMessageDialog = ({ open, onOpenChange }: NewMessageDialogProps) 
                   <AvatarFallback>{follower.following.username?.[0]?.toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <span className="font-medium">{follower.following.username}</span>
-                <Button variant="outline" className="ml-auto">
+                <Button 
+                  variant="outline" 
+                  className="ml-auto"
+                  onClick={() => onSelectUser(follower.following_id)}
+                >
                   Message
                 </Button>
               </div>

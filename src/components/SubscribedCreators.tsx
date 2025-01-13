@@ -12,6 +12,14 @@ interface CreatorWithStats extends Creator {
   subscriber_count: number;
 }
 
+interface SubscriptionData {
+  creator: {
+    id: string;
+    username: string | null;
+    avatar_url: string | null;
+  };
+}
+
 export const SubscribedCreators = () => {
   const session = useSession();
   const { toast } = useToast();
@@ -44,7 +52,7 @@ export const SubscribedCreators = () => {
 
         // Get subscriber count for each creator
         const creatorsWithCounts = await Promise.all(
-          (subscriptions || []).map(async (sub) => {
+          (subscriptions as SubscriptionData[] || []).map(async (sub) => {
             const { count } = await supabase
               .from("creator_subscriptions")
               .select("*", { count: "exact", head: true })
