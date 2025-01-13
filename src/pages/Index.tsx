@@ -32,22 +32,7 @@ export default function Index() {
           throw profileError;
         }
 
-        const { data: roles, error: rolesError } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id);
-
-        if (rolesError && rolesError.code !== 'PGRST116') {
-          console.error("Roles fetch error:", rolesError);
-          throw rolesError;
-        }
-
-        const userRole = roles && roles.length > 0 ? roles[0].role : 'user';
-
-        return {
-          ...profileData,
-          role: userRole
-        };
+        return profileData;
       } catch (error) {
         console.error("Error fetching profile:", error);
         toast({
@@ -79,23 +64,8 @@ export default function Index() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <CreatePostArea 
-                isPayingCustomer={profile?.is_paying_customer}
-                onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                onFileSelect={setSelectedFiles}
-                onOpenGoLive={() => setIsGoLiveOpen(true)}
-              />
-            </motion.div>
-
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mt-6 w-full"
-            >
               <MainFeed 
                 isPayingCustomer={profile?.is_paying_customer}
-                userRole={profile?.role}
                 onOpenCreatePost={() => setIsCreatePostOpen(true)}
                 onFileSelect={setSelectedFiles}
                 onOpenGoLive={() => setIsGoLiveOpen(true)}

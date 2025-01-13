@@ -21,6 +21,7 @@ interface MainFeedProps {
 
 interface PostWithProfiles extends PostType {
   profiles: {
+    id: string;
     username: string;
     avatar_url: string | null;
   };
@@ -31,19 +32,13 @@ export const MainFeed = ({
   onOpenCreatePost,
   onFileSelect,
   onOpenGoLive,
-  onGoLive
+  onGoLive,
 }: MainFeedProps) => {
   const [activeTab, setActiveTab] = useState("feed");
   const session = useSession();
   const { ref, inView } = useInView();
 
-  const {
-    data: feed,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status
-  } = useInfiniteQuery({
+  const { data: feed, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteQuery({
     queryKey: ["feed"],
     queryFn: async ({ pageParam = 0 }) => {
       const { data, error } = await supabase
@@ -51,6 +46,7 @@ export const MainFeed = ({
         .select(`
           *,
           profiles:creator_id (
+            id,
             username,
             avatar_url
           )
@@ -98,9 +94,7 @@ export const MainFeed = ({
                 <Loader2 className="w-6 h-6 animate-spin" />
               </div>
             ) : status === "error" ? (
-              <div className="text-center p-4 text-red-500">
-                Error loading feed
-              </div>
+              <div className="text-center p-4 text-red-500">Error loading feed</div>
             ) : (
               <>
                 {feed?.pages.map((page, i) => (
