@@ -14,7 +14,7 @@ export type Post = {
   ppv_amount: number | null;
   is_ppv: boolean;
   video_urls: string[] | null;
-  has_liked?: boolean;
+  has_liked: boolean;
   has_purchased?: boolean;
   screenshots_count: number;
   downloads_count: number;

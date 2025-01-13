@@ -56,7 +56,7 @@ export const CommentSection = ({ postId, commentsCount }: CommentSectionProps) =
       return (data || []).map(comment => ({
         ...comment,
         creator: {
-          id: comment.creator?.id,
+          id: comment.creator?.id || null,
           username: comment.creator?.username || null,
           avatar_url: comment.creator?.avatar_url || null
         }

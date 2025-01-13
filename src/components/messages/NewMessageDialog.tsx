@@ -1,140 +1,63 @@
-import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCirclePlus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NewMessageDialogProps {
-  onSelectUser: (userId: string) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-interface Profile {
-  id: string;
-  username: string | null;
-  avatar_url: string | null;
-}
-
-interface MutualFollower {
-  following_id: string;
-  following: Profile;
-}
-
-export const NewMessageDialog = ({ onSelectUser }: NewMessageDialogProps) => {
+export const NewMessageDialog = ({ open, onOpenChange }: NewMessageDialogProps) => {
   const session = useSession();
-  const [open, setOpen] = useState(false);
-  const { toast } = useToast();
 
-  const { data: mutualFollowers, error } = useQuery({
+  const { data: mutualFollowers = [] } = useQuery({
     queryKey: ["mutual-followers", session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
-      
-      try {
-        // First, get the list of users who follow me
-        const { data: followersData, error: followersError } = await supabase
-          .from('followers')
-          .select('follower_id')
-          .eq('following_id', session.user.id);
+      const { data, error } = await supabase
+        .from("followers")
+        .select(`
+          following_id,
+          following:profiles!following_id(id, username, avatar_url)
+        `)
+        .eq("follower_id", session?.user?.id);
 
-        if (followersError) {
-          console.error('Error fetching followers:', followersError);
-          throw followersError;
+      if (error) throw error;
+
+      return (data || []).map(follower => ({
+        following_id: follower.following_id,
+        following: {
+          id: follower.following?.id || null,
+          username: follower.following?.username || null,
+          avatar_url: follower.following?.avatar_url || null
         }
-
-        if (!followersData?.length) return [];
-
-        // Then get the profiles of users I follow who also follow me back
-        const { data: mutualData, error: mutualError } = await supabase
-          .from('followers')
-          .select(`
-            following_id,
-            following:profiles!followers_following_id_fkey (
-              id,
-              username,
-              avatar_url
-            )
-          `)
-          .eq('follower_id', session.user.id)
-          .in('following_id', followersData.map(f => f.follower_id));
-
-        if (mutualError) {
-          console.error('Error fetching mutual followers:', mutualError);
-          throw mutualError;
-        }
-
-        return (mutualData || []).map(mutual => ({
-          following_id: mutual.following_id,
-          following: {
-            id: mutual.following?.id,
-            username: mutual.following?.username || null,
-            avatar_url: mutual.following?.avatar_url || null
-          }
-        }));
-      } catch (error) {
-        console.error('Error in mutual followers query:', error);
-        toast({
-          title: "Error loading mutual followers",
-          description: "Please try again later",
-          variant: "destructive",
-        });
-        return [];
-      }
+      }));
     },
     enabled: !!session?.user?.id,
   });
 
-  const handleSelectUser = (userId: string) => {
-    onSelectUser(userId);
-    setOpen(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
-          <MessageCirclePlus className="mr-2 h-4 w-4" />
-          New Message
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>New Message</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-2">
-            {mutualFollowers?.map((user: MutualFollower) => (
-              <button
-                key={user.following_id}
-                onClick={() => handleSelectUser(user.following_id)}
-                className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-secondary transition-colors"
-              >
-                <Avatar>
-                  <AvatarImage src={user.following.avatar_url || undefined} />
-                  <AvatarFallback>
-                    {user.following.username?.[0]?.toUpperCase() || '?'}
-                  </AvatarFallback>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <div className="grid gap-4 py-4">
+          <h2 className="text-lg font-semibold">Send a Message</h2>
+          <div className="flex flex-col gap-2">
+            {mutualFollowers.map((follower) => (
+              <div key={follower.following_id} className="flex items-center gap-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={follower.following.avatar_url || ""} />
+                  <AvatarFallback>{follower.following.username?.[0]?.toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span className="font-medium">{user.following.username}</span>
-              </button>
+                <span className="font-medium">{follower.following.username}</span>
+                <Button variant="outline" className="ml-auto">
+                  Message
+                </Button>
+              </div>
             ))}
-            {!mutualFollowers?.length && (
-              <p className="text-center text-muted-foreground py-8">
-                No mutual followers found. Follow some users to start messaging!
-              </p>
-            )}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

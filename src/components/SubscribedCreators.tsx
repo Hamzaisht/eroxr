@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,45 +22,6 @@ export const SubscribedCreators = () => {
       if (!session?.user) return [];
       
       try {
-        // First verify the creator exists in profiles
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select()
-          .eq("id", session.user.id)
-          .maybeSingle();
-
-        if (profileError) {
-          toast({
-            title: "Error",
-            description: "Failed to fetch profile data",
-            variant: "destructive",
-          });
-          throw profileError;
-        }
-
-        // If profile doesn't exist, create it
-        if (!profile) {
-          const { error: insertError } = await supabase
-            .from("profiles")
-            .insert([
-              { 
-                id: session.user.id,
-                username: session.user.email?.split('@')[0] || 'Anonymous User',
-                avatar_url: null 
-              }
-            ]);
-
-          if (insertError) {
-            toast({
-              title: "Error",
-              description: "Failed to create profile",
-              variant: "destructive",
-            });
-            throw insertError;
-          }
-        }
-
-        // Now fetch subscriptions
         const { data: subscriptions, error: subsError } = await supabase
           .from("creator_subscriptions")
           .select(`
@@ -150,7 +111,7 @@ export const SubscribedCreators = () => {
 
   return (
     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {creators.map((creator) => (
+      {creators?.map((creator) => (
         <CreatorCard
           key={creator.id}
           name={creator.username || "Anonymous Creator"}

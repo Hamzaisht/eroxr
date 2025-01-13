@@ -27,7 +27,7 @@ export const TempDemoContent = () => {
       return (data || []).map(post => ({
         ...post,
         creator: {
-          id: post.creator?.id,
+          id: post.creator?.id || null,
           username: post.creator?.username || null,
           avatar_url: post.creator?.avatar_url || null
         }
@@ -53,7 +53,7 @@ export const TempDemoContent = () => {
       return (data || []).map(story => ({
         ...story,
         creator: {
-          id: story.creator?.id,
+          id: story.creator?.id || null,
           username: story.creator?.username || null,
           avatar_url: story.creator?.avatar_url || null
         }
