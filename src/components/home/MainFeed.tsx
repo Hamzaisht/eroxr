@@ -1,37 +1,17 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useInView } from "react-intersection-observer";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CreatePostArea } from "./CreatePostArea";
-import { GoLiveDialog } from "./GoLiveDialog";
-import { RightSidebar } from "./RightSidebar";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { GoLiveDialog } from "@/components/home/GoLiveDialog";
+import { RightSidebar } from "@/components/home/RightSidebar";
+import { HomeLayout } from "@/components/home/HomeLayout";
 import { StoryReel } from "@/components/StoryReel";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Video, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { LiveStreams } from "./LiveStreams";
-import { Post } from "@/components/feed/Post";
-import type { Post as PostType } from "@/components/feed/types";
-
-interface MainFeedProps {
-  isPayingCustomer?: boolean;
-  onOpenCreatePost?: () => void;
-  onFileSelect?: (files: FileList | null) => void;
-  onOpenGoLive?: () => void;
-  onGoLive?: () => void;
-}
-
-interface PostWithProfiles extends PostType {
-  profiles: {
-    id: string;
-    username: string;
-    avatar_url: string | null;
-  };
-}
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 const MainFeed = ({
   isPayingCustomer,
@@ -48,6 +28,7 @@ const MainFeed = ({
   const { data: feed, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteQuery({
     queryKey: ["feed"],
     queryFn: async ({ pageParam = 0 }) => {
+      console.log("Fetching feed page:", pageParam);
       const { data, error } = await supabase
         .from("posts")
         .select(`
@@ -81,7 +62,7 @@ const MainFeed = ({
           username: post.profiles.username,
           avatar_url: post.profiles.avatar_url
         }
-      })) as PostWithProfiles[];
+      }));
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
@@ -93,13 +74,13 @@ const MainFeed = ({
   });
 
   useEffect(() => {
-    if (inView && hasNextPage) {
+    if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [inView, fetchNextPage, hasNextPage]);
+  }, [inView, hasNextPage, fetchNextPage, isFetchingNextPage]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -157,7 +138,7 @@ const MainFeed = ({
                     transition={{ duration: 0.3, delay: i * 0.1 }}
                     className="space-y-6"
                   >
-                    {page.map((post: PostWithProfiles) => (
+                    {page.map((post) => (
                       <Post
                         key={post.id}
                         post={post}
