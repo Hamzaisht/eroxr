@@ -2,6 +2,7 @@ import { Post } from "@/components/feed/Post";
 import { Loader2, AlertTriangle } from "lucide-react";
 import type { FeedPost } from "../types";
 import { useSession } from "@supabase/auth-helpers-react";
+import { motion } from "framer-motion";
 
 interface FeedContentProps {
   data: any;
@@ -40,9 +41,20 @@ export const FeedContent = ({
   }
 
   return (
-    <div className="space-y-4">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-4"
+    >
       {data?.pages.map((page: any, i: number) => (
-        <div key={i} className="space-y-4">
+        <motion.div 
+          key={i} 
+          className="space-y-4"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: i * 0.1 }}
+        >
           {page.map((post: FeedPost) => (
             <Post
               key={post.id}
@@ -51,7 +63,7 @@ export const FeedContent = ({
               currentUser={session?.user || null}
             />
           ))}
-        </div>
+        </motion.div>
       ))}
       <div ref={observerRef} className="h-10">
         {isFetchingNextPage && hasNextPage && (
@@ -60,6 +72,6 @@ export const FeedContent = ({
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };

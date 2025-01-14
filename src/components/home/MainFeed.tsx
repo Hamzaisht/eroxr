@@ -32,23 +32,47 @@ export const MainFeed = ({
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["feed", userId],
+    queryKey: ["feed", userId, activeTab],
     queryFn: async ({ pageParam = 0 }) => {
-      console.log("Fetching feed data for user:", userId);
-      const { data: posts, error } = await supabase
+      console.log(`Fetching ${activeTab} feed data for user:`, userId);
+      const from = pageParam * 10;
+      const to = from + 9;
+
+      let query = supabase
         .from("posts")
         .select(`
           *,
           creator:profiles(id, username, avatar_url)
         `)
-        .order("created_at", { ascending: false })
-        .range(pageParam * 10, (pageParam + 1) * 10 - 1);
+        .range(from, to);
+
+      // Apply different filters based on feed type
+      switch (activeTab) {
+        case "trending":
+          query = query.order("likes_count", { ascending: false });
+          break;
+        default:
+          query = query.order("created_at", { ascending: false });
+          if (userId) {
+            query = query.eq("creator_id", userId);
+          }
+      }
+
+      const { data: posts, error } = await query;
 
       if (error) {
         console.error("Feed fetch error:", error);
         throw error;
       }
-      return posts as FeedPost[];
+
+      return posts?.map(post => ({
+        ...post,
+        has_liked: false,
+        visibility: post.visibility || "public",
+        screenshots_count: post.screenshots_count || 0,
+        downloads_count: post.downloads_count || 0,
+        updated_at: post.updated_at || post.created_at
+      })) || [];
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.length === 10 ? allPages.length : undefined;
@@ -73,7 +97,7 @@ export const MainFeed = ({
       <div className="mt-6">
         <FeedHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <TabsContent value="feed">
+        <TabsContent value="feed" className="mt-6">
           <FeedContent
             data={data}
             isLoading={isLoading}
@@ -84,11 +108,11 @@ export const MainFeed = ({
           />
         </TabsContent>
 
-        <TabsContent value="trending">
+        <TabsContent value="trending" className="mt-6">
           <TrendingContent data={data} />
         </TabsContent>
 
-        <TabsContent value="live">
+        <TabsContent value="live" className="mt-6">
           <LiveStreams onGoLive={onOpenGoLive} />
         </TabsContent>
       </div>
