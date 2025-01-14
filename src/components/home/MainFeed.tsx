@@ -8,23 +8,15 @@ import { Post } from "@/components/feed/Post";
 import { LiveStreams } from "./LiveStreams";
 import { supabase } from "@/integrations/supabase/client";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import type { MainFeedProps, FeedPost } from "./types";
 
-interface MainFeedProps {
-  userId?: string;
-}
-
-interface Post {
-  id: string;
-  content: string;
-  created_at: string;
-  creator_id: string;
-  media_url?: string[];
-  video_urls?: string[];
-  likes_count: number;
-  comments_count: number;
-}
-
-export const MainFeed = ({ userId }: MainFeedProps) => {
+export const MainFeed = ({ 
+  userId,
+  isPayingCustomer,
+  onOpenCreatePost,
+  onFileSelect,
+  onOpenGoLive
+}: MainFeedProps) => {
   const [activeTab, setActiveTab] = useState("feed");
   const { ref, inView } = useInView();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -41,16 +33,20 @@ export const MainFeed = ({ userId }: MainFeedProps) => {
     queryFn: async ({ pageParam = 0 }) => {
       const { data: posts, error } = await supabase
         .from("posts")
-        .select("*")
+        .select(`
+          *,
+          creator:profiles(id, username, avatar_url)
+        `)
         .order("created_at", { ascending: false })
         .range(pageParam * 10, (pageParam + 1) * 10 - 1);
 
       if (error) throw error;
-      return posts as Post[];
+      return posts as FeedPost[];
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.length === 10 ? allPages.length : undefined;
     },
+    initialPageParam: 0
   });
 
   // Load more posts when scrolling to the bottom
@@ -60,7 +56,11 @@ export const MainFeed = ({ userId }: MainFeedProps) => {
 
   return (
     <div className={`w-full ${isMobile ? 'px-2' : 'px-4'} py-6`}>
-      <CreatePostArea />
+      <CreatePostArea
+        onOpenCreatePost={onOpenCreatePost}
+        onFileSelect={onFileSelect}
+        isPayingCustomer={isPayingCustomer}
+      />
 
       <Tabs defaultValue="feed" className="w-full mt-6" onValueChange={setActiveTab}>
         <TabsList className="w-full justify-start mb-6 bg-transparent border-b border-gray-800">
@@ -98,11 +98,12 @@ export const MainFeed = ({ userId }: MainFeedProps) => {
             <>
               {data?.pages.map((page, i) => (
                 <div key={i} className="space-y-4">
-                  {page.map((post: Post) => (
+                  {page.map((post: FeedPost) => (
                     <Post
                       key={post.id}
                       post={post}
-                      className="bg-background"
+                      creator={post.creator}
+                      currentUser={null}
                     />
                   ))}
                 </div>
@@ -118,17 +119,18 @@ export const MainFeed = ({ userId }: MainFeedProps) => {
           )}
         </TabsContent>
 
-        <TabsContent value="trending">
+        <TabsContent value="trending" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {data?.pages.map((page, i) => (
               <div key={i} className="space-y-4">
                 {page
-                  .filter((post: Post) => post.likes_count > 50)
-                  .map((post: Post) => (
+                  .filter((post: FeedPost) => post.likes_count > 50)
+                  .map((post: FeedPost) => (
                     <Post
                       key={post.id}
                       post={post}
-                      className="bg-background"
+                      creator={post.creator}
+                      currentUser={null}
                     />
                   ))}
               </div>
@@ -137,7 +139,7 @@ export const MainFeed = ({ userId }: MainFeedProps) => {
         </TabsContent>
 
         <TabsContent value="live">
-          <LiveStreams />
+          <LiveStreams onGoLive={onOpenGoLive} />
         </TabsContent>
       </Tabs>
     </div>

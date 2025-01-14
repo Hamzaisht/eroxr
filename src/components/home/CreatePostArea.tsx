@@ -1,12 +1,23 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useSession } from "@supabase/auth-helpers-react";
+import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 
-export const CreatePostArea = () => {
+interface CreatePostAreaProps {
+  onOpenCreatePost: () => void;
+  onFileSelect: (files: FileList | null) => void;
+  isPayingCustomer: boolean | null;
+}
+
+export const CreatePostArea = ({
+  onOpenCreatePost,
+  onFileSelect,
+  isPayingCustomer
+}: CreatePostAreaProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const session = useSession();
 
   if (!session) return null;
@@ -34,6 +45,8 @@ export const CreatePostArea = () => {
       <CreatePostDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
+        selectedFiles={selectedFiles}
+        onFileSelect={setSelectedFiles}
       />
     </>
   );
