@@ -1,7 +1,7 @@
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause } from "lucide-react";
+import { VideoPlayer } from "./VideoPlayer";
 
 interface PostContentProps {
   content: string;
@@ -19,24 +19,11 @@ export const PostContent = ({
   onMediaClick,
 }: PostContentProps) => {
   const [loadError, setLoadError] = useState<Record<string, boolean>>({});
-  const [isPlaying, setIsPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const hasMedia = mediaUrls.length > 0 || videoUrls.length > 0;
 
-  const handleImageError = (url: string) => {
+  const handleMediaError = (url: string) => {
     setLoadError(prev => ({ ...prev, [url]: true }));
     console.error(`Failed to load media: ${url}`);
-  };
-
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
   };
 
   return (
@@ -56,34 +43,11 @@ export const PostContent = ({
                 <div className="flex gap-2 p-2">
                   {/* Videos */}
                   {videoUrls.map((url, index) => (
-                    <motion.div
+                    <VideoPlayer 
                       key={`video-${url}`}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="relative min-w-[300px] max-w-[500px] aspect-video cursor-pointer group"
-                    >
-                      <video
-                        ref={videoRef}
-                        src={url}
-                        className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                        playsInline
-                        loop
-                        onError={() => handleImageError(url)}
-                      />
-                      <div 
-                        className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center"
-                        onClick={togglePlay}
-                      >
-                        <button className="p-3 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors">
-                          {isPlaying ? (
-                            <Pause className="w-6 h-6 text-white" />
-                          ) : (
-                            <Play className="w-6 h-6 text-white" />
-                          )}
-                        </button>
-                      </div>
-                    </motion.div>
+                      url={url}
+                      onError={() => handleMediaError(url)}
+                    />
                   ))}
 
                   {/* Images */}
@@ -103,7 +67,7 @@ export const PostContent = ({
                           className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                           loading="eager"
                           decoding="sync"
-                          onError={() => handleImageError(url)}
+                          onError={() => handleMediaError(url)}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                       </motion.div>
