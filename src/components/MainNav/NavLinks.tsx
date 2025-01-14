@@ -1,12 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { Home, Heart, Play, MessageSquare, Film } from "lucide-react";
+import { Home, Heart, MessageSquare, Play, Film } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const NavLinks = () => {
   return (
     <nav className="hidden md:flex items-center space-x-6">
       <NavLink 
-        to="/" 
+        to="/home" 
         className={({ isActive }) => 
           `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
@@ -78,7 +78,7 @@ export const NavLinks = () => {
       </NavLink>
 
       <NavLink 
-        to="/eros" 
+        to="/shorts" 
         className={({ isActive }) => 
           `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
             isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'

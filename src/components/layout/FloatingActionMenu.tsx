@@ -4,16 +4,43 @@ import { Plus, Image, Video, Heart, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
-export const FloatingActionMenu = () => {
+interface FloatingActionMenuProps {
+  currentPath: string;
+}
+
+export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
-  const menuItems = [
-    { icon: Image, label: "Create Post", onClick: () => navigate("/create-post") },
-    { icon: Video, label: "Create Story", onClick: () => navigate("/create-story") },
-    { icon: Heart, label: "Dating Ad", onClick: () => navigate("/dating/create") },
-    { icon: Film, label: "Create Eros", onClick: () => navigate("/eros/create") },
-  ];
+  const getContextualMenuItems = () => {
+    switch (currentPath) {
+      case '/shorts':
+        return [
+          { 
+            icon: Film, 
+            label: "Upload Eros", 
+            onClick: () => navigate("/shorts/upload") 
+          }
+        ];
+      case '/dating':
+        return [
+          { 
+            icon: Heart, 
+            label: "Create BD", 
+            onClick: () => navigate("/dating/create") 
+          }
+        ];
+      default:
+        return [
+          { icon: Image, label: "Create Post", onClick: () => navigate("/create-post") },
+          { icon: Video, label: "Create Story", onClick: () => navigate("/create-story") },
+          { icon: Heart, label: "Dating Ad", onClick: () => navigate("/dating/create") },
+          { icon: Film, label: "Create Eros", onClick: () => navigate("/shorts/upload") },
+        ];
+    }
+  };
+
+  const menuItems = getContextualMenuItems();
 
   return (
     <div className="fixed bottom-6 right-6 z-50">

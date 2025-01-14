@@ -78,7 +78,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
 
-      {session && !isErosRoute && <FloatingActionMenu />}
+      {session && <FloatingActionMenu currentPath={location.pathname} />}
 
       <CreatePostDialog 
         open={isCreatePostOpen} 
