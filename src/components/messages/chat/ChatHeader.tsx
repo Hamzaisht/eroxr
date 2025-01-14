@@ -9,8 +9,9 @@ interface ChatHeaderProps {
   recipientProfile: any;
   recipientId: string;
   onBack?: () => void;
-  onVoiceCall: () => void;  // Added this prop
-  onVideoCall: () => void;  // Added this prop
+  onVoiceCall: () => void;
+  onVideoCall: () => void;
+  onToggleDetails: () => void;  // Added this prop
 }
 
 export const ChatHeader = ({ 
@@ -18,7 +19,8 @@ export const ChatHeader = ({
   recipientId,
   onBack,
   onVoiceCall,
-  onVideoCall
+  onVideoCall,
+  onToggleDetails
 }: ChatHeaderProps) => {
   const { availability, lastActive } = usePresence(recipientId, false);
 
