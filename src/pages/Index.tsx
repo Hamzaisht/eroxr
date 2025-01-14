@@ -1,79 +1,44 @@
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { MainNav } from "@/components/MainNav";
-import { MainFeed } from "@/components/home/MainFeed";
-import { CreatePostArea } from "@/components/home/CreatePostArea";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import MainFeed from "@/components/home/MainFeed";
+import { RightSidebar } from "@/components/home/RightSidebar";
+import { HomeLayout } from "@/components/home/HomeLayout";
 
-export default function Index() {
+const Index = () => {
   const session = useSession();
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
-  const { toast } = useToast();
+  const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
 
-  const { data: profile } = useQuery({
-    queryKey: ["profile", session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
+  useEffect(() => {
+    const checkPayingCustomerStatus = async () => {
+      if (!session?.user?.id) return;
       
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-
-        if (profileError) {
-          console.error("Profile fetch error:", profileError);
-          throw profileError;
-        }
-
-        return profileData;
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        toast({
-          title: "Error fetching profile",
-          description: "Please try refreshing the page",
-          variant: "destructive",
-        });
-        throw error;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_paying_customer')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (!error && data) {
+        setIsPayingCustomer(data.is_paying_customer);
       }
-    },
-    enabled: !!session?.user?.id,
-  });
+    };
 
-  if (!session) {
-    return null;
-  }
+    checkPayingCustomerStatus();
+  }, [session?.user?.id]);
+
+  if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-luxury-dark">
-      <div className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-luxury-dark/50 border-b border-luxury-primary/10">
-        <MainNav />
+    <HomeLayout>
+      <div className="w-full max-w-[2000px] mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-8">
+          <MainFeed isPayingCustomer={isPayingCustomer} />
+          <RightSidebar />
+        </div>
       </div>
-      
-      <div className="flex min-h-screen pt-16">
-        <main className="flex-1 w-full">
-          <div className="max-w-full mx-auto px-4 py-6">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <MainFeed 
-                isPayingCustomer={profile?.is_paying_customer}
-                onOpenCreatePost={() => setIsCreatePostOpen(true)}
-                onFileSelect={setSelectedFiles}
-                onOpenGoLive={() => setIsGoLiveOpen(true)}
-              />
-            </motion.div>
-          </div>
-        </main>
-      </div>
-    </div>
+    </HomeLayout>
   );
-}
+};
+
+export default Index;

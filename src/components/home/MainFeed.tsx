@@ -3,15 +3,38 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePostArea } from "./CreatePostArea";
 import { GoLiveDialog } from "./GoLiveDialog";
-import { MainFeed } from "@/components/home/MainFeed";
-import { RightSidebar } from "@/components/home/RightSidebar";
-import { HomeLayout } from "@/components/home/HomeLayout";
+import { RightSidebar } from "./RightSidebar";
 import { StoryReel } from "@/components/StoryReel";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Video } from "lucide-react";
+import { Plus, Video, Loader2, ExclamationTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useInView } from "react-intersection-observer";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { LiveStreams } from "./LiveStreams";
+import { Post } from "@/components/feed/Post";
+
+interface MainFeedProps {
+  isPayingCustomer?: boolean;
+  onOpenCreatePost?: () => void;
+  onFileSelect?: (files: FileList | null) => void;
+  onOpenGoLive?: () => void;
+  onGoLive?: () => void;
+}
+
+interface PostWithProfiles {
+  id: string;
+  content: string;
+  created_at: string;
+  creator_id: string;
+  media_url: string[] | null;
+  profiles: {
+    username: string | null;
+    avatar_url: string | null;
+  };
+}
 
 const MainFeed = ({
   isPayingCustomer,

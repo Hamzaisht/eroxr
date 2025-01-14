@@ -3,7 +3,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { GoLiveDialog } from "@/components/home/GoLiveDialog";
-import { MainFeed } from "@/components/home/MainFeed";
+import MainFeed from "@/components/home/MainFeed";
 import { RightSidebar } from "@/components/home/RightSidebar";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { StoryReel } from "@/components/StoryReel";
