@@ -3,16 +3,17 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { InteractiveNav } from "./InteractiveNav";
+import { useMediaQuery } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { MainNav } from "@/components/MainNav";
+import { AppSidebar } from "./AppSidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { LoadingScreen } from "./LoadingScreen";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { UploadDialog } from "./UploadDialog";
 import { FloatingActionMenu } from "./FloatingActionMenu";
 import { supabase } from "@/integrations/supabase/client";
-import { MainNav } from "@/components/MainNav";
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -65,56 +66,45 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark">
-      <BackgroundEffects />
-      
-      <AnimatePresence mode="wait">
-        {!isErosRoute && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <MainNav />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      <div className={cn(
-        "relative flex min-h-screen",
-        isErosRoute ? 'pt-0' : 'pt-16',
-        "transition-all duration-300"
-      )}>
-        {!isMobile && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <InteractiveNav />
-          </motion.div>
-        )}
+    <SidebarProvider defaultOpen>
+      <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark">
+        <BackgroundEffects />
         
-        <main className={cn(
-          "flex-1 min-h-screen w-full",
-          !isMobile && !isErosRoute ? 'pl-20 lg:pl-24' : '',
+        <AnimatePresence mode="wait">
+          {!isErosRoute && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <MainNav />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <div className={cn(
+          "relative flex min-h-screen",
+          isErosRoute ? 'pt-0' : 'pt-16',
           "transition-all duration-300"
         )}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.3 }}
-              className="w-full min-h-screen"
-            >
-              {children || <Outlet />}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-      </div>
+          {!isMobile && <AppSidebar />}
+          
+          <main className="flex-1 min-h-screen w-full transition-all duration-300">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="w-full min-h-screen"
+              >
+                {children || <Outlet />}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
 
       {session && (
         <motion.div
@@ -185,6 +175,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           }
         }}
       />
-    </div>
+      </div>
+    </SidebarProvider>
   );
 };
