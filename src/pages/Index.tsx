@@ -6,6 +6,7 @@ import { RightSidebar } from "@/components/home/RightSidebar";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 const Index = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
@@ -13,6 +14,7 @@ const Index = () => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const session = useSession();
   const { toast } = useToast();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     const checkPayingCustomerStatus = async () => {
@@ -37,7 +39,9 @@ const Index = () => {
   return (
     <HomeLayout>
       <div className="w-full max-w-[2000px] mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-8">
+        <div className={`grid gap-8 ${
+          isMobile ? 'grid-cols-1' : 'lg:grid-cols-[1fr,400px]'
+        }`}>
           <MainFeed 
             userId={session.user.id}
             isPayingCustomer={isPayingCustomer}
@@ -50,7 +54,7 @@ const Index = () => {
               });
             }}
           />
-          <RightSidebar />
+          {!isMobile && <RightSidebar />}
         </div>
       </div>
 
