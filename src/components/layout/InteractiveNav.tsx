@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Home, Heart, MessageSquare, Play, Film } from "lucide-react";
+import { Home, Heart, MessageSquare, Play, Film, Menu, X } from "lucide-react";
 import { NavMenuItem } from "./nav/NavMenuItem";
 import { UserProfileSection } from "./nav/UserProfileSection";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
-// Ensure unique menu items with distinct paths
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
   { icon: Heart, label: "Create a BD", path: "/dating" },
@@ -22,15 +23,59 @@ export const InteractiveNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useSession();
+  const isMobile = window.innerWidth <= 768;
 
-  return (
+  const MobileNav = () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="fixed top-3 left-4 z-50 md:hidden"
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[300px] bg-luxury-dark/95 backdrop-blur-xl border-luxury-primary/10">
+        <div className="flex flex-col h-full py-8">
+          <motion.div
+            className="px-4 mb-8"
+            whileHover={{ scale: 1.05 }}
+            onClick={() => navigate("/")}
+          >
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent cursor-pointer">
+              Eroxr
+            </h1>
+          </motion.div>
+
+          <div className="space-y-2 px-4">
+            {menuItems.map((item) => (
+              <NavMenuItem
+                key={item.path}
+                icon={item.icon}
+                label={item.label}
+                path={item.path}
+                isActive={location.pathname === item.path}
+                isExpanded={true}
+                onClick={() => navigate(item.path)}
+              />
+            ))}
+          </div>
+
+          {session && <UserProfileSection isExpanded={true} />}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+
+  const DesktopNav = () => (
     <motion.nav
       initial={false}
       animate={{ 
         width: isExpanded ? 240 : 80,
         transition: { duration: 0.3, ease: "easeInOut" }
       }}
-      className="fixed left-0 top-0 h-screen bg-[#0D1117]/95 backdrop-blur-xl border-r border-luxury-primary/10 z-50 overflow-hidden"
+      className="fixed left-0 top-0 h-screen bg-[#0D1117]/95 backdrop-blur-xl border-r border-luxury-primary/10 z-50 overflow-hidden hidden md:block"
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
@@ -45,7 +90,7 @@ export const InteractiveNav = () => {
           onClick={() => navigate("/")}
         >
           <h1 className="text-2xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent cursor-pointer">
-            Eroxr
+            {isExpanded ? "Eroxr" : "E"}
           </h1>
         </motion.div>
 
@@ -66,5 +111,12 @@ export const InteractiveNav = () => {
         {session && <UserProfileSection isExpanded={isExpanded} />}
       </motion.div>
     </motion.nav>
+  );
+
+  return (
+    <>
+      <MobileNav />
+      <DesktopNav />
+    </>
   );
 };

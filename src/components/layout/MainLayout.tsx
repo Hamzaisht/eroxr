@@ -6,8 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { MainNav } from "@/components/MainNav";
-import { AppSidebar } from "./AppSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { InteractiveNav } from "./InteractiveNav";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { LoadingScreen } from "./LoadingScreen";
 import { BackgroundEffects } from "./BackgroundEffects";
@@ -66,45 +65,44 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   }
 
   return (
-    <SidebarProvider defaultOpen>
-      <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark">
-        <BackgroundEffects />
+    <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark">
+      <BackgroundEffects />
+      
+      <AnimatePresence mode="wait">
+        {!isErosRoute && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <MainNav />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <div className={cn(
+        "relative flex min-h-screen",
+        isErosRoute ? 'pt-0' : 'pt-16',
+        "transition-all duration-300"
+      )}>
+        <InteractiveNav />
         
-        <AnimatePresence mode="wait">
-          {!isErosRoute && (
+        <main className="flex-1 min-h-screen w-full transition-all duration-300">
+          <AnimatePresence mode="wait">
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              key={location.pathname}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.3 }}
+              className="w-full min-h-screen"
             >
-              <MainNav />
+              {children || <Outlet />}
             </motion.div>
-          )}
-        </AnimatePresence>
-        
-        <div className={cn(
-          "relative flex min-h-screen",
-          isErosRoute ? 'pt-0' : 'pt-16',
-          "transition-all duration-300"
-        )}>
-          {!isMobile && <AppSidebar />}
-          
-          <main className="flex-1 min-h-screen w-full transition-all duration-300">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.3 }}
-                className="w-full min-h-screen"
-              >
-                {children || <Outlet />}
-              </motion.div>
-            </AnimatePresence>
-          </main>
-        </div>
+          </AnimatePresence>
+        </main>
+      </div>
 
       {session && (
         <motion.div
@@ -175,7 +173,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           }
         }}
       />
-      </div>
-    </SidebarProvider>
+    </div>
   );
 };
