@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface ShortContentProps {
   short: {
@@ -17,6 +18,7 @@ interface ShortContentProps {
     has_saved: boolean;
   };
   onShare: (shortId: string) => void;
+  onComment: (shortId: string) => void;
   handleLike: (shortId: string) => Promise<void>;
   handleSave: (shortId: string) => Promise<void>;
   className?: string;
@@ -25,6 +27,7 @@ interface ShortContentProps {
 export const ShortContent = ({ 
   short,
   onShare,
+  onComment,
   handleLike,
   handleSave,
   className = ""
@@ -37,19 +40,29 @@ export const ShortContent = ({
         transition={{ delay: 0.2 }}
         className="flex items-end justify-between"
       >
-        <div className="space-y-4">
+        <div className="space-y-4 max-w-[80%]">
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 ring-2 ring-white/20">
+            <Avatar className="h-12 w-12 ring-2 ring-white/20">
               <AvatarImage src={short.creator.avatar_url ?? ""} />
               <AvatarFallback>
                 {short.creator.username?.[0]?.toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-white font-medium">
-              {short.creator.username}
-            </span>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-white font-semibold">
+                  @{short.creator.username}
+                </span>
+                <Badge variant="secondary" className="bg-luxury-primary/20 text-luxury-primary">
+                  Creator
+                </Badge>
+              </div>
+              <span className="text-sm text-white/60">
+                {new Date().toLocaleDateString()}
+              </span>
+            </div>
           </div>
-          <p className="text-white/90 max-w-[80%]">
+          <p className="text-white/90 text-base leading-relaxed">
             {short.description}
           </p>
         </div>
@@ -58,52 +71,55 @@ export const ShortContent = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
+            className="h-14 w-14 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
             onClick={() => handleLike(short.id)}
           >
             <Heart
-              className={`h-6 w-6 transition-colors ${
+              className={`h-7 w-7 transition-all duration-300 ${
                 short.has_liked
-                  ? "text-red-500 fill-red-500"
+                  ? "text-red-500 fill-red-500 scale-110"
                   : "text-white group-hover:text-red-500"
               }`}
             />
-            <span className="sr-only">Like</span>
+            <span className="absolute -bottom-6 text-sm font-medium text-white">
+              {short.likes}
+            </span>
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
-            className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
+            className="h-14 w-14 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
+            onClick={() => onComment(short.id)}
           >
-            <MessageCircle className="h-6 w-6 text-white group-hover:text-luxury-primary" />
-            <span className="sr-only">Comment</span>
+            <MessageCircle className="h-7 w-7 text-white group-hover:text-luxury-primary" />
+            <span className="absolute -bottom-6 text-sm font-medium text-white">
+              {short.comments}
+            </span>
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
-            className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
+            className="h-14 w-14 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
             onClick={() => handleSave(short.id)}
           >
             <Bookmark
-              className={`h-6 w-6 transition-colors ${
+              className={`h-7 w-7 transition-all duration-300 ${
                 short.has_saved
-                  ? "text-luxury-primary fill-luxury-primary"
+                  ? "text-luxury-primary fill-luxury-primary scale-110"
                   : "text-white group-hover:text-luxury-primary"
               }`}
             />
-            <span className="sr-only">Save</span>
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
-            className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
+            className="h-14 w-14 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
             onClick={() => onShare(short.id)}
           >
-            <Share2 className="h-6 w-6 text-white group-hover:text-luxury-primary" />
-            <span className="sr-only">Share</span>
+            <Share2 className="h-7 w-7 text-white group-hover:text-luxury-primary" />
           </Button>
         </div>
       </motion.div>

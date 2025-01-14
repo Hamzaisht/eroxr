@@ -10,44 +10,51 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
   ({ src, index, onIndexChange, className }, ref) => {
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const observerRef = useRef<IntersectionObserver | null>(null);
+    const videoRef = useRef<HTMLVideoElement>();
 
     useEffect(() => {
-      const video = videoRef.current;
-      if (!video) return;
+      if (ref) {
+        videoRef.current = (ref as React.MutableRefObject<HTMLVideoElement>).current;
+      }
 
-      observerRef.current = new IntersectionObserver(
+      const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               onIndexChange(index);
-              video.play().catch(console.error);
+              if (videoRef.current) {
+                videoRef.current.play().catch(console.error);
+              }
             } else {
-              video.pause();
-              video.currentTime = 0;
+              if (videoRef.current) {
+                videoRef.current.pause();
+                videoRef.current.currentTime = 0;
+              }
             }
           });
         },
         { threshold: 0.7 }
       );
 
-      observerRef.current.observe(video);
+      if (videoRef.current) {
+        observer.observe(videoRef.current);
+      }
 
       return () => {
-        if (observerRef.current) {
-          observerRef.current.disconnect();
+        if (videoRef.current) {
+          observer.unobserve(videoRef.current);
         }
       };
-    }, [index, onIndexChange]);
+    }, [index, onIndexChange, ref]);
 
     return (
       <motion.video
-        ref={videoRef}
+        ref={videoRef as any}
         src={src}
         className={`w-full h-full object-cover ${className}`}
         initial={{ scale: 1.2, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
         playsInline
         loop

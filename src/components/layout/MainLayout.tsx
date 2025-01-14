@@ -1,5 +1,5 @@
 import { useState, useEffect, ReactNode } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -11,6 +11,7 @@ import { UploadDialog } from "./UploadDialog";
 import { FloatingActionMenu } from "./FloatingActionMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { MainNav } from "@/components/MainNav";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -25,6 +26,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const session = useSession();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const location = useLocation();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isErosRoute = location.pathname === "/shorts";
 
   useEffect(() => {
     const checkSession = async () => {
@@ -62,19 +66,19 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#0D1117]">
       <BackgroundEffects />
-      <MainNav />
+      {!isErosRoute && <MainNav />}
       
-      <div className="relative flex min-h-screen pt-16">
-        <InteractiveNav />
+      <div className={`relative flex min-h-screen ${isErosRoute ? 'pt-0' : 'pt-16'}`}>
+        {!isMobile && <InteractiveNav />}
         
-        <main className="flex-1 min-h-screen w-full pl-20 lg:pl-24">
+        <main className={`flex-1 min-h-screen w-full ${!isMobile && !isErosRoute ? 'pl-20 lg:pl-24' : ''}`}>
           <div className="w-full min-h-screen">
             {children || <Outlet />}
           </div>
         </main>
       </div>
 
-      {session && <FloatingActionMenu />}
+      {session && !isErosRoute && <FloatingActionMenu />}
 
       <CreatePostDialog 
         open={isCreatePostOpen} 
