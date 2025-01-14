@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Image, Video, Heart, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { FloatingMenuItem } from "./menu/FloatingMenuItem";
+import { useToast } from "@/hooks/use-toast";
 
 interface FloatingActionMenuProps {
   currentPath: string;
@@ -11,6 +13,7 @@ interface FloatingActionMenuProps {
 export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const getContextualMenuItems = () => {
     switch (currentPath) {
@@ -19,7 +22,14 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
           { 
             icon: Film, 
             label: "Upload Eros", 
-            onClick: () => navigate("/shorts/upload") 
+            onClick: () => {
+              setIsOpen(false);
+              navigate("/shorts/upload");
+              toast({
+                title: "Create new Eros",
+                description: "Upload a video to share with your audience"
+              });
+            }
           }
         ];
       case '/dating':
@@ -27,15 +37,66 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
           { 
             icon: Heart, 
             label: "Create BD", 
-            onClick: () => navigate("/dating/create") 
+            onClick: () => {
+              setIsOpen(false);
+              navigate("/dating/create");
+              toast({
+                title: "Create Dating Profile",
+                description: "Start creating your dating profile"
+              });
+            }
           }
         ];
       default:
         return [
-          { icon: Image, label: "Create Post", onClick: () => navigate("/create-post") },
-          { icon: Video, label: "Create Story", onClick: () => navigate("/create-story") },
-          { icon: Heart, label: "Dating Ad", onClick: () => navigate("/dating/create") },
-          { icon: Film, label: "Create Eros", onClick: () => navigate("/shorts/upload") },
+          { 
+            icon: Image, 
+            label: "Create Post", 
+            onClick: () => {
+              setIsOpen(false);
+              navigate("/create-post");
+              toast({
+                title: "Create Post",
+                description: "Share your thoughts with your audience"
+              });
+            }
+          },
+          { 
+            icon: Video, 
+            label: "Create Story", 
+            onClick: () => {
+              setIsOpen(false);
+              navigate("/create-story");
+              toast({
+                title: "Create Story",
+                description: "Share a moment with your audience"
+              });
+            }
+          },
+          { 
+            icon: Heart, 
+            label: "Dating Ad", 
+            onClick: () => {
+              setIsOpen(false);
+              navigate("/dating/create");
+              toast({
+                title: "Create Dating Profile",
+                description: "Start creating your dating profile"
+              });
+            }
+          },
+          { 
+            icon: Film, 
+            label: "Create Eros", 
+            onClick: () => {
+              setIsOpen(false);
+              navigate("/shorts/upload");
+              toast({
+                title: "Create new Eros",
+                description: "Upload a video to share with your audience"
+              });
+            }
+          },
         ];
     }
   };
@@ -52,29 +113,12 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
             exit={{ opacity: 0, y: 20 }}
             className="absolute bottom-16 right-0 space-y-2"
           >
-            {menuItems.map(({ icon: Icon, label, onClick }, index) => (
-              <motion.div
-                key={label}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-center justify-end gap-2"
-              >
-                <span className="bg-black/80 text-white px-3 py-1 rounded-lg text-sm">
-                  {label}
-                </span>
-                <Button
-                  onClick={() => {
-                    setIsOpen(false);
-                    onClick();
-                  }}
-                  size="icon"
-                  className="bg-luxury-primary hover:bg-luxury-primary/80"
-                >
-                  <Icon className="h-5 w-5" />
-                </Button>
-              </motion.div>
+            {menuItems.map((item, index) => (
+              <FloatingMenuItem
+                key={item.label}
+                {...item}
+                index={index}
+              />
             ))}
           </motion.div>
         )}

@@ -2,98 +2,48 @@ import { NavLink } from "react-router-dom";
 import { Home, Heart, MessageSquare, Play, Film } from "lucide-react";
 import { motion } from "framer-motion";
 
+interface NavItemProps {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+}
+
+const NavItem = ({ to, icon: Icon, label }: NavItemProps) => {
+  return (
+    <NavLink 
+      to={to} 
+      className={({ isActive }) => 
+        `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
+          isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
+        }`
+      }
+    >
+      <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
+      <motion.span 
+        initial={{ opacity: 0, width: 0 }}
+        animate={{ opacity: 1, width: "auto" }}
+        className="overflow-hidden whitespace-nowrap"
+      >
+        {label}
+      </motion.span>
+    </NavLink>
+  );
+};
+
+const navItems: NavItemProps[] = [
+  { to: "/home", icon: Home, label: "Home" },
+  { to: "/dating", icon: Heart, label: "Create a BD" },
+  { to: "/messages", icon: MessageSquare, label: "Messages" },
+  { to: "/eroboard", icon: Play, label: "Eroboard" },
+  { to: "/shorts", icon: Film, label: "Eros" }
+];
+
 export const NavLinks = () => {
   return (
     <nav className="hidden md:flex items-center space-x-6">
-      <NavLink 
-        to="/home" 
-        className={({ isActive }) => 
-          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
-            isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
-          }`
-        }
-      >
-        <Home className="w-5 h-5 transition-transform group-hover:scale-110" />
-        <motion.span 
-          initial={{ opacity: 0, width: 0 }}
-          animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap"
-        >
-          Home
-        </motion.span>
-      </NavLink>
-
-      <NavLink 
-        to="/dating" 
-        className={({ isActive }) => 
-          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
-            isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
-          }`
-        }
-      >
-        <Heart className="w-5 h-5 transition-transform group-hover:scale-110" />
-        <motion.span 
-          initial={{ opacity: 0, width: 0 }}
-          animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap"
-        >
-          Create a BD
-        </motion.span>
-      </NavLink>
-
-      <NavLink 
-        to="/messages" 
-        className={({ isActive }) => 
-          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
-            isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
-          }`
-        }
-      >
-        <MessageSquare className="w-5 h-5 transition-transform group-hover:scale-110" />
-        <motion.span 
-          initial={{ opacity: 0, width: 0 }}
-          animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap"
-        >
-          Messages
-        </motion.span>
-      </NavLink>
-
-      <NavLink 
-        to="/eroboard" 
-        className={({ isActive }) => 
-          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
-            isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
-          }`
-        }
-      >
-        <Play className="w-5 h-5 transition-transform group-hover:scale-110" />
-        <motion.span 
-          initial={{ opacity: 0, width: 0 }}
-          animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap"
-        >
-          Eroboard
-        </motion.span>
-      </NavLink>
-
-      <NavLink 
-        to="/shorts" 
-        className={({ isActive }) => 
-          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
-            isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
-          }`
-        }
-      >
-        <Film className="w-5 h-5 transition-transform group-hover:scale-110" />
-        <motion.span 
-          initial={{ opacity: 0, width: 0 }}
-          animate={{ opacity: 1, width: "auto" }}
-          className="overflow-hidden whitespace-nowrap"
-        >
-          Eros
-        </motion.span>
-      </NavLink>
+      {navItems.map((item) => (
+        <NavItem key={item.to} {...item} />
+      ))}
     </nav>
   );
 };
