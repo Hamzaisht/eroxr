@@ -43,6 +43,7 @@ const MainFeed = ({
   const [activeTab, setActiveTab] = useState("feed");
   const session = useSession();
   const { ref, inView } = useInView();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const { data: feed, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteQuery({
     queryKey: ["feed"],
@@ -62,7 +63,6 @@ const MainFeed = ({
 
       if (error) throw error;
       
-      // Transform the data to match the Post type
       return data?.map(post => ({
         ...post,
         likes_count: post.likes_count || 0,
@@ -103,7 +103,7 @@ const MainFeed = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="space-y-6 px-4 md:px-6"
+      className={`space-y-6 ${isMobile ? 'px-2' : 'px-4 md:px-6'}`}
     >
       <CreatePostArea
         isPayingCustomer={isPayingCustomer}

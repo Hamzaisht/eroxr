@@ -12,6 +12,7 @@ import { Plus, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 const Home = () => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -23,8 +24,8 @@ const Home = () => {
   const [isButtonVisible, setIsButtonVisible] = useState(true);
   const session = useSession();
   const { toast } = useToast();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
-  // Add scroll position tracking
   useEffect(() => {
     let lastScrollY = window.scrollY;
     
@@ -65,14 +66,16 @@ const Home = () => {
           <StoryReel />
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-4 md:gap-8 px-4 md:px-6">
           <MainFeed
             isPayingCustomer={isPayingCustomer}
             onOpenCreatePost={() => setIsCreatePostOpen(true)}
             onFileSelect={setSelectedFiles}
             onOpenGoLive={() => setIsGoLiveOpen(true)}
           />
-          <RightSidebar />
+          <div className={`${isMobile ? 'hidden' : 'block'}`}>
+            <RightSidebar />
+          </div>
         </div>
 
         {/* Floating Action Button with visibility animation */}
@@ -88,12 +91,12 @@ const Home = () => {
               onMouseLeave={() => setShowFloatingMenu(false)}
             >
               <AnimatePresence>
-                {showFloatingMenu && (
+                {(showFloatingMenu || isMobile) && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 20 }}
-                    className="absolute bottom-full right-0 mb-4 space-y-2 min-w-[180px]"
+                    className={`absolute ${isMobile ? 'bottom-16' : 'bottom-full'} right-0 mb-4 space-y-2 min-w-[180px]`}
                   >
                     <Button
                       onClick={() => setIsErosDialogOpen(true)}
@@ -116,9 +119,10 @@ const Home = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => isMobile ? setShowFloatingMenu(!showFloatingMenu) : null}
                 className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg flex items-center justify-center"
               >
-                <Video className="h-6 w-6 text-white" />
+                <Plus className="h-6 w-6 text-white" />
               </motion.button>
             </motion.div>
           )}
@@ -138,7 +142,7 @@ const Home = () => {
       />
 
       <Dialog open={isErosDialogOpen} onOpenChange={setIsErosDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className={`${isMobile ? 'w-[95vw] max-w-none mx-auto rounded-lg mt-auto' : 'sm:max-w-[425px]'}`}>
           <div className="grid gap-4 py-4">
             <div className="flex flex-col items-center gap-4">
               <input
