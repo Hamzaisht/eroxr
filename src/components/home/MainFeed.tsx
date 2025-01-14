@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useInView } from "react-intersection-observer";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePostArea } from "./CreatePostArea";
 import { GoLiveDialog } from "./GoLiveDialog";
@@ -10,8 +12,6 @@ import { Plus, Video, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useInView } from "react-intersection-observer";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveStreams } from "./LiveStreams";
 import { Post } from "@/components/feed/Post";
@@ -61,7 +61,27 @@ const MainFeed = ({
         .range(pageParam * 10, (pageParam + 1) * 10 - 1);
 
       if (error) throw error;
-      return data as PostWithProfiles[];
+      
+      // Transform the data to match the Post type
+      return data?.map(post => ({
+        ...post,
+        likes_count: post.likes_count || 0,
+        comments_count: post.comments_count || 0,
+        updated_at: post.updated_at || post.created_at,
+        visibility: post.visibility || 'public',
+        tags: post.tags || [],
+        ppv_amount: post.ppv_amount || null,
+        is_ppv: post.is_ppv || false,
+        video_urls: post.video_urls || null,
+        has_liked: false,
+        screenshots_count: post.screenshots_count || 0,
+        downloads_count: post.downloads_count || 0,
+        creator: {
+          id: post.profiles.id,
+          username: post.profiles.username,
+          avatar_url: post.profiles.avatar_url
+        }
+      })) as PostWithProfiles[];
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
@@ -141,7 +161,7 @@ const MainFeed = ({
                       <Post
                         key={post.id}
                         post={post}
-                        creator={post.profiles}
+                        creator={post.creator}
                         currentUser={session?.user}
                       />
                     ))}
