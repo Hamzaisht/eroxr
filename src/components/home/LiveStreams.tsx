@@ -1,22 +1,29 @@
+import { useSession } from "@supabase/auth-helpers-react";
+import { Button } from "@/components/ui/button";
+import { Radio } from "lucide-react";
+
 interface LiveStreamsProps {
   onGoLive: () => void;
 }
 
 export const LiveStreams = ({ onGoLive }: LiveStreamsProps) => {
+  const session = useSession();
+
+  if (!session) return null;
+
   return (
-    <div className="w-full">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Live Streams</h2>
-        <button
-          onClick={onGoLive}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-        >
-          Go Live
-        </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="text-center text-gray-500">No live streams at the moment</div>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-[300px] space-y-4">
+      <Radio className="w-12 h-12 text-luxury-primary/50" />
+      <h3 className="text-xl font-semibold text-luxury-neutral">No Live Streams</h3>
+      <p className="text-luxury-neutral/60 text-center max-w-md">
+        There are no live streams at the moment. Be the first to go live and connect with your audience!
+      </p>
+      <Button 
+        onClick={onGoLive}
+        className="mt-4 bg-luxury-primary hover:bg-luxury-primary/90"
+      >
+        Go Live
+      </Button>
     </div>
   );
 };

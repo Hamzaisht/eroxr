@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2, AlertTriangle } from "lucide-react";
@@ -20,6 +21,7 @@ export const MainFeed = ({
   const [activeTab, setActiveTab] = useState("feed");
   const { ref, inView } = useInView();
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const session = useSession();
 
   const {
     data,
@@ -68,22 +70,22 @@ export const MainFeed = ({
       />
 
       <Tabs defaultValue="feed" className="w-full mt-6" onValueChange={setActiveTab}>
-        <TabsList className="w-full justify-start mb-6 bg-transparent border-b border-gray-800">
+        <TabsList className="w-full justify-start mb-6 bg-transparent border-b border-luxury-neutral/10">
           <TabsTrigger
             value="feed"
-            className="data-[state=active]:bg-transparent data-[state=active]:text-primary"
+            className="data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary"
           >
             Feed
           </TabsTrigger>
           <TabsTrigger
             value="trending"
-            className="data-[state=active]:bg-transparent data-[state=active]:text-primary"
+            className="data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary"
           >
             Trending
           </TabsTrigger>
           <TabsTrigger
             value="live"
-            className="data-[state=active]:bg-transparent data-[state=active]:text-primary"
+            className="data-[state=active]:bg-transparent data-[state=active]:text-luxury-primary"
           >
             Live
           </TabsTrigger>
@@ -92,7 +94,7 @@ export const MainFeed = ({
         <TabsContent value="feed" className="space-y-4">
           {isLoading ? (
             <div className="flex justify-center p-8">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <Loader2 className="w-8 h-8 animate-spin text-luxury-primary" />
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center justify-center p-8 text-red-500">
@@ -108,7 +110,7 @@ export const MainFeed = ({
                       key={post.id}
                       post={post}
                       creator={post.creator}
-                      currentUser={null}
+                      currentUser={session?.user || null}
                     />
                   ))}
                 </div>
@@ -116,7 +118,7 @@ export const MainFeed = ({
               <div ref={ref} className="h-10">
                 {isFetchingNextPage && (
                   <div className="flex justify-center p-4">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
                   </div>
                 )}
               </div>
@@ -135,7 +137,7 @@ export const MainFeed = ({
                       key={post.id}
                       post={post}
                       creator={post.creator}
-                      currentUser={null}
+                      currentUser={session?.user || null}
                     />
                   ))}
               </div>
