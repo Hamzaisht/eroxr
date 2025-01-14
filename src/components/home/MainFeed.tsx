@@ -46,7 +46,6 @@ export const MainFeed = ({
         `)
         .range(from, to);
 
-      // Apply different filters based on feed type
       switch (activeTab) {
         case "trending":
           query = query.order("likes_count", { ascending: false });
