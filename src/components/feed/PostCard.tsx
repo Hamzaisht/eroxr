@@ -101,6 +101,7 @@ export const PostCard = ({
         <PostContent
           content={post.content}
           mediaUrls={post.media_url}
+          videoUrls={post.video_urls}
           creatorId={post.creator_id}
           onMediaClick={setSelectedMedia}
         />

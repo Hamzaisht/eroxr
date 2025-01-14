@@ -67,10 +67,10 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
           break;
         case 'popular':
           query = query
-            .order('likes_count', { ascending: false });
+            .order('engagement_score', { ascending: false });
           break;
         case 'recent':
-          // Show all recent posts for now
+          // Show all recent posts
           break;
         default:
           if (userId) {
@@ -91,6 +91,8 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
         visibility: post.visibility || 'public',
         screenshots_count: post.screenshots_count || 0,
         downloads_count: post.downloads_count || 0,
+        video_urls: post.video_urls || [],
+        media_url: post.media_url || [],
         updated_at: post.updated_at || post.created_at
       })) || [];
     },

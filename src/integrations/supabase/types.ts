@@ -855,15 +855,20 @@ export type Database = {
           created_at: string
           creator_id: string
           downloads_count: number | null
+          engagement_score: number | null
           id: string
+          is_featured: boolean | null
           is_ppv: boolean | null
+          last_engagement_at: string | null
           likes_count: number | null
           media_url: string[] | null
           ppv_amount: number | null
           screenshots_count: number | null
+          share_count: number | null
           tags: string[] | null
           updated_at: string
           video_urls: string[] | null
+          view_count: number | null
           visibility: string | null
         }
         Insert: {
@@ -872,15 +877,20 @@ export type Database = {
           created_at?: string
           creator_id: string
           downloads_count?: number | null
+          engagement_score?: number | null
           id?: string
+          is_featured?: boolean | null
           is_ppv?: boolean | null
+          last_engagement_at?: string | null
           likes_count?: number | null
           media_url?: string[] | null
           ppv_amount?: number | null
           screenshots_count?: number | null
+          share_count?: number | null
           tags?: string[] | null
           updated_at?: string
           video_urls?: string[] | null
+          view_count?: number | null
           visibility?: string | null
         }
         Update: {
@@ -889,15 +899,20 @@ export type Database = {
           created_at?: string
           creator_id?: string
           downloads_count?: number | null
+          engagement_score?: number | null
           id?: string
+          is_featured?: boolean | null
           is_ppv?: boolean | null
+          last_engagement_at?: string | null
           likes_count?: number | null
           media_url?: string[] | null
           ppv_amount?: number | null
           screenshots_count?: number | null
+          share_count?: number | null
           tags?: string[] | null
           updated_at?: string
           video_urls?: string[] | null
+          view_count?: number | null
           visibility?: string | null
         }
         Relationships: [
