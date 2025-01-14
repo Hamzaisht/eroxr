@@ -22,7 +22,7 @@ export const useShortActions = () => {
         .select()
         .eq("post_id", shortId)
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
 
       if (existingLike) {
         await supabase
@@ -71,7 +71,7 @@ export const useShortActions = () => {
         .select()
         .eq("post_id", shortId)
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
 
       if (existingSave) {
         await supabase
