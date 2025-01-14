@@ -6,7 +6,7 @@ import { GoLiveDialog } from "./GoLiveDialog";
 import { RightSidebar } from "./RightSidebar";
 import { StoryReel } from "@/components/StoryReel";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Video, Loader2, ExclamationTriangle } from "lucide-react";
+import { Plus, Video, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -15,6 +15,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveStreams } from "./LiveStreams";
 import { Post } from "@/components/feed/Post";
+import type { Post as PostType } from "@/components/feed/types";
 
 interface MainFeedProps {
   isPayingCustomer?: boolean;
@@ -24,14 +25,10 @@ interface MainFeedProps {
   onGoLive?: () => void;
 }
 
-interface PostWithProfiles {
-  id: string;
-  content: string;
-  created_at: string;
-  creator_id: string;
-  media_url: string[] | null;
+interface PostWithProfiles extends PostType {
   profiles: {
-    username: string | null;
+    id: string;
+    username: string;
     avatar_url: string | null;
   };
 }
@@ -125,7 +122,7 @@ const MainFeed = ({
               </div>
             ) : status === "error" ? (
               <div className="text-center p-8 rounded-xl bg-luxury-dark/50 backdrop-blur-sm">
-                <ExclamationTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                 <p className="text-lg font-medium text-red-500">Error loading feed</p>
                 <p className="text-sm text-luxury-neutral/60 mt-2">Please try again later</p>
               </div>
