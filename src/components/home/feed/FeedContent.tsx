@@ -2,26 +2,68 @@ import { Post } from "@/components/feed/Post";
 import { Loader2, AlertTriangle } from "lucide-react";
 import type { FeedPost } from "../types";
 import { useSession } from "@supabase/auth-helpers-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useInView } from "react-intersection-observer";
 
 interface FeedContentProps {
-  data: any;
-  isLoading: boolean;
-  isError: boolean;
-  isFetchingNextPage: boolean;
-  hasNextPage: boolean;
-  observerRef: (node?: Element | null) => void;
+  userId?: string;
 }
 
-export const FeedContent = ({
-  data,
-  isLoading,
-  isError,
-  isFetchingNextPage,
-  hasNextPage,
-  observerRef,
-}: FeedContentProps) => {
+export const FeedContent = ({ userId }: FeedContentProps) => {
   const session = useSession();
+  const { ref, inView } = useInView();
+
+  const {
+    data,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["feed", userId],
+    queryFn: async ({ pageParam = 0 }) => {
+      const from = pageParam * 10;
+      const to = from + 9;
+
+      let query = supabase
+        .from("posts")
+        .select(`
+          *,
+          creator:profiles(id, username, avatar_url)
+        `)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (userId) {
+        query = query.eq("creator_id", userId);
+      }
+
+      const { data: posts, error } = await query;
+
+      if (error) throw error;
+
+      return posts?.map(post => ({
+        ...post,
+        has_liked: false,
+        visibility: post.visibility || "public",
+        screenshots_count: post.screenshots_count || 0,
+        downloads_count: post.downloads_count || 0,
+        updated_at: post.updated_at || post.created_at
+      })) || [];
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage?.length === 10 ? allPages.length : undefined;
+    },
+    initialPageParam: 0,
+  });
+
+  // Handle infinite scroll
+  if (inView && hasNextPage && !isFetchingNextPage) {
+    fetchNextPage();
+  }
 
   if (isLoading) {
     return (
@@ -41,37 +83,40 @@ export const FeedContent = ({
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-4"
-    >
-      {data?.pages.map((page: any, i: number) => (
-        <motion.div 
-          key={i} 
-          className="space-y-4"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: i * 0.1 }}
-        >
-          {page.map((post: FeedPost) => (
-            <Post
-              key={post.id}
-              post={post}
-              creator={post.creator}
-              currentUser={session?.user || null}
-            />
-          ))}
-        </motion.div>
-      ))}
-      <div ref={observerRef} className="h-10">
-        {isFetchingNextPage && hasNextPage && (
-          <div className="flex justify-center p-4">
-            <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
-          </div>
-        )}
-      </div>
-    </motion.div>
+    <AnimatePresence mode="wait">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="space-y-6"
+      >
+        {data?.pages.map((page, i) => (
+          <motion.div 
+            key={i}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: i * 0.1 }}
+            className="space-y-6"
+          >
+            {page.map((post: FeedPost) => (
+              <Post
+                key={post.id}
+                post={post}
+                creator={post.creator}
+                currentUser={session?.user || null}
+              />
+            ))}
+          </motion.div>
+        ))}
+
+        <div ref={ref} className="h-10">
+          {isFetchingNextPage && hasNextPage && (
+            <div className="flex justify-center p-4">
+              <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
