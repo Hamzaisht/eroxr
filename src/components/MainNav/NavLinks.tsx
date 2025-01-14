@@ -37,7 +37,7 @@ export const NavLinks = () => {
           animate={{ opacity: 1, width: "auto" }}
           className="overflow-hidden whitespace-nowrap"
         >
-          Dating
+          Create a BD
         </motion.span>
       </NavLink>
 
@@ -74,6 +74,24 @@ export const NavLinks = () => {
           className="overflow-hidden whitespace-nowrap"
         >
           Eroboard
+        </motion.span>
+      </NavLink>
+
+      <NavLink 
+        to="/eros" 
+        className={({ isActive }) => 
+          `nav-item-liquid group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-500 ${
+            isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
+          }`
+        }
+      >
+        <Film className="w-5 h-5 transition-transform group-hover:scale-110" />
+        <motion.span 
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: "auto" }}
+          className="overflow-hidden whitespace-nowrap"
+        >
+          Eros
         </motion.span>
       </NavLink>
     </nav>

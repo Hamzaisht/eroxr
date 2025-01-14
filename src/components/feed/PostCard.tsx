@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, MoreVertical } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreVertical, Edit, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { MediaViewer } from "@/components/media/MediaViewer";
@@ -84,6 +84,16 @@ export const PostCard = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (onDelete && isOwner) {
+      await onDelete(post.id, post.creator_id);
+      toast({
+        title: "Post deleted",
+        description: "Your post has been successfully deleted.",
+      });
+    }
+  };
+
   const hasMedia = post.media_url && post.media_url.length > 0;
   const isEdited = post.updated_at && post.updated_at !== post.created_at;
 
@@ -118,12 +128,14 @@ export const PostCard = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
                   Edit Post
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="text-red-500"
-                  onClick={() => onDelete && onDelete(post.id, post.creator_id)}
+                  onClick={handleDelete}
                 >
+                  <Trash className="h-4 w-4 mr-2" />
                   Delete Post
                 </DropdownMenuItem>
               </DropdownMenuContent>
