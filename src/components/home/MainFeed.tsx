@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { CreatePostArea } from "./CreatePostArea";
 import { LiveStreams } from "./LiveStreams";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,26 +95,28 @@ export const MainFeed = ({
       />
 
       <div className="mt-6">
-        <FeedHeader activeTab={activeTab} onTabChange={setActiveTab} />
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <FeedHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <TabsContent value="feed" className="mt-6">
-          <FeedContent
-            data={data}
-            isLoading={isLoading}
-            isError={isError}
-            isFetchingNextPage={isFetchingNextPage}
-            hasNextPage={hasNextPage}
-            observerRef={ref}
-          />
-        </TabsContent>
+          <TabsContent value="feed" className="mt-6">
+            <FeedContent
+              data={data}
+              isLoading={isLoading}
+              isError={isError}
+              isFetchingNextPage={isFetchingNextPage}
+              hasNextPage={hasNextPage}
+              observerRef={ref}
+            />
+          </TabsContent>
 
-        <TabsContent value="trending" className="mt-6">
-          <TrendingContent data={data} />
-        </TabsContent>
+          <TabsContent value="trending" className="mt-6">
+            <TrendingContent data={data} />
+          </TabsContent>
 
-        <TabsContent value="live" className="mt-6">
-          <LiveStreams onGoLive={onOpenGoLive} />
-        </TabsContent>
+          <TabsContent value="live" className="mt-6">
+            <LiveStreams onGoLive={onOpenGoLive} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
