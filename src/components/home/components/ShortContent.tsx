@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface ShortContentProps {
   short: {
@@ -32,6 +33,8 @@ export const ShortContent = ({
   handleSave,
   className = ""
 }: ShortContentProps) => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   return (
     <div className={className}>
       <motion.div 
@@ -40,9 +43,9 @@ export const ShortContent = ({
         transition={{ delay: 0.2 }}
         className="flex items-end justify-between"
       >
-        <div className="space-y-4 max-w-[80%]">
+        <div className={`space-y-4 ${isMobile ? 'max-w-[70%]' : 'max-w-[80%]'}`}>
           <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12 ring-2 ring-white/20">
+            <Avatar className={`${isMobile ? 'h-10 w-10' : 'h-12 w-12'} ring-2 ring-white/20`}>
               <AvatarImage src={short.creator.avatar_url ?? ""} />
               <AvatarFallback>
                 {short.creator.username?.[0]?.toUpperCase()}
@@ -62,7 +65,7 @@ export const ShortContent = ({
               </span>
             </div>
           </div>
-          <p className="text-white/90 text-base leading-relaxed">
+          <p className={`text-white/90 ${isMobile ? 'text-sm' : 'text-base'} leading-relaxed line-clamp-2`}>
             {short.description}
           </p>
         </div>
@@ -71,11 +74,11 @@ export const ShortContent = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-14 w-14 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
+            className={`${isMobile ? 'h-12 w-12' : 'h-14 w-14'} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
             onClick={() => handleLike(short.id)}
           >
             <Heart
-              className={`h-7 w-7 transition-all duration-300 ${
+              className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} transition-all duration-300 ${
                 short.has_liked
                   ? "text-red-500 fill-red-500 scale-110"
                   : "text-white group-hover:text-red-500"
@@ -89,10 +92,10 @@ export const ShortContent = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-14 w-14 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
+            className={`${isMobile ? 'h-12 w-12' : 'h-14 w-14'} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
             onClick={() => onComment(short.id)}
           >
-            <MessageCircle className="h-7 w-7 text-white group-hover:text-luxury-primary" />
+            <MessageCircle className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} text-white group-hover:text-luxury-primary`} />
             <span className="absolute -bottom-6 text-sm font-medium text-white">
               {short.comments}
             </span>
@@ -101,11 +104,11 @@ export const ShortContent = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-14 w-14 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
+            className={`${isMobile ? 'h-12 w-12' : 'h-14 w-14'} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
             onClick={() => handleSave(short.id)}
           >
             <Bookmark
-              className={`h-7 w-7 transition-all duration-300 ${
+              className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} transition-all duration-300 ${
                 short.has_saved
                   ? "text-luxury-primary fill-luxury-primary scale-110"
                   : "text-white group-hover:text-luxury-primary"
@@ -116,10 +119,10 @@ export const ShortContent = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-14 w-14 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group"
+            className={`${isMobile ? 'h-12 w-12' : 'h-14 w-14'} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
             onClick={() => onShare(short.id)}
           >
-            <Share2 className="h-7 w-7 text-white group-hover:text-luxury-primary" />
+            <Share2 className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} text-white group-hover:text-luxury-primary`} />
           </Button>
         </div>
       </motion.div>

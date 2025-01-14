@@ -10,16 +10,18 @@ import { useFeedQuery } from "../feed/useFeedQuery";
 import { Badge } from "@/components/ui/badge";
 import { CommentSection } from "../feed/CommentSection";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 export const ShortsFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [selectedShortId, setSelectedShortId] = useState<string | null>(null);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const { handleLike, handleSave } = useShortActions();
   const [isLoading, setIsLoading] = useState(true);
+  const { handleLike, handleSave } = useShortActions();
   const session = useSession();
   const { data } = useFeedQuery(session?.user?.id, 'shorts');
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const shorts = data?.pages.flatMap(page => page) ?? [];
 
@@ -80,7 +82,7 @@ export const ShortsFeed = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="relative h-screen w-full snap-start snap-always"
+              className="relative h-[100dvh] w-full snap-start snap-always"
             >
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
               <VideoPlayer
@@ -103,7 +105,7 @@ export const ShortsFeed = () => {
                 onComment={() => handleCommentClick(short.id)}
                 handleLike={handleLike}
                 handleSave={handleSave}
-                className="absolute bottom-0 left-0 right-0 z-20 p-6"
+                className={`absolute bottom-0 left-0 right-0 z-20 p-4 ${isMobile ? 'pb-16' : 'p-6'}`}
               />
             </motion.div>
           ))}
@@ -119,7 +121,7 @@ export const ShortsFeed = () => {
           />
           
           <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
-            <DialogContent className="sm:max-w-[425px] h-[80vh] bg-black/95">
+            <DialogContent className={`${isMobile ? 'w-full h-[80dvh] rounded-t-xl mt-auto' : 'sm:max-w-[425px] h-[80vh]'} bg-black/95`}>
               <CommentSection
                 postId={selectedShortId}
                 commentsCount={shorts.find(s => s.id === selectedShortId)?.comments_count ?? 0}

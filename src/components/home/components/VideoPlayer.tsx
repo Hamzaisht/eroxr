@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { forwardRef, useEffect, useRef } from "react";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface VideoPlayerProps {
   src: string;
@@ -11,6 +12,7 @@ interface VideoPlayerProps {
 export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
   ({ src, index, onIndexChange, className }, ref) => {
     const videoRef = useRef<HTMLVideoElement>();
+    const isMobile = useMediaQuery("(max-width: 768px)");
 
     useEffect(() => {
       if (ref) {
@@ -33,7 +35,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
             }
           });
         },
-        { threshold: 0.7 }
+        { threshold: isMobile ? 0.5 : 0.7 }
       );
 
       if (videoRef.current) {
@@ -45,7 +47,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           observer.unobserve(videoRef.current);
         }
       };
-    }, [index, onIndexChange, ref]);
+    }, [index, onIndexChange, ref, isMobile]);
 
     return (
       <motion.video
@@ -63,7 +65,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
         style={{ 
           pointerEvents: 'none',
           WebkitUserSelect: 'none',
-          userSelect: 'none'
+          userSelect: 'none',
+          objectFit: isMobile ? 'contain' : 'cover'
         }}
       />
     );
