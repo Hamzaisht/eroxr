@@ -2,7 +2,7 @@ import { useState, useEffect, ReactNode } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { InteractiveNav } from "./InteractiveNav";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { LoadingScreen } from "./LoadingScreen";
@@ -12,6 +12,7 @@ import { FloatingActionMenu } from "./FloatingActionMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { MainNav } from "@/components/MainNav";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -64,21 +65,66 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#0D1117]">
+    <div className="min-h-screen bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark">
       <BackgroundEffects />
-      {!isErosRoute && <MainNav />}
       
-      <div className={`relative flex min-h-screen ${isErosRoute ? 'pt-0' : 'pt-16'}`}>
-        {!isMobile && <InteractiveNav />}
+      <AnimatePresence mode="wait">
+        {!isErosRoute && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <MainNav />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <div className={cn(
+        "relative flex min-h-screen",
+        isErosRoute ? 'pt-0' : 'pt-16',
+        "transition-all duration-300"
+      )}>
+        {!isMobile && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <InteractiveNav />
+          </motion.div>
+        )}
         
-        <main className={`flex-1 min-h-screen w-full ${!isMobile && !isErosRoute ? 'pl-20 lg:pl-24' : ''}`}>
-          <div className="w-full min-h-screen">
-            {children || <Outlet />}
-          </div>
+        <main className={cn(
+          "flex-1 min-h-screen w-full",
+          !isMobile && !isErosRoute ? 'pl-20 lg:pl-24' : '',
+          "transition-all duration-300"
+        )}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full min-h-screen"
+            >
+              {children || <Outlet />}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 
-      {session && <FloatingActionMenu currentPath={location.pathname} />}
+      {session && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+        >
+          <FloatingActionMenu currentPath={location.pathname} />
+        </motion.div>
+      )}
 
       <CreatePostDialog 
         open={isCreatePostOpen} 
