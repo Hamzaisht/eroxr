@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { SocialLoginSection } from "./sections/SocialLoginSection";
 import { DividerWithText } from "./sections/DividerWithText";
 import { LoginForm } from "./sections/LoginForm";
-import { AuthError, Provider } from "@supabase/supabase-js";
+import { AuthError, AuthApiError, Provider } from "@supabase/supabase-js";
 
 export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,24 +24,18 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       });
 
       if (error) {
-        // If email login fails, try to find the user by username
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', values.identifier)
-          .maybeSingle();
-
-        if (profiles) {
-          // Try to sign in with the found user's email
-          const { error: finalError } = await supabase.auth.signInWithPassword({
-            email: profiles.id,
-            password: values.password,
+        // Check if it's an invalid credentials error
+        if (error instanceof AuthApiError && error.status === 400) {
+          toast({
+            title: "Login failed",
+            description: "Invalid email or password. Please check your credentials and try again.",
+            variant: "destructive",
           });
-
-          if (finalError) throw finalError;
-        } else {
-          throw error;
+          return;
         }
+        
+        // Handle other errors
+        throw error;
       }
 
       toast({
@@ -54,13 +48,13 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       
       let errorMessage = "An error occurred during sign in";
       
-      if (error instanceof AuthError) {
+      if (error instanceof AuthApiError) {
         switch (error.message) {
-          case "Invalid login credentials":
-            errorMessage = "Invalid email/username or password";
-            break;
           case "Email not confirmed":
-            errorMessage = "Please verify your email before signing in";
+            errorMessage = "Please verify your email address before signing in.";
+            break;
+          case "Invalid login credentials":
+            errorMessage = "Invalid email or password. Please try again.";
             break;
           default:
             errorMessage = error.message;
