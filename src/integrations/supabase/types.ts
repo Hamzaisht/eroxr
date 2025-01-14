@@ -1286,6 +1286,21 @@ export type Database = {
         }
         Relationships: []
       }
+      trending_content: {
+        Row: {
+          comments: number | null
+          content_id: string | null
+          content_type: string | null
+          created_at: string | null
+          creator_avatar: string | null
+          creator_id: string | null
+          creator_username: string | null
+          likes: number | null
+          media_interactions: number | null
+          trending_rank: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_expired_demo_content: {

@@ -1,8 +1,9 @@
-import { ImagePlus, Video } from "lucide-react";
+import { ImagePlus, Video, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 interface MediaUploadSectionProps {
   selectedFiles: FileList | null;
@@ -18,6 +19,34 @@ export const MediaUploadSection = ({
   handleFileSelect
 }: MediaUploadSectionProps) => {
   const { toast } = useToast();
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const verifyStorageAccess = async () => {
+    try {
+      setIsVerifying(true);
+      // Verify storage bucket access
+      const { data: bucketData, error: bucketError } = await supabase
+        .storage
+        .getBucket('posts');
+
+      if (bucketError) {
+        console.error('Storage bucket verification failed:', bucketError);
+        toast({
+          title: "Storage Access Error",
+          description: "Unable to access storage. Please try again later.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Storage verification error:', error);
+      return false;
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   const validateVideoFile = async (file: File): Promise<boolean> => {
     if (file.type.startsWith('video/')) {
@@ -58,6 +87,13 @@ export const MediaUploadSection = ({
     const files = e.target.files;
     if (!files) return;
 
+    // Verify storage access first
+    const hasStorageAccess = await verifyStorageAccess();
+    if (!hasStorageAccess) {
+      e.target.value = '';
+      return;
+    }
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const isValid = await validateVideoFile(file);
@@ -71,6 +107,15 @@ export const MediaUploadSection = ({
   };
 
   const handleButtonClick = () => {
+    if (!isPayingCustomer) {
+      toast({
+        title: "Premium Feature",
+        description: "Only paying customers can upload media",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const input = document.getElementById('post-file-upload') as HTMLInputElement;
     if (input) {
       input.click();
@@ -86,16 +131,26 @@ export const MediaUploadSection = ({
           variant="outline"
           onClick={handleButtonClick}
           className="w-full"
+          disabled={isVerifying}
         >
-          <Video className="h-4 w-4 mr-2" />
-          {selectedFiles?.length ? `${selectedFiles.length} file(s) selected` : 'Upload Video'}
+          {isVerifying ? (
+            <>
+              <AlertCircle className="h-4 w-4 mr-2 animate-pulse" />
+              Verifying...
+            </>
+          ) : (
+            <>
+              <Video className="h-4 w-4 mr-2" />
+              {selectedFiles?.length ? `${selectedFiles.length} file(s) selected` : 'Upload Video'}
+            </>
+          )}
         </Button>
         <input
           type="file"
           id="post-file-upload"
           accept="video/*"
           onChange={handleFileValidation}
-          disabled={!isPayingCustomer}
+          disabled={!isPayingCustomer || isVerifying}
           style={{ display: 'none' }}
           onClick={(e) => {
             // Reset the value to allow selecting the same file again
