@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { StoryViewer } from "./StoryViewer";
 import { formatDistanceToNow } from "date-fns";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
@@ -14,11 +14,13 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
+import { VideoPreview } from "./VideoPreview";
 
 interface StoryItemProps {
   stories: Array<{
     id: string;
     media_url: string;
+    video_url?: string | null;
     created_at: string;
     expires_at: string;
   }>;
@@ -32,13 +34,29 @@ interface StoryItemProps {
 
 export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const previewTimeoutRef = useRef<NodeJS.Timeout>();
   const latestStory = stories[0];
   const timeAgo = formatDistanceToNow(new Date(latestStory.created_at), { addSuffix: true });
   const { toast } = useToast();
   const session = useSession();
 
+  const handleMouseEnter = () => {
+    if (latestStory.video_url) {
+      previewTimeoutRef.current = setTimeout(() => {
+        setShowPreview(true);
+      }, 300); // Small delay before showing preview
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (previewTimeoutRef.current) {
+      clearTimeout(previewTimeoutRef.current);
+    }
+    setShowPreview(false);
+  };
+
   const handleEdit = async (storyId: string) => {
-    // For now just show a toast - edit functionality can be added later
     toast({
       title: "Coming soon",
       description: "Story editing will be available soon!",
@@ -73,7 +91,9 @@ export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.1 }}
-        className="flex-shrink-0"
+        className="flex-shrink-0 relative"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div className="w-28 rounded-xl border border-luxury-neutral/10 bg-gradient-to-br from-luxury-dark/50 to-luxury-primary/5 p-2 cursor-pointer hover:bg-luxury-neutral/5 transition-all duration-300 group">
           <div className="relative mb-2">
@@ -92,7 +112,6 @@ export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
               </div>
             </Link>
 
-            {/* Three dots menu */}
             {creator.id === session?.user?.id && (
               <div className="absolute -top-2 -right-2 z-10" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
@@ -137,6 +156,12 @@ export const StoryItem = ({ stories, creator, index }: StoryItemProps) => {
             </p>
           </div>
         </div>
+
+        <AnimatePresence>
+          {showPreview && latestStory.video_url && (
+            <VideoPreview videoUrl={latestStory.video_url} />
+          )}
+        </AnimatePresence>
       </motion.div>
 
       <StoryViewer
