@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Comment {
   id: string;
@@ -129,40 +130,43 @@ export const RealtimeComments = ({ postId }: RealtimeCommentsProps) => {
             placeholder="Write a comment..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className="min-h-[80px]"
+            className="min-h-[80px] bg-luxury-dark/30 border-luxury-neutral/10"
           />
           <Button 
             onClick={handleSubmitComment}
             disabled={isSubmitting}
+            className="w-full sm:w-auto"
           >
             {isSubmitting ? "Posting..." : "Post Comment"}
           </Button>
         </div>
       )}
 
-      <div className="space-y-4">
-        {comments.map((comment) => (
-          <div key={comment.id} className="flex gap-3">
-            <Avatar>
-              <AvatarImage src={comment.creator.avatar_url} />
-              <AvatarFallback>
-                {comment.creator.username?.[0]?.toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">
-                  {comment.creator.username}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {new Date(comment.created_at).toLocaleString()}
-                </span>
+      <ScrollArea className="h-[400px] pr-4">
+        <div className="space-y-4">
+          {comments.map((comment) => (
+            <div key={comment.id} className="flex gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={comment.creator.avatar_url} />
+                <AvatarFallback>
+                  {comment.creator.username?.[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-luxury-neutral">
+                    {comment.creator.username}
+                  </span>
+                  <span className="text-sm text-luxury-neutral/60">
+                    {new Date(comment.created_at).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-sm mt-1 text-luxury-neutral/80">{comment.content}</p>
               </div>
-              <p className="text-sm mt-1">{comment.content}</p>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 };
