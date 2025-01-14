@@ -4,10 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { MainFeed } from "@/components/home/MainFeed";
 import { RightSidebar } from "@/components/home/RightSidebar";
 import { HomeLayout } from "@/components/home/HomeLayout";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const session = useSession();
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const session = useSession();
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkPayingCustomerStatus = async () => {
@@ -36,13 +41,25 @@ const Index = () => {
           <MainFeed 
             userId={session.user.id}
             isPayingCustomer={isPayingCustomer}
-            onOpenCreatePost={() => {}}
-            onFileSelect={() => {}}
-            onOpenGoLive={() => {}}
+            onOpenCreatePost={() => setIsCreatePostOpen(true)}
+            onFileSelect={setSelectedFiles}
+            onOpenGoLive={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Live streaming feature will be available soon!",
+              });
+            }}
           />
           <RightSidebar />
         </div>
       </div>
+
+      <CreatePostDialog 
+        open={isCreatePostOpen} 
+        onOpenChange={setIsCreatePostOpen}
+        selectedFiles={selectedFiles}
+        onFileSelect={setSelectedFiles}
+      />
     </HomeLayout>
   );
 };

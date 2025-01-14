@@ -31,6 +31,7 @@ export const MainFeed = ({
   } = useInfiniteQuery({
     queryKey: ["feed", userId],
     queryFn: async ({ pageParam = 0 }) => {
+      console.log("Fetching feed data for user:", userId);
       const { data: posts, error } = await supabase
         .from("posts")
         .select(`
@@ -40,13 +41,17 @@ export const MainFeed = ({
         .order("created_at", { ascending: false })
         .range(pageParam * 10, (pageParam + 1) * 10 - 1);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Feed fetch error:", error);
+        throw error;
+      }
       return posts as FeedPost[];
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.length === 10 ? allPages.length : undefined;
     },
-    initialPageParam: 0
+    initialPageParam: 0,
+    enabled: !!userId // Only fetch when we have a userId
   });
 
   // Load more posts when scrolling to the bottom
