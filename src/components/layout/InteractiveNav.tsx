@@ -2,18 +2,20 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Home, Video, Heart, MessageSquare, Play, Film } from "lucide-react";
+import { Home, Heart, MessageSquare, Play, Film } from "lucide-react";
 import { NavMenuItem } from "./nav/NavMenuItem";
 import { UserProfileSection } from "./nav/UserProfileSection";
 
+// Ensure unique menu items with distinct paths
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
-  { icon: Film, label: "Eros", path: "/shorts" },
-  { icon: Heart, label: "Dating", path: "/dating" },
+  { icon: Heart, label: "Create a BD", path: "/dating" },
   { icon: MessageSquare, label: "Messages", path: "/messages" },
   { icon: Play, label: "Eroboard", path: "/eroboard" },
-  { icon: Video, label: "Shorts", path: "/shorts" }
-];
+  { icon: Film, label: "Eros", path: "/shorts" }
+].filter((item, index, self) => 
+  index === self.findIndex((t) => t.path === item.path)
+);
 
 export const InteractiveNav = () => {
   const [isExpanded, setIsExpanded] = useState(false);
