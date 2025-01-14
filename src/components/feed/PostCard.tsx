@@ -1,25 +1,16 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, MoreVertical, Edit, Trash } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { getImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
-import { MediaViewer } from "@/components/media/MediaViewer";
-import { Post } from "@/components/feed/types";
-import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { CommentSection } from "./CommentSection";
-import { ShareDialog } from "./ShareDialog";
-import { format } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { MediaViewer } from "@/components/media/MediaViewer";
+import { ShareDialog } from "./ShareDialog";
+import { CommentSection } from "./CommentSection";
+import { PostHeader } from "./post-components/PostHeader";
+import { PostContent } from "./post-components/PostContent";
+import { PostActions } from "./post-components/PostActions";
+import { Post } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PostCardProps {
@@ -58,6 +49,16 @@ export const PostCard = ({
     setShowComments(!showComments);
   };
 
+  const handleDelete = async () => {
+    if (onDelete && isOwner) {
+      await onDelete(post.id, post.creator_id);
+      toast({
+        title: "Post deleted",
+        description: "Your post has been successfully deleted.",
+      });
+    }
+  };
+
   const handleEdit = async () => {
     try {
       const { error } = await supabase
@@ -70,141 +71,48 @@ export const PostCard = ({
 
       if (error) throw error;
 
+      setIsEditDialogOpen(false);
       toast({
         title: "Post updated",
         description: "Your post has been successfully updated.",
       });
-      setIsEditDialogOpen(false);
     } catch (error) {
+      console.error('Edit error:', error);
       toast({
-        title: "Error",
+        title: "Update failed",
         description: "Failed to update post. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const handleDelete = async () => {
-    if (onDelete && isOwner) {
-      await onDelete(post.id, post.creator_id);
-      toast({
-        title: "Post deleted",
-        description: "Your post has been successfully deleted.",
-      });
-    }
-  };
-
-  const hasMedia = post.media_url && post.media_url.length > 0;
-  const isEdited = post.updated_at && post.updated_at !== post.created_at;
-
   return (
     <Card className="bg-[#0D1117] border-luxury-neutral/10 hover:border-luxury-neutral/20 transition-all duration-300">
       <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 ring-2 ring-luxury-primary/20">
-              <AvatarImage src={post.creator.avatar_url || ""} alt={post.creator.username || "User"} />
-              <AvatarFallback>{post.creator.username?.[0]?.toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-semibold text-luxury-neutral">
-                {post.creator.username}
-                {isEdited && (
-                  <span className="ml-2 text-sm text-luxury-neutral/60">(edited)</span>
-                )}
-              </h3>
-              <p className="text-sm text-luxury-neutral/60">
-                {format(new Date(post.created_at), 'MMM d, yyyy')}
-              </p>
-            </div>
-          </div>
+        <PostHeader
+          creator={post.creator}
+          createdAt={post.created_at}
+          updatedAt={post.updated_at}
+          isOwner={isOwner}
+          onEdit={() => setIsEditDialogOpen(true)}
+          onDelete={handleDelete}
+        />
 
-          {isOwner && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Post
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="text-red-500"
-                  onClick={handleDelete}
-                >
-                  <Trash className="h-4 w-4 mr-2" />
-                  Delete Post
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
+        <PostContent
+          content={post.content}
+          mediaUrls={post.media_url}
+          creatorId={post.creator_id}
+          onMediaClick={setSelectedMedia}
+        />
 
-        <p className="text-luxury-neutral/90">{post.content}</p>
-        
-        {hasMedia && (
-          <ProtectedMedia contentOwnerId={post.creator_id}>
-            <div className="relative w-full overflow-hidden rounded-xl">
-              <div className="overflow-x-auto scrollbar-hide w-full">
-                <div className="flex w-full">
-                  {post.media_url.map((url, index) => (
-                    <div
-                      key={index}
-                      className="min-w-full h-full cursor-pointer group"
-                      onClick={() => setSelectedMedia(url)}
-                    >
-                      <img
-                        src={url}
-                        alt={`Post media ${index + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="eager"
-                        decoding="sync"
-                        srcSet={generateSrcSet(url)}
-                        sizes={getResponsiveSizes()}
-                        style={getImageStyles()}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </ProtectedMedia>
-        )}
-
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2 hover:bg-luxury-primary/10"
-            onClick={handleLike}
-          >
-            <Heart className={cn("h-5 w-5", post.has_liked && "fill-luxury-primary text-luxury-primary")} />
-            <span className="text-luxury-neutral/80">{post.likes_count || 0}</span>
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2 hover:bg-luxury-primary/10"
-            onClick={handleCommentClick}
-          >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-luxury-neutral/80">{post.comments_count || 0}</span>
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2 hover:bg-luxury-primary/10"
-            onClick={() => setIsShareDialogOpen(true)}
-          >
-            <Share2 className="h-5 w-5" />
-            <span className="text-luxury-neutral/80">Share</span>
-          </Button>
-        </div>
+        <PostActions
+          hasLiked={post.has_liked}
+          likesCount={post.likes_count}
+          commentsCount={post.comments_count}
+          onLike={handleLike}
+          onComment={handleCommentClick}
+          onShare={() => setIsShareDialogOpen(true)}
+        />
 
         {showComments && (
           <CommentSection 
