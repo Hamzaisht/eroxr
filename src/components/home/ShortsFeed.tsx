@@ -55,15 +55,15 @@ export const ShortsFeed = () => {
 
   if (isLoading) {
     return (
-      <div className="relative h-[calc(100vh-4rem)] w-full flex items-center justify-center bg-gradient-to-b from-luxury-dark to-black">
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-b from-luxury-dark to-black">
         <div className="w-12 h-12 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-gradient-to-b from-luxury-dark to-black">
-      <div className="snap-y snap-mandatory h-full overflow-y-auto scrollbar-hide">
+    <div className="fixed inset-0 bg-gradient-to-b from-luxury-dark to-black">
+      <div className="h-full snap-y snap-mandatory overflow-y-auto scrollbar-hide">
         <AnimatePresence mode="wait">
           {shorts.map((short, index) => (
             <motion.div
@@ -107,16 +107,6 @@ export const ShortsFeed = () => {
           postId={selectedShortId}
         />
       )}
-
-      <style>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </div>
   );
 };

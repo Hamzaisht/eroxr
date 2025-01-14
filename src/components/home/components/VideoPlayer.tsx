@@ -45,7 +45,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
       <motion.video
         ref={videoRef}
         src={src}
-        className={className}
+        className={`w-full h-full object-cover ${className}`}
         initial={{ scale: 1.2, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
