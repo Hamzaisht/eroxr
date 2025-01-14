@@ -10,7 +10,7 @@ import { useMediaQuery } from "@/hooks/use-mobile";
 import { FeedHeader } from "./feed/FeedHeader";
 import { FeedContent } from "./feed/FeedContent";
 import { TrendingContent } from "./feed/TrendingContent";
-import type { MainFeedProps, FeedPost } from "./types";
+import type { MainFeedProps } from "./types";
 
 export const MainFeed = ({
   userId,
