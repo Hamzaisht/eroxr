@@ -1,17 +1,30 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useInView } from "react-intersection-observer";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CreatePostDialog } from "@/components/CreatePostDialog";
-import { GoLiveDialog } from "@/components/home/GoLiveDialog";
-import { RightSidebar } from "@/components/home/RightSidebar";
-import { HomeLayout } from "@/components/home/HomeLayout";
+import { CreatePostArea } from "./CreatePostArea";
+import { GoLiveDialog } from "./GoLiveDialog";
+import { RightSidebar } from "./RightSidebar";
 import { StoryReel } from "@/components/StoryReel";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Video } from "lucide-react";
+import { Plus, Video, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { LiveStreams } from "./LiveStreams";
+import { Post } from "@/components/feed/Post";
+import type { Post as PostType } from "@/integrations/supabase/types/post";
 import { useMediaQuery } from "@/hooks/use-mobile";
+
+interface MainFeedProps {
+  isPayingCustomer?: boolean | null;
+  onOpenCreatePost?: () => void;
+  onFileSelect?: (files: FileList | null) => void;
+  onOpenGoLive?: () => void;
+  onGoLive?: () => void;
+}
 
 const MainFeed = ({
   isPayingCustomer,
