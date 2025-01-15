@@ -1,7 +1,9 @@
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { VideoPlayer } from "./VideoPlayer";
+import { VideoPlayer } from "@/components/home/components/VideoPlayer";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 interface PostContentProps {
   content: string;
@@ -19,11 +21,16 @@ export const PostContent = ({
   onMediaClick,
 }: PostContentProps) => {
   const [loadError, setLoadError] = useState<Record<string, boolean>>({});
+  const { toast } = useToast();
   const hasMedia = mediaUrls.length > 0 || videoUrls.length > 0;
 
   const handleMediaError = (url: string) => {
     setLoadError(prev => ({ ...prev, [url]: true }));
-    console.error(`Failed to load media: ${url}`);
+    toast({
+      title: "Error loading media",
+      description: "Failed to load media content. Please try again later.",
+      variant: "destructive",
+    });
   };
 
   return (
@@ -33,7 +40,9 @@ export const PostContent = ({
       transition={{ duration: 0.3 }}
       className="space-y-4"
     >
-      <p className="text-luxury-neutral/90 leading-relaxed">{content}</p>
+      <p className="text-luxury-neutral/90 leading-relaxed whitespace-pre-wrap break-words">
+        {content}
+      </p>
       
       {hasMedia && (
         <ProtectedMedia contentOwnerId={creatorId}>
@@ -43,11 +52,19 @@ export const PostContent = ({
                 <div className="flex gap-2 p-2">
                   {/* Videos */}
                   {videoUrls.map((url, index) => (
-                    <VideoPlayer 
+                    <motion.div
                       key={`video-${url}`}
-                      url={url}
-                      onError={() => handleMediaError(url)}
-                    />
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="relative min-w-[300px] max-w-[500px] aspect-video"
+                    >
+                      <VideoPlayer
+                        url={url}
+                        className="w-full h-full rounded-lg overflow-hidden"
+                        onError={() => handleMediaError(url)}
+                      />
+                    </motion.div>
                   ))}
 
                   {/* Images */}
@@ -61,13 +78,14 @@ export const PostContent = ({
                         className="relative min-w-[300px] max-w-[500px] aspect-[4/3] cursor-pointer group"
                         onClick={() => onMediaClick(url)}
                       >
-                        <img
+                        <motion.img
                           src={url}
                           alt={`Post media ${index + 1}`}
                           className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                           loading="eager"
                           decoding="sync"
                           onError={() => handleMediaError(url)}
+                          layoutId={`post-media-${url}`}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                       </motion.div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Play, Pause, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 interface VideoPlayerProps {
   url: string;
@@ -9,14 +10,23 @@ interface VideoPlayerProps {
   className?: string;
   index?: number;
   onIndexChange?: (index: number) => void;
+  onError?: () => void;
 }
 
-export const VideoPlayer = ({ url, poster, className, index, onIndexChange }: VideoPlayerProps) => {
+export const VideoPlayer = ({ 
+  url, 
+  poster, 
+  className, 
+  index, 
+  onIndexChange,
+  onError 
+}: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const video = videoRef.current;
@@ -32,19 +42,23 @@ export const VideoPlayer = ({ url, poster, className, index, onIndexChange }: Vi
       console.error("Video loading error:", e);
       setIsLoading(false);
       setHasError(true);
+      if (onError) onError();
+      toast({
+        title: "Video Error",
+        description: "Failed to load video. Please try again later.",
+        variant: "destructive",
+      });
     };
 
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
-
-    // Force video reload
     video.load();
 
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
     };
-  }, [url]);
+  }, [url, onError, toast]);
 
   const togglePlay = () => {
     if (!videoRef.current || hasError) return;
@@ -57,6 +71,7 @@ export const VideoPlayer = ({ url, poster, className, index, onIndexChange }: Vi
         playPromise.catch(error => {
           console.error("Error playing video:", error);
           setHasError(true);
+          if (onError) onError();
         });
       }
       if (typeof index !== 'undefined' && onIndexChange) {
