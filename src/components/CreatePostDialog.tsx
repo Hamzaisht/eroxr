@@ -8,7 +8,7 @@ import { PostDialogHeader } from "./post/PostDialogHeader";
 import { PostContentInput } from "./post/PostContentInput";
 import { PostSettings } from "./post/PostSettings";
 import { ContentPreview } from "./post/ContentPreview";
-import { MediaUploadSection } from "./post/MediaUploadSection";
+import { MediaUpload } from "./post/MediaUpload";
 import { PostSubmitButtons } from "./post/PostSubmitButtons";
 import { SuccessOverlay } from "./post/SuccessOverlay";
 import { usePostSubmission } from "./post/usePostSubmission";
@@ -109,21 +109,10 @@ export const CreatePostDialog = ({
 
           <ContentPreview content={content} />
           
-          <MediaUploadSection
+          <MediaUpload
             selectedFiles={selectedFiles}
             onFileSelect={onFileSelect}
             isPayingCustomer={isPayingCustomer}
-            handleFileSelect={(e) => {
-              if (!isPayingCustomer) {
-                toast({
-                  title: "Premium feature",
-                  description: "Only paying customers can upload media",
-                  variant: "destructive",
-                });
-                return;
-              }
-              onFileSelect(e.target.files);
-            }}
           />
           
           <PostSubmitButtons
