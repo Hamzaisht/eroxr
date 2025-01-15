@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { AlertCircle } from "lucide-react";
 
 interface PostContentProps {
   content: string;
@@ -24,28 +24,8 @@ export const PostContent = ({
   const { toast } = useToast();
   const hasMedia = mediaUrls.length > 0 || videoUrls.length > 0;
 
-  const getPublicUrl = async (url: string) => {
-    if (!url) return null;
-    
-    try {
-      // If it's already a public URL, return it
-      if (url.startsWith('http')) {
-        return url;
-      }
-      
-      // Otherwise get the public URL from storage
-      const { data: { publicUrl } } = supabase.storage
-        .from('posts')
-        .getPublicUrl(url);
-        
-      return publicUrl;
-    } catch (error) {
-      console.error('Error getting public URL:', error);
-      return null;
-    }
-  };
-
   const handleMediaError = (url: string) => {
+    console.error("Media load error for URL:", url);
     setLoadError(prev => ({ ...prev, [url]: true }));
     toast({
       title: "Error loading media",
@@ -61,9 +41,11 @@ export const PostContent = ({
       transition={{ duration: 0.3 }}
       className="space-y-4"
     >
-      <p className="text-luxury-neutral/90 leading-relaxed whitespace-pre-wrap break-words">
-        {content}
-      </p>
+      {content && (
+        <p className="text-luxury-neutral/90 leading-relaxed whitespace-pre-wrap break-words">
+          {content}
+        </p>
+      )}
       
       {hasMedia && (
         <ProtectedMedia contentOwnerId={creatorId}>
@@ -108,16 +90,23 @@ export const PostContent = ({
                             className="relative aspect-[4/3] cursor-pointer group"
                             onClick={() => onMediaClick(url)}
                           >
-                            <motion.img
-                              src={url}
-                              alt={`Post media ${index + 1}`}
-                              className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                              loading="eager"
-                              decoding="sync"
-                              onError={() => handleMediaError(url)}
-                              layoutId={`post-media-${url}`}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                            {url ? (
+                              <>
+                                <img
+                                  src={url}
+                                  alt={`Post media ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                                  loading="eager"
+                                  decoding="sync"
+                                  onError={() => handleMediaError(url)}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                              </>
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-luxury-darker rounded-lg">
+                                <AlertCircle className="w-8 h-8 text-luxury-neutral/50" />
+                              </div>
+                            )}
                           </motion.div>
                         )
                       ))}

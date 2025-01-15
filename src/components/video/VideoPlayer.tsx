@@ -27,25 +27,18 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
 
         // If it's already a full URL, use it directly
         if (url.startsWith('http')) {
-          console.log("Using direct URL:", url);
           setVideoUrl(url);
           return;
         }
 
         // Extract bucket name and file path
-        let bucketName = 'posts'; // default bucket
-        let filePath = url;
+        const parts = url.split('/');
+        const bucketName = parts[0] || 'posts'; // Default to 'posts' bucket if not specified
+        const filePath = parts.slice(1).join('/');
 
-        // Check if URL contains bucket name
-        if (url.includes('/')) {
-          const parts = url.split('/');
-          bucketName = parts[0];
-          filePath = parts.slice(1).join('/');
-        }
+        console.log("Getting video URL for bucket:", bucketName, "path:", filePath);
 
-        console.log("Getting public URL for bucket:", bucketName, "path:", filePath);
-
-        // First try to get a public URL
+        // Try to get a public URL first
         const { data: publicData } = supabase.storage
           .from(bucketName)
           .getPublicUrl(filePath);
@@ -57,13 +50,13 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
         }
 
         // If public URL fails, try signed URL
-        const { data: signedData, error } = await supabase.storage
+        const { data: signedData, error: signedError } = await supabase.storage
           .from(bucketName)
           .createSignedUrl(filePath, 3600);
 
-        if (error) {
-          console.error("Error getting video URL:", error);
-          throw error;
+        if (signedError) {
+          console.error("Error getting signed URL:", signedError);
+          throw signedError;
         }
 
         if (signedData?.signedUrl) {
@@ -86,18 +79,30 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
       }
     };
 
-    loadVideo();
-  }, [url, onError]);
+    if (url) {
+      loadVideo();
+    }
+  }, [url, onError, toast]);
 
   const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
+    if (!videoRef.current) return;
+    
+    if (isPlaying) {
+      videoRef.current.pause();
+    } else {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error("Error playing video:", error);
+          toast({
+            title: "Playback Error",
+            description: "Unable to play video. Please try again.",
+            variant: "destructive",
+          });
+        });
       }
-      setIsPlaying(!isPlaying);
     }
+    setIsPlaying(!isPlaying);
   };
 
   const toggleMute = () => {
@@ -135,7 +140,8 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
         loop
         muted={isMuted}
         onLoadedData={() => setIsLoading(false)}
-        onError={() => {
+        onError={(e) => {
+          console.error("Video error:", e);
           setHasError(true);
           onError?.();
         }}
