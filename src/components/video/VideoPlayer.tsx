@@ -45,27 +45,32 @@ export const VideoPlayer = ({
           return;
         }
 
+        // Get the bucket name from the URL (assuming format: bucket/path)
+        const bucketName = url.split('/')[0];
+        const filePath = url.split('/').slice(1).join('/');
+
         // Get the public URL from Supabase storage
         const { data } = supabase.storage
-          .from('posts')
-          .getPublicUrl(url);
+          .from(bucketName)
+          .getPublicUrl(filePath);
 
         if (data?.publicUrl) {
           console.log("Retrieved public URL:", data.publicUrl);
           setVideoUrl(data.publicUrl);
         } else {
-          console.error("No public URL found for:", url);
-          setHasError(true);
-          toast({
-            title: "Error",
-            description: "Could not load video URL",
-            variant: "destructive",
-          });
+          throw new Error("No public URL found");
         }
       } catch (error) {
         console.error('Error getting video URL:', error);
         setHasError(true);
         if (onError) onError();
+        toast({
+          title: "Error loading video",
+          description: "Could not load video. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
