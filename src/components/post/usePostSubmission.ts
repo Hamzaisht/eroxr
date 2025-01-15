@@ -10,6 +10,30 @@ export const usePostSubmission = (onSuccess: () => void) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const cleanupUserFiles = async (userId: string) => {
+    // List all files in user's folder
+    const { data: files, error: listError } = await supabase.storage
+      .from('posts')
+      .list(userId);
+
+    if (listError) {
+      console.error('Error listing files:', listError);
+      return;
+    }
+
+    if (files && files.length > 0) {
+      // Delete all files in the folder
+      const filePaths = files.map(file => `${userId}/${file.name}`);
+      const { error: deleteError } = await supabase.storage
+        .from('posts')
+        .remove(filePaths);
+
+      if (deleteError) {
+        console.error('Error deleting files:', deleteError);
+      }
+    }
+  };
+
   const handleSubmit = async (
     content: string,
     selectedFiles: FileList | null,
@@ -60,6 +84,9 @@ export const usePostSubmission = (onSuccess: () => void) => {
       let mediaUrls: string[] = [];
 
       if (selectedFiles && selectedFiles.length > 0 && isPayingCustomer) {
+        // Clean up any existing files in user's folder
+        await cleanupUserFiles(session.user.id);
+
         const files = Array.from(selectedFiles);
         mediaUrls = await Promise.all(
           files.map(async (file) => {
@@ -106,6 +133,7 @@ export const usePostSubmission = (onSuccess: () => void) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       onSuccess();
     } catch (error) {
+      console.error('Post submission error:', error);
       toast({
         title: "Error",
         description: "Failed to create post. Please try again.",
