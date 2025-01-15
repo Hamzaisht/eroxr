@@ -37,23 +37,13 @@ export const VideoPlayer = ({
     const video = videoRef.current;
     if (!video) return;
 
-    console.log("Attempting to load video from URL:", url);
-
     const handleLoadedData = () => {
-      console.log("Video loaded successfully:", url);
       setIsLoading(false);
       setHasError(false);
     };
 
     const handleError = (e: Event) => {
-      const videoElement = e.target as HTMLVideoElement;
-      console.error("Video loading error details:", {
-        error: videoElement.error,
-        networkState: videoElement.networkState,
-        readyState: videoElement.readyState,
-        url: url
-      });
-      
+      console.error("Video loading error:", e);
       setIsLoading(false);
       setHasError(true);
       if (onError) onError();
@@ -67,14 +57,13 @@ export const VideoPlayer = ({
 
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
-    video.addEventListener('abort', handleError);
 
+    // Force video reload
     video.load();
 
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
-      video.removeEventListener('abort', handleError);
     };
   }, [url, onError, toast]);
 
@@ -99,7 +88,6 @@ export const VideoPlayer = ({
         description: "You now have access to this content",
       });
 
-      // Refresh the page or update the state to show the content
       window.location.reload();
     } catch (error) {
       toast({
@@ -140,7 +128,7 @@ export const VideoPlayer = ({
 
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center bg-luxury-darker aspect-video rounded-lg ${className}`}>
+      <div className={cn("flex items-center justify-center bg-luxury-darker aspect-video rounded-lg", className)}>
         <Loader2 className="w-8 h-8 animate-spin text-luxury-primary" />
       </div>
     );
@@ -148,7 +136,7 @@ export const VideoPlayer = ({
 
   if (hasError) {
     return (
-      <div className={`flex flex-col items-center justify-center bg-luxury-darker aspect-video rounded-lg ${className}`}>
+      <div className={cn("flex flex-col items-center justify-center bg-luxury-darker aspect-video rounded-lg", className)}>
         <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
         <p className="text-sm text-luxury-neutral">Failed to load video</p>
       </div>

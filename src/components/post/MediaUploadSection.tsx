@@ -49,7 +49,8 @@ export const MediaUploadSection = ({
 
   const validateFile = async (file: File): Promise<boolean> => {
     // Check file size (50MB = 50 * 1024 * 1024 bytes)
-    if (file.size > 50 * 1024 * 1024) {
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
       toast({
         title: "File too large",
         description: "Files must be 50MB or smaller",
@@ -58,50 +59,72 @@ export const MediaUploadSection = ({
       return false;
     }
 
-    // If it's a video, check duration
+    // Validate based on file type
     if (file.type.startsWith('video/')) {
+      return validateVideo(file);
+    } else if (file.type.startsWith('image/')) {
+      return validateImage(file);
+    } else {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload only images or videos",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const validateVideo = async (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
       const video = document.createElement('video');
       video.preload = 'metadata';
 
-      return new Promise((resolve) => {
-        video.onloadedmetadata = () => {
-          window.URL.revokeObjectURL(video.src);
-          const duration = video.duration;
-          if (duration > 300) { // 5 minutes = 300 seconds
-            toast({
-              title: "Video too long",
-              description: "Videos must be 5 minutes or shorter",
-              variant: "destructive",
-            });
-            resolve(false);
-          }
-          resolve(true);
-        };
-        video.src = URL.createObjectURL(file);
-      });
-    }
-
-    // For images, check dimensions
-    if (file.type.startsWith('image/')) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          window.URL.revokeObjectURL(img.src);
-          resolve(true);
-        };
-        img.onerror = () => {
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(video.src);
+        const duration = video.duration;
+        if (duration > 300) { // 5 minutes = 300 seconds
           toast({
-            title: "Invalid image",
-            description: "Please upload a valid image file",
+            title: "Video too long",
+            description: "Videos must be 5 minutes or shorter",
             variant: "destructive",
           });
           resolve(false);
-        };
-        img.src = URL.createObjectURL(file);
-      });
-    }
+        }
+        resolve(true);
+      };
 
-    return true;
+      video.onerror = () => {
+        URL.revokeObjectURL(video.src);
+        toast({
+          title: "Invalid video",
+          description: "Please upload a valid video file",
+          variant: "destructive",
+        });
+        resolve(false);
+      };
+
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
+  const validateImage = async (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        resolve(true);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+        toast({
+          title: "Invalid image",
+          description: "Please upload a valid image file",
+          variant: "destructive",
+        });
+        resolve(false);
+      };
+      img.src = URL.createObjectURL(file);
+    });
   };
 
   const handleFileValidation = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +138,7 @@ export const MediaUploadSection = ({
       return;
     }
 
+    // Validate each file
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const isValid = await validateFile(file);
