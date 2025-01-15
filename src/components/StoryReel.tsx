@@ -9,6 +9,7 @@ import { StoryViewer } from "./story/StoryViewer";
 import { StoryNavigation } from "./story/StoryNavigation";
 import { useToast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 interface GroupedStories {
   [creatorId: string]: Story[];
@@ -18,6 +19,7 @@ export const StoryReel = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const session = useSession();
   const { toast } = useToast();
@@ -26,7 +28,10 @@ export const StoryReel = () => {
   useEffect(() => {
     const fetchStories = async () => {
       try {
+        setError(null);
         console.info('Fetching stories');
+        
+        // First get subscriptions and following
         const { data: subscriptions, error: subsError } = await supabase
           .from('creator_subscriptions')
           .select('creator_id')
@@ -41,6 +46,7 @@ export const StoryReel = () => {
 
         if (followError) throw followError;
 
+        // Combine creator IDs
         const creatorIds = [
           ...(subscriptions?.map(sub => sub.creator_id) || []),
           ...(following?.map(f => f.following_id) || [])
@@ -52,6 +58,13 @@ export const StoryReel = () => {
 
         const uniqueCreatorIds = [...new Set(creatorIds)];
 
+        if (uniqueCreatorIds.length === 0) {
+          setStories([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch stories with creator info
         const { data, error } = await supabase
           .from('stories')
           .select(`
@@ -67,9 +80,16 @@ export const StoryReel = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setStories(data || []);
+
+        // Filter out stories with missing media
+        const validStories = data?.filter(story => 
+          (story.media_url || story.video_url) && story.creator
+        ) || [];
+
+        setStories(validStories);
       } catch (error) {
         console.error('Error fetching stories:', error);
+        setError('Failed to load stories');
         toast({
           title: "Error loading stories",
           description: "Please try again later",
@@ -84,6 +104,7 @@ export const StoryReel = () => {
       fetchStories();
     }
 
+    // Set up real-time subscription
     const subscription = supabase
       .channel('stories_channel')
       .on(
@@ -107,12 +128,8 @@ export const StoryReel = () => {
 
   const handleScroll = (direction: "left" | "right") => {
     if (!containerRef.current) return;
-    
     const scrollAmount = direction === "left" ? -200 : 200;
-    containerRef.current.scrollBy({
-      left: scrollAmount,
-      behavior: "smooth"
-    });
+    containerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
   };
 
   const groupStoriesByCreator = (stories: Story[]): GroupedStories => {
@@ -130,7 +147,21 @@ export const StoryReel = () => {
   if (isLoading) {
     return (
       <div className="w-full h-32 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
+          <p className="text-sm text-luxury-neutral">Loading stories...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full h-32 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2 text-red-500">
+          <AlertCircle className="h-8 w-8" />
+          <p className="text-sm">{error}</p>
+        </div>
       </div>
     );
   }
