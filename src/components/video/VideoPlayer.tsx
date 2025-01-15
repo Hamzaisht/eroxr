@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { VideoControls } from "./VideoControls";
+import { VideoLoadingState } from "./VideoLoadingState";
+import { VideoErrorState } from "./VideoErrorState";
+import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 
 interface VideoPlayerProps {
   url: string;
@@ -14,17 +16,18 @@ interface VideoPlayerProps {
   ppvAmount?: number;
   postId?: string;
   hasPurchased?: boolean;
+  onPurchase?: () => void;
 }
 
-export const VideoPlayer = ({ 
-  url, 
-  poster, 
-  className = "", 
+export const VideoPlayer = ({
+  url,
+  poster,
+  className,
   onError,
   isPPV = false,
   ppvAmount = 0,
-  postId,
-  hasPurchased = false
+  hasPurchased = false,
+  onPurchase
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -38,6 +41,7 @@ export const VideoPlayer = ({
     if (!video) return;
 
     const handleLoadedData = () => {
+      console.log("Video loaded successfully:", url);
       setIsLoading(false);
       setHasError(false);
     };
@@ -47,60 +51,30 @@ export const VideoPlayer = ({
       setIsLoading(false);
       setHasError(true);
       if (onError) onError();
-      
       toast({
-        title: "Error loading video",
-        description: "Failed to load video content. Please try again later.",
+        title: "Video Error",
+        description: "Failed to load video. Please try again later.",
         variant: "destructive",
       });
     };
+
+    // Set video source and load
+    video.src = url;
+    video.load();
 
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
 
-    // Force video reload
-    video.load();
-
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
+      video.src = ''; // Clear source on cleanup
     };
   }, [url, onError, toast]);
 
-  const handlePurchase = async () => {
-    if (!postId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('post_purchases')
-        .insert([
-          {
-            post_id: postId,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            amount: ppvAmount
-          }
-        ]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Purchase successful",
-        description: "You now have access to this content",
-      });
-
-      window.location.reload();
-    } catch (error) {
-      toast({
-        title: "Purchase failed",
-        description: "Please try again later",
-        variant: "destructive",
-      });
-    }
-  };
-
   const togglePlay = () => {
     if (!videoRef.current || hasError) return;
-    
+
     if (isPlaying) {
       videoRef.current.pause();
     } else {
@@ -126,80 +100,62 @@ export const VideoPlayer = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className={cn("flex items-center justify-center bg-luxury-darker aspect-video rounded-lg", className)}>
-        <Loader2 className="w-8 h-8 animate-spin text-luxury-primary" />
-      </div>
-    );
-  }
-
-  if (hasError) {
-    return (
-      <div className={cn("flex flex-col items-center justify-center bg-luxury-darker aspect-video rounded-lg", className)}>
-        <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
-        <p className="text-sm text-luxury-neutral">Failed to load video</p>
-      </div>
-    );
-  }
+  const handleRetry = () => {
+    if (!videoRef.current) return;
+    setHasError(false);
+    setIsLoading(true);
+    videoRef.current.load();
+  };
 
   return (
-    <div className={cn("relative group", className)}>
-      <video
-        ref={videoRef}
-        src={url}
-        poster={poster}
-        className={cn(
-          "w-full h-full object-cover rounded-lg",
-          isPPV && !hasPurchased && "blur-xl"
-        )}
-        playsInline
-        loop
-        muted={isMuted}
-        preload="metadata"
-      />
+    <div className={cn(
+      "relative group overflow-hidden rounded-lg bg-luxury-darker/50",
+      className
+    )}>
+      {isLoading && <VideoLoadingState />}
       
-      {isPPV && !hasPurchased ? (
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-4 rounded-lg">
-          <Lock className="w-12 h-12 text-luxury-primary animate-pulse" />
-          <div className="text-center">
-            <h3 className="text-xl font-semibold text-white mb-2">Premium Content</h3>
-            <p className="text-luxury-neutral mb-4">
-              Unlock this content for ${ppvAmount}
-            </p>
-            <Button
-              onClick={handlePurchase}
-              className="bg-luxury-primary hover:bg-luxury-primary/90"
-            >
-              Purchase Access
-            </Button>
-          </div>
-        </div>
+      {hasError ? (
+        <VideoErrorState onRetry={handleRetry} />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <div className="flex gap-4">
-            <button
-              onClick={togglePlay}
-              className="p-3 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
-            >
-              {isPlaying ? (
-                <Pause className="w-6 h-6 text-white" />
-              ) : (
-                <Play className="w-6 h-6 text-white" />
-              )}
-            </button>
-            <button
-              onClick={toggleMute}
-              className="p-3 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
-            >
-              {isMuted ? (
-                <VolumeX className="w-6 h-6 text-white" />
-              ) : (
-                <Volume2 className="w-6 h-6 text-white" />
-              )}
-            </button>
-          </div>
-        </div>
+        <>
+          <video
+            ref={videoRef}
+            poster={poster}
+            className={cn(
+              "w-full h-full object-cover",
+              isPPV && !hasPurchased && "blur-xl"
+            )}
+            playsInline
+            loop
+            muted={isMuted}
+            preload="metadata"
+          />
+          
+          {isPPV && !hasPurchased ? (
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-4 rounded-lg">
+              <Lock className="w-12 h-12 text-luxury-primary animate-pulse" />
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-white mb-2">Premium Content</h3>
+                <p className="text-luxury-neutral mb-4">
+                  Unlock this content for ${ppvAmount}
+                </p>
+                <Button
+                  onClick={onPurchase}
+                  className="bg-luxury-primary hover:bg-luxury-primary/90"
+                >
+                  Purchase Access
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <VideoControls
+              isPlaying={isPlaying}
+              isMuted={isMuted}
+              onPlayPause={togglePlay}
+              onMuteToggle={toggleMute}
+            />
+          )}
+        </>
       )}
     </div>
   );
