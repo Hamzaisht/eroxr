@@ -20,6 +20,8 @@ export const VideoPlayer = ({ url, poster, className, onError }: VideoPlayerProp
     const video = videoRef.current;
     if (!video) return;
 
+    console.log('Loading video URL:', url);
+
     const handleLoadedData = () => {
       setIsLoaded(true);
       console.log("Video loaded successfully:", url);
@@ -32,6 +34,11 @@ export const VideoPlayer = ({ url, poster, className, onError }: VideoPlayerProp
 
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("error", handleError);
+
+    // Reset video state when URL changes
+    setIsPlaying(false);
+    setIsLoaded(false);
+    video.load();
 
     return () => {
       video.removeEventListener("loadeddata", handleLoadedData);

@@ -25,25 +25,30 @@ export const PostContent = ({
   const { toast } = useToast();
   const hasMedia = mediaUrls.length > 0 || videoUrls.length > 0;
 
-  const getPublicUrl = async (url: string) => {
-    try {
-      // Extract bucket and path from URL
-      const urlParts = url.split('/storage/v1/object/public/');
-      if (urlParts.length !== 2) return url;
-      
-      const [bucket, path] = urlParts[1].split('/', 1);
-      const { data } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(path);
-      
-      return data.publicUrl;
-    } catch (error) {
-      console.error('Error getting public URL:', error);
+  const getPublicUrl = (url: string) => {
+    if (!url) return '';
+    
+    // If it's already a public URL, return it
+    if (url.startsWith('http')) {
       return url;
     }
+
+    // Get the bucket name from the path
+    const pathParts = url.split('/');
+    const bucketName = pathParts[0];
+    const filePath = pathParts.slice(1).join('/');
+
+    // Get public URL using Supabase storage
+    const { data } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
+    console.log('Generated public URL:', data.publicUrl);
+    return data.publicUrl;
   };
 
   const handleMediaError = (url: string) => {
+    console.error('Media load error for URL:', url);
     setLoadError(prev => ({ ...prev, [url]: true }));
     toast({
       title: "Error loading media",
@@ -74,8 +79,9 @@ export const PostContent = ({
                   {/* Videos */}
                   {videoUrls && videoUrls.length > 0 && (
                     <div className="space-y-4">
-                      {videoUrls.map((url, index) => (
-                        !loadError[url] && (
+                      {videoUrls.map((url, index) => {
+                        const publicUrl = getPublicUrl(url);
+                        return !loadError[url] && (
                           <motion.div
                             key={`video-${index}`}
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -84,43 +90,43 @@ export const PostContent = ({
                             className="relative aspect-video w-full"
                           >
                             <VideoPlayer
-                              key={url} // Add key to force remount on URL change
-                              url={url}
-                              poster={mediaUrls?.[0]}
+                              url={publicUrl}
+                              poster={mediaUrls?.[0] ? getPublicUrl(mediaUrls[0]) : undefined}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
                             />
                           </motion.div>
-                        )
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
                   {/* Images */}
                   {mediaUrls && mediaUrls.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {mediaUrls.map((url, index) => (
-                        !loadError[url] && (
+                      {mediaUrls.map((url, index) => {
+                        const publicUrl = getPublicUrl(url);
+                        return !loadError[url] && (
                           <motion.div
                             key={`image-${index}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="relative aspect-[4/3] cursor-pointer group"
-                            onClick={() => onMediaClick(url)}
+                            onClick={() => onMediaClick(publicUrl)}
                           >
                             <img
-                              src={url}
+                              src={publicUrl}
                               alt={`Post media ${index + 1}`}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                              loading="lazy"
+                              loading="eager"
                               crossOrigin="anonymous"
                               onError={() => handleMediaError(url)}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </motion.div>
-                        )
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
