@@ -33,6 +33,7 @@ export const VideoPlayer = ({
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
@@ -41,23 +42,50 @@ export const VideoPlayer = ({
     if (!video) return;
 
     const handleLoadedData = () => {
-      console.log("Video loaded successfully:", url);
+      console.info("Video loaded successfully:", {
+        url,
+        duration: video.duration,
+        readyState: video.readyState
+      });
       setIsLoading(false);
       setHasError(false);
+      setErrorDetails("");
     };
 
     const handleError = (e: Event) => {
-      console.error("Video loading error:", e);
+      const videoElement = e.target as HTMLVideoElement;
+      const error = videoElement.error;
+      const errorMessage = error ? 
+        `Code: ${error.code}, Message: ${error.message}` : 
+        'Unknown error';
+      
+      console.error("Video loading error:", {
+        url,
+        error: errorMessage,
+        networkState: videoElement.networkState,
+        readyState: videoElement.readyState
+      });
+      
+      setErrorDetails(errorMessage);
       setIsLoading(false);
       setHasError(true);
       if (onError) onError();
+      
       toast({
         title: "Video Error",
-        description: "Failed to load video. Please try again later.",
+        description: `Failed to load video: ${errorMessage}`,
         variant: "destructive",
       });
     };
 
+    // Reset states when URL changes
+    setIsLoading(true);
+    setHasError(false);
+    setErrorDetails("");
+
+    // Add crossOrigin attribute
+    video.crossOrigin = "anonymous";
+    
     // Set video source and load
     video.src = url;
     video.load();
@@ -81,7 +109,13 @@ export const VideoPlayer = ({
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(error => {
-          console.error("Error playing video:", error);
+          console.error("Error playing video:", {
+            url,
+            error: error.message,
+            networkState: videoRef.current?.networkState,
+            readyState: videoRef.current?.readyState
+          });
+          setHasError(true);
           toast({
             title: "Playback Error",
             description: "Unable to play video. Please try again.",
@@ -102,8 +136,10 @@ export const VideoPlayer = ({
 
   const handleRetry = () => {
     if (!videoRef.current) return;
+    console.info("Retrying video load:", url);
     setHasError(false);
     setIsLoading(true);
+    setErrorDetails("");
     videoRef.current.load();
   };
 
@@ -115,7 +151,10 @@ export const VideoPlayer = ({
       {isLoading && <VideoLoadingState />}
       
       {hasError ? (
-        <VideoErrorState onRetry={handleRetry} />
+        <VideoErrorState 
+          onRetry={handleRetry} 
+          errorDetails={errorDetails}
+        />
       ) : (
         <>
           <video
@@ -129,6 +168,7 @@ export const VideoPlayer = ({
             loop
             muted={isMuted}
             preload="metadata"
+            crossOrigin="anonymous"
           />
           
           {isPPV && !hasPurchased ? (
