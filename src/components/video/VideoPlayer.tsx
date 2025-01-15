@@ -39,26 +39,40 @@ export const VideoPlayer = ({
         setIsLoading(true);
         setHasError(false);
 
-        // If it's already a public URL, use it directly
+        // If it's already a full URL, use it directly
         if (url.startsWith('http')) {
+          console.log("Using direct URL:", url);
           setVideoUrl(url);
           return;
         }
 
-        // Get the bucket name from the URL (assuming format: bucket/path)
-        const bucketName = url.split('/')[0];
-        const filePath = url.split('/').slice(1).join('/');
+        // If it's a Supabase storage path, get the public URL
+        // First, determine if it's a path with bucket prefix
+        let bucketName = 'posts'; // default bucket
+        let filePath = url;
 
-        // Get the public URL from Supabase storage
-        const { data } = supabase.storage
+        if (url.includes('/')) {
+          const parts = url.split('/');
+          bucketName = parts[0];
+          filePath = parts.slice(1).join('/');
+        }
+
+        console.log("Getting public URL for bucket:", bucketName, "path:", filePath);
+
+        const { data, error } = await supabase.storage
           .from(bucketName)
-          .getPublicUrl(filePath);
+          .createSignedUrl(filePath, 3600); // 1 hour expiry
 
-        if (data?.publicUrl) {
-          console.log("Retrieved public URL:", data.publicUrl);
-          setVideoUrl(data.publicUrl);
+        if (error) {
+          console.error("Signed URL error:", error);
+          throw error;
+        }
+
+        if (data?.signedUrl) {
+          console.log("Retrieved signed URL:", data.signedUrl);
+          setVideoUrl(data.signedUrl);
         } else {
-          throw new Error("No public URL found");
+          throw new Error("No signed URL generated");
         }
       } catch (error) {
         console.error('Error getting video URL:', error);
