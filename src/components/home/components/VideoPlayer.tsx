@@ -6,9 +6,11 @@ interface VideoPlayerProps {
   url: string;
   poster?: string;
   className?: string;
+  index?: number;
+  onIndexChange?: (index: number) => void;
 }
 
-export const VideoPlayer = ({ url, poster, className }: VideoPlayerProps) => {
+export const VideoPlayer = ({ url, poster, className, index, onIndexChange }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -19,6 +21,10 @@ export const VideoPlayer = ({ url, poster, className }: VideoPlayerProps) => {
         videoRef.current.pause();
       } else {
         videoRef.current.play();
+        // Notify parent component about current video index when playing starts
+        if (typeof index !== 'undefined' && onIndexChange) {
+          onIndexChange(index);
+        }
       }
       setIsPlaying(!isPlaying);
     }
