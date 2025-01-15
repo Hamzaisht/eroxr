@@ -1,13 +1,15 @@
-export const DividerWithText = ({ text }: { text: string }) => {
+interface DividerWithTextProps {
+  text: string;
+}
+
+export const DividerWithText = ({ text }: DividerWithTextProps) => {
   return (
     <div className="relative">
       <div className="absolute inset-0 flex items-center">
-        <span className="w-full border-t border-luxury-primary/20" />
+        <div className="w-full border-t border-luxury-primary/20"></div>
       </div>
-      <div className="relative flex justify-center text-xs uppercase">
-        <span className="bg-luxury-dark px-2 text-luxury-neutral/60">
-          {text}
-        </span>
+      <div className="relative flex justify-center text-sm">
+        <span className="px-4 bg-transparent text-luxury-neutral/80">{text}</span>
       </div>
     </div>
   );

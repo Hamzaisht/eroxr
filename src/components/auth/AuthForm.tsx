@@ -2,6 +2,7 @@ import { useState } from "react";
 import { SignupForm } from "./signup/SignupForm";
 import { EmailLogin } from "./EmailLogin";
 import { motion, AnimatePresence } from "framer-motion";
+import { Card } from "@/components/ui/card";
 
 export const AuthForm = () => {
   const [isSignup, setIsSignup] = useState(false);
@@ -19,13 +20,14 @@ export const AuthForm = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
-          className="glass-effect rounded-xl p-8 border border-luxury-primary/10"
         >
-          {isSignup ? (
-            <SignupForm onToggleMode={toggleMode} />
-          ) : (
-            <EmailLogin onToggleMode={toggleMode} />
-          )}
+          <Card className="backdrop-blur-xl bg-white/5 p-8 border-luxury-primary/20">
+            {isSignup ? (
+              <SignupForm onToggleMode={toggleMode} />
+            ) : (
+              <EmailLogin onToggleMode={toggleMode} />
+            )}
+          </Card>
         </motion.div>
       </AnimatePresence>
     </div>

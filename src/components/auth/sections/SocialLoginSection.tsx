@@ -19,7 +19,7 @@ export const SocialLoginSection = ({
       <Button 
         variant="outline" 
         onClick={onGoogleLogin}
-        className="w-full h-12 bg-white/5 hover:bg-white/10 border-luxury-primary/20 group"
+        className="w-full h-12 bg-white/5 hover:bg-white/10 border-luxury-primary/20 group relative overflow-hidden"
         disabled={isLoading}
       >
         <div className="w-5 h-5 mr-2 text-[#4285F4]">
@@ -31,24 +31,26 @@ export const SocialLoginSection = ({
           </svg>
         </div>
         <span className="flex-1">Continue with Google</span>
+        <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
         <LogIn className="w-5 h-5 transition-transform group-hover:translate-x-1 opacity-0 group-hover:opacity-100" />
       </Button>
 
       <Button 
         variant="outline"
         onClick={onTwitterLogin}
-        className="w-full h-12 bg-white/5 hover:bg-white/10 border-luxury-primary/20 group"
+        className="w-full h-12 bg-white/5 hover:bg-white/10 border-luxury-primary/20 group relative overflow-hidden"
         disabled={isLoading}
       >
         <span className="text-xl font-bold mr-2">X</span>
         <span className="flex-1">Continue with Twitter</span>
+        <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
         <LogIn className="w-5 h-5 transition-transform group-hover:translate-x-1 opacity-0 group-hover:opacity-100" />
       </Button>
 
       <Button 
         variant="outline"
         onClick={onGithubLogin}
-        className="w-full h-12 bg-white/5 hover:bg-white/10 border-luxury-primary/20 group"
+        className="w-full h-12 bg-white/5 hover:bg-white/10 border-luxury-primary/20 group relative overflow-hidden"
         disabled={isLoading}
       >
         <div className="w-5 h-5 mr-2">
@@ -57,6 +59,7 @@ export const SocialLoginSection = ({
           </svg>
         </div>
         <span className="flex-1">Continue with GitHub</span>
+        <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
         <LogIn className="w-5 h-5 transition-transform group-hover:translate-x-1 opacity-0 group-hover:opacity-100" />
       </Button>
     </div>
