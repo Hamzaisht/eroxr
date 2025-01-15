@@ -11,17 +11,19 @@ interface VideoPlayerProps {
   index?: number;
   onIndexChange?: (index: number) => void;
   onError?: () => void;
+  autoPlay?: boolean;
 }
 
 export const VideoPlayer = ({ 
   url, 
   poster, 
-  className, 
-  index, 
+  className,
+  index,
   onIndexChange,
-  onError 
+  onError,
+  autoPlay = false
 }: VideoPlayerProps) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -36,6 +38,9 @@ export const VideoPlayer = ({
       console.log("Video loaded successfully:", url);
       setIsLoading(false);
       setHasError(false);
+      if (autoPlay) {
+        video.play().catch(console.error);
+      }
     };
 
     const handleError = (e: Event) => {
@@ -58,7 +63,7 @@ export const VideoPlayer = ({
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
     };
-  }, [url, onError, toast]);
+  }, [url, onError, toast, autoPlay]);
 
   const togglePlay = () => {
     if (!videoRef.current || hasError) return;
@@ -72,6 +77,11 @@ export const VideoPlayer = ({
           console.error("Error playing video:", error);
           setHasError(true);
           if (onError) onError();
+          toast({
+            title: "Playback Error",
+            description: "Unable to play video. Please try again.",
+            variant: "destructive",
+          });
         });
       }
       if (typeof index !== 'undefined' && onIndexChange) {

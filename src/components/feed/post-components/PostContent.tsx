@@ -2,7 +2,6 @@ import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoPlayer } from "@/components/home/components/VideoPlayer";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
 interface PostContentProps {
@@ -49,48 +48,57 @@ export const PostContent = ({
           <div className="relative w-full overflow-hidden rounded-xl bg-luxury-darker/50">
             <AnimatePresence mode="wait">
               <div className="overflow-x-auto scrollbar-hide w-full">
-                <div className="flex gap-2 p-2">
+                <div className="flex flex-col gap-4 p-2">
                   {/* Videos */}
-                  {videoUrls.map((url, index) => (
-                    <motion.div
-                      key={`video-${url}`}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="relative min-w-[300px] max-w-[500px] aspect-video"
-                    >
-                      <VideoPlayer
-                        url={url}
-                        className="w-full h-full rounded-lg overflow-hidden"
-                        onError={() => handleMediaError(url)}
-                      />
-                    </motion.div>
-                  ))}
+                  {videoUrls && videoUrls.length > 0 && (
+                    <div className="space-y-4">
+                      {videoUrls.map((url, index) => (
+                        <motion.div
+                          key={`video-${url}`}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="relative aspect-video w-full"
+                        >
+                          <VideoPlayer
+                            url={url}
+                            poster={mediaUrls?.[0]}
+                            className="w-full h-full rounded-lg overflow-hidden"
+                            onError={() => handleMediaError(url)}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Images */}
-                  {mediaUrls.map((url, index) => (
-                    !loadError[url] && (
-                      <motion.div
-                        key={`image-${url}`}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="relative min-w-[300px] max-w-[500px] aspect-[4/3] cursor-pointer group"
-                        onClick={() => onMediaClick(url)}
-                      >
-                        <motion.img
-                          src={url}
-                          alt={`Post media ${index + 1}`}
-                          className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                          loading="eager"
-                          decoding="sync"
-                          onError={() => handleMediaError(url)}
-                          layoutId={`post-media-${url}`}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
-                      </motion.div>
-                    )
-                  ))}
+                  {mediaUrls && mediaUrls.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {mediaUrls.map((url, index) => (
+                        !loadError[url] && (
+                          <motion.div
+                            key={`image-${url}`}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="relative aspect-[4/3] cursor-pointer group"
+                            onClick={() => onMediaClick(url)}
+                          >
+                            <motion.img
+                              src={url}
+                              alt={`Post media ${index + 1}`}
+                              className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                              loading="eager"
+                              decoding="sync"
+                              onError={() => handleMediaError(url)}
+                              layoutId={`post-media-${url}`}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                          </motion.div>
+                        )
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </AnimatePresence>
