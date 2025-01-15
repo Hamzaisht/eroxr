@@ -20,7 +20,10 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
     const handleLoad = () => {
       setIsLoading(false);
       setIsPlaying(true);
-      video.play().catch(() => setIsPlaying(false));
+      video.play().catch((error) => {
+        console.error('Video playback error:', error);
+        setIsPlaying(false);
+      });
     };
 
     const handleError = (error: any) => {
@@ -31,10 +34,17 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
 
     video.addEventListener('loadeddata', handleLoad);
     video.addEventListener('error', handleError);
+    video.addEventListener('pause', () => setIsPlaying(false));
+    video.addEventListener('play', () => setIsPlaying(true));
+
+    // Force video reload
+    video.load();
 
     return () => {
       video.removeEventListener('loadeddata', handleLoad);
       video.removeEventListener('error', handleError);
+      video.removeEventListener('pause', () => setIsPlaying(false));
+      video.removeEventListener('play', () => setIsPlaying(true));
     };
   }, [videoUrl]);
 
@@ -67,7 +77,7 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
         className={cn(className, isLoading ? "hidden" : "block")}
         initial={{ opacity: 0 }}
         animate={{ opacity: isPlaying ? 1 : 0 }}
-        preload="metadata"
+        preload="auto"
         playsInline
         muted
         loop

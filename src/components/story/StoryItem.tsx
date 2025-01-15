@@ -63,11 +63,15 @@ export const StoryItem = ({ story, onClick, isStacked = false, stackCount = 0 }:
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className={cn(
-            "relative w-20 aspect-square rounded-full overflow-hidden cursor-pointer",
+            "relative w-24 h-24 overflow-hidden cursor-pointer",
+            "clip-path-hexagon transform hover:rotate-0 transition-transform duration-300",
             "ring-2 ring-offset-2 ring-offset-luxury-dark",
             isStacked ? "ring-luxury-primary" : "ring-white/20",
             "group-hover:ring-luxury-accent transition-all duration-300"
           )}
+          style={{
+            clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+          }}
         >
           {isLoading ? (
             <div className="w-full h-full flex items-center justify-center bg-luxury-dark/60 backdrop-blur-sm">
