@@ -12,6 +12,9 @@ interface MediaUploadProps {
   selectedFiles: FileList | null;
 }
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB in bytes
+const MAX_VIDEO_DURATION = 300; // 5 minutes in seconds
+
 export const MediaUpload = ({
   onFileSelect,
   isPayingCustomer,
@@ -21,24 +24,32 @@ export const MediaUpload = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   const validateFile = async (file: File) => {
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      throw new Error("File size must be less than 50MB");
+    // Check file size first
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`File size must be less than ${formatFileSize(MAX_FILE_SIZE)} (current size: ${formatFileSize(file.size)})`);
     }
 
     if (file.type.startsWith('video/')) {
       const isValidVideo = await validateVideoFormat(file);
       if (!isValidVideo) {
-        throw new Error("Invalid video format");
+        throw new Error("Invalid video format. Please upload MP4 or WebM files only.");
       }
 
       const duration = await getVideoDuration(file);
-      if (duration > 300) { // 5 minutes
-        throw new Error("Video must be shorter than 5 minutes");
+      if (duration > MAX_VIDEO_DURATION) {
+        throw new Error(`Video must be shorter than ${MAX_VIDEO_DURATION / 60} minutes (current duration: ${Math.round(duration / 60)} minutes)`);
       }
     } else if (!file.type.startsWith('image/')) {
-      throw new Error("File must be an image or video");
+      throw new Error("File must be an image (JPG, PNG, GIF) or video (MP4, WebM)");
     }
 
     return true;
@@ -61,9 +72,21 @@ export const MediaUpload = ({
     setUploadProgress(0);
 
     try {
-      // Validate each file
+      // Validate each file before proceeding
       for (let i = 0; i < files.length; i++) {
-        await validateFile(files[i]);
+        const file = files[i];
+        try {
+          await validateFile(file);
+        } catch (error: any) {
+          toast({
+            title: `Invalid file: ${file.name}`,
+            description: error.message,
+            variant: "destructive",
+          });
+          e.target.value = '';
+          setIsUploading(false);
+          return;
+        }
       }
 
       // Test storage access
@@ -131,6 +154,9 @@ export const MediaUpload = ({
             <div className="flex flex-col items-center gap-2">
               <ImagePlus className="h-6 w-6" />
               <span>Upload Media</span>
+              <span className="text-xs text-muted-foreground">
+                Max file size: {formatFileSize(MAX_FILE_SIZE)}
+              </span>
             </div>
           )}
         </Button>
@@ -143,7 +169,7 @@ export const MediaUpload = ({
         )}
 
         <p className="text-sm text-muted-foreground">
-          Supported formats: Images (JPG, PNG, GIF) and Videos (MP4, WebM) up to 50MB
+          Supported formats: Images (JPG, PNG, GIF) and Videos (MP4, WebM) up to {formatFileSize(MAX_FILE_SIZE)}
         </p>
       </div>
     </div>

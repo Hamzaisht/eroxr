@@ -871,6 +871,9 @@ export type Database = {
           share_count: number | null
           tags: string[] | null
           updated_at: string
+          video_duration: number | null
+          video_processing_status: string | null
+          video_thumbnail_url: string | null
           video_urls: string[] | null
           view_count: number | null
           visibility: string | null
@@ -894,6 +897,9 @@ export type Database = {
           share_count?: number | null
           tags?: string[] | null
           updated_at?: string
+          video_duration?: number | null
+          video_processing_status?: string | null
+          video_thumbnail_url?: string | null
           video_urls?: string[] | null
           view_count?: number | null
           visibility?: string | null
@@ -917,6 +923,9 @@ export type Database = {
           share_count?: number | null
           tags?: string[] | null
           updated_at?: string
+          video_duration?: number | null
+          video_processing_status?: string | null
+          video_thumbnail_url?: string | null
           video_urls?: string[] | null
           view_count?: number | null
           visibility?: string | null
@@ -1242,6 +1251,44 @@ export type Database = {
             columns: ["subscription_tier_id"]
             isOneToOne: false
             referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_processing_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          original_url: string
+          post_id: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          original_url: string
+          post_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          original_url?: string
+          post_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_processing_queue_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]
