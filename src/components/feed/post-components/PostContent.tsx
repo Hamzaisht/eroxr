@@ -1,8 +1,9 @@
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { VideoPlayer } from "@/components/home/components/VideoPlayer";
+import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PostContentProps {
   content: string;
@@ -22,6 +23,27 @@ export const PostContent = ({
   const [loadError, setLoadError] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const hasMedia = mediaUrls.length > 0 || videoUrls.length > 0;
+
+  const getPublicUrl = async (url: string) => {
+    if (!url) return null;
+    
+    try {
+      // If it's already a public URL, return it
+      if (url.startsWith('http')) {
+        return url;
+      }
+      
+      // Otherwise get the public URL from storage
+      const { data: { publicUrl } } = supabase.storage
+        .from('posts')
+        .getPublicUrl(url);
+        
+      return publicUrl;
+    } catch (error) {
+      console.error('Error getting public URL:', error);
+      return null;
+    }
+  };
 
   const handleMediaError = (url: string) => {
     setLoadError(prev => ({ ...prev, [url]: true }));
@@ -53,20 +75,22 @@ export const PostContent = ({
                   {videoUrls && videoUrls.length > 0 && (
                     <div className="space-y-4">
                       {videoUrls.map((url, index) => (
-                        <motion.div
-                          key={`video-${url}`}
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          className="relative aspect-video w-full"
-                        >
-                          <VideoPlayer
-                            url={url}
-                            poster={mediaUrls?.[0]}
-                            className="w-full h-full rounded-lg overflow-hidden"
-                            onError={() => handleMediaError(url)}
-                          />
-                        </motion.div>
+                        !loadError[url] && (
+                          <motion.div
+                            key={`video-${url}`}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="relative aspect-video w-full"
+                          >
+                            <VideoPlayer
+                              url={url}
+                              poster={mediaUrls?.[0]}
+                              className="w-full h-full rounded-lg overflow-hidden"
+                              onError={() => handleMediaError(url)}
+                            />
+                          </motion.div>
+                        )
                       ))}
                     </div>
                   )}
