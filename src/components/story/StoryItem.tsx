@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
 import { VideoPreview } from "./VideoPreview";
+import { cn } from "@/lib/utils";
 
 interface StoryItemProps {
   story: Story;
@@ -12,30 +13,66 @@ interface StoryItemProps {
 
 export const StoryItem = ({ story, onClick, isStacked = false, stackCount = 0 }: StoryItemProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (story.video_url) {
-      const video = document.createElement('video');
-      video.src = story.video_url;
-      video.onloadeddata = () => setIsLoading(false);
-    } else {
-      const img = new Image();
-      img.src = story.media_url || '';
-      img.onload = () => setIsLoading(false);
-    }
+    const loadMedia = async () => {
+      try {
+        setIsLoading(true);
+        setHasError(false);
+        
+        if (story.video_url) {
+          const video = document.createElement('video');
+          video.src = story.video_url;
+          await new Promise((resolve, reject) => {
+            video.onloadeddata = resolve;
+            video.onerror = reject;
+          });
+        } else if (story.media_url) {
+          const img = new Image();
+          img.src = story.media_url;
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+        }
+      } catch (error) {
+        console.error('Media loading error:', error);
+        setHasError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMedia();
   }, [story.video_url, story.media_url]);
 
   return (
-    <div className="relative" onClick={onClick}>
-      <motion.div
-        className={`relative w-20 rounded-full border-2 ${
-          isStacked ? 'border-luxury-primary' : 'border-luxury-neutral/20'
-        } cursor-pointer overflow-hidden group`}
-      >
-        <div className="relative aspect-square">
+    <motion.div 
+      className="relative"
+      whileHover={{ scale: 1.05 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClick}
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={story.id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className={cn(
+            "relative w-20 aspect-square rounded-full overflow-hidden cursor-pointer",
+            "ring-2 ring-offset-2 ring-offset-background",
+            isStacked ? "ring-primary" : "ring-neutral-400/20",
+          )}
+        >
           {isLoading ? (
-            <div className="w-full h-full flex items-center justify-center bg-luxury-dark/20">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-luxury-primary"></div>
+            <div className="w-full h-full flex items-center justify-center bg-black/20 backdrop-blur-sm">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : hasError ? (
+            <div className="w-full h-full flex items-center justify-center bg-black/20">
+              <span className="text-xs text-red-500">Error</span>
             </div>
           ) : (
             story.video_url ? (
@@ -51,20 +88,30 @@ export const StoryItem = ({ story, onClick, isStacked = false, stackCount = 0 }:
               />
             )
           )}
-        </div>
-      </motion.div>
 
-      {stackCount > 0 && (
-        <div className="absolute -right-1 -top-1 bg-luxury-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-          {stackCount}
-        </div>
-      )}
+          {/* Stacked indicator */}
+          {stackCount > 0 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -right-1 -top-1 bg-primary text-background text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center shadow-lg"
+            >
+              {stackCount}
+            </motion.div>
+          )}
+        </motion.div>
+      </AnimatePresence>
 
+      {/* Username */}
       {story.creator && (
-        <p className="text-xs text-center mt-2 text-luxury-neutral/80 truncate max-w-[80px]">
+        <motion.p 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xs text-center mt-2 text-neutral-400 font-medium truncate max-w-[80px]"
+        >
           {story.creator.username || 'Anonymous'}
-        </p>
+        </motion.p>
       )}
-    </div>
+    </motion.div>
   );
 };
