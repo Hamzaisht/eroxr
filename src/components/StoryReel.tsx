@@ -116,14 +116,20 @@ export const StoryReel = () => {
         {session && <StoryUploader />}
         
         {Object.entries(groupedStories).map(([creatorId, creatorStories]) => (
-          <StoryItem
-            key={creatorId}
-            story={creatorStories[0]}
-            onClick={() => {
-              const index = stories.findIndex(s => s.id === creatorStories[0].id);
-              setSelectedStoryIndex(index);
-            }}
-          />
+          <div key={creatorId} className="flex items-center">
+            {creatorStories.map((story, index) => (
+              <StoryItem
+                key={story.id}
+                story={story}
+                isStacked={index > 0}
+                stackCount={index === 0 ? creatorStories.length - 1 : 0}
+                onClick={() => {
+                  const index = stories.findIndex(s => s.id === story.id);
+                  setSelectedStoryIndex(index);
+                }}
+              />
+            ))}
+          </div>
         ))}
       </div>
 

@@ -23,7 +23,7 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
       preload="metadata"
       playsInline
       muted
-      poster={videoUrl + '?x-oss-process=video/snapshot,t_1000,m_fast'}
+      poster={`${videoUrl}?x-oss-process=video/snapshot,t_1000,m_fast`}
     />
   );
 };
