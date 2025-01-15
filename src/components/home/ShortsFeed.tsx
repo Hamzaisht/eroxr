@@ -86,7 +86,7 @@ export const ShortsFeed = () => {
             >
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
               <VideoPlayer
-                src={short.video_urls?.[0] ?? ""}
+                url={short.video_urls?.[0] ?? ""}
                 index={index}
                 onIndexChange={setCurrentVideoIndex}
                 className="h-full w-full object-cover"
