@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
 import { VideoPreview } from "./VideoPreview";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface StoryItemProps {
   story: Story;
@@ -14,6 +15,7 @@ interface StoryItemProps {
 export const StoryItem = ({ story, onClick, isStacked = false, stackCount = 0 }: StoryItemProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     const loadMedia = async () => {
@@ -49,7 +51,7 @@ export const StoryItem = ({ story, onClick, isStacked = false, stackCount = 0 }:
 
   return (
     <motion.div 
-      className="relative"
+      className="relative group"
       whileHover={{ scale: 1.05 }}
       transition={{ duration: 0.2 }}
       onClick={onClick}
@@ -62,16 +64,17 @@ export const StoryItem = ({ story, onClick, isStacked = false, stackCount = 0 }:
           exit={{ opacity: 0 }}
           className={cn(
             "relative w-20 aspect-square rounded-full overflow-hidden cursor-pointer",
-            "ring-2 ring-offset-2 ring-offset-background",
-            isStacked ? "ring-primary" : "ring-neutral-400/20",
+            "ring-2 ring-offset-2 ring-offset-luxury-dark",
+            isStacked ? "ring-luxury-primary" : "ring-white/20",
+            "group-hover:ring-luxury-accent transition-all duration-300"
           )}
         >
           {isLoading ? (
-            <div className="w-full h-full flex items-center justify-center bg-black/20 backdrop-blur-sm">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <div className="w-full h-full flex items-center justify-center bg-luxury-dark/60 backdrop-blur-sm">
+              <div className="w-6 h-6 border-2 border-luxury-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : hasError ? (
-            <div className="w-full h-full flex items-center justify-center bg-black/20">
+            <div className="w-full h-full flex items-center justify-center bg-luxury-dark/60">
               <span className="text-xs text-red-500">Error</span>
             </div>
           ) : (
@@ -89,28 +92,34 @@ export const StoryItem = ({ story, onClick, isStacked = false, stackCount = 0 }:
             )
           )}
 
-          {/* Stacked indicator */}
           {stackCount > 0 && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute -right-1 -top-1 bg-primary text-background text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center shadow-lg"
+              className="absolute -right-1 -top-1 bg-luxury-primary text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center shadow-lg"
             >
               {stackCount}
             </motion.div>
           )}
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          />
         </motion.div>
       </AnimatePresence>
 
-      {/* Username */}
       {story.creator && (
-        <motion.p 
+        <motion.div 
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-center mt-2 text-neutral-400 font-medium truncate max-w-[80px]"
+          className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-full"
         >
-          {story.creator.username || 'Anonymous'}
-        </motion.p>
+          <p className="text-xs text-center text-white/80 font-medium truncate max-w-[80px] mx-auto">
+            {story.creator.username || 'Anonymous'}
+          </p>
+        </motion.div>
       )}
     </motion.div>
   );

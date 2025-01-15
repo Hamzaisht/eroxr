@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
 import { supabase } from "@/integrations/supabase/client";
 import { StoryUploader } from "./story/StoryUploader";
@@ -8,6 +8,7 @@ import { StoryItem } from "./story/StoryItem";
 import { StoryViewer } from "./story/StoryViewer";
 import { StoryNavigation } from "./story/StoryNavigation";
 import { useToast } from "@/hooks/use-toast";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface GroupedStories {
   [creatorId: string]: Story[];
@@ -20,6 +21,7 @@ export const StoryReel = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const session = useSession();
   const { toast } = useToast();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     const fetchStories = async () => {
@@ -32,7 +34,6 @@ export const StoryReel = () => {
 
         if (subsError) throw subsError;
 
-        // Get followed creators
         const { data: following, error: followError } = await supabase
           .from('followers')
           .select('following_id')
@@ -40,18 +41,15 @@ export const StoryReel = () => {
 
         if (followError) throw followError;
 
-        // Combine subscribed and followed creator IDs
         const creatorIds = [
           ...(subscriptions?.map(sub => sub.creator_id) || []),
           ...(following?.map(f => f.following_id) || [])
         ];
 
-        // Add current user's ID to see their own stories
         if (session?.user?.id) {
           creatorIds.push(session.user.id);
         }
 
-        // Remove duplicates
         const uniqueCreatorIds = [...new Set(creatorIds)];
 
         const { data, error } = await supabase
@@ -86,8 +84,6 @@ export const StoryReel = () => {
       fetchStories();
     }
 
-    // Set up real-time subscription for stories
-    console.info('Setting up real-time subscription for stories');
     const subscription = supabase
       .channel('stories_channel')
       .on(
@@ -133,31 +129,42 @@ export const StoryReel = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full h-40 flex items-center justify-center">
+      <div className="w-full h-32 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="relative">
+    <div className="relative w-full bg-luxury-dark/40 backdrop-blur-lg rounded-xl p-4 mb-6">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-white/90">Stories</h2>
+      </div>
+      
       <div
         ref={containerRef}
-        className="flex gap-4 overflow-x-auto pb-4 px-4 scrollbar-hide relative"
+        className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide relative"
       >
-        {session && <StoryUploader />}
-        
-        {Object.entries(groupedStories).map(([creatorId, creatorStories]) => (
-          <motion.div 
-            key={creatorId} 
-            className="relative"
-            whileHover={{ scale: 1.02 }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+        {session && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
           >
+            <StoryUploader />
+          </motion.div>
+        )}
+        
+        {Object.entries(groupedStories).map(([creatorId, creatorStories], index) => (
+          <motion.div 
+            key={creatorId}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+            className="relative"
+            whileHover={{ scale: 1.05 }}
+          >
             <StoryItem
-              key={creatorStories[0].id}
               story={creatorStories[0]}
               isStacked={creatorStories.length > 1}
               stackCount={creatorStories.length - 1}
@@ -168,20 +175,24 @@ export const StoryReel = () => {
             />
           </motion.div>
         ))}
+
+        {stories.length === 0 && !isLoading && (
+          <div className="flex flex-col items-center justify-center w-full py-8">
+            <p className="text-white/60 text-sm">No stories yet</p>
+          </div>
+        )}
       </div>
 
-      {stories.length > 0 && (
-        <>
-          <StoryNavigation onScroll={handleScroll} />
-          
-          {selectedStoryIndex !== null && (
-            <StoryViewer
-              stories={stories}
-              initialStoryIndex={selectedStoryIndex}
-              onClose={() => setSelectedStoryIndex(null)}
-            />
-          )}
-        </>
+      {stories.length > (isMobile ? 3 : 5) && (
+        <StoryNavigation onScroll={handleScroll} />
+      )}
+      
+      {selectedStoryIndex !== null && (
+        <StoryViewer
+          stories={stories}
+          initialStoryIndex={selectedStoryIndex}
+          onClose={() => setSelectedStoryIndex(null)}
+        />
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface VideoPreviewProps {
@@ -9,44 +10,63 @@ interface VideoPreviewProps {
 export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (video) {
-      video.addEventListener('loadeddata', () => setIsLoading(false));
-      video.addEventListener('error', () => {
-        console.error('Video preview loading error:', videoUrl);
-        setHasError(true);
-        setIsLoading(false);
-      });
+    if (!video) return;
 
-      return () => {
-        video.removeEventListener('loadeddata', () => setIsLoading(false));
-        video.removeEventListener('error', () => setHasError(true));
-      };
-    }
+    const handleLoad = () => {
+      setIsLoading(false);
+      setIsPlaying(true);
+      video.play().catch(() => setIsPlaying(false));
+    };
+
+    const handleError = (error: any) => {
+      console.error('Video preview loading error:', error);
+      setHasError(true);
+      setIsLoading(false);
+    };
+
+    video.addEventListener('loadeddata', handleLoad);
+    video.addEventListener('error', handleError);
+
+    return () => {
+      video.removeEventListener('loadeddata', handleLoad);
+      video.removeEventListener('error', handleError);
+    };
   }, [videoUrl]);
 
   if (hasError) {
     return (
-      <div className={cn("bg-black/20 flex items-center justify-center", className)}>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className={cn("bg-luxury-dark/60 flex items-center justify-center", className)}
+      >
         <span className="text-xs text-red-500">Error</span>
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <>
       {isLoading && (
-        <div className={cn("bg-black/20 flex items-center justify-center", className)}>
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className={cn("bg-luxury-dark/60 flex items-center justify-center", className)}
+        >
+          <div className="w-6 h-6 border-2 border-luxury-primary border-t-transparent rounded-full animate-spin" />
+        </motion.div>
       )}
-      <video
+      <motion.video
         ref={videoRef}
         src={videoUrl}
         className={cn(className, isLoading ? "hidden" : "block")}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isPlaying ? 1 : 0 }}
         preload="metadata"
         playsInline
         muted
