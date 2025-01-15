@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -15,42 +15,55 @@ export const VideoPlayer = ({ url, poster, className, index, onIndexChange }: Vi
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (video) {
-      video.addEventListener('loadeddata', () => setIsLoading(false));
-      video.addEventListener('error', (e) => {
-        console.error('Video loading error:', e);
-        setIsLoading(false);
-      });
+    if (!video) return;
 
-      return () => {
-        video.removeEventListener('loadeddata', () => setIsLoading(false));
-        video.removeEventListener('error', () => setIsLoading(false));
-      };
-    }
+    const handleLoadedData = () => {
+      console.log("Video loaded successfully:", url);
+      setIsLoading(false);
+      setHasError(false);
+    };
+
+    const handleError = (e: Event) => {
+      console.error("Video loading error:", e);
+      setIsLoading(false);
+      setHasError(true);
+    };
+
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('error', handleError);
+
+    // Force video reload
+    video.load();
+
+    return () => {
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('error', handleError);
+    };
   }, [url]);
 
   const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.error("Error playing video:", error);
-          });
-        }
-        // Notify parent component about current video index when playing starts
-        if (typeof index !== 'undefined' && onIndexChange) {
-          onIndexChange(index);
-        }
+    if (!videoRef.current || hasError) return;
+
+    if (isPlaying) {
+      videoRef.current.pause();
+    } else {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error("Error playing video:", error);
+          setHasError(true);
+        });
       }
-      setIsPlaying(!isPlaying);
+      if (typeof index !== 'undefined' && onIndexChange) {
+        onIndexChange(index);
+      }
     }
+    setIsPlaying(!isPlaying);
   };
 
   const toggleMute = () => {
@@ -60,11 +73,19 @@ export const VideoPlayer = ({ url, poster, className, index, onIndexChange }: Vi
     }
   };
 
+  if (hasError) {
+    return (
+      <div className="relative aspect-video bg-luxury-darker/50 rounded-lg flex items-center justify-center">
+        <p className="text-sm text-red-400">Failed to load video</p>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("relative group overflow-hidden rounded-lg", className)}>
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker/50 backdrop-blur-sm z-10">
+          <Loader2 className="w-8 h-8 animate-spin text-luxury-primary" />
         </div>
       )}
       
@@ -88,7 +109,7 @@ export const VideoPlayer = ({ url, poster, className, index, onIndexChange }: Vi
         <div className="flex gap-4">
           <button
             onClick={togglePlay}
-            className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm"
+            className="p-3 rounded-full bg-luxury-primary/20 hover:bg-luxury-primary/30 transition-colors backdrop-blur-sm"
           >
             {isPlaying ? (
               <Pause className="h-6 w-6 text-white" />
@@ -99,7 +120,7 @@ export const VideoPlayer = ({ url, poster, className, index, onIndexChange }: Vi
           
           <button
             onClick={toggleMute}
-            className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm"
+            className="p-3 rounded-full bg-luxury-primary/20 hover:bg-luxury-primary/30 transition-colors backdrop-blur-sm"
           >
             {isMuted ? (
               <VolumeX className="h-6 w-6 text-white" />

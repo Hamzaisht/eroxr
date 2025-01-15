@@ -4,6 +4,7 @@ import { Story } from "@/integrations/supabase/types/story";
 import { VideoPreview } from "./VideoPreview";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { Loader2 } from "lucide-react";
 
 interface StoryItemProps {
   story: Story;
@@ -65,20 +66,18 @@ export const StoryItem = ({ story, onClick, isStacked = false, stackCount = 0 }:
           className={cn(
             "relative w-24 h-24 overflow-hidden cursor-pointer",
             "clip-path-hexagon transform hover:rotate-0 transition-transform duration-300",
-            "ring-2 ring-offset-2 ring-offset-luxury-dark",
-            isStacked ? "ring-luxury-primary" : "ring-white/20",
-            "group-hover:ring-luxury-accent transition-all duration-300"
+            "before:absolute before:inset-0 before:bg-gradient-to-b before:from-luxury-primary/20 before:to-luxury-accent/20",
+            "after:absolute after:inset-0 after:border-2 after:border-luxury-primary/30 after:clip-path-hexagon",
+            isStacked ? "ring-2 ring-luxury-primary" : "ring-2 ring-white/20",
+            "group-hover:ring-luxury-accent group-hover:ring-opacity-60 transition-all duration-300"
           )}
-          style={{
-            clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
-          }}
         >
           {isLoading ? (
-            <div className="w-full h-full flex items-center justify-center bg-luxury-dark/60 backdrop-blur-sm">
-              <div className="w-6 h-6 border-2 border-luxury-primary border-t-transparent rounded-full animate-spin" />
+            <div className="w-full h-full flex items-center justify-center bg-luxury-darker/60 backdrop-blur-sm">
+              <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
             </div>
           ) : hasError ? (
-            <div className="w-full h-full flex items-center justify-center bg-luxury-dark/60">
+            <div className="w-full h-full flex items-center justify-center bg-luxury-darker/60">
               <span className="text-xs text-red-500">Error</span>
             </div>
           ) : (
