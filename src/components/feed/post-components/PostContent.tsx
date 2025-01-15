@@ -33,10 +33,9 @@ export const PostContent = ({
       return url;
     }
 
-    // Get the bucket name from the path
-    const pathParts = url.split('/');
-    const bucketName = pathParts[0];
-    const filePath = pathParts.slice(1).join('/');
+    // Get the bucket name and file path
+    const [bucketName, ...pathParts] = url.split('/');
+    const filePath = pathParts.join('/');
 
     // Get public URL using Supabase storage
     const { data } = supabase.storage
@@ -106,6 +105,7 @@ export const PostContent = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {mediaUrls.map((url, index) => {
                         const publicUrl = getPublicUrl(url);
+                        console.log('Processing media URL:', url, 'Public URL:', publicUrl);
                         return !loadError[url] && (
                           <motion.div
                             key={`image-${index}`}
