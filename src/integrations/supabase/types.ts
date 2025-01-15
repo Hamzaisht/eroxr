@@ -222,6 +222,7 @@ export type Database = {
           is_active: boolean | null
           languages: string[] | null
           last_active: string | null
+          last_modified_by: string | null
           latitude: number | null
           longitude: number | null
           looking_for: string[]
@@ -258,6 +259,7 @@ export type Database = {
           is_active?: boolean | null
           languages?: string[] | null
           last_active?: string | null
+          last_modified_by?: string | null
           latitude?: number | null
           longitude?: number | null
           looking_for: string[]
@@ -294,6 +296,7 @@ export type Database = {
           is_active?: boolean | null
           languages?: string[] | null
           last_active?: string | null
+          last_modified_by?: string | null
           latitude?: number | null
           longitude?: number | null
           looking_for?: string[]
@@ -860,6 +863,7 @@ export type Database = {
           is_featured: boolean | null
           is_ppv: boolean | null
           last_engagement_at: string | null
+          last_modified_by: string | null
           likes_count: number | null
           media_url: string[] | null
           ppv_amount: number | null
@@ -882,6 +886,7 @@ export type Database = {
           is_featured?: boolean | null
           is_ppv?: boolean | null
           last_engagement_at?: string | null
+          last_modified_by?: string | null
           likes_count?: number | null
           media_url?: string[] | null
           ppv_amount?: number | null
@@ -904,6 +909,7 @@ export type Database = {
           is_featured?: boolean | null
           is_ppv?: boolean | null
           last_engagement_at?: string | null
+          last_modified_by?: string | null
           likes_count?: number | null
           media_url?: string[] | null
           ppv_amount?: number | null
@@ -1043,6 +1049,7 @@ export type Database = {
           expires_at: string
           id: string
           is_active: boolean | null
+          last_modified_by: string | null
           media_url: string | null
           screenshot_disabled: boolean | null
           video_url: string | null
@@ -1054,6 +1061,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_active?: boolean | null
+          last_modified_by?: string | null
           media_url?: string | null
           screenshot_disabled?: boolean | null
           video_url?: string | null
@@ -1065,6 +1073,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_active?: boolean | null
+          last_modified_by?: string | null
           media_url?: string | null
           screenshot_disabled?: boolean | null
           video_url?: string | null

@@ -65,9 +65,22 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark">
-      <BackgroundEffects />
-      
+    <div className="min-h-screen w-full bg-[#0D1117] relative overflow-hidden">
+      {/* Dynamic Background with Geek Arts Inspiration */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_80%)] opacity-5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-luxury-dark/50 via-luxury-darker/30 to-luxury-dark/50" />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.1 }}
+          transition={{ duration: 2 }}
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(circle at 50% 50%, rgba(76, 29, 149, 0.1) 0%, rgba(76, 29, 149, 0) 50%)`,
+          }}
+        />
+      </div>
+
       <AnimatePresence mode="wait">
         {!isErosRoute && (
           <motion.div
@@ -132,9 +145,23 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `${session.user.id}/${fileName}`;
 
+            // First, validate the file
+            if (file.size > 100 * 1024 * 1024) { // 100MB limit
+              throw new Error('File size too large. Maximum size is 100MB.');
+            }
+
+            if (!file.type.startsWith('video/')) {
+              throw new Error('Invalid file type. Please upload a video file.');
+            }
+
+            // Upload to storage with proper content type
             const { error: uploadError } = await supabase.storage
               .from('posts')
-              .upload(filePath, file);
+              .upload(filePath, file, {
+                contentType: file.type,
+                cacheControl: '3600',
+                upsert: false
+              });
 
             if (uploadError) throw uploadError;
 
@@ -142,6 +169,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               .from('posts')
               .getPublicUrl(filePath);
 
+            // Create post record with video URL
             const { data: post, error: postError } = await supabase
               .from('posts')
               .insert([
@@ -149,7 +177,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                   creator_id: session.user.id,
                   content: "New Eros video",
                   video_urls: [publicUrl],
-                  visibility: 'public'
+                  visibility: 'public',
+                  last_modified_by: session.user.id
                 }
               ])
               .select()
@@ -163,11 +192,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             });
             
             navigate(`/shorts/edit/${post.id}`);
-          } catch (error) {
+          } catch (error: any) {
             console.error('Upload error:', error);
             toast({
               title: "Upload failed",
-              description: "Failed to upload video. Please try again.",
+              description: error.message || "Failed to upload video. Please try again.",
               variant: "destructive",
             });
           }
