@@ -98,7 +98,6 @@ export const StoryReel = () => {
   };
 
   const groupedStories = groupStoriesByCreator(stories);
-  const flatStoriesArray = stories;
 
   if (isLoading) {
     return (
@@ -121,7 +120,7 @@ export const StoryReel = () => {
             key={creatorId}
             story={creatorStories[0]}
             onClick={() => {
-              const index = flatStoriesArray.findIndex(s => s.id === creatorStories[0].id);
+              const index = stories.findIndex(s => s.id === creatorStories[0].id);
               setSelectedStoryIndex(index);
             }}
           />
@@ -134,7 +133,7 @@ export const StoryReel = () => {
           
           {selectedStoryIndex !== null && (
             <StoryViewer
-              stories={flatStoriesArray}
+              stories={stories}
               initialStoryIndex={selectedStoryIndex}
               onClose={() => setSelectedStoryIndex(null)}
             />

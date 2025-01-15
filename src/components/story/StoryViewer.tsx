@@ -9,27 +9,16 @@ import { StoryImage } from "./viewer/StoryImage";
 import { StoryVideo } from "./viewer/StoryVideo";
 import { StoryControls } from "./viewer/StoryControls";
 import { X } from "lucide-react";
+import { Story } from "@/integrations/supabase/types/story";
 
 interface StoryViewerProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  stories: Array<{
-    id: string;
-    media_url: string;
-    video_url?: string;
-    duration?: number;
-    created_at: string;
-    expires_at: string;
-  }>;
-  creator: {
-    id: string;
-    username: string;
-    avatar_url: string;
-  };
+  stories: Story[];
+  initialStoryIndex?: number;
+  onClose: () => void;
 }
 
-export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewerProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+export const StoryViewer = ({ stories, initialStoryIndex = 0, onClose }: StoryViewerProps) => {
+  const [currentIndex, setCurrentIndex] = useState(initialStoryIndex);
   const [isHoldingClick, setIsHoldingClick] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
@@ -37,8 +26,6 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
 
   // Update time remaining
   useEffect(() => {
-    if (!open) return;
-
     const updateTimeRemaining = () => {
       const expiryDate = new Date(stories[currentIndex].expires_at);
       const now = new Date();
@@ -47,39 +34,39 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
         setTimeRemaining(formatDistanceToNow(expiryDate, { addSuffix: true }));
       } else {
         setTimeRemaining("Expired");
-        onOpenChange(false);
+        onClose();
       }
     };
 
     updateTimeRemaining();
     const interval = setInterval(updateTimeRemaining, 1000);
     return () => clearInterval(interval);
-  }, [currentIndex, open, stories, onOpenChange]);
+  }, [currentIndex, stories, onClose]);
 
   // Auto-advance timer for images
   useEffect(() => {
     let timer: NodeJS.Timeout;
     const currentStory = stories[currentIndex];
     
-    if (open && !isHoldingClick && !isPaused && !currentStory.video_url) {
+    if (!isHoldingClick && !isPaused && !currentStory.video_url) {
       timer = setTimeout(() => {
         if (currentIndex < stories.length - 1) {
           setCurrentIndex(currentIndex + 1);
         } else {
-          onOpenChange(false);
+          onClose();
           setCurrentIndex(0);
         }
       }, 5000);
     }
 
     return () => clearTimeout(timer);
-  }, [currentIndex, open, isHoldingClick, isPaused, stories.length, onOpenChange]);
+  }, [currentIndex, isHoldingClick, isPaused, stories.length, onClose]);
 
   const handleVideoEnd = () => {
     if (currentIndex < stories.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      onOpenChange(false);
+      onClose();
       setCurrentIndex(0);
     }
   };
@@ -93,7 +80,7 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
       if (currentIndex < stories.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        onOpenChange(false);
+        onClose();
         setCurrentIndex(0);
       }
     } else {
@@ -119,8 +106,11 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
     }
   };
 
+  const currentStory = stories[currentIndex];
+  const creator = currentStory.creator;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-[500px] p-0 bg-transparent border-none">
         <AnimatePresence mode="wait">
           <motion.div
@@ -145,16 +135,16 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
                 timeRemaining={timeRemaining}
               />
 
-              {stories[currentIndex].video_url ? (
+              {currentStory.video_url ? (
                 <StoryVideo
-                  videoUrl={stories[currentIndex].video_url!}
+                  videoUrl={currentStory.video_url}
                   ref={videoRef}
                   onEnded={handleVideoEnd}
                   isPaused={isPaused}
                 />
               ) : (
                 <StoryImage 
-                  mediaUrl={stories[currentIndex].media_url}
+                  mediaUrl={currentStory.media_url}
                   username={creator.username}
                   isPaused={isPaused}
                 />
@@ -170,7 +160,7 @@ export const StoryViewer = ({ open, onOpenChange, stories, creator }: StoryViewe
               />
 
               <button
-                onClick={() => onOpenChange(false)}
+                onClick={onClose}
                 className="absolute right-4 top-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-50"
               >
                 <X className="h-6 w-6 text-white" />
