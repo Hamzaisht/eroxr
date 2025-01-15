@@ -36,18 +36,32 @@ export const VideoPlayer = ({
   useEffect(() => {
     const getVideoUrl = async () => {
       try {
+        setIsLoading(true);
+        setHasError(false);
+
         // If it's already a public URL, use it directly
         if (url.startsWith('http')) {
           setVideoUrl(url);
           return;
         }
 
-        // Otherwise get the public URL from storage
-        const { data: { publicUrl } } = supabase.storage
+        // Get the public URL from Supabase storage
+        const { data } = supabase.storage
           .from('posts')
           .getPublicUrl(url);
 
-        setVideoUrl(publicUrl);
+        if (data?.publicUrl) {
+          console.log("Retrieved public URL:", data.publicUrl);
+          setVideoUrl(data.publicUrl);
+        } else {
+          console.error("No public URL found for:", url);
+          setHasError(true);
+          toast({
+            title: "Error",
+            description: "Could not load video URL",
+            variant: "destructive",
+          });
+        }
       } catch (error) {
         console.error('Error getting video URL:', error);
         setHasError(true);
@@ -55,8 +69,10 @@ export const VideoPlayer = ({
       }
     };
 
-    getVideoUrl();
-  }, [url, onError]);
+    if (url) {
+      getVideoUrl();
+    }
+  }, [url, onError, toast]);
 
   useEffect(() => {
     const video = videoRef.current;
