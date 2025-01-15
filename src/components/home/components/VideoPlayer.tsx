@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Play, Pause, Volume2, VolumeX, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { VideoControls } from "@/components/video/VideoControls";
+import { VideoLoadingState } from "@/components/video/VideoLoadingState";
+import { VideoErrorState } from "@/components/video/VideoErrorState";
 
 interface VideoPlayerProps {
   url: string;
@@ -14,9 +15,9 @@ interface VideoPlayerProps {
   autoPlay?: boolean;
 }
 
-export const VideoPlayer = ({ 
-  url, 
-  poster, 
+export const VideoPlayer = ({
+  url,
+  poster,
   className,
   index,
   onIndexChange,
@@ -98,63 +99,43 @@ export const VideoPlayer = ({
     }
   };
 
-  if (hasError) {
-    return (
-      <div className="relative aspect-video bg-luxury-darker/50 rounded-lg flex items-center justify-center">
-        <p className="text-sm text-red-400">Failed to load video</p>
-      </div>
-    );
-  }
+  const handleRetry = () => {
+    if (!videoRef.current) return;
+    setHasError(false);
+    setIsLoading(true);
+    videoRef.current.load();
+  };
 
   return (
-    <div className={cn("relative group overflow-hidden rounded-lg", className)}>
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker/50 backdrop-blur-sm z-10">
-          <Loader2 className="w-8 h-8 animate-spin text-luxury-primary" />
-        </div>
-      )}
+    <div className={cn(
+      "relative group overflow-hidden rounded-lg bg-luxury-darker/50",
+      className
+    )}>
+      {isLoading && <VideoLoadingState />}
       
-      <video
-        ref={videoRef}
-        src={url}
-        poster={poster}
-        className="w-full h-full object-cover"
-        playsInline
-        loop
-        muted={isMuted}
-        preload="metadata"
-      />
-      
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
-      >
-        <div className="flex gap-4">
-          <button
-            onClick={togglePlay}
-            className="p-3 rounded-full bg-luxury-primary/20 hover:bg-luxury-primary/30 transition-colors backdrop-blur-sm"
-          >
-            {isPlaying ? (
-              <Pause className="h-6 w-6 text-white" />
-            ) : (
-              <Play className="h-6 w-6 text-white" />
-            )}
-          </button>
+      {hasError ? (
+        <VideoErrorState onRetry={handleRetry} />
+      ) : (
+        <>
+          <video
+            ref={videoRef}
+            src={url}
+            poster={poster}
+            className="w-full h-full object-cover"
+            playsInline
+            loop
+            muted={isMuted}
+            preload="metadata"
+          />
           
-          <button
-            onClick={toggleMute}
-            className="p-3 rounded-full bg-luxury-primary/20 hover:bg-luxury-primary/30 transition-colors backdrop-blur-sm"
-          >
-            {isMuted ? (
-              <VolumeX className="h-6 w-6 text-white" />
-            ) : (
-              <Volume2 className="h-6 w-6 text-white" />
-            )}
-          </button>
-        </div>
-      </motion.div>
+          <VideoControls
+            isPlaying={isPlaying}
+            isMuted={isMuted}
+            onPlayPause={togglePlay}
+            onMuteToggle={toggleMute}
+          />
+        </>
+      )}
     </div>
   );
 };
