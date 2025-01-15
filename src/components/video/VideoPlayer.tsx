@@ -1,31 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import { VideoControls } from "./VideoControls";
-import { VideoLoadingState } from "./VideoLoadingState";
-import { VideoErrorState } from "./VideoErrorState";
+import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface VideoPlayerProps {
   url: string;
   poster?: string;
   className?: string;
-  index?: number;
-  onIndexChange?: (index: number) => void;
   onError?: () => void;
-  autoPlay?: boolean;
 }
 
-export const VideoPlayer = ({
-  url,
-  poster,
-  className,
-  index,
-  onIndexChange,
-  onError,
-  autoPlay = false
-}: VideoPlayerProps) => {
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
+export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlayerProps) => {
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -34,7 +20,7 @@ export const VideoPlayer = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    const getVideoUrl = async () => {
+    const loadVideo = async () => {
       try {
         setIsLoading(true);
         setHasError(false);
@@ -46,11 +32,11 @@ export const VideoPlayer = ({
           return;
         }
 
-        // If it's a Supabase storage path, get the public URL
-        // First, determine if it's a path with bucket prefix
+        // Extract bucket name and file path
         let bucketName = 'posts'; // default bucket
         let filePath = url;
 
+        // Check if URL contains bucket name
         if (url.includes('/')) {
           const parts = url.split('/');
           bucketName = parts[0];
@@ -59,28 +45,40 @@ export const VideoPlayer = ({
 
         console.log("Getting public URL for bucket:", bucketName, "path:", filePath);
 
-        const { data, error } = await supabase.storage
+        // First try to get a public URL
+        const { data: publicData } = supabase.storage
           .from(bucketName)
-          .createSignedUrl(filePath, 3600); // 1 hour expiry
+          .getPublicUrl(filePath);
+
+        if (publicData?.publicUrl) {
+          console.log("Using public URL:", publicData.publicUrl);
+          setVideoUrl(publicData.publicUrl);
+          return;
+        }
+
+        // If public URL fails, try signed URL
+        const { data: signedData, error } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(filePath, 3600);
 
         if (error) {
-          console.error("Signed URL error:", error);
+          console.error("Error getting video URL:", error);
           throw error;
         }
 
-        if (data?.signedUrl) {
-          console.log("Retrieved signed URL:", data.signedUrl);
-          setVideoUrl(data.signedUrl);
+        if (signedData?.signedUrl) {
+          console.log("Using signed URL:", signedData.signedUrl);
+          setVideoUrl(signedData.signedUrl);
         } else {
-          throw new Error("No signed URL generated");
+          throw new Error("Could not generate video URL");
         }
       } catch (error) {
-        console.error('Error getting video URL:', error);
+        console.error('Error loading video:', error);
         setHasError(true);
-        if (onError) onError();
+        onError?.();
         toast({
           title: "Error loading video",
-          description: "Could not load video. Please try again later.",
+          description: "Failed to load video content. Please try again later.",
           variant: "destructive",
         });
       } finally {
@@ -88,70 +86,18 @@ export const VideoPlayer = ({
       }
     };
 
-    if (url) {
-      getVideoUrl();
-    }
-  }, [url, onError, toast]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !videoUrl) return;
-
-    const handleLoadedData = () => {
-      console.log("Video loaded successfully:", videoUrl);
-      setIsLoading(false);
-      setHasError(false);
-      if (autoPlay) {
-        video.play().catch(console.error);
-      }
-    };
-
-    const handleError = (e: Event) => {
-      console.error("Video loading error:", e);
-      setIsLoading(false);
-      setHasError(true);
-      if (onError) onError();
-      toast({
-        title: "Video Error",
-        description: "Failed to load video. Please try again later.",
-        variant: "destructive",
-      });
-    };
-
-    video.addEventListener('loadeddata', handleLoadedData);
-    video.addEventListener('error', handleError);
-    video.load();
-
-    return () => {
-      video.removeEventListener('loadeddata', handleLoadedData);
-      video.removeEventListener('error', handleError);
-    };
-  }, [videoUrl, onError, toast, autoPlay]);
+    loadVideo();
+  }, [url, onError]);
 
   const togglePlay = () => {
-    if (!videoRef.current || hasError) return;
-
-    if (isPlaying) {
-      videoRef.current.pause();
-    } else {
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.error("Error playing video:", error);
-          setHasError(true);
-          if (onError) onError();
-          toast({
-            title: "Playback Error",
-            description: "Unable to play video. Please try again.",
-            variant: "destructive",
-          });
-        });
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
       }
-      if (typeof index !== 'undefined' && onIndexChange) {
-        onIndexChange(index);
-      }
+      setIsPlaying(!isPlaying);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const toggleMute = () => {
@@ -161,47 +107,64 @@ export const VideoPlayer = ({
     }
   };
 
-  const handleRetry = () => {
-    if (!videoRef.current || !videoUrl) return;
-    setHasError(false);
-    setIsLoading(true);
-    videoRef.current.load();
-  };
+  if (isLoading) {
+    return (
+      <div className={`flex items-center justify-center bg-luxury-darker aspect-video rounded-lg ${className}`}>
+        <Loader2 className="w-8 h-8 animate-spin text-luxury-primary" />
+      </div>
+    );
+  }
 
-  if (!videoUrl) {
-    return <VideoLoadingState />;
+  if (hasError || !videoUrl) {
+    return (
+      <div className={`flex flex-col items-center justify-center bg-luxury-darker aspect-video rounded-lg ${className}`}>
+        <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
+        <p className="text-sm text-luxury-neutral">Failed to load video</p>
+      </div>
+    );
   }
 
   return (
-    <div className={cn(
-      "relative group overflow-hidden rounded-lg bg-luxury-darker/50",
-      className
-    )}>
-      {isLoading && <VideoLoadingState />}
+    <div className={`relative group ${className}`}>
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        poster={poster}
+        className="w-full h-full object-cover rounded-lg"
+        playsInline
+        loop
+        muted={isMuted}
+        onLoadedData={() => setIsLoading(false)}
+        onError={() => {
+          setHasError(true);
+          onError?.();
+        }}
+      />
       
-      {hasError ? (
-        <VideoErrorState onRetry={handleRetry} />
-      ) : (
-        <>
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            poster={poster}
-            className="w-full h-full object-cover"
-            playsInline
-            loop
-            muted={isMuted}
-            preload="metadata"
-          />
-          
-          <VideoControls
-            isPlaying={isPlaying}
-            isMuted={isMuted}
-            onPlayPause={togglePlay}
-            onMuteToggle={toggleMute}
-          />
-        </>
-      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+        <div className="flex gap-4">
+          <button
+            onClick={togglePlay}
+            className="p-3 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
+          >
+            {isPlaying ? (
+              <Pause className="w-6 h-6 text-white" />
+            ) : (
+              <Play className="w-6 h-6 text-white" />
+            )}
+          </button>
+          <button
+            onClick={toggleMute}
+            className="p-3 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
+          >
+            {isMuted ? (
+              <VolumeX className="w-6 h-6 text-white" />
+            ) : (
+              <Volume2 className="w-6 h-6 text-white" />
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
