@@ -1,76 +1,74 @@
-import { motion } from "framer-motion";
-import { forwardRef, useEffect, useRef } from "react";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useState, useRef } from "react";
+import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface VideoPlayerProps {
-  src: string;
-  index: number;
-  onIndexChange: (index: number) => void;
+  url: string;
+  poster?: string;
   className?: string;
 }
 
-export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
-  ({ src, index, onIndexChange, className }, ref) => {
-    const videoRef = useRef<HTMLVideoElement>();
-    const isMobile = useMediaQuery("(max-width: 768px)");
+export const VideoPlayer = ({ url, poster, className }: VideoPlayerProps) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-    useEffect(() => {
-      if (ref) {
-        videoRef.current = (ref as React.MutableRefObject<HTMLVideoElement>).current;
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
       }
+      setIsPlaying(!isPlaying);
+    }
+  };
 
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              onIndexChange(index);
-              if (videoRef.current) {
-                videoRef.current.play().catch(console.error);
-              }
-            } else {
-              if (videoRef.current) {
-                videoRef.current.pause();
-                videoRef.current.currentTime = 0;
-              }
-            }
-          });
-        },
-        { threshold: isMobile ? 0.5 : 0.7 }
-      );
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
 
-      if (videoRef.current) {
-        observer.observe(videoRef.current);
-      }
-
-      return () => {
-        if (videoRef.current) {
-          observer.unobserve(videoRef.current);
-        }
-      };
-    }, [index, onIndexChange, ref, isMobile]);
-
-    return (
-      <motion.video
-        ref={videoRef as any}
-        src={src}
-        className={`w-full h-full object-cover ${className}`}
-        initial={{ scale: 1.2, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+  return (
+    <div className={cn("relative group", className)}>
+      <video
+        ref={videoRef}
+        src={url}
+        poster={poster}
+        className="w-full rounded-lg"
         playsInline
         loop
-        muted
-        controls={false}
-        style={{ 
-          pointerEvents: 'none',
-          WebkitUserSelect: 'none',
-          userSelect: 'none',
-          objectFit: isMobile ? 'contain' : 'cover'
-        }}
+        muted={isMuted}
+        preload="metadata"
       />
-    );
-  }
-);
-
-VideoPlayer.displayName = "VideoPlayer";
+      
+      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+        <div className="flex gap-4">
+          <button
+            onClick={togglePlay}
+            className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+          >
+            {isPlaying ? (
+              <Pause className="h-6 w-6 text-white" />
+            ) : (
+              <Play className="h-6 w-6 text-white" />
+            )}
+          </button>
+          
+          <button
+            onClick={toggleMute}
+            className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+          >
+            {isMuted ? (
+              <VolumeX className="h-6 w-6 text-white" />
+            ) : (
+              <Volume2 className="h-6 w-6 text-white" />
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
