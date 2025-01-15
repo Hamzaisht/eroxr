@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import { useParams } from "react-router-dom";
 import type { Post } from "@/integrations/supabase/types/post";
+import { Loader2 } from "lucide-react";
 
 interface CreatorsFeedProps {
   feedType?: 'feed' | 'popular' | 'recent';
@@ -43,8 +44,16 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
 
   const posts = data?.pages.flat() || [];
 
+  // Show initial loading state
   if (isLoading) {
-    return <LoadingSkeleton />;
+    return (
+      <div className="w-full h-[calc(100vh-20rem)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
+          <p className="text-luxury-neutral text-sm">Loading posts...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!posts.length) {
@@ -83,9 +92,12 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
               );
             })}
             {hasNextPage && (
-              <div ref={ref} className="h-8 flex items-center justify-center">
+              <div ref={ref} className="h-16 flex items-center justify-center">
                 {isFetchingNextPage && (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-luxury-primary" />
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-luxury-primary" />
+                    <p className="text-luxury-neutral text-sm">Loading more posts...</p>
+                  </div>
                 )}
               </div>
             )}
