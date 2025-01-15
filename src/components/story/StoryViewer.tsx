@@ -10,6 +10,7 @@ import { StoryVideo } from "./viewer/StoryVideo";
 import { StoryControls } from "./viewer/StoryControls";
 import { X } from "lucide-react";
 import { Story } from "@/integrations/supabase/types/story";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 
 interface StoryViewerProps {
   stories: Story[];
@@ -111,7 +112,20 @@ export const StoryViewer = ({ stories, initialStoryIndex = 0, onClose }: StoryVi
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-[500px] p-0 bg-transparent border-none">
+      <DialogContent 
+        className="max-w-[500px] p-0 bg-transparent border-none"
+        aria-label={`Story by ${creator.username}`}
+      >
+        <VisuallyHidden asChild>
+          <div id="story-dialog-title">
+            Story from {creator.username}
+          </div>
+        </VisuallyHidden>
+        <VisuallyHidden asChild>
+          <div id="story-dialog-description">
+            Navigate through story content using left and right arrow keys or by clicking on the sides of the story
+          </div>
+        </VisuallyHidden>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
@@ -122,6 +136,8 @@ export const StoryViewer = ({ stories, initialStoryIndex = 0, onClose }: StoryVi
             className="relative w-full cursor-pointer"
             style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
             onContextMenu={(e) => e.preventDefault()}
+            aria-labelledby="story-dialog-title"
+            aria-describedby="story-dialog-description"
           >
             <AspectRatio ratio={9/16} className="bg-black">
               <StoryProgress 
@@ -162,6 +178,7 @@ export const StoryViewer = ({ stories, initialStoryIndex = 0, onClose }: StoryVi
               <button
                 onClick={onClose}
                 className="absolute right-4 top-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-50"
+                aria-label="Close story"
               >
                 <X className="h-6 w-6 text-white" />
               </button>
