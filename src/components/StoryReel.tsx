@@ -136,20 +136,26 @@ export const StoryReel = () => {
   }
 
   return (
-    <div className="relative w-full bg-luxury-dark/40 backdrop-blur-lg rounded-xl p-4 mb-6">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-white/90">Stories</h2>
+    <div className="relative w-full bg-gradient-to-r from-luxury-dark/40 via-luxury-darker/20 to-luxury-dark/40 backdrop-blur-lg rounded-2xl p-6 mb-8">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
+          Stories
+        </h2>
+        <p className="text-sm text-white/60 mt-1">
+          Watch and share moments with your favorite creators
+        </p>
       </div>
       
       <div
         ref={containerRef}
-        className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide relative"
+        className="flex gap-5 overflow-x-auto pb-6 pt-2 px-2 scrollbar-hide relative"
       >
         {session && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
+            className="shrink-0"
           >
             <StoryUploader />
           </motion.div>
@@ -161,7 +167,7 @@ export const StoryReel = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="relative"
+            className="relative shrink-0"
             whileHover={{ scale: 1.05 }}
           >
             <StoryItem
@@ -178,7 +184,13 @@ export const StoryReel = () => {
 
         {stories.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center w-full py-8">
-            <p className="text-white/60 text-sm">No stories yet</p>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-white/60 text-sm"
+            >
+              No stories yet
+            </motion.div>
           </div>
         )}
       </div>
