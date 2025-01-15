@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 interface VideoPreviewProps {
   videoUrl: string;
@@ -18,11 +19,13 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
     if (!video) return;
 
     const handleLoad = () => {
+      console.info('Video preview loaded successfully:', videoUrl);
       setIsLoading(false);
       setIsPlaying(true);
       video.play().catch((error) => {
         console.error('Video playback error:', error);
         setIsPlaying(false);
+        setHasError(true);
       });
     };
 
@@ -30,14 +33,20 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
       console.error('Video preview loading error:', error);
       setHasError(true);
       setIsLoading(false);
+      setIsPlaying(false);
     };
+
+    // Reset states when video URL changes
+    setIsLoading(true);
+    setHasError(false);
+    setIsPlaying(false);
 
     video.addEventListener('loadeddata', handleLoad);
     video.addEventListener('error', handleError);
     video.addEventListener('pause', () => setIsPlaying(false));
     video.addEventListener('play', () => setIsPlaying(true));
 
-    // Force video reload
+    // Force video reload with new URL
     video.load();
 
     return () => {
@@ -45,6 +54,7 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
       video.removeEventListener('error', handleError);
       video.removeEventListener('pause', () => setIsPlaying(false));
       video.removeEventListener('play', () => setIsPlaying(true));
+      video.src = ''; // Clear source on cleanup
     };
   }, [videoUrl]);
 
@@ -53,9 +63,13 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className={cn("bg-luxury-dark/60 flex items-center justify-center", className)}
+        className={cn(
+          "bg-red-500/10 flex flex-col items-center justify-center gap-2",
+          className
+        )}
       >
-        <span className="text-xs text-red-500">Error</span>
+        <AlertCircle className="w-6 h-6 text-red-500" />
+        <span className="text-xs text-red-500">Failed to load video</span>
       </motion.div>
     );
   }
@@ -66,18 +80,25 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className={cn("bg-luxury-dark/60 flex items-center justify-center", className)}
+          className={cn(
+            "bg-luxury-dark/60 flex items-center justify-center",
+            className
+          )}
         >
-          <div className="w-6 h-6 border-2 border-luxury-primary border-t-transparent rounded-full animate-spin" />
+          <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
         </motion.div>
       )}
       <motion.video
         ref={videoRef}
         src={videoUrl}
-        className={cn(className, isLoading ? "hidden" : "block")}
+        className={cn(
+          className,
+          isLoading ? "hidden" : "block",
+          "object-cover"
+        )}
         initial={{ opacity: 0 }}
         animate={{ opacity: isPlaying ? 1 : 0 }}
-        preload="auto"
+        preload="metadata"
         playsInline
         muted
         loop
