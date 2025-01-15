@@ -5,6 +5,7 @@ import { LoadingSkeleton } from "./feed/LoadingSkeleton";
 import { EmptyFeed } from "./feed/EmptyFeed";
 import { useFeedQuery } from "./feed/useFeedQuery";
 import { usePostActions } from "./feed/usePostActions";
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import { useParams } from "react-router-dom";
@@ -21,6 +22,9 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   const { ref, inView } = useInView();
   const { id } = useParams();
 
+  // Set up real-time updates
+  useRealtimeUpdates('posts');
+
   const {
     data,
     isLoading,
@@ -30,7 +34,7 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
     refetch
   } = useFeedQuery(id || session?.user?.id, feedType);
 
-  // Fetch initial data and set up real-time updates
+  // Fetch initial data
   useEffect(() => {
     refetch();
   }, [refetch, feedType]);
@@ -44,7 +48,6 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
 
   const posts = data?.pages.flat() || [];
 
-  // Show initial loading state
   if (isLoading) {
     return (
       <div className="w-full h-[calc(100vh-20rem)] flex items-center justify-center">
