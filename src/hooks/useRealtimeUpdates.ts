@@ -19,22 +19,36 @@ export const useRealtimeUpdates = (tableName: string) => {
         },
         (payload) => {
           console.log(`Received ${tableName} update:`, payload);
+          
+          // Invalidate and refetch queries
           queryClient.invalidateQueries({ queryKey: [tableName] });
 
-          if (payload.eventType === 'DELETE') {
-            toast({
-              title: "Post deleted",
-              description: "The post has been removed",
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            toast({
-              title: "Post updated",
-              description: "The post has been updated",
-            });
+          // Show appropriate toast messages
+          switch (payload.eventType) {
+            case 'DELETE':
+              toast({
+                title: "Post deleted",
+                description: "The post has been removed",
+              });
+              break;
+            case 'UPDATE':
+              toast({
+                title: "Post updated",
+                description: "The post has been updated",
+              });
+              break;
+            case 'INSERT':
+              toast({
+                title: "New post",
+                description: "A new post has been added",
+              });
+              break;
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Realtime subscription status:`, status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

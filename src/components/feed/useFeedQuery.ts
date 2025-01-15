@@ -4,7 +4,9 @@ import type { Post } from "@/integrations/supabase/types/post";
 
 const POSTS_PER_PAGE = 5;
 
-export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 'recent' = 'feed') => {
+export type FeedType = 'feed' | 'popular' | 'recent' | 'shorts';
+
+export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
   return useInfiniteQuery({
     queryKey: ["posts", userId, feedType],
     queryFn: async ({ pageParam = 0 }) => {
@@ -27,6 +29,9 @@ export const useFeedQuery = (userId?: string, feedType: 'feed' | 'popular' | 're
       switch (feedType) {
         case 'popular':
           query = query.order('engagement_score', { ascending: false });
+          break;
+        case 'shorts':
+          query = query.not('video_urls', 'is', null);
           break;
         case 'recent':
           // Show all recent posts
