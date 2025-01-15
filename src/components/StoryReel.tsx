@@ -25,6 +25,35 @@ export const StoryReel = () => {
     const fetchStories = async () => {
       try {
         console.info('Fetching stories');
+        const { data: subscriptions, error: subsError } = await supabase
+          .from('creator_subscriptions')
+          .select('creator_id')
+          .eq('user_id', session?.user?.id);
+
+        if (subsError) throw subsError;
+
+        // Get followed creators
+        const { data: following, error: followError } = await supabase
+          .from('followers')
+          .select('following_id')
+          .eq('follower_id', session?.user?.id);
+
+        if (followError) throw followError;
+
+        // Combine subscribed and followed creator IDs
+        const creatorIds = [
+          ...(subscriptions?.map(sub => sub.creator_id) || []),
+          ...(following?.map(f => f.following_id) || [])
+        ];
+
+        // Add current user's ID to see their own stories
+        if (session?.user?.id) {
+          creatorIds.push(session.user.id);
+        }
+
+        // Remove duplicates
+        const uniqueCreatorIds = [...new Set(creatorIds)];
+
         const { data, error } = await supabase
           .from('stories')
           .select(`
@@ -36,6 +65,7 @@ export const StoryReel = () => {
             )
           `)
           .eq('is_active', true)
+          .in('creator_id', uniqueCreatorIds)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -52,7 +82,9 @@ export const StoryReel = () => {
       }
     };
 
-    fetchStories();
+    if (session?.user?.id) {
+      fetchStories();
+    }
 
     // Set up real-time subscription for stories
     console.info('Setting up real-time subscription for stories');
@@ -75,7 +107,7 @@ export const StoryReel = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, [session?.user?.id, toast]);
 
   const handleScroll = (direction: "left" | "right") => {
     if (!containerRef.current) return;
@@ -116,20 +148,25 @@ export const StoryReel = () => {
         {session && <StoryUploader />}
         
         {Object.entries(groupedStories).map(([creatorId, creatorStories]) => (
-          <div key={creatorId} className="flex items-center">
-            {creatorStories.map((story, index) => (
-              <StoryItem
-                key={story.id}
-                story={story}
-                isStacked={index > 0}
-                stackCount={index === 0 ? creatorStories.length - 1 : 0}
-                onClick={() => {
-                  const index = stories.findIndex(s => s.id === story.id);
-                  setSelectedStoryIndex(index);
-                }}
-              />
-            ))}
-          </div>
+          <motion.div 
+            key={creatorId} 
+            className="relative"
+            whileHover={{ scale: 1.02 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <StoryItem
+              key={creatorStories[0].id}
+              story={creatorStories[0]}
+              isStacked={creatorStories.length > 1}
+              stackCount={creatorStories.length - 1}
+              onClick={() => {
+                const index = stories.findIndex(s => s.id === creatorStories[0].id);
+                setSelectedStoryIndex(index);
+              }}
+            />
+          </motion.div>
         ))}
       </div>
 
