@@ -25,7 +25,6 @@ export const PostContent = ({
   const hasMedia = mediaUrls.length > 0 || videoUrls.length > 0;
 
   const handleMediaError = (url: string) => {
-    console.error("Media load error for URL:", url);
     setLoadError(prev => ({ ...prev, [url]: true }));
     toast({
       title: "Error loading media",
@@ -59,7 +58,7 @@ export const PostContent = ({
                       {videoUrls.map((url, index) => (
                         !loadError[url] && (
                           <motion.div
-                            key={`video-${url}`}
+                            key={`video-${index}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
@@ -83,7 +82,7 @@ export const PostContent = ({
                       {mediaUrls.map((url, index) => (
                         !loadError[url] && (
                           <motion.div
-                            key={`image-${url}`}
+                            key={`image-${index}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
@@ -96,8 +95,7 @@ export const PostContent = ({
                                   src={url}
                                   alt={`Post media ${index + 1}`}
                                   className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                                  loading="eager"
-                                  decoding="sync"
+                                  loading="lazy"
                                   onError={() => handleMediaError(url)}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />

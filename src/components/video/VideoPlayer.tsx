@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface VideoPlayerProps {
   url: string;
@@ -15,77 +15,41 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadVideo = async () => {
-      try {
-        setIsLoading(true);
-        setHasError(false);
+    const video = videoRef.current;
+    if (!video) return;
 
-        // If it's already a full URL, use it directly
-        if (url.startsWith('http')) {
-          setVideoUrl(url);
-          return;
-        }
-
-        // Extract bucket name and file path
-        const parts = url.split('/');
-        const bucketName = parts[0] || 'posts'; // Default to 'posts' bucket if not specified
-        const filePath = parts.slice(1).join('/');
-
-        console.log("Getting video URL for bucket:", bucketName, "path:", filePath);
-
-        // Try to get a public URL first
-        const { data: publicData } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(filePath);
-
-        if (publicData?.publicUrl) {
-          console.log("Using public URL:", publicData.publicUrl);
-          setVideoUrl(publicData.publicUrl);
-          return;
-        }
-
-        // If public URL fails, try signed URL
-        const { data: signedData, error: signedError } = await supabase.storage
-          .from(bucketName)
-          .createSignedUrl(filePath, 3600);
-
-        if (signedError) {
-          console.error("Error getting signed URL:", signedError);
-          throw signedError;
-        }
-
-        if (signedData?.signedUrl) {
-          console.log("Using signed URL:", signedData.signedUrl);
-          setVideoUrl(signedData.signedUrl);
-        } else {
-          throw new Error("Could not generate video URL");
-        }
-      } catch (error) {
-        console.error('Error loading video:', error);
-        setHasError(true);
-        onError?.();
-        toast({
-          title: "Error loading video",
-          description: "Failed to load video content. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
+    const handleLoadedData = () => {
+      setIsLoading(false);
+      setHasError(false);
     };
 
-    if (url) {
-      loadVideo();
-    }
+    const handleError = (e: Event) => {
+      console.error("Video loading error:", e);
+      setIsLoading(false);
+      setHasError(true);
+      if (onError) onError();
+      toast({
+        title: "Error loading video",
+        description: "Failed to load video content. Please try again later.",
+        variant: "destructive",
+      });
+    };
+
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('error', handleError);
+
+    return () => {
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('error', handleError);
+    };
   }, [url, onError, toast]);
 
   const togglePlay = () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || hasError) return;
     
     if (isPlaying) {
       videoRef.current.pause();
@@ -120,7 +84,7 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
     );
   }
 
-  if (hasError || !videoUrl) {
+  if (hasError) {
     return (
       <div className={`flex flex-col items-center justify-center bg-luxury-darker aspect-video rounded-lg ${className}`}>
         <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
@@ -130,21 +94,15 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
   }
 
   return (
-    <div className={`relative group ${className}`}>
+    <div className={cn("relative group", className)}>
       <video
         ref={videoRef}
-        src={videoUrl}
+        src={url}
         poster={poster}
         className="w-full h-full object-cover rounded-lg"
         playsInline
         loop
         muted={isMuted}
-        onLoadedData={() => setIsLoading(false)}
-        onError={(e) => {
-          console.error("Video error:", e);
-          setHasError(true);
-          onError?.();
-        }}
       />
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
