@@ -5,21 +5,12 @@ import { useState, useRef, useEffect } from "react";
 import { StoryUploader } from "./story/StoryUploader";
 import { StoryItem } from "./story/StoryItem";
 import { StoryNavigation } from "./story/StoryNavigation";
+import { Story } from "@/integrations/supabase/types/story";
 
 interface Creator {
   id: string;
   username: string | null;
   avatar_url: string | null;
-}
-
-interface Story {
-  id: string;
-  media_url: string;
-  video_url: string | null;
-  duration: number | null;
-  created_at: string;
-  expires_at: string;
-  creator: Creator;
 }
 
 interface GroupedStory {
@@ -72,11 +63,14 @@ export const StoryReel = () => {
         .from("stories")
         .select(`
           id,
+          creator_id,
           media_url,
           video_url,
           duration,
           created_at,
           expires_at,
+          is_active,
+          screenshot_disabled,
           creator:profiles!stories_creator_id_fkey (
             id,
             username,
