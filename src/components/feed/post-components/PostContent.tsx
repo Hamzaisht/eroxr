@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PostContentProps {
   content: string;
@@ -23,6 +24,24 @@ export const PostContent = ({
   const [loadError, setLoadError] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const hasMedia = mediaUrls.length > 0 || videoUrls.length > 0;
+
+  const getPublicUrl = async (url: string) => {
+    try {
+      // Extract bucket and path from URL
+      const urlParts = url.split('/storage/v1/object/public/');
+      if (urlParts.length !== 2) return url;
+      
+      const [bucket, path] = urlParts[1].split('/', 1);
+      const { data } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(path);
+      
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error getting public URL:', error);
+      return url;
+    }
+  };
 
   const handleMediaError = (url: string) => {
     setLoadError(prev => ({ ...prev, [url]: true }));
@@ -65,6 +84,7 @@ export const PostContent = ({
                             className="relative aspect-video w-full"
                           >
                             <VideoPlayer
+                              key={url} // Add key to force remount on URL change
                               url={url}
                               poster={mediaUrls?.[0]}
                               className="w-full h-full rounded-lg overflow-hidden"
@@ -94,6 +114,7 @@ export const PostContent = ({
                               alt={`Post media ${index + 1}`}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               loading="lazy"
+                              crossOrigin="anonymous"
                               onError={() => handleMediaError(url)}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
