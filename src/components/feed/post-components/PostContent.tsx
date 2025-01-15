@@ -89,22 +89,14 @@ export const PostContent = ({
                             className="relative aspect-[4/3] cursor-pointer group"
                             onClick={() => onMediaClick(url)}
                           >
-                            {url ? (
-                              <>
-                                <img
-                                  src={url}
-                                  alt={`Post media ${index + 1}`}
-                                  className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                                  loading="lazy"
-                                  onError={() => handleMediaError(url)}
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
-                              </>
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-luxury-darker rounded-lg">
-                                <AlertCircle className="w-8 h-8 text-luxury-neutral/50" />
-                              </div>
-                            )}
+                            <img
+                              src={url}
+                              alt={`Post media ${index + 1}`}
+                              className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                              loading="lazy"
+                              onError={() => handleMediaError(url)}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </motion.div>
                         )
                       ))}
