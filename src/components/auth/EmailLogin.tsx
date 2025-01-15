@@ -17,25 +17,39 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
     try {
       setIsLoading(true);
       
-      // First try email login
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.identifier,
         password: values.password,
       });
 
       if (error) {
-        // Check if it's an invalid credentials error
-        if (error instanceof AuthApiError && error.status === 400) {
-          toast({
-            title: "Login failed",
-            description: "Invalid email or password. Please check your credentials and try again.",
-            variant: "destructive",
-          });
-          return;
+        if (error instanceof AuthApiError) {
+          switch (error.status) {
+            case 400:
+              toast({
+                title: "Login failed",
+                description: "Invalid email or password. Please check your credentials and try again.",
+                variant: "destructive",
+              });
+              break;
+            case 422:
+              toast({
+                title: "Invalid format",
+                description: "Please enter a valid email address.",
+                variant: "destructive",
+              });
+              break;
+            default:
+              toast({
+                title: "Error",
+                description: error.message,
+                variant: "destructive",
+              });
+          }
+        } else {
+          throw error;
         }
-        
-        // Handle other errors
-        throw error;
+        return;
       }
 
       toast({
@@ -46,24 +60,9 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
     } catch (error: any) {
       console.error("Login error:", error);
       
-      let errorMessage = "An error occurred during sign in";
-      
-      if (error instanceof AuthApiError) {
-        switch (error.message) {
-          case "Email not confirmed":
-            errorMessage = "Please verify your email address before signing in.";
-            break;
-          case "Invalid login credentials":
-            errorMessage = "Invalid email or password. Please try again.";
-            break;
-          default:
-            errorMessage = error.message;
-        }
-      }
-      
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "An unexpected error occurred. Please try again later.",
         variant: "destructive",
       });
     } finally {
