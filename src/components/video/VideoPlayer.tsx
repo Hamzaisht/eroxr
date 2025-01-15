@@ -22,16 +22,27 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
     const video = videoRef.current;
     if (!video) return;
 
+    console.log("Attempting to load video from URL:", url);
+
     const handleLoadedData = () => {
+      console.log("Video loaded successfully:", url);
       setIsLoading(false);
       setHasError(false);
     };
 
     const handleError = (e: Event) => {
-      console.error("Video loading error:", e);
+      const videoElement = e.target as HTMLVideoElement;
+      console.error("Video loading error details:", {
+        error: videoElement.error,
+        networkState: videoElement.networkState,
+        readyState: videoElement.readyState,
+        url: url
+      });
+      
       setIsLoading(false);
       setHasError(true);
       if (onError) onError();
+      
       toast({
         title: "Error loading video",
         description: "Failed to load video content. Please try again later.",
@@ -41,10 +52,15 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
 
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
+    video.addEventListener('abort', handleError);
+
+    // Force video reload when URL changes
+    video.load();
 
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
+      video.removeEventListener('abort', handleError);
     };
   }, [url, onError, toast]);
 
@@ -103,6 +119,7 @@ export const VideoPlayer = ({ url, poster, className = "", onError }: VideoPlaye
         playsInline
         loop
         muted={isMuted}
+        preload="metadata"
       />
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
