@@ -9,48 +9,16 @@ interface StoryItemProps {
 }
 
 export const StoryItem = ({ story, onClick }: StoryItemProps) => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const generateVideoThumbnail = async () => {
-      if (!story.video_url) return;
-
-      try {
-        const video = document.createElement('video');
-        video.src = story.video_url;
-        
-        await new Promise((resolve) => {
-          video.onloadedmetadata = () => {
-            // Seek to middle of video
-            video.currentTime = video.duration / 2;
-            resolve(null);
-          };
-        });
-
-        await new Promise((resolve) => {
-          video.onseeked = () => {
-            // Create canvas and draw video frame
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Convert canvas to data URL
-            const thumbnailUrl = canvas.toDataURL('image/jpeg');
-            setPreviewUrl(thumbnailUrl);
-            resolve(null);
-          };
-        });
-      } catch (error) {
-        console.error('Error generating video thumbnail:', error);
-        // Fallback to video URL if thumbnail generation fails
-        setPreviewUrl(story.video_url);
-      }
-    };
-
     if (story.video_url) {
-      generateVideoThumbnail();
+      // Preload video to ensure it's ready when clicked
+      const video = new Image();
+      video.src = story.video_url;
+      video.onload = () => setIsLoading(false);
+    } else {
+      setIsLoading(false);
     }
   }, [story.video_url]);
 
@@ -63,18 +31,23 @@ export const StoryItem = ({ story, onClick }: StoryItemProps) => {
     >
       <div className="relative mb-2">
         <div className="aspect-[3/4] rounded-lg overflow-hidden">
-          {story.video_url ? (
-            <VideoPreview
-              videoUrl={story.video_url}
-              previewUrl={previewUrl}
-              className="w-full h-full object-cover"
-            />
+          {isLoading ? (
+            <div className="w-full h-full flex items-center justify-center bg-luxury-dark/20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
+            </div>
           ) : (
-            <img
-              src={story.media_url || ''}
-              alt="Story preview"
-              className="w-full h-full object-cover"
-            />
+            story.video_url ? (
+              <VideoPreview
+                videoUrl={story.video_url}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <img
+                src={story.media_url || ''}
+                alt="Story preview"
+                className="w-full h-full object-cover"
+              />
+            )
           )}
         </div>
       </div>

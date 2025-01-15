@@ -1,19 +1,20 @@
+import { useState, useEffect } from "react";
+
 interface VideoPreviewProps {
   videoUrl: string;
-  previewUrl: string | null;
   className?: string;
 }
 
-export const VideoPreview = ({ videoUrl, previewUrl, className }: VideoPreviewProps) => {
-  if (previewUrl) {
-    return (
-      <img 
-        src={previewUrl} 
-        alt="Video preview" 
-        className={className}
-      />
-    );
-  }
+export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const video = document.createElement('video');
+    video.src = videoUrl;
+    video.onloadeddata = () => {
+      setIsLoading(false);
+    };
+  }, [videoUrl]);
 
   return (
     <video
@@ -22,6 +23,7 @@ export const VideoPreview = ({ videoUrl, previewUrl, className }: VideoPreviewPr
       preload="metadata"
       playsInline
       muted
+      poster={videoUrl + '?x-oss-process=video/snapshot,t_1000,m_fast'}
     />
   );
 };
