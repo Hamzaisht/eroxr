@@ -24,7 +24,6 @@ export const MediaUploadSection = ({
   const verifyStorageAccess = async () => {
     try {
       setIsVerifying(true);
-      // Verify storage bucket access
       const { data: bucketData, error: bucketError } = await supabase
         .storage
         .getBucket('posts');
@@ -48,18 +47,19 @@ export const MediaUploadSection = ({
     }
   };
 
-  const validateVideoFile = async (file: File): Promise<boolean> => {
-    if (file.type.startsWith('video/')) {
-      // Check file size (50MB = 50 * 1024 * 1024 bytes)
-      if (file.size > 50 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Videos must be 50MB or smaller",
-          variant: "destructive",
-        });
-        return false;
-      }
+  const validateFile = async (file: File): Promise<boolean> => {
+    // Check file size (50MB = 50 * 1024 * 1024 bytes)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Files must be 50MB or smaller",
+        variant: "destructive",
+      });
+      return false;
+    }
 
+    // If it's a video, check duration
+    if (file.type.startsWith('video/')) {
       const video = document.createElement('video');
       video.preload = 'metadata';
 
@@ -80,6 +80,27 @@ export const MediaUploadSection = ({
         video.src = URL.createObjectURL(file);
       });
     }
+
+    // For images, check dimensions
+    if (file.type.startsWith('image/')) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          window.URL.revokeObjectURL(img.src);
+          resolve(true);
+        };
+        img.onerror = () => {
+          toast({
+            title: "Invalid image",
+            description: "Please upload a valid image file",
+            variant: "destructive",
+          });
+          resolve(false);
+        };
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
     return true;
   };
 
@@ -96,7 +117,7 @@ export const MediaUploadSection = ({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const isValid = await validateVideoFile(file);
+      const isValid = await validateFile(file);
       if (!isValid) {
         e.target.value = '';
         return;
@@ -140,32 +161,37 @@ export const MediaUploadSection = ({
             </>
           ) : (
             <>
-              <Video className="h-4 w-4 mr-2" />
-              {selectedFiles?.length ? `${selectedFiles.length} file(s) selected` : 'Upload Video'}
+              <ImagePlus className="h-4 w-4 mr-2" />
+              {selectedFiles?.length ? `${selectedFiles.length} file(s) selected` : 'Upload Media'}
             </>
           )}
         </Button>
         <input
           type="file"
           id="post-file-upload"
-          accept="video/*"
+          accept="image/*,video/*"
+          multiple
           onChange={handleFileValidation}
           disabled={!isPayingCustomer || isVerifying}
           style={{ display: 'none' }}
           onClick={(e) => {
-            // Reset the value to allow selecting the same file again
             (e.target as HTMLInputElement).value = '';
           }}
         />
       </div>
       {!isPayingCustomer && (
         <p className="text-sm text-muted-foreground">
-          Upgrade to upload video files
+          Upgrade to upload media files
         </p>
       )}
       <p className="text-sm text-muted-foreground">
-        Supported formats: MP4, WebM up to 50MB and 5 minutes
+        Supported formats: Images (JPG, PNG, GIF) and Videos (MP4, WebM) up to 50MB
       </p>
+      {selectedFiles?.length > 0 && (
+        <p className="text-sm text-muted-foreground">
+          Selected {selectedFiles.length} file(s)
+        </p>
+      )}
     </div>
   );
 };
