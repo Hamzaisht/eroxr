@@ -4,10 +4,11 @@ import { Play, Pause } from "lucide-react";
 
 interface VideoPlayerProps {
   url: string;
+  poster?: string;  // Added poster prop
   onError: () => void;
 }
 
-export const VideoPlayer = ({ url, onError }: VideoPlayerProps) => {
+export const VideoPlayer = ({ url, poster, onError }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -35,6 +36,7 @@ export const VideoPlayer = ({ url, onError }: VideoPlayerProps) => {
       <video
         ref={videoRef}
         src={url}
+        poster={poster}  // Added poster attribute
         className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
         playsInline
         loop

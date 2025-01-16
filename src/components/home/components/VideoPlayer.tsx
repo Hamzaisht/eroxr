@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 interface VideoPlayerProps {
   url: string;
   index?: number;
+  poster?: string;  // Added poster prop
   onIndexChange?: (index: number) => void;
   className?: string;
   onError?: () => void;
@@ -15,6 +16,7 @@ interface VideoPlayerProps {
 export const VideoPlayer = ({
   url,
   index,
+  poster,  // Added to destructuring
   onIndexChange,
   className,
   onError
@@ -86,6 +88,7 @@ export const VideoPlayer = ({
       <video
         ref={videoRef}
         src={url}
+        poster={poster}  // Added poster attribute
         muted={isMuted}
         playsInline
         loop

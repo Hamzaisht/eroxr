@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface VideoPlayerProps {
   url: string;
-  poster?: string;  // Added poster prop as optional
+  poster?: string;  // Added poster prop
   className?: string;
   onError?: () => void;
 }
@@ -68,7 +68,7 @@ export const VideoPlayer = ({ url, poster, className, onError }: VideoPlayerProp
       <video
         ref={videoRef}
         src={url}
-        poster={poster}
+        poster={poster}  // Added poster attribute
         muted={isMuted}
         playsInline
         loop
