@@ -12,7 +12,7 @@ export const MainContent = ({ children, isErosRoute = false }: MainContentProps)
   const location = useLocation();
 
   return (
-    <main className="flex-1 relative overflow-y-auto">
+    <div className="min-h-screen w-full relative z-20">
       <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}
@@ -28,6 +28,6 @@ export const MainContent = ({ children, isErosRoute = false }: MainContentProps)
           {children}
         </motion.div>
       </AnimatePresence>
-    </main>
+    </div>
   );
 };
