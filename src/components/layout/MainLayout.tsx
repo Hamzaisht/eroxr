@@ -29,13 +29,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         throw new Error('Authentication required to upload files');
       }
 
-      // Validate file size (max 100MB)
       const maxSize = 100 * 1024 * 1024;
       if (file.size > maxSize) {
         throw new Error('File size exceeds 100MB limit');
       }
 
-      // Validate file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4'];
       if (!allowedTypes.includes(file.type)) {
         throw new Error('Invalid file type. Please upload an image or video file.');
@@ -45,23 +43,20 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
 
-      // Show upload started toast
       toast({
         title: "Upload started",
         description: "Your file is being processed...",
       });
 
-      // Upload to storage
       const { error: uploadError, data } = await supabase.storage
         .from('posts')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false,
+          upsert: false
         });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('posts')
         .getPublicUrl(filePath);
@@ -94,19 +89,23 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     <div className="min-h-screen bg-background relative overflow-hidden">
       <BackgroundEffects />
       
-      <MainContent isErosRoute={isErosRoute}>
-        {children}
-      </MainContent>
+      <div className="relative min-h-screen w-full backdrop-blur-sm">
+        <div className="flex flex-col min-h-screen">
+          <MainContent isErosRoute={isErosRoute}>
+            {children}
+          </MainContent>
 
-      <FloatingActionMenu currentPath={location.pathname} />
-      
-      <UploadDialog
-        open={isUploadOpen}
-        onOpenChange={setIsUploadOpen}
-        onUpload={handleUpload}
-        isUploading={isUploading}
-        uploadProgress={uploadProgress}
-      />
+          <FloatingActionMenu currentPath={location.pathname} />
+          
+          <UploadDialog
+            open={isUploadOpen}
+            onOpenChange={setIsUploadOpen}
+            onUpload={handleUpload}
+            isUploading={isUploading}
+            uploadProgress={uploadProgress}
+          />
+        </div>
+      </div>
     </div>
   );
 };
