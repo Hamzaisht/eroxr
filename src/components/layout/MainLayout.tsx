@@ -3,6 +3,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
 import { BackgroundEffects } from "./BackgroundEffects";
+import { InteractiveNav } from "./InteractiveNav";
 import { MainContent } from "./components/MainContent";
 import { UploadDialog } from "./UploadDialog";
 import { FloatingActionMenu } from "./FloatingActionMenu";
@@ -25,7 +26,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       setIsUploading(true);
       setUploadProgress(0);
 
-      if (!session?.user?.id) {
+      if (!session?.user) {
         throw new Error('Authentication required to upload files');
       }
 
@@ -86,24 +87,28 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isErosRoute = location.pathname.includes('/eros');
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <BackgroundEffects />
+    <div className="flex min-h-screen bg-[#0D1117]">
+      <InteractiveNav />
       
-      <div className="relative min-h-screen w-full backdrop-blur-sm">
-        <div className="flex flex-col min-h-screen">
-          <MainContent isErosRoute={isErosRoute}>
-            {children}
-          </MainContent>
+      <div className="flex-1 relative">
+        <BackgroundEffects />
+        
+        <div className="relative min-h-screen w-full backdrop-blur-sm">
+          <div className="flex flex-col min-h-screen">
+            <MainContent isErosRoute={isErosRoute}>
+              {children}
+            </MainContent>
 
-          <FloatingActionMenu currentPath={location.pathname} />
-          
-          <UploadDialog
-            open={isUploadOpen}
-            onOpenChange={setIsUploadOpen}
-            onUpload={handleUpload}
-            isUploading={isUploading}
-            uploadProgress={uploadProgress}
-          />
+            <FloatingActionMenu currentPath={location.pathname} />
+            
+            <UploadDialog
+              open={isUploadOpen}
+              onOpenChange={setIsUploadOpen}
+              onUpload={handleUpload}
+              isUploading={isUploading}
+              uploadProgress={uploadProgress}
+            />
+          </div>
         </div>
       </div>
     </div>
