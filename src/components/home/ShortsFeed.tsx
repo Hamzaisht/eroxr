@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { CommentSection } from "../feed/CommentSection";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const ShortsFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -20,39 +22,41 @@ export const ShortsFeed = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { handleLike, handleSave } = useShortActions();
   const session = useSession();
-  const { data } = useFeedQuery(session?.user?.id, 'shorts');
+  const { data, refetch } = useFeedQuery(session?.user?.id, 'shorts');
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const { toast } = useToast();
 
   const shorts = data?.pages.flatMap(page => page) ?? [];
 
   useEffect(() => {
-    const preloadVideos = async () => {
-      try {
-        await Promise.all(
-          shorts.map(short => {
-            return new Promise((resolve) => {
-              if (!short.video_urls?.[0]) return resolve(true);
-              const video = document.createElement('video');
-              video.preload = "auto";
-              video.onloadeddata = () => resolve(true);
-              video.onerror = () => {
-                console.error(`Failed to load ${short.video_urls?.[0]}`);
-                resolve(false);
-              };
-              video.src = short.video_urls[0];
-            });
-          })
-        );
-        console.log("Videos preloaded");
-      } catch (error) {
-        console.error("Error during preload:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Subscribe to real-time updates for comments
+    if (!session?.user?.id) return;
 
-    preloadVideos();
-  }, [shorts]);
+    const channel = supabase
+      .channel('public:comments')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments'
+        },
+        (payload) => {
+          console.log('New comment:', payload);
+          refetch();
+          
+          toast({
+            title: "New comment",
+            description: "Someone commented on a short",
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id, refetch, toast]);
 
   const handleShare = (shortId: string) => {
     setSelectedShortId(shortId);
@@ -63,14 +67,6 @@ export const ShortsFeed = () => {
     setSelectedShortId(shortId);
     setIsCommentsOpen(true);
   };
-
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-b from-luxury-dark to-black">
-        <div className="w-12 h-12 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 bg-black">
@@ -90,6 +86,13 @@ export const ShortsFeed = () => {
                 index={index}
                 onIndexChange={setCurrentVideoIndex}
                 className="h-full w-full object-cover"
+                onError={() => {
+                  toast({
+                    title: "Video Error",
+                    description: "Failed to load video. Please try again.",
+                    variant: "destructive",
+                  });
+                }}
               />
               <ShortContent
                 short={{
