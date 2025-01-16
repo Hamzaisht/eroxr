@@ -34,25 +34,26 @@ const App = () => {
   }, [supabase.auth]);
 
   return (
-    <>
+    <div className="min-h-screen bg-[#0D1117]">
       <Routes>
+        {/* Public routes */}
         <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
         
-        {/* Protected routes */}
-        <Route element={<MainLayout />}>
-          <Route path="/" element={session ? <Index /> : <Navigate to="/login" />} />
-          <Route path="/home" element={session ? <Home /> : <Navigate to="/login" />} />
-          <Route path="/profile/:id" element={session ? <Profile /> : <Navigate to="/login" />} />
-          <Route path="/eroboard" element={session ? <Eroboard /> : <Navigate to="/login" />} />
-          <Route path="/messages" element={session ? <Messages /> : <Navigate to="/login" />} />
-          <Route path="/dating" element={session ? <Dating /> : <Navigate to="/login" />} />
-          <Route path="/search" element={session ? <Search /> : <Navigate to="/login" />} />
-          <Route path="/shorts" element={session ? <Shorts /> : <Navigate to="/login" />} />
+        {/* Protected routes wrapped in MainLayout */}
+        <Route element={session ? <MainLayout /> : <Navigate to="/login" />}>
+          <Route path="/" element={<Index />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/profile/:id" element={<Profile />} />
+          <Route path="/eroboard" element={<Eroboard />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/dating" element={<Dating />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/shorts" element={<Shorts />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
       <Toaster />
-    </>
+    </div>
   );
 };
 
