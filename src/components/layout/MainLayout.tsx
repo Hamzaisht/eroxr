@@ -11,6 +11,7 @@ import { BackgroundEffects } from "./components/BackgroundEffects";
 import { MainContent } from "./components/MainContent";
 import { UploadDialog } from "./UploadDialog";
 import { FloatingActionMenu } from "./FloatingActionMenu";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -56,18 +57,41 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const handleUpload = async (file: File) => {
     try {
       console.log('File to upload:', file);
-      // Handle file upload logic here
+      
+      if (!session?.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${session.user.id}/${fileName}`;
+
+      // Upload to storage
+      const { error: uploadError, data } = await supabase.storage
+        .from('posts')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('posts')
+        .getPublicUrl(filePath);
+
       toast({
-        title: "Upload started",
-        description: "Your file is being processed...",
+        title: "Upload successful",
+        description: "Your file has been uploaded successfully",
       });
-    } catch (error) {
+
+      return publicUrl;
+    } catch (error: any) {
       console.error('Upload error:', error);
       toast({
         variant: "destructive",
         title: "Upload failed",
-        description: "There was an error uploading your file. Please try again.",
+        description: error.message || "There was an error uploading your file. Please try again.",
       });
+      throw error;
     }
   };
 
