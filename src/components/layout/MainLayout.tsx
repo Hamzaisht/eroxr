@@ -90,16 +90,18 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     <div className="flex min-h-screen bg-[#0D1117]">
       <InteractiveNav />
       
-      <div className="flex-1 relative ml-[80px] md:ml-[240px]">
+      <div className="flex-1 ml-[80px] md:ml-[240px] relative">
         <BackgroundEffects />
         
-        <div className="relative min-h-screen w-full backdrop-blur-sm">
-          <MainContent isErosRoute={isErosRoute}>
-            {children}
-          </MainContent>
+        <div className="relative min-h-screen w-full">
+          <div className="flex flex-col min-h-screen">
+            <MainContent isErosRoute={isErosRoute}>
+              {children}
+            </MainContent>
 
-          <FloatingActionMenu currentPath={location.pathname} />
-          
+            <FloatingActionMenu currentPath={location.pathname} />
+          </div>
+
           <UploadDialog
             open={isUploadOpen}
             onOpenChange={setIsUploadOpen}
