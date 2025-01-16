@@ -53,9 +53,22 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     checkSession();
   }, [session, navigate, toast]);
 
-  const handleUpload = (files: FileList) => {
-    console.log('Files to upload:', files);
-    // Handle file upload logic here
+  const handleUpload = async (file: File) => {
+    try {
+      console.log('File to upload:', file);
+      // Handle file upload logic here
+      toast({
+        title: "Upload started",
+        description: "Your file is being processed...",
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "There was an error uploading your file. Please try again.",
+      });
+    }
   };
 
   if (isLoading) {
