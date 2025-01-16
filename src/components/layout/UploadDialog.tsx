@@ -1,8 +1,8 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Upload, Loader2 } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { Upload } from "lucide-react";
 
 interface UploadDialogProps {
   open: boolean;
@@ -17,66 +17,51 @@ export const UploadDialog = ({
   onOpenChange,
   onUpload,
   isUploading,
-  uploadProgress
+  uploadProgress,
 }: UploadDialogProps) => {
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
         await onUpload(file);
       } catch (error) {
-        console.error('File upload error:', error);
+        console.error('Upload error:', error);
       }
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Upload Content</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-6">
+      <DialogContent className="sm:max-w-[425px]">
+        <div className="grid gap-4 py-4">
           <div className="flex flex-col items-center gap-4">
             <input
               type="file"
               id="file-upload"
-              accept="image/*,video/*"
               className="hidden"
-              onChange={handleFileSelect}
+              onChange={handleFileChange}
+              accept="image/*,video/*"
               disabled={isUploading}
             />
-            
-            <motion.div 
-              className="w-full"
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full"
             >
               <Button
                 onClick={() => document.getElementById('file-upload')?.click()}
                 className="w-full h-32 rounded-lg border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors"
                 disabled={isUploading}
               >
-                {isUploading ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                    <span>Uploading...</span>
-                    <span className="text-sm text-muted-foreground">
-                      {uploadProgress.toFixed(0)}%
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8" />
-                    <span>Click to select file</span>
-                    <span className="text-sm text-muted-foreground">
-                      Images and videos up to 100MB
-                    </span>
-                  </div>
-                )}
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="h-8 w-8" />
+                  <span>{isUploading ? 'Uploading...' : 'Upload file'}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Maximum size: 100MB
+                  </span>
+                </div>
               </Button>
-              
               {isUploading && (
                 <Progress 
                   value={uploadProgress} 

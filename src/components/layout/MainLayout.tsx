@@ -51,7 +51,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         description: "Your file is being processed...",
       });
 
-      // Upload to storage with progress tracking
+      // Upload to storage
       const { error: uploadError, data } = await supabase.storage
         .from('posts')
         .upload(filePath, file, {
@@ -95,9 +95,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <BackgroundEffects />
       
       <div className="relative min-h-screen w-full backdrop-blur-3xl">
-        <MainContent isErosRoute={isErosRoute}>
-          {children}
-        </MainContent>
+        <div className="flex w-full">
+          <MainContent isErosRoute={isErosRoute}>
+            {children}
+          </MainContent>
+        </div>
 
         <FloatingActionMenu currentPath={location.pathname} />
         
