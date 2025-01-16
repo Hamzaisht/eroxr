@@ -84,31 +84,29 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     }
   };
 
-  const isErosRoute = location.pathname.includes('/eros');
+  const isErosRoute = location.pathname.includes('/shorts');
 
   return (
     <div className="flex min-h-screen bg-[#0D1117]">
       <InteractiveNav />
       
-      <div className="flex-1 relative">
+      <div className="flex-1 relative ml-[80px] md:ml-[240px]">
         <BackgroundEffects />
         
         <div className="relative min-h-screen w-full backdrop-blur-sm">
-          <div className="flex flex-col min-h-screen pt-16">
-            <MainContent>
-              {children}
-            </MainContent>
+          <MainContent isErosRoute={isErosRoute}>
+            {children}
+          </MainContent>
 
-            <FloatingActionMenu currentPath={location.pathname} />
-            
-            <UploadDialog
-              open={isUploadOpen}
-              onOpenChange={setIsUploadOpen}
-              onUpload={handleUpload}
-              isUploading={isUploading}
-              uploadProgress={uploadProgress}
-            />
-          </div>
+          <FloatingActionMenu currentPath={location.pathname} />
+          
+          <UploadDialog
+            open={isUploadOpen}
+            onOpenChange={setIsUploadOpen}
+            onUpload={handleUpload}
+            isUploading={isUploading}
+            uploadProgress={uploadProgress}
+          />
         </div>
       </div>
     </div>

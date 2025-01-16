@@ -12,7 +12,7 @@ export const MainContent = ({ children, isErosRoute = false }: MainContentProps)
   const location = useLocation();
 
   return (
-    <main className="flex-1 relative overflow-y-auto">
+    <main className="relative min-h-screen w-full">
       <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}
@@ -22,7 +22,7 @@ export const MainContent = ({ children, isErosRoute = false }: MainContentProps)
           transition={{ duration: 0.3 }}
           className={cn(
             "w-full min-h-screen",
-            isErosRoute ? 'pt-0' : 'px-4 md:px-6'
+            isErosRoute ? '' : 'p-4 md:p-6'
           )}
         >
           {children}
