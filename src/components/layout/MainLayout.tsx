@@ -5,9 +5,7 @@ import { useLocation } from "react-router-dom";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { InteractiveNav } from "./InteractiveNav";
 import { MainContent } from "./components/MainContent";
-import { UploadDialog } from "./UploadDialog";
 import { FloatingActionMenu } from "./FloatingActionMenu";
-import { supabase } from "@/integrations/supabase/client";
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -18,22 +16,24 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { toast } = useToast();
   const location = useLocation();
 
+  const isErosRoute = location.pathname.includes('/shorts');
+
   console.log("MainLayout rendering", { children, location }); // Debug log
 
   return (
-    <div className="min-h-screen bg-[#0D1117] relative">
+    <div className="min-h-screen bg-[#0D1117]">
       <InteractiveNav />
       
-      <div className="relative min-h-screen ml-[80px] md:ml-[240px]">
-        {/* Background with pointer-events-none to ensure content is clickable */}
+      <div className="ml-[80px] md:ml-[240px] min-h-screen relative">
+        {/* Background */}
         <div className="fixed inset-0 pointer-events-none">
           <BackgroundEffects />
         </div>
         
-        {/* Main content area */}
-        <main className="relative min-h-screen z-10">
+        {/* Main content wrapper */}
+        <MainContent isErosRoute={isErosRoute}>
           {children}
-        </main>
+        </MainContent>
 
         <FloatingActionMenu currentPath={location.pathname} />
       </div>

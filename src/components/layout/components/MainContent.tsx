@@ -22,7 +22,7 @@ export const MainContent = ({ children, isErosRoute = false }: MainContentProps)
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
           className={cn(
-            "w-full min-h-screen",
+            "w-full min-h-screen relative z-10",
             isErosRoute ? '' : 'p-4 md:p-6'
           )}
         >
