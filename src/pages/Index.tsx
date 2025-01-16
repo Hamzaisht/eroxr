@@ -12,46 +12,47 @@ import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   // State management
-  const [userData, setUserData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [loading, setLoading] = useState(true);
   
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const navigate = useNavigate();
 
-  // Initial auth and profile check
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError || !user) {
-          console.error("Auth check failed:", userError);
+        if (!session?.user?.id) {
           navigate("/login");
           return;
         }
 
-        setUserData(user);
-
-        // Check paying customer status
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('is_paying_customer')
-          .eq('id', user.id)
+          .eq('id', session.user.id)
           .single();
         
-        if (!profileError && profile) {
-          setIsPayingCustomer(profile.is_paying_customer);
-        } else {
+        if (profileError) {
           console.error("Profile check failed:", profileError);
+          toast({
+            title: "Error",
+            description: "Failed to load profile data",
+            variant: "destructive",
+          });
+        } else {
+          setIsPayingCustomer(profile?.is_paying_customer || false);
         }
-
       } catch (error) {
         console.error("Auth check failed:", error);
+        toast({
+          title: "Error",
+          description: "Authentication check failed",
+          variant: "destructive",
+        });
         navigate("/login");
       } finally {
         setLoading(false);
@@ -59,19 +60,19 @@ const Index = () => {
     };
 
     checkAuth();
-  }, [navigate]);
+  }, [session, navigate, toast]);
 
-  // Loading state
+  // Show loading screen while checking auth
   if (loading) {
     return <LoadingScreen />;
   }
 
-  // No session state
-  if (!userData || !session) {
-    return null; // useEffect will handle navigation
+  // If no session, redirect to login
+  if (!session?.user) {
+    navigate("/login");
+    return null;
   }
 
-  // Main render
   return (
     <HomeLayout>
       <div className="w-full max-w-[2000px] mx-auto px-4">
@@ -79,7 +80,7 @@ const Index = () => {
           isMobile ? 'grid-cols-1' : 'lg:grid-cols-[1fr,400px]'
         }`}>
           <MainFeed 
-            userId={userData.id}
+            userId={session.user.id}
             isPayingCustomer={isPayingCustomer}
             onOpenCreatePost={() => setIsCreatePostOpen(true)}
             onFileSelect={setSelectedFiles}
