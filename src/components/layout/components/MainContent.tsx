@@ -22,7 +22,7 @@ export const MainContent = ({ children, isErosRoute = false }: MainContentProps)
           transition={{ duration: 0.3 }}
           className={cn(
             "w-full min-h-screen",
-            isErosRoute ? 'pt-0' : 'pt-16'
+            isErosRoute ? 'pt-0' : 'pt-16 px-4 md:px-6'
           )}
         >
           {children}

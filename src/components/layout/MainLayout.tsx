@@ -94,23 +94,19 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     <div className="min-h-screen bg-background relative overflow-hidden">
       <BackgroundEffects />
       
-      <div className="relative min-h-screen w-full backdrop-blur-3xl">
-        <div className="flex w-full">
-          <MainContent isErosRoute={isErosRoute}>
-            {children}
-          </MainContent>
-        </div>
+      <MainContent isErosRoute={isErosRoute}>
+        {children}
+      </MainContent>
 
-        <FloatingActionMenu currentPath={location.pathname} />
-        
-        <UploadDialog
-          open={isUploadOpen}
-          onOpenChange={setIsUploadOpen}
-          onUpload={handleUpload}
-          isUploading={isUploading}
-          uploadProgress={uploadProgress}
-        />
-      </div>
+      <FloatingActionMenu currentPath={location.pathname} />
+      
+      <UploadDialog
+        open={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
+        onUpload={handleUpload}
+        isUploading={isUploading}
+        uploadProgress={uploadProgress}
+      />
     </div>
   );
 };
