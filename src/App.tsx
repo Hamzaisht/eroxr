@@ -11,6 +11,7 @@ import Messages from '@/pages/Messages';
 import Dating from '@/pages/Dating';
 import Search from '@/pages/Search';
 import Shorts from '@/pages/Shorts';
+import Index from '@/pages/Index';
 
 const App = () => {
   const session = useSession();
@@ -35,10 +36,11 @@ const App = () => {
   return (
     <>
       <Routes>
-        <Route path="/login" element={!session ? <Login /> : <Navigate to="/home" />} />
+        <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
         
         {/* Protected routes */}
         <Route element={<MainLayout />}>
+          <Route path="/" element={session ? <Index /> : <Navigate to="/login" />} />
           <Route path="/home" element={session ? <Home /> : <Navigate to="/login" />} />
           <Route path="/profile/:id" element={session ? <Profile /> : <Navigate to="/login" />} />
           <Route path="/eroboard" element={session ? <Eroboard /> : <Navigate to="/login" />} />
@@ -46,8 +48,7 @@ const App = () => {
           <Route path="/dating" element={session ? <Dating /> : <Navigate to="/login" />} />
           <Route path="/search" element={session ? <Search /> : <Navigate to="/login" />} />
           <Route path="/shorts" element={session ? <Shorts /> : <Navigate to="/login" />} />
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="*" element={<Navigate to="/home" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
       <Toaster />
