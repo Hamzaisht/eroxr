@@ -33,14 +33,19 @@ const App = () => {
     return () => window.removeEventListener('unhandledrejection', handleError);
   }, [supabase.auth]);
 
+  if (!session) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0D1117]">
       <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
-        
-        {/* Protected routes wrapped in MainLayout */}
-        <Route element={session ? <MainLayout /> : <Navigate to="/login" />}>
+        <Route element={<MainLayout />}>
           <Route path="/" element={<Index />} />
           <Route path="/home" element={<Home />} />
           <Route path="/profile/:id" element={<Profile />} />

@@ -10,7 +10,6 @@ interface MainContentProps {
 
 export const MainContent = ({ children, isErosRoute = false }: MainContentProps) => {
   const location = useLocation();
-  console.log("MainContent rendering", { location, children }); // Debug log
 
   return (
     <div className="relative w-full min-h-screen">

@@ -1,6 +1,4 @@
-import { ReactNode } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { InteractiveNav } from "./InteractiveNav";
@@ -10,12 +8,10 @@ import { Outlet } from "react-router-dom";
 
 export const MainLayout = () => {
   const session = useSession();
-  const { toast } = useToast();
   const location = useLocation();
-
   const isErosRoute = location.pathname.includes('/shorts');
 
-  console.log("MainLayout rendering", { location }); // Debug log
+  if (!session) return null;
 
   return (
     <div className="min-h-screen bg-[#0D1117]">
