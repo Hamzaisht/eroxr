@@ -14,10 +14,10 @@ export const MainLayout = () => {
   if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-[#0D1117]">
+    <div className="flex min-h-screen bg-[#0D1117]">
       <InteractiveNav />
       
-      <div className="ml-[80px] md:ml-[240px] min-h-screen relative">
+      <div className="flex-1 ml-[80px] md:ml-[240px] min-h-screen relative">
         {/* Background */}
         <div className="fixed inset-0 pointer-events-none">
           <BackgroundEffects />

@@ -8,10 +8,9 @@ import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
-import { useNavigate } from "react-router-dom";
+import { StoryReel } from "@/components/StoryReel";
 
 const Index = () => {
-  // State management
   const [loading, setLoading] = useState(true);
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -20,39 +19,26 @@ const Index = () => {
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkProfile = async () => {
       try {
-        // If no session, redirect to login
-        if (!session?.user?.id) {
-          navigate("/login");
-          return;
-        }
+        if (!session?.user?.id) return;
 
-        // Fetch profile data
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('is_paying_customer')
           .eq('id', session.user.id)
           .single();
         
-        if (profileError) {
-          console.error("Profile check failed:", profileError);
-          toast({
-            title: "Error",
-            description: "Failed to load profile data",
-            variant: "destructive",
-          });
-        } else {
-          setIsPayingCustomer(profile?.is_paying_customer || false);
-        }
+        if (error) throw error;
+        
+        setIsPayingCustomer(profile?.is_paying_customer || false);
       } catch (error) {
-        console.error("Auth check failed:", error);
+        console.error("Profile check failed:", error);
         toast({
           title: "Error",
-          description: "Authentication check failed",
+          description: "Failed to load profile data",
           variant: "destructive",
         });
       } finally {
@@ -60,41 +46,38 @@ const Index = () => {
       }
     };
 
-    checkAuth();
-  }, [session, navigate, toast]);
+    checkProfile();
+  }, [session?.user?.id, toast]);
 
-  // Show loading screen while checking auth
   if (loading) {
     return <LoadingScreen />;
   }
 
-  // If no session, don't render anything - useEffect will handle redirect
   if (!session?.user) {
     return null;
   }
 
-  // Main content render
   return (
-    <div className="min-h-screen bg-[#0D1117]">
-      <HomeLayout>
-        <div className="w-full max-w-[2000px] mx-auto px-4">
-          <div className={`grid gap-8 ${
-            isMobile ? 'grid-cols-1' : 'lg:grid-cols-[1fr,400px]'
-          }`}>
-            <MainFeed 
-              userId={session.user.id}
-              isPayingCustomer={isPayingCustomer}
-              onOpenCreatePost={() => setIsCreatePostOpen(true)}
-              onFileSelect={setSelectedFiles}
-              onOpenGoLive={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Live streaming feature will be available soon!",
-                });
-              }}
-            />
-            {!isMobile && <RightSidebar />}
-          </div>
+    <HomeLayout>
+      <div className="w-full max-w-[2000px] mx-auto px-4">
+        <StoryReel />
+        
+        <div className={`grid gap-8 ${
+          isMobile ? 'grid-cols-1' : 'lg:grid-cols-[1fr,400px]'
+        }`}>
+          <MainFeed 
+            userId={session.user.id}
+            isPayingCustomer={isPayingCustomer}
+            onOpenCreatePost={() => setIsCreatePostOpen(true)}
+            onFileSelect={setSelectedFiles}
+            onOpenGoLive={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Live streaming feature will be available soon!",
+              });
+            }}
+          />
+          {!isMobile && <RightSidebar />}
         </div>
 
         <CreatePostDialog 
@@ -103,8 +86,8 @@ const Index = () => {
           selectedFiles={selectedFiles}
           onFileSelect={setSelectedFiles}
         />
-      </HomeLayout>
-    </div>
+      </div>
+    </HomeLayout>
   );
 };
 

@@ -33,29 +33,27 @@ const App = () => {
     return () => window.removeEventListener('unhandledrejection', handleError);
   }, [supabase.auth]);
 
-  if (!session) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#0D1117]">
       <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Index />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/eroboard" element={<Eroboard />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/dating" element={<Dating />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/shorts" element={<Shorts />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
+        {!session ? (
+          <>
+            <Route path="/login" element={<Login />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </>
+        ) : (
+          <Route element={<MainLayout />}>
+            <Route index element={<Index />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/profile/:id" element={<Profile />} />
+            <Route path="/eroboard" element={<Eroboard />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/dating" element={<Dating />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/shorts" element={<Shorts />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        )}
       </Routes>
       <Toaster />
     </div>
