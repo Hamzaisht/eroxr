@@ -81,7 +81,6 @@ export const UploadDialog = ({
                 <Progress 
                   value={uploadProgress} 
                   className="mt-4"
-                  indicatorClassName="transition-all duration-300"
                 />
               )}
             </motion.div>

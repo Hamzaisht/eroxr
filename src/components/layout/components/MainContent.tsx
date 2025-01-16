@@ -5,10 +5,10 @@ import { useLocation } from "react-router-dom";
 
 interface MainContentProps {
   children: ReactNode;
-  isErosRoute: boolean;
+  isErosRoute?: boolean;
 }
 
-export const MainContent = ({ children, isErosRoute }: MainContentProps) => {
+export const MainContent = ({ children, isErosRoute = false }: MainContentProps) => {
   const location = useLocation();
 
   return (

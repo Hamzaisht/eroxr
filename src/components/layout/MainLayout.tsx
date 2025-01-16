@@ -1,12 +1,12 @@
 import { ReactNode, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "react-router-dom";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { MainContent } from "./components/MainContent";
 import { UploadDialog } from "./UploadDialog";
 import { FloatingActionMenu } from "./FloatingActionMenu";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -18,6 +18,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
+  const location = useLocation();
 
   const handleUpload = async (file: File) => {
     try {
@@ -54,11 +55,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       const { error: uploadError, data } = await supabase.storage
         .from('posts')
         .upload(filePath, file, {
-          onProgress: ({ loaded, total }) => {
-            const progress = (loaded / total) * 100;
-            setUploadProgress(progress);
-            console.log(`Upload progress: ${progress.toFixed(2)}%`);
-          },
+          cacheControl: '3600',
+          upsert: false,
         });
 
       if (uploadError) throw uploadError;
@@ -90,16 +88,18 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     }
   };
 
+  const isErosRoute = location.pathname.includes('/eros');
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <BackgroundEffects />
       
       <div className="relative min-h-screen w-full backdrop-blur-3xl">
-        <MainContent>
+        <MainContent isErosRoute={isErosRoute}>
           {children}
         </MainContent>
 
-        <FloatingActionMenu onUploadClick={() => setIsUploadOpen(true)} />
+        <FloatingActionMenu currentPath={location.pathname} />
         
         <UploadDialog
           open={isUploadOpen}
