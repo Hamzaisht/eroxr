@@ -90,10 +90,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     <div className="flex min-h-screen bg-[#0D1117]">
       <InteractiveNav />
       
-      <main className="flex-1 relative ml-[80px] md:ml-[240px]">
-        <BackgroundEffects />
+      <div className="flex-1 relative">
+        <div className="fixed inset-0 pointer-events-none">
+          <BackgroundEffects />
+        </div>
         
-        <div className="min-h-screen w-full relative z-10">
+        <main className="relative ml-[80px] md:ml-[240px] min-h-screen">
           <MainContent isErosRoute={isErosRoute}>
             {children}
           </MainContent>
@@ -107,8 +109,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             isUploading={isUploading}
             uploadProgress={uploadProgress}
           />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
