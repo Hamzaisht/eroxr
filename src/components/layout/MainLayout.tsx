@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { useMediaQuery } from "@/hooks/use-mobile";
 import { MainNav } from "@/components/MainNav";
 import { InteractiveNav } from "./InteractiveNav";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
@@ -53,6 +52,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
     checkSession();
   }, [session, navigate, toast]);
+
+  const handleUpload = (files: FileList) => {
+    console.log('Files to upload:', files);
+    // Handle file upload logic here
+  };
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -104,6 +108,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <UploadDialog 
         open={isErosDialogOpen}
         onOpenChange={setIsErosDialogOpen}
+        onUpload={handleUpload}
       />
     </div>
   );
