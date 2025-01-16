@@ -25,11 +25,13 @@ const Index = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // If no session, redirect to login
         if (!session?.user?.id) {
           navigate("/login");
           return;
         }
 
+        // Fetch profile data
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('is_paying_customer')
@@ -53,7 +55,6 @@ const Index = () => {
           description: "Authentication check failed",
           variant: "destructive",
         });
-        navigate("/login");
       } finally {
         setLoading(false);
       }
@@ -67,41 +68,43 @@ const Index = () => {
     return <LoadingScreen />;
   }
 
-  // If no session, redirect to login
+  // If no session, don't render anything - useEffect will handle redirect
   if (!session?.user) {
-    navigate("/login");
     return null;
   }
 
+  // Main content render
   return (
-    <HomeLayout>
-      <div className="w-full max-w-[2000px] mx-auto px-4">
-        <div className={`grid gap-8 ${
-          isMobile ? 'grid-cols-1' : 'lg:grid-cols-[1fr,400px]'
-        }`}>
-          <MainFeed 
-            userId={session.user.id}
-            isPayingCustomer={isPayingCustomer}
-            onOpenCreatePost={() => setIsCreatePostOpen(true)}
-            onFileSelect={setSelectedFiles}
-            onOpenGoLive={() => {
-              toast({
-                title: "Coming Soon",
-                description: "Live streaming feature will be available soon!",
-              });
-            }}
-          />
-          {!isMobile && <RightSidebar />}
+    <div className="min-h-screen bg-[#0D1117]">
+      <HomeLayout>
+        <div className="w-full max-w-[2000px] mx-auto px-4">
+          <div className={`grid gap-8 ${
+            isMobile ? 'grid-cols-1' : 'lg:grid-cols-[1fr,400px]'
+          }`}>
+            <MainFeed 
+              userId={session.user.id}
+              isPayingCustomer={isPayingCustomer}
+              onOpenCreatePost={() => setIsCreatePostOpen(true)}
+              onFileSelect={setSelectedFiles}
+              onOpenGoLive={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Live streaming feature will be available soon!",
+                });
+              }}
+            />
+            {!isMobile && <RightSidebar />}
+          </div>
         </div>
-      </div>
 
-      <CreatePostDialog 
-        open={isCreatePostOpen} 
-        onOpenChange={setIsCreatePostOpen}
-        selectedFiles={selectedFiles}
-        onFileSelect={setSelectedFiles}
-      />
-    </HomeLayout>
+        <CreatePostDialog 
+          open={isCreatePostOpen} 
+          onOpenChange={setIsCreatePostOpen}
+          selectedFiles={selectedFiles}
+          onFileSelect={setSelectedFiles}
+        />
+      </HomeLayout>
+    </div>
   );
 };
 
