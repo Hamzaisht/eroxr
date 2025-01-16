@@ -86,6 +86,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
   const isErosRoute = location.pathname.includes('/shorts');
 
+  console.log("MainLayout rendering", { children, location }); // Debug log
+
   return (
     <div className="flex min-h-screen bg-[#0D1117]">
       <InteractiveNav />
@@ -95,7 +97,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <BackgroundEffects />
         </div>
         
-        <main className="relative ml-[80px] md:ml-[240px] min-h-screen">
+        <div className="relative ml-[80px] md:ml-[240px] min-h-screen z-10">
           <MainContent isErosRoute={isErosRoute}>
             {children}
           </MainContent>
@@ -109,7 +111,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             isUploading={isUploading}
             uploadProgress={uploadProgress}
           />
-        </main>
+        </div>
       </div>
     </div>
   );

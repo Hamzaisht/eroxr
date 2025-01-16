@@ -34,10 +34,16 @@ const Index = () => {
     checkPayingCustomerStatus();
   }, [session?.user?.id]);
 
-  if (!session) return null;
+  // Add console log to debug rendering
+  console.log("Index component rendering", { session, isPayingCustomer });
+
+  if (!session) {
+    console.log("No session, returning null");
+    return null;
+  }
 
   return (
-    <HomeLayout>
+    <div className="relative w-full min-h-screen">
       <div className="w-full max-w-[2000px] mx-auto px-4">
         <div className={`grid gap-8 ${
           isMobile ? 'grid-cols-1' : 'lg:grid-cols-[1fr,400px]'
@@ -64,7 +70,7 @@ const Index = () => {
         selectedFiles={selectedFiles}
         onFileSelect={setSelectedFiles}
       />
-    </HomeLayout>
+    </div>
   );
 };
 
