@@ -94,8 +94,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         <BackgroundEffects />
         
         <div className="relative min-h-screen w-full backdrop-blur-sm">
-          <div className="flex flex-col min-h-screen">
-            <MainContent isErosRoute={isErosRoute}>
+          <div className="flex flex-col min-h-screen pt-16">
+            <MainContent>
               {children}
             </MainContent>
 
