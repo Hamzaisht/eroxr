@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface VideoPlayerProps {
   url: string;
-  poster?: string;
+  poster?: string;  // Added poster prop as optional
   className?: string;
   onError?: () => void;
 }
