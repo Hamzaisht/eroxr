@@ -7,37 +7,59 @@ import { HomeLayout } from "@/components/home/HomeLayout";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { LoadingScreen } from "@/components/layout/LoadingScreen";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [loading, setLoading] = useState(true);
+  
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const checkPayingCustomerStatus = async () => {
-      if (!session?.user?.id) return;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_paying_customer')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (!error && data) {
-        setIsPayingCustomer(data.is_paying_customer);
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate("/login");
+          return;
+        }
+
+        // Check paying customer status
+        if (user.id) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('is_paying_customer')
+            .eq('id', user.id)
+            .single();
+          
+          if (!error && data) {
+            setIsPayingCustomer(data.is_paying_customer);
+          }
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        navigate("/login");
+      } finally {
+        setLoading(false);
       }
     };
 
-    checkPayingCustomerStatus();
-  }, [session?.user?.id]);
+    checkAuth();
+  }, [navigate]);
 
-  console.log("Index component rendering", { session, isPayingCustomer });
+  // Show loading screen while checking auth
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
+  // If no session, the useEffect will handle redirect
   if (!session) {
-    console.log("No session, returning null");
     return null;
   }
 
