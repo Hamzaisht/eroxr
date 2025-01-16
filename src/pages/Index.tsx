@@ -11,6 +11,8 @@ import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  // State management
+  const [userData, setUserData] = useState<any>(null);
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
@@ -21,27 +23,33 @@ const Index = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const navigate = useNavigate();
 
+  // Initial auth and profile check
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          console.error("Auth check failed:", userError);
           navigate("/login");
           return;
         }
 
+        setUserData(user);
+
         // Check paying customer status
-        if (user.id) {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('is_paying_customer')
-            .eq('id', user.id)
-            .single();
-          
-          if (!error && data) {
-            setIsPayingCustomer(data.is_paying_customer);
-          }
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_paying_customer')
+          .eq('id', user.id)
+          .single();
+        
+        if (!profileError && profile) {
+          setIsPayingCustomer(profile.is_paying_customer);
+        } else {
+          console.error("Profile check failed:", profileError);
         }
+
       } catch (error) {
         console.error("Auth check failed:", error);
         navigate("/login");
@@ -53,16 +61,17 @@ const Index = () => {
     checkAuth();
   }, [navigate]);
 
-  // Show loading screen while checking auth
+  // Loading state
   if (loading) {
     return <LoadingScreen />;
   }
 
-  // If no session, the useEffect will handle redirect
-  if (!session) {
-    return null;
+  // No session state
+  if (!userData || !session) {
+    return null; // useEffect will handle navigation
   }
 
+  // Main render
   return (
     <HomeLayout>
       <div className="w-full max-w-[2000px] mx-auto px-4">
@@ -70,7 +79,7 @@ const Index = () => {
           isMobile ? 'grid-cols-1' : 'lg:grid-cols-[1fr,400px]'
         }`}>
           <MainFeed 
-            userId={session.user.id}
+            userId={userData.id}
             isPayingCustomer={isPayingCustomer}
             onOpenCreatePost={() => setIsCreatePostOpen(true)}
             onFileSelect={setSelectedFiles}
