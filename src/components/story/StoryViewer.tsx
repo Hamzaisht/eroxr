@@ -1,188 +1,155 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { motion, AnimatePresence } from "framer-motion";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useState, useEffect, useRef } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { StoryProgress } from "./viewer/StoryProgress";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { StoryHeader } from "./viewer/StoryHeader";
+import { StoryProgress } from "./viewer/StoryProgress";
+import { StoryControls } from "./viewer/StoryControls";
 import { StoryImage } from "./viewer/StoryImage";
 import { StoryVideo } from "./viewer/StoryVideo";
-import { StoryControls } from "./viewer/StoryControls";
-import { X } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { Story } from "@/integrations/supabase/types/story";
-import { VisuallyHidden } from "@/components/ui/visually-hidden";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface StoryViewerProps {
   stories: Story[];
-  initialStoryIndex?: number;
+  initialStoryIndex: number;
   onClose: () => void;
 }
 
-export const StoryViewer = ({ stories, initialStoryIndex = 0, onClose }: StoryViewerProps) => {
+export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewerProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialStoryIndex);
-  const [isHoldingClick, setIsHoldingClick] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const updateTimeRemaining = () => {
       const expiryDate = new Date(stories[currentIndex].expires_at);
-      const now = new Date();
-      
-      if (expiryDate > now) {
-        setTimeRemaining(formatDistanceToNow(expiryDate, { addSuffix: true }));
-      } else {
-        setTimeRemaining("Expired");
-        onClose();
-      }
+      const timeLeft = formatDistanceToNow(expiryDate, { addSuffix: true });
+      setTimeRemaining(timeLeft);
     };
 
     updateTimeRemaining();
-    const interval = setInterval(updateTimeRemaining, 1000);
+    const interval = setInterval(updateTimeRemaining, 60000);
+
+    // Close story if expired
+    const expiryDate = new Date(stories[currentIndex].expires_at);
+    if (expiryDate < new Date()) {
+      onClose();
+    }
+
     return () => clearInterval(interval);
   }, [currentIndex, stories, onClose]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
     const currentStory = stories[currentIndex];
-    
-    if (!isHoldingClick && !isPaused && !currentStory.video_url) {
-      timer = setTimeout(() => {
-        if (currentIndex < stories.length - 1) {
-          setCurrentIndex(currentIndex + 1);
-        } else {
-          onClose();
-          setCurrentIndex(0);
+
+    if (!isPaused && !currentStory.video_url) {
+      const duration = 5000; // 5 seconds for images
+      const interval = 50; // Update progress every 50ms
+      let elapsed = 0;
+
+      timer = setInterval(() => {
+        elapsed += interval;
+        setProgress((elapsed / duration) * 100);
+
+        if (elapsed >= duration) {
+          if (currentIndex < stories.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+            setProgress(0);
+          } else {
+            onClose();
+          }
         }
-      }, 5000);
+      }, interval);
     }
 
-    return () => clearTimeout(timer);
-  }, [currentIndex, isHoldingClick, isPaused, stories.length, onClose]);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [currentIndex, isPaused, stories, onClose]);
 
-  const handleVideoEnd = () => {
+  const handleNext = () => {
     if (currentIndex < stories.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+      setCurrentIndex(prev => prev + 1);
+      setProgress(0);
     } else {
       onClose();
-      setCurrentIndex(0);
     }
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const isRightSide = x > rect.width / 2;
-
-    if (isRightSide) {
-      if (currentIndex < stories.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-      } else {
-        onClose();
-        setCurrentIndex(0);
-      }
-    } else {
-      if (currentIndex > 0) {
-        setCurrentIndex(currentIndex - 1);
-      }
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+      setProgress(0);
     }
   };
 
-  const handleTouchStart = () => {
-    setIsHoldingClick(true);
+  const handlePress = () => {
     setIsPaused(true);
-    if (videoRef.current) {
-      videoRef.current.pause();
-    }
   };
 
-  const handleTouchEnd = () => {
-    setIsHoldingClick(false);
+  const handleRelease = () => {
     setIsPaused(false);
-    if (videoRef.current) {
-      videoRef.current.play();
-    }
   };
 
   const currentStory = stories[currentIndex];
-  const creator = currentStory.creator;
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent 
-        className="max-w-[500px] p-0 bg-transparent border-none"
-        aria-label={`Story by ${creator.username}`}
-      >
-        <VisuallyHidden asChild>
-          <div id="story-dialog-title">
-            Story from {creator.username}
-          </div>
-        </VisuallyHidden>
-        <VisuallyHidden asChild>
-          <div id="story-dialog-description">
-            Navigate through story content using left and right arrow keys or by clicking on the sides of the story
-          </div>
-        </VisuallyHidden>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="relative w-full cursor-pointer"
-            style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
-            onContextMenu={(e) => e.preventDefault()}
-            aria-labelledby="story-dialog-title"
-            aria-describedby="story-dialog-description"
-          >
-            <AspectRatio ratio={9/16} className="bg-black">
-              <StoryProgress 
-                stories={stories}
-                currentIndex={currentIndex}
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl h-[80vh] p-0 gap-0 bg-transparent border-none">
+        <div className="relative w-full h-full overflow-hidden rounded-lg bg-luxury-darker">
+          <AnimatePresence mode="wait">
+            {currentStory.video_url ? (
+              <StoryVideo
+                ref={videoRef}
+                key={`video-${currentStory.id}`}
+                videoUrl={currentStory.video_url}
+                onEnded={handleNext}
                 isPaused={isPaused}
               />
-              
-              <StoryHeader 
-                creator={creator}
-                timeRemaining={timeRemaining}
+            ) : (
+              <StoryImage
+                key={`image-${currentStory.id}`}
+                mediaUrl={currentStory.media_url || ''}
+                username={currentStory.creator.username || 'Anonymous'}
+                isPaused={isPaused}
               />
+            )}
+          </AnimatePresence>
 
-              {currentStory.video_url ? (
-                <StoryVideo
-                  videoUrl={currentStory.video_url}
-                  ref={videoRef}
-                  onEnded={handleVideoEnd}
-                  isPaused={isPaused}
-                />
-              ) : (
-                <StoryImage 
-                  mediaUrl={currentStory.media_url}
-                  username={creator.username}
-                  isPaused={isPaused}
-                />
-              )}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50" />
 
-              <StoryControls 
-                onClick={handleClick}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onMouseDown={handleTouchStart}
-                onMouseUp={handleTouchEnd}
-                onMouseLeave={handleTouchEnd}
-              />
+          <StoryHeader
+            creator={currentStory.creator}
+            timeRemaining={timeRemaining}
+            onClose={onClose}
+          />
 
-              <button
-                onClick={onClose}
-                className="absolute right-4 top-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-50"
-                aria-label="Close story"
-              >
-                <X className="h-6 w-6 text-white" />
-              </button>
-            </AspectRatio>
-          </motion.div>
-        </AnimatePresence>
+          <StoryProgress
+            stories={stories}
+            currentIndex={currentIndex}
+            progress={progress}
+          />
+
+          <StoryControls
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              if (x < rect.width / 2) {
+                handlePrevious();
+              } else {
+                handleNext();
+              }
+            }}
+            onTouchStart={handlePress}
+            onTouchEnd={handleRelease}
+            onMouseDown={handlePress}
+            onMouseUp={handleRelease}
+            onMouseLeave={handleRelease}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
