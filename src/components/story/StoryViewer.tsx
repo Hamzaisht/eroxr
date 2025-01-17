@@ -1,13 +1,11 @@
-import { useState, useEffect, useRef } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Story } from "@/integrations/supabase/types/story";
 import { StoryHeader } from "./viewer/StoryHeader";
 import { StoryProgress } from "./viewer/StoryProgress";
 import { StoryControls } from "./viewer/StoryControls";
 import { StoryImage } from "./viewer/StoryImage";
 import { StoryVideo } from "./viewer/StoryVideo";
-import { formatDistanceToNow } from "date-fns";
-import { Story } from "@/integrations/supabase/types/story";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface StoryViewerProps {
   stories: Story[];
@@ -17,76 +15,86 @@ interface StoryViewerProps {
 
 export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewerProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialStoryIndex);
-  const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState<string>("");
+  const [isPaused, setIsPaused] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const progressInterval = useRef<NodeJS.Timeout>();
+  const STORY_DURATION = 5000; // 5 seconds for images
+  
+  const currentStory = stories[currentIndex];
+  const isVideo = currentStory?.video_url;
+  const duration = isVideo ? (currentStory.duration || 10) * 1000 : STORY_DURATION;
 
   useEffect(() => {
-    const updateTimeRemaining = () => {
-      const expiryDate = new Date(stories[currentIndex].expires_at);
-      const timeLeft = formatDistanceToNow(expiryDate, { addSuffix: true });
-      setTimeRemaining(timeLeft);
-    };
-
-    updateTimeRemaining();
-    const interval = setInterval(updateTimeRemaining, 60000);
-
-    // Close story if expired
-    const expiryDate = new Date(stories[currentIndex].expires_at);
-    if (expiryDate < new Date()) {
+    if (!currentStory) {
       onClose();
+      return;
     }
 
-    return () => clearInterval(interval);
-  }, [currentIndex, stories, onClose]);
+    // Reset progress when story changes
+    setProgress(0);
+    setIsPaused(false);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    const currentStory = stories[currentIndex];
+    // Clear existing interval
+    if (progressInterval.current) {
+      clearInterval(progressInterval.current);
+    }
 
-    if (!isPaused && !currentStory.video_url) {
-      const duration = 5000; // 5 seconds for images
-      const interval = 50; // Update progress every 50ms
-      let elapsed = 0;
-
-      timer = setInterval(() => {
-        elapsed += interval;
-        setProgress((elapsed / duration) * 100);
-
-        if (elapsed >= duration) {
+    // Set up progress tracking
+    const startTime = Date.now();
+    progressInterval.current = setInterval(() => {
+      if (!isPaused) {
+        const elapsed = Date.now() - startTime;
+        const newProgress = (elapsed / duration) * 100;
+        
+        if (newProgress >= 100) {
           if (currentIndex < stories.length - 1) {
             setCurrentIndex(prev => prev + 1);
-            setProgress(0);
           } else {
             onClose();
           }
+        } else {
+          setProgress(newProgress);
         }
-      }, interval);
-    }
+      }
+    }, 100);
 
     return () => {
-      if (timer) clearInterval(timer);
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+      }
     };
-  }, [currentIndex, isPaused, stories, onClose]);
+  }, [currentIndex, currentStory, duration, isPaused, onClose, stories.length]);
 
-  const handleNext = () => {
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (currentIndex < stories.length - 1) {
       setCurrentIndex(prev => prev + 1);
-      setProgress(0);
     } else {
       onClose();
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
-      setProgress(0);
     }
   };
 
-  const handlePress = () => {
+  const handleContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    
+    if (x < rect.width / 2) {
+      handlePrevious(e);
+    } else {
+      handleNext(e);
+    }
+  };
+
+  const handleHold = () => {
     setIsPaused(true);
   };
 
@@ -94,63 +102,63 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
     setIsPaused(false);
   };
 
-  const currentStory = stories[currentIndex];
+  if (!currentStory) return null;
+
+  const timeRemaining = "Just now"; // You can implement proper time calculation here
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] p-0 gap-0 bg-transparent border-none">
-        <div className="relative w-full h-full overflow-hidden rounded-lg bg-luxury-darker">
-          <AnimatePresence mode="wait">
-            {currentStory.video_url ? (
-              <StoryVideo
-                ref={videoRef}
-                key={`video-${currentStory.id}`}
-                videoUrl={currentStory.video_url}
-                onEnded={handleNext}
-                isPaused={isPaused}
-              />
-            ) : (
-              <StoryImage
-                key={`image-${currentStory.id}`}
-                mediaUrl={currentStory.media_url || ''}
-                username={currentStory.creator.username || 'Anonymous'}
-                isPaused={isPaused}
-              />
-            )}
-          </AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
+    >
+      <div 
+        className="relative w-full max-w-lg h-[80vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <StoryHeader
+          creator={currentStory.creator}
+          timeRemaining={timeRemaining}
+          onClose={onClose}
+        />
 
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50" />
+        <StoryProgress
+          stories={stories}
+          currentIndex={currentIndex}
+          progress={progress}
+        />
 
-          <StoryHeader
-            creator={currentStory.creator}
-            timeRemaining={timeRemaining}
-            onClose={onClose}
-          />
-
-          <StoryProgress
-            stories={stories}
-            currentIndex={currentIndex}
-            progress={progress}
-          />
+        <div className="relative h-full bg-black">
+          {isVideo ? (
+            <StoryVideo
+              ref={videoRef}
+              videoUrl={currentStory.video_url || ""}
+              onEnded={handleNext}
+              isPaused={isPaused}
+            />
+          ) : (
+            <StoryImage
+              mediaUrl={currentStory.media_url || ""}
+              username={currentStory.creator?.username || ""}
+              isPaused={isPaused}
+            />
+          )}
 
           <StoryControls
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              if (x < rect.width / 2) {
-                handlePrevious();
-              } else {
-                handleNext();
-              }
-            }}
-            onTouchStart={handlePress}
+            onClick={handleContentClick}
+            onTouchStart={handleHold}
             onTouchEnd={handleRelease}
-            onMouseDown={handlePress}
+            onMouseDown={handleHold}
             onMouseUp={handleRelease}
             onMouseLeave={handleRelease}
           />
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </motion.div>
   );
 };
