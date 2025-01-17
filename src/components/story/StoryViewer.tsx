@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
 import { StoryHeader } from "./viewer/StoryHeader";
 import { StoryProgress } from "./viewer/StoryProgress";
@@ -111,11 +111,8 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClose();
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+      onClick={onClose}
     >
       <div 
         className="relative w-full max-w-lg h-[80vh] overflow-hidden"
@@ -131,6 +128,7 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
           stories={stories}
           currentIndex={currentIndex}
           progress={progress}
+          isPaused={isPaused}
         />
 
         <div className="relative h-full bg-black">
