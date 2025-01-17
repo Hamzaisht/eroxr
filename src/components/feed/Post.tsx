@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PPVContent } from "./PPVContent";
-import { VideoPlayer } from "../home/components/VideoPlayer";
+import { VideoPlayer } from "../video/VideoPlayer";
 
 interface PostProps {
   post: PostType;
@@ -22,7 +22,13 @@ interface PostProps {
   onDelete?: (postId: string) => void;
 }
 
-export const Post = ({ post, creator, currentUser, onEdit, onDelete }: PostProps) => {
+export const Post = ({ 
+  post, 
+  creator, 
+  currentUser, 
+  onEdit, 
+  onDelete 
+}: PostProps) => {
   const isOwner = currentUser?.id === creator.id;
   const hasAccess = !post.is_ppv || post.has_purchased || isOwner;
 
@@ -85,8 +91,8 @@ export const Post = ({ post, creator, currentUser, onEdit, onDelete }: PostProps
                     <VideoPlayer
                       key={`video-${index}`}
                       url={url}
-                      poster={post.media_url?.[0]}
                       className="w-full rounded-lg overflow-hidden"
+                      poster={post.media_url?.[0]}
                     />
                   ))}
                 </div>

@@ -2,25 +2,30 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface VideoPlayerProps {
   url: string;
-  poster?: string;  // Added poster prop
+  poster?: string;
   className?: string;
   onError?: () => void;
 }
 
-export const VideoPlayer = ({ url, poster, className, onError }: VideoPlayerProps) => {
+export const VideoPlayer = ({ 
+  url, 
+  poster, 
+  className,
+  onError 
+}: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
-    console.log('Loading video URL:', url);
 
     const handleLoadedData = () => {
       setIsLoaded(true);
@@ -30,6 +35,11 @@ export const VideoPlayer = ({ url, poster, className, onError }: VideoPlayerProp
     const handleError = (e: Event) => {
       console.error("Video loading error:", e);
       if (onError) onError();
+      toast({
+        title: "Error",
+        description: "Failed to load video. Please try again.",
+        variant: "destructive",
+      });
     };
 
     video.addEventListener("loadeddata", handleLoadedData);
@@ -44,7 +54,7 @@ export const VideoPlayer = ({ url, poster, className, onError }: VideoPlayerProp
       video.removeEventListener("loadeddata", handleLoadedData);
       video.removeEventListener("error", handleError);
     };
-  }, [url, onError]);
+  }, [url, onError, toast]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -52,7 +62,14 @@ export const VideoPlayer = ({ url, poster, className, onError }: VideoPlayerProp
     if (isPlaying) {
       videoRef.current.pause();
     } else {
-      videoRef.current.play();
+      videoRef.current.play().catch(error => {
+        console.error('Video playback error:', error);
+        toast({
+          title: "Playback Error",
+          description: "Unable to play video. Please try again.",
+          variant: "destructive",
+        });
+      });
     }
     setIsPlaying(!isPlaying);
   };
@@ -64,20 +81,24 @@ export const VideoPlayer = ({ url, poster, className, onError }: VideoPlayerProp
   };
 
   return (
-    <div className={cn("relative group", className)}>
+    <div className={cn(
+      "relative group aspect-video w-full overflow-hidden rounded-lg bg-luxury-darker/50",
+      className
+    )}>
       <video
         ref={videoRef}
         src={url}
-        poster={poster}  // Added poster attribute
+        poster={poster}
         muted={isMuted}
         playsInline
         loop
-        crossOrigin="anonymous"
-        className="w-full h-full object-cover rounded-lg"
+        className="w-full h-full object-cover"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
       />
       
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="flex items-center gap-2">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute bottom-4 left-4 flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
