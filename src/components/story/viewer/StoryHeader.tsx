@@ -2,16 +2,17 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-interface StoryHeaderProps {
+export interface StoryHeaderProps {
   creator: {
     id: string;
     username: string;
     avatar_url: string;
   };
   timeRemaining: string;
+  onClose: () => void;  // Added this property
 }
 
-export const StoryHeader = ({ creator, timeRemaining }: StoryHeaderProps) => {
+export const StoryHeader = ({ creator, timeRemaining, onClose }: StoryHeaderProps) => {
   return (
     <motion.div 
       initial={{ y: -20, opacity: 0 }}
