@@ -25,7 +25,6 @@ export const StoryViewer = ({ stories, initialStoryIndex = 0, onClose }: StoryVi
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Update time remaining
   useEffect(() => {
     const updateTimeRemaining = () => {
       const expiryDate = new Date(stories[currentIndex].expires_at);
@@ -44,7 +43,6 @@ export const StoryViewer = ({ stories, initialStoryIndex = 0, onClose }: StoryVi
     return () => clearInterval(interval);
   }, [currentIndex, stories, onClose]);
 
-  // Auto-advance timer for images
   useEffect(() => {
     let timer: NodeJS.Timeout;
     const currentStory = stories[currentIndex];

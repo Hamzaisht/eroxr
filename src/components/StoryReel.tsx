@@ -105,7 +105,7 @@ export const StoryReel = () => {
     }
 
     // Set up real-time subscription
-    const subscription = supabase
+    const channel = supabase
       .channel('stories_channel')
       .on(
         'postgres_changes',
@@ -122,7 +122,7 @@ export const StoryReel = () => {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      channel.unsubscribe();
     };
   }, [session?.user?.id, toast]);
 
