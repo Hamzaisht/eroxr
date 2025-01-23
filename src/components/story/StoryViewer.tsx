@@ -110,7 +110,7 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
-      onClick={onClose}
+      onClick={() => onClose()}
     >
       <div 
         className={`relative ${isMobile ? 'w-full h-full' : 'w-full max-w-lg h-[80vh]'} overflow-hidden`}
