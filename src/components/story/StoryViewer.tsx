@@ -6,6 +6,7 @@ import { StoryProgress } from "./viewer/StoryProgress";
 import { StoryControls } from "./viewer/StoryControls";
 import { StoryImage } from "./viewer/StoryImage";
 import { StoryVideo } from "./viewer/StoryVideo";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface StoryViewerProps {
   stories: Story[];
@@ -19,6 +20,8 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
   const [isPaused, setIsPaused] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressInterval = useRef<NodeJS.Timeout>();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  
   const STORY_DURATION = 5000; // 5 seconds for images
   
   const currentStory = stories[currentIndex];
@@ -31,16 +34,13 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
       return;
     }
 
-    // Reset progress when story changes
     setProgress(0);
     setIsPaused(false);
 
-    // Clear existing interval
     if (progressInterval.current) {
       clearInterval(progressInterval.current);
     }
 
-    // Set up progress tracking
     const startTime = Date.now();
     progressInterval.current = setInterval(() => {
       if (!isPaused) {
@@ -66,8 +66,7 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
     };
   }, [currentIndex, currentStory, duration, isPaused, onClose, stories.length]);
 
-  const handleNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleNext = () => {
     if (currentIndex < stories.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
@@ -75,8 +74,7 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
     }
   };
 
-  const handlePrevious = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
     }
@@ -88,9 +86,9 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
     const x = e.clientX - rect.left;
     
     if (x < rect.width / 2) {
-      handlePrevious(e);
+      handlePrevious();
     } else {
-      handleNext(e);
+      handleNext();
     }
   };
 
@@ -104,7 +102,7 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
 
   if (!currentStory) return null;
 
-  const timeRemaining = "Just now"; // You can implement proper time calculation here
+  const timeRemaining = "Just now";
 
   return (
     <motion.div
@@ -112,13 +110,10 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
-      onClick={(e: React.MouseEvent) => {
-        e.stopPropagation();
-        onClose();
-      }}
+      onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-lg h-[80vh] overflow-hidden"
+        className={`relative ${isMobile ? 'w-full h-full' : 'w-full max-w-lg h-[80vh]'} overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
         <StoryHeader
