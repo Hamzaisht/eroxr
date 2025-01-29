@@ -1,74 +1,69 @@
-import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { Story } from "@/integrations/supabase/types/story";
-import { StoryHeader } from "./viewer/StoryHeader";
-import { StoryProgress } from "./viewer/StoryProgress";
-import { StoryControls } from "./viewer/StoryControls";
-import { StoryImage } from "./viewer/StoryImage";
-import { StoryVideo } from "./viewer/StoryVideo";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { StoryProgress } from "./viewer/StoryProgress";
+import { StoryHeader } from "./viewer/StoryHeader";
+import { StoryVideo } from "./viewer/StoryVideo";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+interface Story {
+  id: string;
+  media_url?: string | null;
+  video_url?: string | null;
+  duration?: number | null;
+  creator: {
+    id: string;
+    username: string;
+    avatar_url: string;
+  };
+}
 
 interface StoryViewerProps {
   stories: Story[];
-  initialStoryIndex: number;
+  initialStoryIndex?: number;
   onClose: () => void;
 }
 
-export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewerProps) => {
+export const StoryViewer = ({
+  stories,
+  initialStoryIndex = 0,
+  onClose
+}: StoryViewerProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialStoryIndex);
-  const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [progress, setProgress] = useState(0);
   const progressInterval = useRef<NodeJS.Timeout>();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
-  
-  const STORY_DURATION = 5000; // 5 seconds for images
-  
+
   const currentStory = stories[currentIndex];
-  const isVideo = currentStory?.video_url;
-  const duration = isVideo ? (currentStory.duration || 10) * 1000 : STORY_DURATION;
+  const isVideo = !!currentStory?.video_url;
+  const duration = isVideo ? 0 : (currentStory?.duration || 5000);
 
   useEffect(() => {
-    if (!currentStory) {
-      onClose();
-      return;
-    }
-
-    setProgress(0);
-    setIsPaused(false);
-
-    if (progressInterval.current) {
-      clearInterval(progressInterval.current);
-    }
-
-    const startTime = Date.now();
-    progressInterval.current = setInterval(() => {
-      if (!isPaused) {
-        const elapsed = Date.now() - startTime;
-        const newProgress = (elapsed / duration) * 100;
-        
-        if (newProgress >= 100) {
-          if (currentIndex < stories.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-          } else {
-            onClose();
+    if (!isVideo && !isPaused) {
+      progressInterval.current = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            handleNext();
+            return 0;
           }
-        } else {
-          setProgress(newProgress);
-        }
-      }
-    }, 100);
+          return prev + (100 / duration) * 100;
+        });
+      }, 100);
+    }
 
     return () => {
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
       }
     };
-  }, [currentIndex, currentStory, duration, isPaused, onClose, stories.length]);
+  }, [currentIndex, isPaused, isVideo]);
 
   const handleNext = () => {
     if (currentIndex < stories.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex(currentIndex + 1);
+      setProgress(0);
     } else {
       onClose();
     }
@@ -76,7 +71,8 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
+      setCurrentIndex(currentIndex - 1);
+      setProgress(0);
     }
   };
 
@@ -84,25 +80,23 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
+    const width = rect.width;
     
-    if (x < rect.width / 2) {
+    if (x < width / 3) {
       handlePrevious();
-    } else {
+    } else if (x > (width * 2) / 3) {
       handleNext();
     }
   };
 
-  const handleHold = () => {
-    setIsPaused(true);
-  };
+  const handleMouseDown = () => setIsPaused(true);
+  const handleMouseUp = () => setIsPaused(false);
+  const handleTouchStart = () => setIsPaused(true);
+  const handleTouchEnd = () => setIsPaused(false);
 
-  const handleRelease = () => {
-    setIsPaused(false);
-  };
-
-  if (!currentStory) return null;
-
-  const timeRemaining = "Just now";
+  const timeRemaining = isVideo 
+    ? "Video"
+    : `${Math.ceil((duration - (progress / 100) * duration) / 1000)}s`;
 
   return (
     <motion.div
@@ -116,12 +110,6 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
         className={`relative ${isMobile ? 'w-full h-full' : 'w-full max-w-lg h-[80vh]'} overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
-        <StoryHeader
-          creator={currentStory.creator}
-          timeRemaining={timeRemaining}
-          onClose={onClose}
-        />
-
         <StoryProgress
           stories={stories}
           currentIndex={currentIndex}
@@ -129,31 +117,61 @@ export const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewer
           isPaused={isPaused}
         />
 
-        <div className="relative h-full bg-black">
+        <StoryHeader
+          creator={currentStory.creator}
+          timeRemaining={timeRemaining}
+          onClose={onClose}
+        />
+
+        <motion.div
+          key={currentStory.id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 flex items-center justify-center bg-black"
+          onClick={handleContentClick}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {isVideo ? (
             <StoryVideo
               ref={videoRef}
-              videoUrl={currentStory.video_url || ""}
+              videoUrl={currentStory.video_url!}
               onEnded={handleNext}
               isPaused={isPaused}
             />
           ) : (
-            <StoryImage
-              mediaUrl={currentStory.media_url || ""}
-              username={currentStory.creator?.username || ""}
-              isPaused={isPaused}
+            <img
+              src={currentStory.media_url || ''}
+              alt="Story content"
+              className="h-full w-full object-contain"
             />
           )}
+        </motion.div>
 
-          <StoryControls
-            onClick={handleContentClick}
-            onTouchStart={handleHold}
-            onTouchEnd={handleRelease}
-            onMouseDown={handleHold}
-            onMouseUp={handleRelease}
-            onMouseLeave={handleRelease}
-          />
-        </div>
+        {/* Navigation buttons - visible on desktop only */}
+        {!isMobile && (
+          <>
+            {currentIndex > 0 && (
+              <button
+                onClick={handlePrevious}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white/70 hover:text-white transition-colors"
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+            )}
+            {currentIndex < stories.length - 1 && (
+              <button
+                onClick={handleNext}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/70 hover:text-white transition-colors"
+              >
+                <ChevronRight className="h-8 w-8" />
+              </button>
+            )}
+          </>
+        )}
       </div>
     </motion.div>
   );
