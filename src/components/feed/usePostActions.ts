@@ -1,3 +1,4 @@
+
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,8 +17,8 @@ export const usePostActions = () => {
 
       if (error) throw error;
 
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      // Invalidate and refetch immediately
+      await queryClient.invalidateQueries({ queryKey: ['posts'] });
       
       toast({
         title: "Success",
@@ -68,8 +69,8 @@ export const usePostActions = () => {
         });
       }
 
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      // Invalidate and refetch immediately
+      await queryClient.invalidateQueries({ queryKey: ['posts'] });
     } catch (error) {
       console.error('Like error:', error);
       toast({

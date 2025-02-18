@@ -1,3 +1,4 @@
+
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -105,7 +106,6 @@ export const PostContent = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {mediaUrls.map((url, index) => {
                         const publicUrl = getPublicUrl(url);
-                        console.log('Processing media URL:', url, 'Public URL:', publicUrl);
                         return !loadError[url] && (
                           <motion.div
                             key={`image-${index}`}
