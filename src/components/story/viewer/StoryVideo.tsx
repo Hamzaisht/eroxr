@@ -1,5 +1,6 @@
 
-import { forwardRef, useEffect } from "react";
+import { forwardRef, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -9,6 +10,16 @@ interface StoryVideoProps {
 
 export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
   ({ videoUrl, onEnded, isPaused }, ref) => {
+    const { toast } = useToast();
+
+    const handleError = useCallback(() => {
+      toast({
+        title: "Video Error",
+        description: "Failed to play video",
+        variant: "destructive",
+      });
+    }, [toast]);
+
     useEffect(() => {
       const videoElement = ref as React.MutableRefObject<HTMLVideoElement>;
       if (videoElement?.current) {
@@ -17,10 +28,11 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         } else {
           videoElement.current.play().catch(error => {
             console.error("Error playing video:", error);
+            handleError();
           });
         }
       }
-    }, [isPaused, ref]);
+    }, [isPaused, ref, handleError]);
 
     return (
       <video
@@ -32,6 +44,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         muted={false}
         controls={false}
         onEnded={onEnded}
+        onError={handleError}
       />
     );
   }

@@ -1,10 +1,14 @@
+
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { StoryProgress } from "./viewer/StoryProgress";
 import { StoryHeader } from "./viewer/StoryHeader";
 import { StoryVideo } from "./viewer/StoryVideo";
+import { StoryImage } from "./viewer/StoryImage";
+import { StoryControls } from "./viewer/StoryControls";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Story {
   id: string;
@@ -35,6 +39,7 @@ export const StoryViewer = ({
   const progressInterval = useRef<NodeJS.Timeout>();
   const videoRef = useRef<HTMLVideoElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const { toast } = useToast();
 
   const currentStory = stories[currentIndex];
   const isVideo = !!currentStory?.video_url;
@@ -58,7 +63,7 @@ export const StoryViewer = ({
         clearInterval(progressInterval.current);
       }
     };
-  }, [currentIndex, isPaused, isVideo]);
+  }, [currentIndex, isPaused, isVideo, duration]);
 
   const handleNext = () => {
     if (currentIndex < stories.length - 1) {
@@ -89,8 +94,17 @@ export const StoryViewer = ({
     }
   };
 
+  const handleError = () => {
+    toast({
+      title: "Error",
+      description: "Failed to load story content",
+      variant: "destructive",
+    });
+  };
+
   const handleMouseDown = () => setIsPaused(true);
   const handleMouseUp = () => setIsPaused(false);
+  const handleMouseLeave = () => setIsPaused(false);
   const handleTouchStart = () => setIsPaused(true);
   const handleTouchEnd = () => setIsPaused(false);
 
@@ -104,7 +118,7 @@ export const StoryViewer = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
-      onClick={() => onClose()}
+      onClick={onClose}
     >
       <div 
         className={`relative ${isMobile ? 'w-full h-full' : 'w-full max-w-lg h-[80vh]'} overflow-hidden`}
@@ -123,17 +137,21 @@ export const StoryViewer = ({
           onClose={onClose}
         />
 
+        <StoryControls
+          onClick={handleContentClick}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        />
+
         <motion.div
           key={currentStory.id}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="absolute inset-0 flex items-center justify-center bg-black"
-          onClick={handleContentClick}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
         >
           {isVideo ? (
             <StoryVideo
@@ -143,34 +161,42 @@ export const StoryViewer = ({
               isPaused={isPaused}
             />
           ) : (
-            <img
-              src={currentStory.media_url || ''}
-              alt="Story content"
-              className="h-full w-full object-contain"
+            <StoryImage
+              mediaUrl={currentStory.media_url || ''}
+              username={currentStory.creator.username}
+              isPaused={isPaused}
             />
           )}
         </motion.div>
 
         {/* Navigation buttons - visible on desktop only */}
         {!isMobile && (
-          <>
+          <AnimatePresence>
             {currentIndex > 0 && (
-              <button
+              <motion.button
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
                 onClick={handlePrevious}
                 className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white/70 hover:text-white transition-colors"
+                aria-label="Previous story"
               >
                 <ChevronLeft className="h-8 w-8" />
-              </button>
+              </motion.button>
             )}
             {currentIndex < stories.length - 1 && (
-              <button
+              <motion.button
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
                 onClick={handleNext}
                 className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/70 hover:text-white transition-colors"
+                aria-label="Next story"
               >
                 <ChevronRight className="h-8 w-8" />
-              </button>
+              </motion.button>
             )}
-          </>
+          </AnimatePresence>
         )}
       </div>
     </motion.div>
