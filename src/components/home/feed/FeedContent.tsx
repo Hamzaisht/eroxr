@@ -1,3 +1,4 @@
+
 import { Post } from "@/components/feed/Post";
 import { Loader2, AlertTriangle } from "lucide-react";
 import type { FeedPost } from "../types";
@@ -28,6 +29,8 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
       const from = pageParam * 10;
       const to = from + 9;
 
+      console.log("Fetching feed from", from, "to", to); // Debug log
+
       let query = supabase
         .from("posts")
         .select(`
@@ -43,7 +46,12 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
 
       const { data: posts, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Feed fetch error:", error);
+        throw error;
+      }
+
+      console.log("Fetched posts:", posts); // Debug log
 
       return posts?.map(post => ({
         ...post,
@@ -51,7 +59,12 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
         visibility: post.visibility || "public",
         screenshots_count: post.screenshots_count || 0,
         downloads_count: post.downloads_count || 0,
-        updated_at: post.updated_at || post.created_at
+        updated_at: post.updated_at || post.created_at,
+        creator: {
+          id: post.creator?.id,
+          username: post.creator?.username || "Anonymous",
+          avatar_url: post.creator?.avatar_url || null
+        }
       })) || [];
     },
     getNextPageParam: (lastPage, allPages) => {
@@ -61,9 +74,11 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
   });
 
   // Handle infinite scroll
-  if (inView && hasNextPage && !isFetchingNextPage) {
-    fetchNextPage();
-  }
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isLoading) {
     return (
@@ -78,6 +93,14 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
       <div className="flex flex-col items-center justify-center p-8 text-red-500">
         <AlertTriangle className="w-8 h-8 mb-2" />
         <p>Error loading feed</p>
+      </div>
+    );
+  }
+
+  if (!data?.pages.length || data.pages[0].length === 0) {
+    return (
+      <div className="text-center p-8 text-gray-500">
+        <p>No posts yet</p>
       </div>
     );
   }

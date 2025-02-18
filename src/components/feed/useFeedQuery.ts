@@ -50,6 +50,8 @@ export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
         throw error;
       }
 
+      console.log("Fetched posts:", posts); // Debug log
+
       return posts?.map(post => ({
         ...post,
         has_liked: post.post_likes?.length > 0,
