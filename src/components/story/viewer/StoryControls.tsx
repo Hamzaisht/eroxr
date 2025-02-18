@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 
 interface StoryControlsProps {
@@ -9,17 +10,17 @@ interface StoryControlsProps {
   onMouseLeave: () => void;
 }
 
-export const StoryControls = ({ 
-  onClick, 
-  onTouchStart, 
-  onTouchEnd, 
-  onMouseDown, 
-  onMouseUp, 
-  onMouseLeave 
+export const StoryControls = ({
+  onClick,
+  onTouchStart,
+  onTouchEnd,
+  onMouseDown,
+  onMouseUp,
+  onMouseLeave
 }: StoryControlsProps) => {
   return (
-    <div 
-      className="absolute inset-0 z-20"
+    <motion.div
+      className="absolute inset-0 z-10"
       onClick={onClick}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
@@ -27,13 +28,8 @@ export const StoryControls = ({
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseLeave}
     >
-      <motion.div
-        initial={false}
-        whileHover={{ 
-          background: "linear-gradient(90deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 100%)" 
-        }}
-        className="w-full h-full"
-      />
-    </div>
+      <div className="hidden md:flex absolute inset-y-0 left-0 w-1/3" />
+      <div className="hidden md:flex absolute inset-y-0 right-0 w-1/3" />
+    </motion.div>
   );
 };
