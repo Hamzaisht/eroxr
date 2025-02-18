@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -22,12 +23,17 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
+      
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
         .single();
-      if (error) throw error;
+
+      if (error) {
+        console.error("Profile fetch error:", error);
+        throw error;
+      }
       return data;
     },
     enabled: !!session?.user?.id,

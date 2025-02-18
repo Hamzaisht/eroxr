@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,15 +22,23 @@ export const ProfileContainer = ({ id, isEditing = false, setIsEditing }: Profil
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        const targetId = id || session?.user?.id;
+        if (!targetId) return;
+
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", id || session?.user?.id)
+          .eq("id", targetId)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Profile fetch error:", error);
+          throw error;
+        }
+
         setProfile(data);
       } catch (error: any) {
+        console.error("Full error details:", error);
         toast({
           title: "Error fetching profile",
           description: error.message,
