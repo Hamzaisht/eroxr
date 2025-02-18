@@ -6,6 +6,8 @@ import { ProfileHeader } from "./ProfileHeader";
 import { ProfileTabs } from "./ProfileTabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface ProfileContainerProps {
   id?: string;
@@ -14,47 +16,45 @@ interface ProfileContainerProps {
 }
 
 export const ProfileContainer = ({ id, isEditing = false, setIsEditing }: ProfileContainerProps) => {
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const session = useSession();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const targetId = id || session?.user?.id;
-        if (!targetId) return;
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile", id || session?.user?.id],
+    queryFn: async () => {
+      const targetId = id || session?.user?.id;
+      if (!targetId) throw new Error("No user ID provided");
 
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", targetId)
-          .single();
+      console.log("Fetching profile for ID:", targetId); // Debug log
 
-        if (error) {
-          console.error("Profile fetch error:", error);
-          throw error;
-        }
+      const { data, error } = await supabase
+        .from("profiles")
+        .select()
+        .eq("id", targetId)
+        .maybeSingle();
 
-        setProfile(data);
-      } catch (error: any) {
-        console.error("Full error details:", error);
+      if (error) {
+        console.error("Profile fetch error:", error);
         toast({
           title: "Error fetching profile",
-          description: error.message,
+          description: "Could not load profile information",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
+        throw error;
       }
-    };
 
-    if (session?.user || id) {
-      fetchProfile();
-    }
-  }, [session?.user, id, toast]);
+      if (!data) {
+        console.log("No profile found for ID:", targetId); // Debug log
+        return null;
+      }
 
-  if (loading) {
+      return data as Profile;
+    },
+    retry: 1,
+    enabled: !!(id || session?.user?.id),
+  });
+
+  if (isLoading) {
     return (
       <div className="w-full min-h-screen bg-luxury-dark">
         <div className="h-[40vh] sm:h-[50vh] md:h-[60vh] w-full bg-luxury-darker/50 animate-pulse" />
@@ -70,6 +70,17 @@ export const ProfileContainer = ({ id, isEditing = false, setIsEditing }: Profil
   }
 
   const isOwnProfile = session?.user?.id === (id || session?.user?.id);
+
+  if (!profile) {
+    return (
+      <div className="w-full min-h-screen bg-luxury-dark flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-white/90">Profile Not Found</h2>
+          <p className="text-white/60 mt-2">The requested profile could not be found.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-luxury-dark">
