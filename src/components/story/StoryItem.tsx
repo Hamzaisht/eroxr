@@ -1,130 +1,95 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+
+import { motion } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
-import { VideoPreview } from "./VideoPreview";
-import { cn } from "@/lib/utils";
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { Loader2, Play } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface StoryItemProps {
   story: Story;
-  onClick: () => void;
   isStacked?: boolean;
   stackCount?: number;
+  onClick: () => void;
+  onDelete?: () => void;
 }
 
-export const StoryItem = ({ story, onClick, isStacked = false, stackCount = 0 }: StoryItemProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 768px)");
-
-  useEffect(() => {
-    const loadMedia = async () => {
-      try {
-        setIsLoading(true);
-        setHasError(false);
-        
-        if (story.video_url) {
-          const video = document.createElement('video');
-          video.src = story.video_url;
-          await new Promise((resolve, reject) => {
-            video.onloadeddata = resolve;
-            video.onerror = reject;
-          });
-        } else if (story.media_url) {
-          const img = new Image();
-          img.src = story.media_url;
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-          });
-        }
-      } catch (error) {
-        console.error('Media loading error:', error);
-        setHasError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadMedia();
-  }, [story.video_url, story.media_url]);
-
+export const StoryItem = ({ 
+  story, 
+  isStacked, 
+  stackCount = 0,
+  onClick,
+  onDelete
+}: StoryItemProps) => {
   return (
-    <motion.div 
-      className="relative group cursor-pointer"
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.2 }}
-      onClick={onClick}
-    >
-      <div className="relative w-24 h-36 overflow-hidden">
-        {/* Background Glow Effect */}
-        <div className="absolute inset-0 bg-gradient-to-t from-luxury-primary/20 to-luxury-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <div className="relative">
+      {isStacked && stackCount > 0 && (
+        <>
+          <div className="absolute -right-1 -bottom-1 w-24 h-36 rounded-xl bg-luxury-dark/40 transform rotate-3" />
+          <div className="absolute -right-2 -bottom-2 w-24 h-36 rounded-xl bg-luxury-dark/60 transform rotate-6" />
+        </>
+      )}
+      
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="relative w-24 h-36 rounded-xl overflow-hidden cursor-pointer group"
+        onClick={onClick}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 z-10" />
         
-        {/* Main Content Container */}
-        <div className={cn(
-          "relative w-full h-full rounded-xl overflow-hidden",
-          "ring-2 transition-all duration-300",
-          isStacked ? "ring-luxury-primary/60" : "ring-white/20",
-          "group-hover:ring-luxury-accent group-hover:ring-opacity-80",
-          "before:absolute before:inset-0 before:bg-gradient-to-b before:from-black/0 before:via-black/0 before:to-black/80",
-          "after:absolute after:inset-0 after:bg-gradient-to-t after:from-luxury-primary/20 after:to-transparent after:opacity-0 after:group-hover:opacity-100 after:transition-opacity after:duration-300"
-        )}>
-          {isLoading ? (
-            <div className="w-full h-full flex items-center justify-center bg-luxury-darker/60 backdrop-blur-sm">
-              <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
-            </div>
-          ) : hasError ? (
-            <div className="w-full h-full flex items-center justify-center bg-luxury-darker/60">
-              <span className="text-xs text-red-500">Error</span>
-            </div>
-          ) : (
-            <>
-              {story.video_url ? (
-                <div className="relative w-full h-full">
-                  <VideoPreview
-                    videoUrl={story.video_url}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Play className="w-8 h-8 text-white/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
-                </div>
-              ) : (
-                <img
-                  src={story.media_url || ''}
-                  alt="Story preview"
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </>
-          )}
+        {story.video_url ? (
+          <video
+            src={story.video_url}
+            className="w-full h-full object-cover"
+            muted
+            playsInline
+          />
+        ) : (
+          <img
+            src={story.media_url || ''}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        )}
 
-          {/* Stack Count Badge */}
-          {stackCount > 0 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute top-2 right-2 bg-luxury-primary text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center shadow-lg"
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20">
+          <Avatar className="w-8 h-8 ring-2 ring-luxury-primary/20 group-hover:ring-luxury-primary/40 transition-all duration-200">
+            <AvatarImage src={story.creator.avatar_url || ''} />
+            <AvatarFallback>{story.creator.username[0]?.toUpperCase()}</AvatarFallback>
+          </Avatar>
+        </div>
+
+        {onDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute top-2 right-2 z-20"
+          >
+            <Button
+              variant="destructive"
+              size="icon"
+              className="w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
             >
-              {stackCount}
-            </motion.div>
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </motion.div>
+        )}
+
+        <div className="absolute bottom-2 left-2 right-2 z-20">
+          <p className="text-xs text-white/90 truncate text-center">
+            {story.creator.username}
+          </p>
+          {isStacked && stackCount > 0 && (
+            <p className="text-[10px] text-white/60 text-center mt-0.5">
+              +{stackCount} more
+            </p>
           )}
         </div>
-      </div>
-
-      {/* Creator Info */}
-      {story.creator && (
-        <motion.div 
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-full"
-        >
-          <p className="text-xs text-center text-white/80 font-medium truncate max-w-[80px] mx-auto">
-            {story.creator.username || 'Anonymous'}
-          </p>
-        </motion.div>
-      )}
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };
