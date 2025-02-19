@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Type, Sparkles, Sticker, ColorFilter } from 'lucide-react';
+import { X, Send, Type, Sparkles, Sticker, Wand2 } from 'lucide-react';
 
 interface SnapPreviewProps {
   mediaBlob: Blob;
@@ -78,7 +78,7 @@ export const SnapPreview = ({ mediaBlob, onSend, onClose }: SnapPreviewProps) =>
                   onClick={() => setSelectedFilter(filter.name)}
                   className="snap-center whitespace-nowrap"
                 >
-                  <ColorFilter className="h-4 w-4 mr-2" />
+                  <Wand2 className="h-4 w-4 mr-2" />
                   {filter.label}
                 </Button>
               ))}

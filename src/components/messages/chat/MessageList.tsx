@@ -13,6 +13,7 @@ interface MessageListProps {
 
 export const MessageList = ({ messages, currentUserId, recipientProfile }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  useRealtimeMessages(recipientProfile?.id);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
