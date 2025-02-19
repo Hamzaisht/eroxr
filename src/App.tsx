@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Landing from "@/pages/Landing";
@@ -23,7 +23,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         
         {/* Protected routes - require authentication */}
-        <Route path="/" element={<MainLayout />}>
+        <Route element={<MainLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/profile/:id?" element={<Profile />} />
           <Route path="/messages" element={<Messages />} />

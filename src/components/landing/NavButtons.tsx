@@ -8,7 +8,7 @@ interface NavButtonsProps {
 
 export const NavButtons = ({ orientation = "horizontal" }: NavButtonsProps) => {
   return (
-    <div className={`flex ${orientation === "vertical" ? "flex-col" : "flex-row"} items-center space-x-4`}>
+    <div className={`flex ${orientation === "vertical" ? "flex-col space-y-4" : "flex-row space-x-4"} items-center`}>
       <Button variant="ghost" asChild>
         <Link to="/about" className="text-luxury-neutral hover:text-white">
           About

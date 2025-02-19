@@ -4,10 +4,11 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { NavButtons } from "./NavButtons";
 import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <motion.nav 
