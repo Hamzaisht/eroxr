@@ -35,7 +35,10 @@ const Messages = () => {
               </div>
             </div>
           </div>
-          <MessageList onSelectUser={setSelectedUserId} />
+          <MessageList 
+            onSelectUser={setSelectedUserId} 
+            onNewMessage={() => setIsNewMessageOpen(true)}
+          />
         </div>
 
         {/* Main Chat Area */}

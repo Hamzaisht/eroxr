@@ -1,3 +1,4 @@
+
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { MessageBubble } from "../MessageBubble";
 import { useEffect, useRef } from "react";
