@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { useLocation } from "react-router-dom";
 import { BackgroundEffects } from "./BackgroundEffects";
