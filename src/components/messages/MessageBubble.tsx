@@ -36,6 +36,7 @@ export const MessageBubble = ({
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const channel = supabase
@@ -97,11 +98,13 @@ export const MessageBubble = ({
     if (!editedContent.trim()) return;
     
     try {
+      setIsUpdating(true);
       const { error } = await supabase
         .from('direct_messages')
         .update({ 
           content: editedContent,
-          original_content: message.original_content || message.content
+          original_content: message.original_content || message.content,
+          updated_at: new Date().toISOString()
         })
         .eq('id', message.id);
 
@@ -112,10 +115,13 @@ export const MessageBubble = ({
         description: "Message updated successfully",
       });
     } catch (error) {
+      console.error("Update error:", error);
       toast({
         variant: "destructive",
         description: "Failed to update message",
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -145,30 +151,53 @@ export const MessageBubble = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 p-3 rounded-xl bg-luxury-darker/90 backdrop-blur-md border border-luxury-primary/10 shadow-lg min-w-[280px]"
+          className="flex flex-col gap-3 p-4 rounded-xl bg-luxury-darker/90 backdrop-blur-md border border-luxury-primary/10 shadow-lg min-w-[280px] max-w-[400px]"
         >
           <Input
             ref={inputRef}
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="flex-1 bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleEdit();
+              }
+              if (e.key === 'Escape') {
+                setIsEditing(false);
+              }
+            }}
+            className="w-full bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg px-4 py-2"
             autoFocus
           />
-          <div className="flex items-center gap-1 ml-2">
-            <Button 
-              size="sm" 
-              onClick={handleEdit} 
-              className="bg-luxury-primary hover:bg-luxury-primary/90 rounded-lg px-3"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center justify-end gap-2">
             <Button 
               size="sm" 
               variant="ghost" 
               onClick={() => setIsEditing(false)}
-              className="text-luxury-neutral hover:text-white rounded-lg px-3"
+              className="text-luxury-neutral hover:text-white rounded-lg px-4"
+              disabled={isUpdating}
             >
-              <X className="h-4 w-4" />
+              Cancel
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={handleEdit} 
+              className="bg-luxury-primary hover:bg-luxury-primary/90 rounded-lg px-4"
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <span className="flex items-center gap-2">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Check className="h-4 w-4" />
+                  </motion.div>
+                  Saving...
+                </span>
+              ) : (
+                'Save'
+              )}
             </Button>
           </div>
         </motion.div>
