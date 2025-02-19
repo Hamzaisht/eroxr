@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MessageList } from "@/components/messages/MessageList";
 import { ChatWindow } from "@/components/messages/ChatWindow";
@@ -11,11 +12,11 @@ const Messages = () => {
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
 
   return (
-    <div className="h-screen bg-luxury-dark">
+    <div className="h-screen bg-[#0D1117]">
       <div className="grid h-full grid-cols-[320px,1fr,350px]">
         {/* Left Sidebar - Chat List */}
-        <div className="border-r border-luxury-neutral/10 bg-luxury-dark/50">
-          <div className="p-4 space-y-4 border-b border-luxury-neutral/10">
+        <div className="border-r border-white/5 bg-[#0D1117]/50">
+          <div className="p-4 space-y-4 border-b border-white/5">
             <NewMessageDialog 
               open={isNewMessageOpen}
               onOpenChange={setIsNewMessageOpen}
@@ -25,10 +26,10 @@ const Messages = () => {
               <input
                 type="text"
                 placeholder="Search messages..."
-                className="w-full h-10 pl-10 pr-4 text-sm bg-luxury-neutral/5 border border-luxury-neutral/10 rounded-lg focus:outline-none focus:border-luxury-primary"
+                className="w-full h-10 pl-10 pr-4 text-sm bg-[#161B22] border border-white/5 rounded-lg focus:outline-none focus:border-white/10 text-white/90 placeholder:text-white/40"
               />
               <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg className="w-5 h-5 text-luxury-neutral/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -39,8 +40,8 @@ const Messages = () => {
 
         {/* Main Chat Area */}
         <div className={cn(
-          "flex flex-col bg-luxury-dark/30",
-          !selectedUserId && "items-center justify-center text-luxury-neutral/50"
+          "flex flex-col bg-[#0D1117]",
+          !selectedUserId && "items-center justify-center text-white/50"
         )}>
           {selectedUserId ? (
             <ChatWindow 

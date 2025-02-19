@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +54,7 @@ export const MessageList = ({ onSelectUser }: MessageListProps) => {
     queryFn: async () => {
       if (!session?.user?.id) return [];
 
+      // Get latest message for each unique conversation
       const { data, error } = await supabase
         .from('direct_messages')
         .select(`
@@ -69,15 +71,28 @@ export const MessageList = ({ onSelectUser }: MessageListProps) => {
         .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching messages:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      return data || [];
+      // Group messages by conversation and take only the latest one
+      const latestMessages = data.reduce((acc: any[], message: any) => {
+        const otherUserId = message.sender_id === session.user.id
+          ? message.recipient_id
+          : message.sender_id;
+        
+        const existingIndex = acc.findIndex(m => 
+          (m.sender_id === otherUserId || m.recipient_id === otherUserId)
+        );
+
+        if (existingIndex === -1) {
+          acc.push(message);
+        }
+
+        return acc;
+      }, []);
+
+      return latestMessages;
     },
     enabled: !!session?.user?.id,
-    staleTime: 0,
   });
 
   if (error) {
@@ -101,7 +116,7 @@ export const MessageList = ({ onSelectUser }: MessageListProps) => {
           />
         ))}
         {!messages?.length && (
-          <p className="text-center text-muted-foreground py-8">
+          <p className="text-center text-white/50 py-8">
             No messages yet. Start a conversation!
           </p>
         )}
