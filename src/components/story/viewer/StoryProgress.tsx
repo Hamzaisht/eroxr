@@ -15,12 +15,12 @@ export const StoryProgress = ({
   isPaused
 }: StoryProgressProps) => {
   return (
-    <div className="absolute top-0 left-0 right-0 z-10 p-2">
+    <div className="absolute top-0 left-0 right-0 z-20 p-2">
       <div className="flex gap-1">
         {stories.map((_, index) => (
           <div
             key={index}
-            className="relative h-1 flex-1 bg-white/20 overflow-hidden rounded-full"
+            className="relative h-[3px] flex-1 bg-white/20 overflow-hidden rounded-full"
           >
             <motion.div
               initial={{ scaleX: 0 }}

@@ -11,6 +11,8 @@ import { Story } from "@/integrations/supabase/types/story";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { initializeScreenshotProtection } from "@/lib/security";
 import { useSession } from "@supabase/auth-helpers-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Heart, SmilePlus, Frown, Crown, ThumbsUp } from "lucide-react";
 
 interface StoryContainerProps {
   stories: Story[];
@@ -26,13 +28,6 @@ interface StoryContainerProps {
   onDelete?: () => void;
   onEdit?: () => void;
   timeRemaining: string;
-}
-
-interface ViewerStats {
-  views: number;
-  screenshots: number;
-  shares: number;
-  likes: number;
 }
 
 export const StoryContainer = ({
@@ -52,13 +47,8 @@ export const StoryContainer = ({
 }: StoryContainerProps) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const session = useSession();
-  const [viewerStats] = useState<ViewerStats>({ 
-    views: 41300,
-    screenshots: 287,
-    shares: 1924,
-    likes: 4597
-  });
-  const [showViewers, setShowViewers] = useState(false);
+  const [showReplyInput, setShowReplyInput] = useState(false);
+  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -79,15 +69,16 @@ export const StoryContainer = ({
     }
   };
 
-  const isOwner = session?.user?.id === currentStory.creator_id;
+  const handleReaction = (reaction: string) => {
+    setSelectedReaction(reaction);
+    // TODO: Implement reaction submission to backend
+    setTimeout(() => setSelectedReaction(null), 1000);
+  };
 
   return (
-    <div 
-      className="fixed inset-0 bg-black flex items-center justify-center z-50"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Container with fixed aspect ratio */}
-      <div className="relative h-full aspect-[9/16] max-w-[calc(100vh*9/16)] mx-auto">
+    <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+      <div className="relative w-full h-full md:h-[100vh] md:w-[calc(100vh*9/16)] max-w-3xl mx-auto bg-black overflow-hidden">
+        {/* Progress Bar */}
         <StoryProgress
           stories={stories}
           currentIndex={currentIndex}
@@ -95,6 +86,7 @@ export const StoryContainer = ({
           isPaused={isPaused}
         />
 
+        {/* Header */}
         <div className="absolute top-0 left-0 right-0 z-20 p-4">
           <StoryHeader
             creator={currentStory.creator}
@@ -103,12 +95,14 @@ export const StoryContainer = ({
           />
         </div>
 
+        {/* Main Content */}
         <StoryContent 
           story={currentStory}
           onNext={onNext}
           isPaused={isPaused}
         />
 
+        {/* Touch Controls */}
         <StoryControls
           onClick={handleContentClick}
           onMouseDown={onPause}
@@ -118,14 +112,74 @@ export const StoryContainer = ({
           onTouchEnd={onResume}
         />
 
-        <StoryActions 
-          stats={viewerStats}
-          isOwner={isOwner}
-          onViewersClick={() => setShowViewers(true)}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+        {/* Bottom Section */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+          {/* Reply Input */}
+          <AnimatePresence>
+            {showReplyInput && (
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
+                className="mb-4"
+              >
+                <input
+                  type="text"
+                  placeholder="Write a reply..."
+                  className="w-full px-4 py-3 rounded-full bg-white/10 backdrop-blur-md text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/20"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
+          {/* Reaction Buttons */}
+          <div className="flex justify-center gap-4">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleReaction('love')}
+              className={`p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all ${
+                selectedReaction === 'love' ? 'bg-red-500/50' : ''
+              }`}
+            >
+              <Heart className="w-6 h-6 text-white" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleReaction('happy')}
+              className="p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all"
+            >
+              <SmilePlus className="w-6 h-6 text-white" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleReaction('sad')}
+              className="p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all"
+            >
+              <Frown className="w-6 h-6 text-white" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleReaction('crown')}
+              className="p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all"
+            >
+              <Crown className="w-6 h-6 text-white" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleReaction('like')}
+              className="p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all"
+            >
+              <ThumbsUp className="w-6 h-6 text-white" />
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Navigation Buttons */}
         {!isMobile && (
           <NavigationButtons
             currentIndex={currentIndex}
@@ -135,9 +189,10 @@ export const StoryContainer = ({
           />
         )}
 
+        {/* Viewers Sheet */}
         <ViewersSheet 
-          open={showViewers}
-          onOpenChange={setShowViewers}
+          open={false}
+          onOpenChange={() => {}}
         />
       </div>
     </div>
