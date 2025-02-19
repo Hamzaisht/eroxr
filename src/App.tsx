@@ -1,63 +1,39 @@
-import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
-import { Toaster } from '@/components/ui/toaster';
-import { MainLayout } from '@/components/layout/MainLayout';
-import Home from '@/pages/Home';
-import Login from '@/pages/Login';
-import Profile from '@/pages/Profile';
-import Eroboard from '@/pages/Eroboard';
-import Messages from '@/pages/Messages';
-import Dating from '@/pages/Dating';
-import Search from '@/pages/Search';
-import Shorts from '@/pages/Shorts';
-import Index from '@/pages/Index';
 
-const App = () => {
-  const session = useSession();
-  const supabase = useSupabaseClient();
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Landing } from "@/pages/Landing";
+import { Login } from "@/pages/Login";
+import { Register } from "@/pages/Register";
+import { Home } from "@/pages/Home";
+import { Profile } from "@/pages/Profile";
+import { Messages } from "@/pages/Messages";
+import { Dating } from "@/pages/Dating";
+import { Eroboard } from "@/pages/Eroboard";
+import { Shorts } from "@/pages/Shorts";
 
-  useEffect(() => {
-    const handleError = (error: any) => {
-      console.error('Supabase error:', error);
-    };
-
-    supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event);
-      if (event === 'SIGNED_OUT') {
-        // Clear any cached data or state here
-      }
-    });
-
-    window.addEventListener('unhandledrejection', handleError);
-    return () => window.removeEventListener('unhandledrejection', handleError);
-  }, [supabase.auth]);
-
+function App() {
   return (
-    <div className="min-h-screen bg-[#0D1117]">
+    <Router>
       <Routes>
-        {!session ? (
-          <>
-            <Route path="/login" element={<Login />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </>
-        ) : (
-          <Route element={<MainLayout />}>
-            <Route index element={<Index />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/profile/:id" element={<Profile />} />
-            <Route path="/eroboard" element={<Eroboard />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/dating" element={<Dating />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/shorts" element={<Shorts />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        )}
+        {/* Public routes */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        
+        {/* Protected routes */}
+        <Route path="/" element={<MainLayout />}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/profile/:id?" element={<Profile />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/dating" element={<Dating />} />
+          <Route path="/eroboard" element={<Eroboard />} />
+          <Route path="/shorts" element={<Shorts />} />
+        </Route>
       </Routes>
       <Toaster />
-    </div>
+    </Router>
   );
-};
+}
 
 export default App;
