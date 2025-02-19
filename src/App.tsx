@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Landing from "@/pages/Landing";
@@ -16,12 +16,13 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
+        {/* Public routes - accessible to everyone */}
+        <Route path="/landing" element={<Landing />} />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* Protected routes */}
+        {/* Protected routes - require authentication */}
         <Route path="/" element={<MainLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/profile/:id?" element={<Profile />} />
