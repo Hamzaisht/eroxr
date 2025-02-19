@@ -19,6 +19,7 @@ export function VideoCallDialog({
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(isVideoEnabled);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [isConnecting, setIsConnecting] = useState(true);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -27,16 +28,14 @@ export function VideoCallDialog({
 
   const channelName = `call:${session?.user?.id}:${recipientId}`;
   
-  // Setup real-time tip notifications
   useTipNotifications(recipientId);
 
-  // Initialize WebRTC
   useEffect(() => {
     if (!isOpen) return;
+    setIsConnecting(true);
 
     const initializeCall = async () => {
       try {
-        // Get user media
         const stream = await navigator.mediaDevices.getUserMedia({
           video: isVideoEnabled,
           audio: true
@@ -47,7 +46,6 @@ export function VideoCallDialog({
           localVideoRef.current.srcObject = stream;
         }
 
-        // Initialize RTCPeerConnection
         const configuration = { 
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' }
@@ -57,19 +55,17 @@ export function VideoCallDialog({
         const peerConnection = new RTCPeerConnection(configuration);
         peerConnectionRef.current = peerConnection;
 
-        // Add local stream tracks to peer connection
         stream.getTracks().forEach(track => {
           peerConnection.addTrack(track, stream);
         });
 
-        // Handle incoming streams
         peerConnection.ontrack = (event) => {
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = event.streams[0];
+            setIsConnecting(false);
           }
         };
 
-        // Handle and send ICE candidates via Supabase Realtime
         peerConnection.onicecandidate = (event) => {
           if (event.candidate) {
             supabase.channel(channelName).send({
@@ -80,7 +76,6 @@ export function VideoCallDialog({
           }
         };
 
-        // Create and send offer
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
         
@@ -97,12 +92,12 @@ export function VideoCallDialog({
           description: "Failed to initialize call. Please check your camera/microphone permissions.",
           variant: "destructive"
         });
+        setIsConnecting(false);
       }
     };
 
     initializeCall();
 
-    // Subscribe to WebRTC signaling channel
     const channel = supabase.channel(channelName)
       .on('broadcast', { event: 'offer' }, async ({ payload }) => {
         if (!peerConnectionRef.current) return;
@@ -127,15 +122,14 @@ export function VideoCallDialog({
       })
       .subscribe();
 
-    // Cleanup function
     return () => {
       localStream?.getTracks().forEach(track => track.stop());
       peerConnectionRef.current?.close();
       supabase.removeChannel(channel);
+      setIsConnecting(false);
     };
   }, [isOpen, isVideoEnabled, channelName, toast]);
 
-  // Handle mute/unmute
   useEffect(() => {
     if (localStream) {
       localStream.getAudioTracks().forEach(track => {
@@ -144,7 +138,6 @@ export function VideoCallDialog({
     }
   }, [isMuted, localStream]);
 
-  // Handle video on/off
   useEffect(() => {
     if (localStream) {
       localStream.getVideoTracks().forEach(track => {
@@ -154,37 +147,44 @@ export function VideoCallDialog({
   }, [isVideoOn, localStream]);
 
   const handleClose = () => {
-    // Stop all tracks
     localStream?.getTracks().forEach(track => track.stop());
-    // Close peer connection
     peerConnectionRef.current?.close();
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[800px] bg-black/90">
+      <DialogContent className="sm:max-w-[800px] bg-gradient-to-b from-luxury-dark to-black p-0 border-luxury-primary/20">
         <div className="relative video-container h-[600px] rounded-lg overflow-hidden">
-          {/* Local video */}
-          <video
-            ref={localVideoRef}
-            className="absolute bottom-4 right-4 w-48 h-32 rounded-lg border border-white/20"
-            autoPlay
-            muted
-            playsInline
-          />
-          
-          {/* Remote video */}
-          <video
-            ref={remoteVideoRef}
-            className="w-full h-full object-cover"
-            autoPlay
-            playsInline
-          />
+          <div className="relative w-full h-full">
+            <video
+              ref={remoteVideoRef}
+              className="w-full h-full object-cover"
+              autoPlay
+              playsInline
+            />
+            {isConnecting && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin mx-auto"/>
+                  <p className="text-luxury-primary font-medium">Connecting...</p>
+                </div>
+              </div>
+            )}
+          </div>
 
-          {/* Controls overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
-            <div className="flex items-center justify-between">
+          <div className="absolute bottom-4 right-4 w-48 h-32 transition-transform hover:scale-105">
+            <video
+              ref={localVideoRef}
+              className="w-full h-full object-cover rounded-lg border border-luxury-primary/20 shadow-luxury"
+              autoPlay
+              muted
+              playsInline
+            />
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+            <div className="flex items-center justify-between max-w-3xl mx-auto">
               <VideoControls
                 isMuted={isMuted}
                 setIsMuted={setIsMuted}
@@ -199,7 +199,11 @@ export function VideoCallDialog({
                   channelName={channelName}
                 />
                 
-                <Button variant="destructive" onClick={handleClose}>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleClose}
+                  className="hover:bg-red-600 transition-colors"
+                >
                   End Call
                 </Button>
               </div>
