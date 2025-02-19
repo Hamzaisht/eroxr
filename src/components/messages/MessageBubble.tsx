@@ -41,10 +41,19 @@ export const MessageBubble = ({
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content || "");
+  const [localMessage, setLocalMessage] = useState(message);
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Reset states when switching chats
+  useEffect(() => {
+    setIsEditing(false);
+    setSelectedMedia(null);
+    setEditedContent(message.content || "");
+    setLocalMessage(message);
+  }, [message]);
 
   useEffect(() => {
     const channel = supabase
@@ -58,7 +67,8 @@ export const MessageBubble = ({
           filter: `id=eq.${message.id}`
         },
         (payload: any) => {
-          if (payload.new.content !== message.content) {
+          if (payload.new) {
+            setLocalMessage(payload.new);
             setEditedContent(payload.new.content);
           }
         }
@@ -69,10 +79,6 @@ export const MessageBubble = ({
       supabase.removeChannel(channel);
     };
   }, [message.id]);
-
-  useEffect(() => {
-    setEditedContent(message.content || "");
-  }, [message.content]);
 
   const messageAge = new Date().getTime() - new Date(message.created_at).getTime();
   const canEditDelete = messageAge < 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -113,7 +119,6 @@ export const MessageBubble = ({
         updated_at: new Date().toISOString()
       };
 
-      // Only set original_content if this is the first edit
       if (!message.original_content) {
         updateData.original_content = message.content;
       }
@@ -125,7 +130,17 @@ export const MessageBubble = ({
 
       if (error) throw error;
 
+      // Update local state immediately
+      setLocalMessage({
+        ...localMessage,
+        content: editedContent.trim(),
+        updated_at: updateData.updated_at,
+        original_content: updateData.original_content || localMessage.original_content
+      });
+
       setIsEditing(false);
+      setSelectedMedia(null); // Clear any selected media when editing
+      
       toast({
         description: "Message updated successfully",
       });
@@ -179,6 +194,7 @@ export const MessageBubble = ({
               }
               if (e.key === 'Escape') {
                 setIsEditing(false);
+                setSelectedMedia(null);
               }
             }}
             className="w-full bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg px-4 py-2"
@@ -188,7 +204,10 @@ export const MessageBubble = ({
             <Button 
               size="sm" 
               variant="ghost" 
-              onClick={() => setIsEditing(false)}
+              onClick={() => {
+                setIsEditing(false);
+                setSelectedMedia(null);
+              }}
               className="text-luxury-neutral hover:text-white rounded-lg px-4"
               disabled={isUpdating}
             >
@@ -236,7 +255,7 @@ export const MessageBubble = ({
             src={url}
             alt="Image message"
             className="max-w-[200px] rounded-lg cursor-pointer"
-            onClick={() => setSelectedMedia(url)}
+            onClick={() => !isEditing && setSelectedMedia(url)}
           />
         ));
       case 'snap':
@@ -257,7 +276,7 @@ export const MessageBubble = ({
             "text-sm whitespace-pre-wrap",
             isOwnMessage ? "text-white" : "text-luxury-neutral"
           )}>
-            {message.content}
+            {localMessage.content}
           </p>
         );
     }
@@ -306,8 +325,8 @@ export const MessageBubble = ({
           <div className={`flex items-center space-x-1 mt-1 text-[10px] text-luxury-neutral/50
             ${isOwnMessage ? "justify-end" : "justify-start"}`}>
             <span>
-              {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-              {message.content !== message.original_content && (
+              {formatDistanceToNow(new Date(localMessage.created_at || ''), { addSuffix: true })}
+              {localMessage.content !== localMessage.original_content && (
                 <span className="ml-1 text-luxury-primary/70">(edited)</span>
               )}
             </span>
@@ -320,7 +339,13 @@ export const MessageBubble = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-luxury-darker/95 backdrop-blur-md border-luxury-primary/20">
                   {message.content && (
-                    <DropdownMenuItem onClick={() => setIsEditing(true)} className="text-luxury-neutral hover:text-white">
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setIsEditing(true);
+                        setSelectedMedia(null);
+                      }} 
+                      className="text-luxury-neutral hover:text-white"
+                    >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </DropdownMenuItem>
@@ -342,6 +367,10 @@ export const MessageBubble = ({
           </div>
         </div>
       </motion.div>
+
+      {selectedMedia && !isEditing && (
+        <MediaViewer url={selectedMedia} onClose={() => setSelectedMedia(null)} />
+      )}
     </AnimatePresence>
   );
 };
