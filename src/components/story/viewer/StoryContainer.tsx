@@ -14,9 +14,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Camera, Eye, Share2, MoreVertical, Trash2, Edit, Users } from "lucide-react";
+import { Camera, Eye, Share2, MoreVertical, Trash2, Edit, Users, Heart, MessageCircle, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { initializeScreenshotProtection } from "@/lib/security";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useState } from "react";
@@ -41,6 +41,7 @@ interface ViewerStats {
   views: number;
   screenshots: number;
   shares: number;
+  likes: number;
 }
 
 export const StoryContainer = ({
@@ -60,11 +61,15 @@ export const StoryContainer = ({
 }: StoryContainerProps) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const session = useSession();
-  const [viewerStats, setViewerStats] = useState<ViewerStats>({ views: 0, screenshots: 0, shares: 0 });
+  const [viewerStats, setViewerStats] = useState<ViewerStats>({ 
+    views: 41300,  // Demo numbers matching the image
+    screenshots: 287,
+    shares: 1924,
+    likes: 4597
+  });
   const [showViewers, setShowViewers] = useState(false);
 
   useEffect(() => {
-    // Initialize screenshot protection
     if (session?.user?.id) {
       initializeScreenshotProtection(session.user.id, currentStory.creator_id);
     }
@@ -90,7 +95,7 @@ export const StoryContainer = ({
       className="fixed inset-0 bg-black flex items-center justify-center z-50"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="relative w-full h-full md:w-[400px] md:h-[90vh]">
+      <div className="relative w-full h-full">
         <StoryProgress
           stories={stories}
           currentIndex={currentIndex}
@@ -98,51 +103,86 @@ export const StoryContainer = ({
           isPaused={isPaused}
         />
 
-        <div className="absolute top-0 left-0 right-0 z-20 p-4 flex items-center justify-between">
+        <div className="absolute top-0 left-0 right-0 z-20 p-4">
           <StoryHeader
             creator={currentStory.creator}
             timeRemaining={timeRemaining}
             onClose={onClose}
           />
+        </div>
 
-          <div className="flex items-center gap-4">
+        <StoryContent 
+          story={currentStory}
+          onNext={onNext}
+          isPaused={isPaused}
+        />
+
+        <StoryControls
+          onClick={handleContentClick}
+          onMouseDown={onPause}
+          onMouseUp={onResume}
+          onMouseLeave={onResume}
+          onTouchStart={onPause}
+          onTouchEnd={onResume}
+        />
+
+        {/* Right side buttons - TikTok style */}
+        <div className="absolute right-4 bottom-20 flex flex-col items-center gap-6 z-30">
+          <div className="flex flex-col items-center gap-1">
             <Button 
               variant="ghost" 
               size="icon"
-              className="text-white hover:bg-white/20"
+              className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-lg text-white hover:bg-white/20"
+            >
+              <Heart className="w-6 h-6" />
+            </Button>
+            <span className="text-white text-xs">{viewerStats.likes}</span>
+          </div>
+
+          <div className="flex flex-col items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-lg text-white hover:bg-white/20"
               onClick={() => setShowViewers(true)}
             >
-              <Eye className="w-5 h-5" />
-              <span className="ml-2 text-sm">{viewerStats.views}</span>
+              <Eye className="w-6 h-6" />
             </Button>
+            <span className="text-white text-xs">{viewerStats.views}</span>
+          </div>
 
+          <div className="flex flex-col items-center gap-1">
             <Button 
               variant="ghost" 
               size="icon"
-              className="text-white hover:bg-white/20"
+              className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-lg text-white hover:bg-white/20"
             >
-              <Camera className="w-5 h-5" />
-              <span className="ml-2 text-sm">{viewerStats.screenshots}</span>
+              <MessageCircle className="w-6 h-6" />
             </Button>
+            <span className="text-white text-xs">{viewerStats.screenshots}</span>
+          </div>
 
+          <div className="flex flex-col items-center gap-1">
             <Button 
               variant="ghost" 
               size="icon"
-              className="text-white hover:bg-white/20"
+              className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-lg text-white hover:bg-white/20"
             >
-              <Share2 className="w-5 h-5" />
-              <span className="ml-2 text-sm">{viewerStats.shares}</span>
+              <Share2 className="w-6 h-6" />
             </Button>
+            <span className="text-white text-xs">{viewerStats.shares}</span>
+          </div>
 
-            {isOwner && (
+          {isOwner && (
+            <div className="flex flex-col items-center gap-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    className="text-white hover:bg-white/20"
+                    className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-lg text-white hover:bg-white/20"
                   >
-                    <MoreVertical className="w-5 h-5" />
+                    <MoreVertical className="w-6 h-6" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -156,24 +196,9 @@ export const StoryContainer = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-
-        <StoryControls
-          onClick={handleContentClick}
-          onMouseDown={onPause}
-          onMouseUp={onResume}
-          onMouseLeave={onResume}
-          onTouchStart={onPause}
-          onTouchEnd={onResume}
-        />
-
-        <StoryContent 
-          story={currentStory}
-          onNext={onNext}
-          isPaused={isPaused}
-        />
 
         {!isMobile && (
           <NavigationButtons
