@@ -13,7 +13,6 @@ export const useRealtimeMessages = (recipientId?: string) => {
   useEffect(() => {
     if (!session?.user?.id) return;
 
-    // Subscribe to all message updates for the current user's conversations
     const channel = supabase
       .channel('realtime-messages')
       .on(
@@ -26,23 +25,43 @@ export const useRealtimeMessages = (recipientId?: string) => {
             ? `or(and(sender_id.eq.${session.user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${session.user.id}))`
             : `or(sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id})`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Message update:', payload);
 
-          // Optimistically update the UI
-          queryClient.setQueryData(['messages', session.user.id], (oldData: any) => {
-            if (!oldData) return oldData;
+          // Immediate update for the chat window
+          if (recipientId) {
+            queryClient.setQueriesData({ queryKey: ['chat', session.user.id, recipientId] }, (oldData: any) => {
+              if (!oldData) return [payload.new];
+              return [...(Array.isArray(oldData) ? oldData : []), payload.new];
+            });
+          }
 
+          // Immediate update for the message list
+          queryClient.setQueriesData({ queryKey: ['messages', session.user.id] }, (oldData: any) => {
+            if (!oldData) return [payload.new];
+            
             if (payload.eventType === 'INSERT') {
-              // Add new message to the list
-              return [payload.new, ...oldData];
+              // Remove any existing conversation with the same user and add the new one at the top
+              const otherUserId = payload.new.sender_id === session.user.id 
+                ? payload.new.recipient_id 
+                : payload.new.sender_id;
+                
+              const filteredData = oldData.filter((msg: any) => {
+                const msgOtherUserId = msg.sender_id === session.user.id ? msg.recipient_id : msg.sender_id;
+                return msgOtherUserId !== otherUserId;
+              });
+              
+              return [payload.new, ...filteredData];
             }
 
             if (payload.eventType === 'UPDATE') {
-              // Update existing message
               return oldData.map((message: any) =>
                 message.id === payload.new.id ? payload.new : message
               );
+            }
+
+            if (payload.eventType === 'DELETE') {
+              return oldData.filter((message: any) => message.id !== payload.old.id);
             }
 
             return oldData;
