@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image, PenSquare } from "lucide-react";
+import { Send, Image, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -138,14 +138,24 @@ export const MessageInput = ({
           }
         }}
       />
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isLoading || isUploading}
-      >
-        <Image className="h-5 w-5" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isLoading || isUploading}
+        >
+          <Image className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onSnapStart}
+          disabled={isLoading || isUploading}
+        >
+          <Camera className="h-5 w-5" />
+        </Button>
+      </div>
       <Input
         value={message}
         onChange={(e) => {
