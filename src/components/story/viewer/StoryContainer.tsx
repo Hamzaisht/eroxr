@@ -10,6 +10,7 @@ import { Story } from "@/integrations/supabase/types/story";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { initializeScreenshotProtection } from "@/lib/security";
 import { useSession } from "@supabase/auth-helpers-react";
+import { X } from "lucide-react";
 
 interface StoryContainerProps {
   stories: Story[];
@@ -49,8 +50,6 @@ export const StoryContainer = ({
     if (session?.user?.id) {
       initializeScreenshotProtection(session.user.id, currentStory.creator_id);
     }
-
-    // Lock body scroll when story is open
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'unset';
@@ -71,28 +70,29 @@ export const StoryContainer = ({
   };
 
   return (
-    <div 
-      className="fixed inset-0 bg-black z-[100] w-screen h-screen flex items-center justify-center"
-      style={{ height: '100dvh' }}
-    >
-      {/* Use viewport units for maximum height and scale */}
-      <div className="relative h-full w-full md:h-[100vh] md:w-[100vh] max-h-screen">
-        <StoryProgress
-          stories={stories}
-          currentIndex={currentIndex}
-          progress={progress}
-          isPaused={isPaused}
-        />
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center">
+      {/* Close button - always visible */}
+      <button
+        onClick={onClose}
+        className="fixed top-4 right-4 z-[102] p-2 rounded-full bg-black/50 hover:bg-black/70 transition-all"
+      >
+        <X className="w-6 h-6 text-white" />
+      </button>
 
-        <div className="absolute top-0 left-0 right-0 z-20 p-4">
-          <StoryHeader
-            creator={currentStory.creator}
-            timeRemaining={timeRemaining}
-            onClose={onClose}
+      {/* Story Container */}
+      <div className="relative w-full h-full md:h-[100vh] md:aspect-[9/16] max-w-[500px] mx-auto">
+        {/* Progress Bar */}
+        <div className="absolute top-0 left-0 right-0 z-[101] p-4">
+          <StoryProgress
+            stories={stories}
+            currentIndex={currentIndex}
+            progress={progress}
+            isPaused={isPaused}
           />
         </div>
 
-        <div className="absolute inset-0 flex items-center justify-center bg-black">
+        {/* Story Content */}
+        <div className="absolute inset-0 bg-black">
           <StoryContent 
             story={currentStory}
             onNext={onNext}
@@ -100,6 +100,7 @@ export const StoryContainer = ({
           />
         </div>
 
+        {/* Story Controls */}
         <StoryControls
           onClick={handleContentClick}
           onMouseDown={onPause}
@@ -109,6 +110,7 @@ export const StoryContainer = ({
           onTouchEnd={onResume}
         />
 
+        {/* Navigation Buttons */}
         {!isMobile && (
           <NavigationButtons
             currentIndex={currentIndex}
