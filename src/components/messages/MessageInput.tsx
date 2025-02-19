@@ -1,27 +1,76 @@
-import { useState, useRef } from "react";
+
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image } from "lucide-react";
+import { Send, Image, PenSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface MessageInputProps {
   onSendMessage: (content: string, mediaUrl?: string[]) => void;
   onMediaSelect?: (files: FileList) => Promise<void>;
   onSnapStart?: () => void;
   isLoading?: boolean;
+  recipientId: string;
 }
 
 export const MessageInput = ({ 
   onSendMessage, 
   onMediaSelect, 
   onSnapStart,
-  isLoading 
+  isLoading,
+  recipientId 
 }: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const session = useSession();
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+
+  const emitTypingEvent = () => {
+    if (!session?.user?.id) return;
+
+    // Emit typing event through Supabase realtime
+    supabase.channel('typing-status')
+      .send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          user_id: session.user.id,
+          recipient_id: recipientId,
+          is_typing: true
+        }
+      });
+
+    // Clear previous timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to clear typing status
+    typingTimeoutRef.current = setTimeout(() => {
+      supabase.channel('typing-status')
+        .send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            user_id: session.user.id,
+            recipient_id: recipientId,
+            is_typing: false
+          }
+        });
+    }, 2000); // Stop showing typing indicator after 2 seconds of no input
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSend = async () => {
     if (!message.trim() && !fileInputRef.current?.files?.length) return;
@@ -99,7 +148,10 @@ export const MessageInput = ({
       </Button>
       <Input
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={(e) => {
+          setMessage(e.target.value);
+          emitTypingEvent();
+        }}
         onKeyPress={handleKeyPress}
         placeholder="Type a message..."
         disabled={isLoading || isUploading}

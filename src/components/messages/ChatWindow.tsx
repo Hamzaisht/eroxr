@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import { SnapCamera } from "./chat/SnapCamera";
 import { VideoCallDialog } from "./call/VideoCallDialog";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useChatActions } from "./chat/ChatActions";
+import { PenSquare } from "lucide-react";
 
 interface ChatWindowProps {
   recipientId: string;
@@ -21,6 +22,7 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   const [showCamera, setShowCamera] = useState(false);
   const [showCall, setShowCall] = useState(false);
   const [isVideoCall, setIsVideoCall] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const session = useSession();
   const { toast } = useToast();
   
@@ -63,6 +65,20 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     enabled: !!recipientId,
   });
 
+  useEffect(() => {
+    const channel = supabase.channel('typing-status')
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if (payload.user_id === recipientId && payload.recipient_id === session?.user?.id) {
+          setIsTyping(payload.is_typing);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [recipientId, session?.user?.id]);
+
   const handleVoiceCall = () => {
     setIsVideoCall(false);
     setShowCall(true);
@@ -83,17 +99,26 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         onToggleDetails={onToggleDetails}
       />
       
-      <MessageList
-        messages={messages}
-        currentUserId={session?.user?.id}
-        recipientProfile={recipientProfile}
-      />
+      <div className="flex-1 overflow-y-auto">
+        <MessageList
+          messages={messages}
+          currentUserId={session?.user?.id}
+          recipientProfile={recipientProfile}
+        />
+        {isTyping && (
+          <div className="flex items-center gap-2 px-4 py-2 text-sm text-luxury-neutral/60">
+            <PenSquare className="h-4 w-4 animate-pulse" />
+            <span>{recipientProfile?.username} is typing...</span>
+          </div>
+        )}
+      </div>
 
       <MessageInput
         onSendMessage={handleSendMessage}
         onMediaSelect={handleMediaSelect}
         onSnapStart={() => setShowCamera(true)}
         isLoading={isUploading}
+        recipientId={recipientId}
       />
 
       {showCamera && (
