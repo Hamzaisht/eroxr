@@ -23,20 +23,22 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
       exit={{ opacity: 0 }}
       className="absolute inset-0 flex items-center justify-center bg-black"
     >
-      {isVideo ? (
-        <StoryVideo
-          ref={videoRef}
-          videoUrl={story.video_url!}
-          onEnded={onNext}
-          isPaused={isPaused}
-        />
-      ) : (
-        <StoryImage
-          mediaUrl={story.media_url || ''}
-          username={story.creator.username}
-          isPaused={isPaused}
-        />
-      )}
+      <div className="relative w-full h-full">
+        {isVideo ? (
+          <StoryVideo
+            ref={videoRef}
+            videoUrl={story.video_url!}
+            onEnded={onNext}
+            isPaused={isPaused}
+          />
+        ) : (
+          <StoryImage
+            mediaUrl={story.media_url || ''}
+            username={story.creator.username}
+            isPaused={isPaused}
+          />
+        )}
+      </div>
     </motion.div>
   );
 };

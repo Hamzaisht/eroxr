@@ -86,7 +86,8 @@ export const StoryContainer = ({
       className="fixed inset-0 bg-black flex items-center justify-center z-50"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="relative w-full h-full">
+      {/* Container with fixed aspect ratio */}
+      <div className="relative h-full aspect-[9/16] max-w-[calc(100vh*9/16)] mx-auto">
         <StoryProgress
           stories={stories}
           currentIndex={currentIndex}

@@ -35,17 +35,19 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     }, [isPaused, ref, handleError]);
 
     return (
-      <video
-        ref={ref}
-        src={videoUrl}
-        className="w-full h-full object-contain"
-        playsInline
-        autoPlay
-        muted={false}
-        controls={false}
-        onEnded={onEnded}
-        onError={handleError}
-      />
+      <div className="relative w-full h-full">
+        <video
+          ref={ref}
+          src={videoUrl}
+          className="w-full h-full object-cover"
+          playsInline
+          autoPlay
+          muted={false}
+          controls={false}
+          onEnded={onEnded}
+          onError={handleError}
+        />
+      </div>
     );
   }
 );

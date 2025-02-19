@@ -15,12 +15,14 @@ export const StoryImage = ({ mediaUrl, username }: StoryImageProps) => {
       exit={{ opacity: 0 }}
       className="relative w-full h-full"
     >
-      <img
-        src={mediaUrl}
-        alt={`Story by ${username}`}
-        className="w-full h-full object-contain"
-        loading="eager"
-      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          src={mediaUrl}
+          alt={`Story by ${username}`}
+          className="w-full h-full object-cover"
+          loading="eager"
+        />
+      </div>
     </motion.div>
   );
 };
