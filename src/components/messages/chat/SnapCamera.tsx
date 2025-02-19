@@ -1,7 +1,7 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Camera, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SnapPreview } from './SnapPreview';
 
 interface SnapCameraProps {
   onCapture: (blob: Blob) => void;
@@ -15,6 +15,7 @@ export const SnapCamera = ({ onCapture, onClose }: SnapCameraProps) => {
   const recordingTimeoutRef = useRef<NodeJS.Timeout>();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
 
   const startCamera = async () => {
     try {
@@ -55,7 +56,7 @@ export const SnapCamera = ({ onCapture, onClose }: SnapCameraProps) => {
     
     mediaRecorderRef.current.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-      onCapture(blob);
+      handleCapture(blob);
     };
     
     mediaRecorderRef.current.start();
@@ -92,10 +93,29 @@ export const SnapCamera = ({ onCapture, onClose }: SnapCameraProps) => {
     }
   };
 
+  const handleCapture = (blob: Blob) => {
+    setPreviewBlob(blob);
+  };
+
+  const handleSendSnap = (blob: Blob, text?: string) => {
+    onCapture(blob);
+    setPreviewBlob(null);
+  };
+
   useEffect(() => {
     startCamera();
     return () => stopCamera();
   }, []);
+
+  if (previewBlob) {
+    return (
+      <SnapPreview
+        mediaBlob={previewBlob}
+        onSend={handleSendSnap}
+        onClose={() => setPreviewBlob(null)}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">

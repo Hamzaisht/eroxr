@@ -1,4 +1,3 @@
-
 import { VideoMessage } from "./VideoMessage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface MessageBubbleProps {
   message: any;
@@ -35,27 +35,33 @@ export const MessageBubble = ({
   const [editedContent, setEditedContent] = useState(message.content || "");
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const messageAge = new Date().getTime() - new Date(message.created_at).getTime();
   const canEditDelete = messageAge < 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
   const handleDelete = async () => {
     try {
-      const { error } = await supabase
-        .from('direct_messages')
-        .delete()
-        .eq('id', message.id);
+      setIsDeleting(true);
+      
+      setTimeout(async () => {
+        const { error } = await supabase
+          .from('direct_messages')
+          .delete()
+          .eq('id', message.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        description: "Message deleted successfully",
-      });
+        toast({
+          description: "Message deleted successfully",
+        });
+      }, 500); // Wait for animation to complete
     } catch (error) {
       toast({
         variant: "destructive",
         description: "Failed to delete message",
       });
+      setIsDeleting(false);
     }
   };
 
@@ -170,8 +176,20 @@ export const MessageBubble = ({
   };
 
   return (
-    <>
-      <div className={`flex items-end space-x-2 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 1, scale: 1 }}
+        animate={{
+          opacity: isDeleting ? 0 : 1,
+          scale: isDeleting ? 0 : 1,
+        }}
+        exit={{ opacity: 0, scale: 0 }}
+        transition={{
+          duration: 0.5,
+          ease: "easeInOut"
+        }}
+        className={`flex items-end space-x-2 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}
+      >
         {!isOwnMessage && (
           <Avatar className="h-6 w-6">
             <AvatarImage src={profile?.avatar_url} />
@@ -180,7 +198,8 @@ export const MessageBubble = ({
         )}
         
         <div className={`group max-w-[70%] ${isOwnMessage ? "items-end" : "items-start"}`}>
-          <div
+          <motion.div
+            layout
             className={cn(
               "rounded-2xl px-3 py-2",
               isOwnMessage 
@@ -189,12 +208,13 @@ export const MessageBubble = ({
             )}
           >
             {renderMessageContent()}
-          </div>
+          </motion.div>
           
           <div className={`flex items-center space-x-1 mt-0.5 text-[10px] text-luxury-neutral/50
             ${isOwnMessage ? "justify-end" : "justify-start"}`}>
             <span>
               {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+              {message.content !== message.original_content && " (edited)"}
             </span>
             {isOwnMessage && canEditDelete && message.message_type !== 'snap' && (
               <DropdownMenu>
@@ -226,12 +246,7 @@ export const MessageBubble = ({
             )}
           </div>
         </div>
-      </div>
-
-      <MediaViewer
-        media={selectedMedia}
-        onClose={() => setSelectedMedia(null)}
-      />
-    </>
+      </motion.div>
+    </AnimatePresence>
   );
 };
