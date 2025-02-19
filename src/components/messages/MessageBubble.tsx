@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { Check, CheckCheck, MoreVertical, Camera, Trash2, Edit, X } from "lucide-react";
 import { MediaViewer } from "../media/MediaViewer";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,34 @@ export const MessageBubble = ({
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('message-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `id=eq.${message.id}`
+        },
+        (payload: any) => {
+          if (payload.new.content !== message.content) {
+            setEditedContent(payload.new.content);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [message.id]);
+
+  useEffect(() => {
+    setEditedContent(message.content || "");
+  }, [message.content]);
 
   const messageAge = new Date().getTime() - new Date(message.created_at).getTime();
   const canEditDelete = messageAge < 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -71,7 +99,10 @@ export const MessageBubble = ({
     try {
       const { error } = await supabase
         .from('direct_messages')
-        .update({ content: editedContent })
+        .update({ 
+          content: editedContent,
+          original_content: message.original_content || message.content
+        })
         .eq('id', message.id);
 
       if (error) throw error;
@@ -92,14 +123,12 @@ export const MessageBubble = ({
     if (!message.media_url?.[0]) return;
     setSelectedMedia(message.media_url[0]);
 
-    // Mark message as viewed if it's a snap
     if (message.message_type === 'snap' && !message.viewed_at) {
       supabase
         .from('direct_messages')
         .update({ viewed_at: new Date().toISOString() })
         .eq('id', message.id)
         .then(() => {
-          // After viewing, the message will be deleted after a short delay
           setTimeout(() => {
             supabase
               .from('direct_messages')
@@ -116,20 +145,20 @@ export const MessageBubble = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 p-3 rounded-xl bg-luxury-darker/90 backdrop-blur-md border border-luxury-primary/10 shadow-lg"
+          className="flex items-center gap-2 p-3 rounded-xl bg-luxury-darker/90 backdrop-blur-md border border-luxury-primary/10 shadow-lg min-w-[280px]"
         >
           <Input
             ref={inputRef}
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="flex-1 min-w-[200px] bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg"
+            className="flex-1 bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg"
             autoFocus
           />
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 ml-2">
             <Button 
               size="sm" 
               onClick={handleEdit} 
-              className="bg-luxury-primary hover:bg-luxury-primary/90 rounded-lg"
+              className="bg-luxury-primary hover:bg-luxury-primary/90 rounded-lg px-3"
             >
               <Check className="h-4 w-4" />
             </Button>
@@ -137,7 +166,7 @@ export const MessageBubble = ({
               size="sm" 
               variant="ghost" 
               onClick={() => setIsEditing(false)}
-              className="text-luxury-neutral hover:text-white rounded-lg"
+              className="text-luxury-neutral hover:text-white rounded-lg px-3"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -218,50 +247,17 @@ export const MessageBubble = ({
         )}
         
         <div className={`group max-w-[70%] space-y-2 ${isOwnMessage ? "items-end" : "items-start"}`}>
-          {isEditing ? (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 p-3 rounded-xl bg-luxury-darker/90 backdrop-blur-md border border-luxury-primary/10 shadow-lg"
-            >
-              <Input
-                ref={inputRef}
-                value={editedContent}
-                onChange={(e) => setEditedContent(e.target.value)}
-                className="flex-1 min-w-[200px] bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg"
-                autoFocus
-              />
-              <div className="flex items-center gap-1">
-                <Button 
-                  size="sm" 
-                  onClick={handleEdit} 
-                  className="bg-luxury-primary hover:bg-luxury-primary/90 rounded-lg"
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  onClick={() => setIsEditing(false)}
-                  className="text-luxury-neutral hover:text-white rounded-lg"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              layout
-              className={cn(
-                "rounded-xl px-4 py-2",
-                isOwnMessage 
-                  ? "bg-luxury-primary text-white" 
-                  : "bg-luxury-darker/50 backdrop-blur-sm text-luxury-neutral"
-              )}
-            >
-              {renderMessageContent()}
-            </motion.div>
-          )}
+          <motion.div
+            layout
+            className={cn(
+              "rounded-xl px-4 py-2",
+              isOwnMessage 
+                ? "bg-luxury-primary text-white" 
+                : "bg-luxury-darker/50 backdrop-blur-sm text-luxury-neutral"
+            )}
+          >
+            {renderMessageContent()}
+          </motion.div>
           
           <div className={`flex items-center space-x-1 mt-1 text-[10px] text-luxury-neutral/50
             ${isOwnMessage ? "justify-end" : "justify-start"}`}>
