@@ -3,6 +3,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { VideoControls } from "./VideoControls";
+import { VideoSettings } from "./VideoSettings";
 import { TippingControls } from "./TippingControls";
 import { useTipNotifications } from "./useTipNotifications";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,11 @@ export function VideoCallDialog({
   const [isVideoOn, setIsVideoOn] = useState(isVideoEnabled);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
+  const [currentCameraId, setCurrentCameraId] = useState<string>('');
+  const [frameRate, setFrameRate] = useState(30);
+  const [bitrate, setBitrate] = useState(4000);
+  
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -31,13 +37,81 @@ export function VideoCallDialog({
   useTipNotifications(recipientId);
 
   useEffect(() => {
+    const getCameras = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter(device => device.kind === 'videoinput');
+        setAvailableCameras(cameras);
+        if (cameras.length > 0) {
+          setCurrentCameraId(cameras[0].deviceId);
+        }
+      } catch (error) {
+        console.error('Error getting cameras:', error);
+      }
+    };
+
+    getCameras();
+  }, []);
+
+  const handleCameraSwitch = async () => {
+    if (!availableCameras.length) return;
+    
+    const currentIndex = availableCameras.findIndex(camera => camera.deviceId === currentCameraId);
+    const nextIndex = (currentIndex + 1) % availableCameras.length;
+    const nextCamera = availableCameras[nextIndex];
+    
+    setCurrentCameraId(nextCamera.deviceId);
+    await updateMediaStream(nextCamera.deviceId);
+  };
+
+  const updateMediaStream = async (deviceId: string) => {
+    if (!localStream) return;
+
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: { exact: deviceId },
+          frameRate: { ideal: frameRate },
+        },
+        audio: true
+      });
+
+      if (peerConnectionRef.current) {
+        const senders = peerConnectionRef.current.getSenders();
+        const videoSender = senders.find(sender => sender.track?.kind === 'video');
+        if (videoSender) {
+          videoSender.replaceTrack(newStream.getVideoTracks()[0]);
+        }
+      }
+
+      localStream.getVideoTracks().forEach(track => track.stop());
+      localStream.removeTrack(localStream.getVideoTracks()[0]);
+      localStream.addTrack(newStream.getVideoTracks()[0]);
+
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = localStream;
+      }
+    } catch (error) {
+      console.error('Error switching camera:', error);
+      toast({
+        title: "Camera Switch Error",
+        description: "Failed to switch camera. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  useEffect(() => {
     if (!isOpen) return;
     setIsConnecting(true);
 
     const initializeCall = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: isVideoEnabled,
+          video: {
+            deviceId: currentCameraId ? { exact: currentCameraId } : undefined,
+            frameRate: { ideal: frameRate },
+          },
           audio: true
         });
         
@@ -54,6 +128,17 @@ export function VideoCallDialog({
         
         const peerConnection = new RTCPeerConnection(configuration);
         peerConnectionRef.current = peerConnection;
+
+        if (peerConnection.setParameters) {
+          try {
+            const sender = peerConnection.getSenders()[0];
+            const params = sender.getParameters();
+            params.encodings = [{ maxBitrate: bitrate * 1000 }];
+            await sender.setParameters(params);
+          } catch (e) {
+            console.warn('Failed to set bitrate:', e);
+          }
+        }
 
         stream.getTracks().forEach(track => {
           peerConnection.addTrack(track, stream);
@@ -87,11 +172,39 @@ export function VideoCallDialog({
 
       } catch (error) {
         console.error('Error initializing call:', error);
-        toast({
-          title: "Call Error",
-          description: "Failed to initialize call. Please check your camera/microphone permissions.",
-          variant: "destructive"
-        });
+        
+        if (error instanceof DOMException && error.name === 'NotAllowedError') {
+          toast({
+            title: "Permission Required",
+            description: "Please allow access to your camera and microphone to start the call.",
+            variant: "destructive",
+            action: (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                    .then(() => initializeCall())
+                    .catch(() => {
+                      toast({
+                        title: "Permission Denied",
+                        description: "Cannot start call without camera and microphone access.",
+                        variant: "destructive"
+                      });
+                    });
+                }}
+              >
+                Grant Access
+              </Button>
+            ),
+          });
+        } else {
+          toast({
+            title: "Call Error",
+            description: "Failed to initialize call. Please try again.",
+            variant: "destructive"
+          });
+        }
         setIsConnecting(false);
       }
     };
@@ -128,7 +241,7 @@ export function VideoCallDialog({
       supabase.removeChannel(channel);
       setIsConnecting(false);
     };
-  }, [isOpen, isVideoEnabled, channelName, toast]);
+  }, [isOpen, currentCameraId, frameRate, bitrate, channelName, toast]);
 
   useEffect(() => {
     if (localStream) {
@@ -185,13 +298,23 @@ export function VideoCallDialog({
 
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
             <div className="flex items-center justify-between max-w-3xl mx-auto">
-              <VideoControls
-                isMuted={isMuted}
-                setIsMuted={setIsMuted}
-                isVideoOn={isVideoOn}
-                setIsVideoOn={setIsVideoOn}
-                isVideoEnabled={isVideoEnabled}
-              />
+              <div className="flex items-center gap-3">
+                <VideoControls
+                  isMuted={isMuted}
+                  setIsMuted={setIsMuted}
+                  isVideoOn={isVideoOn}
+                  setIsVideoOn={setIsVideoOn}
+                  isVideoEnabled={isVideoEnabled}
+                />
+                <VideoSettings
+                  onCameraSwitch={handleCameraSwitch}
+                  onFrameRateChange={setFrameRate}
+                  onBitrateChange={setBitrate}
+                  availableCameras={availableCameras}
+                  currentCamera={currentCameraId}
+                  onCameraSelect={setCurrentCameraId}
+                />
+              </div>
 
               <div className="flex items-center gap-4">
                 <TippingControls
