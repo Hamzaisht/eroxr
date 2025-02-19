@@ -116,21 +116,32 @@ export const MessageBubble = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 bg-luxury-darker/80 rounded-xl p-2"
+          className="flex items-center gap-2 p-3 rounded-xl bg-luxury-darker/90 backdrop-blur-md border border-luxury-primary/10 shadow-lg"
         >
           <Input
             ref={inputRef}
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="min-w-[200px] bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50"
+            className="flex-1 min-w-[200px] bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg"
             autoFocus
           />
-          <Button size="sm" onClick={handleEdit} className="bg-luxury-primary hover:bg-luxury-primary/90">
-            <Check className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button 
+              size="sm" 
+              onClick={handleEdit} 
+              className="bg-luxury-primary hover:bg-luxury-primary/90 rounded-lg"
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => setIsEditing(false)}
+              className="text-luxury-neutral hover:text-white rounded-lg"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </motion.div>
       );
     }
@@ -192,7 +203,7 @@ export const MessageBubble = ({
           duration: 0.5,
           ease: "easeInOut"
         }}
-        className={`flex items-end space-x-2 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}
+        className={`flex items-end space-x-2 mb-4 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}
       >
         {!isOwnMessage && (
           <div className="relative">
@@ -206,26 +217,37 @@ export const MessageBubble = ({
           </div>
         )}
         
-        <div className={`group max-w-[70%] ${isOwnMessage ? "items-end" : "items-start"}`}>
+        <div className={`group max-w-[70%] space-y-2 ${isOwnMessage ? "items-end" : "items-start"}`}>
           {isEditing ? (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 bg-luxury-darker/80 rounded-xl p-2"
+              className="flex items-center gap-2 p-3 rounded-xl bg-luxury-darker/90 backdrop-blur-md border border-luxury-primary/10 shadow-lg"
             >
               <Input
                 ref={inputRef}
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
-                className="min-w-[200px] bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50"
+                className="flex-1 min-w-[200px] bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg"
                 autoFocus
               />
-              <Button size="sm" onClick={handleEdit} className="bg-luxury-primary hover:bg-luxury-primary/90">
-                <Check className="h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button 
+                  size="sm" 
+                  onClick={handleEdit} 
+                  className="bg-luxury-primary hover:bg-luxury-primary/90 rounded-lg"
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => setIsEditing(false)}
+                  className="text-luxury-neutral hover:text-white rounded-lg"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </motion.div>
           ) : (
             <motion.div
