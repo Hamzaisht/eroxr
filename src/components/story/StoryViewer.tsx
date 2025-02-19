@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { StoryContainer } from "./viewer/StoryContainer";
 import { useToast } from "@/hooks/use-toast";
 import { Story } from "@/integrations/supabase/types/story";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StoryViewerProps {
   stories: Story[];
@@ -62,11 +63,35 @@ export const StoryViewer = ({
     }
   };
 
-  const handleError = () => {
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('stories')
+        .delete()
+        .eq('id', currentStory.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Story deleted",
+        description: "Your story has been removed successfully",
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error deleting story:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete story",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEdit = () => {
+    // To be implemented
     toast({
-      title: "Error",
-      description: "Failed to load story content",
-      variant: "destructive",
+      title: "Coming soon",
+      description: "Story editing will be available soon",
     });
   };
 
@@ -79,8 +104,7 @@ export const StoryViewer = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
-      onClick={onClose}
+      className="fixed inset-0 z-50"
     >
       <StoryContainer
         stories={stories}
@@ -93,6 +117,8 @@ export const StoryViewer = ({
         onPrevious={handlePrevious}
         onPause={() => setIsPaused(true)}
         onResume={() => setIsPaused(false)}
+        onDelete={handleDelete}
+        onEdit={handleEdit}
         timeRemaining={timeRemaining}
       />
     </motion.div>
