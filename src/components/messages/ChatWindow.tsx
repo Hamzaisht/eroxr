@@ -8,6 +8,7 @@ import { MessageInput } from "./MessageInput";
 import { ChatHeader } from "./chat/ChatHeader";
 import { MessageList } from "./chat/MessageList";
 import { SnapCamera } from "./chat/SnapCamera";
+import { VideoCallDialog } from "./call/VideoCallDialog";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useChatActions } from "./chat/ChatActions";
 
@@ -18,13 +19,12 @@ interface ChatWindowProps {
 
 export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) => {
   const [showCamera, setShowCamera] = useState(false);
+  const [showCall, setShowCall] = useState(false);
+  const [isVideoCall, setIsVideoCall] = useState(false);
   const session = useSession();
   const { toast } = useToast();
   
-  // Add real-time subscription for the current chat
   useRealtimeMessages(recipientId);
-
-  // Get chat actions
   const { isUploading, handleSendMessage, handleMediaSelect, handleSnapCapture } = useChatActions({
     recipientId
   });
@@ -64,17 +64,13 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   });
 
   const handleVoiceCall = () => {
-    toast({
-      title: "Starting voice call...",
-      description: "This feature is coming soon!",
-    });
+    setIsVideoCall(false);
+    setShowCall(true);
   };
 
   const handleVideoCall = () => {
-    toast({
-      title: "Starting video call...",
-      description: "This feature is coming soon!",
-    });
+    setIsVideoCall(true);
+    setShowCall(true);
   };
 
   return (
@@ -104,6 +100,16 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         <SnapCamera
           onCapture={handleSnapCapture}
           onClose={() => setShowCamera(false)}
+        />
+      )}
+
+      {showCall && (
+        <VideoCallDialog
+          isOpen={showCall}
+          onClose={() => setShowCall(false)}
+          recipientId={recipientId}
+          recipientProfile={recipientProfile}
+          isVideoEnabled={isVideoCall}
         />
       )}
     </div>
