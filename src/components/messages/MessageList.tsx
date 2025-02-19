@@ -1,71 +1,40 @@
 
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MessagePreview } from "./MessagePreview";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface MessageListProps {
   onSelectUser: (userId: string) => void;
+  onNewMessage: () => void;
 }
 
-export const MessageList = ({ onSelectUser }: MessageListProps) => {
+export const MessageList = ({ onSelectUser, onNewMessage }: MessageListProps) => {
   const session = useSession();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (!session?.user?.id) return;
-
-    const channel = supabase
-      .channel('public:direct_messages')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'direct_messages',
-          filter: `recipient_id=eq.${session.user.id}`
-        },
-        (payload) => {
-          console.log("Received message update:", payload);
-          queryClient.invalidateQueries({ queryKey: ['messages', session.user.id] });
-
-          if (payload.eventType === 'INSERT') {
-            toast({
-              title: "New message",
-              description: "You have received a new message!",
-              duration: 3000,
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session?.user?.id, queryClient, toast]);
+  useRealtimeMessages(); // Subscribe to all message updates
 
   const { data: messages, error } = useQuery({
     queryKey: ['messages', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return [];
 
-      // Get latest message for each unique conversation
       const { data, error } = await supabase
         .from('direct_messages')
         .select(`
           *,
           sender:profiles!direct_messages_sender_id_fkey (
             username,
-            avatar_url
+            avatar_url,
+            status
           ),
           recipient:profiles!direct_messages_recipient_id_fkey (
             username,
-            avatar_url
+            avatar_url,
+            status
           )
         `)
         .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
@@ -73,26 +42,24 @@ export const MessageList = ({ onSelectUser }: MessageListProps) => {
 
       if (error) throw error;
 
-      // Group messages by conversation and take only the latest one
-      const latestMessages = data.reduce((acc: any[], message: any) => {
+      // Group messages by conversation
+      const conversationsMap = new Map();
+      
+      data.forEach(message => {
         const otherUserId = message.sender_id === session.user.id
           ? message.recipient_id
           : message.sender_id;
-        
-        const existingIndex = acc.findIndex(m => 
-          (m.sender_id === otherUserId || m.recipient_id === otherUserId)
-        );
-
-        if (existingIndex === -1) {
-          acc.push(message);
+          
+        if (!conversationsMap.has(otherUserId)) {
+          conversationsMap.set(otherUserId, message);
         }
+      });
 
-        return acc;
-      }, []);
-
-      return latestMessages;
+      return Array.from(conversationsMap.values());
     },
     enabled: !!session?.user?.id,
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache the data
   });
 
   if (error) {
@@ -100,27 +67,46 @@ export const MessageList = ({ onSelectUser }: MessageListProps) => {
   }
 
   return (
-    <ScrollArea className="h-[calc(100vh-200px)]">
-      <div className="space-y-2 p-4">
-        {messages?.map((message) => (
-          <MessagePreview
-            key={message.id}
-            message={message}
-            currentUserId={session?.user?.id}
-            onClick={() => {
-              const otherUserId = message.sender_id === session?.user?.id
-                ? message.recipient_id
-                : message.sender_id;
-              onSelectUser(otherUserId || '');
-            }}
-          />
-        ))}
-        {!messages?.length && (
-          <p className="text-center text-white/50 py-8">
-            No messages yet. Start a conversation!
-          </p>
-        )}
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b border-white/5">
+        <Button
+          onClick={onNewMessage}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          New Message
+        </Button>
       </div>
-    </ScrollArea>
+
+      <ScrollArea className="flex-1">
+        <div className="space-y-1 p-2">
+          {messages?.map((message) => (
+            <MessagePreview
+              key={message.id}
+              message={message}
+              currentUserId={session?.user?.id}
+              onClick={() => {
+                const otherUserId = message.sender_id === session?.user?.id
+                  ? message.recipient_id
+                  : message.sender_id;
+                onSelectUser(otherUserId || '');
+              }}
+            />
+          ))}
+          {!messages?.length && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-white/50 mb-4">No messages yet</p>
+              <Button
+                onClick={onNewMessage}
+                variant="outline"
+                className="border-white/10 hover:bg-white/5"
+              >
+                Start a conversation
+              </Button>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
   );
 };
