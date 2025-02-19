@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Landing from "@/pages/Landing";
@@ -14,7 +14,7 @@ import Shorts from "@/pages/Shorts";
 
 function App() {
   return (
-    <Router>
+    <>
       <Routes>
         {/* Public routes - accessible to everyone */}
         <Route path="/landing" element={<Landing />} />
@@ -33,7 +33,7 @@ function App() {
         </Route>
       </Routes>
       <Toaster />
-    </Router>
+    </>
   );
 }
 
