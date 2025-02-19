@@ -477,8 +477,10 @@ export type Database = {
           media_url: string[] | null
           message_source: string | null
           message_type: string | null
+          original_content: string | null
           recipient_id: string | null
           sender_id: string | null
+          updated_at: string | null
           video_url: string | null
           viewed_at: string | null
         }
@@ -492,8 +494,10 @@ export type Database = {
           media_url?: string[] | null
           message_source?: string | null
           message_type?: string | null
+          original_content?: string | null
           recipient_id?: string | null
           sender_id?: string | null
+          updated_at?: string | null
           video_url?: string | null
           viewed_at?: string | null
         }
@@ -507,8 +511,10 @@ export type Database = {
           media_url?: string[] | null
           message_source?: string | null
           message_type?: string | null
+          original_content?: string | null
           recipient_id?: string | null
           sender_id?: string | null
+          updated_at?: string | null
           video_url?: string | null
           viewed_at?: string | null
         }

@@ -99,13 +99,20 @@ export const MessageBubble = ({
     
     try {
       setIsUpdating(true);
+      
+      const updateData = {
+        content: editedContent.trim(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Only set original_content if this is the first edit
+      if (!message.original_content) {
+        updateData.original_content = message.content;
+      }
+
       const { error } = await supabase
         .from('direct_messages')
-        .update({ 
-          content: editedContent,
-          original_content: message.original_content || message.content,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', message.id);
 
       if (error) throw error;
