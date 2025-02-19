@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { Send, Image, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
+import { motion } from "framer-motion";
 
 interface MessageInputProps {
   onSendMessage: (content: string, mediaUrl?: string[]) => void;
@@ -176,15 +176,20 @@ export const MessageInput = ({
         />
       </div>
 
-      <div className="relative">
+      <motion.div
+        initial={{ scale: 1 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="relative"
+      >
         <Button
           onClick={handleSend}
           disabled={isLoading || isUploading || (!message.trim() && !fileInputRef.current?.files?.length)}
-          className="rounded-full bg-luxury-primary hover:bg-luxury-primary/90 transition-all duration-300 disabled:opacity-50 disabled:hover:bg-luxury-primary shadow-lg hover:shadow-luxury-primary/25"
+          className="rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-300 disabled:opacity-50 disabled:hover:bg-luxury-primary shadow-lg hover:shadow-luxury-primary/25"
         >
           <Send className="h-5 w-5" />
         </Button>
-      </div>
+      </motion.div>
     </div>
   );
 };

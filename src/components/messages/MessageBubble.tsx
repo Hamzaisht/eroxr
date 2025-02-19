@@ -55,7 +55,7 @@ export const MessageBubble = ({
         toast({
           description: "Message deleted successfully",
         });
-      }, 500); // Wait for animation to complete
+      }, 500);
     } catch (error) {
       toast({
         variant: "destructive",
@@ -113,21 +113,25 @@ export const MessageBubble = ({
   const renderMessageContent = () => {
     if (isEditing) {
       return (
-        <div className="flex items-center gap-2">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 bg-luxury-darker/80 rounded-xl p-2"
+        >
           <Input
             ref={inputRef}
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="min-w-[200px]"
+            className="min-w-[200px] bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50"
             autoFocus
           />
-          <Button size="sm" onClick={handleEdit}>
+          <Button size="sm" onClick={handleEdit} className="bg-luxury-primary hover:bg-luxury-primary/90">
             <Check className="h-4 w-4" />
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
             <X className="h-4 w-4" />
           </Button>
-        </div>
+        </motion.div>
       );
     }
 
@@ -191,46 +195,75 @@ export const MessageBubble = ({
         className={`flex items-end space-x-2 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}
       >
         {!isOwnMessage && (
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={profile?.avatar_url} />
-            <AvatarFallback>{profile?.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={profile?.avatar_url} />
+              <AvatarFallback>{profile?.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+            </Avatar>
+            {profile?.has_stories && (
+              <div className="absolute inset-0 rounded-full animate-pulse-ring bg-gradient-to-tr from-luxury-primary to-luxury-accent opacity-75" />
+            )}
+          </div>
         )}
         
         <div className={`group max-w-[70%] ${isOwnMessage ? "items-end" : "items-start"}`}>
-          <motion.div
-            layout
-            className={cn(
-              "rounded-2xl px-3 py-2",
-              isOwnMessage 
-                ? "bg-[#0B84FF] text-white" 
-                : "bg-[#E9E9EB] dark:bg-luxury-neutral/5"
-            )}
-          >
-            {renderMessageContent()}
-          </motion.div>
+          {isEditing ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 bg-luxury-darker/80 rounded-xl p-2"
+            >
+              <Input
+                ref={inputRef}
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                className="min-w-[200px] bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50"
+                autoFocus
+              />
+              <Button size="sm" onClick={handleEdit} className="bg-luxury-primary hover:bg-luxury-primary/90">
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              layout
+              className={cn(
+                "rounded-xl px-4 py-2",
+                isOwnMessage 
+                  ? "bg-luxury-primary text-white" 
+                  : "bg-luxury-darker/50 backdrop-blur-sm text-luxury-neutral"
+              )}
+            >
+              {renderMessageContent()}
+            </motion.div>
+          )}
           
-          <div className={`flex items-center space-x-1 mt-0.5 text-[10px] text-luxury-neutral/50
+          <div className={`flex items-center space-x-1 mt-1 text-[10px] text-luxury-neutral/50
             ${isOwnMessage ? "justify-end" : "justify-start"}`}>
             <span>
               {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-              {message.content !== message.original_content && " (edited)"}
+              {message.content !== message.original_content && (
+                <span className="ml-1 text-luxury-primary/70">(edited)</span>
+              )}
             </span>
             {isOwnMessage && canEditDelete && message.message_type !== 'snap' && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-4 w-4 p-0">
+                  <Button variant="ghost" size="sm" className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <MoreVertical className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="bg-luxury-darker/95 backdrop-blur-md border-luxury-primary/20">
                   {message.content && (
-                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                    <DropdownMenuItem onClick={() => setIsEditing(true)} className="text-luxury-neutral hover:text-white">
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={handleDelete}>
+                  <DropdownMenuItem onClick={handleDelete} className="text-red-400 hover:text-red-300">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </DropdownMenuItem>
