@@ -1,94 +1,64 @@
+
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import { NavButtons } from "./NavButtons";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Link } from "react-router-dom";
 
 export const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isMobile = useIsMobile();
-
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-luxury-dark/80 backdrop-blur-lg border-b border-luxury-neutral/10">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="text-2xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent"
-        >
-          Eroxr
-        </motion.div>
+    <motion.nav 
+      className="fixed top-0 left-0 right-0 z-50 bg-luxury-dark/80 backdrop-blur-xl border-b border-luxury-primary/10"
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2">
+            <motion.h1 
+              className="text-2xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent"
+              whileHover={{ scale: 1.05 }}
+            >
+              Eroxr
+            </motion.h1>
+          </Link>
 
-        {/* Mobile menu button */}
-        {isMobile && (
-          <button
-            onClick={toggleMenu}
-            className="p-2 text-luxury-neutral/80 hover:text-luxury-neutral"
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        )}
-
-        {/* Desktop navigation */}
-        {!isMobile && (
-          <>
-            <div className="hidden md:flex items-center gap-8 text-luxury-neutral/80">
-              <a href="#features" className="relative group">
-                <span className="hover:text-luxury-neutral transition-colors">Features</span>
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-luxury-primary to-luxury-accent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
-              </a>
-              <a href="#safety" className="relative group">
-                <span className="hover:text-luxury-neutral transition-colors">Safety</span>
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-luxury-primary to-luxury-accent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
-              </a>
-              <a href="#verification" className="relative group">
-                <span className="hover:text-luxury-neutral transition-colors">Verification</span>
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-luxury-primary to-luxury-accent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
-              </a>
-            </div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
             <NavButtons />
-          </>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? (
+              <X className="w-6 h-6 text-luxury-primary" />
+            ) : (
+              <Menu className="w-6 h-6 text-luxury-primary" />
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isOpen && (
+          <motion.div 
+            className="md:hidden py-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <div className="flex flex-col space-y-4">
+              <NavButtons orientation="vertical" />
+            </div>
+          </motion.div>
         )}
       </div>
-
-      {/* Mobile menu */}
-      {isMobile && isMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="absolute top-16 left-0 right-0 bg-luxury-dark/95 backdrop-blur-lg border-b border-luxury-neutral/10"
-        >
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
-            <a
-              href="#features"
-              className="text-luxury-neutral/80 hover:text-luxury-neutral py-2"
-              onClick={toggleMenu}
-            >
-              Features
-            </a>
-            <a
-              href="#safety"
-              className="text-luxury-neutral/80 hover:text-luxury-neutral py-2"
-              onClick={toggleMenu}
-            >
-              Safety
-            </a>
-            <a
-              href="#verification"
-              className="text-luxury-neutral/80 hover:text-luxury-neutral py-2"
-              onClick={toggleMenu}
-            >
-              Verification
-            </a>
-            <div className="pt-4 border-t border-luxury-neutral/10">
-              <NavButtons />
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </nav>
+    </motion.nav>
   );
 };
