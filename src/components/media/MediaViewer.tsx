@@ -1,8 +1,9 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MediaContent } from "./MediaContent";
 
-interface MediaViewerProps {
-  media: string | null;
+export interface MediaViewerProps {
+  media: string;
   onClose: () => void;
 }
 

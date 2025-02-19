@@ -1,23 +1,17 @@
 
-import { VideoMessage } from "./VideoMessage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { Check, CheckCheck, MoreVertical, Camera, Trash2, Edit, X } from "lucide-react";
+import { Check, CheckCheck } from "lucide-react";
 import { MediaViewer } from "../media/MediaViewer";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import type { DirectMessage } from "@/integrations/supabase/types/message";
+import { MessageActions } from "./message-parts/MessageActions";
+import { MessageContent } from "./message-parts/MessageContent";
+import { MessageEditForm } from "./message-parts/MessageEditForm";
 
 interface MessageBubbleProps {
   message: DirectMessage;
@@ -81,7 +75,7 @@ export const MessageBubble = ({
   }, [message.id]);
 
   const messageAge = new Date().getTime() - new Date(message.created_at).getTime();
-  const canEditDelete = messageAge < 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  const canEditDelete = messageAge < 24 * 60 * 60 * 1000;
 
   const handleDelete = async () => {
     try {
@@ -130,7 +124,6 @@ export const MessageBubble = ({
 
       if (error) throw error;
 
-      // Update local state immediately
       setLocalMessage({
         ...localMessage,
         content: editedContent.trim(),
@@ -139,7 +132,7 @@ export const MessageBubble = ({
       });
 
       setIsEditing(false);
-      setSelectedMedia(null); // Clear any selected media when editing
+      setSelectedMedia(null);
       
       toast({
         description: "Message updated successfully",
@@ -172,113 +165,6 @@ export const MessageBubble = ({
               .eq('id', message.id);
           }, 2000);
         });
-    }
-  };
-
-  const renderMessageContent = () => {
-    if (isEditing) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-3 p-4 rounded-xl bg-luxury-darker/90 backdrop-blur-md border border-luxury-primary/10 shadow-lg min-w-[280px] max-w-[400px]"
-        >
-          <Input
-            ref={inputRef}
-            value={editedContent}
-            onChange={(e) => setEditedContent(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleEdit();
-              }
-              if (e.key === 'Escape') {
-                setIsEditing(false);
-                setSelectedMedia(null);
-              }
-            }}
-            className="w-full bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg px-4 py-2"
-            autoFocus
-          />
-          <div className="flex items-center justify-end gap-2">
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={() => {
-                setIsEditing(false);
-                setSelectedMedia(null);
-              }}
-              className="text-luxury-neutral hover:text-white rounded-lg px-4"
-              disabled={isUpdating}
-            >
-              Cancel
-            </Button>
-            <Button 
-              size="sm" 
-              onClick={handleEdit} 
-              className="bg-luxury-primary hover:bg-luxury-primary/90 rounded-lg px-4"
-              disabled={isUpdating}
-            >
-              {isUpdating ? (
-                <span className="flex items-center gap-2">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Check className="h-4 w-4" />
-                  </motion.div>
-                  Saving...
-                </span>
-              ) : (
-                'Save'
-              )}
-            </Button>
-          </div>
-        </motion.div>
-      );
-    }
-
-    switch (message.message_type) {
-      case 'video':
-        return (
-          <VideoMessage
-            messageId={message.id}
-            videoUrl={message.video_url}
-            isViewed={!!message.viewed_at}
-            onView={() => {}}
-          />
-        );
-      case 'image':
-        return message.media_url?.map((url: string, index: number) => (
-          <img
-            key={index}
-            src={url}
-            alt="Image message"
-            className="max-w-[200px] rounded-lg cursor-pointer"
-            onClick={() => !isEditing && setSelectedMedia(url)}
-          />
-        ));
-      case 'snap':
-        return (
-          <div 
-            className="cursor-pointer bg-luxury-primary/10 p-3 rounded-lg"
-            onClick={handleSnapView}
-          >
-            <Camera className="w-6 h-6 text-luxury-primary" />
-            <div className="text-sm mt-1 text-luxury-neutral/70">
-              {message.viewed_at ? "Snap opened" : "Tap to view snap"}
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <p className={cn(
-            "text-sm whitespace-pre-wrap",
-            isOwnMessage ? "text-white" : "text-luxury-neutral"
-          )}>
-            {localMessage.content}
-          </p>
-        );
     }
   };
 
@@ -319,7 +205,27 @@ export const MessageBubble = ({
                 : "bg-luxury-darker/50 backdrop-blur-sm text-luxury-neutral"
             )}
           >
-            {renderMessageContent()}
+            {isEditing ? (
+              <MessageEditForm
+                content={editedContent}
+                onChange={setEditedContent}
+                onSave={handleEdit}
+                onCancel={() => {
+                  setIsEditing(false);
+                  setSelectedMedia(null);
+                }}
+                isUpdating={isUpdating}
+                inputRef={inputRef}
+              />
+            ) : (
+              <MessageContent
+                message={localMessage}
+                isOwnMessage={isOwnMessage}
+                isEditing={isEditing}
+                onMediaSelect={setSelectedMedia}
+                onSnapView={handleSnapView}
+              />
+            )}
           </motion.div>
           
           <div className={`flex items-center space-x-1 mt-1 text-[10px] text-luxury-neutral/50
@@ -331,31 +237,14 @@ export const MessageBubble = ({
               )}
             </span>
             {isOwnMessage && canEditDelete && message.message_type !== 'snap' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-luxury-darker/95 backdrop-blur-md border-luxury-primary/20">
-                  {message.content && (
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setIsEditing(true);
-                        setSelectedMedia(null);
-                      }} 
-                      className="text-luxury-neutral hover:text-white"
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={handleDelete} className="text-red-400 hover:text-red-300">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <MessageActions
+                onEdit={() => {
+                  setIsEditing(true);
+                  setSelectedMedia(null);
+                }}
+                onDelete={handleDelete}
+                hasContent={!!message.content}
+              />
             )}
             {isOwnMessage && (
               message.viewed_at ? (
@@ -369,7 +258,7 @@ export const MessageBubble = ({
       </motion.div>
 
       {selectedMedia && !isEditing && (
-        <MediaViewer url={selectedMedia} onClose={() => setSelectedMedia(null)} />
+        <MediaViewer media={selectedMedia} onClose={() => setSelectedMedia(null)} />
       )}
     </AnimatePresence>
   );
