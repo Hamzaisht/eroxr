@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,7 @@ import { MessageInput } from "./MessageInput";
 import { ChatHeader } from "./chat/ChatHeader";
 import { MessageList } from "./chat/MessageList";
 import { SnapCamera } from "./chat/SnapCamera";
+import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 
 interface ChatWindowProps {
   recipientId: string;
@@ -21,6 +21,9 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   const [isUploading, setIsUploading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
+  
+  // Add real-time subscription for the current chat
+  useRealtimeMessages(recipientId);
 
   const handleVoiceCall = () => {
     toast({
@@ -172,28 +175,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
 
     if (session?.user?.id && recipientId) {
       fetchMessages();
-
-      // Subscribe to new messages
-      const channel = supabase
-        .channel(`chat:${session.user.id}-${recipientId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'direct_messages',
-            filter: `or(and(sender_id.eq.${session.user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${session.user.id}))`
-          },
-          (payload) => {
-            console.log('New message received:', payload);
-            setMessages(prev => [...prev, payload.new as DirectMessage]);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     }
   }, [session?.user?.id, recipientId]);
 
