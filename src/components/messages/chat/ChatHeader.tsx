@@ -42,8 +42,8 @@ export const ChatHeader = ({
     enabled: !!recipientId,
   });
 
-  const handleBookingClick = (type: 'chat' | 'video' | 'voice') => {
-    setBookingType(type);
+  const handleBookingClick = () => {
+    setBookingType('chat');
     setShowBooking(true);
   };
 
@@ -68,7 +68,7 @@ export const ChatHeader = ({
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => handleBookingClick('chat')}
+              onClick={handleBookingClick}
             >
               <Calendar className="h-5 w-5" />
             </Button>
@@ -76,14 +76,14 @@ export const ChatHeader = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => handleBookingClick('voice')}
+            onClick={onVoiceCall}
           >
             <Phone className="h-5 w-5" />
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => handleBookingClick('video')}
+            onClick={onVideoCall}
           >
             <Video className="h-5 w-5" />
           </Button>
