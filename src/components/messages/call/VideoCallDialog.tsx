@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -129,20 +130,21 @@ export function VideoCallDialog({
         const peerConnection = new RTCPeerConnection(configuration);
         peerConnectionRef.current = peerConnection;
 
-        if (peerConnection.setParameters) {
-          try {
-            const sender = peerConnection.getSenders()[0];
-            const params = sender.getParameters();
-            params.encodings = [{ maxBitrate: bitrate * 1000 }];
-            await sender.setParameters(params);
-          } catch (e) {
-            console.warn('Failed to set bitrate:', e);
-          }
-        }
-
         stream.getTracks().forEach(track => {
           peerConnection.addTrack(track, stream);
         });
+
+        // Set bitrate after adding tracks
+        const senders = peerConnection.getSenders();
+        const videoSender = senders.find(sender => sender.track?.kind === 'video');
+        if (videoSender) {
+          const parameters = videoSender.getParameters();
+          if (!parameters.encodings) {
+            parameters.encodings = [{}];
+          }
+          parameters.encodings[0].maxBitrate = bitrate * 1000;
+          await videoSender.setParameters(parameters);
+        }
 
         peerConnection.ontrack = (event) => {
           if (remoteVideoRef.current) {
