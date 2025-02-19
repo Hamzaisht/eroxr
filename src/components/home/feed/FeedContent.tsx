@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { Post } from "@/components/feed/Post";
 import { Loader2, AlertTriangle } from "lucide-react";
 import type { FeedPost } from "../types";
