@@ -13,12 +13,13 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     const { toast } = useToast();
 
     const handleError = useCallback(() => {
+      console.error("Video loading error:", videoUrl);
       toast({
         title: "Video Error",
-        description: "Failed to play video",
+        description: "Failed to play video. Please try again.",
         variant: "destructive",
       });
-    }, [toast]);
+    }, [toast, videoUrl]);
 
     useEffect(() => {
       const videoElement = ref as React.MutableRefObject<HTMLVideoElement>;
@@ -35,11 +36,11 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     }, [isPaused, ref, handleError]);
 
     return (
-      <div className="relative w-full h-full">
+      <div className="absolute inset-0 flex items-center justify-center bg-black">
         <video
           ref={ref}
           src={videoUrl}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           playsInline
           autoPlay
           muted={false}

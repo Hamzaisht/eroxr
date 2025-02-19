@@ -7,22 +7,20 @@ interface StoryImageProps {
   isPaused: boolean;
 }
 
-export const StoryImage = ({ mediaUrl, username }: StoryImageProps) => {
+export const StoryImage = ({ mediaUrl, username, isPaused }: StoryImageProps) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="relative w-full h-full"
+      className="absolute inset-0 flex items-center justify-center bg-black"
     >
-      <div className="absolute inset-0 flex items-center justify-center">
-        <img
-          src={mediaUrl}
-          alt={`Story by ${username}`}
-          className="w-full h-full object-cover"
-          loading="eager"
-        />
-      </div>
+      <img
+        src={mediaUrl}
+        alt={`Story by ${username}`}
+        className="w-full h-full object-contain"
+        loading="eager"
+      />
     </motion.div>
   );
 };
