@@ -1,220 +1,158 @@
-import { ImagePlus, Video, AlertCircle } from "lucide-react";
+
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { ImagePlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
 
 interface MediaUploadSectionProps {
-  selectedFiles: FileList | null;
-  onFileSelect: (files: FileList | null) => void;
-  isPayingCustomer: boolean | null;
-  handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onMediaSelect: (urls: string[]) => void;
+  isUploading: boolean;
 }
 
-export const MediaUploadSection = ({
-  selectedFiles,
-  onFileSelect,
-  isPayingCustomer,
-  handleFileSelect
-}: MediaUploadSectionProps) => {
+export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSectionProps) => {
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const { toast } = useToast();
-  const [isVerifying, setIsVerifying] = useState(false);
 
-  const verifyStorageAccess = async () => {
-    try {
-      setIsVerifying(true);
-      const { data: bucketData, error: bucketError } = await supabase
-        .storage
-        .getBucket('posts');
-
-      if (bucketError) {
-        console.error('Storage bucket verification failed:', bucketError);
-        toast({
-          title: "Storage Access Error",
-          description: "Unable to access storage. Please try again later.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Storage verification error:', error);
-      return false;
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const validateFile = async (file: File): Promise<boolean> => {
-    // Check file size (50MB = 50 * 1024 * 1024 bytes)
-    const maxSize = 50 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast({
-        title: "File too large",
-        description: "Files must be 50MB or smaller",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    // Validate based on file type
-    if (file.type.startsWith('video/')) {
-      return validateVideo(file);
-    } else if (file.type.startsWith('image/')) {
-      return validateImage(file);
-    } else {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload only images or videos",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-
-  const validateVideo = async (file: File): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      video.preload = 'metadata';
-
-      video.onloadedmetadata = () => {
-        URL.revokeObjectURL(video.src);
-        const duration = video.duration;
-        if (duration > 300) { // 5 minutes = 300 seconds
-          toast({
-            title: "Video too long",
-            description: "Videos must be 5 minutes or shorter",
-            variant: "destructive",
-          });
-          resolve(false);
-        }
-        resolve(true);
-      };
-
-      video.onerror = () => {
-        URL.revokeObjectURL(video.src);
-        toast({
-          title: "Invalid video",
-          description: "Please upload a valid video file",
-          variant: "destructive",
-        });
-        resolve(false);
-      };
-
-      video.src = URL.createObjectURL(file);
-    });
-  };
-
-  const validateImage = async (file: File): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        URL.revokeObjectURL(img.src);
-        resolve(true);
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(img.src);
-        toast({
-          title: "Invalid image",
-          description: "Please upload a valid image file",
-          variant: "destructive",
-        });
-        resolve(false);
-      };
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  const handleFileValidation = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
     if (!files) return;
 
-    // Verify storage access first
-    const hasStorageAccess = await verifyStorageAccess();
-    if (!hasStorageAccess) {
-      e.target.value = '';
-      return;
-    }
+    setSelectedFiles(files);
+    
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // Create optimized version of image if it's too large
+        let fileToUpload = file;
+        if (file.type.startsWith('image/') && file.size > 1024 * 1024) {
+          fileToUpload = await optimizeImage(file);
+        }
 
-    // Validate each file
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const isValid = await validateFile(file);
-      if (!isValid) {
-        e.target.value = '';
-        return;
-      }
-    }
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${Date.now()}_${fileName}`;
 
-    handleFileSelect(e);
-  };
+        // Upload file
+        const { data, error } = await supabase.storage
+          .from('posts')
+          .upload(filePath, fileToUpload, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type
+          });
 
-  const handleButtonClick = () => {
-    if (!isPayingCustomer) {
+        if (error) throw error;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('posts')
+          .getPublicUrl(data.path);
+
+        return publicUrl;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+      onMediaSelect(urls);
+
       toast({
-        title: "Premium Feature",
-        description: "Only paying customers can upload media",
+        title: "Media uploaded",
+        description: "Your media has been uploaded successfully",
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload media. Please try again.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setSelectedFiles(null);
     }
-    
-    const input = document.getElementById('post-file-upload') as HTMLInputElement;
-    if (input) {
-      input.click();
-    }
+  }, [onMediaSelect, toast]);
+
+  const optimizeImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+        const maxDimension = 1920;
+        
+        if (width > height && width > maxDimension) {
+          height *= maxDimension / width;
+          width = maxDimension;
+        } else if (height > maxDimension) {
+          width *= maxDimension / height;
+          height = maxDimension;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress image
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            }));
+          }
+        }, 'image/jpeg', 0.85); // Adjust quality as needed
+        
+        URL.revokeObjectURL(img.src);
+      };
+    });
   };
 
   return (
-    <div className="space-y-2">
-      <Label>Media</Label>
-      <div className="flex items-center gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleButtonClick}
-          className="w-full"
-          disabled={isVerifying}
-        >
-          {isVerifying ? (
-            <>
-              <AlertCircle className="h-4 w-4 mr-2 animate-pulse" />
-              Verifying...
-            </>
-          ) : (
-            <>
-              <ImagePlus className="h-4 w-4 mr-2" />
-              {selectedFiles?.length ? `${selectedFiles.length} file(s) selected` : 'Upload Media'}
-            </>
-          )}
-        </Button>
-        <input
-          type="file"
-          id="post-file-upload"
-          accept="image/*,video/*"
-          multiple
-          onChange={handleFileValidation}
-          disabled={!isPayingCustomer || isVerifying}
-          style={{ display: 'none' }}
-          onClick={(e) => {
-            (e.target as HTMLInputElement).value = '';
-          }}
-        />
-      </div>
-      {!isPayingCustomer && (
-        <p className="text-sm text-muted-foreground">
-          Upgrade to upload media files
-        </p>
-      )}
-      <p className="text-sm text-muted-foreground">
-        Supported formats: Images (JPG, PNG, GIF) and Videos (MP4, WebM) up to 50MB
-      </p>
-      {selectedFiles?.length > 0 && (
-        <p className="text-sm text-muted-foreground">
-          Selected {selectedFiles.length} file(s)
-        </p>
+    <div className="space-y-4">
+      <input
+        type="file"
+        id="media-upload"
+        multiple
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={handleFileChange}
+        disabled={isUploading}
+      />
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full h-32 relative border-dashed border-2"
+        onClick={() => document.getElementById('media-upload')?.click()}
+        disabled={isUploading}
+      >
+        {isUploading ? (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Uploading...</span>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <ImagePlus className="h-6 w-6" />
+            <span>Upload Media</span>
+          </div>
+        )}
+      </Button>
+
+      {selectedFiles && (
+        <div className="text-sm text-muted-foreground">
+          {Array.from(selectedFiles).map((file, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <span>{file.name}</span>
+              <span className="text-xs">({Math.round(file.size / 1024)}KB)</span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
