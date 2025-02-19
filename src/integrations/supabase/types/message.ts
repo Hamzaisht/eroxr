@@ -1,3 +1,4 @@
+
 export type DirectMessage = {
   id: string;
   sender_id: string | null;
@@ -11,4 +12,6 @@ export type DirectMessage = {
   video_url: string | null;
   duration: number | null;
   viewed_at: string | null;
+  original_content: string | null;
+  updated_at: string | null;
 };
