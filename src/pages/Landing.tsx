@@ -8,7 +8,7 @@ import { AnimatedStats } from "@/components/landing/AnimatedStats";
 import { InteractiveFeatures } from "@/components/landing/InteractiveFeatures";
 import { Navbar } from "@/components/landing/Navbar";
 
-export const Landing = () => {
+const Landing = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white overflow-hidden">
       <Navbar />
@@ -30,3 +30,5 @@ export const Landing = () => {
     </div>
   );
 };
+
+export default Landing;

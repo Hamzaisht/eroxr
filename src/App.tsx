@@ -2,15 +2,15 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Landing } from "@/pages/Landing";
-import { Login } from "@/pages/Login";
-import { Register } from "@/pages/Register";
-import { Home } from "@/pages/Home";
-import { Profile } from "@/pages/Profile";
-import { Messages } from "@/pages/Messages";
-import { Dating } from "@/pages/Dating";
-import { Eroboard } from "@/pages/Eroboard";
-import { Shorts } from "@/pages/Shorts";
+import Landing from "@/pages/Landing";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import Home from "@/pages/Home";
+import Profile from "@/pages/Profile";
+import Messages from "@/pages/Messages";
+import Dating from "@/pages/Dating";
+import Eroboard from "@/pages/Eroboard";
+import Shorts from "@/pages/Shorts";
 
 function App() {
   return (
