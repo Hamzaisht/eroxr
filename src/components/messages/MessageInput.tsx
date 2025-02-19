@@ -126,7 +126,9 @@ export const MessageInput = ({
   };
 
   return (
-    <div className="flex items-center gap-2 p-4 border-t border-border bg-background">
+    <div className="relative flex items-center gap-3 p-6 border-t border-white/5 bg-luxury-dark">
+      <div className="absolute inset-0 bg-gradient-to-t from-luxury-darker to-transparent opacity-50"></div>
+      
       <input
         type="file"
         ref={fileInputRef}
@@ -138,41 +140,51 @@ export const MessageInput = ({
           }
         }}
       />
-      <div className="flex items-center gap-1">
+
+      <div className="relative flex items-center gap-2 bg-luxury-darker/50 backdrop-blur-sm rounded-full p-1.5">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => fileInputRef.current?.click()}
           disabled={isLoading || isUploading}
+          className="rounded-full hover:bg-luxury-primary/20 transition-colors duration-300"
         >
-          <Image className="h-5 w-5" />
+          <Image className="h-5 w-5 text-luxury-neutral" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
           onClick={onSnapStart}
           disabled={isLoading || isUploading}
+          className="rounded-full hover:bg-luxury-primary/20 transition-colors duration-300"
         >
-          <Camera className="h-5 w-5" />
+          <Camera className="h-5 w-5 text-luxury-neutral" />
         </Button>
       </div>
-      <Input
-        value={message}
-        onChange={(e) => {
-          setMessage(e.target.value);
-          emitTypingEvent();
-        }}
-        onKeyPress={handleKeyPress}
-        placeholder="Type a message..."
-        disabled={isLoading || isUploading}
-        className="flex-1"
-      />
-      <Button
-        onClick={handleSend}
-        disabled={isLoading || isUploading || (!message.trim() && !fileInputRef.current?.files?.length)}
-      >
-        <Send className="h-5 w-5" />
-      </Button>
+
+      <div className="relative flex-1">
+        <Input
+          value={message}
+          onChange={(e) => {
+            setMessage(e.target.value);
+            emitTypingEvent();
+          }}
+          onKeyPress={handleKeyPress}
+          placeholder="Type a message..."
+          disabled={isLoading || isUploading}
+          className="bg-luxury-darker/50 backdrop-blur-sm border-none rounded-full px-6 py-3 text-luxury-neutral placeholder:text-luxury-neutral/50 focus-visible:ring-1 focus-visible:ring-luxury-primary/50 transition-all duration-300"
+        />
+      </div>
+
+      <div className="relative">
+        <Button
+          onClick={handleSend}
+          disabled={isLoading || isUploading || (!message.trim() && !fileInputRef.current?.files?.length)}
+          className="rounded-full bg-luxury-primary hover:bg-luxury-primary/90 transition-all duration-300 disabled:opacity-50 disabled:hover:bg-luxury-primary shadow-lg hover:shadow-luxury-primary/25"
+        >
+          <Send className="h-5 w-5" />
+        </Button>
+      </div>
     </div>
   );
 };
