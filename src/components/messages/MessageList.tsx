@@ -58,7 +58,7 @@ export const MessageList = ({ onSelectUser, onNewMessage }: MessageListProps) =>
       return Array.from(conversationsMap.values());
     },
     enabled: !!session?.user?.id,
-    gcTime: 0,
+    gcTime: 0, // Using gcTime instead of cacheTime
     staleTime: 0
   });
 
