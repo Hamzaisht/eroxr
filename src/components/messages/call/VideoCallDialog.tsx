@@ -64,19 +64,19 @@ export function VideoCallDialog({
     };
   }, [recipientId, toast, queryClient]);
 
-  // Get total tips for this call
+  // Get total tips for this call using a properly typed query
   const { data: tipsTotal = 0 } = useQuery({
     queryKey: ['tips_total', recipientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tips')
-        .select('amount')
+        .select('sum:amount')
         .eq('recipient_id', recipientId)
         .eq('call_id', channelName)
-        .sum('amount');
+        .single();
 
       if (error) throw error;
-      return data?.[0]?.sum || 0;
+      return data?.sum || 0;
     },
   });
 
