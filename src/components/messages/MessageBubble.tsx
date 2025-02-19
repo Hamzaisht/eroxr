@@ -1,3 +1,4 @@
+
 import { VideoMessage } from "./VideoMessage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
@@ -16,12 +17,19 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import type { DirectMessage } from "@/integrations/supabase/types/message";
 
 interface MessageBubbleProps {
-  message: any;
+  message: DirectMessage;
   isOwnMessage: boolean;
   currentUserId: string | undefined;
   profile?: any;
+}
+
+interface MessageUpdateData {
+  content: string;
+  updated_at: string;
+  original_content?: string;
 }
 
 export const MessageBubble = ({ 
@@ -100,7 +108,7 @@ export const MessageBubble = ({
     try {
       setIsUpdating(true);
       
-      const updateData = {
+      const updateData: MessageUpdateData = {
         content: editedContent.trim(),
         updated_at: new Date().toISOString()
       };
