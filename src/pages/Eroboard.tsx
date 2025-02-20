@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Loader2, TrendingUp, Users, Eye, DollarSign, BarChart3 } from "lucide-react";
@@ -9,6 +8,7 @@ import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { EngagementChart } from "@/components/dashboard/EngagementChart";
 import { ContentDistribution } from "@/components/dashboard/ContentDistribution";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
+import { PayoutRequestDialog } from "@/components/dashboard/PayoutRequestDialog";
 import { motion } from "framer-motion";
 
 export default function Eroboard() {
@@ -28,6 +28,11 @@ export default function Eroboard() {
   const [engagementData, setEngagementData] = useState([]);
   const [earningsData, setEarningsData] = useState([]);
   const [contentTypeData, setContentTypeData] = useState([]);
+  const [payoutDialogOpen, setPayoutDialogOpen] = useState(false);
+  const [latestPayout, setLatestPayout] = useState<{
+    status: string;
+    processed_at: string | null;
+  } | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -104,7 +109,28 @@ export default function Eroboard() {
       }
     };
 
+    const fetchLatestPayout = async () => {
+      if (!session?.user?.id) return;
+
+      const { data, error } = await supabase
+        .from('payout_requests')
+        .select('*')
+        .eq('creator_id', session.user.id)
+        .order('requested_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching payout status:', error);
+      }
+
+      if (data) {
+        setLatestPayout(data);
+      }
+    };
+
     fetchDashboardData();
+    fetchLatestPayout();
   }, [session?.user?.id, toast]);
 
   const handleRequestPayout = () => {
@@ -112,6 +138,26 @@ export default function Eroboard() {
       title: "Payout Requested",
       description: "Your payout request has been submitted and will be processed within 2 weeks.",
     });
+  };
+
+  const handlePayoutSuccess = () => {
+    // Refresh payout status
+    fetchDashboardData();
+  };
+
+  const getPayoutStatusText = () => {
+    if (!latestPayout) return null;
+
+    switch (latestPayout.status) {
+      case 'pending':
+        return '(Under Review)';
+      case 'approved':
+        return '(Approved)';
+      case 'processed':
+        return `(Last Payment: ${new Date(latestPayout.processed_at!).toLocaleDateString()})`;
+      default:
+        return null;
+    }
   };
 
   if (loading) {
@@ -165,12 +211,20 @@ export default function Eroboard() {
               Track your performance and earnings
             </p>
           </div>
-          <Button 
-            onClick={handleRequestPayout}
-            className="bg-luxury-primary hover:bg-luxury-primary/90"
-          >
-            Request Payout
-          </Button>
+          <div className="flex items-center gap-4">
+            {latestPayout && (
+              <span className="text-sm text-luxury-muted">
+                {getPayoutStatusText()}
+              </span>
+            )}
+            <Button 
+              onClick={() => setPayoutDialogOpen(true)}
+              className="bg-luxury-primary hover:bg-luxury-primary/90"
+              disabled={latestPayout?.status === 'pending'}
+            >
+              Request Payout
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -241,6 +295,13 @@ export default function Eroboard() {
           </div>
           <RevenueChart data={earningsData} />
         </motion.div>
+
+        <PayoutRequestDialog
+          open={payoutDialogOpen}
+          onOpenChange={setPayoutDialogOpen}
+          totalEarnings={stats.totalEarnings}
+          onSuccess={handlePayoutSuccess}
+        />
       </div>
     </div>
   );
