@@ -1,6 +1,6 @@
 
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { Sphere } from "@react-three/drei";
 import { motion } from "framer-motion";
 
 const Scene = () => {
@@ -8,20 +8,13 @@ const Scene = () => {
     <>
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
-      <mesh>
-        <sphereGeometry args={[1.5, 32, 32]} />
+      <Sphere args={[1.5, 32, 32]}>
         <meshStandardMaterial
           color="#1A1F2C"
           metalness={0.7}
           roughness={0.2}
         />
-      </mesh>
-      <OrbitControls
-        enableZoom={false}
-        enablePan={false}
-        autoRotate
-        autoRotateSpeed={0.5}
-      />
+      </Sphere>
     </>
   );
 };
