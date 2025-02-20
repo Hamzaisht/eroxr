@@ -16,13 +16,15 @@ interface ShareDialogProps {
   storyId: string;
 }
 
+interface Profile {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+}
+
 interface Follower {
   following_id: string;
-  following: {
-    id: string;
-    username: string | null;
-    avatar_url: string | null;
-  };
+  following: Profile;
 }
 
 export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) => {
@@ -42,14 +44,21 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
         .eq('follower_id', session?.user?.id);
 
       if (error) throw error;
-      return data;
+      
+      return (data || []).map(item => ({
+        following_id: item.following_id,
+        following: {
+          id: item.following.id,
+          username: item.following.username,
+          avatar_url: item.following.avatar_url
+        }
+      }));
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id
   });
 
   const handleShare = async (recipientId: string) => {
     try {
-      // Create a direct message with the shared story
       await supabase.from('direct_messages').insert({
         sender_id: session?.user?.id,
         recipient_id: recipientId,
@@ -59,7 +68,6 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
         original_content: storyId
       });
 
-      // Register the share action
       await supabase.from('post_media_actions').insert({
         post_id: storyId,
         user_id: session?.user?.id,
@@ -81,7 +89,7 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
     }
   };
 
-  const filteredFollowers = followers.filter(follower => 
+  const filteredFollowers = (followers || []).filter(follower => 
     follower.following.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
