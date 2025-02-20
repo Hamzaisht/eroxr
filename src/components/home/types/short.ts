@@ -1,13 +1,14 @@
+
 export interface Short {
-  id: string;  // Changed from number to string to match UUID format
+  id: string;
   creator: {
-    username: string;
+    username: string | null;
     avatar_url: string | null;
   };
-  video_url: string;
-  description: string;
-  likes: number;
-  comments: number;
-  has_liked?: boolean;
+  content: string;
+  video_urls: string[] | null;
+  likes_count: number | null;
+  comments_count: number | null;
+  has_liked: boolean;
   has_saved?: boolean;
 }

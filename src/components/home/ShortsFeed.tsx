@@ -31,7 +31,20 @@ export const ShortsFeed = () => {
   const { playLikeSound, playCommentSound } = useSoundEffects();
   const feedContainerRef = useRef<HTMLDivElement>(null);
 
-  const shorts = data?.pages.flatMap(page => page) ?? [];
+  // Transform posts data into shorts format
+  const shorts: Short[] = (data?.pages.flatMap(page => page) ?? []).map(post => ({
+    id: post.id,
+    creator: {
+      username: post.creator?.username || 'Anonymous',
+      avatar_url: post.creator?.avatar_url || null
+    },
+    content: post.content,
+    video_urls: post.video_urls,
+    likes_count: post.likes_count,
+    comments_count: post.comments_count,
+    has_liked: post.has_liked,
+    has_saved: false // Default value since we don't have this in the post type
+  }));
 
   useEffect(() => {
     // Subscribe to real-time updates for comments
@@ -131,7 +144,12 @@ export const ShortsFeed = () => {
                 }}
               />
               <ShortContent
-                short={short}
+                short={{
+                  ...short,
+                  description: short.content,
+                  likes: short.likes_count || 0,
+                  comments: short.comments_count || 0
+                }}
                 onShare={handleShare}
                 onComment={() => handleCommentClick(short.id)}
                 handleLike={handleLike}
