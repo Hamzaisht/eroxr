@@ -48,80 +48,84 @@ export const Post = ({
   };
 
   return (
-    <Card className="p-4 bg-luxury-dark/30 border-luxury-neutral/10">
-      <div className="flex items-start space-x-4">
-        <Avatar>
-          <AvatarImage src={creator.avatar_url || ''} alt={creator.username || ''} />
-          <AvatarFallback>{creator.username?.[0]?.toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium">{creator.username}</h3>
-            {isOwner && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleEdit}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Post
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-destructive focus:text-destructive"
-                    onClick={handleDelete}
-                  >
-                    <Trash className="h-4 w-4 mr-2" />
-                    Delete Post
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+    <Card className="bg-luxury-dark/30 border-luxury-neutral/10 overflow-hidden">
+      <div className="p-3 md:p-4">
+        <div className="flex items-start space-x-3">
+          <Avatar className="w-10 h-10">
+            <AvatarImage src={creator.avatar_url || ''} alt={creator.username || ''} />
+            <AvatarFallback>{creator.username?.[0]?.toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium truncate">{creator.username}</h3>
+              {isOwner && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleEdit}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Post
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-destructive focus:text-destructive"
+                      onClick={handleDelete}
+                    >
+                      <Trash className="h-4 w-4 mr-2" />
+                      Delete Post
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+            <p className="mt-1 text-sm text-luxury-neutral/80 break-words">{post.content}</p>
           </div>
-          <p className="mt-2 text-sm text-luxury-neutral/80">{post.content}</p>
-          
-          {/* Handle PPV Content */}
-          {post.is_ppv && !hasAccess ? (
+        </div>
+        
+        {/* Handle PPV Content */}
+        {post.is_ppv && !hasAccess ? (
+          <div className="mt-3">
             <PPVContent 
               postId={post.id} 
               amount={post.ppv_amount || 0}
               mediaUrl={post.media_url?.[0]}
             />
-          ) : (
-            <div className="mt-4 space-y-4">
-              {/* Video Content */}
-              {post.video_urls && post.video_urls.length > 0 && (
-                <div className="space-y-4">
-                  {post.video_urls.map((url, index) => (
-                    <VideoPlayer
-                      key={`video-${index}`}
-                      url={url}
-                      className="w-full rounded-lg overflow-hidden"
-                      poster={post.media_url?.[0]}
-                    />
-                  ))}
-                </div>
-              )}
-              
-              {/* Image Content */}
-              {post.media_url && post.media_url.length > 0 && (
-                <div className="space-y-2">
-                  {post.media_url.map((url, index) => (
-                    <img 
-                      key={`image-${index}`}
-                      src={url}
-                      alt={`Post media ${index + 1}`}
-                      className="rounded-lg max-h-96 w-full object-cover"
-                      loading="lazy"
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="mt-3 -mx-3 md:-mx-4 space-y-3">
+            {/* Video Content */}
+            {post.video_urls && post.video_urls.length > 0 && (
+              <div className="space-y-3">
+                {post.video_urls.map((url, index) => (
+                  <VideoPlayer
+                    key={`video-${index}`}
+                    url={url}
+                    className="w-full aspect-[4/3] sm:aspect-[16/9]"
+                    poster={post.media_url?.[0]}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {/* Image Content */}
+            {post.media_url && post.media_url.length > 0 && (
+              <div className="space-y-3">
+                {post.media_url.map((url, index) => (
+                  <img 
+                    key={`image-${index}`}
+                    src={url}
+                    alt={`Post media ${index + 1}`}
+                    className="w-full object-cover"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );

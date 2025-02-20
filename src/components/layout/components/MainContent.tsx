@@ -20,7 +20,7 @@ export const MainContent = ({ children, isErosRoute = false }: MainContentProps)
       transition={{ duration: 0.3 }}
       className="relative w-full min-h-screen"
     >
-      <div className={`container mx-auto py-6 px-4 ${isErosRoute ? 'max-w-none p-0' : 'max-w-7xl'}`}>
+      <div className={`${isErosRoute ? 'max-w-none p-0' : 'container mx-auto px-0 sm:px-2 md:px-4'}`}>
         {children}
       </div>
     </motion.div>
