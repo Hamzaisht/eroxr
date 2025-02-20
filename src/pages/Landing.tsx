@@ -12,25 +12,27 @@ const InteractiveFeatures = lazy(() => import("@/components/landing/InteractiveF
 const CreatorCategories = lazy(() => import("@/components/landing/sections/CreatorCategories"));
 const PlatformPreview = lazy(() => import("@/components/landing/PlatformPreview"));
 
-// Loading placeholder
+// Loading placeholder with skeleton UI
 const LoadingSection = () => (
-  <div className="h-screen w-full flex items-center justify-center">
-    <div className="w-8 h-8 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
+  <div className="h-screen w-full flex items-center justify-center bg-luxury-dark">
+    <div className="space-y-8 w-full max-w-4xl mx-auto px-4">
+      <div className="h-12 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
+      <div className="h-64 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
+      <div className="h-12 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
+    </div>
   </div>
 );
 
 const Landing = () => {
   return (
     <LazyMotion features={domAnimation}>
-      <div 
-        className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white overflow-hidden"
-      >
-        {/* Hero Section - Always loaded immediately */}
+      <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white">
+        {/* Hero Section - Immediate Load */}
         <motion.div initial={{ opacity: 1 }}>
           <HeroSection />
         </motion.div>
 
-        {/* Stats Section */}
+        {/* Stats Section - Social Proof */}
         <Suspense fallback={<LoadingSection />}>
           <motion.div
             initial={{ opacity: 0 }}
@@ -42,7 +44,7 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
-        {/* Platform Preview Section */}
+        {/* Platform Preview - Show Value */}
         <Suspense fallback={<LoadingSection />}>
           <motion.div
             initial={{ opacity: 0 }}
@@ -54,7 +56,7 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
-        {/* Creator Categories */}
+        {/* Creator Categories - Target Audience */}
         <Suspense fallback={<LoadingSection />}>
           <motion.div
             initial={{ opacity: 0 }}
@@ -66,7 +68,7 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
-        {/* Features Section */}
+        {/* Features Section - Benefits */}
         <Suspense fallback={<LoadingSection />}>
           <motion.div
             initial={{ opacity: 0 }}
@@ -78,7 +80,7 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
-        {/* Creator Showcase */}
+        {/* Creator Showcase - Social Proof */}
         <Suspense fallback={<LoadingSection />}>
           <motion.div
             initial={{ opacity: 0 }}
@@ -90,7 +92,7 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
-        {/* Interactive Features */}
+        {/* Interactive Features - Engagement */}
         <Suspense fallback={<LoadingSection />}>
           <motion.div
             initial={{ opacity: 0 }}
@@ -102,7 +104,7 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
-        {/* Footer */}
+        {/* Footer with CTAs */}
         <Footer />
       </div>
     </LazyMotion>
