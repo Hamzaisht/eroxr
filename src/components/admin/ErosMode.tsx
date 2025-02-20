@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { 
   Shield, 
   AlertTriangle, 
@@ -25,7 +24,12 @@ import {
   Download, 
   Search, 
   Filter,
-  Eye
+  Eye,
+  Calendar,
+  ChevronUp,
+  ChevronDown,
+  FileJson,
+  FileSpreadsheet
 } from "lucide-react";
 import {
   Dialog,
@@ -46,6 +50,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 interface Report {
   id: string;
@@ -86,6 +91,8 @@ export const ErosMode = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+  const [sortConfig, setSortConfig] = useState<{ field: string; direction: 'asc' | 'desc' }>({ field: 'created_at', direction: 'desc' });
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const session = useSession();
   const navigate = useNavigate();
@@ -118,29 +125,72 @@ export const ErosMode = () => {
     },
   });
 
-  const handleExport = (data: any[], type: string) => {
-    const csv = data.map(item => Object.values(item).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+  const handleExport = (data: any[], type: string, format: 'csv' | 'json' | 'xlsx') => {
+    let content: string;
+    let mimeType: string;
+    let fileExtension: string;
+
+    switch (format) {
+      case 'json':
+        content = JSON.stringify(data, null, 2);
+        mimeType = 'application/json';
+        fileExtension = 'json';
+        break;
+      case 'xlsx':
+        content = data.map(item => Object.values(item).join(',')).join('\n');
+        mimeType = 'text/csv';
+        fileExtension = 'csv';
+        break;
+      default:
+        content = data.map(item => Object.values(item).join(',')).join('\n');
+        mimeType = 'text/csv';
+        fileExtension = 'csv';
+    }
+
+    const blob = new Blob([content], { type: mimeType });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
     a.setAttribute('href', url);
-    a.setAttribute('download', `${type}_export_${Date.now()}.csv`);
+    a.setAttribute('download', `${type}_export_${Date.now()}.${fileExtension}`);
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   };
 
-  const filterData = (data: any[]) => {
-    return data?.filter(item => {
-      const matchesSearch = 
-        item.content_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.reason?.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-      
-      return matchesSearch && matchesStatus;
+  const handleSort = (field: string) => {
+    setSortConfig({
+      field,
+      direction: sortConfig.field === field && sortConfig.direction === 'asc' ? 'desc' : 'asc'
     });
+  };
+
+  const filterAndSortData = (data: any[]) => {
+    return data
+      ?.filter(item => {
+        const matchesSearch = 
+          item.content_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (item.reason?.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+        
+        const matchesDateRange = 
+          !dateRange.from || !dateRange.to || 
+          (new Date(item.created_at) >= dateRange.from && 
+           new Date(item.created_at) <= dateRange.to);
+        
+        return matchesSearch && matchesStatus && matchesDateRange;
+      })
+      .sort((a, b) => {
+        const aValue = a[sortConfig.field];
+        const bValue = b[sortConfig.field];
+        const modifier = sortConfig.direction === 'asc' ? 1 : -1;
+        
+        if (typeof aValue === 'string') {
+          return aValue.localeCompare(bValue) * modifier;
+        }
+        return ((aValue < bValue ? -1 : 1) * modifier);
+      });
   };
 
   const handleReport = useMutation({
@@ -292,7 +342,7 @@ export const ErosMode = () => {
         <Badge variant="destructive" className="px-2 py-1">GOD MODE</Badge>
       </div>
 
-      <div className="flex gap-4 mb-4">
+      <div className="flex flex-wrap gap-4 mb-4">
         <div className="relative max-w-xs">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
           <Input
@@ -302,6 +352,7 @@ export const ErosMode = () => {
             className="pl-10"
           />
         </div>
+        
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
@@ -313,6 +364,12 @@ export const ErosMode = () => {
             <SelectItem value="dismissed">Dismissed</SelectItem>
           </SelectContent>
         </Select>
+
+        <DateRangePicker
+          from={dateRange.from}
+          to={dateRange.to}
+          onSelect={(range) => setDateRange(range)}
+        />
       </div>
 
       <Tabs defaultValue="reports" className="w-full">
@@ -341,7 +398,7 @@ export const ErosMode = () => {
                         action: 'resolved'
                       })}
                     >
-                      Resolve Selected
+                      Resolve Selected ({selectedItems.length})
                     </Button>
                     <Button 
                       variant="outline"
@@ -350,193 +407,225 @@ export const ErosMode = () => {
                         action: 'dismissed'
                       })}
                     >
-                      Dismiss Selected
+                      Dismiss Selected ({selectedItems.length})
                     </Button>
                   </>
                 )}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => handleExport(reports || [], 'reports')}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleExport(reports || [], 'reports', 'json')}
+                >
+                  <FileJson className="w-4 h-4 mr-2" />
+                  Export JSON
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleExport(reports || [], 'reports', 'xlsx')}
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Export Excel
+                </Button>
+              </div>
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Checkbox
-                      checked={selectedItems.length === reports?.length}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedItems(reports?.map(r => r.id) || []);
-                        } else {
-                          setSelectedItems([]);
-                        }
-                      }}
-                    />
-                  </TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reporter</TableHead>
-                  <TableHead>Reported</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filterData(reports)?.map((report) => (
-                  <TableRow key={report.id}>
-                    <TableCell>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]">
                       <Checkbox
-                        checked={selectedItems.includes(report.id)}
+                        checked={selectedItems.length === reports?.length}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setSelectedItems([...selectedItems, report.id]);
+                            setSelectedItems(reports?.map(r => r.id) || []);
                           } else {
-                            setSelectedItems(selectedItems.filter(id => id !== report.id));
+                            setSelectedItems([]);
                           }
                         }}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(report.status)}>
-                        {report.status.toUpperCase()}
-                      </Badge>
-                      {report.is_emergency && (
-                        <Badge variant="destructive" className="ml-2">
-                          URGENT
-                        </Badge>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer"
+                      onClick={() => handleSort('status')}
+                    >
+                      Status {sortConfig.field === 'status' && (
+                        sortConfig.direction === 'asc' ? <ChevronUp className="inline w-4 h-4" /> : <ChevronDown className="inline w-4 h-4" />
                       )}
-                    </TableCell>
-                    <TableCell>{report.reporter?.username}</TableCell>
-                    <TableCell>{report.reported?.username}</TableCell>
-                    <TableCell>{report.content_type}</TableCell>
-                    <TableCell>{report.reason}</TableCell>
-                    <TableCell>
-                      {formatDistanceToNow(new Date(report.created_at), { addSuffix: true })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-3xl">
-                            <DialogHeader>
-                              <DialogTitle>Detailed Report View</DialogTitle>
-                            </DialogHeader>
-                            <div className="grid gap-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <h3 className="font-medium">Reporter Details</h3>
-                                  <p>Username: {report.reporter?.username}</p>
-                                  <p>Report Time: {new Date(report.created_at).toLocaleString()}</p>
-                                </div>
-                                <div>
-                                  <h3 className="font-medium">Reported Content</h3>
-                                  <p>Type: {report.content_type}</p>
-                                  <p>Status: {report.status}</p>
-                                </div>
-                              </div>
-                              <div>
-                                <h3 className="font-medium">Reason</h3>
-                                <p>{report.reason}</p>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              <Shield className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Review Report</DialogTitle>
-                              <DialogDescription>
-                                Are you sure you want to review this report?
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <Button 
-                                onClick={() => handleReport.mutate({ 
-                                  reportId: report.id, 
-                                  action: 'review'
-                                })}
-                              >
-                                Confirm Review
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              <Ban className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Ban User</DialogTitle>
-                              <DialogDescription>
-                                Are you sure you want to ban this user?
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <Button 
-                                variant="destructive"
-                                onClick={() => handleReport.mutate({ 
-                                  reportId: report.id, 
-                                  action: 'ban'
-                                })}
-                              >
-                                Confirm Ban
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Dismiss Report</DialogTitle>
-                              <DialogDescription>
-                                Are you sure you want to dismiss this report?
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <Button 
-                                onClick={() => handleReport.mutate({ 
-                                  reportId: report.id, 
-                                  action: 'dismiss'
-                                })}
-                              >
-                                Confirm Dismiss
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead>Reporter</TableHead>
+                    <TableHead>Reported</TableHead>
+                    <TableHead 
+                      className="cursor-pointer"
+                      onClick={() => handleSort('content_type')}
+                    >
+                      Type {sortConfig.field === 'content_type' && (
+                        sortConfig.direction === 'asc' ? <ChevronUp className="inline w-4 h-4" /> : <ChevronDown className="inline w-4 h-4" />
+                      )}
+                    </TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead 
+                      className="cursor-pointer"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      Time {sortConfig.field === 'created_at' && (
+                        sortConfig.direction === 'asc' ? <ChevronUp className="inline w-4 h-4" /> : <ChevronDown className="inline w-4 h-4" />
+                      )}
+                    </TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filterAndSortData(reports)?.map((report) => (
+                    <TableRow key={report.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedItems.includes(report.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedItems([...selectedItems, report.id]);
+                            } else {
+                              setSelectedItems(selectedItems.filter(id => id !== report.id));
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(report.status)}>
+                          {report.status.toUpperCase()}
+                        </Badge>
+                        {report.is_emergency && (
+                          <Badge variant="destructive" className="ml-2">
+                            URGENT
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{report.reporter?.username}</TableCell>
+                      <TableCell>{report.reported?.username}</TableCell>
+                      <TableCell>{report.content_type}</TableCell>
+                      <TableCell>{report.reason}</TableCell>
+                      <TableCell>
+                        {formatDistanceToNow(new Date(report.created_at), { addSuffix: true })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl">
+                              <DialogHeader>
+                                <DialogTitle>Detailed Report View</DialogTitle>
+                              </DialogHeader>
+                              <div className="grid gap-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <h3 className="font-medium">Reporter Details</h3>
+                                    <p>Username: {report.reporter?.username}</p>
+                                    <p>Report Time: {new Date(report.created_at).toLocaleString()}</p>
+                                  </div>
+                                  <div>
+                                    <h3 className="font-medium">Reported Content</h3>
+                                    <p>Type: {report.content_type}</p>
+                                    <p>Status: {report.status}</p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <h3 className="font-medium">Reason</h3>
+                                  <p>{report.reason}</p>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline">
+                                <Shield className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Review Report</DialogTitle>
+                                <DialogDescription>
+                                  Are you sure you want to review this report?
+                                </DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter>
+                                <Button 
+                                  onClick={() => handleReport.mutate({ 
+                                    reportId: report.id, 
+                                    action: 'review'
+                                  })}
+                                >
+                                  Confirm Review
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline">
+                                <Ban className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Ban User</DialogTitle>
+                                <DialogDescription>
+                                  Are you sure you want to ban this user?
+                                </DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter>
+                                <Button 
+                                  variant="destructive"
+                                  onClick={() => handleReport.mutate({ 
+                                    reportId: report.id, 
+                                    action: 'ban'
+                                  })}
+                                >
+                                  Confirm Ban
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline">
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Dismiss Report</DialogTitle>
+                                <DialogDescription>
+                                  Are you sure you want to dismiss this report?
+                                </DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter>
+                                <Button 
+                                  onClick={() => handleReport.mutate({ 
+                                    reportId: report.id, 
+                                    action: 'dismiss'
+                                  })}
+                                >
+                                  Confirm Dismiss
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </Card>
         </TabsContent>
 

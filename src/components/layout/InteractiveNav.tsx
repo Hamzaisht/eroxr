@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -140,6 +141,17 @@ export const InteractiveNav = () => {
     <>
       <MobileNav />
       <DesktopNav />
+      {isGodMode && (
+        <Button
+          variant="destructive"
+          size="sm"
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-2"
+          onClick={() => navigate('/admin/features')}
+        >
+          <Shield className="w-4 h-4" />
+          {!isMobile && "God Mode"}
+        </Button>
+      )}
     </>
   );
 };
