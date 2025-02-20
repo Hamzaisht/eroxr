@@ -70,7 +70,7 @@ export const StoryContainer = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center">
+    <div className="fixed inset-0 bg-black z-[100] flex items-center justify-center">
       {/* Close button - always visible */}
       <button
         onClick={onClose}
@@ -80,7 +80,13 @@ export const StoryContainer = ({
       </button>
 
       {/* Story Container */}
-      <div className="relative w-full h-full md:h-[100vh] md:aspect-[9/16] max-w-[500px] mx-auto">
+      <div 
+        className={`relative ${
+          isMobile 
+            ? 'w-full h-[100dvh]' 
+            : 'w-[400px] h-[90vh] max-h-[90vh]'
+        } mx-auto bg-black aspect-[9/16]`}
+      >
         {/* Progress Bar */}
         <div className="absolute top-0 left-0 right-0 z-[101] p-4">
           <StoryProgress
@@ -92,7 +98,7 @@ export const StoryContainer = ({
         </div>
 
         {/* Story Content */}
-        <div className="absolute inset-0 bg-black">
+        <div className="absolute inset-0">
           <StoryContent 
             story={currentStory}
             onNext={onNext}
@@ -110,7 +116,7 @@ export const StoryContainer = ({
           onTouchEnd={onResume}
         />
 
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons - Only on Desktop */}
         {!isMobile && (
           <NavigationButtons
             currentIndex={currentIndex}
@@ -120,6 +126,7 @@ export const StoryContainer = ({
           />
         )}
 
+        {/* Viewers Sheet */}
         <ViewersSheet 
           open={false}
           onOpenChange={() => {}}
