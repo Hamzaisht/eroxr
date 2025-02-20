@@ -1,41 +1,52 @@
 
 import { Canvas } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
+import { Sphere, Points } from "@react-three/drei";
 import { motion } from "framer-motion";
 import * as THREE from "three";
 import { useMemo } from "react";
 
 const ParticleRing = () => {
+  const count = 5000;
   const positions = useMemo(() => {
-    const pos = new Float32Array(5000 * 3);
-    for (let i = 0; i < 5000; i++) {
+    const positions = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const radius = THREE.MathUtils.lerp(2, 3.5, Math.random());
       const y = THREE.MathUtils.lerp(-0.5, 0.5, Math.random());
-      pos[i * 3] = Math.cos(angle) * radius;
-      pos[i * 3 + 1] = y;
-      pos[i * 3 + 2] = Math.sin(angle) * radius;
+      positions[i * 3] = Math.cos(angle) * radius;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = Math.sin(angle) * radius;
     }
-    return pos;
+    return positions;
   }, []);
 
   return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={5000}
-          array={positions}
-          itemSize={3}
-        />
-      </bufferGeometry>
+    <Points positions={positions}>
       <pointsMaterial
         size={0.015}
         color="#9b87f5"
         sizeAttenuation
         transparent
       />
-    </points>
+    </Points>
+  );
+};
+
+const Scene = () => {
+  return (
+    <>
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10, 10, 5]} intensity={1} />
+      <ParticleRing />
+      <mesh>
+        <sphereGeometry args={[1.5, 32, 32]} />
+        <meshStandardMaterial
+          color="#1A1F2C"
+          metalness={0.7}
+          roughness={0.2}
+        />
+      </mesh>
+    </>
   );
 };
 
@@ -43,19 +54,15 @@ export const Hero3D = () => {
   return (
     <div className="relative h-[600px] w-full">
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 75 }}
+        camera={{
+          position: [0, 0, 5],
+          fov: 75,
+          near: 0.1,
+          far: 1000
+        }}
         className="absolute inset-0"
       >
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <ParticleRing />
-        <Sphere args={[1.5, 32, 32]}>
-          <meshStandardMaterial
-            color="#1A1F2C"
-            metalness={0.7}
-            roughness={0.2}
-          />
-        </Sphere>
+        <Scene />
       </Canvas>
       <div className="absolute inset-0 z-10 flex items-center justify-center">
         <motion.div
