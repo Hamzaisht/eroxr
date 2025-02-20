@@ -43,7 +43,7 @@ export const ShortsFeed = () => {
     likes_count: post.likes_count,
     comments_count: post.comments_count,
     has_liked: post.has_liked,
-    has_saved: false // Default value since we don't have this in the post type
+    has_saved: false // Now always providing a boolean value
   }));
 
   useEffect(() => {

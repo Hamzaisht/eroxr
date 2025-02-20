@@ -10,5 +10,5 @@ export interface Short {
   likes_count: number | null;
   comments_count: number | null;
   has_liked: boolean;
-  has_saved?: boolean;
+  has_saved: boolean; // Changed from optional to required
 }
