@@ -1,4 +1,3 @@
-import type { Json } from './database.types';
 
 export type Profile = {
   id: string;
@@ -21,6 +20,7 @@ export type Profile = {
   is_suspended?: boolean | null;
   suspended_at?: string | null;
   status?: 'online' | 'offline' | 'away' | 'busy' | null;
+  last_username_change?: string | null;
 };
 
 export type Creator = {

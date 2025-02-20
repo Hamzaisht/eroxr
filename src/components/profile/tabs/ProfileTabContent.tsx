@@ -1,22 +1,16 @@
-import { ProfileForm } from "@/components/profile/ProfileForm";
-import { ProfileTabs } from "@/components/profile/ProfileTabs";
-import { CreatorsFeed } from "@/components/CreatorsFeed";
+
+import { ProfileForm } from "../ProfileForm";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface ProfileTabContentProps {
-  profile: any;
-  isEditing: boolean;
-  onSave: () => void;
+  profile: Profile;
+  onSuccess: () => void;
 }
 
-export const ProfileTabContent = ({ profile, isEditing, onSave }: ProfileTabContentProps) => {
-  return isEditing ? (
-    <ProfileForm onSave={onSave} />
-  ) : (
-    <>
-      <ProfileTabs profile={profile} />
-      <div className="mt-8">
-        <CreatorsFeed />
-      </div>
-    </>
+export const ProfileTabContent = ({ profile, onSuccess }: ProfileTabContentProps) => {
+  return (
+    <div className="w-full max-w-2xl mx-auto py-6">
+      <ProfileForm profile={profile} onSuccess={onSuccess} />
+    </div>
   );
 };
