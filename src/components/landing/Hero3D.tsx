@@ -1,5 +1,5 @@
 
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,22 @@ import { useState, useEffect } from "react";
 
 export const Hero3D = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const { scrollY } = useScroll();
+  const headerBg = useTransform(
+    scrollY,
+    [0, 100],
+    ["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 1)"]
+  );
+  const headerTextColor = useTransform(
+    scrollY,
+    [0, 100],
+    ["rgb(255, 255, 255)", "rgb(0, 0, 0)"]
+  );
+  const headerBorderColor = useTransform(
+    scrollY,
+    [0, 100],
+    ["rgba(255, 255, 255, 0.1)", "rgba(0, 0, 0, 0.1)"]
+  );
 
   useEffect(() => {
     const loadVideo = async () => {
@@ -47,12 +63,20 @@ export const Hero3D = () => {
       )}
       
       {/* Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-luxury-dark/80 backdrop-blur-xl border-b border-luxury-primary/10">
+      <motion.nav 
+        style={{ 
+          backgroundColor: headerBg,
+          color: headerTextColor,
+          borderColor: headerBorderColor
+        }}
+        className="fixed top-0 left-0 right-0 z-50 border-b transition-colors duration-200"
+      >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2">
               <motion.h1 
-                className="eroxr-logo"
+                className="text-3xl font-bold"
+                style={{ color: headerTextColor }}
                 whileHover={{ scale: 1.05 }}
               >
                 Eroxr
@@ -61,25 +85,41 @@ export const Hero3D = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link to="/explore" className="nav-item-liquid text-luxury-neutral hover:text-white transition-colors">
-                Explore
-              </Link>
-              <Link to="/pricing" className="nav-item-liquid text-luxury-neutral hover:text-white transition-colors">
-                Pricing
-              </Link>
-              <Link to="/creators" className="nav-item-liquid text-luxury-neutral hover:text-white transition-colors">
-                Creators
-              </Link>
-              <Button variant="ghost" asChild className="nav-item-liquid">
+              <motion.div style={{ color: headerTextColor }}>
+                {["Explore", "Pricing", "Creators"].map((item) => (
+                  <Link
+                    key={item}
+                    to={`/${item.toLowerCase()}`}
+                    className="relative inline-flex items-center px-4 py-2 transition-colors duration-200 hover:opacity-80"
+                  >
+                    <span className="relative z-10">{item}</span>
+                    <motion.div
+                      className="absolute inset-0 -z-10 rounded-full"
+                      whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+                      transition={{ duration: 0.2 }}
+                    />
+                  </Link>
+                ))}
+              </motion.div>
+              
+              <Button 
+                variant="ghost" 
+                asChild 
+                className="hover:scale-105 transition-all duration-200"
+              >
                 <Link to="/login">Log In</Link>
               </Button>
-              <Button asChild className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-500">
+              
+              <Button 
+                asChild 
+                className="bg-white text-black hover:bg-gray-100 transition-all duration-200 transform hover:scale-105"
+              >
                 <Link to="/register">Sign Up</Link>
               </Button>
             </div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Content */}
       <div className="relative min-h-screen flex items-center justify-center">
@@ -92,7 +132,7 @@ export const Hero3D = () => {
               className="text-center"
             >
               <motion.h1 
-                className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-luxury-primary to-luxury-accent bg-clip-text text-transparent"
+                className="text-5xl md:text-7xl font-bold mb-6"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -100,7 +140,7 @@ export const Hero3D = () => {
                 Connect With Your Audience
               </motion.h1>
               <motion.p 
-                className="text-lg md:text-xl text-luxury-neutral max-w-2xl mx-auto mb-8"
+                className="text-lg md:text-xl text-gray-200 max-w-2xl mx-auto mb-8"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -116,7 +156,7 @@ export const Hero3D = () => {
               >
                 <Button 
                   size="lg" 
-                  className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary text-white px-8 py-6 text-lg rounded-full w-full sm:w-auto"
+                  className="bg-white text-black hover:bg-gray-100 hover:scale-105 transition-all duration-200 px-8 py-6 text-lg rounded-full w-full sm:w-auto"
                   asChild
                 >
                   <Link to="/register">
@@ -125,8 +165,8 @@ export const Hero3D = () => {
                 </Button>
                 <Button 
                   size="lg" 
-                  variant="ghost" 
-                  className="border border-luxury-neutral/20 hover:bg-luxury-primary/10 px-8 py-6 text-lg rounded-full w-full sm:w-auto"
+                  variant="outline" 
+                  className="border-white text-white hover:bg-white/10 hover:scale-105 transition-all duration-200 px-8 py-6 text-lg rounded-full w-full sm:w-auto"
                   asChild
                 >
                   <Link to="/about">
