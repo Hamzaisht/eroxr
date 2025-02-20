@@ -1,7 +1,10 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
+import PlatformFeatureAdmin from "./PlatformFeatureAdmin";
 
 interface PlatformFeature {
   id: string;
@@ -13,6 +16,9 @@ interface PlatformFeature {
 }
 
 const PlatformPreview = () => {
+  const session = useSession();
+  const isAdmin = session?.user?.email === 'hamzaishtiaq242@gmail.com';
+
   const { data: features } = useQuery({
     queryKey: ['platform-features'],
     queryFn: async () => {
@@ -95,7 +101,7 @@ const PlatformPreview = () => {
           </motion.div>
         </div>
       </div>
-      <PlatformFeatureAdmin />
+      {isAdmin && <PlatformFeatureAdmin />}
     </section>
   );
 };
