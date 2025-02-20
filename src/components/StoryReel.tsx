@@ -1,7 +1,7 @@
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
 import { supabase } from "@/integrations/supabase/client";
 import { StoryUploader } from "./story/StoryUploader";
@@ -10,21 +10,22 @@ import { StoryViewer } from "./story/StoryViewer";
 import { StoryNavigation } from "./story/StoryNavigation";
 import { useToast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { useStories } from "./story/hooks/useStories";
+import { StoryLoadingState } from "./story/components/StoryLoadingState";
+import { StoryErrorState } from "./story/components/StoryErrorState";
+import { StoryReelHeader } from "./story/components/StoryReelHeader";
 
 interface GroupedStories {
   [creatorId: string]: Story[];
 }
 
 export const StoryReel = () => {
-  const [stories, setStories] = useState<Story[]>([]);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const { stories, isLoading, error, setStories } = useStories();
 
   const handleDeleteStory = async (storyId: string) => {
     try {
@@ -50,82 +51,6 @@ export const StoryReel = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        setError(null);
-        console.info('Fetching stories');
-        
-        const { data: subscriptions, error: subsError } = await supabase
-          .from('creator_subscriptions')
-          .select('creator_id')
-          .eq('user_id', session?.user?.id);
-
-        if (subsError) throw subsError;
-
-        const { data: following, error: followError } = await supabase
-          .from('followers')
-          .select('following_id')
-          .eq('follower_id', session?.user?.id);
-
-        if (followError) throw followError;
-
-        const creatorIds = [
-          ...(subscriptions?.map(sub => sub.creator_id) || []),
-          ...(following?.map(f => f.following_id) || [])
-        ];
-
-        if (session?.user?.id) {
-          creatorIds.push(session.user.id);
-        }
-
-        const uniqueCreatorIds = [...new Set(creatorIds)];
-
-        if (uniqueCreatorIds.length === 0) {
-          setStories([]);
-          setIsLoading(false);
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('stories')
-          .select(`
-            *,
-            creator:profiles!stories_creator_id_fkey(
-              id,
-              username,
-              avatar_url
-            )
-          `)
-          .eq('is_active', true)
-          .in('creator_id', uniqueCreatorIds)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        const validStories = data?.filter(story => 
-          (story.media_url || story.video_url) && story.creator
-        ) || [];
-
-        setStories(validStories);
-      } catch (error) {
-        console.error('Error fetching stories:', error);
-        setError('Failed to load stories');
-        toast({
-          title: "Error loading stories",
-          description: "Please try again later",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (session?.user?.id) {
-      fetchStories();
-    }
-  }, [session?.user?.id, toast]);
-
   const groupStoriesByCreator = (stories: Story[]): GroupedStories => {
     return stories.reduce((acc: GroupedStories, story) => {
       if (!acc[story.creator_id]) {
@@ -138,38 +63,12 @@ export const StoryReel = () => {
 
   const groupedStories = groupStoriesByCreator(stories);
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-32 flex items-center justify-center bg-luxury-dark/40 backdrop-blur-md rounded-xl">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
-          <p className="text-sm text-luxury-neutral">Loading stories...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-full h-32 flex items-center justify-center bg-luxury-dark/40 backdrop-blur-md rounded-xl">
-        <div className="flex flex-col items-center gap-2 text-red-500">
-          <AlertCircle className="h-8 w-8" />
-          <p className="text-sm">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <StoryLoadingState />;
+  if (error) return <StoryErrorState error={error} />;
 
   return (
     <div className="relative w-full bg-gradient-to-r from-luxury-dark/60 via-luxury-darker/40 to-luxury-dark/60 backdrop-blur-xl rounded-xl p-6 shadow-xl">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
-          Stories
-        </h2>
-        <p className="text-sm text-white/60 mt-1">
-          Watch and share moments with your favorite creators
-        </p>
-      </div>
+      <StoryReelHeader />
       
       <div className="relative">
         <div
