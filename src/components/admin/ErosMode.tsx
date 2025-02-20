@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -13,7 +16,16 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
-import { Shield, AlertTriangle, Ban, CheckCircle } from "lucide-react";
+import { 
+  Shield, 
+  AlertTriangle, 
+  Ban, 
+  CheckCircle, 
+  Download, 
+  Search, 
+  Filter,
+  Eye
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +35,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -63,20 +82,66 @@ interface Profile {
 }
 
 export const ErosMode = () => {
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const session = useSession();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check if user is super admin
   const isGodMode = session?.user?.email === 'hamzaishtiaq242@gmail.com';
-
+  
   if (!isGodMode) {
     navigate('/');
     return null;
   }
 
-  // Mutation for handling reports
+  const handleBulkAction = useMutation({
+    mutationFn: async ({ items, action }: { items: string[]; action: string }) => {
+      const { error } = await supabase
+        .from('reports')
+        .update({ status: action })
+        .in('id', items);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
+      toast({
+        title: "Bulk Action Completed",
+        description: "Selected items have been updated.",
+      });
+      setSelectedItems([]);
+    },
+  });
+
+  const handleExport = (data: any[], type: string) => {
+    const csv = data.map(item => Object.values(item).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `${type}_export_${Date.now()}.csv`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const filterData = (data: any[]) => {
+    return data?.filter(item => {
+      const matchesSearch = 
+        item.content_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.reason?.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  };
+
   const handleReport = useMutation({
     mutationFn: async ({ reportId, action }: { reportId: string; action: string }) => {
       const { error } = await supabase
@@ -98,7 +163,6 @@ export const ErosMode = () => {
     },
   });
 
-  // Mutation for handling DMCA requests
   const handleDMCA = useMutation({
     mutationFn: async ({ requestId, action }: { requestId: string; action: 'approve' | 'reject' }) => {
       const { error } = await supabase
@@ -120,7 +184,6 @@ export const ErosMode = () => {
     },
   });
 
-  // Mutation for handling content classifications
   const handleClassification = useMutation({
     mutationFn: async ({ 
       classificationId, 
@@ -145,7 +208,6 @@ export const ErosMode = () => {
     },
   });
 
-  // Fetch active reports
   const { data: reports } = useQuery({
     queryKey: ['admin-reports'],
     queryFn: async () => {
@@ -172,7 +234,6 @@ export const ErosMode = () => {
     }
   });
 
-  // Fetch DMCA requests
   const { data: dmcaRequests } = useQuery({
     queryKey: ['admin-dmca'],
     queryFn: async () => {
@@ -194,7 +255,6 @@ export const ErosMode = () => {
     }
   });
 
-  // Fetch content classifications
   const { data: classifications } = useQuery({
     queryKey: ['admin-classifications'],
     queryFn: async () => {
@@ -231,18 +291,91 @@ export const ErosMode = () => {
         <Badge variant="destructive" className="px-2 py-1">GOD MODE</Badge>
       </div>
 
+      <div className="flex gap-4 mb-4">
+        <Input
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-xs"
+          prefix={<Search className="w-4 h-4" />}
+        />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="resolved">Resolved</SelectItem>
+            <SelectItem value="dismissed">Dismissed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <Tabs defaultValue="reports" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="reports">Active Reports ({reports?.length || 0})</TabsTrigger>
-          <TabsTrigger value="dmca">DMCA Requests ({dmcaRequests?.length || 0})</TabsTrigger>
-          <TabsTrigger value="classifications">Content Classifications</TabsTrigger>
+          <TabsTrigger value="reports">
+            Active Reports ({reports?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="dmca">
+            DMCA Requests ({dmcaRequests?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="classifications">
+            Content Classifications
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="reports" className="mt-4">
           <Card className="p-4">
+            <div className="flex justify-between mb-4">
+              <div className="flex gap-2">
+                {selectedItems.length > 0 && (
+                  <>
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleBulkAction.mutate({
+                        items: selectedItems,
+                        action: 'resolved'
+                      })}
+                    >
+                      Resolve Selected
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleBulkAction.mutate({
+                        items: selectedItems,
+                        action: 'dismissed'
+                      })}
+                    >
+                      Dismiss Selected
+                    </Button>
+                  </>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => handleExport(reports || [], 'reports')}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+            </div>
+
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                      checked={selectedItems.length === reports?.length}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedItems(reports?.map(r => r.id) || []);
+                        } else {
+                          setSelectedItems([]);
+                        }
+                      }}
+                    />
+                  </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Reporter</TableHead>
                   <TableHead>Reported</TableHead>
@@ -253,8 +386,20 @@ export const ErosMode = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {reports?.map((report) => (
+                {filterData(reports)?.map((report) => (
                   <TableRow key={report.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedItems.includes(report.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedItems([...selectedItems, report.id]);
+                          } else {
+                            setSelectedItems(selectedItems.filter(id => id !== report.id));
+                          }
+                        }}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(report.status)}>
                         {report.status.toUpperCase()}
@@ -274,6 +419,37 @@ export const ErosMode = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl">
+                            <DialogHeader>
+                              <DialogTitle>Detailed Report View</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid gap-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <h3 className="font-medium">Reporter Details</h3>
+                                  <p>Username: {report.reporter?.username}</p>
+                                  <p>Report Time: {new Date(report.created_at).toLocaleString()}</p>
+                                </div>
+                                <div>
+                                  <h3 className="font-medium">Reported Content</h3>
+                                  <p>Type: {report.content_type}</p>
+                                  <p>Status: {report.status}</p>
+                                </div>
+                              </div>
+                              <div>
+                                <h3 className="font-medium">Reason</h3>
+                                <p>{report.reason}</p>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button size="sm" variant="outline">
