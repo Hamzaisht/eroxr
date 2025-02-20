@@ -1,94 +1,67 @@
 
-import { useEffect, useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { ProfileHeader } from "./ProfileHeader";
-import { ProfileTabs } from "./ProfileTabs";
-import { useToast } from "@/components/ui/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ProfileHeaderContainer } from "./header/ProfileHeaderContainer";
+import { ProfileTabs } from "./ProfileTabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface ProfileContainerProps {
   id?: string;
-  isEditing?: boolean;
-  setIsEditing?: (value: boolean) => void;
+  isEditing: boolean;
+  setIsEditing: (isEditing: boolean) => void;
 }
 
-export const ProfileContainer = ({ id, isEditing = false, setIsEditing }: ProfileContainerProps) => {
-  const session = useSession();
-  const { toast } = useToast();
-
+export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContainerProps) => {
   const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile", id || session?.user?.id],
+    queryKey: ["profile", id],
     queryFn: async () => {
-      const targetId = id || session?.user?.id;
-      if (!targetId) throw new Error("No user ID provided");
-
+      if (!id) return null;
+      
       const { data, error } = await supabase
         .from("profiles")
-        .select()
-        .eq("id", targetId)
-        .maybeSingle();
+        .select("*")
+        .eq("id", id)
+        .single();
 
-      if (error) {
-        console.error("Profile fetch error:", error);
-        toast({
-          title: "Error fetching profile",
-          description: "Could not load profile information",
-          variant: "destructive",
-        });
-        throw error;
-      }
-
-      if (!data) {
-        console.log("No profile found for ID:", targetId);
-        return null;
-      }
-
+      if (error) throw error;
       return data as Profile;
     },
-    retry: 1,
-    enabled: !!(id || session?.user?.id),
+    enabled: !!id,
   });
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-luxury-dark">
-        <div className="h-[40vh] sm:h-[50vh] md:h-[60vh] w-full bg-luxury-darker/50 animate-pulse" />
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="relative -mt-16 sm:-mt-20 md:-mt-24 flex flex-col items-center gap-4 sm:gap-6">
-            <Skeleton className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full" />
-            <Skeleton className="w-3/4 sm:w-2/3 md:w-1/2 h-8" />
-            <Skeleton className="w-2/3 sm:w-1/2 md:w-1/3 h-4" />
+      <div className="w-full space-y-8 animate-pulse">
+        <Skeleton className="w-full h-[60vh]" />
+        <div className="container mx-auto px-4">
+          <Skeleton className="h-32 w-32 rounded-full mx-auto -mt-16" />
+          <div className="space-y-4 mt-8">
+            <Skeleton className="h-8 w-48 mx-auto" />
+            <Skeleton className="h-4 w-64 mx-auto" />
           </div>
         </div>
       </div>
     );
   }
 
-  const isOwnProfile = session?.user?.id === (id || session?.user?.id);
-
   if (!profile) {
     return (
-      <div className="w-full min-h-screen bg-luxury-dark flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold text-white/90">Profile Not Found</h2>
-          <p className="text-white/60 mt-2">The requested profile could not be found.</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-luxury-neutral">Profile not found</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen bg-luxury-dark">
-      <ProfileHeader
+    <div className="flex flex-col min-h-screen w-full">
+      <ProfileHeaderContainer 
         profile={profile}
-        isOwnProfile={isOwnProfile}
+        isOwnProfile={true}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
       />
-      <div className="w-full">
+      <div className="flex-1 container mx-auto px-4 py-8">
         <ProfileTabs profile={profile} />
       </div>
     </div>

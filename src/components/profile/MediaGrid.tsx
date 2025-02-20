@@ -1,3 +1,4 @@
+
 import { Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 interface MediaGridProps {
   onImageClick: (url: string) => void;
@@ -16,17 +18,23 @@ interface MediaGridProps {
 export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const session = useSession();
+  const { toast } = useToast();
 
-  const { data: mediaItems = [], isLoading } = useQuery({
+  const { data: mediaItems = [], isLoading, error } = useQuery({
     queryKey: ["profile-media", session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) throw new Error("No user ID");
+
       const { data: posts, error } = await supabase
         .from("posts")
         .select("id, media_url, video_urls, is_ppv, created_at")
-        .eq("creator_id", session?.user?.id)
+        .eq("creator_id", session.user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching media:", error);
+        throw error;
+      }
 
       const media = posts?.flatMap(post => {
         const mediaUrls = [...(post.media_url || []), ...(post.video_urls || [])];
@@ -42,8 +50,24 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
 
       return media;
     },
-    enabled: !!session?.user?.id
+    enabled: !!session?.user?.id,
+    onError: (error) => {
+      console.error("Media fetch error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load media content. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 p-6">
+        Failed to load media content. Please try again later.
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -79,7 +103,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
       >
         {mediaItems.map((mediaItem, index) => (
           <motion.div
-            key={`${mediaItem.id}-${mediaItem.url}`}
+            key={`${mediaItem.id}-${index}`}
             variants={{
               hidden: { y: 20, opacity: 0 },
               show: { y: 0, opacity: 1 }
@@ -96,6 +120,9 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
                 )}
                 muted
                 playsInline
+                onError={(e) => {
+                  console.error("Video loading error:", e);
+                }}
               />
             ) : (
               <img
@@ -106,6 +133,10 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
                   mediaItem.isPremium ? "blur-lg" : ""
                 )}
                 loading="lazy"
+                onError={(e) => {
+                  console.error("Image loading error:", e);
+                  e.currentTarget.src = "/placeholder.svg";
+                }}
               />
             )}
             

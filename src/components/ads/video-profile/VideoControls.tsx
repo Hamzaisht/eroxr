@@ -1,4 +1,6 @@
+
 import { useRef, useEffect } from 'react';
+import { useToast } from "@/hooks/use-toast";
 
 interface VideoControlsProps {
   videoUrl: string | null;
@@ -8,6 +10,7 @@ interface VideoControlsProps {
 
 export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (videoRef.current) {
@@ -18,6 +21,11 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
         if (playPromise !== undefined) {
           playPromise.catch(error => {
             console.error('Video playback error:', error);
+            toast({
+              title: "Video Error",
+              description: "Failed to play video content. Please try again.",
+              variant: "destructive",
+            });
           });
         }
       } else {
@@ -27,7 +35,7 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
         }
       }
     }
-  }, [isActive, videoUrl]);
+  }, [isActive, videoUrl, toast]);
 
   return (
     <div className="absolute inset-0 w-full h-full">
@@ -43,6 +51,11 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
           poster={avatarUrl || undefined}
           onError={(e) => {
             console.error('Video loading error:', e);
+            toast({
+              title: "Error",
+              description: "Failed to load video content. Please try again.",
+              variant: "destructive",
+            });
           }}
         />
       ) : (
