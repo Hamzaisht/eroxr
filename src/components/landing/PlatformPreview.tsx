@@ -1,8 +1,35 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PlatformFeature {
+  id: string;
+  feature_name: string;
+  image_path: string;
+  display_order: number;
+  title: string;
+  description: string;
+}
 
 const PlatformPreview = () => {
+  const { data: features } = useQuery({
+    queryKey: ['platform-features'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('platform_features')
+        .select('*')
+        .order('display_order');
+      
+      if (error) throw error;
+      return data as PlatformFeature[];
+    }
+  });
+
+  const leftFeatures = features?.slice(0, 2) || [];
+  const rightFeatures = features?.slice(2, 4) || [];
+
   return (
     <section className="py-20 relative overflow-hidden">
       <div className="container mx-auto px-4">
@@ -25,25 +52,23 @@ const PlatformPreview = () => {
             whileInView={{ opacity: 1, x: 0 }}
             className="space-y-8"
           >
-            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
-              <img 
-                src="/lovable-uploads/3afb027b-f83e-477f-b9aa-ee70f156546f.png" 
-                alt="Messages Interface"
-                className="rounded-lg shadow-lg w-full"
-              />
-              <h3 className="text-xl font-semibold mt-4 mb-2">Connect Through Chat</h3>
-              <p className="text-luxury-neutral/60">Build deeper connections with your audience through our advanced messaging system</p>
-            </div>
-            
-            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
-              <img 
-                src="/lovable-uploads/210f4161-ff9f-4874-8aad-93edd31b6e01.png" 
-                alt="Live Streaming"
-                className="rounded-lg shadow-lg w-full h-48 object-cover"
-              />
-              <h3 className="text-xl font-semibold mt-4 mb-2">Go Live With Your Community</h3>
-              <p className="text-luxury-neutral/60">Stream live content and interact with your audience in real-time</p>
-            </div>
+            {leftFeatures.map((feature) => (
+              <div key={feature.id} className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
+                {feature.image_path ? (
+                  <img 
+                    src={`${supabase.storage.from('platform-features').getPublicUrl(feature.image_path).data.publicUrl}`}
+                    alt={feature.title}
+                    className="rounded-lg shadow-lg w-full h-48 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-48 bg-luxury-darker rounded-lg flex items-center justify-center text-luxury-neutral/40">
+                    Upload feature screenshot
+                  </div>
+                )}
+                <h3 className="text-xl font-semibold mt-4 mb-2">{feature.title}</h3>
+                <p className="text-luxury-neutral/60">{feature.description}</p>
+              </div>
+            ))}
           </motion.div>
 
           <motion.div
@@ -51,25 +76,23 @@ const PlatformPreview = () => {
             whileInView={{ opacity: 1, x: 0 }}
             className="space-y-8"
           >
-            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
-              <img 
-                src="/lovable-uploads/680a4cbf-2252-4c48-9aab-c7385de5b32d.png" 
-                alt="Business Development"
-                className="rounded-lg shadow-lg w-full h-48 object-cover"
-              />
-              <h3 className="text-xl font-semibold mt-4 mb-2">Expand Your Network</h3>
-              <p className="text-luxury-neutral/60">Connect with verified members and grow your business contacts</p>
-            </div>
-
-            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
-              <img 
-                src="/analytics-preview.png" 
-                alt="Analytics Dashboard"
-                className="rounded-lg shadow-lg w-full h-48 object-cover"
-              />
-              <h3 className="text-xl font-semibold mt-4 mb-2">Track Your Growth</h3>
-              <p className="text-luxury-neutral/60">Monitor your performance with detailed analytics and insights</p>
-            </div>
+            {rightFeatures.map((feature) => (
+              <div key={feature.id} className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
+                {feature.image_path ? (
+                  <img 
+                    src={`${supabase.storage.from('platform-features').getPublicUrl(feature.image_path).data.publicUrl}`}
+                    alt={feature.title}
+                    className="rounded-lg shadow-lg w-full h-48 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-48 bg-luxury-darker rounded-lg flex items-center justify-center text-luxury-neutral/40">
+                    Upload feature screenshot
+                  </div>
+                )}
+                <h3 className="text-xl font-semibold mt-4 mb-2">{feature.title}</h3>
+                <p className="text-luxury-neutral/60">{feature.description}</p>
+              </div>
+            ))}
           </motion.div>
         </div>
       </div>
