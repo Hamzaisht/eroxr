@@ -1,53 +1,22 @@
 
 import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Stars } from "@react-three/drei";
 import { motion } from "framer-motion";
-import * as THREE from "three";
-import { useMemo } from "react";
-
-const ParticleRing = () => {
-  const count = 5000;
-  const positions = useMemo(() => {
-    const points = [];
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = THREE.MathUtils.lerp(2, 3.5, Math.random());
-      const y = THREE.MathUtils.lerp(-0.5, 0.5, Math.random());
-      
-      points.push(
-        Math.cos(angle) * radius,
-        y,
-        Math.sin(angle) * radius
-      );
-    }
-    return new Float32Array(points);
-  }, []);
-
-  return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={count}
-          array={positions}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.02}
-        color="#9b87f5"
-        sizeAttenuation={true}
-        transparent={true}
-      />
-    </points>
-  );
-};
 
 const Scene = () => {
   return (
     <>
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
-      <ParticleRing />
+      <Stars
+        radius={100}
+        depth={50}
+        count={5000}
+        factor={4}
+        saturation={0}
+        fade
+        speed={1}
+      />
       <mesh>
         <sphereGeometry args={[1.5, 32, 32]} />
         <meshStandardMaterial
@@ -56,6 +25,12 @@ const Scene = () => {
           roughness={0.2}
         />
       </mesh>
+      <OrbitControls
+        enableZoom={false}
+        enablePan={false}
+        autoRotate
+        autoRotateSpeed={0.5}
+      />
     </>
   );
 };
