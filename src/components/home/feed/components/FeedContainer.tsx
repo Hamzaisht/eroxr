@@ -14,7 +14,7 @@ interface FeedContainerProps {
   userId?: string;
   isPayingCustomer: boolean | null;
   onOpenCreatePost: () => void;
-  onFileSelect: () => void;
+  onFileSelect: (files: FileList | null) => void;  // Updated type to match MainFeedProps
   onOpenGoLive: () => void;
 }
 

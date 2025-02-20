@@ -60,7 +60,7 @@ export const MainFeed = ({
         userId={userId}
         isPayingCustomer={isPayingCustomer}
         onOpenCreatePost={onOpenCreatePost}
-        onFileSelect={(files) => onFileSelect(files)}
+        onFileSelect={onFileSelect}
         onOpenGoLive={onOpenGoLive}
       />
     </div>
