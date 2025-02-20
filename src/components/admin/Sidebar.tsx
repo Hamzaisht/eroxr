@@ -62,7 +62,7 @@ const adminRoutes = [
     href: "/admin/violations",
   },
   {
-    label: "Platform Features",
+    label: "Eros Mode",
     icon: Settings,
     href: "/admin/features",
   },
