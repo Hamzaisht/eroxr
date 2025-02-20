@@ -99,7 +99,8 @@ export const StoryActions = ({
           id,
           action_type,
           created_at,
-          profiles:user_id (
+          user_id,
+          profiles!inner (
             username,
             avatar_url
           )
@@ -108,13 +109,14 @@ export const StoryActions = ({
         .order('created_at', { ascending: false });
 
       if (data) {
-        setViewers(data.map(d => ({
+        const viewersData: StoryViewer[] = data.map(d => ({
           id: d.id,
           username: d.profiles?.username || 'Unknown',
           avatar_url: d.profiles?.avatar_url || '',
           action_type: d.action_type,
           created_at: d.created_at
-        })));
+        }));
+        setViewers(viewersData);
       }
     } catch (error) {
       console.error('Error fetching viewers:', error);
