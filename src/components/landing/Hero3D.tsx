@@ -1,6 +1,5 @@
 
 import { Canvas } from "@react-three/fiber";
-import { Sphere } from "@react-three/drei";
 import { motion } from "framer-motion";
 
 const Scene = () => {
@@ -8,13 +7,14 @@ const Scene = () => {
     <>
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
-      <Sphere args={[1.5, 32, 32]}>
+      <mesh>
+        <sphereBufferGeometry args={[1.5, 32, 32]} />
         <meshStandardMaterial
           color="#1A1F2C"
           metalness={0.7}
           roughness={0.2}
         />
-      </Sphere>
+      </mesh>
     </>
   );
 };
@@ -23,6 +23,7 @@ export const Hero3D = () => {
   return (
     <div className="relative h-[600px] w-full">
       <Canvas
+        gl={{ antialias: true }}
         camera={{
           position: [0, 0, 5],
           fov: 75,
