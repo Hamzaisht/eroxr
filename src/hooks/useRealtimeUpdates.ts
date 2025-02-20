@@ -23,25 +23,26 @@ export const useRealtimeUpdates = (tableName: string) => {
           
           // Invalidate and refetch queries
           queryClient.invalidateQueries({ queryKey: [tableName] });
+          queryClient.invalidateQueries({ queryKey: ['admin-platform-stats'] });
 
           // Show appropriate toast messages
           switch (payload.eventType) {
             case 'DELETE':
               toast({
-                title: "Post deleted",
-                description: "The post has been removed",
+                title: "Data Updated",
+                description: `${tableName} record deleted`,
               });
               break;
             case 'UPDATE':
               toast({
-                title: "Post updated",
-                description: "The post has been updated",
+                title: "Data Updated",
+                description: `${tableName} record updated`,
               });
               break;
             case 'INSERT':
               toast({
-                title: "New post",
-                description: "A new post has been added",
+                title: "Data Updated",
+                description: `New ${tableName} record added`,
               });
               break;
           }

@@ -1,7 +1,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Users, 
   MessageSquare, 
@@ -14,7 +18,8 @@ import {
   AlertTriangle,
   UserX,
   Clock,
-  BadgeAlert
+  BadgeAlert,
+  LogOut
 } from "lucide-react";
 
 interface PlatformStats {
@@ -33,6 +38,16 @@ interface PlatformStats {
 }
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Enable real-time updates for relevant tables
+  useRealtimeUpdates('profiles');
+  useRealtimeUpdates('posts');
+  useRealtimeUpdates('reports');
+  useRealtimeUpdates('security_violations');
+  useRealtimeUpdates('live_streams');
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin-platform-stats'],
     queryFn: async () => {
@@ -79,6 +94,14 @@ export const Dashboard = () => {
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  const handleExitGodMode = () => {
+    toast({
+      title: "Exiting God Mode",
+      description: "Redirecting to user interface...",
+    });
+    navigate('/home');
+  };
 
   const statCards = [
     { 
@@ -150,21 +173,34 @@ export const Dashboard = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-luxury-neutral">Admin Control Panel</h1>
-        <div className="flex items-center space-x-2">
-          <span className={`inline-flex h-3 w-3 rounded-full ${
-            stats?.systemHealth === 'good' ? 'bg-green-500' :
-            stats?.systemHealth === 'warning' ? 'bg-yellow-500' :
-            'bg-red-500'
-          } animate-pulse`}/>
-          <span className="text-sm text-luxury-neutral/60">
-            System Status: {stats?.systemHealth || 'Loading...'}
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <span className={`inline-flex h-3 w-3 rounded-full ${
+              stats?.systemHealth === 'good' ? 'bg-green-500' :
+              stats?.systemHealth === 'warning' ? 'bg-yellow-500' :
+              'bg-red-500'
+            } animate-pulse`}/>
+            <span className="text-sm text-luxury-neutral/60">
+              System Status: {stats?.systemHealth || 'Loading...'}
+            </span>
+          </div>
+          <Button 
+            variant="destructive" 
+            onClick={handleExitGodMode}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Exit God Mode
+          </Button>
         </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {statCards.map((stat) => (
-          <Card key={stat.label} className="p-6 bg-[#161B22]/80 backdrop-blur-xl border-white/10 hover:border-white/20 transition-all duration-300">
+          <Card 
+            key={stat.label} 
+            className="p-6 bg-[#161B22]/80 backdrop-blur-xl border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+          >
             <div className="flex items-center space-x-4">
               <div className={`p-3 rounded-full bg-opacity-10 ${stat.color} bg-current`}>
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
