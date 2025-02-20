@@ -1,5 +1,6 @@
+
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ShareDialog } from "@/components/feed/ShareDialog";
 import { Short } from "./types/short";
 import { useShortActions } from "./hooks/useShortActions";
@@ -7,12 +8,13 @@ import { VideoPlayer } from "./components/VideoPlayer";
 import { ShortContent } from "./components/ShortContent";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useFeedQuery } from "../feed/useFeedQuery";
-import { Badge } from "@/components/ui/badge";
-import { CommentSection } from "../feed/CommentSection";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { CommentSection } from "../feed/CommentSection";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
+import { useSoundEffects } from "@/hooks/use-sound-effects";
 
 export const ShortsFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -20,11 +22,14 @@ export const ShortsFeed = () => {
   const [selectedShortId, setSelectedShortId] = useState<string | null>(null);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
   const { handleLike, handleSave } = useShortActions();
   const session = useSession();
-  const { data, refetch } = useFeedQuery(session?.user?.id, 'shorts');
+  const { data, refetch, fetchNextPage, hasNextPage } = useFeedQuery(session?.user?.id, 'shorts');
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { toast } = useToast();
+  const { playLikeSound, playCommentSound } = useSoundEffects();
+  const feedContainerRef = useRef<HTMLDivElement>(null);
 
   const shorts = data?.pages.flatMap(page => page) ?? [];
 
@@ -66,10 +71,38 @@ export const ShortsFeed = () => {
   const handleCommentClick = (shortId: string) => {
     setSelectedShortId(shortId);
     setIsCommentsOpen(true);
+    playCommentSound();
   };
 
+  const handleScroll = (event: React.WheelEvent) => {
+    if (event.deltaY > 0 && currentVideoIndex < shorts.length - 1) {
+      setCurrentVideoIndex(prev => prev + 1);
+    } else if (event.deltaY < 0 && currentVideoIndex > 0) {
+      setCurrentVideoIndex(prev => prev - 1);
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'ArrowUp' && currentVideoIndex > 0) {
+      setCurrentVideoIndex(prev => prev - 1);
+    } else if (event.key === 'ArrowDown' && currentVideoIndex < shorts.length - 1) {
+      setCurrentVideoIndex(prev => prev + 1);
+    } else if (event.key === 'm') {
+      setIsMuted(prev => !prev);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentVideoIndex, shorts.length]);
+
   return (
-    <div className="fixed inset-0 bg-black">
+    <div 
+      className="fixed inset-0 bg-black"
+      onWheel={handleScroll}
+      ref={feedContainerRef}
+    >
       <div className="h-full snap-y snap-mandatory overflow-y-auto scrollbar-hide">
         <AnimatePresence initial={false}>
           {shorts.map((short, index) => (
@@ -84,6 +117,9 @@ export const ShortsFeed = () => {
               <VideoPlayer
                 url={short.video_urls?.[0] ?? ""}
                 index={index}
+                isMuted={isMuted}
+                onMuteChange={setIsMuted}
+                isCurrentVideo={index === currentVideoIndex}
                 onIndexChange={setCurrentVideoIndex}
                 className="h-full w-full object-cover"
                 onError={() => {
@@ -95,21 +131,34 @@ export const ShortsFeed = () => {
                 }}
               />
               <ShortContent
-                short={{
-                  id: short.id,
-                  creator: short.creator,
-                  description: short.content,
-                  likes: short.likes_count ?? 0,
-                  comments: short.comments_count ?? 0,
-                  has_liked: short.has_liked,
-                  has_saved: false
-                }}
+                short={short}
                 onShare={handleShare}
                 onComment={() => handleCommentClick(short.id)}
                 handleLike={handleLike}
                 handleSave={handleSave}
+                isCurrentVideo={index === currentVideoIndex}
                 className={`absolute bottom-0 left-0 right-0 z-20 p-4 ${isMobile ? 'pb-16' : 'p-6'}`}
               />
+              
+              {/* Navigation buttons */}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-4">
+                <button
+                  onClick={() => currentVideoIndex > 0 && setCurrentVideoIndex(prev => prev - 1)}
+                  className={`p-2 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 transition-colors
+                    ${currentVideoIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={currentVideoIndex === 0}
+                >
+                  <ChevronUp className="w-6 h-6 text-white" />
+                </button>
+                <button
+                  onClick={() => currentVideoIndex < shorts.length - 1 && setCurrentVideoIndex(prev => prev + 1)}
+                  className={`p-2 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 transition-colors
+                    ${currentVideoIndex === shorts.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={currentVideoIndex === shorts.length - 1}
+                >
+                  <ChevronDown className="w-6 h-6 text-white" />
+                </button>
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>
@@ -132,6 +181,13 @@ export const ShortsFeed = () => {
             </DialogContent>
           </Dialog>
         </>
+      )}
+
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <Loader2 className="w-8 h-8 animate-spin text-luxury-primary" />
+        </div>
       )}
     </div>
   );
