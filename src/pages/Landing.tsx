@@ -1,66 +1,92 @@
 
-import { motion } from "framer-motion";
+import { Suspense, lazy } from "react";
+import { motion, LazyMotion, domAnimation } from "framer-motion";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { Features3D } from "@/components/landing/Features3D";
-import { CreatorShowcase } from "@/components/landing/CreatorShowcase";
-import { AnimatedStats } from "@/components/landing/AnimatedStats";
-import { InteractiveFeatures } from "@/components/landing/InteractiveFeatures";
-import { CreatorCategories } from "@/components/landing/sections/CreatorCategories";
+
+// Lazy load other sections
+const Features3D = lazy(() => import("@/components/landing/Features3D"));
+const CreatorShowcase = lazy(() => import("@/components/landing/CreatorShowcase").then(mod => ({ default: mod.CreatorShowcase })));
+const AnimatedStats = lazy(() => import("@/components/landing/AnimatedStats").then(mod => ({ default: mod.AnimatedStats })));
+const InteractiveFeatures = lazy(() => import("@/components/landing/InteractiveFeatures").then(mod => ({ default: mod.InteractiveFeatures })));
+const CreatorCategories = lazy(() => import("@/components/landing/sections/CreatorCategories").then(mod => ({ default: mod.CreatorCategories })));
+
+// Loading placeholder
+const LoadingSection = () => (
+  <div className="h-screen w-full flex items-center justify-center">
+    <div className="w-8 h-8 border-4 border-luxury-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const Landing = () => {
   return (
-    <div 
-      className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white overflow-hidden"
-      style={{ willChange: 'transform' }}
-    >
-      {/* Hero Section */}
-      <motion.div
-        initial={{ opacity: 1 }}
-        style={{ willChange: 'transform' }}
+    <LazyMotion features={domAnimation}>
+      <div 
+        className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white overflow-hidden"
       >
-        <HeroSection />
-      </motion.div>
+        {/* Hero Section - Always loaded immediately */}
+        <motion.div
+          initial={{ opacity: 1 }}
+        >
+          <HeroSection />
+        </motion.div>
 
-      {/* Stats Section */}
-      <motion.div
-        initial={{ opacity: 1 }}
-        style={{ willChange: 'transform' }}
-      >
-        <AnimatedStats />
-      </motion.div>
+        {/* Lazy loaded sections */}
+        <Suspense fallback={<LoadingSection />}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <AnimatedStats />
+          </motion.div>
+        </Suspense>
 
-      {/* Creator Categories */}
-      <motion.div
-        initial={{ opacity: 1 }}
-        style={{ willChange: 'transform' }}
-      >
-        <CreatorCategories />
-      </motion.div>
+        <Suspense fallback={<LoadingSection />}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <CreatorCategories />
+          </motion.div>
+        </Suspense>
 
-      {/* Features Section */}
-      <motion.div
-        initial={{ opacity: 1 }}
-        style={{ willChange: 'transform' }}
-      >
-        <Features3D />
-      </motion.div>
+        <Suspense fallback={<LoadingSection />}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <Features3D />
+          </motion.div>
+        </Suspense>
 
-      {/* Creator Showcase */}
-      <motion.div
-        initial={{ opacity: 1 }}
-        style={{ willChange: 'transform' }}
-      >
-        <CreatorShowcase />
-      </motion.div>
+        <Suspense fallback={<LoadingSection />}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <CreatorShowcase />
+          </motion.div>
+        </Suspense>
 
-      {/* Interactive Features */}
-      <motion.div
-        initial={{ opacity: 1 }}
-        style={{ willChange: 'transform' }}
-      >
-        <InteractiveFeatures />
-      </motion.div>
-    </div>
+        <Suspense fallback={<LoadingSection />}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <InteractiveFeatures />
+          </motion.div>
+        </Suspense>
+      </div>
+    </LazyMotion>
   );
 };
 
