@@ -23,8 +23,10 @@ interface Report {
   status: string;
   created_at: string;
   is_emergency: boolean;
-  reporter: { username: string };
-  reported: { username: string };
+  reporter_id: string;
+  reported_id: string;
+  reporter: Profile;
+  reported: Profile;
 }
 
 interface DMCARequest {
@@ -32,7 +34,8 @@ interface DMCARequest {
   content_type: string;
   status: string;
   created_at: string;
-  reporter: { username: string };
+  reporter_id: string;
+  reporter: Profile;
 }
 
 interface ContentClassification {
@@ -41,6 +44,11 @@ interface ContentClassification {
   classification: string;
   visibility: string;
   created_at: string;
+}
+
+interface Profile {
+  id: string;
+  username: string;
 }
 
 export const ErosMode = () => {
@@ -57,15 +65,17 @@ export const ErosMode = () => {
           status,
           created_at,
           is_emergency,
-          reporter:reporter_id(username),
-          reported:reported_id(username)
+          reporter_id,
+          reported_id,
+          reporter:profiles!reporter_id (username),
+          reported:profiles!reported_id (username)
         `)
         .order('is_emergency', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      return data as Report[];
+      return data as unknown as Report[];
     }
   });
 
@@ -80,13 +90,14 @@ export const ErosMode = () => {
           content_type,
           status,
           created_at,
-          reporter:reporter_id(username)
+          reporter_id,
+          reporter:profiles!reporter_id (username)
         `)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      return data as DMCARequest[];
+      return data as unknown as DMCARequest[];
     }
   });
 
@@ -161,8 +172,8 @@ export const ErosMode = () => {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>{report.reporter.username}</TableCell>
-                    <TableCell>{report.reported.username}</TableCell>
+                    <TableCell>{report.reporter?.username}</TableCell>
+                    <TableCell>{report.reported?.username}</TableCell>
                     <TableCell>{report.content_type}</TableCell>
                     <TableCell>{report.reason}</TableCell>
                     <TableCell>
@@ -208,7 +219,7 @@ export const ErosMode = () => {
                         {request.status.toUpperCase()}
                       </Badge>
                     </TableCell>
-                    <TableCell>{request.reporter.username}</TableCell>
+                    <TableCell>{request.reporter?.username}</TableCell>
                     <TableCell>{request.content_type}</TableCell>
                     <TableCell>
                       {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
