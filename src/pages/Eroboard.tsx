@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Loader2, TrendingUp, Users, Eye, DollarSign, BarChart3 } from "lucide-react";
@@ -34,6 +33,16 @@ export default function Eroboard() {
     status: string;
     processed_at: string | null;
   } | null>(null);
+
+  const isPayoutDisabled = () => {
+    return latestPayout?.status === 'pending' || stats.totalEarnings < 100;
+  };
+
+  const getPayoutButtonTooltip = () => {
+    if (latestPayout?.status === 'pending') return 'You have a pending payout request';
+    if (stats.totalEarnings < 100) return 'Minimum payout amount is $100';
+    return '';
+  };
 
   const fetchDashboardData = async () => {
     if (!session?.user?.id) return;
@@ -205,9 +214,15 @@ export default function Eroboard() {
             <Button 
               onClick={() => setPayoutDialogOpen(true)}
               className="bg-luxury-primary hover:bg-luxury-primary/90"
-              disabled={latestPayout?.status === 'pending'}
+              disabled={isPayoutDisabled()}
+              title={getPayoutButtonTooltip()}
             >
               Request Payout
+              {stats.totalEarnings < 100 && (
+                <span className="ml-2 text-xs opacity-70">
+                  (Min. $100)
+                </span>
+              )}
             </Button>
           </div>
         </div>

@@ -30,12 +30,15 @@ export function PayoutRequestDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const platformFeePercentage = 0.10; // 10% platform fee
+  const minimumPayout = 100; // $100 minimum payout threshold
 
   const platformFee = Number(amount) * platformFeePercentage;
   const finalAmount = Number(amount) - platformFee;
 
   const handleSubmit = async () => {
-    if (Number(amount) > totalEarnings) {
+    const requestAmount = Number(amount);
+
+    if (requestAmount > totalEarnings) {
       toast({
         title: "Invalid amount",
         description: "Request amount cannot exceed your total earnings",
@@ -44,10 +47,19 @@ export function PayoutRequestDialog({
       return;
     }
 
+    if (requestAmount < minimumPayout) {
+      toast({
+        title: "Invalid amount",
+        description: "Minimum payout amount is $100",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from("payout_requests").insert({
-        amount: Number(amount),
+        amount: requestAmount,
         platform_fee: platformFee,
         final_amount: finalAmount,
       });
@@ -78,7 +90,9 @@ export function PayoutRequestDialog({
         <DialogHeader>
           <DialogTitle>Request Payout</DialogTitle>
           <DialogDescription className="text-luxury-muted">
-            Review your payout details before confirming
+            {totalEarnings < minimumPayout 
+              ? `You need at least $${minimumPayout} to request a payout. Current balance: $${totalEarnings.toFixed(2)}`
+              : "Review your payout details before confirming"}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -90,7 +104,7 @@ export function PayoutRequestDialog({
             <div className="space-y-4">
               <div>
                 <label htmlFor="amount" className="text-sm text-luxury-muted">
-                  Request Amount
+                  Request Amount (Minimum $100)
                 </label>
                 <Input
                   id="amount"
@@ -98,6 +112,7 @@ export function PayoutRequestDialog({
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   max={totalEarnings}
+                  min={minimumPayout}
                   className="bg-luxury-dark/50"
                 />
               </div>
@@ -133,7 +148,7 @@ export function PayoutRequestDialog({
           <Button
             onClick={handleSubmit}
             className="bg-luxury-primary hover:bg-luxury-primary/90"
-            disabled={isSubmitting || Number(amount) <= 0}
+            disabled={isSubmitting || Number(amount) < minimumPayout || totalEarnings < minimumPayout}
           >
             {isSubmitting ? "Requesting..." : "Confirm Payout"}
           </Button>
