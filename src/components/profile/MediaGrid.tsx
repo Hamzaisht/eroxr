@@ -15,12 +15,21 @@ interface MediaGridProps {
   onImageClick: (url: string) => void;
 }
 
+type MediaItem = {
+  id: string;
+  type: 'video' | 'image';
+  url: string;
+  isPremium: boolean;
+  width: number;
+  height: number;
+}
+
 export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const session = useSession();
   const { toast } = useToast();
 
-  const { data: mediaItems = [], isLoading, error } = useQuery({
+  const { data: mediaItems = [], isLoading, error } = useQuery<MediaItem[]>({
     queryKey: ["profile-media", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) throw new Error("No user ID");
@@ -40,7 +49,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         const mediaUrls = [...(post.media_url || []), ...(post.video_urls || [])];
         return mediaUrls.map(url => ({
           id: post.id,
-          type: url.toLowerCase().endsWith('.mp4') ? 'video' : 'image',
+          type: url.toLowerCase().endsWith('.mp4') ? 'video' as const : 'image' as const,
           url: url,
           isPremium: post.is_ppv || false,
           width: 1080,
@@ -51,13 +60,15 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
       return media;
     },
     enabled: !!session?.user?.id,
-    onError: (error) => {
-      console.error("Media fetch error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load media content. Please try again.",
-        variant: "destructive",
-      });
+    meta: {
+      onError: (error: Error) => {
+        console.error("Media fetch error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load media content. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   });
 
