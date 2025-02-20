@@ -37,7 +37,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     if (!session?.user?.id) return;
 
     const channel = supabase
-      .channel('public:posts')
+      .channel('posts-channel')
       .on(
         'postgres_changes',
         {
@@ -46,14 +46,18 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
           table: 'posts',
           filter: `creator_id=eq.${session.user.id}`
         },
-        () => {
-          // Invalidate and refetch posts data
+        (payload) => {
+          console.log('Realtime update received:', payload);
           queryClient.invalidateQueries({ queryKey: ["profile-media", session.user.id] });
+          queryClient.invalidateQueries({ queryKey: ["posts"] });
         }
       )
       .subscribe();
 
+    console.log('Subscribed to posts channel');
+
     return () => {
+      console.log('Unsubscribing from posts channel');
       supabase.removeChannel(channel);
     };
   }, [session?.user?.id, queryClient]);
@@ -62,6 +66,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     queryKey: ["profile-media", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) throw new Error("No user ID");
+
+      console.log('Fetching media for user:', session.user.id);
 
       const { data: posts, error } = await supabase
         .from("posts")
@@ -79,6 +85,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         console.error("Error fetching media:", error);
         throw error;
       }
+
+      console.log('Fetched posts:', posts);
 
       if (!posts) return [];
 
@@ -98,36 +106,48 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         }));
       });
 
+      console.log('Processed media items:', media);
       return media;
     },
     enabled: !!session?.user?.id,
-    gcTime: 30000,
-    staleTime: 30000,
-    retry: 1,
-    throwOnError: true,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
     initialData: [] as MediaItem[],
-    meta: {
-      errorMessage: "Failed to load media content"
-    }
   });
 
   const handleDelete = async (postId: string) => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to delete posts",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      console.log('Attempting to delete post:', postId);
+      
       const { error: deleteError } = await supabase
         .from('posts')
         .delete()
         .eq('id', postId)
-        .eq('creator_id', session?.user?.id);
+        .eq('creator_id', session.user.id);
 
       if (deleteError) throw deleteError;
+
+      console.log('Post deleted successfully');
 
       toast({
         title: "Success",
         description: "Post deleted successfully",
       });
 
-      // Manually invalidate the query to trigger a refetch
-      queryClient.invalidateQueries({ queryKey: ["profile-media", session?.user?.id] });
+      // Manually invalidate queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["profile-media", session.user.id] }),
+        queryClient.invalidateQueries({ queryKey: ["posts"] })
+      ]);
     } catch (err) {
       console.error('Delete error:', err);
       toast({
