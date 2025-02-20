@@ -14,6 +14,7 @@ import { PostActions } from "./post-components/PostActions";
 import { Post } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PostCardProps {
   post: Post;
@@ -37,6 +38,7 @@ export const PostCard = ({
   const [editedContent, setEditedContent] = useState(post.content);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isOwner = currentUserId === post.creator_id;
 
   const handleLike = async () => {
@@ -70,6 +72,9 @@ export const PostCard = ({
         .eq("id", post.id);
 
       if (error) throw error;
+
+      // Update the cache
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
 
       setIsEditDialogOpen(false);
       toast({
