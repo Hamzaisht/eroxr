@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Shield, Users, CreditCard, MessageSquare, Palette, Trophy, Zap, Heart, Star } from "lucide-react";
 
