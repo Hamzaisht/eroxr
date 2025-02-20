@@ -13,6 +13,7 @@ import Eroboard from "@/pages/Eroboard";
 import Shorts from "@/pages/Shorts";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import { Dashboard } from "./components/admin/Dashboard";
+import { ErosMode } from "./components/admin/ErosMode";
 
 function App() {
   return (
@@ -45,7 +46,7 @@ function App() {
           <Route path="dating" element={<div>Dating Ads</div>} />
           <Route path="reports" element={<div>User Reports</div>} />
           <Route path="violations" element={<div>Security Violations</div>} />
-          <Route path="features" element={<div>Platform Features</div>} />
+          <Route path="features" element={<ErosMode />} />
           <Route path="verifications" element={<div>User Verifications</div>} />
         </Route>
       </Routes>

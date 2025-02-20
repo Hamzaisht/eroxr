@@ -9,6 +9,78 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      blacklisted_content: {
+        Row: {
+          added_by: string | null
+          content_hash: string
+          content_type: string
+          created_at: string | null
+          id: string
+          permanent_block: boolean | null
+          reason: string
+          related_dmca_id: string | null
+          source_report_id: string | null
+        }
+        Insert: {
+          added_by?: string | null
+          content_hash: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          permanent_block?: boolean | null
+          reason: string
+          related_dmca_id?: string | null
+          source_report_id?: string | null
+        }
+        Update: {
+          added_by?: string | null
+          content_hash?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          permanent_block?: boolean | null
+          reason?: string
+          related_dmca_id?: string | null
+          source_report_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blacklisted_content_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blacklisted_content_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blacklisted_content_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blacklisted_content_related_dmca_id_fkey"
+            columns: ["related_dmca_id"]
+            isOneToOne: false
+            referencedRelation: "dmca_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blacklisted_content_source_report_id_fkey"
+            columns: ["source_report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_slots: {
         Row: {
           created_at: string | null
@@ -208,6 +280,70 @@ export type Database = {
           {
             foreignKeyName: "comments_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_classifications: {
+        Row: {
+          age_restriction: boolean | null
+          classification: string
+          classified_by: string | null
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          requires_warning: boolean | null
+          updated_at: string | null
+          visibility: string | null
+          warning_text: string | null
+        }
+        Insert: {
+          age_restriction?: boolean | null
+          classification: string
+          classified_by?: string | null
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          requires_warning?: boolean | null
+          updated_at?: string | null
+          visibility?: string | null
+          warning_text?: string | null
+        }
+        Update: {
+          age_restriction?: boolean | null
+          classification?: string
+          classified_by?: string | null
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          requires_warning?: boolean | null
+          updated_at?: string | null
+          visibility?: string | null
+          warning_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_classifications_classified_by_fkey"
+            columns: ["classified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_classifications_classified_by_fkey"
+            columns: ["classified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_classifications_classified_by_fkey"
+            columns: ["classified_by"]
             isOneToOne: false
             referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
@@ -557,6 +693,94 @@ export type Database = {
           {
             foreignKeyName: "direct_messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dmca_requests: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          handled_by: string | null
+          id: string
+          original_content_url: string | null
+          proof_of_ownership: string | null
+          reporter_id: string | null
+          resolution_notes: string | null
+          status: string | null
+          takedown_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          handled_by?: string | null
+          id?: string
+          original_content_url?: string | null
+          proof_of_ownership?: string | null
+          reporter_id?: string | null
+          resolution_notes?: string | null
+          status?: string | null
+          takedown_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          handled_by?: string | null
+          id?: string
+          original_content_url?: string | null
+          proof_of_ownership?: string | null
+          reporter_id?: string | null
+          resolution_notes?: string | null
+          status?: string | null
+          takedown_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dmca_requests_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dmca_requests_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dmca_requests_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dmca_requests_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dmca_requests_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dmca_requests_reporter_id_fkey"
+            columns: ["reporter_id"]
             isOneToOne: false
             referencedRelation: "top_creators_by_earnings"
             referencedColumns: ["id"]
@@ -1213,6 +1437,127 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      reports: {
+        Row: {
+          action_taken: string | null
+          content_id: string | null
+          content_type: string
+          created_at: string | null
+          description: string | null
+          evidence_urls: string[] | null
+          id: string
+          ip_address: string | null
+          is_emergency: boolean | null
+          reason: string
+          reported_id: string | null
+          reporter_id: string | null
+          resolution_notes: string | null
+          resolved_by: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          content_id?: string | null
+          content_type: string
+          created_at?: string | null
+          description?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          ip_address?: string | null
+          is_emergency?: boolean | null
+          reason: string
+          reported_id?: string | null
+          reporter_id?: string | null
+          resolution_notes?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          content_id?: string | null
+          content_type?: string
+          created_at?: string | null
+          description?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          ip_address?: string | null
+          is_emergency?: boolean | null
+          reason?: string
+          reported_id?: string | null
+          reporter_id?: string | null
+          resolution_notes?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reported_id_fkey"
+            columns: ["reported_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reported_id_fkey"
+            columns: ["reported_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reported_id_fkey"
+            columns: ["reported_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_violations: {
         Row: {
