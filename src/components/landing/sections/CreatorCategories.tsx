@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -116,3 +115,5 @@ export const CreatorCategories = () => {
     </section>
   );
 };
+
+export default CreatorCategories;

@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import {
   Carousel,
@@ -92,3 +91,5 @@ export const CreatorShowcase = () => {
     </section>
   );
 };
+
+export default CreatorShowcase;

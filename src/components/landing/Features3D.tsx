@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Shield, Users, CreditCard, MessageSquare, Palette, Trophy, Zap, Heart, Star } from "lucide-react";
 
@@ -119,3 +118,5 @@ export const Features3D = () => {
     </section>
   );
 };
+
+export default Features3D;

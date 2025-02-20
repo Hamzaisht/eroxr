@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { StatCard } from "./sections/StatCard";
 
@@ -27,3 +26,5 @@ export const AnimatedStats = () => {
     </section>
   );
 };
+
+export default AnimatedStats;

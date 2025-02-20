@@ -5,10 +5,10 @@ import { HeroSection } from "@/components/landing/HeroSection";
 
 // Lazy load other sections
 const Features3D = lazy(() => import("@/components/landing/Features3D"));
-const CreatorShowcase = lazy(() => import("@/components/landing/CreatorShowcase").then(mod => ({ default: mod.CreatorShowcase })));
-const AnimatedStats = lazy(() => import("@/components/landing/AnimatedStats").then(mod => ({ default: mod.AnimatedStats })));
-const InteractiveFeatures = lazy(() => import("@/components/landing/InteractiveFeatures").then(mod => ({ default: mod.InteractiveFeatures })));
-const CreatorCategories = lazy(() => import("@/components/landing/sections/CreatorCategories").then(mod => ({ default: mod.CreatorCategories })));
+const CreatorShowcase = lazy(() => import("@/components/landing/CreatorShowcase"));
+const AnimatedStats = lazy(() => import("@/components/landing/AnimatedStats"));
+const InteractiveFeatures = lazy(() => import("@/components/landing/InteractiveFeatures"));
+const CreatorCategories = lazy(() => import("@/components/landing/sections/CreatorCategories"));
 
 // Loading placeholder
 const LoadingSection = () => (
