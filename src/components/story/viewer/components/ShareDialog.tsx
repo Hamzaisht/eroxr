@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Database } from "@/integrations/supabase/types/database.types";
 
 interface ShareDialogProps {
   open: boolean;
@@ -17,16 +16,13 @@ interface ShareDialogProps {
   storyId: string;
 }
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
-
 interface Follower {
   following_id: string;
-  following: Profile;
-}
-
-interface FollowerResponse {
-  following_id: string;
-  following: Profile;
+  following: {
+    id: string;
+    username: string | null;
+    avatar_url: string | null;
+  };
 }
 
 export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) => {
@@ -41,23 +37,19 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
         .from('followers')
         .select(`
           following_id,
-          following:profiles!following_id(*)
+          following:profiles!following_id(id, username, avatar_url)
         `)
         .eq('follower_id', session?.user?.id);
 
       if (error) throw error;
-      
-      const typedData = data as FollowerResponse[];
-      return typedData.map(item => ({
-        following_id: item.following_id,
-        following: item.following
-      }));
+      return data;
     },
-    enabled: !!session?.user?.id
+    enabled: !!session?.user?.id,
   });
 
   const handleShare = async (recipientId: string) => {
     try {
+      // Create a direct message with the shared story
       await supabase.from('direct_messages').insert({
         sender_id: session?.user?.id,
         recipient_id: recipientId,
@@ -67,6 +59,7 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
         original_content: storyId
       });
 
+      // Register the share action
       await supabase.from('post_media_actions').insert({
         post_id: storyId,
         user_id: session?.user?.id,
