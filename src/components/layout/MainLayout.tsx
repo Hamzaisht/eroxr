@@ -1,11 +1,10 @@
 
 import { useSession } from "@supabase/auth-helpers-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Outlet } from "react-router-dom";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { InteractiveNav } from "./InteractiveNav";
 import { MainContent } from "./components/MainContent";
 import { FloatingActionMenu } from "./FloatingActionMenu";
-import { Outlet } from "react-router-dom";
 
 export const MainLayout = () => {
   const session = useSession();

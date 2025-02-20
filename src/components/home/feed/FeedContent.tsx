@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
+import { EmptyFeed } from "@/components/feed/EmptyFeed";
+import { usePostActions } from "@/components/feed/usePostActions";
 
 interface FeedContentProps {
   userId?: string;
@@ -16,6 +18,7 @@ interface FeedContentProps {
 export const FeedContent = ({ userId }: FeedContentProps) => {
   const session = useSession();
   const { ref, inView } = useInView();
+  const { handleLike, handleDelete } = usePostActions();
 
   const {
     data,
@@ -25,25 +28,20 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["feed", userId],
+    queryKey: ["posts", "feed", userId],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * 10;
       const to = from + 9;
-
-      console.log("Fetching feed from", from, "to", to); // Debug log
 
       let query = supabase
         .from("posts")
         .select(`
           *,
-          creator:profiles(id, username, avatar_url)
+          creator:profiles(id, username, avatar_url),
+          post_likes(user_id)
         `)
         .order("created_at", { ascending: false })
         .range(from, to);
-
-      if (userId) {
-        query = query.eq("creator_id", userId);
-      }
 
       const { data: posts, error } = await query;
 
@@ -52,15 +50,9 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
         throw error;
       }
 
-      console.log("Fetched posts:", posts); // Debug log
-
       return posts?.map(post => ({
         ...post,
-        has_liked: false,
-        visibility: post.visibility || "public",
-        screenshots_count: post.screenshots_count || 0,
-        downloads_count: post.downloads_count || 0,
-        updated_at: post.updated_at || post.created_at,
+        has_liked: post.post_likes?.some(like => like.user_id === session?.user?.id) || false,
         creator: {
           id: post.creator?.id,
           username: post.creator?.username || "Anonymous",
@@ -98,12 +90,10 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
     );
   }
 
-  if (!data?.pages.length || data.pages[0].length === 0) {
-    return (
-      <div className="text-center p-8 text-gray-500">
-        <p>No posts yet</p>
-      </div>
-    );
+  const allPosts = data?.pages.flatMap(page => page) || [];
+
+  if (!allPosts.length) {
+    return <EmptyFeed />;
   }
 
   return (
@@ -114,23 +104,15 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
         exit={{ opacity: 0 }}
         className="space-y-6"
       >
-        {data?.pages.map((page, i) => (
-          <motion.div 
-            key={i}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: i * 0.1 }}
-            className="space-y-6"
-          >
-            {page.map((post: FeedPost) => (
-              <Post
-                key={post.id}
-                post={post}
-                creator={post.creator}
-                currentUser={session?.user || null}
-              />
-            ))}
-          </motion.div>
+        {allPosts.map((post: FeedPost) => (
+          <Post
+            key={post.id}
+            post={post}
+            creator={post.creator}
+            currentUser={session?.user || null}
+            onLike={() => handleLike(post.id)}
+            onDelete={() => handleDelete(post.id, post.creator_id)}
+          />
         ))}
 
         <div ref={ref} className="h-10">
