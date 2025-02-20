@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,12 +13,14 @@ import { LocationField } from "./form-fields/LocationField";
 import { InterestsField } from "./form-fields/InterestsField";
 import { VisibilityField } from "./form-fields/VisibilityField";
 import { profileSchema, type ProfileFormValues } from "./types";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface ProfileFormProps {
-  onSave?: () => void;
+  profile?: Profile | null;
+  onSuccess?: () => void;
 }
 
-export const ProfileForm = ({ onSave }: ProfileFormProps) => {
+export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
   const { toast } = useToast();
   const session = useSession();
   const [isLoading, setIsLoading] = useState(false);
@@ -37,66 +40,27 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
   });
 
   useEffect(() => {
-    const loadProfile = async () => {
-      if (!session?.user?.id) {
-        console.log("No session user ID found");
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "Please sign in to edit your profile",
-        });
-        return;
+    if (profile) {
+      console.log("Setting form values with profile:", profile);
+      setCurrentUsername(profile.username || "");
+      form.reset({
+        username: profile.username || "",
+        bio: profile.bio || "",
+        location: profile.location || "",
+        interests: profile.interests?.join(", ") || "",
+        profile_visibility: profile.profile_visibility ?? true,
+      });
+
+      const lastChange = profile.last_username_change;
+      setLastUsernameChange(lastChange);
+      if (lastChange) {
+        const daysSinceChange = Math.floor(
+          (Date.now() - new Date(lastChange).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        setCanChangeUsername(daysSinceChange >= 60);
       }
-
-      try {
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Error loading profile:", error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to load profile data",
-          });
-          return;
-        }
-
-        if (profile) {
-          console.log("Setting form values with profile:", profile);
-          setCurrentUsername(profile.username || "");
-          form.reset({
-            username: profile.username || "",
-            bio: profile.bio || "",
-            location: profile.location || "",
-            interests: profile.interests?.join(", ") || "",
-            profile_visibility: profile.profile_visibility ?? true,
-          });
-
-          const lastChange = profile.last_username_change;
-          setLastUsernameChange(lastChange);
-          if (lastChange) {
-            const daysSinceChange = Math.floor(
-              (Date.now() - new Date(lastChange).getTime()) / (1000 * 60 * 60 * 24)
-            );
-            setCanChangeUsername(daysSinceChange >= 60);
-          }
-        }
-      } catch (error) {
-        console.error("Error in loadProfile:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load profile data",
-        });
-      }
-    };
-
-    loadProfile();
-  }, [session?.user?.id, form, toast]);
+    }
+  }, [profile, form]);
 
   const onSubmit = async (values: ProfileFormValues) => {
     if (!session?.user?.id) {
@@ -139,7 +103,7 @@ export const ProfileForm = ({ onSave }: ProfileFormProps) => {
         description: "Your profile has been updated.",
       });
       
-      onSave?.();
+      onSuccess?.();
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
