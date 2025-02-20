@@ -1,5 +1,5 @@
 
-import { Lock } from "lucide-react";
+import { Lock, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -7,9 +7,10 @@ import { useState } from "react";
 import { MediaViewer } from "@/components/media/MediaViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 import type { Post } from "@/integrations/supabase/types/post";
 
 interface MediaGridProps {
@@ -29,6 +30,33 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const session = useSession();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Set up real-time subscription for posts
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const channel = supabase
+      .channel('public:posts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'posts',
+          filter: `creator_id=eq.${session.user.id}`
+        },
+        () => {
+          // Invalidate and refetch posts data
+          queryClient.invalidateQueries({ queryKey: ["profile-media", session.user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id, queryClient]);
 
   const { data: mediaItems, isLoading, error } = useQuery<MediaItem[], Error>({
     queryKey: ["profile-media", session?.user?.id],
@@ -58,7 +86,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         const mediaUrls = [
           ...(post.media_url || []), 
           ...(post.video_urls || [])
-        ].filter(Boolean); // Remove null/undefined values
+        ].filter(Boolean);
 
         return mediaUrls.map(url => ({
           id: post.id,
@@ -83,7 +111,33 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     }
   });
 
-  // Handle errors through the useQuery error state
+  const handleDelete = async (postId: string) => {
+    try {
+      const { error: deleteError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId)
+        .eq('creator_id', session?.user?.id);
+
+      if (deleteError) throw deleteError;
+
+      toast({
+        title: "Success",
+        description: "Post deleted successfully",
+      });
+
+      // Manually invalidate the query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ["profile-media", session?.user?.id] });
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast({
+        title: "Error",
+        description: "Failed to delete post",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (error) {
     console.error("Media fetch error:", error);
     toast({
@@ -138,50 +192,70 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
               show: { y: 0, opacity: 1 }
             }}
             className="relative aspect-[4/5] rounded-lg overflow-hidden group cursor-pointer"
-            onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
           >
-            {mediaItem.type === 'video' ? (
-              <video
-                src={mediaItem.url}
-                className={cn(
-                  "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                  mediaItem.isPremium ? "blur-lg" : ""
-                )}
-                muted
-                playsInline
-                onError={(e) => {
-                  console.error("Video loading error:", e);
-                }}
-              />
-            ) : (
-              <img
-                src={mediaItem.url}
-                alt="Media content"
-                className={cn(
-                  "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                  mediaItem.isPremium ? "blur-lg" : ""
-                )}
-                loading="lazy"
-                onError={(e) => {
-                  console.error("Image loading error:", e);
-                  e.currentTarget.src = "/placeholder.svg";
-                }}
-              />
-            )}
-            
-            {mediaItem.isPremium && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-                <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
-                <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
-                <Button 
-                  size="sm"
-                  variant="secondary"
-                  className="mt-2 text-xs sm:text-sm"
-                >
-                  Subscribe to Unlock
-                </Button>
-              </div>
-            )}
+            <div 
+              className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(mediaItem.id);
+              }}
+            >
+              <Button
+                variant="destructive"
+                size="icon"
+                className="h-8 w-8"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div 
+              onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
+              className="w-full h-full"
+            >
+              {mediaItem.type === 'video' ? (
+                <video
+                  src={mediaItem.url}
+                  className={cn(
+                    "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                    mediaItem.isPremium ? "blur-lg" : ""
+                  )}
+                  muted
+                  playsInline
+                  onError={(e) => {
+                    console.error("Video loading error:", e);
+                  }}
+                />
+              ) : (
+                <img
+                  src={mediaItem.url}
+                  alt="Media content"
+                  className={cn(
+                    "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                    mediaItem.isPremium ? "blur-lg" : ""
+                  )}
+                  loading="lazy"
+                  onError={(e) => {
+                    console.error("Image loading error:", e);
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
+                />
+              )}
+              
+              {mediaItem.isPremium && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                  <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+                  <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
+                  <Button 
+                    size="sm"
+                    variant="secondary"
+                    className="mt-2 text-xs sm:text-sm"
+                  >
+                    Subscribe to Unlock
+                  </Button>
+                </div>
+              )}
+            </div>
           </motion.div>
         ))}
       </motion.div>
