@@ -1,3 +1,5 @@
+
+import { useState, useEffect } from "react"; // Added useEffect import
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { FeedContainer } from "./feed/components/FeedContainer";
 import type { MainFeedProps } from "./types";
