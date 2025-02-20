@@ -1,4 +1,6 @@
 
+import type { Json } from './database.types';
+
 export type Profile = {
   id: string;
   username?: string | null;
