@@ -1,34 +1,35 @@
 
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Sphere } from "@react-three/drei";
+import { Sphere } from "@react-three/drei";
 import { motion } from "framer-motion";
 import * as THREE from "three";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 const ParticleRing = () => {
-  const points = Array.from({ length: 5000 }, (_, i) => {
-    const angle = Math.random() * Math.PI * 2;
-    const radius = THREE.MathUtils.lerp(2, 3.5, Math.random());
-    const y = THREE.MathUtils.lerp(-0.5, 0.5, Math.random());
-    return new THREE.Vector3(
-      Math.cos(angle) * radius,
-      y,
-      Math.sin(angle) * radius
-    );
-  });
+  const points = useMemo(() => {
+    return Array.from({ length: 5000 }, () => {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = THREE.MathUtils.lerp(2, 3.5, Math.random());
+      const y = THREE.MathUtils.lerp(-0.5, 0.5, Math.random());
+      return {
+        position: [
+          Math.cos(angle) * radius,
+          y,
+          Math.sin(angle) * radius
+        ]
+      };
+    });
+  }, []);
 
   return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={points.length}
-          array={new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial size={0.015} color="#9b87f5" sizeAttenuation transparent />
-    </points>
+    <group>
+      {points.map((point, i) => (
+        <mesh key={i} position={point.position as [number, number, number]}>
+          <sphereGeometry args={[0.005]} />
+          <meshBasicMaterial color="#9b87f5" />
+        </mesh>
+      ))}
+    </group>
   );
 };
 
@@ -49,18 +50,14 @@ export const Hero3D = () => {
 
   return (
     <div className="relative h-[600px] w-full">
-      <Canvas className="absolute inset-0">
+      <Canvas
+        camera={{ position: [0, 0, 5], fov: 75 }}
+        className="absolute inset-0"
+      >
         <ambientLight intensity={0.5} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
-        <OrbitControls
-          enableZoom={false}
-          enablePan={false}
-          enableRotate={false}
-          autoRotate
-          autoRotateSpeed={0.5}
-        />
         <ParticleRing />
-        <Sphere args={[1.5, 32, 32]} position={[0, 0, 0]}>
+        <Sphere args={[1.5, 32, 32]}>
           <meshStandardMaterial
             color="#1A1F2C"
             metalness={0.7}
