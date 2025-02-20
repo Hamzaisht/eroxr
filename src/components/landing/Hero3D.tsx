@@ -9,7 +9,7 @@ const RollingText = ({ children, href }: { children: string; href: string }) => 
   return (
     <Link 
       to={href} 
-      className="group relative inline-block overflow-hidden px-4 py-2"
+      className="group relative inline-block overflow-hidden px-4 py-2 text-white"
     >
       <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-full">
         {children}
@@ -103,12 +103,11 @@ export const Hero3D = () => {
       <motion.nav 
         style={{ 
           backgroundColor: headerBg,
-          backdropFilter: "blur(8px)"
         }}
         className="fixed top-0 left-0 right-0 z-50 transition-colors duration-200"
       >
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between relative z-10">
             <Link to="/" className="flex items-center space-x-2">
               <h1 className="text-3xl font-bold text-white">
                 Eroxr
@@ -126,7 +125,7 @@ export const Hero3D = () => {
               <Button 
                 variant="ghost" 
                 asChild 
-                className="text-white hover:bg-white/10 transition-all duration-200"
+                className="text-white hover:bg-transparent"
               >
                 <Link to="/login">Log In</Link>
               </Button>
