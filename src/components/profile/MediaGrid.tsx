@@ -10,6 +10,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import type { Post } from "@/integrations/supabase/types/post";
 
 interface MediaGridProps {
   onImageClick: (url: string) => void;
@@ -29,14 +30,20 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const session = useSession();
   const { toast } = useToast();
 
-  const { data: mediaItems = [], isLoading, error } = useQuery<MediaItem[]>({
+  const { data: mediaItems = [], isLoading, error } = useQuery<MediaItem[], Error>({
     queryKey: ["profile-media", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) throw new Error("No user ID");
 
       const { data: posts, error } = await supabase
         .from("posts")
-        .select("id, media_url, video_urls, is_ppv, created_at")
+        .select(`
+          id,
+          media_url,
+          video_urls,
+          is_ppv,
+          created_at
+        `)
         .eq("creator_id", session.user.id)
         .order("created_at", { ascending: false });
 
@@ -45,30 +52,39 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         throw error;
       }
 
-      const media = posts?.flatMap(post => {
-        const mediaUrls = [...(post.media_url || []), ...(post.video_urls || [])];
+      if (!posts) return [];
+
+      const media = posts.flatMap((post: Post) => {
+        const mediaUrls = [
+          ...(post.media_url || []), 
+          ...(post.video_urls || [])
+        ].filter(Boolean); // Remove null/undefined values
+
         return mediaUrls.map(url => ({
           id: post.id,
           type: url.toLowerCase().endsWith('.mp4') ? 'video' as const : 'image' as const,
           url: url,
-          isPremium: post.is_ppv || false,
+          isPremium: post.is_ppv,
           width: 1080,
           height: 1350
         }));
-      }) || [];
+      });
 
       return media;
     },
     enabled: !!session?.user?.id,
     meta: {
-      onError: (error: Error) => {
-        console.error("Media fetch error:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load media content. Please try again.",
-          variant: "destructive",
-        });
-      }
+      errorMessage: "Failed to load media content"
+    },
+    retry: 1,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    onError: (err: Error) => {
+      console.error("Media fetch error:", err);
+      toast({
+        title: "Error",
+        description: "Failed to load media content. Please try again.",
+        variant: "destructive",
+      });
     }
   });
 
