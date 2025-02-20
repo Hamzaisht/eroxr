@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { StoryControls } from "./StoryControls";
 import { StoryContent } from "./StoryContent";
 import { NavigationButtons } from "./NavigationButtons";
@@ -11,6 +11,7 @@ import { useMediaQuery } from "@/hooks/use-mobile";
 import { initializeScreenshotProtection } from "@/lib/security";
 import { useSession } from "@supabase/auth-helpers-react";
 import { X } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface StoryContainerProps {
   stories: Story[];
@@ -43,7 +44,6 @@ export const StoryContainer = ({
   onEdit,
   timeRemaining,
 }: StoryContainerProps) => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const session = useSession();
 
   useEffect(() => {
@@ -70,24 +70,25 @@ export const StoryContainer = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-[100] flex items-center justify-center">
-      {/* Close button - always visible */}
-      <button
-        onClick={onClose}
-        className="fixed top-4 right-4 z-[102] p-2 rounded-full bg-black/50 hover:bg-black/70 transition-all"
-      >
-        <X className="w-6 h-6 text-white" />
-      </button>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-black snap-y snap-mandatory overflow-y-auto"
+    >
+      <div className="w-full h-[100dvh] relative snap-start">
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/20 pointer-events-none z-[1]" />
 
-      {/* Story Container */}
-      <div 
-        className={`relative overflow-hidden ${
-          isMobile 
-            ? 'w-full h-[100dvh] max-h-[100dvh]' 
-            : 'w-[calc(min(100vw,calc(100vh*9/16)))] h-[100vh] max-h-[100vh]'
-        } bg-black m-0`}
-      >
-        {/* Progress Bar */}
+        {/* Close Button - Floating */}
+        <button
+          onClick={onClose}
+          className="fixed top-4 right-4 z-[102] p-2 rounded-full bg-black/50 hover:bg-black/70 transition-all"
+        >
+          <X className="w-6 h-6 text-white" />
+        </button>
+
+        {/* Progress Bar - Floating */}
         <div className="absolute top-0 left-0 right-0 z-[101] p-4">
           <StoryProgress
             stories={stories}
@@ -116,15 +117,13 @@ export const StoryContainer = ({
           onTouchEnd={onResume}
         />
 
-        {/* Navigation Buttons - Only on Desktop */}
-        {!isMobile && (
-          <NavigationButtons
-            currentIndex={currentIndex}
-            totalStories={stories.length}
-            onNext={onNext}
-            onPrevious={onPrevious}
-          />
-        )}
+        {/* Navigation Buttons - Floating */}
+        <NavigationButtons
+          currentIndex={currentIndex}
+          totalStories={stories.length}
+          onNext={onNext}
+          onPrevious={onPrevious}
+        />
 
         {/* Viewers Sheet */}
         <ViewersSheet 
@@ -132,6 +131,6 @@ export const StoryContainer = ({
           onOpenChange={() => {}}
         />
       </div>
-    </div>
+    </motion.div>
   );
 };
