@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
@@ -22,6 +23,7 @@ interface ShortContentProps {
   onComment: (shortId: string) => void;
   handleLike: (shortId: string) => Promise<void>;
   handleSave: (shortId: string) => Promise<void>;
+  isCurrentVideo: boolean; // Added this prop
   className?: string;
 }
 
@@ -31,6 +33,7 @@ export const ShortContent = ({
   onComment,
   handleLike,
   handleSave,
+  isCurrentVideo,
   className = ""
 }: ShortContentProps) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
