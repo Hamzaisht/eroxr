@@ -9,8 +9,12 @@ const RollingText = ({ children, href }: { children: string; href: string }) => 
   return (
     <Link 
       to={href} 
-      className="group relative inline-block overflow-hidden px-4 py-2"
+      className="group relative inline-block overflow-hidden px-4 py-2 hover:text-luxury-primary transition-colors duration-300"
     >
+      {/* Background liquid effect */}
+      <span className="absolute inset-0 bg-gradient-to-r from-luxury-primary/20 to-luxury-accent/20 transform origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
+      
+      {/* Text animation */}
       <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-full">
         {children}
       </span>
@@ -58,7 +62,7 @@ export const Hero3D = () => {
   const headerBg = useTransform(
     scrollY,
     [0, 100],
-    ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 1)"]
+    ["rgba(13, 17, 23, 0.95)", "rgba(13, 17, 23, 1)"]  // Increased initial opacity
   );
 
   useEffect(() => {
@@ -80,7 +84,7 @@ export const Hero3D = () => {
     <>
       {/* Hero Background */}
       <div className="absolute inset-0 bg-cover bg-center" style={{
-        backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.9), rgba(22, 27, 34, 0.95))'
+        backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.95), rgba(22, 27, 34, 0.95))'
       }} />
       
       {/* Background Video */}
@@ -103,9 +107,9 @@ export const Hero3D = () => {
       <motion.nav 
         style={{ 
           backgroundColor: headerBg,
-          backdropFilter: "blur(8px)"
+          backdropFilter: "blur(16px)"  // Increased blur effect
         }}
-        className="fixed top-0 left-0 right-0 z-50 transition-colors duration-200"
+        className="fixed top-0 left-0 right-0 z-50 transition-colors duration-200 border-b border-white/5"
       >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -123,13 +127,9 @@ export const Hero3D = () => {
                 </RollingText>
               ))}
               
-              <Button 
-                variant="ghost" 
-                asChild 
-                className="text-white hover:bg-white/10 transition-all duration-200"
-              >
-                <Link to="/login">Log In</Link>
-              </Button>
+              <RollingText href="/login">
+                Log In
+              </RollingText>
               
               <Link to="/register">
                 <WaveButton className="bg-luxury-primary">
