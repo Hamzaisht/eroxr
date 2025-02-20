@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 export const Hero3D = () => {
-  return <div className="relative min-h-screen">
+  return (
+    <div className="relative min-h-screen">
       {/* Hero Background */}
       <div className="absolute inset-0 bg-cover bg-center" style={{
       backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.8), rgba(22, 27, 34, 0.9))'
@@ -27,7 +28,7 @@ export const Hero3D = () => {
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2">
               <motion.h1 
-                className="text-2xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent"
+                className="eroxr-logo"
                 whileHover={{ scale: 1.05 }}
               >
                 Eroxr
@@ -36,19 +37,19 @@ export const Hero3D = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link to="/explore" className="text-luxury-neutral hover:text-white transition-colors">
+              <Link to="/explore" className="nav-item-liquid text-luxury-neutral hover:text-white transition-colors">
                 Explore
               </Link>
-              <Link to="/pricing" className="text-luxury-neutral hover:text-white transition-colors">
+              <Link to="/pricing" className="nav-item-liquid text-luxury-neutral hover:text-white transition-colors">
                 Pricing
               </Link>
-              <Link to="/creators" className="text-luxury-neutral hover:text-white transition-colors">
+              <Link to="/creators" className="nav-item-liquid text-luxury-neutral hover:text-white transition-colors">
                 Creators
               </Link>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="nav-item-liquid">
                 <Link to="/login">Log In</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-500">
                 <Link to="/register">Sign Up</Link>
               </Button>
             </div>
@@ -86,5 +87,6 @@ export const Hero3D = () => {
           </motion.div>
         </motion.div>
       </div>
-    </div>;
+    </div>
+  );
 };
