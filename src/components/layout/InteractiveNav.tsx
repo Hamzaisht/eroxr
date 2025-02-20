@@ -40,7 +40,7 @@ export const InteractiveNav = () => {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] bg-luxury-dark/95 backdrop-blur-xl border-luxury-primary/10">
+      <SheetContent side="left" className="w-[300px] bg-gradient-to-b from-[#0D1117]/95 via-[#161B22]/95 to-[#0D1117]/95 backdrop-blur-xl border-luxury-primary/10">
         <div className="flex flex-col h-full py-8">
           <motion.div
             className="px-4 mb-8"
@@ -89,7 +89,7 @@ export const InteractiveNav = () => {
         width: isExpanded ? 240 : 80,
         transition: { duration: 0.3, ease: "easeInOut" }
       }}
-      className="fixed left-0 top-0 h-screen bg-[#0D1117]/95 backdrop-blur-xl border-r border-luxury-primary/10 z-50 overflow-hidden hidden md:block"
+      className="fixed left-0 top-0 h-screen bg-gradient-to-b from-[#0D1117]/95 via-[#161B22]/95 to-[#0D1117]/95 backdrop-blur-xl border-r border-luxury-primary/10 z-50 overflow-hidden hidden md:block"
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
