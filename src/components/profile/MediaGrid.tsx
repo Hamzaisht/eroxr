@@ -1,15 +1,15 @@
+
+import { useState, useEffect } from "react"; // Added useEffect import
 import { Lock, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { MediaViewer } from "@/components/media/MediaViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 import type { Post } from "@/integrations/supabase/types/post";
 import { DeleteConfirmDialog } from "@/components/feed/DeleteConfirmDialog";
 
