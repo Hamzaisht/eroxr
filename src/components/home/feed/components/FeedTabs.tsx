@@ -1,45 +1,59 @@
 
-import { useState } from "react";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { FeedHeader } from "../FeedHeader";
-import { FeedContent } from "../FeedContent";
-import { TrendingContent } from "../TrendingContent";
-import { LiveStreams } from "../../LiveStreams";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Plus, Upload, Radio } from "lucide-react";
 
 interface FeedTabsProps {
-  userId?: string;
   activeTab: string;
   onTabChange: (value: string) => void;
   onOpenCreatePost: () => void;
-  onFileSelect: () => void;
+  onFileSelect: (files: FileList | null) => void;  // Updated type
   onOpenGoLive: () => void;
 }
 
-export const FeedTabs = ({ 
-  userId, 
-  activeTab, 
+export const FeedTabs = ({
+  activeTab,
   onTabChange,
   onOpenCreatePost,
   onFileSelect,
-  onOpenGoLive 
+  onOpenGoLive,
 }: FeedTabsProps) => {
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange}>
-      <FeedHeader activeTab={activeTab} onTabChange={onTabChange} />
-
-      <div className="mt-6">
-        <TabsContent value="feed" className="space-y-4 animate-fade-up">
-          <FeedContent userId={userId} />
-        </TabsContent>
-
-        <TabsContent value="trending" className="space-y-4 animate-fade-up">
-          <TrendingContent />
-        </TabsContent>
-
-        <TabsContent value="live" className="space-y-4 animate-fade-up">
-          <LiveStreams onGoLive={onOpenGoLive} />
-        </TabsContent>
+    <div className="flex items-center justify-between">
+      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+        <TabsList className="w-full justify-start">
+          <TabsTrigger value="feed">For You</TabsTrigger>
+          <TabsTrigger value="trending">Trending</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.accept = 'image/*,video/*';
+            input.onchange = (e) => {
+              const target = e.target as HTMLInputElement;
+              if (target.files) {
+                onFileSelect(target.files);
+              }
+            };
+            input.click();
+          }}
+        >
+          <Upload className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={onOpenCreatePost}>
+          <Plus className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={onOpenGoLive}>
+          <Radio className="h-4 w-4" />
+        </Button>
       </div>
-    </Tabs>
+    </div>
   );
 };
