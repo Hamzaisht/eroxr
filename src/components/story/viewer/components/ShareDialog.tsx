@@ -24,6 +24,11 @@ interface Follower {
   following: Profile;
 }
 
+interface FollowerResponse {
+  following_id: string;
+  following: Profile;
+}
+
 export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) => {
   const session = useSession();
   const { toast } = useToast();
@@ -41,9 +46,11 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
         .eq('follower_id', session?.user?.id);
 
       if (error) throw error;
-      return (data || []).map(item => ({
+      
+      const typedData = data as FollowerResponse[];
+      return typedData.map(item => ({
         following_id: item.following_id,
-        following: item.following as Profile
+        following: item.following
       }));
     },
     enabled: !!session?.user?.id

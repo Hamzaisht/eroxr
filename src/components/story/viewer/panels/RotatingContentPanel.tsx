@@ -78,10 +78,10 @@ export const RotatingContentPanel = () => {
 
   return (
     <div className="h-full bg-black/20 backdrop-blur-sm rounded-r-xl overflow-hidden">
-      <Carousel value={activeSection} onValueChange={(value) => setActiveSection(value)}>
+      <Carousel>
         <CarouselContent>
           {/* Exclusive Creators Section */}
-          <CarouselItem>
+          <CarouselItem className={activeSection === 0 ? 'block' : 'hidden'}>
             <div className="p-6 space-y-4">
               <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-luxury-primary" />
@@ -125,7 +125,7 @@ export const RotatingContentPanel = () => {
           </CarouselItem>
 
           {/* News & Updates Section */}
-          <CarouselItem>
+          <CarouselItem className={activeSection === 1 ? 'block' : 'hidden'}>
             <div className="p-6 space-y-4">
               <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                 <Zap className="w-5 h-5 text-luxury-primary" />
@@ -161,7 +161,7 @@ export const RotatingContentPanel = () => {
           </CarouselItem>
 
           {/* Live Streams Section */}
-          <CarouselItem>
+          <CarouselItem className={activeSection === 2 ? 'block' : 'hidden'}>
             <div className="p-6 space-y-4">
               <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                 <Radio className="w-5 h-5 text-luxury-primary" />
