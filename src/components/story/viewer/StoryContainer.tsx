@@ -7,6 +7,7 @@ import { StoryProgress } from "./StoryProgress";
 import { StoryHeader } from "./StoryHeader";
 import { StoryActions } from "./StoryActions";
 import { ViewersSheet } from "./ViewersSheet";
+import { RotatingContentPanel } from "./panels/RotatingContentPanel";
 
 interface StoryContainerProps {
   stories: Story[];
@@ -41,58 +42,66 @@ export const StoryContainer = ({
 }: StoryContainerProps) => {
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center z-[100] overflow-hidden">
-      <div className="relative w-full h-full md:max-w-[500px] mx-auto bg-black overflow-hidden">
-        <div className="absolute inset-0 flex flex-col overflow-hidden">
-          {/* Progress Bar */}
-          <div className="absolute top-0 left-0 right-0 z-50 p-4">
-            <StoryProgress
-              stories={stories}
-              currentIndex={currentIndex}
-              progress={progress}
-              isPaused={isPaused}
-            />
-          </div>
+      <div className="relative w-full h-full lg:h-[85vh] max-w-[1400px] mx-auto flex">
+        {/* Story Section */}
+        <div className="relative flex-1 bg-black overflow-hidden">
+          <div className="absolute inset-0 flex flex-col overflow-hidden">
+            {/* Progress Bar */}
+            <div className="absolute top-0 left-0 right-0 z-50 p-4">
+              <StoryProgress
+                stories={stories}
+                currentIndex={currentIndex}
+                progress={progress}
+                isPaused={isPaused}
+              />
+            </div>
 
-          {/* Story Header */}
-          <StoryHeader
-            story={currentStory}
-            timeRemaining={timeRemaining}
-            onClose={onClose}
-          />
-
-          {/* Main Content */}
-          <div className="flex-1 relative overflow-hidden">
-            <StoryContent
+            {/* Story Header */}
+            <StoryHeader
               story={currentStory}
+              timeRemaining={timeRemaining}
+              onClose={onClose}
+            />
+
+            {/* Main Content */}
+            <div className="flex-1 relative overflow-hidden">
+              <StoryContent
+                story={currentStory}
+                onNext={onNext}
+                isPaused={isPaused}
+              />
+            </div>
+
+            {/* Navigation and Controls */}
+            <StoryControls
+              onPrevious={onPrevious}
               onNext={onNext}
-              isPaused={isPaused}
+              onPause={onPause}
+              onResume={onResume}
+            />
+
+            {/* Action Buttons */}
+            <div className="absolute bottom-4 right-4 z-50">
+              <StoryActions
+                story={currentStory}
+                onDelete={onDelete}
+                onEdit={onEdit}
+              />
+            </div>
+
+            {/* Navigation Buttons */}
+            <NavigationButtons
+              onPrevious={onPrevious}
+              onNext={onNext}
+              currentIndex={currentIndex}
+              totalStories={stories.length}
             />
           </div>
+        </div>
 
-          {/* Navigation and Controls */}
-          <StoryControls
-            onPrevious={onPrevious}
-            onNext={onNext}
-            onPause={onPause}
-            onResume={onResume}
-          />
-
-          {/* Action Buttons */}
-          <div className="absolute bottom-4 right-4 z-50">
-            <StoryActions
-              story={currentStory}
-              onDelete={onDelete}
-              onEdit={onEdit}
-            />
-          </div>
-
-          {/* Navigation Buttons */}
-          <NavigationButtons
-            onPrevious={onPrevious}
-            onNext={onNext}
-            currentIndex={currentIndex}
-            totalStories={stories.length}
-          />
+        {/* Rotating Content Panel - Only visible on desktop */}
+        <div className="hidden lg:block w-[500px]">
+          <RotatingContentPanel />
         </div>
       </div>
     </div>
