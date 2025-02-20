@@ -9,7 +9,6 @@ export const usePostActions = () => {
 
   const handleDelete = async (postId: string, creatorId: string) => {
     try {
-      // First, try to delete the post
       const { error } = await supabase
         .from('posts')
         .delete()
@@ -18,10 +17,12 @@ export const usePostActions = () => {
 
       if (error) throw error;
 
-      // Invalidate and refetch immediately
+      // Invalidate and refetch all relevant queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['posts'] }),
-        queryClient.invalidateQueries({ queryKey: ['profile-media'] })
+        queryClient.invalidateQueries({ queryKey: ['profile-media'] }),
+        queryClient.invalidateQueries({ queryKey: ['eros'] }),
+        queryClient.invalidateQueries({ queryKey: ['eroboard'] })
       ]);
       
       toast({
@@ -73,7 +74,6 @@ export const usePostActions = () => {
         });
       }
 
-      // Invalidate and refetch immediately
       await queryClient.invalidateQueries({ queryKey: ['posts'] });
     } catch (error) {
       console.error('Like error:', error);

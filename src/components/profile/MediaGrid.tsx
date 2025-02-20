@@ -1,4 +1,3 @@
-
 import { Lock, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import type { Post } from "@/integrations/supabase/types/post";
+import { DeleteConfirmDialog } from "@/components/feed/DeleteConfirmDialog";
 
 interface MediaGridProps {
   onImageClick: (url: string) => void;
@@ -28,11 +28,11 @@ type MediaItem = {
 
 export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
+  const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const session = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Set up real-time subscription for posts
   useEffect(() => {
     if (!session?.user?.id) return;
 
@@ -110,8 +110,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
       return media;
     },
     enabled: !!session?.user?.id,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache
+    staleTime: 0,
+    gcTime: 0,
     initialData: [] as MediaItem[],
   });
 
@@ -143,10 +143,11 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         description: "Post deleted successfully",
       });
 
-      // Manually invalidate queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["profile-media", session.user.id] }),
-        queryClient.invalidateQueries({ queryKey: ["posts"] })
+        queryClient.invalidateQueries({ queryKey: ["posts"] }),
+        queryClient.invalidateQueries({ queryKey: ["eros"] }),
+        queryClient.invalidateQueries({ queryKey: ["eroboard"] })
       ]);
     } catch (err) {
       console.error('Delete error:', err);
@@ -155,6 +156,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         description: "Failed to delete post",
         variant: "destructive",
       });
+    } finally {
+      setDeletePostId(null);
     }
   };
 
@@ -217,7 +220,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
               className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
-                handleDelete(mediaItem.id);
+                setDeletePostId(mediaItem.id);
               }}
             >
               <Button
@@ -283,6 +286,12 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
       <MediaViewer 
         media={selectedMedia}
         onClose={() => setSelectedMedia(null)}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deletePostId}
+        onOpenChange={(open) => !open && setDeletePostId(null)}
+        onConfirm={() => deletePostId && handleDelete(deletePostId)}
       />
     </>
   );
