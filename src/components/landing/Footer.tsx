@@ -1,5 +1,5 @@
 
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
+import { Facebook, Twitter, Instagram, Youtube, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -94,17 +94,53 @@ const Footer = () => {
         <div className="border-t border-luxury-neutral/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex space-x-6 mb-4 md:mb-0">
-              <a href="https://twitter.com" className="hover:text-luxury-primary transition-colors">
-                <Twitter className="h-5 w-5" />
+              {/* Social Media Buttons with Hover Animation */}
+              <a 
+                href="https://twitter.com" 
+                className="group relative inline-block overflow-hidden px-2 py-2 text-white hover:text-luxury-primary transition-colors"
+              >
+                <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-full">
+                  <Twitter className="h-5 w-5" />
+                </span>
+                <span className="absolute left-0 top-0 h-full w-full flex items-center justify-center transition-transform duration-300 translate-y-full group-hover:translate-y-0">
+                  <Twitter className="h-5 w-5" />
+                </span>
               </a>
-              <a href="https://facebook.com" className="hover:text-luxury-primary transition-colors">
-                <Facebook className="h-5 w-5" />
+
+              <a 
+                href="https://facebook.com" 
+                className="group relative inline-block overflow-hidden px-2 py-2 text-white hover:text-luxury-primary transition-colors"
+              >
+                <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-full">
+                  <Facebook className="h-5 w-5" />
+                </span>
+                <span className="absolute left-0 top-0 h-full w-full flex items-center justify-center transition-transform duration-300 translate-y-full group-hover:translate-y-0">
+                  <Facebook className="h-5 w-5" />
+                </span>
               </a>
-              <a href="https://instagram.com" className="hover:text-luxury-primary transition-colors">
-                <Instagram className="h-5 w-5" />
+
+              <a 
+                href="https://instagram.com" 
+                className="group relative inline-block overflow-hidden px-2 py-2 text-white hover:text-luxury-primary transition-colors"
+              >
+                <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-full">
+                  <Instagram className="h-5 w-5" />
+                </span>
+                <span className="absolute left-0 top-0 h-full w-full flex items-center justify-center transition-transform duration-300 translate-y-full group-hover:translate-y-0">
+                  <Instagram className="h-5 w-5" />
+                </span>
               </a>
-              <a href="https://youtube.com" className="hover:text-luxury-primary transition-colors">
-                <Youtube className="h-5 w-5" />
+
+              <a 
+                href="https://youtube.com" 
+                className="group relative inline-block overflow-hidden px-2 py-2 text-white hover:text-luxury-primary transition-colors"
+              >
+                <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-full">
+                  <Youtube className="h-5 w-5" />
+                </span>
+                <span className="absolute left-0 top-0 h-full w-full flex items-center justify-center transition-transform duration-300 translate-y-full group-hover:translate-y-0">
+                  <Youtube className="h-5 w-5" />
+                </span>
               </a>
             </div>
 
