@@ -15,16 +15,24 @@ interface StoryActionsProps {
   onEdit?: () => void;
 }
 
+interface StoryStats {
+  views: number;
+  likes: number;
+  shares: number;
+  screenshots: number;
+}
+
 export const StoryActions = ({ 
   story,
   onDelete,
   onEdit 
 }: StoryActionsProps) => {
-  const stats = {
-    views: story.views || 0,
-    likes: story.likes || 0,
-    shares: story.shares || 0,
-    screenshots: story.screenshots || 0
+  // Initialize default stats since these fields don't exist in the Story type
+  const stats: StoryStats = {
+    views: 0,
+    likes: 0,
+    shares: 0,
+    screenshots: 0
   };
 
   const isOwner = true; // You might want to compute this based on the user session
