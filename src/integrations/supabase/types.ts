@@ -1108,6 +1108,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payout_requests: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          creator_id: string
+          final_amount: number
+          id: string
+          notes: string | null
+          platform_fee: number
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          creator_id: string
+          final_amount: number
+          id?: string
+          notes?: string | null
+          platform_fee: number
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          creator_id?: string
+          final_amount?: number
+          id?: string
+          notes?: string | null
+          platform_fee?: number
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       platform_features: {
         Row: {
           created_at: string | null

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Loader2, TrendingUp, Users, Eye, DollarSign, BarChart3 } from "lucide-react";
@@ -34,85 +35,70 @@ export default function Eroboard() {
     processed_at: string | null;
   } | null>(null);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!session?.user?.id) return;
+  const fetchDashboardData = async () => {
+    if (!session?.user?.id) return;
 
-      try {
-        // Fetch total earnings from PPV content by joining posts and post_purchases
-        const { data: earningsData, error: earningsError } = await supabase
-          .from('posts')
-          .select(`
-            id,
-            post_purchases!inner (
-              amount
-            )
-          `)
-          .eq('creator_id', session.user.id);
+    try {
+      // Fetch total earnings from PPV content by joining posts and post_purchases
+      const { data: earningsData, error: earningsError } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          post_purchases!inner (
+            amount
+          )
+        `)
+        .eq('creator_id', session.user.id);
 
-        if (earningsError) throw earningsError;
+      if (earningsError) throw earningsError;
 
-        // Calculate total earnings from post purchases
-        const totalEarnings = earningsData?.reduce((sum, post) => {
-          const purchases = post.post_purchases || [];
-          return sum + purchases.reduce((postSum: number, purchase: any) => postSum + (purchase.amount || 0), 0);
-        }, 0) || 0;
+      // Calculate total earnings from post purchases
+      const totalEarnings = earningsData?.reduce((sum, post) => {
+        const purchases = post.post_purchases || [];
+        return sum + purchases.reduce((postSum: number, purchase: any) => postSum + (purchase.amount || 0), 0);
+      }, 0) || 0;
 
-        // Fetch subscriber count
-        const { data: subscribersData, error: subscribersError } = await supabase
-          .from('creator_subscriptions')
-          .select('id')
-          .eq('creator_id', session.user.id);
+      // Fetch subscriber count
+      const { data: subscribersData, error: subscribersError } = await supabase
+        .from('creator_subscriptions')
+        .select('id')
+        .eq('creator_id', session.user.id);
 
-        if (subscribersError) throw subscribersError;
+      if (subscribersError) throw subscribersError;
 
-        // Fetch followers count
-        const { data: followersData, error: followersError } = await supabase
-          .from('followers')
-          .select('id')
-          .eq('following_id', session.user.id);
+      // Fetch followers count
+      const { data: followersData, error: followersError } = await supabase
+        .from('followers')
+        .select('id')
+        .eq('following_id', session.user.id);
 
-        if (followersError) throw followersError;
+      if (followersError) throw followersError;
 
-        const subscriberCount = subscribersData?.length || 0;
-        const followerCount = followersData?.length || 0;
+      const subscriberCount = subscribersData?.length || 0;
+      const followerCount = followersData?.length || 0;
 
-        // Calculate engagement rate as a number
-        const engagementRate = followerCount > 0 
-          ? Number(((subscriberCount / followerCount) * 100).toFixed(1))
-          : 0;
+      // Calculate engagement rate as a number
+      const engagementRate = followerCount > 0 
+        ? Number(((subscriberCount / followerCount) * 100).toFixed(1))
+        : 0;
 
-        setStats(prev => ({
-          ...prev,
-          totalEarnings: totalEarnings * stats.revenueShare,
-          totalSubscribers: subscriberCount,
-          followers: followerCount,
-          engagementRate
-        }));
+      setStats(prev => ({
+        ...prev,
+        totalEarnings: totalEarnings * stats.revenueShare,
+        totalSubscribers: subscriberCount,
+        followers: followerCount,
+        engagementRate
+      }));
 
-        // Mock data for content types (replace with real data)
-        setContentTypeData([
-          { name: 'Photos', value: 35 },
-          { name: 'Videos', value: 45 },
-          { name: 'Stories', value: 20 }
-        ]);
+      // Mock data for content types (replace with real data)
+      setContentTypeData([
+        { name: 'Photos', value: 35 },
+        { name: 'Videos', value: 45 },
+        { name: 'Stories', value: 20 }
+      ]);
 
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        toast({
-          variant: "destructive",
-          title: "Error fetching dashboard data",
-          description: "Please try again later."
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchLatestPayout = async () => {
-      if (!session?.user?.id) return;
-
-      const { data, error } = await supabase
+      // Fetch latest payout status
+      const { data: latestPayoutData, error: payoutError } = await supabase
         .from('payout_requests')
         .select('*')
         .eq('creator_id', session.user.id)
@@ -120,28 +106,27 @@ export default function Eroboard() {
         .limit(1)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching payout status:', error);
+      if (!payoutError) {
+        setLatestPayout(latestPayoutData);
       }
 
-      if (data) {
-        setLatestPayout(data);
-      }
-    };
-
-    fetchDashboardData();
-    fetchLatestPayout();
-  }, [session?.user?.id, toast]);
-
-  const handleRequestPayout = () => {
-    toast({
-      title: "Payout Requested",
-      description: "Your payout request has been submitted and will be processed within 2 weeks.",
-    });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        variant: "destructive",
+        title: "Error fetching dashboard data",
+        description: "Please try again later."
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchDashboardData();
+  }, [session?.user?.id]);
+
   const handlePayoutSuccess = () => {
-    // Refresh payout status
     fetchDashboardData();
   };
 
