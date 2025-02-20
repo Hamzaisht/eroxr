@@ -36,17 +36,20 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     }, [isPaused, ref, handleError]);
 
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-black">
+      <div className="absolute inset-0 flex items-center justify-center bg-black aspect-[9/16] w-full h-full">
         <video
           ref={ref}
           src={videoUrl}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
           playsInline
           autoPlay
           muted={false}
           controls={false}
           onEnded={onEnded}
           onError={handleError}
+          style={{
+            objectPosition: 'center center'
+          }}
         />
       </div>
     );

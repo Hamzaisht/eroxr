@@ -81,11 +81,11 @@ export const StoryContainer = ({
 
       {/* Story Container */}
       <div 
-        className={`relative ${
+        className={`relative overflow-hidden ${
           isMobile 
-            ? 'w-full h-[100dvh]' 
-            : 'w-[400px] h-[90vh] max-h-[90vh]'
-        } mx-auto bg-black aspect-[9/16]`}
+            ? 'w-full h-[100dvh] max-h-[100dvh]' 
+            : 'w-[calc(min(100vw,calc(100vh*9/16)))] h-[100vh] max-h-[100vh]'
+        } bg-black m-0`}
       >
         {/* Progress Bar */}
         <div className="absolute top-0 left-0 right-0 z-[101] p-4">

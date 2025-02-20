@@ -13,13 +13,16 @@ export const StoryImage = ({ mediaUrl, username, isPaused }: StoryImageProps) =>
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 flex items-center justify-center bg-black"
+      className="absolute inset-0 bg-black aspect-[9/16] w-full h-full"
     >
       <img
         src={mediaUrl}
         alt={`Story by ${username}`}
-        className="w-full h-full object-contain"
+        className="w-full h-full object-cover"
         loading="eager"
+        style={{
+          objectPosition: 'center center'
+        }}
       />
     </motion.div>
   );

@@ -23,7 +23,7 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
       exit={{ opacity: 0 }}
       className="w-full h-full flex items-center justify-center"
     >
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full aspect-[9/16] overflow-hidden">
         {isVideo ? (
           <StoryVideo
             ref={videoRef}
