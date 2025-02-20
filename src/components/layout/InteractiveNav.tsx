@@ -8,6 +8,7 @@ import { NavMenuItem } from "./nav/NavMenuItem";
 import { UserProfileSection } from "./nav/UserProfileSection";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
@@ -35,7 +36,7 @@ export const InteractiveNav = () => {
         <Button 
           variant="ghost" 
           size="icon"
-          className="fixed top-3 left-4 z-50 md:hidden"
+          className="fixed top-3 left-4 z-50 md:hidden bg-white/5 hover:bg-white/10 backdrop-blur-lg"
         >
           <Menu className="h-6 w-6" />
         </Button>
@@ -89,7 +90,12 @@ export const InteractiveNav = () => {
         width: isExpanded ? 240 : 80,
         transition: { duration: 0.3, ease: "easeInOut" }
       }}
-      className="fixed left-0 top-0 h-screen bg-gradient-to-b from-[#0D1117]/95 via-[#161B22]/95 to-[#0D1117]/95 backdrop-blur-xl border-r border-luxury-primary/10 z-50 overflow-hidden hidden md:block"
+      className={cn(
+        "fixed left-0 top-0 h-screen z-50 hidden md:block",
+        "bg-gradient-to-b from-[#0D1117]/95 via-[#161B22]/95 to-[#0D1117]/95",
+        "backdrop-blur-xl border-r border-luxury-primary/10",
+        "overflow-hidden transition-all duration-300"
+      )}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
@@ -103,7 +109,11 @@ export const InteractiveNav = () => {
           whileHover={{ scale: 1.05 }}
           onClick={() => navigate("/")}
         >
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent cursor-pointer">
+          <h1 className={cn(
+            "font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary",
+            "bg-clip-text text-transparent cursor-pointer transition-all duration-300",
+            isExpanded ? "text-2xl" : "text-xl text-center"
+          )}>
             {isExpanded ? "Eroxr" : "E"}
           </h1>
         </motion.div>

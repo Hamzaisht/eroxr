@@ -42,7 +42,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
             <video
               ref={ref}
               src={videoUrl}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
               playsInline
               autoPlay
               muted={false}
@@ -52,7 +52,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
               style={{
                 maxHeight: '100vh',
                 backgroundColor: 'black',
-                objectFit: 'contain'
+                objectFit: 'cover'
               }}
             />
           </div>
