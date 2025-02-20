@@ -67,73 +67,75 @@ export const StoryReel = () => {
   if (error) return <StoryErrorState error={error} />;
 
   return (
-    <div className="relative w-full bg-gradient-to-r from-luxury-dark/60 via-luxury-darker/40 to-luxury-dark/60 backdrop-blur-xl rounded-xl p-6 shadow-xl">
-      <StoryReelHeader />
-      
-      <div className="relative">
-        <div
-          ref={containerRef}
-          className="flex gap-5 overflow-x-auto scrollbar-hide relative py-4 px-2"
-        >
-          {session && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              className="shrink-0"
-            >
-              <StoryUploader />
-            </motion.div>
-          )}
-          
-          {Object.entries(groupedStories).map(([creatorId, creatorStories], index) => (
-            <motion.div 
-              key={creatorId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="relative shrink-0"
-            >
-              <StoryItem
-                story={creatorStories[0]}
-                isStacked={creatorStories.length > 1}
-                stackCount={creatorStories.length - 1}
-                onDelete={
-                  session?.user?.id === creatorId 
-                    ? () => handleDeleteStory(creatorStories[0].id)
-                    : undefined
-                }
-                onClick={() => {
-                  const index = stories.findIndex(s => s.id === creatorStories[0].id);
-                  setSelectedStoryIndex(index);
-                }}
-              />
-            </motion.div>
-          ))}
-
-          {stories.length === 0 && !isLoading && (
-            <div className="flex flex-col items-center justify-center w-full py-8">
+    <div className="w-full mx-auto px-0 sm:px-2 md:px-4 py-4 space-y-6">
+      <div className="relative bg-gradient-to-r from-luxury-dark/60 via-luxury-darker/40 to-luxury-dark/60 backdrop-blur-xl rounded-xl p-6 shadow-xl">
+        <StoryReelHeader />
+        
+        <div className="relative">
+          <div
+            ref={containerRef}
+            className="flex gap-5 overflow-x-auto scrollbar-hide relative py-4 px-2"
+          >
+            {session && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-white/60 text-sm"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="shrink-0"
               >
-                No stories yet
+                <StoryUploader />
               </motion.div>
-            </div>
+            )}
+            
+            {Object.entries(groupedStories).map(([creatorId, creatorStories], index) => (
+              <motion.div 
+                key={creatorId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="relative shrink-0"
+              >
+                <StoryItem
+                  story={creatorStories[0]}
+                  isStacked={creatorStories.length > 1}
+                  stackCount={creatorStories.length - 1}
+                  onDelete={
+                    session?.user?.id === creatorId 
+                      ? () => handleDeleteStory(creatorStories[0].id)
+                      : undefined
+                  }
+                  onClick={() => {
+                    const index = stories.findIndex(s => s.id === creatorStories[0].id);
+                    setSelectedStoryIndex(index);
+                  }}
+                />
+              </motion.div>
+            ))}
+
+            {stories.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center w-full py-8">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-white/60 text-sm"
+                >
+                  No stories yet
+                </motion.div>
+              </div>
+            )}
+          </div>
+
+          {stories.length > (isMobile ? 3 : 5) && (
+            <StoryNavigation 
+              onScroll={(direction) => {
+                if (containerRef.current) {
+                  const scrollAmount = direction === "left" ? -200 : 200;
+                  containerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+                }
+              }} 
+            />
           )}
         </div>
-
-        {stories.length > (isMobile ? 3 : 5) && (
-          <StoryNavigation 
-            onScroll={(direction) => {
-              if (containerRef.current) {
-                const scrollAmount = direction === "left" ? -200 : 200;
-                containerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-              }
-            }} 
-          />
-        )}
       </div>
       
       {selectedStoryIndex !== null && (
