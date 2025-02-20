@@ -1,5 +1,4 @@
-
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +14,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { Shield, AlertTriangle, Ban, CheckCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface Report {
   id: string;
@@ -52,6 +63,88 @@ interface Profile {
 }
 
 export const ErosMode = () => {
+  const session = useSession();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Check if user is super admin
+  const isGodMode = session?.user?.email === 'hamzaishtiaq242@gmail.com';
+
+  if (!isGodMode) {
+    navigate('/');
+    return null;
+  }
+
+  // Mutation for handling reports
+  const handleReport = useMutation({
+    mutationFn: async ({ reportId, action }: { reportId: string; action: string }) => {
+      const { error } = await supabase
+        .from('reports')
+        .update({ 
+          status: action === 'dismiss' ? 'dismissed' : 'resolved',
+          action_taken: action
+        })
+        .eq('id', reportId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
+      toast({
+        title: "Report Updated",
+        description: "The report has been successfully handled.",
+      });
+    },
+  });
+
+  // Mutation for handling DMCA requests
+  const handleDMCA = useMutation({
+    mutationFn: async ({ requestId, action }: { requestId: string; action: 'approve' | 'reject' }) => {
+      const { error } = await supabase
+        .from('dmca_requests')
+        .update({ 
+          status: action === 'approve' ? 'approved' : 'rejected',
+          takedown_date: action === 'approve' ? new Date().toISOString() : null
+        })
+        .eq('id', requestId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-dmca'] });
+      toast({
+        title: "DMCA Request Updated",
+        description: "The DMCA request has been processed.",
+      });
+    },
+  });
+
+  // Mutation for handling content classifications
+  const handleClassification = useMutation({
+    mutationFn: async ({ 
+      classificationId, 
+      visibility 
+    }: { 
+      classificationId: string; 
+      visibility: string 
+    }) => {
+      const { error } = await supabase
+        .from('content_classifications')
+        .update({ visibility })
+        .eq('id', classificationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-classifications'] });
+      toast({
+        title: "Classification Updated",
+        description: "The content classification has been updated.",
+      });
+    },
+  });
+
   // Fetch active reports
   const { data: reports } = useQuery({
     queryKey: ['admin-reports'],
@@ -139,9 +232,9 @@ export const ErosMode = () => {
       </div>
 
       <Tabs defaultValue="reports" className="w-full">
-        <TabsList>
-          <TabsTrigger value="reports">Active Reports</TabsTrigger>
-          <TabsTrigger value="dmca">DMCA Requests</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="reports">Active Reports ({reports?.length || 0})</TabsTrigger>
+          <TabsTrigger value="dmca">DMCA Requests ({dmcaRequests?.length || 0})</TabsTrigger>
           <TabsTrigger value="classifications">Content Classifications</TabsTrigger>
         </TabsList>
 
@@ -181,15 +274,84 @@ export const ErosMode = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Shield className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Ban className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <CheckCircle className="w-4 h-4" />
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <Shield className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Review Report</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to review this report?
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button 
+                                onClick={() => handleReport.mutate({ 
+                                  reportId: report.id, 
+                                  action: 'review'
+                                })}
+                              >
+                                Confirm Review
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <Ban className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Ban User</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to ban this user?
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button 
+                                variant="destructive"
+                                onClick={() => handleReport.mutate({ 
+                                  reportId: report.id, 
+                                  action: 'ban'
+                                })}
+                              >
+                                Confirm Ban
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Dismiss Report</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to dismiss this report?
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button 
+                                onClick={() => handleReport.mutate({ 
+                                  reportId: report.id, 
+                                  action: 'dismiss'
+                                })}
+                              >
+                                Confirm Dismiss
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -226,12 +388,58 @@ export const ErosMode = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
-                          <AlertTriangle className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <CheckCircle className="w-4 h-4" />
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <AlertTriangle className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Reject DMCA Request</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to reject this DMCA request?
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button 
+                                variant="destructive"
+                                onClick={() => handleDMCA.mutate({ 
+                                  requestId: request.id, 
+                                  action: 'reject'
+                                })}
+                              >
+                                Confirm Reject
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Approve DMCA Request</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to approve this DMCA takedown request?
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button 
+                                onClick={() => handleDMCA.mutate({ 
+                                  requestId: request.id, 
+                                  action: 'approve'
+                                })}
+                              >
+                                Confirm Approval
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -267,9 +475,47 @@ export const ErosMode = () => {
                       {formatDistanceToNow(new Date(classification.created_at), { addSuffix: true })}
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline">
-                        Edit
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            Edit
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Update Content Visibility</DialogTitle>
+                            <DialogDescription>
+                              Choose the new visibility setting for this content.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4">
+                            <Button 
+                              onClick={() => handleClassification.mutate({
+                                classificationId: classification.id,
+                                visibility: 'public'
+                              })}
+                            >
+                              Make Public
+                            </Button>
+                            <Button 
+                              onClick={() => handleClassification.mutate({
+                                classificationId: classification.id,
+                                visibility: 'private'
+                              })}
+                            >
+                              Make Private
+                            </Button>
+                            <Button 
+                              onClick={() => handleClassification.mutate({
+                                classificationId: classification.id,
+                                visibility: 'subscribers_only'
+                              })}
+                            >
+                              Subscribers Only
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </TableCell>
                   </TableRow>
                 ))}
