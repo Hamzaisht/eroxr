@@ -1,3 +1,4 @@
+
 import { Post as PostType } from "./types";
 import { User } from "@supabase/auth-helpers-react";
 import { Creator } from "@/integrations/supabase/types/profile";
@@ -20,6 +21,7 @@ interface PostProps {
   currentUser: User | null;
   onEdit?: (postId: string) => void;
   onDelete?: (postId: string) => void;
+  onLike?: (postId: string) => void;  // Added this prop
 }
 
 export const Post = ({ 
@@ -27,7 +29,8 @@ export const Post = ({
   creator, 
   currentUser, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onLike 
 }: PostProps) => {
   const isOwner = currentUser?.id === creator.id;
   const hasAccess = !post.is_ppv || post.has_purchased || isOwner;
@@ -38,6 +41,10 @@ export const Post = ({
 
   const handleDelete = () => {
     if (onDelete) onDelete(post.id);
+  };
+
+  const handleLike = () => {
+    if (onLike) onLike(post.id);
   };
 
   return (
