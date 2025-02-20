@@ -1,4 +1,3 @@
-
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -11,10 +10,10 @@ const RollingText = ({ children, href }: { children: string; href: string }) => 
       to={href} 
       className="group relative inline-block overflow-hidden px-4 py-2 text-white"
     >
-      <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-full">
+      <span className="relative inline-block transition-transform duration-300 group-hover:translate-y-full opacity-0">
         {children}
       </span>
-      <span className="absolute left-0 inline-block translate-y-full transition-transform duration-300 group-hover:translate-y-0">
+      <span className="absolute left-0 top-0 inline-block transition-transform duration-300">
         {children}
       </span>
     </Link>
@@ -122,13 +121,11 @@ export const Hero3D = () => {
                 </RollingText>
               ))}
               
-              <Button 
-                variant="ghost" 
-                asChild 
-                className="text-white hover:bg-transparent"
-              >
-                <Link to="/login">Log In</Link>
-              </Button>
+              <Link to="/login">
+                <WaveButton className="bg-transparent hover:bg-luxury-primary/10 transition-all duration-300">
+                  Log In
+                </WaveButton>
+              </Link>
               
               <Link to="/register">
                 <WaveButton className="bg-luxury-primary">
