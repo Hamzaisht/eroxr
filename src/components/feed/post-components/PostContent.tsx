@@ -9,8 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface PostContentProps {
   content: string;
-  mediaUrls?: string[];
-  videoUrls?: string[];
+  mediaUrls?: string[] | null;
+  videoUrls?: string[] | null;
   creatorId: string;
   onMediaClick: (url: string) => void;
 }
@@ -24,7 +24,8 @@ export const PostContent = ({
 }: PostContentProps) => {
   const [loadError, setLoadError] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
-  const hasMedia = mediaUrls.length > 0 || videoUrls.length > 0;
+  // Safely check if either array has content
+  const hasMedia = (mediaUrls?.length ?? 0) > 0 || (videoUrls?.length ?? 0) > 0;
 
   const getPublicUrl = (url: string) => {
     if (!url) return '';
