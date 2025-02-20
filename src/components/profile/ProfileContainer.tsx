@@ -25,8 +25,6 @@ export const ProfileContainer = ({ id, isEditing = false, setIsEditing }: Profil
       const targetId = id || session?.user?.id;
       if (!targetId) throw new Error("No user ID provided");
 
-      console.log("Fetching profile for ID:", targetId); // Debug log
-
       const { data, error } = await supabase
         .from("profiles")
         .select()
@@ -44,7 +42,7 @@ export const ProfileContainer = ({ id, isEditing = false, setIsEditing }: Profil
       }
 
       if (!data) {
-        console.log("No profile found for ID:", targetId); // Debug log
+        console.log("No profile found for ID:", targetId);
         return null;
       }
 
@@ -58,7 +56,7 @@ export const ProfileContainer = ({ id, isEditing = false, setIsEditing }: Profil
     return (
       <div className="w-full min-h-screen bg-luxury-dark">
         <div className="h-[40vh] sm:h-[50vh] md:h-[60vh] w-full bg-luxury-darker/50 animate-pulse" />
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="relative -mt-16 sm:-mt-20 md:-mt-24 flex flex-col items-center gap-4 sm:gap-6">
             <Skeleton className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full" />
             <Skeleton className="w-3/4 sm:w-2/3 md:w-1/2 h-8" />
@@ -90,7 +88,7 @@ export const ProfileContainer = ({ id, isEditing = false, setIsEditing }: Profil
         isEditing={isEditing}
         setIsEditing={setIsEditing}
       />
-      <div className="max-w-screen-2xl mx-auto">
+      <div className="w-full">
         <ProfileTabs profile={profile} />
       </div>
     </div>

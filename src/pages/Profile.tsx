@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ProfileContainer } from "@/components/profile/ProfileContainer";
 import { FloatingActionMenu } from "@/components/profile/FloatingActionMenu";
 import { useSession } from "@supabase/auth-helpers-react";
+import { ProfileEditModal } from "@/components/profile/ProfileEditModal";
 
 export default function Profile() {
   const { id } = useParams();
@@ -17,9 +19,9 @@ export default function Profile() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen bg-gradient-to-b from-[#1A1F2C] to-[#0D1117]"
+      className="min-h-screen w-full bg-gradient-to-b from-[#1A1F2C] to-[#0D1117]"
     >
-      <div className="max-w-[100vw] mx-auto">
+      <div className="w-full">
         <ProfileContainer
           id={id}
           isEditing={isEditing}
@@ -28,17 +30,24 @@ export default function Profile() {
       </div>
       
       {isOwnProfile && (
-        <FloatingActionMenu
-          onCreatePost={() => {
-            // Handle create post
-          }}
-          onCreateStory={() => {
-            // Handle create story
-          }}
-          onCreateDatingAd={() => {
-            // Handle create dating ad
-          }}
-        />
+        <>
+          <FloatingActionMenu
+            onCreatePost={() => {
+              // Handle create post
+            }}
+            onCreateStory={() => {
+              // Handle create story
+            }}
+            onCreateDatingAd={() => {
+              // Handle create dating ad
+            }}
+          />
+          <ProfileEditModal 
+            open={isEditing} 
+            onOpenChange={setIsEditing}
+            userId={id}
+          />
+        </>
       )}
     </motion.div>
   );
