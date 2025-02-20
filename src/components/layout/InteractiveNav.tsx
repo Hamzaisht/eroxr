@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -24,6 +25,9 @@ export const InteractiveNav = () => {
   const location = useLocation();
   const session = useSession();
   const isMobile = window.innerWidth <= 768;
+
+  // Check if user is super admin
+  const isGodMode = session?.user?.email === 'hamzaishtiaq242@gmail.com';
 
   const MobileNav = () => (
     <Sheet>
@@ -60,6 +64,16 @@ export const InteractiveNav = () => {
                 onClick={() => navigate(item.path)}
               />
             ))}
+            {isGodMode && (
+              <NavMenuItem
+                icon={Shield}
+                label="Platform Control"
+                path="/admin/features"
+                isActive={location.pathname === '/admin/features'}
+                isExpanded={true}
+                onClick={() => navigate('/admin/features')}
+              />
+            )}
           </div>
 
           {session && <UserProfileSection isExpanded={true} />}
@@ -106,6 +120,16 @@ export const InteractiveNav = () => {
               onClick={() => navigate(item.path)}
             />
           ))}
+          {isGodMode && (
+            <NavMenuItem
+              icon={Shield}
+              label="Platform Control"
+              path="/admin/features"
+              isActive={location.pathname === '/admin/features'}
+              isExpanded={isExpanded}
+              onClick={() => navigate('/admin/features')}
+            />
+          )}
         </div>
 
         {session && <UserProfileSection isExpanded={isExpanded} />}
