@@ -9,23 +9,23 @@ interface NavButtonsProps {
 export const NavButtons = ({ orientation = "horizontal" }: NavButtonsProps) => {
   return (
     <div className={`flex ${orientation === "vertical" ? "flex-col space-y-4" : "flex-row space-x-4"} items-center`}>
-      <Button variant="ghost" asChild>
+      <Button variant="ghost" asChild className="nav-item-liquid">
         <Link to="/about" className="text-luxury-neutral hover:text-white">
           About
         </Link>
       </Button>
-      <Button variant="ghost" asChild>
+      <Button variant="ghost" asChild className="nav-item-liquid">
         <Link to="/creators" className="text-luxury-neutral hover:text-white">
           Creators
         </Link>
       </Button>
-      <Button variant="ghost" asChild>
+      <Button variant="ghost" asChild className="nav-item-liquid">
         <Link to="/login" className="text-luxury-neutral hover:text-white">
           Log In
         </Link>
       </Button>
-      <Button asChild>
-        <Link to="/register" className="bg-luxury-primary hover:bg-luxury-primary/90">
+      <Button asChild className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-500">
+        <Link to="/register" className="text-white">
           Get Started
         </Link>
       </Button>

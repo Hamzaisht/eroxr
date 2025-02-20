@@ -46,88 +46,55 @@
 }
 
 @layer components {
-  .neo-card {
-    @apply relative overflow-hidden rounded-xl bg-black/20 backdrop-blur-xl border border-white/10 
-           transition-all duration-700 hover:border-white/20;
+  .eroxr-logo {
+    @apply relative text-3xl font-bold;
+    text-shadow: 0 0 20px rgba(155, 135, 245, 0.5);
+    background: linear-gradient(
+      to right,
+      #9b87f5,
+      #D946EF,
+      #9b87f5
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
   }
 
-  .glass-effect {
-    @apply backdrop-blur-xl bg-black/20 border border-white/10 rounded-xl 
-           transition-all duration-700;
-  }
-
-  .glass-card {
-    @apply backdrop-blur-xl bg-black/20 border border-white/10 rounded-xl 
-           transition-all duration-700 hover:bg-black/30 hover:border-white/20;
+  @keyframes shine {
+    to {
+      background-position: 200% center;
+    }
   }
 
   .nav-item-liquid {
-    @apply relative flex items-center gap-3 w-full overflow-visible rounded-lg;
-    
-    .nav-item-content {
-      @apply relative z-30 flex items-center gap-3 w-full;
-    }
+    @apply relative overflow-hidden rounded-lg transition-all duration-300;
     
     &::before {
       content: '';
-      @apply absolute -inset-[1px] opacity-0 transition-all duration-1000 ease-out rounded-lg z-10;
-      background: 
-        linear-gradient(90deg, 
-          transparent 0%,
-          rgba(155, 135, 245, 0.3) 10%,
-          rgba(217, 70, 239, 0.4) 50%,
-          rgba(155, 135, 245, 0.3) 90%,
-          transparent 100%
-        );
-      mask: linear-gradient(black, black) padding-box,
-            linear-gradient(black, black) border-box;
-      mask-composite: xor;
-      transform-origin: var(--mouse-x) var(--mouse-y);
-      transform: scale(0.98) translateZ(0);
-      filter: drop-shadow(0 0 20px rgba(155, 135, 245, 0.5));
-      box-shadow: 
-        0 0 30px rgba(155, 135, 245, 0.4),
-        0 0 60px rgba(217, 70, 239, 0.3);
-    }
-    
-    &::after {
-      content: '';
-      @apply absolute -inset-[1px] opacity-0 transition-all duration-700 rounded-lg z-20;
-      background: 
-        linear-gradient(90deg,
-          transparent 0%,
-          rgba(155, 135, 245, 0.5) 20%,
-          rgba(217, 70, 239, 0.6) 50%,
-          rgba(155, 135, 245, 0.5) 80%,
-          transparent 100%
-        );
-      mask: linear-gradient(black, black) padding-box,
-            linear-gradient(black, black) border-box;
-      mask-composite: xor;
-      transform: translateZ(0);
-      filter: drop-shadow(0 0 25px rgba(217, 70, 239, 0.6));
-      box-shadow: 
-        0 0 40px rgba(155, 135, 245, 0.5),
-        0 0 80px rgba(217, 70, 239, 0.4);
+      @apply absolute inset-0 bg-gradient-to-r from-luxury-primary/20 to-luxury-accent/20 opacity-0 transition-opacity duration-300;
     }
     
     &:hover::before {
       @apply opacity-100;
-      transform: scale(1.02) translateZ(0);
-      animation: edge-glow 3s ease-in-out infinite;
+    }
+    
+    &::after {
+      content: '';
+      @apply absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-luxury-primary to-luxury-accent transform scale-x-0 transition-transform duration-300 origin-left;
     }
     
     &:hover::after {
-      @apply opacity-100;
-      animation: edge-pulse 3s ease-out infinite;
+      @apply scale-x-100;
     }
-
-    &:hover .nav-item-content {
-      @apply text-white;
-      text-shadow: 
-        0 0 15px rgba(217, 70, 239, 0.7),
-        0 0 25px rgba(155, 135, 245, 0.5);
-    }
+  }
+  
+  .glass-morph {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -240,5 +207,24 @@
 
   .animate-pulse-ring {
     animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-neon-glow {
+    animation: neonGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes neonGlow {
+    0%, 100% {
+      box-shadow: 
+        0 0 5px rgba(155, 135, 245, 0.5),
+        0 0 10px rgba(155, 135, 245, 0.3),
+        0 0 15px rgba(155, 135, 245, 0.2);
+    }
+    50% {
+      box-shadow: 
+        0 0 10px rgba(217, 70, 239, 0.5),
+        0 0 20px rgba(217, 70, 239, 0.3),
+        0 0 30px rgba(217, 70, 239, 0.2);
+    }
   }
 }
