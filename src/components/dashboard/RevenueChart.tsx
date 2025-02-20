@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
