@@ -58,7 +58,7 @@ export const Hero3D = () => {
   const headerBg = useTransform(
     scrollY,
     [0, 100],
-    ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 1)"]  // Made fully opaque when scrolled
+    ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 1)"]
   );
 
   useEffect(() => {
@@ -103,7 +103,7 @@ export const Hero3D = () => {
       <motion.nav 
         style={{ 
           backgroundColor: headerBg,
-          backdropFilter: "blur(8px)"  // Added blur effect to help with text visibility
+          backdropFilter: "blur(8px)"
         }}
         className="fixed top-0 left-0 right-0 z-50 transition-colors duration-200"
       >
@@ -131,14 +131,11 @@ export const Hero3D = () => {
                 <Link to="/login">Log In</Link>
               </Button>
               
-              <Button 
-                asChild 
-                className="bg-luxury-primary hover:bg-luxury-primary/90 text-white transition-all duration-200"
-              >
-                <Link to="/register">
-                  <WaveButton>Sign Up</WaveButton>
-                </Link>
-              </Button>
+              <Link to="/register">
+                <WaveButton className="bg-luxury-primary">
+                  Sign Up
+                </WaveButton>
+              </Link>
             </div>
           </div>
         </div>
@@ -177,12 +174,12 @@ export const Hero3D = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Link to="/register" className="w-full sm:w-auto">
+                <Link to="/register">
                   <WaveButton className="bg-luxury-primary w-full sm:w-auto">
                     Start Creating
                   </WaveButton>
                 </Link>
-                <Link to="/about" className="w-full sm:w-auto">
+                <Link to="/about">
                   <WaveButton className="bg-transparent border-2 border-white w-full sm:w-auto">
                     Learn More
                   </WaveButton>
