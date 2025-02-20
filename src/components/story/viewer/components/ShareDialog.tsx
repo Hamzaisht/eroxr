@@ -41,7 +41,10 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
         .eq('follower_id', session?.user?.id);
 
       if (error) throw error;
-      return data as Follower[];
+      return (data || []).map(item => ({
+        following_id: item.following_id,
+        following: item.following as Profile
+      }));
     },
     enabled: !!session?.user?.id
   });

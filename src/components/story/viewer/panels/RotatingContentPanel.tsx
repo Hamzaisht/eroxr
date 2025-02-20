@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,6 +15,7 @@ const ROTATION_INTERVAL = 5000; // 5 seconds
 
 export const RotatingContentPanel = () => {
   const [activeSection, setActiveSection] = useState(0);
+  const queryClient = useQueryClient();
 
   const { data: featuredContent } = useQuery({
     queryKey: ['featured-content'],
@@ -67,7 +67,6 @@ export const RotatingContentPanel = () => {
         schema: 'public', 
         table: 'platform_news' 
       }, () => {
-        // Refetch data when changes occur
         queryClient.invalidateQueries({ queryKey: ['featured-content'] });
       })
       .subscribe();
@@ -75,15 +74,11 @@ export const RotatingContentPanel = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <div className="h-full bg-black/20 backdrop-blur-sm rounded-r-xl overflow-hidden">
-      <Carousel 
-        className="h-full w-full"
-        selectedIndex={activeSection}
-        onChange={setActiveSection}
-      >
+      <Carousel value={activeSection} onValueChange={(value) => setActiveSection(value)}>
         <CarouselContent>
           {/* Exclusive Creators Section */}
           <CarouselItem>
