@@ -1,22 +1,57 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { EngagementChart } from "./EngagementChart";
 import { ContentDistribution } from "./ContentDistribution";
 import { RevenueChart } from "./RevenueChart";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { addDays, subDays, startOfMonth, endOfMonth } from "date-fns";
 
 interface DashboardChartsProps {
   engagementData: any[];
   contentTypeData: any[];
   earningsData: any[];
+  onDateRangeChange: (range: { from: Date; to: Date }) => void;
 }
 
 export function DashboardCharts({
   engagementData,
   contentTypeData,
-  earningsData
+  earningsData,
+  onDateRangeChange
 }: DashboardChartsProps) {
+  const [dateRange, setDateRange] = useState({
+    from: subDays(new Date(), 30),
+    to: new Date()
+  });
+
+  const handleDateRangeChange = (range: { from: Date | null; to: Date | null }) => {
+    if (range.from && range.to) {
+      setDateRange({ from: range.from, to: range.to });
+      onDateRangeChange({ from: range.from, to: range.to });
+    }
+  };
+
+  const setLast30Days = () => {
+    const range = {
+      from: subDays(new Date(), 30),
+      to: new Date()
+    };
+    setDateRange(range);
+    onDateRangeChange(range);
+  };
+
+  const setThisMonth = () => {
+    const range = {
+      from: startOfMonth(new Date()),
+      to: endOfMonth(new Date())
+    };
+    setDateRange(range);
+    onDateRangeChange(range);
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -28,10 +63,18 @@ export function DashboardCharts({
         >
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Engagement Overview</h2>
-            <Button variant="ghost" size="sm">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
+            <div className="flex items-center gap-2">
+              <DateRangePicker
+                from={dateRange.from}
+                to={dateRange.to}
+                onSelect={handleDateRangeChange}
+                className="w-[260px]"
+              />
+              <Button variant="ghost" size="sm" onClick={setLast30Days}>
+                <Calendar className="h-4 w-4 mr-2" />
+                Last 30 Days
+              </Button>
+            </div>
           </div>
           <EngagementChart data={engagementData} />
         </motion.div>
@@ -44,7 +87,7 @@ export function DashboardCharts({
         >
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Content Distribution</h2>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={setLast30Days}>
               Last 30 Days
             </Button>
           </div>
@@ -60,7 +103,7 @@ export function DashboardCharts({
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Revenue Analytics</h2>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={setThisMonth}>
             This Month
           </Button>
         </div>

@@ -7,6 +7,7 @@ import { PayoutRequestDialog } from "@/components/dashboard/PayoutRequestDialog"
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import { format } from "date-fns";
 
 export default function Eroboard() {
   const session = useSession();
@@ -30,6 +31,113 @@ export default function Eroboard() {
     status: string;
     processed_at: string | null;
   } | null>(null);
+
+  const fetchDashboardData = async (dateRange?: { from: Date; to: Date }) => {
+    if (!session?.user?.id) return;
+
+    try {
+      // Fetch total earnings for the selected date range
+      const { data: earningsData, error: earningsError } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          created_at,
+          post_purchases!inner (
+            amount,
+            created_at
+          )
+        `)
+        .eq('creator_id', session.user.id)
+        .gte('created_at', dateRange ? format(dateRange.from, 'yyyy-MM-dd') : null)
+        .lte('created_at', dateRange ? format(dateRange.to, 'yyyy-MM-dd') : null);
+
+      if (earningsError) throw earningsError;
+
+      // Process earnings data for chart
+      const processedEarningsData = earningsData?.reduce((acc: any, post) => {
+        const purchases = post.post_purchases || [];
+        purchases.forEach((purchase: any) => {
+          const date = format(new Date(purchase.created_at), 'yyyy-MM-dd');
+          acc[date] = (acc[date] || 0) + purchase.amount;
+        });
+        return acc;
+      }, {});
+
+      // Convert to array format for chart
+      const chartEarningsData = Object.entries(processedEarningsData || {}).map(
+        ([date, amount]) => ({
+          date,
+          amount: Number(amount) * stats.revenueShare
+        })
+      ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      setEarningsData(chartEarningsData);
+
+      // Calculate total earnings
+      const totalEarnings = chartEarningsData.reduce((sum, item) => sum + Number(item.amount), 0);
+
+      // Fetch engagement data
+      const { data: subscribersData, error: subscribersError } = await supabase
+        .from('creator_subscriptions')
+        .select('created_at, count', { count: 'exact' })
+        .eq('creator_id', session.user.id)
+        .gte('created_at', dateRange ? format(dateRange.from, 'yyyy-MM-dd') : null)
+        .lte('created_at', dateRange ? format(dateRange.to, 'yyyy-MM-dd') : null);
+
+      if (subscribersError) throw subscribersError;
+
+      // Fetch content distribution data
+      const { data: postsData, error: postsError } = await supabase
+        .from('posts')
+        .select('media_url, video_urls, created_at')
+        .eq('creator_id', session.user.id)
+        .gte('created_at', dateRange ? format(dateRange.from, 'yyyy-MM-dd') : null)
+        .lte('created_at', dateRange ? format(dateRange.to, 'yyyy-MM-dd') : null);
+
+      if (postsError) throw postsError;
+
+      // Calculate content distribution
+      const distribution = postsData?.reduce(
+        (acc: { photos: number; videos: number; stories: number }, post) => {
+          if (post.media_url?.length) acc.photos += 1;
+          if (post.video_urls?.length) acc.videos += 1;
+          return acc;
+        },
+        { photos: 0, videos: 0, stories: 0 }
+      );
+
+      setContentTypeData([
+        { name: 'Photos', value: distribution?.photos || 0 },
+        { name: 'Videos', value: distribution?.videos || 0 },
+        { name: 'Stories', value: distribution?.stories || 0 }
+      ]);
+
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        totalEarnings,
+        totalSubscribers: subscribersData?.length || 0
+      }));
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        variant: "destructive",
+        title: "Error fetching dashboard data",
+        description: "Please try again later."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [session?.user?.id]);
+
+  const handleDateRangeChange = (range: { from: Date; to: Date }) => {
+    fetchDashboardData(range);
+  };
 
   const isPayoutDisabled = () => {
     return latestPayout?.status === 'pending' || stats.totalEarnings < 100;
@@ -55,97 +163,6 @@ export default function Eroboard() {
         return null;
     }
   };
-
-  const fetchDashboardData = async () => {
-    if (!session?.user?.id) return;
-
-    try {
-      // Fetch total earnings from PPV content by joining posts and post_purchases
-      const { data: earningsData, error: earningsError } = await supabase
-        .from('posts')
-        .select(`
-          id,
-          post_purchases!inner (
-            amount
-          )
-        `)
-        .eq('creator_id', session.user.id);
-
-      if (earningsError) throw earningsError;
-
-      // Calculate total earnings from post purchases
-      const totalEarnings = earningsData?.reduce((sum, post) => {
-        const purchases = post.post_purchases || [];
-        return sum + purchases.reduce((postSum: number, purchase: any) => postSum + (purchase.amount || 0), 0);
-      }, 0) || 0;
-
-      // Fetch subscriber count
-      const { data: subscribersData, error: subscribersError } = await supabase
-        .from('creator_subscriptions')
-        .select('id')
-        .eq('creator_id', session.user.id);
-
-      if (subscribersError) throw subscribersError;
-
-      // Fetch followers count
-      const { data: followersData, error: followersError } = await supabase
-        .from('followers')
-        .select('id')
-        .eq('following_id', session.user.id);
-
-      if (followersError) throw followersError;
-
-      const subscriberCount = subscribersData?.length || 0;
-      const followerCount = followersData?.length || 0;
-
-      // Calculate engagement rate as a number
-      const engagementRate = followerCount > 0 
-        ? Number(((subscriberCount / followerCount) * 100).toFixed(1))
-        : 0;
-
-      setStats(prev => ({
-        ...prev,
-        totalEarnings: totalEarnings * stats.revenueShare,
-        totalSubscribers: subscriberCount,
-        followers: followerCount,
-        engagementRate
-      }));
-
-      // Mock data for content types (replace with real data)
-      setContentTypeData([
-        { name: 'Photos', value: 35 },
-        { name: 'Videos', value: 45 },
-        { name: 'Stories', value: 20 }
-      ]);
-
-      // Fetch latest payout status
-      const { data: latestPayoutData, error: payoutError } = await supabase
-        .from('payout_requests')
-        .select('*')
-        .eq('creator_id', session.user.id)
-        .order('requested_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (!payoutError) {
-        setLatestPayout(latestPayoutData);
-      }
-
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast({
-        variant: "destructive",
-        title: "Error fetching dashboard data",
-        description: "Please try again later."
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [session?.user?.id]);
 
   const handlePayoutSuccess = () => {
     fetchDashboardData();
@@ -176,6 +193,7 @@ export default function Eroboard() {
           engagementData={engagementData}
           contentTypeData={contentTypeData}
           earningsData={earningsData}
+          onDateRangeChange={handleDateRangeChange}
         />
 
         <PayoutRequestDialog
