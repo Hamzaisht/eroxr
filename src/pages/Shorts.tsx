@@ -1,6 +1,7 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { ShortsFeed } from "@/components/home/ShortsFeed";
-import { UploadShortButton } from "@/components/home/UploadShortButton";
+import { UploadVideoButton } from "@/components/home/UploadVideoButton";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -49,7 +50,7 @@ export default function Shorts() {
       <div className="fixed inset-0 flex items-center justify-center">
         <ShortsFeed />
       </div>
-      {session && <UploadShortButton />}
+      {session && <UploadVideoButton />}
     </div>
   );
 }
