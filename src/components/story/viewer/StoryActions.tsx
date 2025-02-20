@@ -7,31 +7,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-
-interface ViewerStats {
-  views: number;
-  screenshots: number;
-  shares: number;
-  likes: number;
-}
+import { Story } from "@/integrations/supabase/types/story";
 
 interface StoryActionsProps {
-  stats: ViewerStats;
-  isOwner: boolean;
-  onViewersClick: () => void;
-  onEdit?: () => void;
+  story: Story;
   onDelete?: () => void;
+  onEdit?: () => void;
 }
 
 export const StoryActions = ({ 
-  stats, 
-  isOwner,
-  onViewersClick,
-  onEdit,
-  onDelete 
+  story,
+  onDelete,
+  onEdit 
 }: StoryActionsProps) => {
+  const stats = {
+    views: story.views || 0,
+    likes: story.likes || 0,
+    shares: story.shares || 0,
+    screenshots: story.screenshots || 0
+  };
+
+  const isOwner = true; // You might want to compute this based on the user session
+
   return (
-    <div className="absolute right-4 bottom-20 flex flex-col items-center gap-6 z-30">
+    <div className="flex flex-col items-center gap-6">
       <div className="flex flex-col items-center gap-1">
         <Button 
           variant="ghost" 
@@ -48,7 +47,6 @@ export const StoryActions = ({
           variant="ghost" 
           size="icon"
           className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-lg text-white hover:bg-white/20"
-          onClick={onViewersClick}
         >
           <Eye className="w-6 h-6" />
         </Button>

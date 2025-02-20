@@ -2,34 +2,39 @@
 import { motion } from "framer-motion";
 
 interface StoryControlsProps {
-  onClick: (e: React.MouseEvent) => void;
-  onTouchStart: () => void;
-  onTouchEnd: () => void;
-  onMouseDown: () => void;
-  onMouseUp: () => void;
-  onMouseLeave: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
+  onPause: () => void;
+  onResume: () => void;
 }
 
 export const StoryControls = ({
-  onClick,
-  onTouchStart,
-  onTouchEnd,
-  onMouseDown,
-  onMouseUp,
-  onMouseLeave
+  onPrevious,
+  onNext,
+  onPause,
+  onResume
 }: StoryControlsProps) => {
   return (
-    <motion.div
-      className="absolute inset-0 z-10"
-      onClick={onClick}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseLeave}
-    >
-      <div className="hidden md:flex absolute inset-y-0 left-0 w-1/3" />
-      <div className="hidden md:flex absolute inset-y-0 right-0 w-1/3" />
+    <motion.div className="absolute inset-0 z-10">
+      {/* Left side - Previous */}
+      <div 
+        className="absolute inset-y-0 left-0 w-1/3" 
+        onClick={onPrevious}
+        onTouchStart={onPause}
+        onTouchEnd={onResume}
+        onMouseDown={onPause}
+        onMouseUp={onResume}
+      />
+      
+      {/* Right side - Next */}
+      <div 
+        className="absolute inset-y-0 right-0 w-1/3"
+        onClick={onNext}
+        onTouchStart={onPause}
+        onTouchEnd={onResume}
+        onMouseDown={onPause}
+        onMouseUp={onResume}
+      />
     </motion.div>
   );
 };
