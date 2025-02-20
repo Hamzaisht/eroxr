@@ -15,6 +15,13 @@ import { Post } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { MoreHorizontal, Edit2, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PostCardProps {
   post: Post;
@@ -72,10 +79,7 @@ export const PostCard = ({
         .eq("id", post.id);
 
       if (error) throw error;
-
-      // Update the cache
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-
       setIsEditDialogOpen(false);
       toast({
         title: "Post updated",
@@ -94,14 +98,35 @@ export const PostCard = ({
   return (
     <Card className="bg-[#0D1117] border-luxury-neutral/10 hover:border-luxury-neutral/20 transition-all duration-300">
       <div className="p-4 space-y-4">
-        <PostHeader
-          creator={post.creator}
-          createdAt={post.created_at}
-          updatedAt={post.updated_at}
-          isOwner={isOwner}
-          onEdit={() => setIsEditDialogOpen(true)}
-          onDelete={() => setIsDeleteDialogOpen(true)}
-        />
+        <div className="flex items-center justify-between">
+          <PostHeader
+            creator={post.creator}
+            createdAt={post.created_at}
+            updatedAt={post.updated_at}
+          />
+          {isOwner && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                  <Edit2 className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-red-500 focus:text-red-500"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
 
         <PostContent
           content={post.content}

@@ -22,6 +22,15 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface FollowerResponse {
+  following_id: string;
+  following: {
+    id: string;
+    username: string | null;
+    avatar_url: string | null;
+  };
+}
+
 interface Follower {
   following_id: string;
   following: Profile;
@@ -45,7 +54,8 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
 
       if (error) throw error;
       
-      return (data || []).map(item => ({
+      const typedData = (data || []) as FollowerResponse[];
+      return typedData.map(item => ({
         following_id: item.following_id,
         following: {
           id: item.following.id,
