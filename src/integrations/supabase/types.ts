@@ -884,6 +884,39 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_features: {
+        Row: {
+          created_at: string | null
+          description: string
+          display_order: number
+          feature_name: string
+          id: string
+          image_path: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          display_order: number
+          feature_name: string
+          id?: string
+          image_path: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          display_order?: number
+          feature_name?: string
+          id?: string
+          image_path?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       post_likes: {
         Row: {
           created_at: string
