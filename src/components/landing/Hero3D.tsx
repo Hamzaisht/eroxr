@@ -6,48 +6,28 @@ import * as THREE from "three";
 import { useEffect, useState, useMemo } from "react";
 
 const ParticleRing = () => {
-  const points = useMemo(() => {
-    return Array.from({ length: 5000 }, () => {
+  const particles = useMemo(() => {
+    const temp = [];
+    for (let i = 0; i < 5000; i++) {
       const angle = Math.random() * Math.PI * 2;
       const radius = THREE.MathUtils.lerp(2, 3.5, Math.random());
       const y = THREE.MathUtils.lerp(-0.5, 0.5, Math.random());
-      return {
-        position: [
-          Math.cos(angle) * radius,
-          y,
-          Math.sin(angle) * radius
-        ]
-      };
-    });
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      temp.push({ position: [x, y, z] });
+    }
+    return temp;
   }, []);
 
   return (
-    <group>
-      {points.map((point, i) => (
-        <mesh key={i} position={point.position as [number, number, number]}>
-          <sphereGeometry args={[0.005]} />
-          <meshBasicMaterial color="#9b87f5" />
-        </mesh>
-      ))}
-    </group>
+    <instancedMesh args={[undefined, undefined, 5000]}>
+      <sphereGeometry args={[0.005]} />
+      <meshBasicMaterial color="#9b87f5" />
+    </instancedMesh>
   );
 };
 
 export const Hero3D = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 2 - 1,
-        y: -(e.clientY / window.innerHeight) * 2 + 1,
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
   return (
     <div className="relative h-[600px] w-full">
       <Canvas
