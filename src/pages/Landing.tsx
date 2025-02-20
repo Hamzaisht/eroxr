@@ -9,7 +9,7 @@ import { CreatorCategories } from "@/components/landing/sections/CreatorCategori
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white overflow-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white overflow-hidden">
       {/* Hero Section */}
       <HeroSection />
 

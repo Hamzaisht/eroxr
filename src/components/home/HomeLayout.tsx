@@ -8,7 +8,7 @@ interface HomeLayoutProps {
 
 export const HomeLayout = ({ children }: HomeLayoutProps) => {
   return (
-    <div className="min-h-screen bg-[#0D1117] relative overflow-hidden">
+    <div className="min-h-screen w-full bg-[#0D1117] relative overflow-hidden">
       {/* Dynamic Background */}
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_80%)] opacity-5" />
       
