@@ -30,7 +30,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const session = useSession();
   const { toast } = useToast();
 
-  const { data: mediaItems = [], isLoading, error } = useQuery<MediaItem[], Error>({
+  const { data: mediaItems, isLoading, error } = useQuery<MediaItem[], Error>({
     queryKey: ["profile-media", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) throw new Error("No user ID");
@@ -73,22 +73,24 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
       return media;
     },
     enabled: !!session?.user?.id,
+    gcTime: 30000,
+    staleTime: 30000,
+    retry: 1,
+    throwOnError: true,
+    initialData: [] as MediaItem[],
     meta: {
       errorMessage: "Failed to load media content"
-    },
-    retry: 1,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    onError: (err: Error) => {
-      console.error("Media fetch error:", err);
-      toast({
-        title: "Error",
-        description: "Failed to load media content. Please try again.",
-        variant: "destructive",
-      });
     }
   });
 
+  // Handle errors through the useQuery error state
   if (error) {
+    console.error("Media fetch error:", error);
+    toast({
+      title: "Error",
+      description: "Failed to load media content. Please try again.",
+      variant: "destructive",
+    });
     return (
       <div className="text-center text-red-500 p-6">
         Failed to load media content. Please try again later.
@@ -106,7 +108,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     );
   }
 
-  if (!mediaItems.length) {
+  if (!mediaItems?.length) {
     return (
       <div className="text-center text-muted-foreground p-6 sm:p-12">
         No media content yet
