@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Loader2, TrendingUp, Users, Eye, DollarSign, BarChart3 } from "lucide-react";
