@@ -25,9 +25,9 @@ const PlatformPreview = () => {
             whileInView={{ opacity: 1, x: 0 }}
             className="space-y-8"
           >
-            <div className="glass-morph p-6 rounded-xl">
+            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
               <img 
-                src="/chat-preview.png" 
+                src="/lovable-uploads/680a4cbf-2252-4c48-9aab-c7385de5b32d.png" 
                 alt="Chat Interface"
                 className="rounded-lg shadow-lg w-full"
               />
@@ -35,11 +35,11 @@ const PlatformPreview = () => {
               <p className="text-luxury-neutral/60">Connect with your fans through live chat, comments, and private messages</p>
             </div>
             
-            <div className="glass-morph p-6 rounded-xl">
+            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
               <img 
                 src="/content-preview.png" 
                 alt="Content Management"
-                className="rounded-lg shadow-lg w-full"
+                className="rounded-lg shadow-lg w-full h-48 object-cover"
               />
               <h3 className="text-xl font-semibold mt-4 mb-2">Share Your Content</h3>
               <p className="text-luxury-neutral/60">Upload and manage your content with our intuitive tools</p>
@@ -51,21 +51,21 @@ const PlatformPreview = () => {
             whileInView={{ opacity: 1, x: 0 }}
             className="space-y-8"
           >
-            <div className="glass-morph p-6 rounded-xl">
+            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
               <img 
                 src="/analytics-preview.png" 
                 alt="Analytics Dashboard"
-                className="rounded-lg shadow-lg w-full"
+                className="rounded-lg shadow-lg w-full h-48 object-cover"
               />
               <h3 className="text-xl font-semibold mt-4 mb-2">Track Your Growth</h3>
               <p className="text-luxury-neutral/60">Monitor your performance with detailed analytics and insights</p>
             </div>
 
-            <div className="glass-morph p-6 rounded-xl">
+            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
               <img 
                 src="/earnings-preview.png" 
                 alt="Earnings Dashboard"
-                className="rounded-lg shadow-lg w-full"
+                className="rounded-lg shadow-lg w-full h-48 object-cover"
               />
               <h3 className="text-xl font-semibold mt-4 mb-2">Manage Your Earnings</h3>
               <p className="text-luxury-neutral/60">Track your revenue and manage your subscriptions easily</p>
