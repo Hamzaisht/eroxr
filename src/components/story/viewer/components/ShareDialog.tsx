@@ -22,7 +22,7 @@ interface Profile {
   avatar_url: string | null;
 }
 
-interface FollowerResponse {
+interface DatabaseFollower {
   following_id: string;
   following: {
     id: string;
@@ -44,7 +44,7 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
   const { data: followers = [] } = useQuery<Follower[]>({
     queryKey: ["followers", session?.user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: rawData, error } = await supabase
         .from('followers')
         .select(`
           following_id,
@@ -54,8 +54,8 @@ export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) =
 
       if (error) throw error;
       
-      const typedData = (data || []) as FollowerResponse[];
-      return typedData.map(item => ({
+      const data = rawData as DatabaseFollower[];
+      return data.map(item => ({
         following_id: item.following_id,
         following: {
           id: item.following.id,
