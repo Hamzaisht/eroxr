@@ -9,24 +9,57 @@ import { CreatorCategories } from "@/components/landing/sections/CreatorCategori
 
 const Landing = () => {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white overflow-hidden">
+    <div 
+      className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white overflow-hidden"
+      style={{ willChange: 'transform' }}
+    >
       {/* Hero Section */}
-      <HeroSection />
+      <motion.div
+        initial={{ opacity: 1 }}
+        style={{ willChange: 'transform' }}
+      >
+        <HeroSection />
+      </motion.div>
 
       {/* Stats Section */}
-      <AnimatedStats />
+      <motion.div
+        initial={{ opacity: 1 }}
+        style={{ willChange: 'transform' }}
+      >
+        <AnimatedStats />
+      </motion.div>
 
       {/* Creator Categories */}
-      <CreatorCategories />
+      <motion.div
+        initial={{ opacity: 1 }}
+        style={{ willChange: 'transform' }}
+      >
+        <CreatorCategories />
+      </motion.div>
 
       {/* Features Section */}
-      <Features3D />
+      <motion.div
+        initial={{ opacity: 1 }}
+        style={{ willChange: 'transform' }}
+      >
+        <Features3D />
+      </motion.div>
 
       {/* Creator Showcase */}
-      <CreatorShowcase />
+      <motion.div
+        initial={{ opacity: 1 }}
+        style={{ willChange: 'transform' }}
+      >
+        <CreatorShowcase />
+      </motion.div>
 
       {/* Interactive Features */}
-      <InteractiveFeatures />
+      <motion.div
+        initial={{ opacity: 1 }}
+        style={{ willChange: 'transform' }}
+      >
+        <InteractiveFeatures />
+      </motion.div>
     </div>
   );
 };
