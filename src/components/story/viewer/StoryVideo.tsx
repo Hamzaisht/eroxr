@@ -36,13 +36,13 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     }, [isPaused, ref, handleError]);
 
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black">
+      <div className="fixed inset-0 flex items-center justify-center bg-black overflow-hidden">
         <div className="relative w-full h-full max-w-[500px] mx-auto">
           <div className="absolute inset-0 flex items-center justify-center">
             <video
               ref={ref}
               src={videoUrl}
-              className="w-full h-full object-contain aspect-[9/16]"
+              className="w-full h-full object-contain"
               playsInline
               autoPlay
               muted={false}
@@ -51,7 +51,8 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
               onError={handleError}
               style={{
                 maxHeight: '100vh',
-                backgroundColor: 'black'
+                backgroundColor: 'black',
+                objectFit: 'contain'
               }}
             />
           </div>

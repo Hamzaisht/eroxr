@@ -40,9 +40,9 @@ export const StoryContainer = ({
   onEdit,
 }: StoryContainerProps) => {
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center z-[100]">
-      <div className="relative w-full h-full md:max-w-[500px] mx-auto bg-black">
-        <div className="absolute inset-0 flex flex-col">
+    <div className="fixed inset-0 bg-black flex items-center justify-center z-[100] overflow-hidden">
+      <div className="relative w-full h-full md:max-w-[500px] mx-auto bg-black overflow-hidden">
+        <div className="absolute inset-0 flex flex-col overflow-hidden">
           {/* Progress Bar */}
           <div className="absolute top-0 left-0 right-0 z-50 p-4">
             <StoryProgress
@@ -61,7 +61,7 @@ export const StoryContainer = ({
           />
 
           {/* Main Content */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative overflow-hidden">
             <StoryContent
               story={currentStory}
               onNext={onNext}
