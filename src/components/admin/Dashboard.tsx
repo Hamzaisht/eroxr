@@ -2,67 +2,188 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Users, MessageSquare, Image, Video, Flag, ShieldAlert } from "lucide-react";
+import { 
+  Users, 
+  MessageSquare, 
+  Image, 
+  Video, 
+  Flag, 
+  ShieldAlert, 
+  DollarSign,
+  Server,
+  AlertTriangle,
+  UserX,
+  Clock,
+  BadgeAlert
+} from "lucide-react";
+
+interface PlatformStats {
+  activeUsers: number;
+  bannedUsers: number;
+  totalPosts: number;
+  totalMessages: number;
+  pendingReports: number;
+  totalViolations: number;
+  onlineUsers: number;
+  totalPhotos: number;
+  totalVideos: number;
+  pendingVerifications: number;
+  activeStreams: number;
+  systemHealth: 'good' | 'warning' | 'critical';
+}
 
 export const Dashboard = () => {
-  const { data: stats } = useQuery({
-    queryKey: ['admin-stats'],
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['admin-platform-stats'],
     queryFn: async () => {
       const [
-        { count: usersCount },
-        { count: messagesCount },
-        { count: photosCount },
-        { count: videosCount },
-        { count: reportsCount },
-        { count: violationsCount },
+        { count: activeUsers },
+        { count: bannedUsers },
+        { count: totalPosts },
+        { count: totalMessages },
+        { count: pendingReports },
+        { count: totalViolations },
+        { count: totalPhotos },
+        { count: totalVideos },
+        { count: pendingVerifications },
+        { count: activeStreams },
+        { data: onlineUsers },
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', false),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', true),
+        supabase.from('posts').select('*', { count: 'exact', head: true }),
         supabase.from('direct_messages').select('*', { count: 'exact', head: true }),
+        supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('security_violations').select('*', { count: 'exact', head: true }),
         supabase.from('posts').select('*', { count: 'exact', head: true }).not('media_url', 'eq', '{}'),
         supabase.from('posts').select('*', { count: 'exact', head: true }).not('video_urls', 'eq', '{}'),
-        supabase.from('reports').select('*', { count: 'exact', head: true }),
-        supabase.from('security_violations').select('*', { count: 'exact', head: true }),
+        supabase.from('id_verifications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('live_streams').select('*', { count: 'exact', head: true }).eq('status', 'live'),
+        supabase.from('profiles').select('id').eq('status', 'online'),
       ]);
 
       return {
-        users: usersCount || 0,
-        messages: messagesCount || 0,
-        photos: photosCount || 0,
-        videos: videosCount || 0,
-        reports: reportsCount || 0,
-        violations: violationsCount || 0,
+        activeUsers: activeUsers || 0,
+        bannedUsers: bannedUsers || 0,
+        totalPosts: totalPosts || 0,
+        totalMessages: totalMessages || 0,
+        pendingReports: pendingReports || 0,
+        totalViolations: totalViolations || 0,
+        onlineUsers: onlineUsers?.length || 0,
+        totalPhotos: totalPhotos || 0,
+        totalVideos: totalVideos || 0,
+        pendingVerifications: pendingVerifications || 0,
+        activeStreams: activeStreams || 0,
+        systemHealth: 'good' as const,
       };
-    }
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const statCards = [
-    { label: 'Total Users', value: stats?.users || 0, icon: Users },
-    { label: 'Messages', value: stats?.messages || 0, icon: MessageSquare },
-    { label: 'Photos', value: stats?.photos || 0, icon: Image },
-    { label: 'Videos', value: stats?.videos || 0, icon: Video },
-    { label: 'Reports', value: stats?.reports || 0, icon: Flag },
-    { label: 'Violations', value: stats?.violations || 0, icon: ShieldAlert },
+    { 
+      label: 'Active Users',
+      value: stats?.activeUsers || 0,
+      icon: Users,
+      color: 'text-green-500',
+      description: 'Currently active accounts'
+    },
+    { 
+      label: 'Banned Users',
+      value: stats?.bannedUsers || 0,
+      icon: UserX,
+      color: 'text-red-500',
+      description: 'Suspended accounts'
+    },
+    { 
+      label: 'Online Now',
+      value: stats?.onlineUsers || 0,
+      icon: Clock,
+      color: 'text-blue-500',
+      description: 'Users currently online'
+    },
+    { 
+      label: 'Pending Reports',
+      value: stats?.pendingReports || 0,
+      icon: Flag,
+      color: 'text-yellow-500',
+      description: 'Awaiting moderation'
+    },
+    { 
+      label: 'Security Violations',
+      value: stats?.totalViolations || 0,
+      icon: ShieldAlert,
+      color: 'text-red-500',
+      description: 'Total security incidents'
+    },
+    { 
+      label: 'System Health',
+      value: stats?.systemHealth || 'good',
+      icon: Server,
+      color: 'text-green-500',
+      description: 'Overall platform status'
+    },
+    { 
+      label: 'Active Streams',
+      value: stats?.activeStreams || 0,
+      icon: Video,
+      color: 'text-purple-500',
+      description: 'Live broadcasts'
+    },
+    { 
+      label: 'Pending Verifications',
+      value: stats?.pendingVerifications || 0,
+      icon: BadgeAlert,
+      color: 'text-blue-500',
+      description: 'Awaiting verification'
+    },
+    { 
+      label: 'Total Content',
+      value: (stats?.totalPhotos || 0) + (stats?.totalVideos || 0),
+      icon: Image,
+      color: 'text-pink-500',
+      description: 'Photos and videos'
+    },
   ];
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-luxury-neutral">Admin Dashboard</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-luxury-neutral">Admin Control Panel</h1>
+        <div className="flex items-center space-x-2">
+          <span className={`inline-flex h-3 w-3 rounded-full ${
+            stats?.systemHealth === 'good' ? 'bg-green-500' :
+            stats?.systemHealth === 'warning' ? 'bg-yellow-500' :
+            'bg-red-500'
+          } animate-pulse`}/>
+          <span className="text-sm text-luxury-neutral/60">
+            System Status: {stats?.systemHealth || 'Loading...'}
+          </span>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {statCards.map((stat) => (
-          <Card key={stat.label} className="p-6 bg-[#161B22]/80 backdrop-blur-xl border-white/10">
+          <Card key={stat.label} className="p-6 bg-[#161B22]/80 backdrop-blur-xl border-white/10 hover:border-white/20 transition-all duration-300">
             <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-full bg-luxury-primary/10">
-                <stat.icon className="w-6 h-6 text-luxury-primary" />
+              <div className={`p-3 rounded-full bg-opacity-10 ${stat.color} bg-current`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
               <div>
                 <p className="text-sm text-luxury-neutral/60">{stat.label}</p>
                 <p className="text-2xl font-bold text-luxury-neutral">{stat.value}</p>
+                <p className="text-xs text-luxury-neutral/40">{stat.description}</p>
               </div>
             </div>
           </Card>
         ))}
       </div>
+
+      {isLoading && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="loading-spinner">Loading...</div>
+        </div>
+      )}
     </div>
   );
 };
