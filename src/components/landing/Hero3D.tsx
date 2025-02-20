@@ -3,27 +3,39 @@ import { Canvas } from "@react-three/fiber";
 import { Sphere } from "@react-three/drei";
 import { motion } from "framer-motion";
 import * as THREE from "three";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 
 const ParticleRing = () => {
-  const particles = useMemo(() => {
-    const temp = [];
+  const positions = useMemo(() => {
+    const pos = new Float32Array(5000 * 3);
     for (let i = 0; i < 5000; i++) {
       const angle = Math.random() * Math.PI * 2;
       const radius = THREE.MathUtils.lerp(2, 3.5, Math.random());
       const y = THREE.MathUtils.lerp(-0.5, 0.5, Math.random());
-      const x = Math.cos(angle) * radius;
-      const z = Math.sin(angle) * radius;
-      temp.push({ position: [x, y, z] });
+      pos[i * 3] = Math.cos(angle) * radius;
+      pos[i * 3 + 1] = y;
+      pos[i * 3 + 2] = Math.sin(angle) * radius;
     }
-    return temp;
+    return pos;
   }, []);
 
   return (
-    <instancedMesh args={[undefined, undefined, 5000]}>
-      <sphereGeometry args={[0.005]} />
-      <meshBasicMaterial color="#9b87f5" />
-    </instancedMesh>
+    <points>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={5000}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.015}
+        color="#9b87f5"
+        sizeAttenuation
+        transparent
+      />
+    </points>
   );
 };
 
