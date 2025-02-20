@@ -1,4 +1,3 @@
-
 import { DollarSign, Users, Eye, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 

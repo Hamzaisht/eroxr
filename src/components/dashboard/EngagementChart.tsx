@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
