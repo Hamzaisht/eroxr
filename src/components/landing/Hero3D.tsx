@@ -1,8 +1,10 @@
+
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
 
 const RollingText = ({ children, href }: { children: string; href: string }) => {
   return (
@@ -59,6 +61,14 @@ export const Hero3D = () => {
     [0, 100],
     ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 1)"]
   );
+  const session = useSession();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (session) {
+      navigate('/home');
+    }
+  }, [session, navigate]);
 
   useEffect(() => {
     const loadVideo = async () => {
@@ -115,23 +125,25 @@ export const Hero3D = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              {["Explore", "Pricing", "Creators"].map((item) => (
-                <RollingText key={item} href={`/${item.toLowerCase()}`}>
-                  {item}
-                </RollingText>
-              ))}
+              <div className="flex items-center space-x-8">
+                <RollingText href="/explore">Explore</RollingText>
+                <RollingText href="/pricing">Pricing</RollingText>
+                <RollingText href="/creators">Creators</RollingText>
+              </div>
               
-              <Link to="/login">
-                <WaveButton className="bg-transparent hover:bg-luxury-primary/10 transition-all duration-300">
-                  Log In
-                </WaveButton>
-              </Link>
-              
-              <Link to="/register">
-                <WaveButton className="bg-luxury-primary">
-                  Sign Up
-                </WaveButton>
-              </Link>
+              <div className="flex items-center space-x-4">
+                <Link to="/login">
+                  <WaveButton className="bg-transparent hover:bg-luxury-primary/10 transition-all duration-300">
+                    Log In
+                  </WaveButton>
+                </Link>
+                
+                <Link to="/register">
+                  <WaveButton className="bg-luxury-primary">
+                    Sign Up
+                  </WaveButton>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

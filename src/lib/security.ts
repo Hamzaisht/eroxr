@@ -7,6 +7,12 @@ export const initializeScreenshotProtection = (userId: string | undefined, conte
   // Disable right-click context menu
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 
+  // Disable text selection
+  document.addEventListener('selectstart', (e) => e.preventDefault());
+
+  // Disable drag and drop
+  document.addEventListener('dragstart', (e) => e.preventDefault());
+
   // Detect keyboard shortcuts for screenshots
   document.addEventListener('keydown', async (e) => {
     const isScreenshotAttempt = (
@@ -32,12 +38,33 @@ export const initializeScreenshotProtection = (userId: string | undefined, conte
     e.preventDefault();
   });
 
+  document.addEventListener('paste', (e) => {
+    e.preventDefault();
+  });
+
+  document.addEventListener('cut', (e) => {
+    e.preventDefault();
+  });
+
   // Detect screen capture API
   if (navigator.mediaDevices) {
     navigator.mediaDevices.getDisplayMedia = async () => {
       throw new Error('Screen sharing is disabled for security reasons');
     };
   }
+
+  // Apply CSS to prevent selection
+  const style = document.createElement('style');
+  style.textContent = `
+    * {
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
+      user-select: none !important;
+      -webkit-touch-callout: none !important;
+    }
+  `;
+  document.head.appendChild(style);
 };
 
 // Report security violations

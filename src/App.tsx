@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Landing from "@/pages/Landing";
@@ -14,25 +14,54 @@ import Shorts from "@/pages/Shorts";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import { Dashboard } from "./components/admin/Dashboard";
 import { ErosMode } from "./components/admin/ErosMode";
+import { useSession } from "@supabase/auth-helpers-react";
 
 function App() {
+  const session = useSession();
+
   return (
     <BrowserRouter>
       <Routes>
         {/* Public routes - accessible to everyone */}
-        <Route path="/landing" element={<Landing />} />
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route 
+          path="/" 
+          element={session ? <Navigate to="/home" replace /> : <Landing />} 
+        />
+        <Route 
+          path="/login" 
+          element={session ? <Navigate to="/home" replace /> : <Login />} 
+        />
+        <Route 
+          path="/register" 
+          element={session ? <Navigate to="/home" replace /> : <Register />} 
+        />
         
         {/* Protected routes - require authentication */}
         <Route element={<MainLayout />}>
-          <Route path="/home" element={<Home />} />
-          <Route path="/profile/:id?" element={<Profile />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/dating" element={<Dating />} />
-          <Route path="/eroboard" element={<Eroboard />} />
-          <Route path="/shorts" element={<Shorts />} />
+          <Route 
+            path="/home" 
+            element={!session ? <Navigate to="/login" replace /> : <Home />} 
+          />
+          <Route 
+            path="/profile/:id?" 
+            element={!session ? <Navigate to="/login" replace /> : <Profile />} 
+          />
+          <Route 
+            path="/messages" 
+            element={!session ? <Navigate to="/login" replace /> : <Messages />} 
+          />
+          <Route 
+            path="/dating" 
+            element={!session ? <Navigate to="/login" replace /> : <Dating />} 
+          />
+          <Route 
+            path="/eroboard" 
+            element={!session ? <Navigate to="/login" replace /> : <Eroboard />} 
+          />
+          <Route 
+            path="/shorts" 
+            element={!session ? <Navigate to="/login" replace /> : <Shorts />} 
+          />
         </Route>
 
         {/* Admin routes */}
