@@ -5,29 +5,40 @@ import * as THREE from "three";
 import { useMemo } from "react";
 
 const ParticleRing = () => {
-  const geometry = useMemo(() => {
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(5000 * 3);
-    
-    for (let i = 0; i < 5000; i++) {
+  const count = 5000;
+  const positions = useMemo(() => {
+    const points = [];
+    for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const radius = THREE.MathUtils.lerp(2, 3.5, Math.random());
       const y = THREE.MathUtils.lerp(-0.5, 0.5, Math.random());
       
-      positions[i * 3] = Math.cos(angle) * radius;
-      positions[i * 3 + 1] = y;
-      positions[i * 3 + 2] = Math.sin(angle) * radius;
+      points.push(
+        Math.cos(angle) * radius,
+        y,
+        Math.sin(angle) * radius
+      );
     }
-    
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    return geometry;
+    return new Float32Array(points);
   }, []);
 
   return (
-    <mesh>
-      <primitive object={geometry} />
-      <meshBasicMaterial color="#9b87f5" />
-    </mesh>
+    <points>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.02}
+        color="#9b87f5"
+        sizeAttenuation={true}
+        transparent={true}
+      />
+    </points>
   );
 };
 
