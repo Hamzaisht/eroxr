@@ -9,6 +9,37 @@ export const usePostActions = () => {
 
   const handleDelete = async (postId: string, creatorId: string) => {
     try {
+      // First, delete any associated media files from storage
+      const { data: post } = await supabase
+        .from('posts')
+        .select('media_url, video_urls')
+        .eq('id', postId)
+        .single();
+
+      if (post) {
+        // Delete media files from storage if they exist
+        if (post.media_url?.length) {
+          const mediaUrls = post.media_url.map(url => {
+            const [bucket, ...pathParts] = url.split('/');
+            return pathParts.join('/');
+          });
+          await Promise.all(
+            mediaUrls.map(path => supabase.storage.from('media').remove([path]))
+          );
+        }
+
+        if (post.video_urls?.length) {
+          const videoUrls = post.video_urls.map(url => {
+            const [bucket, ...pathParts] = url.split('/');
+            return pathParts.join('/');
+          });
+          await Promise.all(
+            videoUrls.map(path => supabase.storage.from('videos').remove([path]))
+          );
+        }
+      }
+
+      // Now delete the post record
       const { error } = await supabase
         .from('posts')
         .delete()
@@ -20,6 +51,8 @@ export const usePostActions = () => {
       // Invalidate and refetch all relevant queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['posts'] }),
+        queryClient.invalidateQueries({ queryKey: ['posts', 'feed'] }),
+        queryClient.invalidateQueries({ queryKey: ['posts', 'trending'] }),
         queryClient.invalidateQueries({ queryKey: ['profile-media'] }),
         queryClient.invalidateQueries({ queryKey: ['eros'] }),
         queryClient.invalidateQueries({ queryKey: ['eroboard'] })
