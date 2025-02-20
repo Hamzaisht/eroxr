@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +13,7 @@ import { PostContent } from "./post-components/PostContent";
 import { PostActions } from "./post-components/PostActions";
 import { Post } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 
 interface PostCardProps {
   post: Post;
@@ -33,6 +35,7 @@ export const PostCard = ({
   const [showComments, setShowComments] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editedContent, setEditedContent] = useState(post.content);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
   const isOwner = currentUserId === post.creator_id;
 
@@ -52,10 +55,7 @@ export const PostCard = ({
   const handleDelete = async () => {
     if (onDelete && isOwner) {
       await onDelete(post.id, post.creator_id);
-      toast({
-        title: "Post deleted",
-        description: "Your post has been successfully deleted.",
-      });
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -95,7 +95,7 @@ export const PostCard = ({
           updatedAt={post.updated_at}
           isOwner={isOwner}
           onEdit={() => setIsEditDialogOpen(true)}
-          onDelete={handleDelete}
+          onDelete={() => setIsDeleteDialogOpen(true)}
         />
 
         <PostContent
@@ -157,6 +157,12 @@ export const PostCard = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <DeleteConfirmDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+      />
     </Card>
   );
 };
