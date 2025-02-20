@@ -29,6 +29,17 @@ interface StoryViewer {
   created_at: string;
 }
 
+interface PostMediaAction {
+  id: string;
+  action_type: string;
+  created_at: string;
+  user_id: string;
+  profiles: {
+    username: string;
+    avatar_url: string;
+  };
+}
+
 export const StoryActions = ({ 
   story,
   onDelete,
@@ -109,10 +120,10 @@ export const StoryActions = ({
         .order('created_at', { ascending: false });
 
       if (data) {
-        const viewersData: StoryViewer[] = data.map(d => ({
+        const viewersData = (data as PostMediaAction[]).map(d => ({
           id: d.id,
-          username: d.profiles?.username || 'Unknown',
-          avatar_url: d.profiles?.avatar_url || '',
+          username: d.profiles.username || 'Unknown',
+          avatar_url: d.profiles.avatar_url || '',
           action_type: d.action_type,
           created_at: d.created_at
         }));
