@@ -16,12 +16,21 @@ interface ShareDialogProps {
   storyId: string;
 }
 
+interface Follower {
+  following_id: string;
+  following: {
+    id: string;
+    username: string | null;
+    avatar_url: string | null;
+  };
+}
+
 export const ShareDialog = ({ open, onOpenChange, storyId }: ShareDialogProps) => {
   const session = useSession();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: followers = [] } = useQuery({
+  const { data: followers = [] } = useQuery<Follower[]>({
     queryKey: ["followers", session?.user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
