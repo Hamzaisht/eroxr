@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Radio, TrendingUp, Home } from "lucide-react";
+import { Plus, FileVideo, Radio, TrendingUp, Home } from "lucide-react";
 
 interface FeedTabsProps {
   activeTab: string;
@@ -72,7 +72,7 @@ export const FeedTabs = ({
             }}
             className="bg-white/5 hover:bg-white/10 backdrop-blur-lg rounded-xl"
           >
-            <Upload className="h-4 w-4" />
+            <FileVideo className="h-4 w-4" />
           </Button>
         </motion.div>
 
