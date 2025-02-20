@@ -16,7 +16,7 @@ export const MainFeed = ({
   // Create a wrapper function that adapts the onFileSelect callback
   const handleFileSelect = () => {
     if (onFileSelect) {
-      onFileSelect();
+      onFileSelect(null);  // Pass null as the FileList when no files are selected
     }
   };
 
