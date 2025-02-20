@@ -61,16 +61,18 @@ export function DashboardCharts({
           transition={{ delay: 0.4 }}
           className="glass-card p-6"
         >
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 className="text-xl font-semibold">Engagement Overview</h2>
-            <div className="flex items-center gap-2">
-              <DateRangePicker
-                from={dateRange.from}
-                to={dateRange.to}
-                onSelect={handleDateRangeChange}
-                className="w-[260px]"
-              />
-              <Button variant="ghost" size="sm" onClick={setLast30Days}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+              <div className="flex-grow sm:flex-grow-0">
+                <DateRangePicker
+                  from={dateRange.from}
+                  to={dateRange.to}
+                  onSelect={handleDateRangeChange}
+                  className="w-full sm:w-[280px]"
+                />
+              </div>
+              <Button variant="ghost" size="sm" onClick={setLast30Days} className="whitespace-nowrap">
                 <Calendar className="h-4 w-4 mr-2" />
                 Last 30 Days
               </Button>

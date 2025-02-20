@@ -76,10 +76,10 @@ export default function Eroboard() {
       // Calculate total earnings
       const totalEarnings = chartEarningsData.reduce((sum, item) => sum + Number(item.amount), 0);
 
-      // Fetch engagement data
-      const { data: subscribersData, error: subscribersError } = await supabase
+      // Fetch subscribers count with proper grouping
+      const { count: subscribersCount, error: subscribersError } = await supabase
         .from('creator_subscriptions')
-        .select('created_at, count', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('creator_id', session.user.id)
         .gte('created_at', dateRange ? format(dateRange.from, 'yyyy-MM-dd') : null)
         .lte('created_at', dateRange ? format(dateRange.to, 'yyyy-MM-dd') : null);
@@ -116,7 +116,7 @@ export default function Eroboard() {
       setStats(prev => ({
         ...prev,
         totalEarnings,
-        totalSubscribers: subscribersData?.length || 0
+        totalSubscribers: subscribersCount || 0
       }));
 
     } catch (error) {
