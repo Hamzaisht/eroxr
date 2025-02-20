@@ -21,13 +21,44 @@ const RollingText = ({ children, href }: { children: string; href: string }) => 
   );
 };
 
+const WaveButton = ({ children, className, ...props }: { children: React.ReactNode; className?: string }) => {
+  return (
+    <button 
+      className={`relative inline-flex items-center justify-center px-8 py-3 overflow-hidden font-medium transition duration-300 ease-out rounded-full group ${className}`} 
+      {...props}
+    >
+      <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-luxury-primary group-hover:translate-x-0 ease">
+        <svg 
+          className="w-6 h-6" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24" 
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth="2" 
+            d="M14 5l7 7m0 0l-7 7m7-7H3"
+          >
+          </path>
+        </svg>
+      </span>
+      <span className="absolute flex items-center justify-center w-full h-full text-white transition-all duration-300 transform group-hover:translate-x-full ease">
+        {children}
+      </span>
+      <span className="relative invisible">{children}</span>
+    </button>
+  );
+};
+
 export const Hero3D = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const { scrollY } = useScroll();
   const headerBg = useTransform(
     scrollY,
     [0, 100],
-    ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 0.95)"]
+    ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 1)"]  // Made fully opaque when scrolled
   );
 
   useEffect(() => {
@@ -70,7 +101,10 @@ export const Hero3D = () => {
       
       {/* Navigation Bar */}
       <motion.nav 
-        style={{ backgroundColor: headerBg }}
+        style={{ 
+          backgroundColor: headerBg,
+          backdropFilter: "blur(8px)"  // Added blur effect to help with text visibility
+        }}
         className="fixed top-0 left-0 right-0 z-50 transition-colors duration-200"
       >
         <div className="container mx-auto px-4 py-4">
@@ -101,7 +135,9 @@ export const Hero3D = () => {
                 asChild 
                 className="bg-luxury-primary hover:bg-luxury-primary/90 text-white transition-all duration-200"
               >
-                <Link to="/register">Sign Up</Link>
+                <Link to="/register">
+                  <WaveButton>Sign Up</WaveButton>
+                </Link>
               </Button>
             </div>
           </div>
@@ -141,25 +177,16 @@ export const Hero3D = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Button 
-                  size="lg" 
-                  className="bg-luxury-primary hover:bg-luxury-primary/90 text-white transition-all duration-200 px-8 py-6 text-lg w-full sm:w-auto"
-                  asChild
-                >
-                  <Link to="/register">
+                <Link to="/register" className="w-full sm:w-auto">
+                  <WaveButton className="bg-luxury-primary w-full sm:w-auto">
                     Start Creating
-                  </Link>
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-luxury-neutral text-white hover:bg-white/10 transition-all duration-200 px-8 py-6 text-lg w-full sm:w-auto"
-                  asChild
-                >
-                  <Link to="/about">
+                  </WaveButton>
+                </Link>
+                <Link to="/about" className="w-full sm:w-auto">
+                  <WaveButton className="bg-transparent border-2 border-white w-full sm:w-auto">
                     Learn More
-                  </Link>
-                </Button>
+                  </WaveButton>
+                </Link>
               </motion.div>
             </motion.div>
           </div>
