@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -96,6 +95,7 @@ const PlatformPreview = () => {
           </motion.div>
         </div>
       </div>
+      <PlatformFeatureAdmin />
     </section>
   );
 };
