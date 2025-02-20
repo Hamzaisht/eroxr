@@ -27,22 +27,22 @@ const PlatformPreview = () => {
           >
             <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
               <img 
-                src="/lovable-uploads/680a4cbf-2252-4c48-9aab-c7385de5b32d.png" 
-                alt="Chat Interface"
+                src="/lovable-uploads/e754d33f-d841-445d-bc8a-537e1694f818.png" 
+                alt="Platform Interface"
                 className="rounded-lg shadow-lg w-full"
               />
-              <h3 className="text-xl font-semibold mt-4 mb-2">Engage With Your Community</h3>
-              <p className="text-luxury-neutral/60">Connect with your fans through live chat, comments, and private messages</p>
+              <h3 className="text-xl font-semibold mt-4 mb-2">Create What You Want</h3>
+              <p className="text-luxury-neutral/60">Build and customize your content with our powerful creation tools</p>
             </div>
             
             <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
               <img 
-                src="/content-preview.png" 
-                alt="Content Management"
+                src="/lovable-uploads/210f4161-ff9f-4874-8aad-93edd31b6e01.png" 
+                alt="Community Features"
                 className="rounded-lg shadow-lg w-full h-48 object-cover"
               />
-              <h3 className="text-xl font-semibold mt-4 mb-2">Share Your Content</h3>
-              <p className="text-luxury-neutral/60">Upload and manage your content with our intuitive tools</p>
+              <h3 className="text-xl font-semibold mt-4 mb-2">Connect With Your Community</h3>
+              <p className="text-luxury-neutral/60">Engage with your audience through our interactive features</p>
             </div>
           </motion.div>
 
@@ -53,22 +53,22 @@ const PlatformPreview = () => {
           >
             <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
               <img 
+                src="/lovable-uploads/680a4cbf-2252-4c48-9aab-c7385de5b32d.png" 
+                alt="Content Management"
+                className="rounded-lg shadow-lg w-full h-48 object-cover"
+              />
+              <h3 className="text-xl font-semibold mt-4 mb-2">Manage Your Content</h3>
+              <p className="text-luxury-neutral/60">Organize and publish your content with ease</p>
+            </div>
+
+            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
+              <img 
                 src="/analytics-preview.png" 
                 alt="Analytics Dashboard"
                 className="rounded-lg shadow-lg w-full h-48 object-cover"
               />
               <h3 className="text-xl font-semibold mt-4 mb-2">Track Your Growth</h3>
               <p className="text-luxury-neutral/60">Monitor your performance with detailed analytics and insights</p>
-            </div>
-
-            <div className="glass-morph p-6 rounded-xl bg-[#161B22]/80 backdrop-blur-xl border border-white/10">
-              <img 
-                src="/earnings-preview.png" 
-                alt="Earnings Dashboard"
-                className="rounded-lg shadow-lg w-full h-48 object-cover"
-              />
-              <h3 className="text-xl font-semibold mt-4 mb-2">Manage Your Earnings</h3>
-              <p className="text-luxury-neutral/60">Track your revenue and manage your subscriptions easily</p>
             </div>
           </motion.div>
         </div>
