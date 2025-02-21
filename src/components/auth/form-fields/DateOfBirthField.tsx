@@ -1,4 +1,3 @@
-
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
@@ -167,7 +166,12 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                               }
                             }}
                           >
-                            <span>{props.name === 'month' ? format(new Date(2024, parseInt(value), 1), 'MMMM') : value}</span>
+                            <span>
+                              {props.name === 'month' 
+                                ? format(new Date(2024, Number(value), 1), 'MMMM')
+                                : String(value)
+                              }
+                            </span>
                             <svg className="h-4 w-4 text-luxury-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
