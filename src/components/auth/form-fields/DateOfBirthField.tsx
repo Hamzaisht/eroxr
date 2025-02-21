@@ -1,4 +1,3 @@
-
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
@@ -122,25 +121,30 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                   }}
                   components={{
                     Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
+                      const months = [
+                        "January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"
+                      ];
+
                       return (
                         <select
                           value={value}
                           onChange={onChange}
                           className={cn(
-                            "h-10 px-3 rounded-md",
+                            "h-9 px-2 rounded-md cursor-pointer",
                             "bg-[#1e1e1e] text-white",
                             "border border-luxury-primary/20",
                             "hover:bg-luxury-primary/10 hover:border-luxury-primary",
                             "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
-                            "transition-all duration-200",
-                            "appearance-none cursor-pointer relative z-10",
-                            "pr-8" // Space for the custom arrow
+                            "appearance-none",
+                            "min-w-[110px]"
                           )}
                           style={{
                             backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239b87f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e")`,
                             backgroundRepeat: 'no-repeat',
                             backgroundPosition: 'right 0.5rem center',
-                            backgroundSize: '1.5em 1.5em'
+                            backgroundSize: '1em 1em',
+                            paddingRight: '2rem'
                           }}
                           {...props}
                         >
