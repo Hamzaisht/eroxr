@@ -20,34 +20,48 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#1a1a2e] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Interactive background elements - Liquid metal effect */}
+      {/* Interactive background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
           animate={{
             x: mousePosition.x * 0.02,
             y: mousePosition.y * 0.02,
-            rotate: mousePosition.x * 0.02,
           }}
-          transition={{ type: "spring", damping: 30 }}
-          className="absolute -top-1/2 -left-1/2 w-[150%] h-[150%] bg-gradient-to-r from-[#D946EF]/20 to-[#8B5CF6]/20 rounded-[100%] blur-3xl"
-          style={{
-            filter: "blur(100px) saturate(150%)",
-            mixBlendMode: "soft-light",
-          }}
+          className="absolute -top-1/2 -left-1/2 w-full h-full bg-[#D946EF]/10 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
             x: mousePosition.x * -0.02,
             y: mousePosition.y * -0.02,
-            rotate: mousePosition.x * -0.02,
           }}
-          transition={{ type: "spring", damping: 30 }}
-          className="absolute -bottom-1/2 -right-1/2 w-[150%] h-[150%] bg-gradient-to-r from-[#8B5CF6]/20 to-black/40 rounded-[100%] blur-3xl"
-          style={{
-            filter: "blur(100px) saturate(150%)",
-            mixBlendMode: "color-dodge",
-          }}
+          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-[#8B5CF6]/10 rounded-full blur-3xl"
         />
+      </div>
+      
+      {/* Animated particles with enhanced glow */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(25)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0.2, scale: 0 }}
+            animate={{
+              opacity: [0.2, 0.5, 0.2],
+              scale: [1, 2, 1],
+              x: [0, Math.random() * 400 - 200, 0],
+              y: [0, Math.random() * 400 - 200, 0],
+            }}
+            transition={{
+              duration: Math.random() * 5 + 5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute w-1 h-1 bg-gradient-to-r from-[#D946EF] to-[#8B5CF6] rounded-full shadow-[0_0_10px_rgba(217,70,239,0.5)]"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+          />
+        ))}
       </div>
 
       {/* Card container with enhanced glass effect */}
