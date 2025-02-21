@@ -18,6 +18,25 @@ interface DateOfBirthFieldProps {
 
 export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => {
   const [date, setDate] = useState<Date>();
+  const [open, setOpen] = useState(false);
+
+  const handleSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      const today = new Date();
+      const age = today.getFullYear() - selectedDate.getFullYear();
+      const monthDiff = today.getMonth() - selectedDate.getMonth();
+      const dayDiff = today.getDate() - selectedDate.getDate();
+      
+      // Adjust age if birthday hasn't occurred this year
+      const adjustedAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+
+      if (adjustedAge >= 18) {
+        setDate(selectedDate);
+        form.setValue('dateOfBirth', format(selectedDate, 'yyyy-MM-dd'));
+        setOpen(false);
+      }
+    }
+  };
 
   return (
     <FormField
@@ -26,7 +45,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
       render={({ field }) => (
         <FormItem>
           <FormControl>
-            <Popover>
+            <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -41,7 +60,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                 >
                   <Calendar className="h-5 w-5 text-luxury-neutral/50" />
                   {field.value ? (
-                    format(new Date(field.value), "PPP")
+                    format(new Date(field.value), "MMMM d, yyyy")
                   ) : (
                     <span className="text-white/50">Date of Birth</span>
                   )}
@@ -54,12 +73,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                 <CalendarComponent
                   mode="single"
                   selected={field.value ? new Date(field.value) : undefined}
-                  onSelect={(date) => {
-                    if (date) {
-                      field.onChange(format(date, 'yyyy-MM-dd'));
-                      setDate(date);
-                    }
-                  }}
+                  onSelect={handleSelect}
                   disabled={(date) => {
                     const today = new Date();
                     const minDate = new Date();
@@ -92,9 +106,9 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                       "first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
                     ),
                     day: cn(
-                      "h-9 w-9 p-0 font-normal text-white/90",
+                      "h-9 w-9 p-0 font-normal text-white/90 aria-selected:opacity-100",
                       "hover:bg-luxury-primary hover:text-white rounded-full transition-colors",
-                      "focus:bg-luxury-primary focus:text-white",
+                      "focus:bg-luxury-primary focus:text-white focus:outline-none",
                       "aria-selected:bg-luxury-primary aria-selected:text-white"
                     ),
                     day_selected: "bg-luxury-primary text-white hover:bg-luxury-primary hover:text-white",
@@ -105,27 +119,21 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     day_hidden: "invisible",
                   }}
                   components={{
-                    Dropdown: ({ value, onChange, children, ...props }) => {
-                      const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-                        if (typeof onChange === 'function') {
-                          onChange(e);
-                        }
-                      };
-                      
-                      return (
-                        <select
-                          value={value}
-                          onChange={handleChange}
-                          className="bg-[#161B22] text-white/90 border border-luxury-primary/20 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-primary/30"
-                          {...props}
-                        >
-                          {children}
-                        </select>
-                      );
-                    }
+                    Dropdown: ({ value, onChange, children, ...props }) => (
+                      <select
+                        value={value}
+                        onChange={(e) => onChange?.(e.target.value)}
+                        className="bg-[#161B22] text-white/90 border border-luxury-primary/20 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-primary/30"
+                        {...props}
+                      >
+                        {children}
+                      </select>
+                    )
                   }}
                   showOutsideDays={false}
                   captionLayout="dropdown"
+                  fromYear={1924}
+                  toYear={2006}
                 />
               </PopoverContent>
             </Popover>
