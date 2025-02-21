@@ -58,15 +58,30 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark"
+      className="min-h-screen w-full overflow-hidden bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark"
     >
-      <ProfileHeaderContainer
-        profile={profile}
-        isOwnProfile={isOwnProfile}
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-      />
-      <ProfileTabs profile={profile} />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full"
+      >
+        <ProfileHeaderContainer
+          profile={profile}
+          isOwnProfile={isOwnProfile}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+        />
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="w-full max-w-none"
+        >
+          <ProfileStats profileId={profile.id} />
+          <ProfileTabs profile={profile} />
+        </motion.div>
+      </motion.div>
     </motion.div>
   );
 };
