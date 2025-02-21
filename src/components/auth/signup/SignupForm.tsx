@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,59 +72,55 @@ export const SignupForm = ({ onToggleMode }: { onToggleMode: () => void }) => {
       transition={{ duration: 0.5 }}
       className="w-full max-w-md space-y-6"
     >
-      <div className="relative backdrop-blur-xl bg-white/5 rounded-2xl p-8 shadow-2xl border border-luxury-primary/20">
-        <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/10 via-luxury-accent/5 to-transparent rounded-2xl" />
-        
-        <div className="relative space-y-6">
-          <SignupHeader />
+      <div className="space-y-6">
+        <SignupHeader />
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <EmailField form={form} isLoading={isLoading} />
-              
-              <div className="space-y-4">
-                <PasswordField
-                  form={form}
-                  name="password"
-                  placeholder="Password"
-                  isLoading={isLoading}
-                />
-                <PasswordField
-                  form={form}
-                  name="confirmPassword"
-                  placeholder="Confirm Password"
-                  isLoading={isLoading}
-                />
-              </div>
-
-              <UsernameField
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <EmailField form={form} isLoading={isLoading} />
+            
+            <div className="space-y-4">
+              <PasswordField
                 form={form}
+                name="password"
+                placeholder="Password"
                 isLoading={isLoading}
               />
+              <PasswordField
+                form={form}
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                isLoading={isLoading}
+              />
+            </div>
 
-              <DateOfBirthField form={form} isLoading={isLoading} />
-              
-              <CountrySelect form={form} isLoading={isLoading} />
+            <UsernameField
+              form={form}
+              isLoading={isLoading}
+            />
 
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary text-white font-medium py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed h-12"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Creating account...</span>
-                  </div>
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </form>
-          </Form>
+            <DateOfBirthField form={form} isLoading={isLoading} />
+            
+            <CountrySelect form={form} isLoading={isLoading} />
 
-          <SignupFooter onToggleMode={onToggleMode} />
-        </div>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary text-white font-medium py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed h-12"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Creating account...</span>
+                </div>
+              ) : (
+                "Create Account"
+              )}
+            </Button>
+          </form>
+        </Form>
+
+        <SignupFooter onToggleMode={onToggleMode} />
       </div>
     </motion.div>
   );
