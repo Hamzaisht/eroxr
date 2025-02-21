@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
@@ -87,8 +88,8 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                   classNames={{
                     months: "space-y-4",
                     month: "space-y-4",
-                    caption: "flex justify-center pt-1 relative items-center gap-4",
-                    caption_label: "text-base font-medium text-white",
+                    caption: "flex justify-center pt-1 relative items-center gap-4 bg-[#1e1e1e]",
+                    caption_label: "text-base font-medium text-white bg-[#1e1e1e]",
                     nav: "flex items-center gap-1",
                     nav_button: cn(
                       "h-8 w-8 bg-luxury-primary/10 text-luxury-primary rounded-full",
@@ -146,7 +147,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                       };
 
                       return (
-                        <div className="relative">
+                        <div className="relative bg-[#1e1e1e]">
                           <select
                             value={value}
                             onChange={handleChange}
@@ -163,7 +164,8 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                             )}
                             style={{
                               WebkitAppearance: 'none',
-                              MozAppearance: 'none'
+                              MozAppearance: 'none',
+                              backgroundColor: '#1e1e1e'
                             }}
                             {...props}
                           >
