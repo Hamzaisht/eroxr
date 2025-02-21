@@ -1,10 +1,10 @@
 
 import { Users, Heart, Image, DollarSign } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionValue, useMotionValue, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 
@@ -15,6 +15,18 @@ interface TipData {
   call_id: string;
   sender_name: string | null;
 }
+
+const Counter = ({ value }: { value: number }) => {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
+  
+  useEffect(() => {
+    const animation = motion.animate(count, value, { duration: 2 });
+    return animation.stop;
+  }, [count, value]);
+
+  return <motion.span>{rounded}</motion.span>;
+};
 
 export const ProfileStats = ({ profileId }: { profileId: string }) => {
   const [showTipDialog, setShowTipDialog] = useState(false);
@@ -73,14 +85,9 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
       >
         <Users className="h-5 w-5 text-luxury-primary animate-pulse" />
         <div className="flex flex-col">
-          <motion.span 
-            className="text-white font-medium"
-            initial={{ number: 0 }}
-            animate={{ number: 4300 }}
-            transition={{ duration: 2 }}
-          >
-            4.3K
-          </motion.span>
+          <span className="text-white font-medium">
+            <Counter value={4300} />
+          </span>
           <span className="text-xs text-white/60">Followers</span>
         </div>
         <motion.div 
@@ -103,14 +110,9 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
       >
         <Heart className="h-5 w-5 text-luxury-accent animate-pulse" />
         <div className="flex flex-col">
-          <motion.span 
-            className="text-white font-medium"
-            initial={{ number: 0 }}
-            animate={{ number: 12800 }}
-            transition={{ duration: 2 }}
-          >
-            12.8K
-          </motion.span>
+          <span className="text-white font-medium">
+            <Counter value={12800} />
+          </span>
           <span className="text-xs text-white/60">Likes</span>
         </div>
       </motion.div>
@@ -125,14 +127,9 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
       >
         <Image className="h-5 w-5 text-luxury-neutral animate-pulse" />
         <div className="flex flex-col">
-          <motion.span 
-            className="text-white font-medium"
-            initial={{ number: 0 }}
-            animate={{ number: 286 }}
-            transition={{ duration: 2 }}
-          >
-            286
-          </motion.span>
+          <span className="text-white font-medium">
+            <Counter value={286} />
+          </span>
           <span className="text-xs text-white/60">Posts</span>
         </div>
       </motion.div>

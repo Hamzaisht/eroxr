@@ -1,9 +1,9 @@
+
 import { ProfileBanner } from "@/components/profile/banner/ProfileBanner";
 import { ProfileInfo } from "@/components/profile/ProfileInfo";
-import { ProfileStats } from "@/components/profile/ProfileStats";
-import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { ProfileHeaderStatus } from "./ProfileHeaderStatus";
 import type { ProfileHeaderProps } from "../types";
 
 export const ProfileHeaderContainer = ({
@@ -46,10 +46,6 @@ export const ProfileHeaderContainer = ({
           
           <div className="w-full max-w-3xl space-y-6 text-center">
             <ProfileInfo profile={profile} />
-            
-            <div className="flex justify-center">
-              <ProfileStats />
-            </div>
             
             {isOwnProfile && (
               <div className="flex justify-center gap-4">

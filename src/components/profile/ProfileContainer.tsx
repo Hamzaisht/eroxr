@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { ProfileHeaderContainer } from "./header/ProfileHeaderContainer";
 import { ProfileTabs } from "./ProfileTabs";
+import { ProfileStats } from "./ProfileStats"; // Add this import
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Loader2 } from "lucide-react";
