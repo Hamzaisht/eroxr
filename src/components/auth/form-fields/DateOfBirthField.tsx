@@ -119,7 +119,20 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     day_disabled: "bg-[#1e1e1e] text-white/20",
                     day_range_middle: "aria-selected:bg-luxury-primary/20",
                     day_hidden: "invisible",
-                    dropdown: "absolute top-0 bg-[#1e1e1e] border border-luxury-primary/20 rounded-md shadow-lg p-2 z-50 min-w-[120px] max-h-[300px] overflow-y-auto scrollbar-none",
+                    dropdown: cn(
+                      "absolute top-0 bg-[#1e1e1e] border border-luxury-primary/20 rounded-md shadow-lg p-2",
+                      "z-50 min-w-[120px] max-h-[300px] overflow-y-auto",
+                      "[&::-webkit-scrollbar]:w-1.5",
+                      "[&::-webkit-scrollbar-track]:bg-transparent",
+                      "[&::-webkit-scrollbar-thumb]:bg-luxury-primary/30",
+                      "[&::-webkit-scrollbar-thumb]:rounded-full",
+                      "[&::-webkit-scrollbar-thumb]:border-2",
+                      "[&::-webkit-scrollbar-thumb]:border-transparent",
+                      "[&::-webkit-scrollbar-thumb]:bg-clip-padding",
+                      "[&::-webkit-scrollbar-thumb]:hover:bg-luxury-primary/50",
+                      "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-luxury-primary/30",
+                      "hover:scrollbar-thumb-luxury-primary/50"
+                    ),
                     dropdown_month: "space-y-1",
                     dropdown_year: "space-y-1",
                     vhidden: "hidden"
