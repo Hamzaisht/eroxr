@@ -10,64 +10,84 @@ export const SignupHeader = () => {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <div className="relative w-20 h-20">
-          {/* Outer Circle - Versace-inspired border */}
+        <div className="relative w-24 h-24">
+          {/* Greek Key Pattern Border */}
           <motion.div 
-            className="absolute inset-0 rounded-full border-2 border-luxury-primary"
+            className="absolute inset-0 rounded-full"
             initial={{ rotate: 0 }}
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           >
-            {/* Decorative elements */}
-            {[...Array(8)].map((_, i) => (
+            {/* Generate Greek key pattern segments */}
+            {[...Array(16)].map((_, i) => (
               <div
                 key={i}
-                className="absolute w-1.5 h-1.5 bg-luxury-accent"
+                className="absolute w-1.5 h-3 bg-luxury-primary"
                 style={{
                   top: '50%',
                   left: '50%',
-                  transform: `rotate(${i * 45}deg) translateX(2.5rem) translate(-50%, -50%)`,
+                  transform: `
+                    rotate(${i * (360 / 16)}deg) 
+                    translateX(3rem) 
+                    rotate(${i * (360 / 16)}deg)
+                  `,
                 }}
-              />
+              >
+                <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-luxury-primary" />
+              </div>
             ))}
           </motion.div>
 
           {/* Inner Circle - Main logo container */}
-          <div className="absolute inset-2 rounded-full bg-gradient-to-br from-luxury-darker to-[#1A1F2C] flex items-center justify-center overflow-hidden">
-            {/* Freya's Wings */}
+          <div className="absolute inset-3 rounded-full bg-gradient-to-br from-luxury-darker to-[#1A1F2C] flex items-center justify-center overflow-hidden">
+            {/* Combined Heart Symbol */}
             <motion.div
-              className="absolute w-full h-full"
-              initial={{ rotate: -10, scale: 0.9 }}
-              animate={{ rotate: 0, scale: 1 }}
-              transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+              className="relative w-10 h-10"
+              initial={{ scale: 0.9, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut"
+              }}
             >
-              <div className="absolute left-1/2 top-1/2 w-4 h-8 -translate-x-1/2 -translate-y-1/2">
-                <div className="absolute left-0 w-4 h-4 bg-gradient-to-r from-luxury-primary to-luxury-accent transform -rotate-45 rounded-tl-full" />
-                <div className="absolute right-0 w-4 h-4 bg-gradient-to-l from-luxury-primary to-luxury-accent transform rotate-45 rounded-tr-full" />
+              {/* Heart shape */}
+              <div className="absolute inset-0">
+                <div className="absolute w-5 h-8 bg-gradient-to-br from-luxury-primary to-luxury-accent rounded-t-full"
+                     style={{ left: '0', transform: 'rotate(-45deg) translateY(-50%)' }} />
+                <div className="absolute w-5 h-8 bg-gradient-to-bl from-luxury-primary to-luxury-accent rounded-t-full"
+                     style={{ right: '0', transform: 'rotate(45deg) translateY(-50%)' }} />
               </div>
-            </motion.div>
 
-            {/* Eros's Arrow */}
-            <motion.div
-              className="absolute w-6 h-0.5 bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-primary"
-              initial={{ rotate: 45, scale: 0.8, opacity: 0.5 }}
-              animate={{ rotate: 225, scale: 1.2, opacity: 1 }}
-              transition={{ duration: 3, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-            >
-              <div className="absolute -right-1 -top-1 w-2 h-2 bg-luxury-accent transform rotate-45" />
+              {/* Animated glow effect */}
+              <motion.div
+                className="absolute inset-0 bg-luxury-accent/20 blur-md"
+                initial={{ opacity: 0.2 }}
+                animate={{ opacity: 0.6 }}
+                transition={{ 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut"
+                }}
+              />
             </motion.div>
           </div>
         </div>
 
         {/* Logo Text */}
-        <motion.h2 
+        <motion.div 
+          className="mt-4 space-y-1"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-4 text-4xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent"
         >
-          EROXR
-        </motion.h2>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
+            EROXR
+          </h2>
+          <p className="text-sm text-luxury-primary/80 tracking-wider">GOD OF LOVE</p>
+        </motion.div>
       </motion.div>
       <p className="text-luxury-neutral/80">Create your account</p>
     </div>
