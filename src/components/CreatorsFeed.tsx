@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { PostCard } from "./feed/PostCard";
@@ -22,7 +23,6 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   const { ref, inView } = useInView();
   const { id } = useParams();
 
-  // Set up real-time updates
   useRealtimeUpdates('posts');
 
   const {
@@ -34,12 +34,10 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
     refetch
   } = useFeedQuery(id || session?.user?.id, feedType);
 
-  // Fetch initial data
   useEffect(() => {
     refetch();
   }, [refetch, feedType]);
 
-  // Handle infinite scroll
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -66,8 +64,8 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   return (
     <div className="w-full mx-auto">
       <ScrollArea className="h-[calc(100vh-20rem)]">
-        <div className="space-y-6 max-w-3xl mx-auto">
-          <div className="space-y-6">
+        <div className="space-y-4 max-w-3xl mx-auto">
+          <div className="space-y-4">
             {posts.map((post) => {
               const typedPost: Post = {
                 ...post,
@@ -85,13 +83,19 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
               };
 
               return (
-                <PostCard
+                <motion.div
                   key={post.id}
-                  post={typedPost}
-                  onLike={handleLike}
-                  onDelete={handleDelete}
-                  currentUserId={session?.user?.id}
-                />
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <PostCard
+                    post={typedPost}
+                    onLike={handleLike}
+                    onDelete={handleDelete}
+                    currentUserId={session?.user?.id}
+                  />
+                </motion.div>
               );
             })}
             {hasNextPage && (
