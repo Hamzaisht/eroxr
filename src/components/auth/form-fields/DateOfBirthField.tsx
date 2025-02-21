@@ -37,11 +37,6 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
     }
   };
 
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-
   return (
     <FormField
       control={form.control}
@@ -94,6 +89,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     months: "space-y-4",
                     month: "space-y-4",
                     caption: "flex justify-center pt-1 relative items-center gap-2",
+                    caption_dropdown: "flex gap-1",
                     caption_label: "text-base font-medium text-white",
                     nav: "flex items-center gap-1",
                     nav_button: cn(
@@ -124,27 +120,40 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     day_disabled: "bg-[#1e1e1e] text-white/20",
                     day_range_middle: "aria-selected:bg-luxury-primary/20",
                     day_hidden: "invisible",
+                    dropdown: cn(
+                      "absolute top-0 bg-[#1e1e1e] border border-luxury-primary/20",
+                      "rounded-md shadow-lg p-2 z-50 min-w-[120px] max-h-[300px]",
+                      "overflow-y-auto scrollbar-none"
+                    ),
+                    dropdown_month: "space-y-1",
+                    dropdown_year: "space-y-1",
+                    dropdown_item: cn(
+                      "cursor-pointer px-3 py-2 text-sm text-white rounded-md",
+                      "hover:bg-luxury-primary hover:text-white transition-colors",
+                      "focus:outline-none focus:bg-luxury-primary focus:text-white"
+                    ),
+                    dropdown_item_selected: "bg-luxury-primary text-white"
                   }}
                   components={{
                     Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
-                      const displayValue = props.name === 'month' 
-                        ? months[parseInt(String(value))]
-                        : value;
+                      const months = [
+                        "January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"
+                      ];
 
                       return (
-                        <div className="relative inline-block">
+                        <div className="relative">
                           <select
                             value={value}
                             onChange={onChange}
                             className={cn(
-                              "h-9 px-2 rounded-md cursor-pointer",
+                              "h-9 px-3 rounded-md cursor-pointer",
                               "bg-[#1e1e1e] text-white",
                               "border border-luxury-primary/20",
                               "hover:bg-luxury-primary/10 hover:border-luxury-primary",
                               "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
-                              "appearance-none",
-                              "pr-8 pl-2",
-                              "min-w-[120px]"
+                              "appearance-none min-w-[120px]",
+                              "pr-8 text-sm font-medium"
                             )}
                             style={{
                               backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239b87f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e")`,
@@ -152,9 +161,16 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                               backgroundPosition: 'right 0.5rem center',
                               backgroundSize: '1em 1em'
                             }}
-                            {...props}
                           >
-                            {children}
+                            {props.name === 'month' ? (
+                              months.map((month, index) => (
+                                <option key={month} value={index} className="bg-[#1e1e1e] text-white">
+                                  {month}
+                                </option>
+                              ))
+                            ) : (
+                              children
+                            )}
                           </select>
                         </div>
                       );
