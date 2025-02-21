@@ -88,8 +88,8 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                   classNames={{
                     months: "space-y-4",
                     month: "space-y-4",
-                    caption: "flex justify-center pt-1 relative items-center gap-4 bg-[#1e1e1e]",
-                    caption_label: "text-base font-medium text-white bg-[#1e1e1e]",
+                    caption: "flex justify-center pt-1 relative items-center gap-4",
+                    caption_label: "text-base font-medium text-white",
                     nav: "flex items-center gap-1",
                     nav_button: cn(
                       "h-8 w-8 bg-luxury-primary/10 text-luxury-primary rounded-full",
@@ -147,35 +147,39 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                       };
 
                       return (
-                        <div className="relative bg-[#1e1e1e]">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            className={cn(
+                              "h-10 px-3 rounded-md",
+                              "bg-[#1e1e1e] text-white",
+                              "border border-luxury-primary/20",
+                              "hover:bg-luxury-primary/10 hover:border-luxury-primary",
+                              "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
+                              "transition-all duration-200",
+                              "flex-1 flex items-center justify-between"
+                            )}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const select = e.currentTarget.nextElementSibling as HTMLSelectElement;
+                              if (select) {
+                                select.click();
+                              }
+                            }}
+                          >
+                            <span>{props.name === 'month' ? format(new Date(2024, parseInt(value), 1), 'MMMM') : value}</span>
+                            <svg className="h-4 w-4 text-luxury-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
                           <select
                             value={value}
                             onChange={handleChange}
-                            className={cn(
-                              "appearance-none",
-                              "w-full px-3 py-2 rounded-md",
-                              "bg-[#1e1e1e] text-white",
-                              "border border-luxury-primary/20",
-                              "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
-                              "hover:border-luxury-primary transition-colors duration-200",
-                              "cursor-pointer min-w-[110px]",
-                              "text-sm font-medium",
-                              "[&>option]:bg-[#1e1e1e] [&>option]:text-white [&>option]:py-1"
-                            )}
-                            style={{
-                              WebkitAppearance: 'none',
-                              MozAppearance: 'none',
-                              backgroundColor: '#1e1e1e'
-                            }}
+                            className="sr-only"
                             {...props}
                           >
                             {children}
                           </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-luxury-primary">
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
                         </div>
                       );
                     }
