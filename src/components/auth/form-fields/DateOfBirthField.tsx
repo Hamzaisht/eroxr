@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
@@ -87,7 +88,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                   classNames={{
                     months: "space-y-4",
                     month: "space-y-4",
-                    caption: "flex justify-center pt-1 relative items-center gap-4",
+                    caption: "flex justify-center pt-1 relative items-center",
                     caption_label: "text-base font-medium text-white",
                     nav: "flex items-center gap-1",
                     nav_button: cn(
@@ -121,70 +122,30 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                   }}
                   components={{
                     Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
-                      const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-                        if (onChange) {
-                          const selectedValue = event.target.value;
-                          const fakeEvent = {
-                            ...event,
-                            target: {
-                              ...event.target,
-                              value: selectedValue
-                            }
-                          };
-                          onChange(fakeEvent);
-                          
-                          if (field.value) {
-                            const currentDate = new Date(field.value);
-                            if (props.name === 'month') {
-                              currentDate.setMonth(parseInt(selectedValue));
-                            } else if (props.name === 'year') {
-                              currentDate.setFullYear(parseInt(selectedValue));
-                            }
-                            handleSelect(currentDate);
-                          }
-                        }
-                      };
-
                       return (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            className={cn(
-                              "h-10 px-3 rounded-md",
-                              "bg-[#1e1e1e] text-white",
-                              "border border-luxury-primary/20",
-                              "hover:bg-luxury-primary/10 hover:border-luxury-primary",
-                              "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
-                              "transition-all duration-200",
-                              "flex-1 flex items-center justify-between"
-                            )}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              const select = e.currentTarget.nextElementSibling as HTMLSelectElement;
-                              if (select) {
-                                select.click();
-                              }
-                            }}
-                          >
-                            <span>
-                              {props.name === 'month' 
-                                ? format(new Date(2024, Number(value), 1), 'MMMM')
-                                : String(value)
-                              }
-                            </span>
-                            <svg className="h-4 w-4 text-luxury-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </button>
-                          <select
-                            value={value}
-                            onChange={handleChange}
-                            className="sr-only"
-                            {...props}
-                          >
-                            {children}
-                          </select>
-                        </div>
+                        <select
+                          value={value}
+                          onChange={onChange}
+                          className={cn(
+                            "h-10 px-3 rounded-md",
+                            "bg-[#1e1e1e] text-white",
+                            "border border-luxury-primary/20",
+                            "hover:bg-luxury-primary/10 hover:border-luxury-primary",
+                            "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
+                            "transition-all duration-200",
+                            "appearance-none cursor-pointer relative z-10",
+                            "pr-8" // Space for the custom arrow
+                          )}
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239b87f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e")`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'right 0.5rem center',
+                            backgroundSize: '1.5em 1.5em'
+                          }}
+                          {...props}
+                        >
+                          {children}
+                        </select>
                       );
                     }
                   }}
