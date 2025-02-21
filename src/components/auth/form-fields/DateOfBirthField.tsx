@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
@@ -119,19 +120,10 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     day_disabled: "bg-[#1e1e1e] text-white/20",
                     day_range_middle: "aria-selected:bg-luxury-primary/20",
                     day_hidden: "invisible",
-                    dropdown: cn(
-                      "absolute top-0 bg-[#1e1e1e] border border-luxury-primary/20",
-                      "rounded-md shadow-lg p-2 z-50 min-w-[120px] max-h-[300px]",
-                      "overflow-y-auto scrollbar-none"
-                    ),
+                    dropdown: "absolute top-0 bg-[#1e1e1e] border border-luxury-primary/20 rounded-md shadow-lg p-2 z-50 min-w-[120px] max-h-[300px] overflow-y-auto scrollbar-none",
                     dropdown_month: "space-y-1",
                     dropdown_year: "space-y-1",
-                    dropdown_item: cn(
-                      "cursor-pointer px-3 py-2 text-sm text-white rounded-md",
-                      "hover:bg-luxury-primary hover:text-white transition-colors",
-                      "focus:outline-none focus:bg-luxury-primary focus:text-white"
-                    ),
-                    dropdown_item_selected: "bg-luxury-primary text-white"
+                    vhidden: "hidden"
                   }}
                   components={{
                     Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
