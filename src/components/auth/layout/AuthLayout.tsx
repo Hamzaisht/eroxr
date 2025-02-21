@@ -19,7 +19,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-luxury-gradient flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#1a1a2e] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Interactive background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -27,20 +27,20 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
             x: mousePosition.x * 0.02,
             y: mousePosition.y * 0.02,
           }}
-          className="absolute -top-1/2 -left-1/2 w-full h-full bg-luxury-primary/5 rounded-full blur-3xl"
+          className="absolute -top-1/2 -left-1/2 w-full h-full bg-[#D946EF]/10 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
             x: mousePosition.x * -0.02,
             y: mousePosition.y * -0.02,
           }}
-          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-luxury-accent/5 rounded-full blur-3xl"
+          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-[#8B5CF6]/10 rounded-full blur-3xl"
         />
       </div>
       
-      {/* Animated particles */}
+      {/* Animated particles with enhanced glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(25)].map((_, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0.2, scale: 0 }}
@@ -55,7 +55,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute w-1 h-1 bg-luxury-primary/20 rounded-full"
+            className="absolute w-1 h-1 bg-gradient-to-r from-[#D946EF] to-[#8B5CF6] rounded-full shadow-[0_0_10px_rgba(217,70,239,0.5)]"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -64,40 +64,40 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         ))}
       </div>
 
-      {/* Card container with glass effect */}
+      {/* Card container with enhanced glass effect */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md space-y-8 relative z-10"
       >
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 shadow-xl border border-white/10">
+        <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-white/10">
           {children}
         </div>
       </motion.div>
 
-      {/* Trust indicators */}
-      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-8 text-sm text-luxury-neutral/60">
+      {/* Trust indicators with enhanced styling */}
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-8 text-sm">
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/5"
         >
-          <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-          256-bit Encryption
+          <span className="w-2 h-2 bg-[#D946EF] rounded-full animate-pulse shadow-[0_0_10px_rgba(217,70,239,0.5)]" />
+          <span className="text-white/80">256-bit Encryption</span>
         </motion.div>
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/5"
         >
-          <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-          GDPR Compliant
+          <span className="w-2 h-2 bg-[#8B5CF6] rounded-full animate-pulse shadow-[0_0_10px_rgba(139,92,246,0.5)]" />
+          <span className="text-white/80">GDPR Compliant</span>
         </motion.div>
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/5"
         >
-          <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
-          24/7 Support
+          <span className="w-2 h-2 bg-[#ec4899] rounded-full animate-pulse shadow-[0_0_10px_rgba(236,72,153,0.5)]" />
+          <span className="text-white/80">24/7 Support</span>
         </motion.div>
       </div>
     </div>
