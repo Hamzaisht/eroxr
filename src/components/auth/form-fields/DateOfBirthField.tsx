@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useState } from "react";
+import { SelectSingleEventHandler } from "react-day-picker";
 
 interface DateOfBirthFieldProps {
   form: UseFormReturn<SignupFormValues>;
@@ -47,7 +48,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="w-auto p-0 bg-luxury-dark border border-luxury-primary/20"
+                className="w-auto p-0 bg-[#161B22] border border-luxury-primary/20"
                 align="start"
               >
                 <CalendarComponent
@@ -82,7 +83,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     table: "w-full border-collapse space-y-1",
                     head_row: "flex",
                     head_cell: cn(
-                      "text-luxury-neutral/50 rounded-md w-9 font-normal text-[0.8rem]",
+                      "text-luxury-neutral rounded-md w-9 font-normal text-[0.8rem]",
                       "uppercase tracking-wider text-center"
                     ),
                     row: "flex w-full mt-2",
@@ -91,17 +92,32 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                       "first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
                     ),
                     day: cn(
-                      "h-9 w-9 p-0 font-normal text-luxury-neutral",
-                      "hover:bg-luxury-primary/20 rounded-full transition-colors",
-                      "focus:bg-luxury-primary focus:text-white"
+                      "h-9 w-9 p-0 font-normal text-white/90",
+                      "hover:bg-luxury-primary hover:text-white rounded-full transition-colors",
+                      "focus:bg-luxury-primary focus:text-white",
+                      "aria-selected:bg-luxury-primary aria-selected:text-white"
                     ),
                     day_selected: "bg-luxury-primary text-white hover:bg-luxury-primary hover:text-white",
-                    day_today: "bg-luxury-accent/10 text-luxury-accent",
+                    day_today: "bg-luxury-accent/10 text-luxury-accent font-semibold",
                     day_outside: "text-luxury-neutral/30",
                     day_disabled: "text-luxury-neutral/20",
                     day_range_middle: "aria-selected:bg-luxury-primary/20",
                     day_hidden: "invisible",
                   }}
+                  components={{
+                    Dropdown: ({ value, onChange, children, ...props }) => (
+                      <select
+                        value={value}
+                        onChange={(e) => onChange?.(e.target.value)}
+                        className="bg-[#161B22] text-white/90 border border-luxury-primary/20 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-primary/30"
+                        {...props}
+                      >
+                        {children}
+                      </select>
+                    ),
+                  }}
+                  showOutsideDays={false}
+                  captionLayout="dropdown"
                 />
               </PopoverContent>
             </Popover>

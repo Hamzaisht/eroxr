@@ -23,6 +23,13 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
     <div className="min-h-screen bg-gradient-to-br from-[#0D1117] via-[#161B22] to-[#0D1117] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Interactive background elements */}
       <div className="absolute inset-0 overflow-hidden">
+        {/* Cursor follower */}
+        <motion.div
+          className="pointer-events-none fixed inset-0 z-30 transition-opacity"
+          animate={{
+            background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(217, 70, 239, 0.05), transparent 40%)`,
+          }}
+        />
         <motion.div
           animate={{
             x: mousePosition.x * 0.02,
