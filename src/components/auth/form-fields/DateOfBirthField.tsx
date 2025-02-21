@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 import { SelectSingleEventHandler } from "react-day-picker";
 
 interface DateOfBirthFieldProps {
@@ -108,7 +108,11 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     Dropdown: ({ value, onChange, children, ...props }) => (
                       <select
                         value={value}
-                        onChange={(e) => onChange?.(e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                          if (onChange) {
+                            onChange(e.target.value);
+                          }
+                        }}
                         className="bg-[#161B22] text-white/90 border border-luxury-primary/20 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-primary/30"
                         {...props}
                       >
