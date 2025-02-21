@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useState } from "react";
-import { SelectSingleEventHandler } from "react-day-picker";
+import { DropdownProps } from "react-day-picker";
 
 interface DateOfBirthFieldProps {
   form: UseFormReturn<SignupFormValues>;
@@ -105,18 +105,11 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     day_hidden: "invisible",
                   }}
                   components={{
-                    Dropdown: ({ value, onChange: onChangeDropdown, children, ...props }) => {
-                      const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-                        if (onChangeDropdown) {
-                          // Call the original onChange with just the value
-                          onChangeDropdown(e.target.value);
-                        }
-                      };
-
+                    Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
                       return (
                         <select
                           value={value}
-                          onChange={handleChange}
+                          onChange={(e) => onChange?.(e.target.value)}
                           className="bg-[#161B22] text-white/90 border border-luxury-primary/20 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-primary/30"
                           {...props}
                         >
