@@ -133,14 +133,14 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                           value={value}
                           onChange={handleChange}
                           className={cn(
-                            "bg-[#161B22] text-white border border-luxury-primary/20 rounded-md",
+                            "bg-[#0D1117] text-white border border-luxury-primary/20 rounded-md",
                             "px-3 py-1.5 text-sm font-medium",
                             "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
                             "hover:border-luxury-primary transition-colors duration-200",
                             "cursor-pointer appearance-none min-w-[110px]",
                             "bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22%239b87f5%22%3E%3Cpath%20d%3D%22M3%205l3%203%203-3%22%2F%3E%3C%2Fsvg%3E')]",
                             "bg-[position:right_0.5rem_center] bg-no-repeat bg-[length:1.5em_1.5em]",
-                            "pr-8"
+                            "pr-8 mx-1"
                           )}
                           {...props}
                         >
