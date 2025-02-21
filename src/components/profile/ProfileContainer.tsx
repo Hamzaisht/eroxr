@@ -1,18 +1,22 @@
 
+import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { ProfileHeaderContainer } from "./header/ProfileHeaderContainer";
 import { ProfileTabs } from "./ProfileTabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { Profile } from "@/integrations/supabase/types/profile";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
+import { Loader2 } from "lucide-react";
 
 interface ProfileContainerProps {
   id?: string;
   isEditing: boolean;
-  setIsEditing: (isEditing: boolean) => void;
+  setIsEditing: (value: boolean) => void;
 }
 
 export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContainerProps) => {
+  const session = useSession();
+  const isOwnProfile = session?.user?.id === id;
+
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
@@ -25,21 +29,17 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
         .single();
 
       if (error) throw error;
-      return data as Profile;
+      return data;
     },
     enabled: !!id,
   });
 
   if (isLoading) {
     return (
-      <div className="w-full space-y-8 animate-pulse">
-        <Skeleton className="w-full h-[60vh]" />
-        <div className="container mx-auto px-4">
-          <Skeleton className="h-32 w-32 rounded-full mx-auto -mt-16" />
-          <div className="space-y-4 mt-8">
-            <Skeleton className="h-8 w-48 mx-auto" />
-            <Skeleton className="h-4 w-64 mx-auto" />
-          </div>
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
+          <p className="text-luxury-neutral">Loading profile...</p>
         </div>
       </div>
     );
@@ -47,23 +47,26 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="w-full h-screen flex items-center justify-center">
         <p className="text-luxury-neutral">Profile not found</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen w-full">
-      <ProfileHeaderContainer 
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark"
+    >
+      <ProfileHeaderContainer
         profile={profile}
-        isOwnProfile={true}
+        isOwnProfile={isOwnProfile}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
       />
-      <div className="flex-1 container mx-auto px-4 py-8">
-        <ProfileTabs profile={profile} />
-      </div>
-    </div>
+      <ProfileTabs profile={profile} />
+    </motion.div>
   );
 };

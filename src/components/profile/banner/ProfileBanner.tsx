@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 import type { Profile } from "@/integrations/supabase/types/profile";
 import { BannerMedia } from "./BannerMedia";
 import { BannerEditButton } from "./BannerEditButton";
@@ -18,6 +19,13 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [currentBannerUrl, setCurrentBannerUrl] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
   // Update currentBannerUrl when profile changes
   useEffect(() => {
@@ -36,6 +44,7 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   return (
     <>
       <motion.div 
+        ref={containerRef}
         className="h-[60vh] w-full overflow-hidden relative cursor-pointer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -44,11 +53,17 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
         onHoverEnd={() => setIsHovering(false)}
         onClick={() => setShowPreview(true)}
       >
-        <BannerMedia 
-          mediaUrl={bannerUrl}
-          mediaType={bannerMediaType}
-          isHovering={isHovering}
-        />
+        <motion.div style={{ y }} className="absolute inset-0">
+          <BannerMedia 
+            mediaUrl={bannerUrl}
+            mediaType={bannerMediaType}
+            isHovering={isHovering}
+          />
+        </motion.div>
+
+        {/* Gradient overlays for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-luxury-darker via-transparent to-transparent pointer-events-none" />
 
         {isOwnProfile && isHovering && (
           <BannerEditButton 
