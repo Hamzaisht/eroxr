@@ -12,6 +12,7 @@ import { useInView } from "react-intersection-observer";
 import { useParams } from "react-router-dom";
 import type { Post } from "@/integrations/supabase/types/post";
 import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface CreatorsFeedProps {
   feedType?: 'feed' | 'popular' | 'recent';
