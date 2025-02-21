@@ -124,7 +124,26 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
                       const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
                         if (onChange) {
-                          onChange(event);
+                          const selectedValue = event.target.value;
+                          const fakeEvent = {
+                            ...event,
+                            target: {
+                              ...event.target,
+                              value: selectedValue
+                            }
+                          };
+                          onChange(fakeEvent);
+                          
+                          // Force rerender of calendar when month/year changes
+                          if (field.value) {
+                            const currentDate = new Date(field.value);
+                            if (props.name === 'month') {
+                              currentDate.setMonth(parseInt(selectedValue));
+                            } else if (props.name === 'year') {
+                              currentDate.setFullYear(parseInt(selectedValue));
+                            }
+                            handleSelect(currentDate);
+                          }
                         }
                       };
 
@@ -140,7 +159,8 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                             "cursor-pointer appearance-none min-w-[110px]",
                             "bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22%239b87f5%22%3E%3Cpath%20d%3D%22M3%205l3%203%203-3%22%2F%3E%3C%2Fsvg%3E')]",
                             "bg-[position:right_0.5rem_center] bg-no-repeat bg-[length:1.5em_1.5em]",
-                            "pr-8 mx-1"
+                            "pr-8 mx-1",
+                            "option:bg-[#0D1117] option:text-white"
                           )}
                           {...props}
                         >
