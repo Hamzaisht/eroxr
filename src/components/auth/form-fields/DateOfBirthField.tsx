@@ -52,11 +52,11 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                   disabled={isLoading}
                   className={cn(
                     "w-full h-12 px-4 text-left font-normal flex items-center gap-3",
-                    "bg-white/5 border-luxury-primary/20 hover:bg-white/10",
+                    "bg-black/10 border-luxury-primary/20 hover:bg-black/20",
                     "transition-all duration-300 ease-in-out",
                     "focus:ring-2 focus:ring-luxury-primary/30",
                     !field.value && "text-muted-foreground",
-                    "hover:border-luxury-primary hover:bg-luxury-primary/5"
+                    "hover:border-luxury-primary"
                   )}
                 >
                   <Calendar className="h-5 w-5 text-luxury-primary" />
@@ -68,7 +68,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="w-auto p-4 bg-[#161B22] border border-luxury-primary/20 shadow-xl backdrop-blur-sm"
+                className="w-auto p-4 bg-[#0D1117] border border-luxury-primary/20 shadow-xl backdrop-blur-sm"
                 align="start"
               >
                 <CalendarComponent
@@ -148,24 +148,35 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                       };
 
                       return (
-                        <select
-                          value={value}
-                          onChange={handleChange}
-                          className={cn(
-                            "bg-[#0D1117] text-white border border-luxury-primary/20 rounded-md",
-                            "px-3 py-1.5 text-sm font-medium",
-                            "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
-                            "hover:border-luxury-primary transition-colors duration-200",
-                            "cursor-pointer appearance-none min-w-[110px]",
-                            "bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22%239b87f5%22%3E%3Cpath%20d%3D%22M3%205l3%203%203-3%22%2F%3E%3C%2Fsvg%3E')]",
-                            "bg-[position:right_0.5rem_center] bg-no-repeat bg-[length:1.5em_1.5em]",
-                            "pr-8 mx-1",
-                            "option:bg-[#0D1117] option:text-white"
-                          )}
-                          {...props}
-                        >
-                          {children}
-                        </select>
+                        <div className="relative">
+                          <select
+                            value={value}
+                            onChange={handleChange}
+                            className={cn(
+                              "appearance-none",
+                              "w-full px-3 py-2 rounded-md",
+                              "bg-[#161B22] text-white",
+                              "border border-luxury-primary/20",
+                              "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
+                              "hover:border-luxury-primary transition-colors duration-200",
+                              "cursor-pointer min-w-[110px]",
+                              "text-sm font-medium",
+                              "[&_option]:bg-[#161B22] [&_option]:text-white"
+                            )}
+                            style={{
+                              WebkitAppearance: 'none',
+                              MozAppearance: 'none'
+                            }}
+                            {...props}
+                          >
+                            {children}
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-luxury-primary">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
                       );
                     }
                   }}
