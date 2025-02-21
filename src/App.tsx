@@ -25,7 +25,7 @@ function App() {
         {/* Public routes - accessible to everyone */}
         <Route 
           path="/" 
-          element={session ? <Navigate to="/home" replace /> : <Landing />} 
+          element={<Landing />} 
         />
         <Route 
           path="/login" 
