@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { ReactNode, useEffect, useState } from "react";
 
@@ -8,6 +7,7 @@ interface AuthLayoutProps {
 
 export const AuthLayout = ({ children }: AuthLayoutProps) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [activeInfo, setActiveInfo] = useState<string | null>(null);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -76,28 +76,75 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         </div>
       </motion.div>
 
-      {/* Trust indicators with enhanced styling */}
-      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-8 text-sm">
+      {/* Interactive Trust Menu */}
+      <div className="fixed top-8 right-8 flex flex-col gap-4 z-20">
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/5"
+          onClick={() => setActiveInfo("encryption")}
+          className="group relative flex items-center gap-2 bg-black/20 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/5 cursor-pointer hover:bg-black/30 transition-all duration-300"
         >
           <span className="w-2 h-2 bg-[#D946EF] rounded-full animate-pulse shadow-[0_0_10px_rgba(217,70,239,0.5)]" />
-          <span className="text-white/80">256-bit Encryption</span>
+          <span className="text-white/80">Security</span>
+          
+          {activeInfo === "encryption" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute right-full mr-4 w-64 p-4 bg-black/40 backdrop-blur-md rounded-xl border border-white/10"
+            >
+              <h4 className="text-white font-medium mb-2">256-bit Encryption</h4>
+              <p className="text-sm text-white/70">
+                Your data is protected with military-grade encryption, ensuring maximum security for your content and personal information.
+              </p>
+            </motion.div>
+          )}
         </motion.div>
+
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/5"
+          onClick={() => setActiveInfo("gdpr")}
+          className="group relative flex items-center gap-2 bg-black/20 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/5 cursor-pointer hover:bg-black/30 transition-all duration-300"
         >
           <span className="w-2 h-2 bg-[#8B5CF6] rounded-full animate-pulse shadow-[0_0_10px_rgba(139,92,246,0.5)]" />
-          <span className="text-white/80">GDPR Compliant</span>
+          <span className="text-white/80">Privacy</span>
+          
+          {activeInfo === "gdpr" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute right-full mr-4 w-64 p-4 bg-black/40 backdrop-blur-md rounded-xl border border-white/10"
+            >
+              <h4 className="text-white font-medium mb-2">GDPR Compliant</h4>
+              <p className="text-sm text-white/70">
+                We follow strict European data protection regulations to ensure your privacy and data rights are respected at all times.
+              </p>
+            </motion.div>
+          )}
         </motion.div>
+
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/5"
+          onClick={() => setActiveInfo("support")}
+          className="group relative flex items-center gap-2 bg-black/20 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/5 cursor-pointer hover:bg-black/30 transition-all duration-300"
         >
           <span className="w-2 h-2 bg-[#ec4899] rounded-full animate-pulse shadow-[0_0_10px_rgba(236,72,153,0.5)]" />
-          <span className="text-white/80">24/7 Support</span>
+          <span className="text-white/80">Support</span>
+          
+          {activeInfo === "support" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute right-full mr-4 w-64 p-4 bg-black/40 backdrop-blur-md rounded-xl border border-white/10"
+            >
+              <h4 className="text-white font-medium mb-2">24/7 Support</h4>
+              <p className="text-sm text-white/70">
+                Our dedicated support team is available around the clock to assist you with any questions or concerns.
+              </p>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </div>
