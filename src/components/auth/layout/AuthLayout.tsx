@@ -20,7 +20,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#1a1a2e] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#0D1117] via-[#161B22] to-[#0D1117] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Interactive background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -28,14 +28,20 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
             x: mousePosition.x * 0.02,
             y: mousePosition.y * 0.02,
           }}
-          className="absolute -top-1/2 -left-1/2 w-full h-full bg-[#D946EF]/10 rounded-full blur-3xl"
+          className="absolute -top-1/2 -left-1/2 w-full h-full bg-[#D946EF]/5 rounded-full blur-3xl"
+          style={{
+            filter: 'blur(120px)',
+          }}
         />
         <motion.div
           animate={{
             x: mousePosition.x * -0.02,
             y: mousePosition.y * -0.02,
           }}
-          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-[#8B5CF6]/10 rounded-full blur-3xl"
+          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-[#8B5CF6]/5 rounded-full blur-3xl"
+          style={{
+            filter: 'blur(120px)',
+          }}
         />
       </div>
 
