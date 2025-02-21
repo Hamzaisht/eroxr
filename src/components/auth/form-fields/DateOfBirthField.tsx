@@ -55,19 +55,20 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     "bg-white/5 border-luxury-primary/20 hover:bg-white/10",
                     "transition-all duration-300 ease-in-out",
                     "focus:ring-2 focus:ring-luxury-primary/30",
-                    !field.value && "text-muted-foreground"
+                    !field.value && "text-muted-foreground",
+                    "hover:border-luxury-primary hover:bg-luxury-primary/5"
                   )}
                 >
-                  <Calendar className="h-5 w-5 text-luxury-neutral/50" />
+                  <Calendar className="h-5 w-5 text-luxury-primary" />
                   {field.value ? (
-                    format(new Date(field.value), "MMMM d, yyyy")
+                    <span className="text-white">{format(new Date(field.value), "MMMM d, yyyy")}</span>
                   ) : (
                     <span className="text-white/50">Date of Birth</span>
                   )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="w-auto p-0 bg-[#161B22] border border-luxury-primary/20"
+                className="w-auto p-4 bg-[#161B22] border border-luxury-primary/20 shadow-xl backdrop-blur-sm"
                 align="start"
               >
                 <CalendarComponent
@@ -87,17 +88,18 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                   classNames={{
                     months: "space-y-4",
                     month: "space-y-4",
-                    caption: "flex justify-center pt-1 relative items-center gap-1",
-                    caption_label: "text-sm font-medium text-luxury-neutral",
+                    caption: "flex justify-center pt-1 relative items-center gap-4",
+                    caption_label: "text-base font-medium text-white",
                     nav: "flex items-center gap-1",
                     nav_button: cn(
-                      "h-7 w-7 bg-transparent p-0 text-luxury-neutral",
-                      "hover:bg-luxury-primary/20 rounded-full transition-colors"
+                      "h-8 w-8 bg-luxury-primary/10 text-luxury-primary rounded-full",
+                      "hover:bg-luxury-primary/20 transition-colors duration-200",
+                      "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30"
                     ),
                     table: "w-full border-collapse space-y-1",
                     head_row: "flex",
                     head_cell: cn(
-                      "text-luxury-neutral rounded-md w-9 font-normal text-[0.8rem]",
+                      "text-luxury-primary rounded-md w-10 font-medium text-[0.9rem]",
                       "uppercase tracking-wider text-center"
                     ),
                     row: "flex w-full mt-2",
@@ -106,9 +108,9 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                       "first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
                     ),
                     day: cn(
-                      "h-9 w-9 p-0 font-normal text-white/90 aria-selected:opacity-100",
-                      "hover:bg-luxury-primary hover:text-white rounded-full transition-colors",
-                      "focus:bg-luxury-primary focus:text-white focus:outline-none",
+                      "h-10 w-10 p-0 font-normal text-white/90 aria-selected:opacity-100",
+                      "hover:bg-luxury-primary hover:text-white rounded-full transition-colors duration-200",
+                      "focus:bg-luxury-primary focus:text-white focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
                       "aria-selected:bg-luxury-primary aria-selected:text-white"
                     ),
                     day_selected: "bg-luxury-primary text-white hover:bg-luxury-primary hover:text-white",
@@ -130,7 +132,16 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                         <select
                           value={value}
                           onChange={handleChange}
-                          className="bg-[#161B22] text-white/90 border border-luxury-primary/20 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-primary/30"
+                          className={cn(
+                            "bg-[#161B22] text-white border border-luxury-primary/20 rounded-md",
+                            "px-3 py-1.5 text-sm font-medium",
+                            "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
+                            "hover:border-luxury-primary transition-colors duration-200",
+                            "cursor-pointer appearance-none min-w-[110px]",
+                            "bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22%239b87f5%22%3E%3Cpath%20d%3D%22M3%205l3%203%203-3%22%2F%3E%3C%2Fsvg%3E')]",
+                            "bg-[position:right_0.5rem_center] bg-no-repeat bg-[length:1.5em_1.5em]",
+                            "pr-8"
+                          )}
                           {...props}
                         >
                           {children}
