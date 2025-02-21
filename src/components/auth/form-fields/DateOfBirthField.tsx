@@ -27,7 +27,6 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
       const monthDiff = today.getMonth() - selectedDate.getMonth();
       const dayDiff = today.getDate() - selectedDate.getDate();
       
-      // Adjust age if birthday hasn't occurred this year
       const adjustedAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
 
       if (adjustedAge >= 18) {
@@ -52,7 +51,8 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                   disabled={isLoading}
                   className={cn(
                     "w-full h-12 px-4 text-left font-normal flex items-center gap-3",
-                    "bg-black/10 border-luxury-primary/20 hover:bg-black/20",
+                    "bg-black/10 border-luxury-primary/20",
+                    "hover:bg-luxury-primary/10",
                     "transition-all duration-300 ease-in-out",
                     "focus:ring-2 focus:ring-luxury-primary/30",
                     !field.value && "text-muted-foreground",
@@ -68,7 +68,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                 </Button>
               </PopoverTrigger>
               <PopoverContent 
-                className="w-auto p-4 bg-[#0D1117] border border-luxury-primary/20 shadow-xl backdrop-blur-sm"
+                className="w-auto p-4 bg-[#1e1e1e] border border-luxury-primary/20 shadow-xl backdrop-blur-sm z-[999]"
                 align="start"
               >
                 <CalendarComponent
@@ -78,9 +78,9 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                   disabled={(date) => {
                     const today = new Date();
                     const minDate = new Date();
-                    minDate.setFullYear(today.getFullYear() - 100); // Max age 100
+                    minDate.setFullYear(today.getFullYear() - 100);
                     const maxDate = new Date();
-                    maxDate.setFullYear(today.getFullYear() - 18); // Min age 18
+                    maxDate.setFullYear(today.getFullYear() - 18);
                     return date > maxDate || date < minDate;
                   }}
                   initialFocus
@@ -108,15 +108,15 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                       "first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
                     ),
                     day: cn(
-                      "h-10 w-10 p-0 font-normal text-white/90 aria-selected:opacity-100",
+                      "h-10 w-10 p-0 font-normal text-white aria-selected:opacity-100",
                       "hover:bg-luxury-primary hover:text-white rounded-full transition-colors duration-200",
                       "focus:bg-luxury-primary focus:text-white focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
                       "aria-selected:bg-luxury-primary aria-selected:text-white"
                     ),
                     day_selected: "bg-luxury-primary text-white hover:bg-luxury-primary hover:text-white",
                     day_today: "bg-luxury-accent/10 text-luxury-accent font-semibold",
-                    day_outside: "text-luxury-neutral/30",
-                    day_disabled: "text-luxury-neutral/20",
+                    day_outside: "text-white/30",
+                    day_disabled: "text-white/20",
                     day_range_middle: "aria-selected:bg-luxury-primary/20",
                     day_hidden: "invisible",
                   }}
@@ -134,7 +134,6 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                           };
                           onChange(fakeEvent);
                           
-                          // Force rerender of calendar when month/year changes
                           if (field.value) {
                             const currentDate = new Date(field.value);
                             if (props.name === 'month') {
@@ -155,13 +154,13 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                             className={cn(
                               "appearance-none",
                               "w-full px-3 py-2 rounded-md",
-                              "bg-[#161B22] text-white",
+                              "bg-[#2b2b2b] text-white",
                               "border border-luxury-primary/20",
                               "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
                               "hover:border-luxury-primary transition-colors duration-200",
                               "cursor-pointer min-w-[110px]",
                               "text-sm font-medium",
-                              "[&_option]:bg-[#161B22] [&_option]:text-white"
+                              "[&>option]:bg-[#2b2b2b] [&>option]:text-white [&>option]:py-1"
                             )}
                             style={{
                               WebkitAppearance: 'none',
