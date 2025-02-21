@@ -1,4 +1,3 @@
-
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
@@ -132,6 +131,19 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                         "July", "August", "September", "October", "November", "December"
                       ];
 
+                      const selectStyles = {
+                        backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239b87f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 0.5rem center',
+                        backgroundSize: '1em 1em',
+                        backgroundColor: '#1e1e1e'
+                      };
+
+                      const optionStyles = {
+                        backgroundColor: '#1e1e1e',
+                        color: '#ffffff'
+                      };
+
                       return (
                         <div className="relative">
                           <select
@@ -144,18 +156,19 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                               "hover:bg-luxury-primary/10 hover:border-luxury-primary",
                               "focus:outline-none focus:ring-2 focus:ring-luxury-primary/30",
                               "appearance-none min-w-[120px]",
-                              "pr-8 text-sm font-medium"
+                              "pr-8 text-sm font-medium",
+                              "[&>option]:bg-[#1e1e1e] [&>option]:text-white"
                             )}
-                            style={{
-                              backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239b87f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e")`,
-                              backgroundRepeat: 'no-repeat',
-                              backgroundPosition: 'right 0.5rem center',
-                              backgroundSize: '1em 1em'
-                            }}
+                            style={selectStyles}
                           >
                             {props.name === 'month' ? (
                               months.map((month, index) => (
-                                <option key={month} value={index} className="bg-[#1e1e1e] text-white">
+                                <option 
+                                  key={month} 
+                                  value={index} 
+                                  style={optionStyles}
+                                  className="bg-[#1e1e1e] text-white hover:bg-luxury-primary/10"
+                                >
                                   {month}
                                 </option>
                               ))
