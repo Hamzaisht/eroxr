@@ -119,16 +119,24 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     day_hidden: "invisible",
                   }}
                   components={{
-                    Dropdown: ({ value, onChange, children, ...props }) => (
-                      <select
-                        value={value}
-                        onChange={(e) => onChange?.(e.target.value)}
-                        className="bg-[#161B22] text-white/90 border border-luxury-primary/20 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-primary/30"
-                        {...props}
-                      >
-                        {children}
-                      </select>
-                    )
+                    Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
+                      const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+                        if (onChange) {
+                          onChange(event);
+                        }
+                      };
+
+                      return (
+                        <select
+                          value={value}
+                          onChange={handleChange}
+                          className="bg-[#161B22] text-white/90 border border-luxury-primary/20 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-luxury-primary/30"
+                          {...props}
+                        >
+                          {children}
+                        </select>
+                      );
+                    }
                   }}
                   showOutsideDays={false}
                   captionLayout="dropdown"
