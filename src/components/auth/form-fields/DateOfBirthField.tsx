@@ -1,4 +1,3 @@
-
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
@@ -89,7 +88,7 @@ export const DateOfBirthField = ({ form, isLoading }: DateOfBirthFieldProps) => 
                     months: "space-y-4",
                     month: "space-y-4",
                     caption: "flex justify-center pt-1 relative items-center gap-2",
-                    caption_dropdown: "flex gap-1",
+                    caption_dropdowns: "flex gap-1",
                     caption_label: "text-base font-medium text-white",
                     nav: "flex items-center gap-1",
                     nav_button: cn(
