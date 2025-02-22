@@ -1,10 +1,9 @@
-
 import { Users, Heart, Image, DollarSign } from "lucide-react";
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 
@@ -17,19 +16,15 @@ interface TipData {
 }
 
 const Counter = ({ value }: { value: number }) => {
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
-  
-  useEffect(() => {
-    const animation = animate(count, value, {
-      duration: 2,
-      ease: "easeOut"
-    });
-
-    return () => animation.stop();
-  }, [count, value]);
-
-  return <motion.span>{rounded}</motion.span>;
+  return (
+    <motion.span
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {value.toLocaleString()}
+    </motion.span>
+  );
 };
 
 export const ProfileStats = ({ profileId }: { profileId: string }) => {
