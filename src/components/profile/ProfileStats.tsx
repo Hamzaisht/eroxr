@@ -1,6 +1,6 @@
 
 import { Users, Heart, Image, DollarSign } from "lucide-react";
-import { motion, AnimatePresence, MotionValue, useMotionValue, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -21,8 +21,12 @@ const Counter = ({ value }: { value: number }) => {
   const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
   
   useEffect(() => {
-    const animation = motion.animate(count, value, { duration: 2 });
-    return animation.stop;
+    const animation = animate(count, value, {
+      duration: 2,
+      ease: "easeOut"
+    });
+
+    return () => animation.stop();
   }, [count, value]);
 
   return <motion.span>{rounded}</motion.span>;
