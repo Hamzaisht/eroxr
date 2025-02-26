@@ -14,6 +14,7 @@ import { InterestsField } from "./form-fields/InterestsField";
 import { VisibilityField } from "./form-fields/VisibilityField";
 import { profileSchema, type ProfileFormValues } from "./types";
 import type { Profile } from "@/integrations/supabase/types/profile";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProfileFormProps {
   profile?: Profile | null;
@@ -23,6 +24,7 @@ interface ProfileFormProps {
 export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
   const { toast } = useToast();
   const session = useSession();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [canChangeUsername, setCanChangeUsername] = useState(true);
   const [lastUsernameChange, setLastUsernameChange] = useState<string | null>(null);
@@ -98,18 +100,22 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
 
       if (error) throw error;
 
+      // Invalidate profile queries to trigger a refresh
+      await queryClient.invalidateQueries({ queryKey: ["profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+
       toast({
         title: "Success",
         description: "Your profile has been updated.",
       });
       
       onSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: error.message || "Failed to update profile. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -131,9 +137,15 @@ export const ProfileForm = ({ profile, onSuccess }: ProfileFormProps) => {
         <InterestsField form={form} />
         <VisibilityField form={form} />
 
-        <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? "Updating..." : "Update Profile"}
-        </Button>
+        <div className="flex gap-4 justify-end">
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            className="bg-luxury-primary hover:bg-luxury-primary/90"
+          >
+            {isLoading ? "Updating..." : "Save Changes"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
