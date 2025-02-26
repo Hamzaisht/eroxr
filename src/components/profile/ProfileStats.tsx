@@ -1,3 +1,4 @@
+
 import { Users, Heart, Image, DollarSign } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TipData {
   sender_id: string;
@@ -13,6 +16,12 @@ interface TipData {
   amount: number;
   call_id: string;
   sender_name: string | null;
+}
+
+interface ProfileStats {
+  follower_count: number;
+  like_count: number;
+  post_count: number;
 }
 
 const Counter = ({ value }: { value: number }) => {
@@ -27,11 +36,50 @@ const Counter = ({ value }: { value: number }) => {
   );
 };
 
+const StatSkeleton = () => (
+  <div className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-darker/60 backdrop-blur-lg">
+    <Skeleton className="h-5 w-5 rounded-full" />
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-6 w-16" />
+      <Skeleton className="h-4 w-12" />
+    </div>
+  </div>
+);
+
 export const ProfileStats = ({ profileId }: { profileId: string }) => {
   const [showTipDialog, setShowTipDialog] = useState(false);
   const [tipAmount, setTipAmount] = useState("5");
   const { toast } = useToast();
   const session = useSession();
+
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["profileStats", profileId],
+    queryFn: async () => {
+      // Get follower count
+      const { count: followerCount } = await supabase
+        .from("followers")
+        .select("*", { count: 'exact', head: true })
+        .eq("following_id", profileId);
+
+      // Get total likes on posts
+      const { count: likeCount } = await supabase
+        .from("post_likes")
+        .select("posts!inner(*)", { count: 'exact', head: true })
+        .eq("posts.creator_id", profileId);
+
+      // Get post count
+      const { count: postCount } = await supabase
+        .from("posts")
+        .select("*", { count: 'exact', head: true })
+        .eq("creator_id", profileId);
+
+      return {
+        follower_count: followerCount || 0,
+        like_count: likeCount || 0,
+        post_count: postCount || 0
+      };
+    }
+  });
 
   const handleSendTip = async () => {
     if (!session?.user) {
@@ -64,6 +112,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
       });
       setShowTipDialog(false);
     } catch (error) {
+      console.error("Error sending tip:", error);
       toast({
         title: "Error sending tip",
         description: "Please try again later",
@@ -71,6 +120,16 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex gap-6 justify-center relative z-10">
+        <StatSkeleton />
+        <StatSkeleton />
+        <StatSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="flex gap-6 justify-center relative z-10">
@@ -85,7 +144,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         <Users className="h-5 w-5 text-luxury-primary animate-pulse" />
         <div className="flex flex-col">
           <span className="text-white font-medium">
-            <Counter value={4300} />
+            <Counter value={stats?.follower_count || 0} />
           </span>
           <span className="text-xs text-white/60">Followers</span>
         </div>
@@ -110,7 +169,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         <Heart className="h-5 w-5 text-luxury-accent animate-pulse" />
         <div className="flex flex-col">
           <span className="text-white font-medium">
-            <Counter value={12800} />
+            <Counter value={stats?.like_count || 0} />
           </span>
           <span className="text-xs text-white/60">Likes</span>
         </div>
@@ -127,7 +186,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         <Image className="h-5 w-5 text-luxury-neutral animate-pulse" />
         <div className="flex flex-col">
           <span className="text-white font-medium">
-            <Counter value={286} />
+            <Counter value={stats?.post_count || 0} />
           </span>
           <span className="text-xs text-white/60">Posts</span>
         </div>
