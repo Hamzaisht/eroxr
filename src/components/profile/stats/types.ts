@@ -11,4 +11,6 @@ export interface ProfileStats {
   follower_count: number;
   like_count: number;
   post_count: number;
+  subscriber_count?: number;
+  premium_post_count?: number;
 }

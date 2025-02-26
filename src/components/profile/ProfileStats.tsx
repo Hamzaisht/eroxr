@@ -1,5 +1,5 @@
 
-import { Users, Heart, Image, DollarSign } from "lucide-react";
+import { Users, Heart, Image, DollarSign, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -28,7 +28,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
     queryKey: ["profileStats", profileId],
     queryFn: async () => {
       try {
-        // Get follower count with error handling
+        // Get follower count
         const { count: followerCount, error: followerError } = await supabase
           .from("followers")
           .select("*", { count: 'exact', head: true })
@@ -36,7 +36,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
 
         if (followerError) throw followerError;
 
-        // Get total likes on posts with error handling
+        // Get total likes on posts
         const { count: likeCount, error: likeError } = await supabase
           .from("post_likes")
           .select("posts!inner(*)", { count: 'exact', head: true })
@@ -44,24 +44,39 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
 
         if (likeError) throw likeError;
 
-        // Get post count with error handling
-        const { count: postCount, error: postError } = await supabase
+        // Get post counts (total and premium)
+        const { data: posts, error: postError } = await supabase
           .from("posts")
-          .select("*", { count: 'exact', head: true })
+          .select("id, is_ppv")
           .eq("creator_id", profileId);
 
         if (postError) throw postError;
 
-        console.log("Profile stats fetched successfully:", {
+        const postCount = posts?.length || 0;
+        const premiumPostCount = posts?.filter(post => post.is_ppv).length || 0;
+
+        // Get subscriber count
+        const { count: subscriberCount, error: subError } = await supabase
+          .from("creator_subscriptions")
+          .select("*", { count: 'exact', head: true })
+          .eq("creator_id", profileId);
+
+        if (subError) throw subError;
+
+        console.log("Profile stats fetched:", {
           followerCount,
           likeCount,
-          postCount
+          postCount,
+          premiumPostCount,
+          subscriberCount
         });
 
         return {
           follower_count: followerCount || 0,
           like_count: likeCount || 0,
-          post_count: postCount || 0
+          post_count: postCount,
+          premium_post_count: premiumPostCount,
+          subscriber_count: subscriberCount || 0
         } as ProfileStatsType;
       } catch (error: any) {
         console.error("Error fetching profile stats:", error);
@@ -69,7 +84,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
       }
     },
     retry: 2,
-    staleTime: 30000 // Cache for 30 seconds
+    staleTime: 30000
   });
 
   if (error) {
@@ -82,24 +97,30 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
 
   if (isLoading) {
     return (
-      <div className="flex gap-6 justify-center relative z-10">
-        <StatSkeleton />
-        <StatSkeleton />
-        <StatSkeleton />
+      <div className="flex gap-4 justify-center relative z-10">
+        {[...Array(5)].map((_, i) => (
+          <StatSkeleton key={i} />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="flex gap-6 justify-center relative z-10">
+    <div className="flex gap-4 justify-center relative z-10">
       <StatCard
         icon={Users}
         value={stats?.follower_count || 0}
         label="Followers"
         iconColor="text-luxury-primary"
         delay={0.2}
-        showTooltip
-        tooltipContent="Top supporters"
+      />
+      
+      <StatCard
+        icon={Users}
+        value={stats?.subscriber_count || 0}
+        label="Subscribers"
+        iconColor="text-luxury-accent"
+        delay={0.3}
       />
       
       <StatCard
@@ -107,7 +128,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         value={stats?.like_count || 0}
         label="Likes"
         iconColor="text-luxury-accent"
-        delay={0.3}
+        delay={0.4}
       />
       
       <StatCard
@@ -115,13 +136,23 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         value={stats?.post_count || 0}
         label="Posts"
         iconColor="text-luxury-neutral"
-        delay={0.4}
+        delay={0.5}
       />
+
+      {stats?.premium_post_count ? (
+        <StatCard
+          icon={Lock}
+          value={stats.premium_post_count}
+          label="Premium"
+          iconColor="text-luxury-secondary"
+          delay={0.6}
+        />
+      ) : null}
 
       <motion.button
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.7 }}
         whileHover={{ scale: 1.05 }}
         onClick={() => setShowTipDialog(true)}
         className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-primary/20 backdrop-blur-lg 
