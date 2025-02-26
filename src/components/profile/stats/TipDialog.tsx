@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import type { TipData } from "./types";
 
 interface TipDialogProps {
@@ -15,8 +16,10 @@ interface TipDialogProps {
 
 export const TipDialog = ({ open, onOpenChange, recipientId }: TipDialogProps) => {
   const [tipAmount, setTipAmount] = useState("5");
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const session = useSession();
+  const queryClient = useQueryClient();
 
   const handleSendTip = async () => {
     if (!session?.user) {
@@ -28,11 +31,28 @@ export const TipDialog = ({ open, onOpenChange, recipientId }: TipDialogProps) =
       return;
     }
 
+    if (session.user.id === recipientId) {
+      toast({
+        title: "Invalid action",
+        description: "You cannot send tips to yourself",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
     try {
+      const amount = parseFloat(tipAmount);
+      
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error("Invalid tip amount");
+      }
+
       const tipData: TipData = {
         sender_id: session.user.id,
         recipient_id: recipientId,
-        amount: parseFloat(tipAmount),
+        amount: amount,
         call_id: 'profile-tip',
         sender_name: session.user.email
       };
@@ -43,18 +63,24 @@ export const TipDialog = ({ open, onOpenChange, recipientId }: TipDialogProps) =
 
       if (error) throw error;
 
+      // Invalidate relevant queries
+      await queryClient.invalidateQueries({ queryKey: ["profileStats", recipientId] });
+
       toast({
         title: "Tip sent!",
-        description: `Successfully sent $${tipAmount} tip`,
+        description: `Successfully sent $${amount} tip`,
       });
+      
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending tip:", error);
       toast({
         title: "Error sending tip",
-        description: "Please try again later",
+        description: error.message || "Please try again later",
         variant: "destructive"
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -73,6 +99,7 @@ export const TipDialog = ({ open, onOpenChange, recipientId }: TipDialogProps) =
                 variant={tipAmount === amount ? "default" : "outline"}
                 onClick={() => setTipAmount(amount)}
                 className="flex-1"
+                disabled={isProcessing}
               >
                 ${amount}
               </Button>
@@ -81,8 +108,9 @@ export const TipDialog = ({ open, onOpenChange, recipientId }: TipDialogProps) =
           <Button 
             onClick={handleSendTip}
             className="w-full bg-luxury-primary hover:bg-luxury-primary/90"
+            disabled={isProcessing}
           >
-            Send Tip
+            {isProcessing ? "Processing..." : "Send Tip"}
           </Button>
         </div>
       </DialogContent>

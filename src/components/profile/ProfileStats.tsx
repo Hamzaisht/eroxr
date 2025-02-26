@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "./stats/StatCard";
 import { TipDialog } from "./stats/TipDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import type { ProfileStats as ProfileStatsType } from "./stats/types";
 
 const StatSkeleton = () => (
@@ -21,35 +22,63 @@ const StatSkeleton = () => (
 
 export const ProfileStats = ({ profileId }: { profileId: string }) => {
   const [showTipDialog, setShowTipDialog] = useState(false);
+  const { toast } = useToast();
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, error } = useQuery({
     queryKey: ["profileStats", profileId],
     queryFn: async () => {
-      // Get follower count
-      const { count: followerCount } = await supabase
-        .from("followers")
-        .select("*", { count: 'exact', head: true })
-        .eq("following_id", profileId);
+      try {
+        // Get follower count with error handling
+        const { count: followerCount, error: followerError } = await supabase
+          .from("followers")
+          .select("*", { count: 'exact', head: true })
+          .eq("following_id", profileId);
 
-      // Get total likes on posts
-      const { count: likeCount } = await supabase
-        .from("post_likes")
-        .select("posts!inner(*)", { count: 'exact', head: true })
-        .eq("posts.creator_id", profileId);
+        if (followerError) throw followerError;
 
-      // Get post count
-      const { count: postCount } = await supabase
-        .from("posts")
-        .select("*", { count: 'exact', head: true })
-        .eq("creator_id", profileId);
+        // Get total likes on posts with error handling
+        const { count: likeCount, error: likeError } = await supabase
+          .from("post_likes")
+          .select("posts!inner(*)", { count: 'exact', head: true })
+          .eq("posts.creator_id", profileId);
 
-      return {
-        follower_count: followerCount || 0,
-        like_count: likeCount || 0,
-        post_count: postCount || 0
-      } as ProfileStatsType;
-    }
+        if (likeError) throw likeError;
+
+        // Get post count with error handling
+        const { count: postCount, error: postError } = await supabase
+          .from("posts")
+          .select("*", { count: 'exact', head: true })
+          .eq("creator_id", profileId);
+
+        if (postError) throw postError;
+
+        console.log("Profile stats fetched successfully:", {
+          followerCount,
+          likeCount,
+          postCount
+        });
+
+        return {
+          follower_count: followerCount || 0,
+          like_count: likeCount || 0,
+          post_count: postCount || 0
+        } as ProfileStatsType;
+      } catch (error: any) {
+        console.error("Error fetching profile stats:", error);
+        throw new Error("Failed to fetch profile statistics");
+      }
+    },
+    retry: 2,
+    staleTime: 30000 // Cache for 30 seconds
   });
+
+  if (error) {
+    toast({
+      title: "Error loading stats",
+      description: "Failed to load profile statistics. Please try again later.",
+      variant: "destructive"
+    });
+  }
 
   if (isLoading) {
     return (
