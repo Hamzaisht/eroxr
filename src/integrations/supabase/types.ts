@@ -1795,6 +1795,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tips: {
+        Row: {
+          amount: number
+          call_id: string | null
+          created_at: string
+          id: string
+          recipient_id: string
+          sender_id: string
+          sender_name: string | null
+        }
+        Insert: {
+          amount: number
+          call_id?: string | null
+          created_at?: string
+          id?: string
+          recipient_id: string
+          sender_id: string
+          sender_name?: string | null
+        }
+        Update: {
+          amount?: number
+          call_id?: string | null
+          created_at?: string
+          id?: string
+          recipient_id?: string
+          sender_id?: string
+          sender_name?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
