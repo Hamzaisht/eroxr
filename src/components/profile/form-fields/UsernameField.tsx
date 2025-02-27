@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { Check, X, Loader2 } from "lucide-react";
@@ -88,6 +89,9 @@ export const UsernameField = ({
                   {...field}
                   className="pl-8"
                   disabled={isLoading || !canChangeUsername}
+                  aria-label="Username"
+                  placeholder="username"
+                  autoComplete="username"
                 />
               </div>
             </FormControl>

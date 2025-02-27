@@ -97,7 +97,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
 
   if (isLoading) {
     return (
-      <div className="flex gap-4 justify-center relative z-10">
+      <div className="flex flex-wrap gap-4 justify-center relative z-10 px-4">
         {[...Array(5)].map((_, i) => (
           <StatSkeleton key={i} />
         ))}
@@ -106,13 +106,15 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
   }
 
   return (
-    <div className="flex gap-4 justify-center relative z-10">
+    <div className="flex flex-wrap gap-4 justify-center relative z-10 px-4">
       <StatCard
         icon={Users}
         value={stats?.follower_count || 0}
         label="Followers"
         iconColor="text-luxury-primary"
         delay={0.2}
+        showTooltip
+        tooltipContent="People following this creator"
       />
       
       <StatCard
@@ -121,6 +123,8 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         label="Subscribers"
         iconColor="text-luxury-accent"
         delay={0.3}
+        showTooltip
+        tooltipContent="Paying subscribers to this creator"
       />
       
       <StatCard
@@ -129,6 +133,8 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         label="Likes"
         iconColor="text-luxury-accent"
         delay={0.4}
+        showTooltip
+        tooltipContent="Total likes on all posts"
       />
       
       <StatCard
@@ -137,6 +143,8 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         label="Posts"
         iconColor="text-luxury-neutral"
         delay={0.5}
+        showTooltip
+        tooltipContent="Total posts published"
       />
 
       {stats?.premium_post_count ? (
@@ -146,6 +154,8 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
           label="Premium"
           iconColor="text-luxury-secondary"
           delay={0.6}
+          showTooltip
+          tooltipContent="Pay-per-view premium content"
         />
       ) : null}
 
@@ -157,6 +167,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         onClick={() => setShowTipDialog(true)}
         className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-primary/20 backdrop-blur-lg 
                    transition-colors duration-300 hover:bg-luxury-primary/30 cursor-pointer"
+        aria-label="Send tip to creator"
       >
         <DollarSign className="h-5 w-5 text-luxury-primary animate-pulse" />
         <span className="text-white font-medium">Send Tip</span>

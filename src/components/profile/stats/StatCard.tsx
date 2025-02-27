@@ -32,9 +32,11 @@ export const StatCard = ({
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay }}
-      className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-darker/60 backdrop-blur-lg"
+      className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-darker/60 backdrop-blur-lg hover:bg-luxury-darker/80 transition-colors duration-300"
+      role="figure"
+      aria-label={`${label}: ${value}`}
     >
-      <Icon className={`h-5 w-5 ${iconColor}`} />
+      <Icon className={`h-5 w-5 ${iconColor}`} aria-hidden="true" />
       <div className="flex flex-col">
         <span className="text-lg font-semibold text-white">
           {value.toLocaleString()}
@@ -49,11 +51,11 @@ export const StatCard = ({
   if (showTooltip && tooltipContent) {
     return (
       <TooltipProvider>
-        <Tooltip>
+        <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
             {Card}
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent className="bg-luxury-darker border-luxury-primary/20 text-white">
             <p>{tooltipContent}</p>
           </TooltipContent>
         </Tooltip>
