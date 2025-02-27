@@ -25,7 +25,7 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
       transition={{ delay: 0.2 }}
       className="space-y-4 max-w-3xl mx-auto px-4"
     >
-      <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent text-center">
+      <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent text-center truncate">
         @{displayName}
       </h1>
       

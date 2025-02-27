@@ -1,5 +1,5 @@
 
-import { Users, Heart, Image, DollarSign, Lock } from "lucide-react";
+import { Users, Heart, Image, DollarSign, Lock, Loader2, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { StatCard } from "./stats/StatCard";
 import { TipDialog } from "./stats/TipDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { ProfileStats as ProfileStatsType } from "./stats/types";
 
 const StatSkeleton = () => (
@@ -22,54 +23,46 @@ const StatSkeleton = () => (
 
 export const ProfileStats = ({ profileId }: { profileId: string }) => {
   const [showTipDialog, setShowTipDialog] = useState(false);
+  const [isTipLoading, setIsTipLoading] = useState(false);
   const { toast } = useToast();
 
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ["profileStats", profileId],
     queryFn: async () => {
       try {
-        // Get follower count
-        const { count: followerCount, error: followerError } = await supabase
-          .from("followers")
-          .select("*", { count: 'exact', head: true })
-          .eq("following_id", profileId);
+        // Use batch fetching to optimize performance
+        const [
+          { count: followerCount, error: followerError }, 
+          { count: likeCount, error: likeError }, 
+          { data: posts, error: postError },
+          { count: subscriberCount, error: subError }
+        ] = await Promise.all([
+          supabase
+            .from("followers")
+            .select("*", { count: 'exact', head: true })
+            .eq("following_id", profileId),
+          supabase
+            .from("post_likes")
+            .select("posts!inner(*)", { count: 'exact', head: true })
+            .eq("posts.creator_id", profileId),
+          supabase
+            .from("posts")
+            .select("id, is_ppv")
+            .eq("creator_id", profileId),
+          supabase
+            .from("creator_subscriptions")
+            .select("*", { count: 'exact', head: true })
+            .eq("creator_id", profileId)
+        ]);
 
+        // Check for errors in any of the queries
         if (followerError) throw followerError;
-
-        // Get total likes on posts
-        const { count: likeCount, error: likeError } = await supabase
-          .from("post_likes")
-          .select("posts!inner(*)", { count: 'exact', head: true })
-          .eq("posts.creator_id", profileId);
-
         if (likeError) throw likeError;
-
-        // Get post counts (total and premium)
-        const { data: posts, error: postError } = await supabase
-          .from("posts")
-          .select("id, is_ppv")
-          .eq("creator_id", profileId);
-
         if (postError) throw postError;
+        if (subError) throw subError;
 
         const postCount = posts?.length || 0;
         const premiumPostCount = posts?.filter(post => post.is_ppv).length || 0;
-
-        // Get subscriber count
-        const { count: subscriberCount, error: subError } = await supabase
-          .from("creator_subscriptions")
-          .select("*", { count: 'exact', head: true })
-          .eq("creator_id", profileId);
-
-        if (subError) throw subError;
-
-        console.log("Profile stats fetched:", {
-          followerCount,
-          likeCount,
-          postCount,
-          premiumPostCount,
-          subscriberCount
-        });
 
         return {
           follower_count: followerCount || 0,
@@ -80,6 +73,11 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         } as ProfileStatsType;
       } catch (error: any) {
         console.error("Error fetching profile stats:", error);
+        toast({
+          title: "Error loading stats",
+          description: "Failed to load profile statistics. Please try again later.",
+          variant: "destructive"
+        });
         throw new Error("Failed to fetch profile statistics");
       }
     },
@@ -87,12 +85,26 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
     staleTime: 30000
   });
 
+  const handleOpenTipDialog = () => {
+    setIsTipLoading(true);
+    // Simulate loading for better UX
+    setTimeout(() => {
+      setShowTipDialog(true);
+      setIsTipLoading(false);
+    }, 300);
+  };
+
   if (error) {
-    toast({
-      title: "Error loading stats",
-      description: "Failed to load profile statistics. Please try again later.",
-      variant: "destructive"
-    });
+    return (
+      <div className="flex justify-center w-full py-6 px-4">
+        <Alert variant="destructive" className="max-w-md bg-luxury-darker border-red-500/20">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load profile stats. Please refresh or try again later.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   if (isLoading) {
@@ -163,13 +175,19 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.7 }}
-        whileHover={{ scale: 1.05 }}
-        onClick={() => setShowTipDialog(true)}
-        className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-primary/20 backdrop-blur-lg 
-                   transition-colors duration-300 hover:bg-luxury-primary/30 cursor-pointer"
+        whileHover={{ scale: isTipLoading ? 1 : 1.05 }}
+        onClick={handleOpenTipDialog}
+        className={`neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-primary/20 backdrop-blur-lg 
+                   transition-colors duration-300 hover:bg-luxury-primary/30 cursor-pointer
+                   ${isTipLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+        disabled={isTipLoading}
         aria-label="Send tip to creator"
       >
-        <DollarSign className="h-5 w-5 text-luxury-primary animate-pulse" />
+        {isTipLoading ? (
+          <Loader2 className="h-5 w-5 text-luxury-primary animate-spin" />
+        ) : (
+          <DollarSign className="h-5 w-5 text-luxury-primary animate-pulse" />
+        )}
         <span className="text-white font-medium">Send Tip</span>
       </motion.button>
 

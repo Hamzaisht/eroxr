@@ -55,7 +55,7 @@ export const StatCard = ({
           <TooltipTrigger asChild>
             {Card}
           </TooltipTrigger>
-          <TooltipContent className="bg-luxury-darker border-luxury-primary/20 text-white">
+          <TooltipContent className="bg-luxury-darker border-luxury-primary/20 text-white" role="tooltip">
             <p>{tooltipContent}</p>
           </TooltipContent>
         </Tooltip>

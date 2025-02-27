@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import type { TipData } from "./types";
 
 interface TipDialogProps {
@@ -110,7 +111,12 @@ export const TipDialog = ({ open, onOpenChange, recipientId }: TipDialogProps) =
             className="w-full bg-luxury-primary hover:bg-luxury-primary/90"
             disabled={isProcessing}
           >
-            {isProcessing ? "Processing..." : "Send Tip"}
+            {isProcessing ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processing...
+              </span>
+            ) : "Send Tip"}
           </Button>
         </div>
       </DialogContent>
