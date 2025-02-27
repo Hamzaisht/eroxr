@@ -16,6 +16,7 @@ interface StatCardProps {
   delay?: number;
   showTooltip?: boolean;
   tooltipContent?: string;
+  onClick?: () => void;
 }
 
 export const StatCard = ({
@@ -25,16 +26,20 @@ export const StatCard = ({
   iconColor = "text-white",
   delay = 0,
   showTooltip = false,
-  tooltipContent
+  tooltipContent,
+  onClick
 }: StatCardProps) => {
   const Card = (
     <motion.div
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay }}
-      className="neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-darker/60 backdrop-blur-lg hover:bg-luxury-darker/80 transition-colors duration-300"
-      role="figure"
+      className={`neo-blur rounded-2xl p-4 flex items-center gap-3 bg-luxury-darker/60 backdrop-blur-lg 
+                  transition-colors duration-300
+                  ${onClick ? "hover:bg-luxury-darker/80 cursor-pointer" : ""}`}
+      role={onClick ? "button" : "figure"}
       aria-label={`${label}: ${value}`}
+      onClick={onClick}
     >
       <Icon className={`h-5 w-5 ${iconColor}`} aria-hidden="true" />
       <div className="flex flex-col">
