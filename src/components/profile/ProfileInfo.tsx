@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { CircuitBoard } from "lucide-react";
 import type { Profile } from "@/integrations/supabase/types/profile";
