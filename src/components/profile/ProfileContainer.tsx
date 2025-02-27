@@ -96,8 +96,6 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
           setIsEditing={setIsEditing}
         />
         
-        <ProfileInfo profile={profile} />
-        
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
