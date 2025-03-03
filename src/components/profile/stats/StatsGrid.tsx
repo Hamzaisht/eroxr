@@ -114,7 +114,10 @@ export const StatsGrid = ({
           iconColor="text-green-500"
           delay={0.7}
           showTooltip
-          tooltipContent={`You're in the top ${Math.ceil(100 - earningsData.earnings_percentile)}% of earners`}
+          tooltipContent={earningsData.earnings_percentile ? 
+            `You're in the top ${Math.ceil(100 - earningsData.earnings_percentile)}% of earners` : 
+            "Your earnings information"
+          }
           isCurrency
         />
       ) : null}

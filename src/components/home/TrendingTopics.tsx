@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { TrendingUp, MoreHorizontal, Video, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,47 +32,53 @@ export const TrendingTopics = ({ trendingData }: TrendingTopicsProps) => {
         </Button>
       </div>
 
-      <div className="space-y-3">
-        {trendingData?.trendingTags.map((topic, index) => (
-          <motion.div
-            key={topic.tag}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="group p-3 rounded-lg hover:bg-luxury-neutral/5 transition-all cursor-pointer"
-            onClick={() => navigate(`/tag/${topic.tag.replace('#', '')}`)}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-luxury-neutral group-hover:text-luxury-primary transition-colors">
-                  {topic.tag}
-                </h3>
-                <p className="text-sm text-luxury-neutral/60">{topic.count} posts</p>
+      {trendingData?.trendingTags && trendingData.trendingTags.length > 0 ? (
+        <div className="space-y-3">
+          {trendingData.trendingTags.map((topic, index) => (
+            <motion.div
+              key={topic.tag}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="group p-3 rounded-lg hover:bg-luxury-neutral/5 transition-all cursor-pointer"
+              onClick={() => navigate(`/tag/${topic.tag.replace('#', '')}`)}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-luxury-neutral group-hover:text-luxury-primary transition-colors">
+                    {topic.tag}
+                  </h3>
+                  <p className="text-sm text-luxury-neutral/60">{topic.count} posts</p>
+                </div>
+                <span className="text-green-400 text-sm font-medium">+{topic.percentageIncrease}%</span>
               </div>
-              <span className="text-green-400 text-sm font-medium">+{topic.percentageIncrease}%</span>
-            </div>
-          </motion.div>
-        ))}
-
-        <div className="pt-4 space-y-3">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-2 text-luxury-neutral/80 hover:text-luxury-primary"
-            onClick={() => navigate('/eros')}
-          >
-            <Video className="h-4 w-4" />
-            Trending Eros
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-2 text-luxury-neutral/80 hover:text-luxury-primary"
-            onClick={() => navigate('/live')}
-          >
-            <Radio className="h-4 w-4" />
-            Live Streams
-          </Button>
+            </motion.div>
+          ))}
         </div>
+      ) : (
+        <div className="py-10 text-center text-luxury-neutral/50">
+          <p>No trending topics available</p>
+        </div>
+      )}
+
+      <div className="pt-4 space-y-3">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-2 text-luxury-neutral/80 hover:text-luxury-primary"
+          onClick={() => navigate('/eros')}
+        >
+          <Video className="h-4 w-4" />
+          Trending Eros
+        </Button>
+        
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-2 text-luxury-neutral/80 hover:text-luxury-primary"
+          onClick={() => navigate('/live')}
+        >
+          <Radio className="h-4 w-4" />
+          Live Streams
+        </Button>
       </div>
     </div>
   );
