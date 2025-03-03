@@ -11,8 +11,10 @@ import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import { useParams } from "react-router-dom";
 import type { Post } from "@/integrations/supabase/types/post";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "./ui/button";
+import { Alert, AlertDescription } from "./ui/alert";
 
 interface CreatorsFeedProps {
   feedType?: 'feed' | 'popular' | 'recent';
@@ -32,7 +34,9 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    refetch
+    refetch,
+    isError,
+    error
   } = useFeedQuery(id || session?.user?.id, feedType);
 
   useEffect(() => {
@@ -53,6 +57,28 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
           <p className="text-luxury-neutral text-sm">Loading posts...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="w-full h-[calc(100vh-20rem)] flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <Alert className="bg-luxury-darker border-red-500/20 mb-4">
+            <AlertDescription className="flex flex-col items-center gap-4">
+              <p className="text-luxury-neutral">Error loading posts: {error?.message || "Something went wrong"}</p>
+            </AlertDescription>
+          </Alert>
+          <Button 
+            onClick={() => refetch()}
+            className="mx-auto flex items-center gap-2 w-full"
+            variant="outline"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
         </div>
       </div>
     );

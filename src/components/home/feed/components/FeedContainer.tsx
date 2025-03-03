@@ -7,8 +7,9 @@ import { FeedTabs } from "./FeedTabs";
 import { useToast } from "@/hooks/use-toast";
 import { usePostActions } from "@/components/feed/usePostActions";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface FeedContainerProps {
   userId?: string;
@@ -31,7 +32,7 @@ export const FeedContainer = ({
   const { handleLike, handleDelete } = usePostActions();
   const { toast } = useToast();
 
-  const { data: posts, isLoading } = useQuery({
+  const { data: posts, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["posts", activeTab],
     queryFn: async () => {
       let query = supabase
@@ -92,6 +93,31 @@ export const FeedContainer = ({
       >
         <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
         <p className="text-luxury-neutral text-sm">Curating your personalized feed...</p>
+      </motion.div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center min-h-[400px] gap-4"
+      >
+        <Alert className="bg-luxury-darker border-red-500/20 mb-4 max-w-md w-full">
+          <AlertTriangle className="h-5 w-5 text-red-500" />
+          <AlertDescription>
+            Failed to load your feed. {error?.message || "Please try again."}
+          </AlertDescription>
+        </Alert>
+        <Button 
+          onClick={() => refetch()} 
+          className="flex items-center gap-2"
+          variant="outline"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Retry
+        </Button>
       </motion.div>
     );
   }

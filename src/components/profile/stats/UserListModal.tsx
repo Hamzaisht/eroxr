@@ -4,9 +4,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Profile } from "@/integrations/supabase/types/profile";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 interface UserListModalProps {
   open: boolean;
@@ -22,7 +24,7 @@ type UserData = {
 };
 
 export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListModalProps) => {
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading, isError, error, refetch } = useQuery({
     queryKey: [type, profileId],
     queryFn: async () => {
       try {
@@ -40,7 +42,7 @@ export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListM
 
           if (error) throw error;
           // Properly map and type the nested data
-          return data?.map(item => item.follower as UserData) || [];
+          return data?.map(item => (item.follower as unknown) as UserData) || [];
         } else {
           const { data, error } = await supabase
             .from('creator_subscriptions')
@@ -55,7 +57,7 @@ export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListM
 
           if (error) throw error;
           // Properly map and type the nested data
-          return data?.map(item => item.subscriber as UserData) || [];
+          return data?.map(item => (item.subscriber as unknown) as UserData) || [];
         }
       } catch (error) {
         console.error(`Error fetching ${type}:`, error);
@@ -78,6 +80,18 @@ export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListM
           {isLoading ? (
             <div className="flex justify-center p-4">
               <Loader2 className="h-6 w-6 animate-spin text-luxury-primary" />
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center p-4 gap-4">
+              <Alert className="bg-luxury-darker/80 border-red-500/20">
+                <AlertDescription>
+                  Failed to load {type}. {error?.message || "Please try again."}
+                </AlertDescription>
+              </Alert>
+              <Button onClick={() => refetch()} variant="outline" size="sm" className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </Button>
             </div>
           ) : !users?.length ? (
             <p className="text-center text-luxury-neutral py-8">
