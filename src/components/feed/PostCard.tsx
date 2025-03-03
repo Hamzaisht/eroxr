@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,13 +15,14 @@ import { Post } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreHorizontal, Edit2, Trash2 } from "lucide-react";
+import { MoreHorizontal, Edit2, Trash2, AlertCircle, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PostCardProps {
   post: Post;
@@ -43,6 +45,10 @@ export const PostCard = ({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editedContent, setEditedContent] = useState(post.content);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isOwner = currentUserId === post.creator_id;
@@ -62,13 +68,39 @@ export const PostCard = ({
 
   const handleDelete = async () => {
     if (onDelete && isOwner) {
-      await onDelete(post.id, post.creator_id);
-      setIsDeleteDialogOpen(false);
+      try {
+        setIsDeleting(true);
+        setDeleteError(null);
+        await onDelete(post.id, post.creator_id);
+        setIsDeleteDialogOpen(false);
+        toast({
+          title: "Post deleted",
+          description: "Your post has been successfully removed.",
+        });
+      } catch (error) {
+        console.error('Delete error:', error);
+        setDeleteError("Failed to delete post. Please try again.");
+      } finally {
+        setIsDeleting(false);
+      }
     }
+  };
+
+  const handleRetryDelete = () => {
+    setDeleteError(null);
+    handleDelete();
   };
 
   const handleEdit = async () => {
     try {
+      if (!editedContent.trim()) {
+        setEditError("Content cannot be empty");
+        return;
+      }
+      
+      setIsEditing(true);
+      setEditError(null);
+      
       const { error } = await supabase
         .from("posts")
         .update({ 
@@ -78,20 +110,25 @@ export const PostCard = ({
         .eq("id", post.id);
 
       if (error) throw error;
+      
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       setIsEditDialogOpen(false);
+      
       toast({
         title: "Post updated",
         description: "Your post has been successfully updated.",
       });
     } catch (error) {
       console.error('Edit error:', error);
-      toast({
-        title: "Update failed",
-        description: "Failed to update post. Please try again.",
-        variant: "destructive",
-      });
+      setEditError("Failed to update post. Please try again.");
+    } finally {
+      setIsEditing(false);
     }
+  };
+
+  const handleRetryEdit = () => {
+    setEditError(null);
+    handleEdit();
   };
 
   return (
@@ -174,14 +211,49 @@ export const PostCard = ({
               onChange={(e) => setEditedContent(e.target.value)}
               placeholder="Edit your post..."
               className="min-h-[100px]"
+              disabled={isEditing}
             />
+            
+            {editError && (
+              <Alert variant="destructive" className="bg-luxury-darker border-red-500/20">
+                <div className="flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  <AlertDescription>{editError}</AlertDescription>
+                </div>
+              </Alert>
+            )}
+            
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEditDialogOpen(false)}
+                disabled={isEditing}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleEdit}>
-                Save Changes
-              </Button>
+              
+              {editError ? (
+                <Button 
+                  onClick={handleRetryEdit}
+                  disabled={isEditing}
+                >
+                  Retry
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleEdit}
+                  disabled={isEditing}
+                >
+                  {isEditing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>
@@ -191,6 +263,9 @@ export const PostCard = ({
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
+        isDeleting={isDeleting}
+        error={deleteError}
+        onRetry={handleRetryDelete}
       />
     </Card>
   );
