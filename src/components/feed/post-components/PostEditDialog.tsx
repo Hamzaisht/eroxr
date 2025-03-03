@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Wifi, WifiOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-mobile";
@@ -32,12 +32,40 @@ export const PostEditDialog = ({
   const [editedContent, setEditedContent] = useState(initialContent);
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
+  // Track online status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Reset content when dialog opens
+  useEffect(() => {
+    if (open) {
+      setEditedContent(initialContent);
+      setEditError(null);
+    }
+  }, [open, initialContent]);
+
   const handleEdit = async () => {
     try {
+      if (!isOnline) {
+        setEditError("You're offline. Please check your connection and try again.");
+        return;
+      }
+
       if (!editedContent.trim()) {
         setEditError("Content cannot be empty");
         return;
@@ -65,7 +93,15 @@ export const PostEditDialog = ({
       });
     } catch (error) {
       console.error('Edit error:', error);
-      setEditError("Failed to update post. Please try again.");
+      
+      // More specific error messages
+      if (!isOnline) {
+        setEditError("Network connection lost. Please check your connection and try again.");
+      } else if (error instanceof Error) {
+        setEditError(`Failed to update post: ${error.message}`);
+      } else {
+        setEditError("Failed to update post. Please try again.");
+      }
     } finally {
       setIsEditing(false);
     }
@@ -78,18 +114,34 @@ export const PostEditDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`${isMobile ? 'w-[90vw] p-4' : 'p-6'} max-w-md bg-luxury-darker border-luxury-primary/20`}>
+      <DialogContent 
+        className={`${isMobile ? 'w-[95vw] max-h-[80vh] overflow-y-auto p-4' : 'p-6'} max-w-md bg-luxury-darker border-luxury-primary/20`}
+      >
         <DialogHeader>
-          <DialogTitle className={`${isMobile ? 'text-lg' : 'text-xl'} text-luxury-neutral`}>Edit Post</DialogTitle>
+          <DialogTitle className={`${isMobile ? 'text-lg' : 'text-xl'} text-luxury-neutral flex items-center gap-2`}>
+            {!isOnline && <WifiOff className="h-4 w-4 text-yellow-500" />}
+            {isOnline && <Wifi className="h-4 w-4 text-green-500" />}
+            Edit Post
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <Textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
             placeholder="Edit your post..."
-            className="min-h-[120px] bg-luxury-dark border-luxury-neutral/20 focus:border-luxury-primary/50 resize-none text-white"
+            className={`min-h-[120px] ${isMobile ? 'min-h-[100px]' : 'min-h-[120px]'} bg-luxury-dark border-luxury-neutral/20 focus:border-luxury-primary/50 resize-none text-white`}
             disabled={isEditing}
+            maxLength={2000}
           />
+          
+          <div className="flex justify-between items-center text-xs text-luxury-neutral/60">
+            <span>{editedContent?.length || 0}/2000</span>
+            {!isOnline && (
+              <span className="text-yellow-500 flex items-center gap-1">
+                <WifiOff className="h-3 w-3" /> Offline
+              </span>
+            )}
+          </div>
           
           {editError && (
             <Alert variant="destructive" className="bg-luxury-darker border-red-500/20 py-2 px-3">
@@ -113,7 +165,7 @@ export const PostEditDialog = ({
             {editError ? (
               <Button 
                 onClick={handleRetryEdit}
-                disabled={isEditing}
+                disabled={isEditing || !isOnline}
                 className={`${isMobile ? 'text-sm px-3 py-1.5' : 'px-4 py-2'} bg-luxury-primary/80 hover:bg-luxury-primary text-white`}
               >
                 Retry
@@ -121,7 +173,7 @@ export const PostEditDialog = ({
             ) : (
               <Button 
                 onClick={handleEdit}
-                disabled={isEditing}
+                disabled={isEditing || !isOnline}
                 className={`${isMobile ? 'text-sm px-3 py-1.5' : 'px-4 py-2'} bg-luxury-primary/80 hover:bg-luxury-primary text-white`}
               >
                 {isEditing ? (
