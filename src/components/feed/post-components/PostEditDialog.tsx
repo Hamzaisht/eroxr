@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 import {
   Dialog,
@@ -33,6 +34,7 @@ export const PostEditDialog = ({
   const [editError, setEditError] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const handleEdit = async () => {
     try {
@@ -76,33 +78,34 @@ export const PostEditDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className={`${isMobile ? 'w-[90vw] p-4' : 'p-6'} max-w-md bg-luxury-darker border-luxury-primary/20`}>
         <DialogHeader>
-          <DialogTitle>Edit Post</DialogTitle>
+          <DialogTitle className={`${isMobile ? 'text-lg' : 'text-xl'} text-luxury-neutral`}>Edit Post</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 mt-2">
           <Textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
             placeholder="Edit your post..."
-            className="min-h-[100px]"
+            className="min-h-[120px] bg-luxury-dark border-luxury-neutral/20 focus:border-luxury-primary/50 resize-none text-white"
             disabled={isEditing}
           />
           
           {editError && (
-            <Alert variant="destructive" className="bg-luxury-darker border-red-500/20">
+            <Alert variant="destructive" className="bg-luxury-darker border-red-500/20 py-2 px-3">
               <div className="flex items-center">
                 <AlertCircle className="h-4 w-4 mr-2" />
-                <AlertDescription>{editError}</AlertDescription>
+                <AlertDescription className={isMobile ? "text-sm" : "text-base"}>{editError}</AlertDescription>
               </div>
             </Alert>
           )}
           
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 mt-4">
             <Button 
               variant="outline" 
               onClick={() => onOpenChange(false)}
               disabled={isEditing}
+              className={`${isMobile ? 'text-sm px-3 py-1.5' : 'px-4 py-2'} bg-transparent border-luxury-neutral/30 text-luxury-neutral hover:bg-luxury-neutral/10`}
             >
               Cancel
             </Button>
@@ -111,6 +114,7 @@ export const PostEditDialog = ({
               <Button 
                 onClick={handleRetryEdit}
                 disabled={isEditing}
+                className={`${isMobile ? 'text-sm px-3 py-1.5' : 'px-4 py-2'} bg-luxury-primary/80 hover:bg-luxury-primary text-white`}
               >
                 Retry
               </Button>
@@ -118,6 +122,7 @@ export const PostEditDialog = ({
               <Button 
                 onClick={handleEdit}
                 disabled={isEditing}
+                className={`${isMobile ? 'text-sm px-3 py-1.5' : 'px-4 py-2'} bg-luxury-primary/80 hover:bg-luxury-primary text-white`}
               >
                 {isEditing ? (
                   <>
