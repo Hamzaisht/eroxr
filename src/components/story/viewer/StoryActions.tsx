@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Eye, Share2, MoreVertical, Edit, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,6 @@ export const StoryActions = ({
 
   const isOwner = session?.user?.id === story.creator_id;
 
-  // Register view when story is opened
   useEffect(() => {
     const registerView = async () => {
       if (session?.user?.id) {
@@ -111,12 +109,18 @@ export const StoryActions = ({
                 <MoreVertical className="w-6 h-6" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onEdit}>
+            <DropdownMenuContent align="end" className="w-48 bg-luxury-darker/95 backdrop-blur-md border-luxury-primary/20">
+              <DropdownMenuItem 
+                onClick={onEdit}
+                className="text-luxury-neutral hover:text-white"
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Story
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDelete} className="text-red-500">
+              <DropdownMenuItem 
+                onClick={onDelete} 
+                className="text-red-500 hover:text-red-300 focus:text-red-300"
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Story
               </DropdownMenuItem>

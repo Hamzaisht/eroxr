@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -143,18 +142,21 @@ export const PostCard = ({
           {isOwner && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="hover:bg-luxury-neutral/10">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+              <DropdownMenuContent align="end" className="w-40 bg-luxury-darker/95 backdrop-blur-md border-luxury-primary/20">
+                <DropdownMenuItem 
+                  onClick={() => setIsEditDialogOpen(true)}
+                  className="text-luxury-neutral hover:text-white"
+                >
                   <Edit2 className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setIsDeleteDialogOpen(true)}
-                  className="text-red-500 focus:text-red-500"
+                  className="text-red-500 hover:text-red-300 focus:text-red-300"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete

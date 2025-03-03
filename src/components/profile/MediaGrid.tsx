@@ -226,7 +226,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
               <Button
                 variant="destructive"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 shadow-lg"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
