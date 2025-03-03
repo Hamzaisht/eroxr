@@ -5,6 +5,7 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { PayoutSection } from "@/components/dashboard/PayoutSection";
 import { useEroboardData } from "@/hooks/useEroboardData";
+import { useState } from "react";
 
 export default function Eroboard() {
   const {
@@ -18,12 +19,39 @@ export default function Eroboard() {
     setLatestPayout
   } = useEroboardData();
 
+  const [payoutDialogOpen, setPayoutDialogOpen] = useState(false);
+
   const handleDateRangeChange = (range: { from: Date; to: Date }) => {
     fetchDashboardData(range);
   };
 
   const handlePayoutSuccess = () => {
     fetchDashboardData();
+  };
+
+  const isPayoutDisabled = () => {
+    return latestPayout?.status === 'pending' || stats.totalEarnings < 100;
+  };
+
+  const getPayoutButtonTooltip = () => {
+    if (latestPayout?.status === 'pending') return 'You have a pending payout request';
+    if (stats.totalEarnings < 100) return 'Minimum payout amount is $100';
+    return '';
+  };
+
+  const getPayoutStatusText = () => {
+    if (!latestPayout) return null;
+
+    switch (latestPayout.status) {
+      case 'pending':
+        return '(Under Review)';
+      case 'approved':
+        return '(Approved)';
+      case 'processed':
+        return `(Last Payment: ${new Date(latestPayout.processed_at!).toLocaleDateString()})`;
+      default:
+        return null;
+    }
   };
 
   if (loading) {
@@ -37,22 +65,13 @@ export default function Eroboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
-              Creator Dashboard
-            </h1>
-            <p className="text-luxury-muted mt-1">
-              Track your performance and earnings
-            </p>
-          </div>
-          
-          <PayoutSection 
-            totalEarnings={stats.totalEarnings}
-            latestPayout={latestPayout}
-            onPayoutSuccess={handlePayoutSuccess}
-          />
-        </div>
+        <DashboardHeader 
+          totalEarnings={stats.totalEarnings}
+          onRequestPayout={() => setPayoutDialogOpen(true)}
+          isPayoutDisabled={isPayoutDisabled()}
+          payoutStatus={getPayoutStatusText()}
+          payoutTooltip={getPayoutButtonTooltip()}
+        />
         
         <StatsCards stats={stats} />
         
@@ -61,6 +80,14 @@ export default function Eroboard() {
           contentTypeData={contentTypeData}
           earningsData={earningsData}
           onDateRangeChange={handleDateRangeChange}
+        />
+
+        <PayoutSection 
+          totalEarnings={stats.totalEarnings}
+          latestPayout={latestPayout}
+          onPayoutSuccess={handlePayoutSuccess}
+          payoutDialogOpen={payoutDialogOpen}
+          setPayoutDialogOpen={setPayoutDialogOpen}
         />
       </div>
     </div>
