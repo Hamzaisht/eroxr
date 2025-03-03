@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface FeedContainerProps {
   userId?: string;
@@ -31,6 +31,8 @@ export const FeedContainer = ({
   const queryClient = useQueryClient();
   const { handleLike, handleDelete } = usePostActions();
   const { toast } = useToast();
+  const session = useSession();
+  const currentUserId = session?.user?.id || userId;
 
   const { data: posts, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["posts", activeTab],
@@ -167,7 +169,7 @@ export const FeedContainer = ({
                 post={post}
                 onLike={onLikePost}
                 onDelete={handleDelete}
-                currentUserId={userId}
+                currentUserId={currentUserId}
               />
             </motion.div>
           ))}

@@ -25,7 +25,10 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   const { handleLike, handleDelete } = usePostActions();
   const { ref, inView } = useInView();
   const { id } = useParams();
+  const currentUserId = session?.user?.id;
 
+  console.log('CreatorsFeed - currentUserId:', currentUserId);
+  
   useRealtimeUpdates('posts');
 
   const {
@@ -109,6 +112,10 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
                 }
               };
 
+              console.log('CreatorsFeed - post.creator_id:', post.creator_id);
+              console.log('CreatorsFeed - currentUserId:', currentUserId);
+              console.log('CreatorsFeed - isOwner:', post.creator_id === currentUserId);
+
               return (
                 <motion.div
                   key={post.id}
@@ -120,7 +127,7 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
                     post={typedPost}
                     onLike={handleLike}
                     onDelete={handleDelete}
-                    currentUserId={session?.user?.id}
+                    currentUserId={currentUserId}
                   />
                 </motion.div>
               );

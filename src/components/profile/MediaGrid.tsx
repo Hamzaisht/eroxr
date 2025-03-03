@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react"; // Added useEffect import
+import { useState, useEffect } from "react";
 import { Lock, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -24,14 +23,19 @@ type MediaItem = {
   isPremium: boolean;
   width: number;
   height: number;
+  creator_id: string;
 }
 
 export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const session = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  console.log('MediaGrid - User ID:', session?.user?.id);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -76,7 +80,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
           media_url,
           video_urls,
           is_ppv,
-          created_at
+          created_at,
+          creator_id
         `)
         .eq("creator_id", session.user.id)
         .order("created_at", { ascending: false });
@@ -102,7 +107,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
           url: url,
           isPremium: post.is_ppv,
           width: 1080,
-          height: 1350
+          height: 1350,
+          creator_id: post.creator_id
         }));
       });
 
@@ -126,6 +132,8 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     }
 
     try {
+      setIsDeleting(true);
+      setDeleteError(null);
       console.log('Attempting to delete post:', postId);
       
       const { error: deleteError } = await supabase
@@ -151,13 +159,21 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
       ]);
     } catch (err) {
       console.error('Delete error:', err);
+      setDeleteError("Failed to delete post. Please try again.");
       toast({
         title: "Error",
         description: "Failed to delete post",
         variant: "destructive",
       });
     } finally {
-      setDeletePostId(null);
+      setIsDeleting(false);
+    }
+  };
+
+  const handleRetryDelete = () => {
+    if (deletePostId) {
+      setDeleteError(null);
+      handleDelete(deletePostId);
     }
   };
 
@@ -207,80 +223,86 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         animate="show"
         className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-4"
       >
-        {mediaItems.map((mediaItem, index) => (
-          <motion.div
-            key={`${mediaItem.id}-${index}`}
-            variants={{
-              hidden: { y: 20, opacity: 0 },
-              show: { y: 0, opacity: 1 }
-            }}
-            className="relative aspect-[4/5] rounded-lg overflow-hidden group cursor-pointer"
-          >
-            <div 
-              className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeletePostId(mediaItem.id);
+        {mediaItems.map((mediaItem, index) => {
+          const isOwner = session?.user?.id === mediaItem.creator_id;
+          
+          return (
+            <motion.div
+              key={`${mediaItem.id}-${index}`}
+              variants={{
+                hidden: { y: 20, opacity: 0 },
+                show: { y: 0, opacity: 1 }
               }}
+              className="relative aspect-[4/5] rounded-lg overflow-hidden group cursor-pointer"
             >
-              <Button
-                variant="destructive"
-                size="icon"
-                className="h-8 w-8 shadow-lg"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div 
-              onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
-              className="w-full h-full"
-            >
-              {mediaItem.type === 'video' ? (
-                <video
-                  src={mediaItem.url}
-                  className={cn(
-                    "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                    mediaItem.isPremium ? "blur-lg" : ""
-                  )}
-                  muted
-                  playsInline
-                  onError={(e) => {
-                    console.error("Video loading error:", e);
+              {isOwner && (
+                <div 
+                  className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeletePostId(mediaItem.id);
                   }}
-                />
-              ) : (
-                <img
-                  src={mediaItem.url}
-                  alt="Media content"
-                  className={cn(
-                    "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                    mediaItem.isPremium ? "blur-lg" : ""
-                  )}
-                  loading="lazy"
-                  onError={(e) => {
-                    console.error("Image loading error:", e);
-                    e.currentTarget.src = "/placeholder.svg";
-                  }}
-                />
-              )}
-              
-              {mediaItem.isPremium && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-                  <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
-                  <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
-                  <Button 
-                    size="sm"
-                    variant="secondary"
-                    className="mt-2 text-xs sm:text-sm"
+                >
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8 shadow-lg"
                   >
-                    Subscribe to Unlock
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               )}
-            </div>
-          </motion.div>
-        ))}
+
+              <div 
+                onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
+                className="w-full h-full"
+              >
+                {mediaItem.type === 'video' ? (
+                  <video
+                    src={mediaItem.url}
+                    className={cn(
+                      "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                      mediaItem.isPremium ? "blur-lg" : ""
+                    )}
+                    muted
+                    playsInline
+                    onError={(e) => {
+                      console.error("Video loading error:", e);
+                    }}
+                  />
+                ) : (
+                  <img
+                    src={mediaItem.url}
+                    alt="Media content"
+                    className={cn(
+                      "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                      mediaItem.isPremium ? "blur-lg" : ""
+                    )}
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error("Image loading error:", e);
+                      e.currentTarget.src = "/placeholder.svg";
+                    }}
+                  />
+                )}
+                
+                {mediaItem.isPremium && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+                    <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
+                    <Button 
+                      size="sm"
+                      variant="secondary"
+                      className="mt-2 text-xs sm:text-sm"
+                    >
+                      Subscribe to Unlock
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </motion.div>
 
       <MediaViewer 
@@ -292,6 +314,9 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
         open={!!deletePostId}
         onOpenChange={(open) => !open && setDeletePostId(null)}
         onConfirm={() => deletePostId && handleDelete(deletePostId)}
+        isDeleting={isDeleting}
+        error={deleteError}
+        onRetry={handleRetryDelete}
       />
     </>
   );

@@ -25,6 +25,8 @@ const Home = () => {
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
+  
+  console.log('Home - session?.user?.id:', session?.user?.id);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -68,6 +70,7 @@ const Home = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-4 md:gap-8 px-4 md:px-6">
           <MainFeed
+            userId={session.user.id}
             isPayingCustomer={isPayingCustomer}
             onOpenCreatePost={() => setIsCreatePostOpen(true)}
             onFileSelect={setSelectedFiles}

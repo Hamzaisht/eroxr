@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Eye, Share2, MoreVertical, Edit, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -13,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ViewersList } from "./components/ViewersList";
 import { ShareDialog } from "./components/ShareDialog";
-import { useEffect } from "react";
 import { useStoryStats } from "./hooks/useStoryStats";
 import { useStoryViewers } from "./hooks/useStoryViewers";
 
@@ -36,6 +36,10 @@ export const StoryActions = ({
   const viewers = useStoryViewers(story.id);
 
   const isOwner = session?.user?.id === story.creator_id;
+  
+  console.log('StoryActions - session?.user?.id:', session?.user?.id);
+  console.log('StoryActions - story.creator_id:', story.creator_id);
+  console.log('StoryActions - isOwner:', isOwner);
 
   useEffect(() => {
     const registerView = async () => {
@@ -112,14 +116,14 @@ export const StoryActions = ({
             <DropdownMenuContent align="end" className="w-48 bg-luxury-darker/95 backdrop-blur-md border-luxury-primary/20">
               <DropdownMenuItem 
                 onClick={onEdit}
-                className="text-luxury-neutral hover:text-white"
+                className="text-luxury-neutral hover:text-white cursor-pointer"
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Story
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={onDelete} 
-                className="text-red-500 hover:text-red-300 focus:text-red-300"
+                className="text-red-500 hover:text-red-300 focus:text-red-300 cursor-pointer"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Story

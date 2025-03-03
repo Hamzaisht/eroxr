@@ -50,7 +50,11 @@ export const PostCard = ({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isOwner = currentUserId === post.creator_id;
+  const isOwner = currentUserId && post.creator_id === currentUserId;
+
+  console.log('PostCard - currentUserId:', currentUserId);
+  console.log('PostCard - post.creator_id:', post.creator_id);
+  console.log('PostCard - isOwner:', isOwner);
 
   const handleLike = async () => {
     if (onLike) {
@@ -149,14 +153,14 @@ export const PostCard = ({
               <DropdownMenuContent align="end" className="w-40 bg-luxury-darker/95 backdrop-blur-md border-luxury-primary/20">
                 <DropdownMenuItem 
                   onClick={() => setIsEditDialogOpen(true)}
-                  className="text-luxury-neutral hover:text-white"
+                  className="text-luxury-neutral hover:text-white cursor-pointer"
                 >
                   <Edit2 className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setIsDeleteDialogOpen(true)}
-                  className="text-red-500 hover:text-red-300 focus:text-red-300"
+                  className="text-red-500 hover:text-red-300 focus:text-red-300 cursor-pointer"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete
