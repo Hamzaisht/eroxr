@@ -17,6 +17,7 @@ interface StatCardProps {
   showTooltip?: boolean;
   tooltipContent?: string;
   onClick?: () => void;
+  isCurrency?: boolean;
 }
 
 export const StatCard = ({
@@ -27,8 +28,13 @@ export const StatCard = ({
   delay = 0,
   showTooltip = false,
   tooltipContent,
-  onClick
+  onClick,
+  isCurrency = false
 }: StatCardProps) => {
+  const formattedValue = isCurrency 
+    ? `$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` 
+    : value.toLocaleString();
+
   const Card = (
     <motion.div
       initial={{ y: 20, opacity: 0 }}
@@ -44,7 +50,7 @@ export const StatCard = ({
       <Icon className={`h-5 w-5 ${iconColor}`} aria-hidden="true" />
       <div className="flex flex-col">
         <span className="text-lg font-semibold text-white">
-          {value.toLocaleString()}
+          {formattedValue}
         </span>
         <span className="text-sm text-luxury-neutral">
           {label}

@@ -7,6 +7,7 @@ interface StatsCardsProps {
     totalEarnings: number;
     totalSubscribers: number;
     engagementRate: number;
+    earningsPercentile?: number;
   };
 }
 
@@ -16,7 +17,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
       title: "Total Earnings",
       value: `$${stats.totalEarnings.toFixed(2)}`,
       icon: DollarSign,
-      trend: "+12.5%",
+      trend: stats.earningsPercentile ? `Top ${Math.ceil(100 - stats.earningsPercentile)}%` : "+12.5%",
       color: "bg-green-500/10 text-green-500"
     },
     {
@@ -56,7 +57,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
             <div className={`p-3 rounded-lg ${stat.color}`}>
               <stat.icon className="h-6 w-6" />
             </div>
-            <span className="text-sm text-green-500">{stat.trend}</span>
+            <span className={`text-sm ${stat.title === "Total Earnings" && stats.earningsPercentile ? "text-green-500" : "text-green-500"}`}>
+              {stat.trend}
+            </span>
           </div>
           <h3 className="text-2xl font-bold mb-1">{stat.value}</h3>
           <p className="text-luxury-muted text-sm">{stat.title}</p>

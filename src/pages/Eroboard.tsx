@@ -21,7 +21,8 @@ export default function Eroboard() {
     timeOnPlatform: 0,
     revenueShare: 0.92,
     followers: 0,
-    totalContent: 0
+    totalContent: 0,
+    earningsPercentile: null
   });
   const [engagementData, setEngagementData] = useState([]);
   const [earningsData, setEarningsData] = useState([]);
@@ -36,6 +37,17 @@ export default function Eroboard() {
     if (!session?.user?.id) return;
 
     try {
+      // Fetch creator's earnings information
+      const { data: creatorEarnings, error: creatorEarningsError } = await supabase
+        .from("top_creators_by_earnings")
+        .select("total_earnings, earnings_percentile")
+        .eq("id", session.user.id)
+        .single();
+
+      if (creatorEarningsError && !creatorEarningsError.message.includes('No rows found')) {
+        throw creatorEarningsError;
+      }
+
       // Fetch total earnings for the selected date range
       const { data: earningsData, error: earningsError } = await supabase
         .from('posts')
@@ -112,10 +124,11 @@ export default function Eroboard() {
         { name: 'Stories', value: distribution?.stories || 0 }
       ]);
 
-      // Update stats
+      // Update stats with earnings data
       setStats(prev => ({
         ...prev,
-        totalEarnings,
+        totalEarnings: creatorEarnings?.total_earnings || 0,
+        earningsPercentile: creatorEarnings?.earnings_percentile || null,
         totalSubscribers: subscribersCount || 0
       }));
 

@@ -1,11 +1,15 @@
 
-import { Users, Heart, Image, Lock } from "lucide-react";
+import { Users, Heart, Image, Lock, DollarSign } from "lucide-react";
 import { StatCard } from "./StatCard";
 import { TipButton } from "./TipButton";
 import type { ProfileStats as ProfileStatsType } from "./types";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StatsGridProps {
   stats: ProfileStatsType;
+  profileId: string;
   onShowUserList: (type: 'followers' | 'subscribers') => void;
   onShowTipDialog: () => void;
   isTipLoading: boolean;
@@ -13,10 +17,33 @@ interface StatsGridProps {
 
 export const StatsGrid = ({ 
   stats, 
+  profileId,
   onShowUserList, 
   onShowTipDialog, 
   isTipLoading 
 }: StatsGridProps) => {
+  const session = useSession();
+  const isOwnProfile = session?.user?.id === profileId;
+
+  // Fetch earnings data if it's the user's own profile
+  const { data: earningsData } = useQuery({
+    queryKey: ["creator-earnings", profileId],
+    queryFn: async () => {
+      if (!isOwnProfile) return null;
+      
+      const { data, error } = await supabase
+        .from("top_creators_by_earnings")
+        .select("total_earnings, earnings_percentile")
+        .eq("id", profileId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!isOwnProfile && !!profileId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   return (
     <div className="flex flex-wrap gap-4 justify-center relative z-10 px-4">
       <div onClick={() => onShowUserList('followers')}>
@@ -72,6 +99,19 @@ export const StatsGrid = ({
           delay={0.6}
           showTooltip
           tooltipContent="Pay-per-view premium content"
+        />
+      ) : null}
+
+      {isOwnProfile && earningsData?.total_earnings ? (
+        <StatCard
+          icon={DollarSign}
+          value={earningsData.total_earnings}
+          label="Earnings"
+          iconColor="text-green-500"
+          delay={0.7}
+          showTooltip
+          tooltipContent={`You're in the top ${Math.ceil(100 - earningsData.earnings_percentile)}% of earners`}
+          isCurrency
         />
       ) : null}
 

@@ -1,5 +1,5 @@
 
-import { MoreVertical, Plus, CheckCircle } from "lucide-react";
+import { MoreVertical, Plus, CheckCircle, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,13 +16,13 @@ export const SuggestedCreators = () => {
   const session = useSession();
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
 
-  const { data: suggestedCreators, isLoading } = useQuery({
-    queryKey: ["suggested-creators"],
+  const { data: topCreators, isLoading } = useQuery({
+    queryKey: ["top-creators-by-earnings"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles_with_stats")
+        .from("top_creators_by_earnings")
         .select("*")
-        .order('follower_count', { ascending: false })
+        .order('total_earnings', { ascending: false })
         .limit(5)
         .throwOnError();
 
@@ -96,7 +96,7 @@ export const SuggestedCreators = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-luxury-neutral">Top Creators</h2>
+        <h2 className="text-lg font-semibold text-luxury-neutral">Top Earning Creators</h2>
         <div className="flex gap-2">
           <Button
             variant="ghost"
@@ -122,7 +122,7 @@ export const SuggestedCreators = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {suggestedCreators?.map((creator, i) => (
+          {topCreators?.map((creator, i) => (
             <motion.div
               key={creator.id}
               initial={{ opacity: 0, y: 10 }}
@@ -140,15 +140,20 @@ export const SuggestedCreators = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-luxury-neutral truncate">{creator.username}</p>
-                    {creator.follower_count > 100 && (
-                      <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary">
-                        Popular
-                      </Badge>
-                    )}
+                    <Badge variant="secondary" className="bg-green-500/10 text-green-500 flex items-center gap-1">
+                      <DollarSign className="h-3 w-3" />
+                      <span>
+                        {creator.earnings_percentile > 90 
+                          ? 'Top 10%' 
+                          : creator.earnings_percentile > 75 
+                            ? 'Top 25%' 
+                            : 'Earner'}
+                      </span>
+                    </Badge>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-luxury-neutral/60">
-                    <span className="truncate">{creator.follower_count || 0} followers</span>
-                    <span className="truncate">{creator.post_count || 0} posts</span>
+                    <span className="truncate">${creator.total_earnings?.toFixed(2) || '0.00'}</span>
+                    <span className="truncate">{creator.subscriber_count || 0} subs</span>
                   </div>
                 </div>
               </Link>

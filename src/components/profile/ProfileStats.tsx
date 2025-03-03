@@ -39,6 +39,7 @@ export const ProfileStats = ({ profileId }: { profileId: string }) => {
     <>
       <StatsGrid 
         stats={stats}
+        profileId={profileId}
         onShowUserList={handleShowUserList}
         onShowTipDialog={handleShowTipDialog}
         isTipLoading={isTipLoading}
