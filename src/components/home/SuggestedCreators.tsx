@@ -1,5 +1,5 @@
 
-import { MoreVertical, Plus, CheckCircle, DollarSign } from "lucide-react";
+import { MoreVertical, Plus, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -21,8 +21,8 @@ export const SuggestedCreators = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("top_creators_by_earnings")
-        .select("*")
-        .order('total_earnings', { ascending: false })
+        .select("id, username, avatar_url, subscriber_count")
+        .order('subscriber_count', { ascending: false })
         .limit(5)
         .throwOnError();
 
@@ -96,7 +96,7 @@ export const SuggestedCreators = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-luxury-neutral">Top Earning Creators</h2>
+        <h2 className="text-lg font-semibold text-luxury-neutral">Popular Creators</h2>
         <div className="flex gap-2">
           <Button
             variant="ghost"
@@ -140,20 +140,12 @@ export const SuggestedCreators = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-luxury-neutral truncate">{creator.username}</p>
-                    <Badge variant="secondary" className="bg-green-500/10 text-green-500 flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      <span>
-                        {creator.earnings_percentile > 90 
-                          ? 'Top 10%' 
-                          : creator.earnings_percentile > 75 
-                            ? 'Top 25%' 
-                            : 'Earner'}
-                      </span>
+                    <Badge variant="secondary" className="bg-luxury-primary/10 text-luxury-primary flex items-center gap-1">
+                      <span>Trending</span>
                     </Badge>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-luxury-neutral/60">
-                    <span className="truncate">${creator.total_earnings?.toFixed(2) || '0.00'}</span>
-                    <span className="truncate">{creator.subscriber_count || 0} subs</span>
+                    <span className="truncate">{creator.subscriber_count || 0} subscribers</span>
                   </div>
                 </div>
               </Link>

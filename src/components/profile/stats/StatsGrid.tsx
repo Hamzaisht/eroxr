@@ -25,7 +25,7 @@ export const StatsGrid = ({
   const session = useSession();
   const isOwnProfile = session?.user?.id === profileId;
 
-  // Fetch earnings data if it's the user's own profile
+  // Fetch earnings data ONLY if it's the user's own profile
   const { data: earningsData } = useQuery({
     queryKey: ["creator-earnings", profileId],
     queryFn: async () => {
@@ -102,6 +102,7 @@ export const StatsGrid = ({
         />
       ) : null}
 
+      {/* Only show earnings if it's the user's own profile */}
       {isOwnProfile && earningsData?.total_earnings ? (
         <StatCard
           icon={DollarSign}
