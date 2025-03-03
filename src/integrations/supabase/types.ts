@@ -2337,11 +2337,45 @@ export type Database = {
       profiles_with_stats: {
         Row: {
           avatar_url: string | null
+          banner_url: string | null
+          bio: string | null
           created_at: string | null
+          follower_count: number | null
+          following_count: number | null
           id: string | null
+          post_count: number | null
+          status: string | null
           subscriber_count: number | null
           updated_at: string | null
           username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          banner_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          follower_count?: never
+          following_count?: never
+          id?: string | null
+          post_count?: never
+          status?: string | null
+          subscriber_count?: never
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          banner_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          follower_count?: never
+          following_count?: never
+          id?: string | null
+          post_count?: never
+          status?: string | null
+          subscriber_count?: never
+          updated_at?: string | null
+          username?: string | null
         }
         Relationships: []
       }
