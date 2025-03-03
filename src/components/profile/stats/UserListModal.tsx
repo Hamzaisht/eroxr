@@ -39,7 +39,8 @@ export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListM
             .eq('following_id', profileId);
 
           if (error) throw error;
-          return data?.map(item => item.follower) as UserData[] || [];
+          // Properly map and type the nested data
+          return data?.map(item => item.follower as UserData) || [];
         } else {
           const { data, error } = await supabase
             .from('creator_subscriptions')
@@ -53,7 +54,8 @@ export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListM
             .eq('creator_id', profileId);
 
           if (error) throw error;
-          return data?.map(item => item.subscriber) as UserData[] || [];
+          // Properly map and type the nested data
+          return data?.map(item => item.subscriber as UserData) || [];
         }
       } catch (error) {
         console.error(`Error fetching ${type}:`, error);
