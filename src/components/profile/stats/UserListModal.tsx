@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 interface UserListModalProps {
   open: boolean;
@@ -13,6 +14,12 @@ interface UserListModalProps {
   profileId: string;
   type: 'followers' | 'subscribers';
 }
+
+type UserData = {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+};
 
 export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListModalProps) => {
   const { data: users, isLoading } = useQuery({
@@ -32,7 +39,7 @@ export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListM
             .eq('following_id', profileId);
 
           if (error) throw error;
-          return data?.map(item => item.follower) || [];
+          return data?.map(item => item.follower) as UserData[] || [];
         } else {
           const { data, error } = await supabase
             .from('creator_subscriptions')
@@ -46,7 +53,7 @@ export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListM
             .eq('creator_id', profileId);
 
           if (error) throw error;
-          return data?.map(item => item.subscriber) || [];
+          return data?.map(item => item.subscriber) as UserData[] || [];
         }
       } catch (error) {
         console.error(`Error fetching ${type}:`, error);
