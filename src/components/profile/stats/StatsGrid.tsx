@@ -58,17 +58,20 @@ export const StatsGrid = ({
         />
       </div>
       
-      <div onClick={() => onShowUserList('subscribers')}>
-        <StatCard
-          icon={Users}
-          value={stats?.subscriber_count || 0}
-          label="Subscribers"
-          iconColor="text-luxury-accent"
-          delay={0.3}
-          showTooltip
-          tooltipContent="Click to see subscribers"
-        />
-      </div>
+      {/* Only show subscribers if it's the user's own profile */}
+      {isOwnProfile && (
+        <div onClick={() => onShowUserList('subscribers')}>
+          <StatCard
+            icon={Users}
+            value={stats?.subscriber_count || 0}
+            label="Subscribers"
+            iconColor="text-luxury-accent"
+            delay={0.3}
+            showTooltip
+            tooltipContent="Click to see subscribers"
+          />
+        </div>
+      )}
       
       <StatCard
         icon={Heart}

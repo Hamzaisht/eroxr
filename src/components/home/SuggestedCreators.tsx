@@ -21,8 +21,8 @@ export const SuggestedCreators = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("top_creators_by_earnings")
-        .select("id, username, avatar_url, subscriber_count")
-        .order('subscriber_count', { ascending: false })
+        .select("id, username, avatar_url, follower_count")
+        .order('follower_count', { ascending: false })
         .limit(5)
         .throwOnError();
 
@@ -145,7 +145,7 @@ export const SuggestedCreators = () => {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-luxury-neutral/60">
-                    <span className="truncate">{creator.subscriber_count || 0} subscribers</span>
+                    <span className="truncate">{creator.follower_count || 0} followers</span>
                   </div>
                 </div>
               </Link>
