@@ -5,7 +5,14 @@ import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DatingAd } from "./types/dating";
 
-export const useAdsQuery = () => {
+interface UseAdsQueryOptions {
+  verifiedOnly?: boolean;
+  premiumOnly?: boolean;
+  filterOptions?: any;
+}
+
+export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
+  const { verifiedOnly = true, premiumOnly = false, filterOptions = {} } = options;
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -40,16 +47,57 @@ export const useAdsQuery = () => {
   }, [queryClient, toast]);
 
   return useQuery({
-    queryKey: ["dating_ads"],
+    queryKey: ["dating_ads", verifiedOnly, premiumOnly, filterOptions],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("dating_ads")
-        .select("*")
+        .select(`
+          *,
+          profiles!dating_ads_user_id_fkey(
+            is_paying_customer,
+            id_verification_status
+          )
+        `)
         .eq("is_active", true)
-        .order("created_at", { ascending: false });
+        .eq("moderation_status", "approved");
+      
+      // Only return verified profiles if requested
+      if (verifiedOnly) {
+        query = query.eq("profiles.id_verification_status", "verified");
+      }
+      
+      // Only return premium profiles if requested
+      if (premiumOnly) {
+        query = query.eq("profiles.is_paying_customer", true);
+      }
+      
+      // Apply any additional filters from filterOptions
+      if (filterOptions.country) {
+        query = query.eq("country", filterOptions.country);
+      }
+      
+      if (filterOptions.userType) {
+        query = query.eq("user_type", filterOptions.userType);
+      }
+      
+      if (filterOptions.minAge && filterOptions.maxAge) {
+        // Using PostgreSQL's range operators for age filtering
+        query = query.overlaps("age_range", `[${filterOptions.minAge},${filterOptions.maxAge}]`);
+      }
+      
+      // Order by most recent first
+      query = query.order("created_at", { ascending: false });
+      
+      const { data, error } = await query;
 
       if (error) throw error;
-      return data as DatingAd[];
+      
+      // Transform data to match DatingAd type
+      return data.map(ad => ({
+        ...ad,
+        isUserVerified: ad.profiles?.id_verification_status === 'verified',
+        isUserPremium: ad.profiles?.is_paying_customer === true
+      })) as DatingAd[];
     },
     staleTime: 0,
   });

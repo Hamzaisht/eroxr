@@ -1,189 +1,91 @@
-import { useState } from 'react';
-import { Eye, MessageCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { motion } from 'framer-motion';
 
-export interface ProfileActionsProps {
-  userId: string | null;
-  onShare: () => Promise<void>;
-  source?: string;
-  isOwnProfile?: boolean;
-  isEditing?: boolean;
-  onEdit?: () => void;
-  onSave?: () => void;
-  onCancel?: () => void;
+import { useState } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useNavigate } from "react-router-dom";
+import { MessageSquare, Heart, Share2, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ReportAdDialog } from "../body-contact/components/ReportAdDialog";
+import { useBodyContactAccess } from "../body-contact/hooks/useBodyContactAccess";
+
+interface ProfileActionsProps {
+  userId?: string;
+  adId?: string;
+  onShare: () => void;
+  source: "dating" | "profile";
 }
 
 export const ProfileActions = ({ 
   userId, 
-  onShare, 
-  source = 'regular',
-  isOwnProfile = false,
-  isEditing = false,
-  onEdit,
-  onSave,
-  onCancel 
+  adId,
+  onShare,
+  source
 }: ProfileActionsProps) => {
-  const [isLiked, setIsLiked] = useState(false);
-  const { toast } = useToast();
+  const session = useSession();
   const navigate = useNavigate();
+  const accessResult = useBodyContactAccess();
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
-  const handleLike = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to like profiles",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!userId) {
-        toast({
-          title: "Error",
-          description: "Invalid profile",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data: existingLike } = await supabase
-        .from('creator_likes')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('creator_id', userId)
-        .single();
-
-      if (existingLike) {
-        const { error: deleteError } = await supabase
-          .from('creator_likes')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('creator_id', userId);
-
-        if (deleteError) throw deleteError;
-
-        setIsLiked(false);
-        toast({
-          title: "Profile unliked",
-          description: "This profile has been removed from your likes",
-        });
-      } else {
-        const { error } = await supabase
-          .from('creator_likes')
-          .insert([
-            { 
-              user_id: user.id, 
-              creator_id: userId 
-            }
-          ]);
-
-        if (error) throw error;
-
-        setIsLiked(true);
-        toast({
-          title: "Profile liked",
-          description: "This profile has been added to your likes",
-        });
-      }
-    } catch (error: any) {
-      console.error('Like error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Could not process like action",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleContact = () => {
-    if (!userId) {
-      toast({
-        title: "Error",
-        description: "Invalid profile",
-        variant: "destructive",
-      });
+  const handleMessageClick = () => {
+    if (!session?.user) {
+      navigate('/login');
       return;
     }
-    navigate(`/messages?recipient=${userId}&source=${source}`);
+
+    if (!accessResult.canAccess) {
+      // Show access restriction toast or modal
+      return;
+    }
+
+    // Navigate to messages with this user pre-selected
+    navigate(`/messages?userId=${userId}`);
   };
 
-  if (isOwnProfile) {
-    return (
-      <div className="flex items-center justify-end gap-2 pt-4">
-        {isEditing ? (
-          <>
-            <Button 
-              variant="default" 
-              onClick={onSave}
-              className="bg-luxury-primary hover:bg-luxury-primary/80"
-            >
-              Save Changes
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={onCancel}
-              className="border-luxury-primary text-luxury-primary hover:bg-luxury-primary/10"
-            >
-              Cancel
-            </Button>
-          </>
-        ) : (
-          <Button 
-            variant="default"
-            onClick={onEdit}
-            className="bg-luxury-primary hover:bg-luxury-primary/80"
+  return (
+    <>
+      <div className="flex gap-2">
+        <Button
+          onClick={handleMessageClick}
+          className="flex-1 bg-luxury-primary hover:bg-luxury-primary/80 text-white"
+          disabled={!session?.user}
+        >
+          <MessageSquare className="h-4 w-4 mr-2" />
+          Message
+        </Button>
+        
+        <Button
+          variant="outline"
+          className="rounded-full aspect-square p-0 w-10 h-10 border-luxury-primary/30 text-luxury-primary"
+          onClick={onShare}
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
+
+        <Button
+          variant="outline"
+          className="rounded-full aspect-square p-0 w-10 h-10 border-luxury-primary/30 text-luxury-primary"
+        >
+          <Heart className="h-4 w-4" />
+        </Button>
+
+        {userId && userId !== session?.user?.id && (
+          <Button
+            variant="outline"
+            className="rounded-full aspect-square p-0 w-10 h-10 border-destructive/30 text-destructive"
+            onClick={() => setReportDialogOpen(true)}
           >
-            Edit Profile
+            <AlertTriangle className="h-4 w-4" />
           </Button>
         )}
       </div>
-    );
-  }
 
-  return (
-    <div className="flex items-center justify-between pt-4">
-      <div className="flex gap-2">
-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="text-luxury-primary hover:text-luxury-primary/80 hover:bg-luxury-primary/10 transition-all duration-300"
-            onClick={onShare}
-          >
-            <Eye className="h-5 w-5 transition-transform hover:scale-110" />
-          </Button>
-        </motion.div>
-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className={`${isLiked ? 'text-red-500' : 'text-luxury-primary'} hover:text-luxury-primary/80 hover:bg-luxury-primary/10 transition-all duration-300`}
-            onClick={handleLike}
-          >
-            <MessageCircle className="h-5 w-5 transition-transform hover:scale-110" />
-          </Button>
-        </motion.div>
-      </div>
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Button 
-          variant="default"
-          className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white transition-all duration-300 transform hover:-translate-y-1"
-          onClick={handleContact}
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          Contact
-        </Button>
-      </motion.div>
-    </div>
+      {userId && adId && (
+        <ReportAdDialog 
+          adId={adId}
+          userId={userId}
+          open={reportDialogOpen}
+          onOpenChange={setReportDialogOpen}
+        />
+      )}
+    </>
   );
 };

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { BodyContactForm } from "./BodyContactForm";
 import { useBodyContactSubmit } from "./hooks/useBodyContactSubmit";
+import { useBodyContactAccess } from "./hooks/useBodyContactAccess";
+import { PremiumAccessRequired } from "./components/PremiumAccessRequired";
 
 interface CreateBodyContactDialogProps {
   onSuccess?: () => void;
@@ -13,6 +15,7 @@ interface CreateBodyContactDialogProps {
 export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogProps) => {
   const [open, setOpen] = useState(false);
   const { handleSubmit, isLoading } = useBodyContactSubmit({ onSuccess, onComplete: () => setOpen(false) });
+  const accessResult = useBodyContactAccess();
 
   return (
     <>
@@ -30,11 +33,15 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
               Create Body Contact Ad
             </h2>
 
-            <BodyContactForm 
-              onSubmit={handleSubmit} 
-              isLoading={isLoading} 
-              onCancel={() => setOpen(false)} 
-            />
+            {accessResult.canAccess ? (
+              <BodyContactForm 
+                onSubmit={handleSubmit} 
+                isLoading={isLoading} 
+                onCancel={() => setOpen(false)} 
+              />
+            ) : (
+              <PremiumAccessRequired accessResult={accessResult} />
+            )}
           </div>
         </DialogContent>
       </Dialog>

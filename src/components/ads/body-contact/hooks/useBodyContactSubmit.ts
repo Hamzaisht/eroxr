@@ -28,6 +28,33 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSu
     setIsLoading(true);
 
     try {
+      // First, check if user is allowed to create a Body Contact ad
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("is_paying_customer, id_verification_status")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (!profileData.is_paying_customer) {
+        toast({
+          title: "Premium required",
+          description: "You need a premium subscription to create body contact ads",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (profileData.id_verification_status !== 'verified') {
+        toast({
+          title: "Verification required",
+          description: "You need to verify your ID to create body contact ads",
+          variant: "destructive",
+        });
+        return;
+      }
+
       let videoUrl = null;
       let avatarUrl = null;
 
@@ -61,6 +88,7 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSu
         avatarUrl = publicUrl;
       }
 
+      // Insert ad with moderation status
       const { error } = await supabase
         .from("dating_ads")
         .insert({
@@ -77,6 +105,7 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSu
           video_url: videoUrl,
           user_type: values.relationshipStatus === "couple" ? "couple_mf" : "male",
           is_active: true,
+          moderation_status: "pending", // Default to pending for review
         });
 
       if (error) throw error;
@@ -92,7 +121,7 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSu
 
       toast({
         title: "Success!",
-        description: "Your body contact ad has been created",
+        description: "Your body contact ad has been submitted for review",
       });
       
       if (onSuccess) {
