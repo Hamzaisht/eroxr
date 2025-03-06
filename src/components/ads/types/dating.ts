@@ -1,3 +1,4 @@
+
 export type DatingAd = {
   id: string;
   title: string;
@@ -37,7 +38,7 @@ export type DatingAd = {
 
 export type SearchCategory = {
   seeker: "couple" | "female" | "male" | "any";
-  looking_for: "male" | "female" | "couple" | "any";
+  looking_for: "male" | "female" | "couple" | "trans" | "any";
 };
 
 export type FilterOptions = {
