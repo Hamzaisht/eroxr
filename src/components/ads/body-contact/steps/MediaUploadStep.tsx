@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Label } from "@/components/ui/label";
@@ -9,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface MediaUploadStepProps {
   values: AdFormValues;
@@ -27,6 +27,7 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const containerVariants = {
     hidden: { opacity: 0 },
