@@ -1,19 +1,22 @@
 
 import { motion } from 'framer-motion';
-import { Shield, Info, Award, Clock, Map, Calendar } from 'lucide-react';
+import { useState } from 'react';
+import { Shield, Award, Clock, Map, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ModerationBadge } from '../body-contact/components/ModerationBadge';
 import { DatingAd } from '../types/dating';
 import { ProfileTags } from './ProfileTags';
+import { ProfileQuickPreview } from '../profile-preview/ProfileQuickPreview';
 
 interface ProfileInfoProps {
   ad: DatingAd;
+  isPreviewMode?: boolean;
 }
 
-export const ProfileInfo = ({ ad }: ProfileInfoProps) => {
+export const ProfileInfo = ({ ad, isPreviewMode = false }: ProfileInfoProps) => {
   // Format age range for display
   const ageRangeDisplay = `${ad.age_range.lower}-${ad.age_range.upper}`;
+  const [showProfilePreview, setShowProfilePreview] = useState(false);
   
   return (
     <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
@@ -53,11 +56,6 @@ export const ProfileInfo = ({ ad }: ProfileInfoProps) => {
                   </Tooltip>
                 </TooltipProvider>
               )}
-              
-              {/* Moderation Status - Show only for pending ads */}
-              {ad.moderation_status === 'pending' && (
-                <ModerationBadge status="pending" />
-              )}
             </div>
           </div>
           
@@ -66,36 +64,58 @@ export const ProfileInfo = ({ ad }: ProfileInfoProps) => {
               <Calendar className="w-3.5 h-3.5" />
               {ad.relationship_status}
             </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              {ageRangeDisplay}
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Map className="w-3.5 h-3.5" />
-              {ad.city}, {ad.country}
-            </span>
+            {!isPreviewMode && (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  {ageRangeDisplay}
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Map className="w-3.5 h-3.5" />
+                  {ad.city}, {ad.country}
+                </span>
+              </>
+            )}
           </div>
           
-          <p className="text-white/70 line-clamp-2 max-w-2xl">{ad.description}</p>
+          {!isPreviewMode && (
+            <p className="text-white/70 line-clamp-2 max-w-2xl">{ad.description}</p>
+          )}
           
-          {/* Tags */}
-          <ProfileTags ad={ad} />
+          {/* Tags - Show fewer tags in preview mode */}
+          <ProfileTags ad={ad} maxTags={isPreviewMode ? 3 : undefined} />
         </div>
         
-        {/* Profile Image */}
+        {/* Profile Image with Quick Preview */}
         {ad.avatar_url && (
-          <motion.div 
-            whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(155, 135, 245, 0.5)" }}
-            className="w-16 h-16 rounded-full overflow-hidden border-2 border-luxury-primary"
-          >
-            <img 
-              src={ad.avatar_url} 
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          </motion.div>
+          <div className="relative">
+            <motion.div 
+              whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(155, 135, 245, 0.5)" }}
+              className="w-16 h-16 rounded-full overflow-hidden border-2 border-luxury-primary cursor-pointer"
+              onHoverStart={() => setShowProfilePreview(true)}
+              onHoverEnd={() => setShowProfilePreview(false)}
+            >
+              <img 
+                src={ad.avatar_url} 
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+            
+            <div className="absolute bottom-full right-0 mb-2">
+              <ProfileQuickPreview 
+                userId={ad.user_id}
+                avatarUrl={ad.avatar_url}
+                username={ad.user?.username}
+                location={`${ad.city}, ${ad.country}`}
+                relationshipStatus={ad.relationship_status}
+                isVisible={showProfilePreview}
+                onClose={() => setShowProfilePreview(false)}
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>

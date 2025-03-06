@@ -55,6 +55,8 @@ export interface DatingAd {
     id_verification_status?: string;
     is_paying_customer?: boolean;
   };
+  // Function for tag click handling
+  onTagClick?: (tag: string) => void;
 }
 
 export interface FilterOptions {
@@ -70,6 +72,6 @@ export interface FilterOptions {
 }
 
 export interface SearchCategory {
-  seeker: "male" | "female" | "couple";
+  seeker: "male" | "female" | "couple" | "verified" | "premium";
   looking_for: "male" | "female" | "couple" | "trans" | "any";
 }

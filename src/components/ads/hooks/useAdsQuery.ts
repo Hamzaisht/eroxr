@@ -15,7 +15,8 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
     filterOptions = {}, 
     includeMyPendingAds = true,
     skipModeration = true, // Always skip moderation checks
-    userId = undefined
+    userId = undefined,
+    includeMsgCount = true, // New option to include message counts
   } = options;
   
   const queryClient = useQueryClient();
@@ -59,11 +60,11 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
   }, [queryClient, toast]);
 
   return useQuery({
-    queryKey: ["dating_ads", verifiedOnly, premiumOnly, filterOptions, includeMyPendingAds, skipModeration, currentUserId, userId],
+    queryKey: ["dating_ads", verifiedOnly, premiumOnly, filterOptions, includeMyPendingAds, skipModeration, currentUserId, userId, includeMsgCount],
     queryFn: async () => {
       console.log("Query executing with options:", { 
         verifiedOnly, premiumOnly, filterOptions, 
-        includeMyPendingAds, skipModeration, currentUserId, userId 
+        includeMyPendingAds, skipModeration, currentUserId, userId, includeMsgCount
       });
       
       // Build and execute the main query
@@ -90,6 +91,48 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
           const pendingAdIds = new Set(pendingAds.map(ad => ad.id));
           const filteredFetchedAds = allAds.filter(ad => !pendingAdIds.has(ad.id));
           allAds = [...filteredFetchedAds, ...pendingAds];
+        }
+      }
+      
+      // If includeMsgCount is true, fetch message counts for each ad
+      if (includeMsgCount) {
+        const adIds = allAds.map(ad => ad.id);
+        
+        if (adIds.length > 0) {
+          // Get message counts from direct_messages table
+          // This will count how many messages were sent regarding each ad
+          try {
+            const { data: messageCounts, error: msgError } = await supabase
+              .from('direct_messages')
+              .select('content, recipient_id, count')
+              .contains('content', { ad_id: adIds })
+              .eq('message_type', 'ad_message')
+              .group('content, recipient_id');
+            
+            if (!msgError && messageCounts) {
+              // Process message counts and associate with ads
+              allAds = allAds.map(ad => {
+                const adMessages = messageCounts.filter(msg => {
+                  try {
+                    const content = JSON.parse(msg.content || '{}');
+                    return content.ad_id === ad.id;
+                  } catch (e) {
+                    return false;
+                  }
+                });
+                
+                const messageCount = adMessages.reduce((sum, msg) => sum + parseInt(msg.count), 0);
+                
+                return {
+                  ...ad,
+                  message_count: messageCount
+                };
+              });
+            }
+          } catch (error) {
+            console.error("Error fetching message counts:", error);
+            // Continue without message counts if there's an error
+          }
         }
       }
       

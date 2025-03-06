@@ -9,9 +9,16 @@ import { ProfileInfo } from './ProfileInfo';
 interface VideoProfileCardProps {
   ad: DatingAd;
   isActive?: boolean;
+  isPreviewMode?: boolean;
+  onClick?: () => void;
 }
 
-export const VideoProfileCard = ({ ad, isActive = false }: VideoProfileCardProps) => {
+export const VideoProfileCard = ({ 
+  ad, 
+  isActive = false, 
+  isPreviewMode = false,
+  onClick
+}: VideoProfileCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -22,7 +29,8 @@ export const VideoProfileCard = ({ ad, isActive = false }: VideoProfileCardProps
       transition={{ duration: 0.5 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: isPreviewMode ? 1 : 1.02 }}
+      onClick={onClick}
       layout
     >
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 z-10 pointer-events-none" />
@@ -38,7 +46,7 @@ export const VideoProfileCard = ({ ad, isActive = false }: VideoProfileCardProps
       />
       
       {/* Profile Information */}
-      <ProfileInfo ad={ad} />
+      <ProfileInfo ad={ad} isPreviewMode={isPreviewMode} />
     </motion.div>
   );
 };

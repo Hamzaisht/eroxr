@@ -8,13 +8,14 @@ import { DatingHeader } from "@/components/dating/DatingHeader";
 import { DatingContent } from "@/components/dating/DatingContent";
 import { useUserProfile } from "@/components/dating/hooks/useUserProfile";
 import { useViewTracking } from "@/components/dating/hooks/useViewTracking";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Award, ArrowRight } from "lucide-react";
 
 export default function Dating() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedSeeker, setSelectedSeeker] = useState<string | null>(null);
   const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     minAge: 18,
     maxAge: 99,
@@ -23,6 +24,7 @@ export default function Dating() {
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
   
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Track page views
   useViewTracking();
@@ -40,20 +42,41 @@ export default function Dating() {
     // Always show all ads regardless of moderation status
     skipModeration: true,
     includeMyPendingAds: true,
-    filterOptions
+    filterOptions,
+    tagFilter: selectedTag,
+    verifiedOnly: selectedSeeker === 'verified',
+    premiumOnly: selectedSeeker === 'premium'
   });
 
-  // Handle URL parameters for tag searching
+  // Handle URL parameters for tag searching and filtering
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tagParam = params.get('tag');
+    const seekerParam = params.get('seeker');
+    const lookingForParam = params.get('looking_for');
     
-    if (tagParam && shortcutMap[tagParam.toUpperCase()]) {
-      const { seeker, looking_for } = shortcutMap[tagParam.toUpperCase()];
+    if (tagParam) {
+      setSelectedTag(tagParam);
+    }
+    
+    if (seekerParam && lookingForParam) {
+      setSelectedSeeker(seekerParam);
+      setSelectedLookingFor(lookingForParam);
+    } else if (seekerParam && shortcutMap[seekerParam.toUpperCase()]) {
+      const { seeker, looking_for } = shortcutMap[seekerParam.toUpperCase()];
       setSelectedSeeker(seeker);
       setSelectedLookingFor(looking_for);
     }
   }, [location.search]);
+
+  // Handle tag click for filtering
+  const handleTagClick = (tag: string) => {
+    setSelectedTag(tag);
+    // Update URL without reloading the page
+    const params = new URLSearchParams(location.search);
+    params.set('tag', tag);
+    navigate(`${location.pathname}?${params.toString()}`);
+  };
 
   // Define search categories
   const searchCategories: SearchCategory[] = [
@@ -76,7 +99,11 @@ export default function Dating() {
     { seeker: "male", looking_for: "male" },
     { seeker: "male", looking_for: "couple" },
     { seeker: "male", looking_for: "trans" },
-    { seeker: "male", looking_for: "any" }
+    { seeker: "male", looking_for: "any" },
+    
+    // Special categories
+    { seeker: "verified", looking_for: "any" },
+    { seeker: "premium", looking_for: "any" },
   ];
 
   // Check if user can access body contact features
@@ -154,6 +181,7 @@ export default function Dating() {
                 whileHover={{ scale: 1.05, x: 5 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-gradient-to-r from-purple-500 to-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1"
+                onClick={() => navigate('/subscription')}
               >
                 Upgrade Now <ArrowRight className="h-4 w-4 ml-1" />
               </motion.button>
@@ -179,6 +207,8 @@ export default function Dating() {
                 filterOptions={filterOptions}
                 setFilterOptions={setFilterOptions}
                 countries={["denmark", "finland", "iceland", "norway", "sweden"]}
+                selectedTag={selectedTag}
+                setSelectedTag={setSelectedTag}
               />
             </motion.div>
 
@@ -187,6 +217,7 @@ export default function Dating() {
               ads={ads}
               canAccessBodyContact={!!canAccessBodyContact}
               onAdCreationSuccess={handleAdCreationSuccess}
+              onTagClick={handleTagClick}
             />
           </div>
         </motion.div>

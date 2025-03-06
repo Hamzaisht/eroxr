@@ -17,16 +17,20 @@ export const VideoContent = ({ ad, isActive, isHovered }: VideoContentProps) => 
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  // Auto-play video when card becomes active
+  // Auto-play video when card becomes active or hovered
   useEffect(() => {
-    if (isActive && videoRef.current) {
-      if (isPlaying) {
+    if (videoRef.current) {
+      if (isActive && isPlaying) {
         videoRef.current.play().catch(e => console.error("Autoplay failed:", e));
+      } else if (isHovered) {
+        // On hover, always play but muted
+        videoRef.current.muted = true;
+        videoRef.current.play().catch(e => console.error("Hover autoplay failed:", e));
       } else {
         videoRef.current.pause();
       }
     }
-  }, [isActive, isPlaying]);
+  }, [isActive, isHovered, isPlaying]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;

@@ -14,7 +14,8 @@ export const buildAdsQuery = (
     verifiedOnly, 
     premiumOnly, 
     filterOptions, 
-    userId 
+    userId,
+    tagFilter
   } = options;
 
   // Main query to get dating ads
@@ -42,7 +43,25 @@ export const buildAdsQuery = (
       // Using PostgreSQL's range operators for age filtering
       adsQuery = adsQuery.overlaps("age_range", `[${filterOptions.minAge},${filterOptions.maxAge}]`);
     }
+
+    // Filter by specific tag if provided
+    if (tagFilter) {
+      adsQuery = adsQuery.contains('tags', [tagFilter]);
+    }
+    
+    // Filter for verified users only
+    if (verifiedOnly) {
+      adsQuery = adsQuery.eq("is_verified", true);
+    }
+    
+    // Filter for premium users only
+    if (premiumOnly) {
+      adsQuery = adsQuery.eq("is_premium", true);
+    }
   }
+
+  // Filter to show only active ads
+  adsQuery = adsQuery.eq("is_active", true);
 
   return adsQuery;
 };
