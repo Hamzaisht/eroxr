@@ -12,6 +12,7 @@ interface UseAdsQueryOptions {
   filterOptions?: any;
   includeMyPendingAds?: boolean;
   skipModeration?: boolean; // Added to bypass moderation for verified users
+  userId?: string; // Added to fetch ads for a specific user
 }
 
 // Define the type for raw data from Supabase
@@ -25,17 +26,22 @@ type RawDatingAd = Omit<DatingAd, 'age_range'> & {
 
 export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
   const { 
-    verifiedOnly = false, // Changed default to false
+    verifiedOnly = false,
     premiumOnly = false, 
     filterOptions = {}, 
     includeMyPendingAds = true,
-    skipModeration = false // For verified users
+    skipModeration = false, // For verified users
+    userId = undefined // For fetching specific user's ads
   } = options;
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const session = useSession();
   const currentUserId = session?.user?.id;
+
+  // For debugging
+  console.log("useAdsQuery - currentUserId:", currentUserId);
+  console.log("useAdsQuery - options:", options);
 
   useEffect(() => {
     const channel = supabase
@@ -68,15 +74,15 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
   }, [queryClient, toast]);
 
   return useQuery({
-    queryKey: ["dating_ads", verifiedOnly, premiumOnly, filterOptions, includeMyPendingAds, skipModeration, currentUserId],
+    queryKey: ["dating_ads", verifiedOnly, premiumOnly, filterOptions, includeMyPendingAds, skipModeration, currentUserId, userId],
     queryFn: async () => {
       console.log("Query executing with options:", { 
         verifiedOnly, premiumOnly, filterOptions, 
-        includeMyPendingAds, skipModeration, currentUserId 
+        includeMyPendingAds, skipModeration, currentUserId, userId 
       });
       
-      // 1. First query: Get all approved ads (with filters)
-      let approvedAdsQuery = supabase
+      // Main query to get dating ads
+      let adsQuery = supabase
         .from("dating_ads")
         .select(`
           *,
@@ -87,46 +93,63 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
         `)
         .eq("is_active", true);
       
-      // Only apply moderation filter for public ads
-      if (!skipModeration) {
-        approvedAdsQuery = approvedAdsQuery.eq("moderation_status", "approved");
+      // If fetching for a specific profile
+      if (userId) {
+        console.log("Fetching ads for specific user ID:", userId);
+        adsQuery = adsQuery.eq("user_id", userId);
+        // When viewing someone's profile, we should only see their approved ads
+        // unless it's our own profile
+        if (userId !== currentUserId) {
+          adsQuery = adsQuery.eq("moderation_status", "approved");
+        }
+      } else {
+        // For the main dating page
+        
+        // 1. If the user is neither verified nor premium, only show approved ads
+        if (!skipModeration) {
+          adsQuery = adsQuery.eq("moderation_status", "approved");
+        }
+        
+        // Only return verified profiles if requested
+        if (verifiedOnly) {
+          adsQuery = adsQuery.eq("profiles.id_verification_status", "verified");
+        }
+        
+        // Only return premium profiles if requested
+        if (premiumOnly) {
+          adsQuery = adsQuery.eq("profiles.is_paying_customer", true);
+        }
+        
+        // Apply any additional filters from filterOptions
+        if (filterOptions.country) {
+          adsQuery = adsQuery.eq("country", filterOptions.country);
+        }
+        
+        if (filterOptions.userType) {
+          adsQuery = adsQuery.eq("user_type", filterOptions.userType);
+        }
+        
+        if (filterOptions.minAge && filterOptions.maxAge) {
+          // Using PostgreSQL's range operators for age filtering
+          adsQuery = adsQuery.overlaps("age_range", `[${filterOptions.minAge},${filterOptions.maxAge}]`);
+        }
       }
       
-      // Only return verified profiles if requested
-      if (verifiedOnly) {
-        approvedAdsQuery = approvedAdsQuery.eq("profiles.id_verification_status", "verified");
+      // Execute the main query
+      const { data: fetchedAds, error: fetchError } = await adsQuery.order("created_at", { ascending: false });
+      
+      if (fetchError) {
+        console.error("Error fetching ads:", fetchError);
+        throw fetchError;
       }
       
-      // Only return premium profiles if requested
-      if (premiumOnly) {
-        approvedAdsQuery = approvedAdsQuery.eq("profiles.is_paying_customer", true);
-      }
+      console.log("Fetched ads:", fetchedAds?.length, fetchedAds);
       
-      // Apply any additional filters from filterOptions
-      if (filterOptions.country) {
-        approvedAdsQuery = approvedAdsQuery.eq("country", filterOptions.country);
-      }
+      let allAds = fetchedAds || [];
       
-      if (filterOptions.userType) {
-        approvedAdsQuery = approvedAdsQuery.eq("user_type", filterOptions.userType);
-      }
-      
-      if (filterOptions.minAge && filterOptions.maxAge) {
-        // Using PostgreSQL's range operators for age filtering
-        approvedAdsQuery = approvedAdsQuery.overlaps("age_range", `[${filterOptions.minAge},${filterOptions.maxAge}]`);
-      }
-      
-      // Get approved ads
-      const { data: approvedAds, error: approvedError } = await approvedAdsQuery.order("created_at", { ascending: false });
-      
-      if (approvedError) throw approvedError;
-      
-      console.log("Approved ads query result:", approvedAds);
-      
-      // 2. Second query: Get the user's own pending ads if they're logged in and option is enabled
-      let myPendingAds: RawDatingAd[] = [];
-      
-      if (includeMyPendingAds && currentUserId) {
+      // 2. If we're on the main page and the user is logged in, include their pending ads separately
+      if (includeMyPendingAds && currentUserId && !userId) {
+        console.log("Fetching user's pending ads");
         const { data: pendingAds, error: pendingError } = await supabase
           .from("dating_ads")
           .select(`
@@ -141,39 +164,13 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
           .eq("user_id", currentUserId)
           .order("created_at", { ascending: false });
           
-        if (!pendingError && pendingAds) {
-          myPendingAds = pendingAds as RawDatingAd[];
-          console.log("User's pending ads:", myPendingAds);
+        if (!pendingError && pendingAds && pendingAds.length > 0) {
+          console.log("User's pending ads:", pendingAds.length, pendingAds);
+          allAds = [...allAds, ...pendingAds];
         }
       }
       
-      // 3. If verified/premium users, get their own ads separately
-      let myAds: RawDatingAd[] = [];
-      
-      if (currentUserId && skipModeration) {
-        const { data: userAds, error: userAdsError } = await supabase
-          .from("dating_ads")
-          .select(`
-            *,
-            profiles!dating_ads_user_id_fkey(
-              is_paying_customer,
-              id_verification_status
-            )
-          `)
-          .eq("is_active", true)
-          .eq("user_id", currentUserId)
-          .order("created_at", { ascending: false });
-          
-        if (!userAdsError && userAds) {
-          myAds = userAds as RawDatingAd[];
-          console.log("User's own ads:", myAds);
-        }
-      }
-      
-      // Combine all results
-      const allAds = [...(approvedAds || []), ...myPendingAds, ...myAds];
-      
-      // Remove duplicates (user's own ads might be in both approved and myAds)
+      // Remove duplicates (when merging results)
       const uniqueAds = Array.from(new Map(allAds.map(ad => [ad.id, ad])).values());
       
       console.log("Total unique ads to display:", uniqueAds.length);

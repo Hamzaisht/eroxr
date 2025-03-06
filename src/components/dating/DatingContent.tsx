@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Clock, AlertCircle, TrendingUp, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState } from "react";
 
 interface DatingContentProps {
   ads: DatingAd[] | undefined;
@@ -21,10 +22,30 @@ export const DatingContent = ({
 }: DatingContentProps) => {
   const session = useSession();
   const currentUserId = session?.user?.id;
+  const [hasAds, setHasAds] = useState(false);
+  
+  useEffect(() => {
+    // Log to help debugging
+    console.log("DatingContent - Ads received:", ads?.length);
+    console.log("DatingContent - User ID:", currentUserId);
+    
+    if (ads && ads.length > 0) {
+      setHasAds(true);
+      console.log("DatingContent - Has ads:", true);
+    } else {
+      setHasAds(false);
+      console.log("DatingContent - Has ads:", false);
+    }
+  }, [ads, currentUserId]);
   
   // Check if the user has any pending ads
   const hasPendingAds = ads?.some(ad => 
     ad.moderation_status === 'pending' && ad.user_id === currentUserId
+  );
+
+  // Check if the user has any approved ads
+  const hasApprovedAds = ads?.some(ad => 
+    ad.moderation_status === 'approved' && ad.user_id === currentUserId
   );
 
   // Filter most viewed ads (top 5)
@@ -58,6 +79,10 @@ export const DatingContent = ({
     ad.moderation_status === 'approved' || ad.user_id === currentUserId
   );
 
+  console.log("All ads count:", allAds?.length);
+  console.log("Pending ads for current user:", hasPendingAds);
+  console.log("Approved ads for current user:", hasApprovedAds);
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
@@ -76,7 +101,17 @@ export const DatingContent = ({
         </Alert>
       )}
       
-      {ads && ads.length > 0 ? (
+      {!hasPendingAds && hasApprovedAds && (
+        <Alert className="bg-green-50 border-green-300">
+          <AlertCircle className="h-4 w-4 text-green-600" />
+          <AlertTitle className="text-green-800">Your ad is live!</AlertTitle>
+          <AlertDescription className="text-green-700">
+            Your body contact ad has been approved and is now visible to all users.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {hasAds ? (
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid grid-cols-3 mb-6">
             <TabsTrigger value="all" className="flex items-center gap-2">
@@ -93,7 +128,17 @@ export const DatingContent = ({
           </TabsList>
           
           <TabsContent value="all" className="space-y-4">
-            <VideoProfileCarousel ads={allAds || []} />
+            {allAds && allAds.length > 0 ? (
+              <VideoProfileCarousel ads={allAds} />
+            ) : (
+              <div className="flex flex-col items-center justify-center p-8 text-center bg-black/20 rounded-xl">
+                <AlertCircle className="h-12 w-12 text-luxury-primary/40 mb-4" />
+                <h3 className="text-xl font-bold text-luxury-primary mb-2">No Ads Available</h3>
+                <p className="text-luxury-neutral/60 max-w-md">
+                  No body contact ads match your current filters. Adjust your filters or create your own ad.
+                </p>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="trending" className="space-y-4">
