@@ -102,17 +102,17 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
           // Get message counts from direct_messages table
           // This will count how many messages were sent regarding each ad
           try {
-            // Instead of using the group method directly, we'll use a custom SQL query
-            const { data: messageCounts, error: msgError } = await supabase
+            // Use a simple select and filter approach instead of count(*)
+            const { data: messages, error: msgError } = await supabase
               .from('direct_messages')
-              .select('content, recipient_id, count(*)')
+              .select('content, recipient_id')
               .contains('content', { ad_id: adIds })
               .eq('message_type', 'ad_message');
             
-            if (!msgError && messageCounts) {
+            if (!msgError && messages) {
               // Process message counts and associate with ads
               allAds = allAds.map(ad => {
-                const adMessages = messageCounts.filter(msg => {
+                const adMessages = messages.filter(msg => {
                   try {
                     const content = JSON.parse(msg.content || '{}');
                     return content.ad_id === ad.id;
