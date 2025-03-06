@@ -1,7 +1,8 @@
 
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
+import { Upload, CheckCircle2 } from "lucide-react";
 
 interface VideoUploadProps {
   videoFile: File | null;
@@ -9,20 +10,32 @@ interface VideoUploadProps {
 }
 
 export const VideoUpload = ({ videoFile, onUpdateVideoFile }: VideoUploadProps) => {
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    setUploadError(null);
+    
     if (file) {
       if (file.size > 50 * 1024 * 1024) { // 50MB limit
-        console.error("File too large");
+        setUploadError("File too large. Maximum size is 50MB.");
         return;
       }
+      
+      // Check file type
+      if (!file.type.startsWith('video/')) {
+        setUploadError("Please upload a valid video file.");
+        return;
+      }
+      
+      console.log("Video selected:", file.name, file.size, file.type);
       onUpdateVideoFile(file);
     }
   };
 
   return (
     <div className="space-y-2">
-      <Label>Video Profile</Label>
+      <Label>Video Profile <span className="text-red-500">*</span></Label>
       <div className="flex items-center gap-2">
         <Input
           type="file"
@@ -39,13 +52,20 @@ export const VideoUpload = ({ videoFile, onUpdateVideoFile }: VideoUploadProps) 
           {videoFile ? 'Change Video' : 'Upload Video'}
         </Label>
         {videoFile && (
-          <span className="text-sm text-muted-foreground">
-            {videoFile.name}
-          </span>
+          <div className="flex items-center text-sm text-muted-foreground">
+            <CheckCircle2 className="h-4 w-4 text-green-500 mr-1" />
+            <span className="truncate max-w-[200px]">{videoFile.name}</span>
+            <span className="ml-2 text-xs">
+              ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
+            </span>
+          </div>
         )}
       </div>
+      {uploadError && (
+        <p className="text-sm text-red-500">{uploadError}</p>
+      )}
       <p className="text-sm text-muted-foreground">
-        Maximum size: 50MB. Recommended length: 30-60 seconds.
+        <span className="text-red-500">Required.</span> Maximum size: 50MB. Recommended length: 30-60 seconds.
       </p>
     </div>
   );

@@ -7,6 +7,7 @@ import { VideoUpload } from "./components/VideoUpload";
 import { BasicInfoFields } from "./components/BasicInfoFields";
 import { LocationAgeFields } from "./components/LocationAgeFields";
 import { TagsField } from "./components/TagsField";
+import { FormSubmitError } from "./components/FormSubmitError";
 import { BodyContactFormProps, AdFormValues } from "./types";
 
 export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFormProps) => {
@@ -22,11 +23,14 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
     videoFile: null,
     avatarFile: null,
   });
-
+  
   const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const updateField = (field: keyof AdFormValues, value: any) => {
     setValues((prev) => ({ ...prev, [field]: value }));
+    // Clear previous errors when form is updated
+    setSubmitError(null);
   };
 
   const handleAvatarChange = (file: File | null, preview: string) => {
@@ -34,8 +38,38 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
     setAvatarPreview(preview);
   };
 
-  const handleSubmit = () => {
-    onSubmit(values);
+  const handleSubmit = async () => {
+    try {
+      // Validate required fields client-side before submitting
+      if (!values.title) {
+        setSubmitError("Title is required");
+        return;
+      }
+      
+      if (!values.description) {
+        setSubmitError("Description is required");
+        return;
+      }
+      
+      if (!values.location) {
+        setSubmitError("Location is required");
+        return;
+      }
+      
+      if (!values.videoFile) {
+        setSubmitError("Video profile is required");
+        return;
+      }
+      
+      // Clear any previous errors
+      setSubmitError(null);
+      
+      // Submit the form
+      await onSubmit(values);
+    } catch (error) {
+      console.error("Form submission error:", error);
+      setSubmitError(error.message || "An unexpected error occurred");
+    }
   };
 
   return (
@@ -72,6 +106,8 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
         videoFile={values.videoFile}
         onUpdateVideoFile={(value) => updateField('videoFile', value)}
       />
+
+      {submitError && <FormSubmitError error={submitError} />}
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={onCancel}>
