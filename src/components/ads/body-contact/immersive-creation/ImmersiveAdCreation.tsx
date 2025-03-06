@@ -1,5 +1,6 @@
 
 import { useSession } from "@supabase/auth-helpers-react";
+import { motion } from "framer-motion";
 import { useBodyContactAccess } from "../hooks/useBodyContactAccess";
 import { useBodyContactSubmit } from "../hooks/useBodyContactSubmit";
 import { AdFormValues } from "../types";
