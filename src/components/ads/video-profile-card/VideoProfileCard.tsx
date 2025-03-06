@@ -1,10 +1,11 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { DatingAd } from '../types/dating';
 import { VideoContent } from './VideoContent';
 import { ProfileBadges } from './ProfileBadges';
 import { ProfileInfo } from './ProfileInfo';
+import { AdActions } from './AdActions';
 
 interface VideoProfileCardProps {
   ad: DatingAd;
@@ -23,7 +24,7 @@ export const VideoProfileCard = ({
 
   return (
     <motion.div 
-      className="w-full max-w-4xl rounded-xl overflow-hidden relative glass-card"
+      className="w-full max-w-4xl rounded-xl overflow-hidden relative glass-card group"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -37,6 +38,9 @@ export const VideoProfileCard = ({
       
       {/* Premium Badge */}
       <ProfileBadges ad={ad} />
+      
+      {/* Edit/Delete Actions */}
+      <AdActions ad={ad} />
       
       {/* Video Content */}
       <VideoContent 
