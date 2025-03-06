@@ -133,6 +133,11 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSu
         throw new Error("Please fill all required fields");
       }
 
+      // Check if Looking For is selected
+      if (!values.lookingFor || values.lookingFor.length === 0) {
+        throw new Error("Please select at least one 'Looking For' option");
+      }
+
       if (!videoUrl) {
         throw new Error("Video is required. Please upload a video.");
       }
@@ -140,6 +145,7 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSu
       // Prepare the age range
       const ageRangeStr = `[${values.ageRange.lower},${values.ageRange.upper}]`;
       console.log("Age range:", ageRangeStr);
+      console.log("Looking for:", values.lookingFor);
 
       // Create the ad data object
       const adData = {

@@ -7,6 +7,7 @@ import { VideoUpload } from "./components/VideoUpload";
 import { BasicInfoFields } from "./components/BasicInfoFields";
 import { LocationAgeFields } from "./components/LocationAgeFields";
 import { TagsField } from "./components/TagsField";
+import { LookingForField } from "./components/LookingForField";
 import { FormSubmitError } from "./components/FormSubmitError";
 import { BodyContactFormProps, AdFormValues } from "./types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -94,6 +95,11 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
         onUpdateDescription={(value) => updateField('description', value)}
         onUpdateRelationshipStatus={(value) => updateField('relationshipStatus', value)}
         onUpdateBodyType={(value) => updateField('bodyType', value)}
+      />
+
+      <LookingForField
+        lookingFor={values.lookingFor}
+        onUpdateLookingFor={(value) => updateField('lookingFor', value)}
       />
 
       <LocationAgeFields
