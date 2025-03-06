@@ -25,7 +25,7 @@ const searchCategories: SearchCategory[] = [
 const countries: NordicCountry[] = ["denmark", "finland", "iceland", "norway", "sweden"];
 
 // Define the type for raw data from Supabase
-type RawDatingAd = Omit<DatingAd, 'age_range' | 'preferred_age_range'> & {
+type RawDatingAd = Omit<DatingAd, 'age_range'> & {
   age_range: string;
   preferred_age_range?: string;
 };
@@ -51,10 +51,10 @@ export const PromotedAds = () => {
       if (selectedSeeker && selectedLookingFor) {
         query = query.contains("looking_for", [selectedLookingFor]);
       }
-      if (filterOptions.bodyType?.length) {
+      if (filterOptions.bodyType && Array.isArray(filterOptions.bodyType) && filterOptions.bodyType.length > 0) {
         query = query.in("body_type", filterOptions.bodyType);
       }
-      if (filterOptions.educationLevel?.length) {
+      if (filterOptions.educationLevel && Array.isArray(filterOptions.educationLevel) && filterOptions.educationLevel.length > 0) {
         query = query.in("education_level", filterOptions.educationLevel);
       }
       if (filterOptions.minAge || filterOptions.maxAge) {
@@ -101,20 +101,30 @@ export const PromotedAds = () => {
       if (error) throw error;
 
       // Transform the data to match the DatingAd type
-      return (data as RawDatingAd[] || []).map((ad) => ({
-        ...ad,
-        age_range: {
-          lower: parseInt(ad.age_range.replace(/[\[\]\(\)]/g, '').split(',')[0]),
-          upper: parseInt(ad.age_range.replace(/[\[\]\(\)]/g, '').split(',')[1])
-        },
-        preferred_age_range: ad.preferred_age_range ? {
-          lower: parseInt(ad.preferred_age_range.replace(/[\[\]\(\)]/g, '').split(',')[0]),
-          upper: parseInt(ad.preferred_age_range.replace(/[\[\]\(\)]/g, '').split(',')[1])
-        } : undefined,
-        // Add demo premium and verified status for some ads
-        is_premium: Math.random() > 0.7,
-        is_verified: Math.random() > 0.5
-      })) as DatingAd[];
+      return (data as RawDatingAd[] || []).map((ad) => {
+        const parsedAge = typeof ad.age_range === 'string' 
+          ? { 
+              lower: parseInt(ad.age_range.replace(/[\[\]\(\)]/g, '').split(',')[0]),
+              upper: parseInt(ad.age_range.replace(/[\[\]\(\)]/g, '').split(',')[1])
+            }
+          : ad.age_range;
+          
+        const parsedPreferredAge = ad.preferred_age_range && typeof ad.preferred_age_range === 'string' 
+          ? { 
+              lower: parseInt(ad.preferred_age_range.replace(/[\[\]\(\)]/g, '').split(',')[0]),
+              upper: parseInt(ad.preferred_age_range.replace(/[\[\]\(\)]/g, '').split(',')[1])
+            }
+          : ad.preferred_age_range;
+          
+        return {
+          ...ad,
+          age_range: parsedAge,
+          preferred_age_range: parsedPreferredAge,
+          // Add demo premium and verified status for some ads
+          is_premium: ad.is_premium || Math.random() > 0.7,
+          is_verified: ad.is_verified || Math.random() > 0.5
+        } as unknown as DatingAd;
+      });
     },
   });
 

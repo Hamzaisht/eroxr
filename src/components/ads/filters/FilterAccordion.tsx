@@ -1,7 +1,7 @@
+
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { type FilterOptions } from "../types/dating";
 
@@ -75,11 +75,11 @@ export const FilterAccordion = ({
             <div key={type} className="flex items-center space-x-2">
               <Checkbox
                 id={type}
-                checked={filterOptions.bodyType?.includes(type)}
+                checked={Array.isArray(filterOptions.bodyType) && filterOptions.bodyType.includes(type)}
                 onCheckedChange={(checked) => {
                   const newTypes = checked
-                    ? [...(filterOptions.bodyType || []), type]
-                    : filterOptions.bodyType?.filter((t) => t !== type) || [];
+                    ? [...(Array.isArray(filterOptions.bodyType) ? filterOptions.bodyType : []), type]
+                    : Array.isArray(filterOptions.bodyType) ? filterOptions.bodyType.filter((t) => t !== type) : [];
                   setFilterOptions({ ...filterOptions, bodyType: newTypes });
                 }}
                 className="border-luxury-primary/50 data-[state=checked]:bg-luxury-primary data-[state=checked]:border-luxury-primary"
@@ -102,7 +102,7 @@ export const FilterAccordion = ({
           <div className="flex items-center space-x-2">
             <Checkbox
               id="verified"
-              checked={filterOptions.isVerified}
+              checked={filterOptions.isVerified || false}
               onCheckedChange={(checked) => 
                 setFilterOptions({ ...filterOptions, isVerified: !!checked })
               }
@@ -115,7 +115,7 @@ export const FilterAccordion = ({
           <div className="flex items-center space-x-2">
             <Checkbox
               id="premium"
-              checked={filterOptions.isPremium}
+              checked={filterOptions.isPremium || false}
               onCheckedChange={(checked) => 
                 setFilterOptions({ ...filterOptions, isPremium: !!checked })
               }

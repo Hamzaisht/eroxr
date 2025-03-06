@@ -11,6 +11,11 @@ interface UseAdsQueryOptions {
   filterOptions?: any;
 }
 
+// Define the type for raw data from Supabase
+type RawDatingAd = Omit<DatingAd, 'age_range'> & {
+  age_range: string;
+};
+
 export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
   const { verifiedOnly = true, premiumOnly = false, filterOptions = {} } = options;
   const queryClient = useQueryClient();
@@ -92,12 +97,25 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
 
       if (error) throw error;
       
-      // Transform data to match DatingAd type
-      return data.map(ad => ({
-        ...ad,
-        isUserVerified: ad.profiles?.id_verification_status === 'verified',
-        isUserPremium: ad.profiles?.is_paying_customer === true
-      })) as DatingAd[];
+      // Transform data to match DatingAd type with proper age_range conversion
+      return (data as RawDatingAd[] || []).map(ad => {
+        // Parse age_range from string to object if necessary
+        const ageRange = typeof ad.age_range === 'string' 
+          ? { 
+              lower: parseInt(ad.age_range.replace(/[\[\]\(\)]/g, '').split(',')[0]),
+              upper: parseInt(ad.age_range.replace(/[\[\]\(\)]/g, '').split(',')[1])
+            }
+          : ad.age_range;
+        
+        return {
+          ...ad,
+          age_range: ageRange,
+          isUserVerified: ad.profiles?.id_verification_status === 'verified',
+          isUserPremium: ad.profiles?.is_paying_customer === true,
+          is_verified: ad.profiles?.id_verification_status === 'verified',
+          is_premium: ad.profiles?.is_paying_customer === true
+        } as DatingAd;
+      });
     },
     staleTime: 0,
   });

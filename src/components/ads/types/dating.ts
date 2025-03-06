@@ -1,3 +1,4 @@
+
 export interface Ad {
   id: string;
   title: string;
@@ -21,7 +22,7 @@ export interface DatingAd {
   created_at: string;
   city: string;
   country: string;
-  age_range: string;
+  age_range: { lower: number; upper: number };
   relationship_status: string;
   looking_for: string[];
   tags: string[];
@@ -30,10 +31,30 @@ export interface DatingAd {
     username: string;
     avatar_url: string;
   };
+  // Additional properties used in components
+  view_count?: number;
+  message_count?: number;
+  click_count?: number;
+  is_active?: boolean;
+  is_premium?: boolean;
+  is_verified?: boolean;
+  avatar_url?: string;
+  body_type?: string;
+  education_level?: string;
+  interests?: string[];
+  profile_completion_score?: number;
+  last_active?: string;
+  preferred_age_range?: { lower: number; upper: number };
 }
 
 export interface FilterOptions {
-  [key: string]: string | string[];
+  minAge?: number;
+  maxAge?: number;
+  bodyType?: string[];
+  isVerified?: boolean;
+  isPremium?: boolean;
+  maxDistance?: number;
+  [key: string]: string | string[] | number | boolean | undefined;
 }
 
 export interface SearchCategory {
