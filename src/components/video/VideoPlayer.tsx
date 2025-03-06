@@ -1,6 +1,7 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -9,18 +10,22 @@ interface VideoPlayerProps {
   poster?: string;
   className?: string;
   onError?: () => void;
+  autoPlay?: boolean;
 }
 
 export const VideoPlayer = ({ 
   url, 
   poster, 
   className,
-  onError 
+  onError,
+  autoPlay = false
 }: VideoPlayerProps) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,6 +35,9 @@ export const VideoPlayer = ({
     const handleLoadedData = () => {
       setIsLoaded(true);
       console.log("Video loaded successfully:", url);
+      if (autoPlay) {
+        video.play().catch(e => console.error("Autoplay failed:", e));
+      }
     };
 
     const handleError = (e: Event) => {
@@ -46,7 +54,7 @@ export const VideoPlayer = ({
     video.addEventListener("error", handleError);
 
     // Reset video state when URL changes
-    setIsPlaying(false);
+    setIsPlaying(autoPlay);
     setIsLoaded(false);
     video.load();
 
@@ -54,7 +62,7 @@ export const VideoPlayer = ({
       video.removeEventListener("loadeddata", handleLoadedData);
       video.removeEventListener("error", handleError);
     };
-  }, [url, onError, toast]);
+  }, [url, onError, toast, autoPlay]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -80,11 +88,45 @@ export const VideoPlayer = ({
     setIsMuted(!isMuted);
   };
 
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(err => {
+        toast({
+          title: "Fullscreen Error",
+          description: `Error attempting to enable fullscreen: ${err.message}`,
+          variant: "destructive",
+        });
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  // Handle fullscreen change event
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   return (
-    <div className={cn(
-      "relative group aspect-video w-full overflow-hidden rounded-lg bg-luxury-darker/50",
-      className
-    )}>
+    <div 
+      ref={containerRef}
+      className={cn(
+        "relative group aspect-video w-full overflow-hidden rounded-lg bg-luxury-darker/50",
+        className
+      )}
+    >
       <video
         ref={videoRef}
         src={url}
@@ -92,9 +134,10 @@ export const VideoPlayer = ({
         muted={isMuted}
         playsInline
         loop
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        onClick={togglePlay}
       />
       
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -123,6 +166,15 @@ export const VideoPlayer = ({
             ) : (
               <Volume2 className="h-4 w-4 text-white" />
             )}
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
+            onClick={toggleFullscreen}
+          >
+            <Maximize className="h-4 w-4 text-white" />
           </Button>
         </div>
       </div>

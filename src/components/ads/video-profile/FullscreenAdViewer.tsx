@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { X, MessageCircle, Eye, Heart, Map, Clock, Calendar } from 'lucide-react';
+import { X, MessageCircle, Eye, Map, Clock, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -112,7 +112,8 @@ export const FullscreenAdViewer = ({ ad, onClose }: FullscreenAdViewerProps) => 
               {ad.video_url ? (
                 <VideoPlayer 
                   url={ad.video_url} 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain bg-black"
+                  autoPlay
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-luxury-darker/50">
@@ -132,6 +133,14 @@ export const FullscreenAdViewer = ({ ad, onClose }: FullscreenAdViewerProps) => 
                   <span>{replyCount} replies</span>
                 </div>
               </div>
+              
+              <Button 
+                onClick={handleMessageClick}
+                className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Message
+              </Button>
             </div>
           </div>
           
