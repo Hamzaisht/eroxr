@@ -512,6 +512,7 @@ export type Database = {
           longitude: number | null
           looking_for: string[]
           message_count: number | null
+          moderation_status: string | null
           occupation: string | null
           preferred_age_range: unknown | null
           profile_completion_score: number | null
@@ -549,6 +550,7 @@ export type Database = {
           longitude?: number | null
           looking_for: string[]
           message_count?: number | null
+          moderation_status?: string | null
           occupation?: string | null
           preferred_age_range?: unknown | null
           profile_completion_score?: number | null
@@ -586,6 +588,7 @@ export type Database = {
           longitude?: number | null
           looking_for?: string[]
           message_count?: number | null
+          moderation_status?: string | null
           occupation?: string | null
           preferred_age_range?: unknown | null
           profile_completion_score?: number | null

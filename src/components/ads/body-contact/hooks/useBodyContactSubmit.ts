@@ -213,19 +213,25 @@ export const useBodyContactSubmit = ({
       if (insertedAd) {
         console.log("Ad created with ID:", insertedAd.id);
         
-        const { error: trackingError } = await supabase
-          .from("dating_ad_media")
-          .insert({
+        if (videoUrl || avatarUrl) {
+          const mediaData = {
             user_id: session.user.id,
             ad_id: insertedAd.id,
             video_url: videoUrl,
             avatar_url: avatarUrl,
             created_at: new Date().toISOString()
-          });
+          };
+          
+          console.log("Recording media data:", mediaData);
+          
+          const { error: mediaError } = await supabase
+            .from("dating_ad_media")
+            .insert(mediaData);
 
-        if (trackingError) {
-          console.error("Media tracking error:", trackingError);
-          // Don't throw, just log - we've already created the ad
+          if (mediaError) {
+            console.error("Media recording error:", mediaError);
+            // Log but don't throw - we've already created the ad
+          }
         }
       }
 
