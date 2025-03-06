@@ -1,10 +1,10 @@
+
 import { motion } from "framer-motion";
 import { DatingAd } from "@/components/ads/types/dating";
 import { VideoProfileCarousel } from "@/components/ads/video-profile-carousel";
 import { EmptyProfilesState } from "./EmptyProfilesState";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Clock, AlertCircle, TrendingUp, Eye } from "lucide-react";
+import { TrendingUp, AlertCircle, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
 
@@ -36,23 +36,13 @@ export const DatingContent = ({
       console.log("DatingContent - Has ads:", false);
     }
   }, [ads, currentUserId]);
-  
-  // Check if the user has any pending ads - keeping for debugging but not showing UI alert
-  const hasPendingAds = ads?.some(ad => 
-    ad.moderation_status === 'pending' && ad.user_id === currentUserId
-  );
 
-  // Check if the user has any approved ads - keeping for debugging but not showing UI alert
-  const hasApprovedAds = ads?.some(ad => 
-    ad.moderation_status === 'approved' && ad.user_id === currentUserId
-  );
-
-  // Filter most viewed ads (top 5) - show regardless of moderation status
+  // Filter most viewed ads (top 5)
   const mostViewedAds = ads
     ?.sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
     ?.slice(0, 5);
 
-  // Filter trending ads (based on recency and views) - show regardless of moderation status
+  // Filter trending ads (based on recency and views)
   const trendingAds = ads
     ?.sort((a, b) => {
       // Custom scoring: 0.7 * recency + 0.3 * views
@@ -71,12 +61,10 @@ export const DatingContent = ({
     })
     ?.slice(0, 5);
 
-  // All ads for "All Ads" tab - show regardless of moderation status
+  // All ads for "All Ads" tab
   const allAds = ads;
 
   console.log("All ads count:", allAds?.length);
-  console.log("Pending ads for current user:", hasPendingAds);
-  console.log("Approved ads for current user:", hasApprovedAds);
 
   return (
     <motion.div 
@@ -85,8 +73,6 @@ export const DatingContent = ({
       transition={{ duration: 0.5, delay: 0.4 }}
       className="flex-1 space-y-6"
     >
-      {/* Removed approval/pending notification alerts as requested */}
-      
       {hasAds ? (
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid grid-cols-3 mb-6">

@@ -19,13 +19,22 @@ export const transformRawAds = (rawAds: RawDatingAd[]): DatingAd[] => {
         }
       : ad.age_range;
     
+    // Create a minimal user object since we don't have profiles data
+    const user = {
+      id: ad.user_id,
+      username: "User", // Fallback username
+      avatar_url: ad.avatar_url || null
+    };
+    
     return {
       ...ad,
       age_range: ageRange,
-      isUserVerified: ad.profiles?.id_verification_status === 'verified',
-      isUserPremium: ad.profiles?.is_paying_customer === true,
-      is_verified: ad.profiles?.id_verification_status === 'verified',
-      is_premium: ad.profiles?.is_paying_customer === true
+      user: user,
+      // Set default verified/premium status
+      is_verified: false,
+      is_premium: false,
+      // Set moderation status to approved by default
+      moderation_status: 'approved'
     } as DatingAd;
   });
 };

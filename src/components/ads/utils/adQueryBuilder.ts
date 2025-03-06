@@ -14,42 +14,20 @@ export const buildAdsQuery = (
     verifiedOnly, 
     premiumOnly, 
     filterOptions, 
-    skipModeration, 
     userId 
   } = options;
 
   // Main query to get dating ads
   let adsQuery = supabase
     .from("dating_ads")
-    .select(`
-      *,
-      profiles!dating_ads_user_id_fkey(
-        is_paying_customer,
-        id_verification_status
-      )
-    `)
-    .eq("is_active", true);
+    .select("*");
   
   // If fetching for a specific profile
   if (userId) {
     console.log("Fetching ads for specific user ID:", userId);
     adsQuery = adsQuery.eq("user_id", userId);
-    // When viewing someone's profile, we should see all their ads
-    // No longer filtering by moderation status
   } else {
     // For the main dating page
-    
-    // No longer filtering by moderation status to show all ads
-    
-    // Only return verified profiles if requested
-    if (verifiedOnly) {
-      adsQuery = adsQuery.eq("profiles.id_verification_status", "verified");
-    }
-    
-    // Only return premium profiles if requested
-    if (premiumOnly) {
-      adsQuery = adsQuery.eq("profiles.is_paying_customer", true);
-    }
     
     // Apply any additional filters from filterOptions
     if (filterOptions?.country) {
@@ -80,15 +58,8 @@ export const fetchPendingUserAds = async (
 
   const { data: pendingAds, error: pendingError } = await supabase
     .from("dating_ads")
-    .select(`
-      *,
-      profiles!dating_ads_user_id_fkey(
-        is_paying_customer,
-        id_verification_status
-      )
-    `)
+    .select("*")
     .eq("is_active", true)
-    .eq("moderation_status", "pending")
     .eq("user_id", currentUserId)
     .order("created_at", { ascending: false });
     

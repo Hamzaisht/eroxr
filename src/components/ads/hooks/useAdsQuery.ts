@@ -14,7 +14,7 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
     premiumOnly = false, 
     filterOptions = {}, 
     includeMyPendingAds = true,
-    skipModeration = false,
+    skipModeration = true, // Always skip moderation checks
     userId = undefined
   } = options;
   
@@ -86,7 +86,10 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
         
         if (pendingAds && pendingAds.length > 0) {
           console.log("User's pending ads:", pendingAds.length, pendingAds);
-          allAds = [...allAds, ...pendingAds];
+          // Filter out duplicates
+          const pendingAdIds = new Set(pendingAds.map(ad => ad.id));
+          const filteredFetchedAds = allAds.filter(ad => !pendingAdIds.has(ad.id));
+          allAds = [...filteredFetchedAds, ...pendingAds];
         }
       }
       
