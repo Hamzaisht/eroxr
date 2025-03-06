@@ -45,7 +45,7 @@ export const PremiumAccessRequired = ({ accessResult }: PremiumAccessRequiredPro
             <Check className="h-5 w-5 text-green-500" />
           )}
           <span className={isNotVerified ? "text-red-500" : "text-green-500"}>
-            ID verification
+            ID or selfie verification
           </span>
         </div>
         

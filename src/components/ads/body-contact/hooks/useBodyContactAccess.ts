@@ -25,7 +25,7 @@ export const useBodyContactAccess = (): BodyContactAccessCheckResult => {
 
   // Super admin check (based on email)
   const superAdminEmails = ["hamzaishtiaq242@gmail.com"];
-  if (superAdminEmails.includes(session.user.email)) {
+  if (session.user.email && superAdminEmails.includes(session.user.email.toLowerCase())) {
     console.log("Super admin detected, granting full access to Body Contact features");
     result.canAccess = true;
     return result;
@@ -45,7 +45,7 @@ export const useBodyContactAccess = (): BodyContactAccessCheckResult => {
     return result;
   }
 
-  // ID verification required
+  // ID verification required - check for both id_verification or selfie verification
   if (userProfile.id_verification_status !== 'verified') {
     result.reasonCodes.push("NOT_VERIFIED");
     result.reasonMessages.push("ID verification or selfie verification required to access Body Contact");
