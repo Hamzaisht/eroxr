@@ -11,6 +11,7 @@ interface VideoPlayerProps {
   className?: string;
   onError?: () => void;
   autoPlay?: boolean;
+  playOnHover?: boolean;
 }
 
 export const VideoPlayer = ({ 
@@ -18,7 +19,8 @@ export const VideoPlayer = ({
   poster, 
   className,
   onError,
-  autoPlay = false
+  autoPlay = false,
+  playOnHover = false
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
@@ -118,6 +120,36 @@ export const VideoPlayer = ({
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
+
+  // Handle play on hover
+  useEffect(() => {
+    if (!playOnHover || !videoRef.current) return;
+    
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const handleMouseEnter = () => {
+      if (videoRef.current) {
+        videoRef.current.play().catch(e => console.error("Hover play failed:", e));
+        setIsPlaying(true);
+      }
+    };
+    
+    const handleMouseLeave = () => {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    };
+    
+    container.addEventListener('mouseenter', handleMouseEnter);
+    container.addEventListener('mouseleave', handleMouseLeave);
+    
+    return () => {
+      container.removeEventListener('mouseenter', handleMouseEnter);
+      container.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [playOnHover]);
 
   return (
     <div 
