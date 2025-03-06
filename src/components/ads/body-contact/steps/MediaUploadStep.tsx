@@ -1,14 +1,12 @@
-import { useState, useRef } from "react";
+
+import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Label } from "@/components/ui/label";
+import { Upload, X, AlertCircle, Check, Camera, Video as VideoIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AdFormValues } from "../types";
-import { Upload, Image as ImageIcon, Video, Check, AlertCircle, Play, Pause, X } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getVideoDuration } from "@/utils/videoProcessing";
 
 interface MediaUploadStepProps {
   values: AdFormValues;
@@ -16,24 +14,26 @@ interface MediaUploadStepProps {
 }
 
 export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps) => {
+  const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
+  const [isDraggingVideo, setIsDraggingVideo] = useState(false);
+  const [videoThumbnails, setVideoThumbnails] = useState<string[]>([]);
+  const [selectedThumbnail, setSelectedThumbnail] = useState(0);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string>("");
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [thumbnails, setThumbnails] = useState<string[]>([]);
-  const [selectedTab, setSelectedTab] = useState("video");
+  const [processingVideo, setProcessingVideo] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
   
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
-
+  
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
+      transition: {
         staggerChildren: 0.1
       }
     }
@@ -44,415 +44,439 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
     visible: { y: 0, opacity: 1 }
   };
 
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    setUploadError(null);
+  const handleAvatarDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingAvatar(true);
+  }, []);
+
+  const handleAvatarDragLeave = useCallback(() => {
+    setIsDraggingAvatar(false);
+  }, []);
+
+  const handleAvatarDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingAvatar(false);
     
-    if (file) {
-      setIsUploading(true);
-      
-      if (file.size > 50 * 1024 * 1024) { // 50MB limit
-        setUploadError("File too large. Maximum size is 50MB.");
-        setIsUploading(false);
-        return;
-      }
-      
-      // Check file type
-      if (!file.type.startsWith('video/')) {
-        setUploadError("Please upload a valid video file.");
-        setIsUploading(false);
-        return;
-      }
-      
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      handleAvatarFile(file);
+    }
+  }, []);
+
+  const handleAvatarFile = (file: File) => {
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file for your avatar",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Avatar image must be smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    onUpdateValues({ avatarFile: file });
+  };
+
+  const handleVideoDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingVideo(true);
+  }, []);
+
+  const handleVideoDragLeave = useCallback(() => {
+    setIsDraggingVideo(false);
+  }, []);
+
+  const handleVideoDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingVideo(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      handleVideoFile(file);
+    }
+  }, []);
+
+  const handleVideoFile = async (file: File) => {
+    // Reset states
+    setVideoError(null);
+    setVideoThumbnails([]);
+    setProcessingVideo(true);
+    setUploadProgress(0);
+    
+    // Check file type
+    if (!file.type.startsWith('video/')) {
+      setVideoError("Please upload a video file");
+      setProcessingVideo(false);
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a video file",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check file size (max 100MB)
+    if (file.size > 100 * 1024 * 1024) {
+      setVideoError("Video must be smaller than 100MB");
+      setProcessingVideo(false);
+      toast({
+        title: "File too large",
+        description: "Video must be smaller than 100MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
       // Simulate upload progress
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += Math.random() * 10;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          
-          setTimeout(() => {
-            setIsUploading(false);
-            onUpdateValues({ videoFile: file });
-            
-            // Generate fake thumbnails
-            generateThumbnails(file);
-          }, 500);
-        }
-        setUploadProgress(progress);
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(progressInterval);
+            return 95;
+          }
+          return prev + 5;
+        });
       }, 200);
-    }
-  };
-
-  const generateThumbnails = (file: File) => {
-    // This would typically be done server-side, but for the demo we'll just use the video file
-    // to create a fake video element and capture frames
-    const videoElement = document.createElement('video');
-    videoElement.preload = 'metadata';
-    
-    videoElement.onloadedmetadata = () => {
-      const duration = videoElement.duration;
       
-      // Generate 3 thumbnails at different points in the video
-      const thumbnailTimes = [
-        duration * 0.25, 
-        duration * 0.5, 
-        duration * 0.75
-      ];
+      // Check video duration
+      const duration = await getVideoDuration(file);
+      setVideoDuration(duration);
       
-      // For demo purposes, we'll just use the same preview 3 times since we can't actually
-      // generate real thumbnails on the client
-      const fakeUrl = URL.createObjectURL(file);
-      setThumbnails([fakeUrl, fakeUrl, fakeUrl]);
-    };
-    
-    videoElement.src = URL.createObjectURL(file);
-  };
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setUploadError("Avatar file too large. Maximum size is 5MB.");
+      if (duration > 120) { // 2 minutes
+        setVideoError("Video must be shorter than 2 minutes");
+        setProcessingVideo(false);
+        clearInterval(progressInterval);
+        toast({
+          title: "Video too long",
+          description: "Video must be shorter than 2 minutes",
+          variant: "destructive",
+        });
         return;
       }
       
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-        onUpdateValues({ avatarFile: file });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const toggleVideoPlay = () => {
-    if (!videoRef.current) return;
-    
-    if (isVideoPlaying) {
-      videoRef.current.pause();
-    } else {
-      videoRef.current.play().catch(error => {
-        console.error('Video playback error:', error);
-        setUploadError("Unable to play video. Please try another file.");
+      // Generate thumbnails
+      const thumbnails = await generateThumbnails(file);
+      setVideoThumbnails(thumbnails);
+      
+      // Complete the upload
+      setUploadProgress(100);
+      clearInterval(progressInterval);
+      
+      onUpdateValues({ videoFile: file });
+      setProcessingVideo(false);
+      toast({
+        title: "Video uploaded",
+        description: "Your video has been successfully processed",
+      });
+    } catch (error) {
+      console.error("Error processing video:", error);
+      setVideoError(error.message || "Failed to process video");
+      setProcessingVideo(false);
+      toast({
+        title: "Error processing video",
+        description: error.message || "Failed to process video",
+        variant: "destructive",
       });
     }
-    
-    setIsVideoPlaying(!isVideoPlaying);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const generateThumbnails = async (videoFile: File): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const thumbnails: string[] = [];
+      
+      video.addEventListener('loadedmetadata', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // Generate 3 thumbnails at different points
+        const timePoints = [
+          video.duration * 0.25,
+          video.duration * 0.5,
+          video.duration * 0.75
+        ];
+        
+        let loaded = 0;
+        
+        timePoints.forEach((time) => {
+          video.currentTime = time;
+        });
+        
+        video.addEventListener('seeked', () => {
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            thumbnails.push(canvas.toDataURL('image/jpeg'));
+            loaded++;
+            
+            if (loaded === timePoints.length) {
+              resolve(thumbnails);
+            }
+          }
+        });
+      });
+      
+      video.addEventListener('error', (e) => {
+        reject(new Error('Error generating thumbnails: ' + e.message));
+      });
+      
+      video.src = URL.createObjectURL(videoFile);
+    });
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      if (selectedTab === "video") {
-        // Manually trigger file input change
-        if (fileInputRef.current) {
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(files[0]);
-          fileInputRef.current.files = dataTransfer.files;
-          
-          // Trigger change event
-          const event = new Event('change', { bubbles: true });
-          fileInputRef.current.dispatchEvent(event);
-        }
-      } else {
-        // Handle avatar drop
-        if (avatarInputRef.current) {
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(files[0]);
-          avatarInputRef.current.files = dataTransfer.files;
-          
-          // Trigger change event
-          const event = new Event('change', { bubbles: true });
-          avatarInputRef.current.dispatchEvent(event);
-        }
-      }
-    }
+  const selectThumbnail = (index: number) => {
+    setSelectedThumbnail(index);
+    // In a real implementation, we would save this selected thumbnail
   };
 
   return (
-    <motion.div 
+    <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
       className="space-y-8"
     >
-      <Tabs defaultValue="video" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <motion.div variants={itemVariants}>
-          <TabsList className="w-full grid grid-cols-2 bg-black/30 border border-luxury-primary/10">
-            <TabsTrigger 
-              value="video" 
-              className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary"
-            >
-              <Video className="mr-2 h-4 w-4" />
-              Video Upload
-            </TabsTrigger>
-            <TabsTrigger 
-              value="avatar"
-              className="data-[state=active]:bg-luxury-primary/20 data-[state=active]:text-luxury-primary"
-            >
-              <ImageIcon className="mr-2 h-4 w-4" />
-              Profile Photo
-            </TabsTrigger>
-          </TabsList>
-        </motion.div>
-
-        <TabsContent value="video" className="mt-6">
-          <motion.div 
-            variants={itemVariants}
-            className="space-y-4"
-          >
-            <Label className="text-luxury-neutral text-md font-medium">Video Profile <span className="text-red-500">*</span></Label>
-            
-            {/* Video upload area */}
-            <div 
-              className={`relative border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-8 transition-all duration-300
-                ${values.videoFile ? 'border-luxury-primary/40 bg-luxury-primary/5' : 'border-muted-foreground/30 hover:border-luxury-primary/30'}
-                ${isUploading ? 'bg-luxury-primary/5' : ''}`}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/*"
-                onChange={handleVideoChange}
-                className="hidden"
-                id="video-upload"
-                disabled={isUploading}
-              />
-
-              {!values.videoFile && !isUploading && (
-                <motion.div variants={itemVariants} className="text-center">
-                  <Video className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Upload Your Video</h3>
-                  <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                    Drag and drop your video here, or click to browse. Maximum size: 50MB. Recommended length: 30-60 seconds.
-                  </p>
-                  <Label
-                    htmlFor="video-upload"
-                    className="inline-flex items-center gap-2 cursor-pointer bg-luxury-primary/10 hover:bg-luxury-primary/20 
-                      text-luxury-primary px-4 py-2 rounded-md transition-all duration-300"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Upload Video
-                  </Label>
-                </motion.div>
-              )}
-
-              {isUploading && (
-                <motion.div 
-                  variants={itemVariants}
-                  className="w-full max-w-md text-center"
-                >
-                  <div className="relative mb-4">
-                    <svg className="w-20 h-20 mx-auto animate-spin text-muted-foreground/50" viewBox="0 0 100 100">
-                      <circle
-                        className="opacity-25"
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <circle
-                        className="opacity-75"
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        fill="none"
-                        style={{
-                          strokeDasharray: 283,
-                          strokeDashoffset: 283 - (uploadProgress / 100) * 283,
-                          stroke: 'var(--color-primary)',
-                        }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-lg font-medium">{Math.round(uploadProgress)}%</span>
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">Uploading Video...</h3>
-                  <p className="text-sm text-muted-foreground">Please wait while we process your video.</p>
-                </motion.div>
-              )}
-
-              {values.videoFile && !isUploading && (
-                <motion.div variants={itemVariants} className="w-full">
-                  <div className="relative aspect-video rounded-lg overflow-hidden mb-4 max-w-2xl mx-auto">
-                    <video
-                      ref={videoRef}
-                      src={values.videoFile ? URL.createObjectURL(values.videoFile) : undefined}
-                      className="w-full h-full object-cover"
-                      onPlay={() => setIsVideoPlaying(true)}
-                      onPause={() => setIsVideoPlaying(false)}
-                      onEnded={() => setIsVideoPlaying(false)}
-                      loop
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-center justify-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-16 w-16 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50"
-                        onClick={toggleVideoPlay}
-                      >
-                        {isVideoPlaying ? (
-                          <Pause className="h-8 w-8 text-white" />
-                        ) : (
-                          <Play className="h-8 w-8 text-white" />
-                        )}
-                      </Button>
-                    </div>
-                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm text-white bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">
-                        <Check className="h-4 w-4 text-green-400" />
-                        <span>
-                          {values.videoFile.name.length > 20 
-                            ? values.videoFile.name.substring(0, 20) + '...' 
-                            : values.videoFile.name} 
-                          ({(values.videoFile.size / (1024 * 1024)).toFixed(1)} MB)
-                        </span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm rounded-full px-3"
-                        onClick={() => {
-                          setIsVideoPlaying(false);
-                          onUpdateValues({ videoFile: null });
-                          if (videoRef.current) {
-                            videoRef.current.pause();
-                          }
-                        }}
-                      >
-                        Change Video
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Thumbnails selection - would be generated server-side in real implementation */}
-                  {thumbnails.length > 0 && (
-                    <motion.div 
-                      variants={itemVariants}
-                      className="mt-6 space-y-2"
-                    >
-                      <Label className="text-luxury-neutral">Select Thumbnail</Label>
-                      <div className="flex gap-3 justify-center">
-                        {thumbnails.map((thumb, index) => (
-                          <button
-                            key={index}
-                            className="relative aspect-video w-[160px] rounded-md overflow-hidden border-2 border-transparent 
-                              hover:border-luxury-primary transition-all duration-300 focus:outline-none"
-                            onClick={() => {
-                              // In a real implementation, this would select the thumbnail to use
-                              toast({
-                                title: "Thumbnail Selected",
-                                description: `Using thumbnail ${index + 1} for your video`,
-                              });
-                            }}
-                          >
-                            <img 
-                              src={thumb} 
-                              alt={`Thumbnail ${index + 1}`} 
-                              className="w-full h-full object-cover" 
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
-                              <Check className="h-6 w-6 text-white" />
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground text-center">
-                        Choose a thumbnail that best represents your video
-                      </p>
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
-            </div>
-            
-            {uploadError && (
-              <motion.div 
-                variants={itemVariants}
-                className="flex items-center text-sm text-red-500 mt-1"
-              >
-                <AlertCircle className="h-4 w-4 mr-2" />
-                {uploadError}
-              </motion.div>
+      <motion.div variants={itemVariants}>
+        <h3 className="text-xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent inline-block">
+          Media Upload
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Upload your profile video and photo. A video is required to create your ad.
+        </p>
+      </motion.div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Profile Avatar Upload */}
+        <motion.div variants={itemVariants} className="space-y-2">
+          <label className="text-sm font-medium">Profile Image</label>
+          <div
+            className={cn(
+              "border-2 border-dashed rounded-xl aspect-square flex flex-col items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden",
+              isDraggingAvatar ? "border-luxury-primary bg-luxury-primary/10" : "border-gray-600",
+              values.avatarFile ? "border-green-500 bg-black/40" : ""
             )}
-            
-            <motion.p variants={itemVariants} className="text-sm text-muted-foreground">
-              <span className="text-red-500">Required.</span> Maximum size: 50MB. Recommended length: 30-60 seconds.
-            </motion.p>
-          </motion.div>
-        </TabsContent>
-        
-        <TabsContent value="avatar" className="mt-6">
-          <motion.div 
-            variants={itemVariants}
-            className="space-y-4"
+            onDragOver={handleAvatarDragOver}
+            onDragLeave={handleAvatarDragLeave}
+            onDrop={handleAvatarDrop}
+            onClick={() => avatarInputRef.current?.click()}
           >
-            <Label className="text-luxury-neutral text-md font-medium">Profile Photo</Label>
-            
-            <div 
-              className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 transition-all duration-300
-                border-muted-foreground/30 hover:border-luxury-primary/30"
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              <div className="relative group">
-                <Avatar className="h-32 w-32 border-2 border-luxury-primary/30 shadow-[0_0_15px_rgba(155,135,245,0.3)]
-                  transition-all duration-500 group-hover:shadow-[0_0_25px_rgba(155,135,245,0.6)]">
-                  <AvatarImage src={avatarPreview} />
-                  <AvatarFallback>
-                    <User className="h-16 w-16 text-muted-foreground" />
-                  </AvatarFallback>
-                </Avatar>
-                <input
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  id="avatar-upload"
+            {values.avatarFile ? (
+              <div className="relative w-full h-full">
+                <img
+                  src={URL.createObjectURL(values.avatarFile)}
+                  alt="Avatar Preview"
+                  className="w-full h-full object-cover"
                 />
-              </div>
-              
-              <div className="mt-6 text-center">
-                <h3 className="text-lg font-medium mb-2">Upload Profile Picture</h3>
-                <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                  This will be displayed alongside your ad. Choose a clear, appealing image.
-                </p>
-                <Label
-                  htmlFor="avatar-upload"
-                  className="inline-flex items-center gap-2 cursor-pointer bg-luxury-primary/10 hover:bg-luxury-primary/20
-                    text-luxury-primary px-4 py-2 rounded-md transition-all duration-300"
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  className="absolute top-2 right-2 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateValues({ avatarFile: null });
+                  }}
                 >
-                  <ImageIcon className="h-4 w-4" />
-                  {values.avatarFile ? "Change Photo" : "Select Photo"}
-                </Label>
+                  <X size={16} />
+                </Button>
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                  <p className="text-sm font-medium text-white">
+                    {values.avatarFile.name}
+                  </p>
+                </div>
               </div>
-            </div>
-            
-            <motion.p variants={itemVariants} className="text-sm text-muted-foreground">
-              Maximum size: 5MB. Recommended format: JPG or PNG. Square images work best.
-            </motion.p>
-          </motion.div>
-        </TabsContent>
-      </Tabs>
+            ) : (
+              <>
+                <Camera size={40} className="mb-2 text-gray-400" />
+                <p className="text-sm text-center text-gray-400 px-4">
+                  Drag & drop your profile image or click to upload
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  JPG, PNG • Max 5MB
+                </p>
+              </>
+            )}
+          </div>
+          <input
+            type="file"
+            ref={avatarInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                handleAvatarFile(e.target.files[0]);
+              }
+            }}
+          />
+        </motion.div>
+        
+        {/* Video Upload */}
+        <motion.div variants={itemVariants} className="space-y-2">
+          <label className="text-sm font-medium flex justify-between items-center">
+            <span>Profile Video <span className="text-red-500">*</span></span>
+            {videoDuration !== null && (
+              <span className="text-xs text-gray-400">
+                Duration: {Math.floor(videoDuration)} seconds
+              </span>
+            )}
+          </label>
+          <div
+            className={cn(
+              "border-2 border-dashed rounded-xl aspect-square flex flex-col items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden relative",
+              isDraggingVideo ? "border-luxury-primary bg-luxury-primary/10" : "border-gray-600",
+              processingVideo ? "border-yellow-500" : "",
+              videoError ? "border-red-500" : "",
+              values.videoFile && !processingVideo && !videoError ? "border-green-500 bg-black/40" : ""
+            )}
+            onDragOver={handleVideoDragOver}
+            onDragLeave={handleVideoDragLeave}
+            onDrop={handleVideoDrop}
+            onClick={() => !processingVideo && videoInputRef.current?.click()}
+          >
+            {values.videoFile && !processingVideo && !videoError ? (
+              <div className="relative w-full h-full">
+                <video
+                  src={URL.createObjectURL(values.videoFile)}
+                  className="w-full h-full object-cover"
+                  controls
+                  ref={videoRef}
+                />
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  className="absolute top-2 right-2 rounded-full z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateValues({ videoFile: null });
+                    setVideoDuration(null);
+                    setVideoThumbnails([]);
+                  }}
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+            ) : processingVideo ? (
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="relative h-20 w-20">
+                  <svg className="h-20 w-20 animate-spin" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <circle
+                      className="opacity-75"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      strokeDasharray="32"
+                      strokeDashoffset="12"
+                      fill="none"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-medium">{uploadProgress}%</span>
+                  </div>
+                </div>
+                <p className="text-sm">Processing your video...</p>
+              </div>
+            ) : videoError ? (
+              <div className="flex flex-col items-center justify-center">
+                <AlertCircle size={40} className="text-red-500 mb-2" />
+                <p className="text-sm text-red-500 text-center px-4">{videoError}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setVideoError(null);
+                  }}
+                >
+                  Try Again
+                </Button>
+              </div>
+            ) : (
+              <>
+                <VideoIcon size={40} className="mb-2 text-gray-400" />
+                <p className="text-sm text-center text-gray-400 px-4">
+                  Drag & drop your video or click to upload
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  MP4, MOV • Max 100MB • Max 2 minutes
+                </p>
+              </>
+            )}
+          </div>
+          <input
+            type="file"
+            ref={videoInputRef}
+            className="hidden"
+            accept="video/*"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                handleVideoFile(e.target.files[0]);
+              }
+            }}
+          />
+        </motion.div>
+      </div>
+      
+      {/* Video Thumbnails */}
+      {videoThumbnails.length > 0 && (
+        <motion.div
+          variants={itemVariants}
+          className="space-y-2"
+        >
+          <label className="text-sm font-medium">Choose thumbnail (optional)</label>
+          <div className="grid grid-cols-3 gap-3">
+            {videoThumbnails.map((thumbnail, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "relative aspect-video rounded-lg overflow-hidden cursor-pointer transition-all duration-200",
+                  selectedThumbnail === index ? "ring-2 ring-luxury-primary scale-105" : "opacity-70 hover:opacity-100"
+                )}
+                onClick={() => selectThumbnail(index)}
+              >
+                <img src={thumbnail} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                {selectedThumbnail === index && (
+                  <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1">
+                    <Check size={12} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500">
+            This thumbnail will be shown before your video plays
+          </p>
+        </motion.div>
+      )}
+      
+      <motion.div variants={itemVariants} className="pt-4">
+        <p className="text-sm text-luxury-neutral flex items-center">
+          <Check size={16} className="mr-2 text-green-500" />
+          Your uploads are private and only visible to approved users
+        </p>
+      </motion.div>
     </motion.div>
   );
 };

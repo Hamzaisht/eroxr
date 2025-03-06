@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -46,6 +47,9 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
     avatarFile: null,
   });
 
+  // Check if user is super admin
+  const isSuperAdmin = session?.user?.email && ["hamzaishtiaq242@gmail.com"].includes(session.user.email.toLowerCase());
+
   // Handle form submission
   const { handleSubmit, isLoading } = useBodyContactSubmit({
     onSuccess: () => {
@@ -58,7 +62,8 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
     },
     onComplete: () => {
       // Do nothing here, we'll handle the closing manually
-    }
+    },
+    isSuperAdmin // Pass the super admin status to the submit hook
   });
 
   // Update form progress based on field completion
@@ -195,9 +200,6 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
       </div>
     );
   }
-
-  // Check if user is super admin (grant immediate access)
-  const isSuperAdmin = session?.user?.email && ["hamzaishtiaq242@gmail.com"].includes(session.user.email.toLowerCase());
   
   if (!accessResult.canAccess && !isSuperAdmin) {
     return (

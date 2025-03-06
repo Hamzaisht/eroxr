@@ -9,9 +9,14 @@ import { validateVideoFormat, getVideoDuration } from "@/utils/videoProcessing";
 interface UseBodyContactSubmitProps {
   onSuccess?: () => void;
   onComplete?: () => void;
+  isSuperAdmin?: boolean;
 }
 
-export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSubmitProps) => {
+export const useBodyContactSubmit = ({ 
+  onSuccess, 
+  onComplete,
+  isSuperAdmin = false
+}: UseBodyContactSubmitProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
@@ -29,34 +34,38 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSu
     setIsLoading(true);
 
     try {
-      // First, check if user is allowed to create a Body Contact ad
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("is_paying_customer, id_verification_status")
-        .eq("id", session.user.id)
-        .single();
+      // First, check if user is allowed to create a Body Contact ad (skip for super admin)
+      if (!isSuperAdmin) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("is_paying_customer, id_verification_status")
+          .eq("id", session.user.id)
+          .single();
 
-      if (profileError) {
-        console.error("Profile fetch error:", profileError);
-        throw profileError;
-      }
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          throw profileError;
+        }
 
-      if (!profileData.is_paying_customer) {
-        toast({
-          title: "Premium required",
-          description: "You need a premium subscription to create body contact ads",
-          variant: "destructive",
-        });
-        return;
-      }
+        if (!profileData.is_paying_customer) {
+          toast({
+            title: "Premium required",
+            description: "You need a premium subscription to create body contact ads",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      if (profileData.id_verification_status !== 'verified') {
-        toast({
-          title: "Verification required",
-          description: "You need to verify your ID to create body contact ads",
-          variant: "destructive",
-        });
-        return;
+        if (profileData.id_verification_status !== 'verified') {
+          toast({
+            title: "Verification required",
+            description: "You need to verify your ID to create body contact ads",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        console.log("Super admin detected - bypassing verification and premium checks");
       }
 
       let videoUrl = null;
@@ -162,7 +171,7 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSu
         video_url: videoUrl,
         user_type: values.relationshipStatus === "couple" ? "couple_mf" : "male",
         is_active: true,
-        moderation_status: "pending", // Default to pending for review
+        moderation_status: isSuperAdmin ? "approved" : "pending", // Super admins get auto-approved
       };
       
       console.log("Submitting ad data:", adData);
@@ -203,7 +212,9 @@ export const useBodyContactSubmit = ({ onSuccess, onComplete }: UseBodyContactSu
 
       toast({
         title: "Success!",
-        description: "Your body contact ad has been submitted for review",
+        description: isSuperAdmin 
+          ? "Your body contact ad has been published immediately!" 
+          : "Your body contact ad has been submitted for review",
       });
       
       if (onSuccess) {
