@@ -33,17 +33,17 @@ export const useAdPermissionCheck = () => {
         throw profileError;
       }
 
-      if (!profileData.is_paying_customer) {
-        return { 
-          isAllowed: false, 
-          error: "You need a premium subscription to create body contact ads" 
-        };
-      }
+      // Check if user is either premium OR verified (not necessarily both)
+      const isPremium = profileData.is_paying_customer;
+      const isVerified = profileData.id_verification_status === 'verified';
 
-      if (profileData.id_verification_status !== 'verified') {
+      console.log("User permission check:", { isPremium, isVerified });
+
+      // Either premium OR verification is sufficient
+      if (!isPremium && !isVerified) {
         return { 
           isAllowed: false, 
-          error: "You need to verify your ID to create body contact ads" 
+          error: "You need either a premium subscription or ID verification to create body contact ads" 
         };
       }
 

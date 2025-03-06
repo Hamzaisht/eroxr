@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAdsQuery } from "@/components/ads/useAdsQuery";
 import { FilterOptions, SearchCategory } from "@/components/ads/types/dating";
@@ -9,12 +9,17 @@ import { DatingContent } from "@/components/dating/DatingContent";
 import { useUserProfile } from "@/components/dating/hooks/useUserProfile";
 import { useViewTracking } from "@/components/dating/hooks/useViewTracking";
 import { useLocation } from "react-router-dom";
+import { Award, ArrowRight } from "lucide-react";
 
 export default function Dating() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedSeeker, setSelectedSeeker] = useState<string | null>(null);
   const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    minAge: 18,
+    maxAge: 99,
+    maxDistance: 50
+  });
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
   
   const location = useLocation();
@@ -22,14 +27,25 @@ export default function Dating() {
   // Track page views
   useViewTracking();
 
-  // Fetch ads data
-  const { data: ads, isLoading, refetch } = useAdsQuery();
-
   // Get user profile data
   const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
+  
+  // Check if user is verified and/or premium
+  const isVerified = userProfile?.id_verification_status === 'verified';
+  const isPremium = userProfile?.is_paying_customer;
+  const canAccessFullFeatures = isVerified && isPremium;
+  
+  // Fetch ads data with special options for verified users
+  const { data: ads, isLoading, refetch } = useAdsQuery({
+    // If user is verified and premium, we'll skip moderation checks
+    // This allows users to see their own ads immediately
+    skipModeration: canAccessFullFeatures,
+    includeMyPendingAds: true,
+    filterOptions
+  });
 
   // Handle URL parameters for tag searching
-  useState(() => {
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tagParam = params.get('tag');
     
@@ -38,7 +54,7 @@ export default function Dating() {
       setSelectedSeeker(seeker);
       setSelectedLookingFor(looking_for);
     }
-  });
+  }, [location.search]);
 
   // Define search categories
   const searchCategories: SearchCategory[] = [
@@ -65,7 +81,7 @@ export default function Dating() {
   ];
 
   // Check if user can access body contact features
-  const canAccessBodyContact = userProfile?.is_paying_customer || userProfile?.id_verification_status === 'verified';
+  const canAccessBodyContact = isVerified || isPremium;
 
   // Handler to refresh ads after creating a new one
   const handleAdCreationSuccess = () => {
@@ -73,7 +89,7 @@ export default function Dating() {
   };
 
   // Show loading state
-  if (isLoading) {
+  if (isLoading || isProfileLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
@@ -120,6 +136,30 @@ export default function Dating() {
             canAccessBodyContact={!!canAccessBodyContact}
             onAdCreationSuccess={handleAdCreationSuccess}
           />
+
+          {!canAccessFullFeatures && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="w-full bg-gradient-to-r from-purple-500/20 to-purple-700/20 rounded-lg p-3 flex flex-col sm:flex-row justify-between items-center shadow-lg border border-purple-500/30"
+            >
+              <div className="flex items-center gap-3 mb-3 sm:mb-0">
+                <Award className="h-6 w-6 text-purple-400" />
+                <div>
+                  <h3 className="font-semibold text-white">Unlock BD Ads for 59 SEK/month</h3>
+                  <p className="text-xs text-luxury-neutral">Cancel anytime, instant access</p>
+                </div>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.05, x: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gradient-to-r from-purple-500 to-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1"
+              >
+                Upgrade Now <ArrowRight className="h-4 w-4 ml-1" />
+              </motion.button>
+            </motion.div>
+          )}
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Sidebar - Filters */}

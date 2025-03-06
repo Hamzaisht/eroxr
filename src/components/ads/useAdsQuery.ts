@@ -11,6 +11,7 @@ interface UseAdsQueryOptions {
   premiumOnly?: boolean;
   filterOptions?: any;
   includeMyPendingAds?: boolean;
+  skipModeration?: boolean; // Added to bypass moderation for verified users
 }
 
 // Define the type for raw data from Supabase
@@ -23,7 +24,14 @@ type RawDatingAd = Omit<DatingAd, 'age_range'> & {
 };
 
 export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
-  const { verifiedOnly = true, premiumOnly = false, filterOptions = {}, includeMyPendingAds = true } = options;
+  const { 
+    verifiedOnly = false, // Changed default to false
+    premiumOnly = false, 
+    filterOptions = {}, 
+    includeMyPendingAds = true,
+    skipModeration = false // For verified users
+  } = options;
+  
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const session = useSession();
@@ -60,9 +68,13 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
   }, [queryClient, toast]);
 
   return useQuery({
-    queryKey: ["dating_ads", verifiedOnly, premiumOnly, filterOptions, includeMyPendingAds, currentUserId],
+    queryKey: ["dating_ads", verifiedOnly, premiumOnly, filterOptions, includeMyPendingAds, skipModeration, currentUserId],
     queryFn: async () => {
-      // We'll create two queries and merge the results
+      console.log("Query executing with options:", { 
+        verifiedOnly, premiumOnly, filterOptions, 
+        includeMyPendingAds, skipModeration, currentUserId 
+      });
+      
       // 1. First query: Get all approved ads (with filters)
       let approvedAdsQuery = supabase
         .from("dating_ads")
@@ -73,8 +85,12 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
             id_verification_status
           )
         `)
-        .eq("is_active", true)
-        .eq("moderation_status", "approved");
+        .eq("is_active", true);
+      
+      // Only apply moderation filter for public ads
+      if (!skipModeration) {
+        approvedAdsQuery = approvedAdsQuery.eq("moderation_status", "approved");
+      }
       
       // Only return verified profiles if requested
       if (verifiedOnly) {
@@ -105,6 +121,8 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
       
       if (approvedError) throw approvedError;
       
+      console.log("Approved ads query result:", approvedAds);
+      
       // 2. Second query: Get the user's own pending ads if they're logged in and option is enabled
       let myPendingAds: RawDatingAd[] = [];
       
@@ -125,14 +143,43 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
           
         if (!pendingError && pendingAds) {
           myPendingAds = pendingAds as RawDatingAd[];
+          console.log("User's pending ads:", myPendingAds);
         }
       }
       
-      // Combine both results
-      const allAds = [...(approvedAds || []), ...myPendingAds];
+      // 3. If verified/premium users, get their own ads separately
+      let myAds: RawDatingAd[] = [];
+      
+      if (currentUserId && skipModeration) {
+        const { data: userAds, error: userAdsError } = await supabase
+          .from("dating_ads")
+          .select(`
+            *,
+            profiles!dating_ads_user_id_fkey(
+              is_paying_customer,
+              id_verification_status
+            )
+          `)
+          .eq("is_active", true)
+          .eq("user_id", currentUserId)
+          .order("created_at", { ascending: false });
+          
+        if (!userAdsError && userAds) {
+          myAds = userAds as RawDatingAd[];
+          console.log("User's own ads:", myAds);
+        }
+      }
+      
+      // Combine all results
+      const allAds = [...(approvedAds || []), ...myPendingAds, ...myAds];
+      
+      // Remove duplicates (user's own ads might be in both approved and myAds)
+      const uniqueAds = Array.from(new Map(allAds.map(ad => [ad.id, ad])).values());
+      
+      console.log("Total unique ads to display:", uniqueAds.length);
       
       // Transform data to match DatingAd type with proper age_range conversion
-      return allAds.map(ad => {
+      return uniqueAds.map(ad => {
         // Parse age_range from string to object if necessary
         const ageRange = typeof ad.age_range === 'string' 
           ? { 

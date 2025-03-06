@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AdFormValues } from "../types";
-import { Check, AlertTriangle } from "lucide-react";
+import { Check, AlertTriangle, Users, Calendar, MapPin, Heart, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +51,18 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1 }
   };
+  
+  // Get appropriate icon for relationship status
+  const getRelationshipIcon = () => {
+    switch (values.relationshipStatus) {
+      case 'single':
+        return <User className="h-4 w-4" />;
+      case 'couple':
+        return <Users className="h-4 w-4" />;
+      default:
+        return <Heart className="h-4 w-4" />;
+    }
+  };
 
   return (
     <motion.div 
@@ -68,7 +80,7 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
         </p>
       </motion.div>
       
-      {/* Preview Card */}
+      {/* Preview Card - This shows how the ad will look in the main BD page */}
       <motion.div 
         variants={itemVariants}
         className="p-6 rounded-xl border border-luxury-primary/20 bg-black/20 backdrop-blur-sm overflow-hidden"
@@ -88,16 +100,20 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
             
             <h2 className="text-xl font-bold mb-2">{values.title || "Untitled Ad"}</h2>
             <div className="flex flex-wrap gap-1 mb-3">
-              <Badge variant="outline" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
+              <Badge variant="outline" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20 flex items-center gap-1">
+                {getRelationshipIcon()}
                 {values.relationshipStatus || "Single"}
               </Badge>
-              <Badge variant="outline" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
+              <Badge variant="outline" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20 flex items-center gap-1">
+                <Users className="h-4 w-4" />
                 {values.bodyType ? values.bodyType.replace('_', ' ') : "Not specified"}
               </Badge>
-              <Badge variant="outline" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
+              <Badge variant="outline" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20 flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
                 {values.ageRange.lower}-{values.ageRange.upper} y/o
               </Badge>
-              <Badge variant="outline" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
+              <Badge variant="outline" className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20 flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
                 {values.location || "No location"}
               </Badge>
             </div>
@@ -124,11 +140,15 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
             )}
             
             <div className="mt-3">
-              <h4 className="text-sm font-medium mb-2">Looking For:</h4>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Heart className="h-4 w-4 text-luxury-primary" />
+                Looking For:
+              </h4>
               <div className="flex flex-wrap gap-1">
                 {values.lookingFor.length > 0 ? (
                   values.lookingFor.map((option) => (
-                    <Badge key={option} className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20">
+                    <Badge key={option} className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20 flex items-center">
+                      <Users className="h-3 w-3 mr-1" />
                       {option}
                     </Badge>
                   ))
@@ -140,11 +160,14 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
             
             {values.tags.length > 0 && (
               <div className="mt-3">
-                <h4 className="text-sm font-medium mb-2">Tags:</h4>
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-luxury-primary" />
+                  Tags:
+                </h4>
                 <div className="flex flex-wrap gap-1">
                   {values.tags.map((tag) => (
                     <Badge key={tag} variant="secondary" className="bg-black/20 text-muted-foreground">
-                      {tag}
+                      #{tag}
                     </Badge>
                   ))}
                 </div>
@@ -172,9 +195,18 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
       )}
       
       {/* Submit section */}
-      <motion.div variants={itemVariants} className="flex items-center justify-center pt-4">
+      <motion.div variants={itemVariants} className="flex items-center justify-center gap-4 pt-4">
         <Button
-          className="w-full md:w-auto py-6 text-lg rounded-full bg-gradient-to-r from-luxury-primary to-luxury-secondary 
+          variant="outline"
+          onClick={() => window.history.back()}
+          className="px-6 py-5 border-luxury-primary/30 text-luxury-neutral"
+          disabled={isLoading}
+        >
+          Edit Ad
+        </Button>
+        
+        <Button
+          className="px-8 py-6 text-lg rounded-full bg-gradient-to-r from-luxury-primary to-luxury-secondary 
             hover:from-luxury-secondary hover:to-luxury-primary transition-all duration-500
             hover:shadow-[0_0_20px_rgba(155,135,245,0.6)] group"
           size="lg"

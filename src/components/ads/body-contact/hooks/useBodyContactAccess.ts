@@ -45,20 +45,32 @@ export const useBodyContactAccess = (): BodyContactAccessCheckResult => {
     return result;
   }
 
-  // ID verification required - check for both id_verification or selfie verification
-  if (userProfile.id_verification_status !== 'verified') {
+  console.log("User profile for access check:", userProfile);
+
+  // Check for either verification OR premium status - either is sufficient
+  let hasVerification = userProfile.id_verification_status === 'verified';
+  let hasPremium = userProfile.is_paying_customer;
+  
+  // If user is either verified OR premium, they can access
+  if (hasVerification && hasPremium) {
+    // User has both requirements - full access
+    result.canAccess = true;
+    return result;
+  }
+  
+  // User needs at least one of the requirements
+  if (!hasVerification) {
     result.reasonCodes.push("NOT_VERIFIED");
     result.reasonMessages.push("ID verification or selfie verification required to access Body Contact");
   }
 
-  // Premium subscription required
-  if (!userProfile.is_paying_customer) {
+  if (!hasPremium) {
     result.reasonCodes.push("NOT_PREMIUM");
     result.reasonMessages.push("Premium subscription required to access Body Contact");
   }
 
-  // If no reason codes were added, user has access
-  if (result.reasonCodes.length === 0) {
+  // If user has at least verification OR premium, grant access
+  if (hasVerification || hasPremium) {
     result.canAccess = true;
   }
 
