@@ -36,6 +36,9 @@ export const useBodyContactSubmit = ({
       return;
     }
 
+    // Add debug logging to inspect the form values
+    console.log("Form values submitted:", values);
+    
     setIsLoading(true);
 
     try {

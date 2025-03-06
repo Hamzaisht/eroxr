@@ -519,6 +519,7 @@ export type Database = {
           relationship_status: Database["public"]["Enums"]["relationship_status"]
           seeking_description: string | null
           smoking_status: string | null
+          tags: string[] | null
           title: string
           updated_at: string | null
           user_id: string | null
@@ -557,6 +558,7 @@ export type Database = {
           relationship_status: Database["public"]["Enums"]["relationship_status"]
           seeking_description?: string | null
           smoking_status?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string | null
           user_id?: string | null
@@ -595,6 +597,7 @@ export type Database = {
           relationship_status?: Database["public"]["Enums"]["relationship_status"]
           seeking_description?: string | null
           smoking_status?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string | null
           user_id?: string | null

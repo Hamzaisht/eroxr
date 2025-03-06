@@ -38,7 +38,7 @@ export const useAdDatabaseOperations = () => {
         description: values.description,
         relationship_status: values.relationshipStatus,
         looking_for: values.lookingFor,
-        tags: values.tags,
+        tags: values.tags || [], // Handle tags properly
         country: "sweden", // Default for demo
         city: values.location,
         age_range: ageRangeStr,
