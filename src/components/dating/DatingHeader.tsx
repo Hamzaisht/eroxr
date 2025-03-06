@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSession } from "@supabase/auth-helpers-react";
-import { CreateBodyContactDialog } from "@/components/ads/CreateBodyContactDialog";
+import { CreateBodyContactDialog } from "@/components/ads/body-contact";
 import { NewMessageDialog } from "@/components/messages/NewMessageDialog";
 
 interface DatingHeaderProps {

@@ -1,9 +1,8 @@
-
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@supabase/auth-helpers-react";
-import { CreateBodyContactDialog } from "@/components/ads/CreateBodyContactDialog";
+import { CreateBodyContactDialog } from "@/components/ads/body-contact";
 
 interface EmptyProfilesStateProps {
   canAccessBodyContact: boolean;
