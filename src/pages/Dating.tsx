@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useAdsQuery } from "@/components/ads/useAdsQuery";
+import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { FilterOptions, SearchCategory } from "@/components/ads/types/dating";
 import { AdFilters } from "@/components/ads/AdFilters";
 import { DatingHeader } from "@/components/dating/DatingHeader";

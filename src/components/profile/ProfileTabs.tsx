@@ -8,7 +8,7 @@ import { MediaGrid } from "./MediaGrid";
 import { EmptyState } from "./EmptyState";
 import { useParams } from "react-router-dom";
 import { VideoProfileCarousel } from "@/components/ads/VideoProfileCarousel";
-import { useAdsQuery } from "@/components/ads/useAdsQuery";
+import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { useState, useEffect } from "react";
 
 export const ProfileTabs = ({ profile }: { profile: any }) => {
