@@ -9,7 +9,7 @@ import { LocationAgeFields } from "./components/LocationAgeFields";
 import { TagsField } from "./components/TagsField";
 import { LookingForField } from "./components/LookingForField";
 import { FormSubmitError } from "./components/FormSubmitError";
-import { BodyContactFormProps, AdFormValues } from "./types";
+import { AdFormValues, BodyContactFormProps } from "./types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFormProps) => {

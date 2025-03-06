@@ -1,63 +1,42 @@
-
-export type DatingAd = {
+export interface Ad {
   id: string;
   title: string;
   description: string;
-  relationship_status: "single" | "couple" | "other";
-  looking_for: string[];
-  country: string;
-  city: string;
-  age_range: { lower: number; upper: number };
+  videoUrl: string;
+  thumbnailUrl: string;
+  createdAt: string;
+  profile: {
+    id: string;
+    username: string;
+    avatarUrl: string;
+  };
+}
+
+export interface DatingAd {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  video_url: string;
   created_at: string;
-  is_premium?: boolean;
-  is_verified?: boolean;
-  interests?: string[];
-  preferred_age_range?: { lower: number; upper: number };
-  height?: number;
-  body_type?: string;
-  smoking_status?: string;
-  drinking_status?: string;
-  languages?: string[];
-  occupation?: string;
-  education_level?: string;
-  about_me?: string;
-  seeking_description?: string;
-  last_active?: string;
-  profile_completion_score?: number;
-  latitude?: number;
-  longitude?: number;
-  video_url?: string;
-  user_type: string;
-  avatar_url?: string;
-  view_count?: number;
-  message_count?: number;
-  click_count?: number;
-  user_id?: string;
-  is_active?: boolean;
-};
+  city: string;
+  country: string;
+  age_range: string;
+  relationship_status: string;
+  looking_for: string[];
+  tags: string[];
+  user: {
+    id: string;
+    username: string;
+    avatar_url: string;
+  };
+}
 
-export type SearchCategory = {
-  seeker: "couple" | "female" | "male" | "any";
+export interface FilterOptions {
+  [key: string]: string | string[];
+}
+
+export interface SearchCategory {
+  seeker: "male" | "female" | "couple";
   looking_for: "male" | "female" | "couple" | "trans" | "any";
-};
-
-export type FilterOptions = {
-  minAge?: number;
-  maxAge?: number;
-  minHeight?: number;
-  maxHeight?: number;
-  bodyType?: string[];
-  smokingStatus?: string[];
-  drinkingStatus?: string[];
-  languages?: string[];
-  educationLevel?: string[];
-  hasPhoto?: boolean;
-  isVerified?: boolean;
-  isPremium?: boolean;
-  lastActive?: 'today' | 'week' | 'month' | 'all';
-  sortBy?: 'newest' | 'lastActive' | 'profileScore';
-  maxDistance?: number;
-  latitude?: number;
-  longitude?: number;
-  userType?: string[];
-};
+}
