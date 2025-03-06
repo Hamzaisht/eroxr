@@ -1,4 +1,3 @@
-
 import { useSession } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
@@ -27,7 +26,7 @@ export const AdActions = ({ ad }: AdActionsProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   
-  const isOwner = session?.user?.id === ad.creator_id;
+  const isOwner = session?.user?.id === ad.user_id;
   
   if (!isOwner) return null;
   
@@ -41,7 +40,7 @@ export const AdActions = ({ ad }: AdActionsProps) => {
         .from('dating_ads')
         .delete()
         .eq('id', ad.id)
-        .eq('creator_id', session?.user?.id);
+        .eq('user_id', session?.user?.id);
       
       if (error) throw error;
       
