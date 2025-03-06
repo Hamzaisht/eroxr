@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DatingAd } from './types/dating';
-import { VideoProfileCard } from './VideoProfileCard';
+import { VideoProfileCard } from './video-profile-card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

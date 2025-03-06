@@ -1,0 +1,2 @@
+
+export { VideoProfileCard } from './VideoProfileCard';
