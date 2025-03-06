@@ -49,7 +49,6 @@ export const useBodyContactSubmit = ({
       }
 
       // 2. Check user permissions (premium, verification)
-      // For verified users or super admins, we'll skip moderation
       const permissionCheck = await checkPermissions(isSuperAdmin);
       if (!permissionCheck.isAllowed) {
         toast({
@@ -89,9 +88,7 @@ export const useBodyContactSubmit = ({
       // 7. Show success message and trigger callbacks
       toast({
         title: "Success!",
-        description: isSuperAdmin 
-          ? "Your body contact ad has been published immediately!" 
-          : "Your body contact ad has been submitted for review",
+        description: "Your body contact ad has been published!", 
       });
       
       if (onSuccess) {

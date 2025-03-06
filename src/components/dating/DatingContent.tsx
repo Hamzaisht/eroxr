@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { DatingAd } from "@/components/ads/types/dating";
 import { VideoProfileCarousel } from "@/components/ads/video-profile-carousel";
@@ -38,25 +37,23 @@ export const DatingContent = ({
     }
   }, [ads, currentUserId]);
   
-  // Check if the user has any pending ads
+  // Check if the user has any pending ads - keeping for debugging but not showing UI alert
   const hasPendingAds = ads?.some(ad => 
     ad.moderation_status === 'pending' && ad.user_id === currentUserId
   );
 
-  // Check if the user has any approved ads
+  // Check if the user has any approved ads - keeping for debugging but not showing UI alert
   const hasApprovedAds = ads?.some(ad => 
     ad.moderation_status === 'approved' && ad.user_id === currentUserId
   );
 
-  // Filter most viewed ads (top 5)
+  // Filter most viewed ads (top 5) - show regardless of moderation status
   const mostViewedAds = ads
-    ?.filter(ad => ad.moderation_status === 'approved' || ad.user_id === currentUserId)
     ?.sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
     ?.slice(0, 5);
 
-  // Filter trending ads (based on recency and views)
+  // Filter trending ads (based on recency and views) - show regardless of moderation status
   const trendingAds = ads
-    ?.filter(ad => ad.moderation_status === 'approved' || ad.user_id === currentUserId)
     ?.sort((a, b) => {
       // Custom scoring: 0.7 * recency + 0.3 * views
       const dateA = new Date(a.created_at);
@@ -74,10 +71,8 @@ export const DatingContent = ({
     })
     ?.slice(0, 5);
 
-  // All ads for "All Ads" tab
-  const allAds = ads?.filter(ad => 
-    ad.moderation_status === 'approved' || ad.user_id === currentUserId
-  );
+  // All ads for "All Ads" tab - show regardless of moderation status
+  const allAds = ads;
 
   console.log("All ads count:", allAds?.length);
   console.log("Pending ads for current user:", hasPendingAds);
@@ -90,26 +85,7 @@ export const DatingContent = ({
       transition={{ duration: 0.5, delay: 0.4 }}
       className="flex-1 space-y-6"
     >
-      {hasPendingAds && (
-        <Alert className="bg-amber-50 border-amber-300">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-800">Your ad is awaiting moderation</AlertTitle>
-          <AlertDescription className="text-amber-700">
-            Your ad has been submitted successfully but must be approved before it's visible to others. 
-            You can see your ad below, but other users won't see it until it's approved.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {!hasPendingAds && hasApprovedAds && (
-        <Alert className="bg-green-50 border-green-300">
-          <AlertCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">Your ad is live!</AlertTitle>
-          <AlertDescription className="text-green-700">
-            Your body contact ad has been approved and is now visible to all users.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Removed approval/pending notification alerts as requested */}
       
       {hasAds ? (
         <Tabs defaultValue="all" className="w-full">

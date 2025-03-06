@@ -17,10 +17,11 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
   const [bodyContactAds, setBodyContactAds] = useState<any[]>([]);
   const [hasAds, setHasAds] = useState(false);
   
-  // Fetch body contact ads for this specific profile
+  // Fetch body contact ads for this specific profile - skip moderation status filter
   const { data: profileAds, isLoading: adsLoading } = useAdsQuery({
     userId: id,
-    includeMyPendingAds: true
+    includeMyPendingAds: true,
+    skipModeration: true
   });
   
   useEffect(() => {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
@@ -35,11 +34,10 @@ export default function Dating() {
   const isPremium = userProfile?.is_paying_customer;
   const canAccessFullFeatures = isVerified || isPremium; // Changed to OR logic
   
-  // Fetch ads data with special options for verified users
+  // Fetch ads data with special options - always skip moderation checks
   const { data: ads, isLoading, refetch } = useAdsQuery({
-    // If user is verified or premium, we'll skip moderation checks
-    // This allows users to see their own ads immediately
-    skipModeration: canAccessFullFeatures,
+    // Always show all ads regardless of moderation status
+    skipModeration: true,
     includeMyPendingAds: true,
     filterOptions
   });

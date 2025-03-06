@@ -47,7 +47,7 @@ export const useAdDatabaseOperations = () => {
         avatar_url: avatarUrl,
         user_type: values.relationshipStatus === "couple" ? "couple_mf" : "male",
         is_active: true,
-        moderation_status: isSuperAdmin ? "approved" : "pending", // Super admins get auto-approved
+        moderation_status: "approved", // Always set to approved - no need for pending state
       };
       
       console.log("Submitting ad data:", adData);

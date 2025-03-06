@@ -34,18 +34,12 @@ export const buildAdsQuery = (
   if (userId) {
     console.log("Fetching ads for specific user ID:", userId);
     adsQuery = adsQuery.eq("user_id", userId);
-    // When viewing someone's profile, we should only see their approved ads
-    // unless it's our own profile
-    if (userId !== currentUserId) {
-      adsQuery = adsQuery.eq("moderation_status", "approved");
-    }
+    // When viewing someone's profile, we should see all their ads
+    // No longer filtering by moderation status
   } else {
     // For the main dating page
     
-    // 1. If the user is neither verified nor premium, only show approved ads
-    if (!skipModeration) {
-      adsQuery = adsQuery.eq("moderation_status", "approved");
-    }
+    // No longer filtering by moderation status to show all ads
     
     // Only return verified profiles if requested
     if (verifiedOnly) {

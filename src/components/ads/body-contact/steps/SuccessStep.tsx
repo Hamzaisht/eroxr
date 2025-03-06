@@ -10,21 +10,7 @@ interface SuccessStepProps {
 }
 
 export const SuccessStep = ({ onClose }: SuccessStepProps) => {
-  const [countdown, setCountdown] = useState(24);
-  
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, []);
+  // Remove countdown since we don't need to show approval timeline anymore
   
   const copyToClipboard = () => {
     const url = window.location.href;
@@ -71,27 +57,8 @@ export const SuccessStep = ({ onClose }: SuccessStepProps) => {
         transition={{ delay: 0.5 }}
         className="text-luxury-neutral mb-6"
       >
-        Your ad has been submitted for review. It will be live within 24 hours.
+        Your ad has been published and is now live!
       </motion.p>
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="mb-8"
-      >
-        <div className="w-full bg-black/30 h-2 rounded-full mb-2 overflow-hidden">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: '100%' }}
-            transition={{ duration: 24, ease: 'linear' }}
-            className="h-full bg-gradient-to-r from-luxury-primary to-luxury-accent"
-          />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Estimated time remaining: <span className="text-luxury-primary">{countdown} hours</span>
-        </p>
-      </motion.div>
       
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
