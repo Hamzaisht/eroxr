@@ -45,6 +45,14 @@ export interface DatingAd {
   profile_completion_score?: number;
   last_active?: string;
   preferred_age_range?: { lower: number; upper: number };
+  // Properties for verification status and premium status
+  isUserVerified?: boolean;
+  isUserPremium?: boolean;
+  // Additional computed properties not present in the database
+  profiles?: {
+    id_verification_status?: string;
+    is_paying_customer?: boolean;
+  };
 }
 
 export interface FilterOptions {
@@ -54,6 +62,8 @@ export interface FilterOptions {
   isVerified?: boolean;
   isPremium?: boolean;
   maxDistance?: number;
+  country?: string;
+  userType?: string;
   [key: string]: string | string[] | number | boolean | undefined;
 }
 

@@ -14,6 +14,10 @@ interface UseAdsQueryOptions {
 // Define the type for raw data from Supabase
 type RawDatingAd = Omit<DatingAd, 'age_range'> & {
   age_range: string;
+  profiles?: {
+    id_verification_status?: string;
+    is_paying_customer?: boolean;
+  };
 };
 
 export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
