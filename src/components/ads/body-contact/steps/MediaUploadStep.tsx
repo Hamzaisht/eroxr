@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AdFormValues } from "../types";
 import { useToast } from "@/hooks/use-toast";
-import { getVideoDuration, generateVideoThumbnails } from "@/utils/videoProcessing";
+import { getVideoDuration, generateVideoThumbnails, validateVideoFormat } from "@/utils/videoProcessing";
 
 interface MediaUploadStepProps {
   values: AdFormValues;
@@ -27,7 +27,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const progressIntervalRef = useRef<number | null>(null);
   const { toast } = useToast();
   
@@ -170,6 +169,20 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
           }
         });
       }, 150);
+      
+      // Validate video format
+      const isValidVideo = await validateVideoFormat(file);
+      if (!isValidVideo) {
+        cleanupProgressInterval();
+        setVideoError("Invalid video format");
+        setProcessingVideo(false);
+        toast({
+          title: "Invalid video format",
+          description: "Please upload a valid video file",
+          variant: "destructive",
+        });
+        return;
+      }
       
       const duration = await getVideoDuration(file);
       setVideoDuration(duration);

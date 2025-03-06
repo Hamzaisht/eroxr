@@ -55,7 +55,7 @@ export const getVideoDuration = async (file: File): Promise<number> => {
   });
 };
 
-// New helper function to generate video thumbnails with better error handling
+// Helper function to generate video thumbnails with better error handling
 export const generateVideoThumbnails = async (videoFile: File, numThumbnails = 3): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');

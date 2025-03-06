@@ -81,8 +81,9 @@ export const useBodyContactSubmit = ({
         throw new Error("Please select at least one 'Looking For' option");
       }
 
-      if (!values.videoFile) {
-        throw new Error("Video is required. Please upload a video.");
+      // Check for at least one media item (photo or video)
+      if (!values.videoFile && !values.avatarFile) {
+        throw new Error("At least one photo or video is required. Please upload media content.");
       }
 
       // Video Upload Process - with improved error handling
@@ -178,6 +179,7 @@ export const useBodyContactSubmit = ({
         age_range: ageRangeStr,
         body_type: values.bodyType,
         video_url: videoUrl,
+        avatar_url: avatarUrl,
         user_type: values.relationshipStatus === "couple" ? "couple_mf" : "male",
         is_active: true,
         moderation_status: isSuperAdmin ? "approved" : "pending", // Super admins get auto-approved
@@ -203,6 +205,22 @@ export const useBodyContactSubmit = ({
         } else {
           throw new Error(`Failed to create ad: ${insertError.message}`);
         }
+      }
+
+      // Track the dating ad media for the user profile
+      const { error: trackingError } = await supabase
+        .from("dating_ad_media")
+        .insert({
+          user_id: session.user.id,
+          ad_id: adData.id,
+          video_url: videoUrl,
+          avatar_url: avatarUrl,
+          created_at: new Date().toISOString()
+        });
+
+      if (trackingError) {
+        console.error("Media tracking error:", trackingError);
+        // Don't throw, just log - we've already created the ad
       }
 
       if (avatarUrl) {

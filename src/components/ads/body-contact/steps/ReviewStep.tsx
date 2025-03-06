@@ -24,7 +24,7 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
     if (!values.title) errors.push("Title is required");
     if (!values.description) errors.push("Description is required");
     if (!values.location) errors.push("Location is required");
-    if (!values.videoFile) errors.push("Video profile is required");
+    if (!values.avatarFile && !values.videoFile) errors.push("At least one photo or video is required");
     if (values.lookingFor.length === 0) errors.push("Please select at least one 'Looking For' option");
     
     setValidationErrors(errors);
