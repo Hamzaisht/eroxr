@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -197,7 +196,10 @@ export const ImmersiveAdCreation = ({ onClose, onSuccess }: ImmersiveAdCreationP
     );
   }
 
-  if (!accessResult.canAccess) {
+  // Check if user is super admin (grant immediate access)
+  const isSuperAdmin = session?.user?.email && ["hamzaishtiaq242@gmail.com"].includes(session.user.email.toLowerCase());
+  
+  if (!accessResult.canAccess && !isSuperAdmin) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
         <motion.div
