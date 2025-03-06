@@ -1,3 +1,4 @@
+
 import { type Config } from "tailwindcss";
 
 export default {
@@ -125,6 +126,11 @@ export default {
             boxShadow: "0 0 10px theme('colors.luxury.accent'), 0 0 30px theme('colors.luxury.accent')"
           }
         },
+        "shine": {
+          "to": {
+            backgroundPosition: "200% center"
+          }
+        }
       },
       animation: {
         "logo-spin": "logo-spin 1.5s ease-in-out",
@@ -132,6 +138,7 @@ export default {
         "float": "float 6s ease-in-out infinite",
         "pulse-ring": "pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "neon-glow": "neon-pulse 2s ease-in-out infinite",
+        "shine": "shine 2s linear infinite"
       },
       clipPath: {
         hexagon: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',

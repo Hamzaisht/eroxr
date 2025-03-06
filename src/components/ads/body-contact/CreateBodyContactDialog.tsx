@@ -1,74 +1,40 @@
 
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useState } from "react";
+import { ImmersiveAdCreation } from "./ImmersiveAdCreation";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { BodyContactForm } from "./BodyContactForm";
-import { useBodyContactSubmit } from "./hooks/useBodyContactSubmit";
-import { useBodyContactAccess } from "./hooks/useBodyContactAccess";
-import { PremiumAccessRequired } from "./components/PremiumAccessRequired";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
+import { PlusCircle } from "lucide-react";
+import "./styles.css";
 
 interface CreateBodyContactDialogProps {
   onSuccess?: () => void;
 }
 
 export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const { handleSubmit, isLoading } = useBodyContactSubmit({ onSuccess, onComplete: () => setOpen(false) });
-  const accessResult = useBodyContactAccess();
-  const session = useSession();
-  const { toast } = useToast();
-  
-  // Debug output to console
-  useEffect(() => {
-    if (open && session?.user) {
-      console.log("Current user email:", session.user.email);
-      console.log("Access result:", accessResult);
-    }
-  }, [open, session, accessResult]);
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && !session) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to create an ad",
-        variant: "destructive"
-      });
-      return;
-    }
-    setOpen(isOpen);
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
       <Button 
-        onClick={() => handleOpenChange(true)}
-        className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white"
+        onClick={() => setIsOpen(true)}
+        className="relative overflow-hidden bg-gradient-to-r from-luxury-primary to-luxury-secondary 
+          hover:from-luxury-secondary hover:to-luxury-primary text-white
+          transition-all duration-500 hover:shadow-[0_0_20px_rgba(155,135,245,0.4)]
+          group"
       >
-        Create Body Contact
+        <span className="relative flex items-center z-10">
+          <PlusCircle className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
+          Create Body Contact
+        </span>
+        <span className="absolute inset-0 bg-[linear-gradient(110deg,rgba(155,135,245,0.3)_0%,rgba(155,135,245,0)_35%,rgba(155,135,245,0)_65%,rgba(155,135,245,0.3)_100%)]
+          opacity-0 group-hover:opacity-100 group-hover:animate-shine"></span>
       </Button>
 
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="space-y-4 p-4">
-            <h2 className="text-xl font-bold text-center bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
-              Create Body Contact Ad
-            </h2>
-
-            {accessResult.canAccess ? (
-              <BodyContactForm 
-                onSubmit={handleSubmit} 
-                isLoading={isLoading} 
-                onCancel={() => setOpen(false)} 
-              />
-            ) : (
-              <PremiumAccessRequired accessResult={accessResult} />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {isOpen && (
+        <ImmersiveAdCreation 
+          onClose={() => setIsOpen(false)} 
+          onSuccess={onSuccess} 
+        />
+      )}
     </>
   );
 };
