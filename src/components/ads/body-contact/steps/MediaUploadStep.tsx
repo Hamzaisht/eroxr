@@ -1,11 +1,12 @@
-import { useState, useRef, useCallback } from "react";
+
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Upload, X, AlertCircle, Check, Camera, Video as VideoIcon } from "lucide-react";
+import { Upload, X, AlertCircle, Check, Camera, Video as VideoIcon, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AdFormValues } from "../types";
 import { useToast } from "@/hooks/use-toast";
-import { getVideoDuration } from "@/utils/videoProcessing";
+import { getVideoDuration, generateVideoThumbnails } from "@/utils/videoProcessing";
 
 interface MediaUploadStepProps {
   values: AdFormValues;
@@ -21,6 +22,7 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
   const [processingVideo, setProcessingVideo] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [uploadComplete, setUploadComplete] = useState(false);
   
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +30,15 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const progressIntervalRef = useRef<number | null>(null);
   const { toast } = useToast();
+  
+  // Cleanup progress interval on unmount
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
   
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -104,11 +115,19 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
     }
   }, []);
 
+  const cleanupProgressInterval = useCallback(() => {
+    if (progressIntervalRef.current !== null) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  }, []);
+
   const handleVideoFile = async (file: File) => {
     setVideoError(null);
     setVideoThumbnails([]);
     setProcessingVideo(true);
     setUploadProgress(0);
+    setUploadComplete(false);
     
     cleanupProgressInterval();
     
@@ -135,17 +154,22 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
     }
 
     try {
+      // Start progress simulation that never exceeds 100%
       progressIntervalRef.current = window.setInterval(() => {
         setUploadProgress(prev => {
-          if (prev >= 98) {
-            return prev + 0.1;
-          } else if (prev >= 90) {
+          // Ensure we never exceed 95% during processing
+          // The last 5% will be set when processing is complete
+          if (prev >= 95) {
+            return 95;
+          } else if (prev >= 80) {
             return prev + 0.5;
+          } else if (prev >= 60) {
+            return prev + 1;
           } else {
-            return prev + 5;
+            return prev + 2;
           }
         });
-      }, 200);
+      }, 150);
       
       const duration = await getVideoDuration(file);
       setVideoDuration(duration);
@@ -162,14 +186,18 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
         return;
       }
       
-      const thumbnails = await generateThumbnails(file);
+      // Generate thumbnails from the video
+      const thumbnails = await generateVideoThumbnails(file);
       setVideoThumbnails(thumbnails);
       
+      // Processing complete
       cleanupProgressInterval();
       setUploadProgress(100);
+      setUploadComplete(true);
       
       onUpdateValues({ videoFile: file });
       setProcessingVideo(false);
+      
       toast({
         title: "Video uploaded",
         description: "Your video has been successfully processed",
@@ -179,6 +207,7 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
       cleanupProgressInterval();
       setVideoError(error.message || "Failed to process video");
       setProcessingVideo(false);
+      
       toast({
         title: "Error processing video",
         description: error.message || "Failed to process video",
@@ -187,60 +216,9 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
     }
   };
 
-  const generateThumbnails = async (videoFile: File): Promise<string[]> => {
-    return new Promise((resolve, reject) => {
-      const video = document.createElement('video');
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const thumbnails: string[] = [];
-      
-      video.addEventListener('loadedmetadata', () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        const timePoints = [
-          video.duration * 0.25,
-          video.duration * 0.5,
-          video.duration * 0.75
-        ];
-        
-        let loaded = 0;
-        
-        timePoints.forEach((time) => {
-          video.currentTime = time;
-        });
-        
-        video.addEventListener('seeked', () => {
-          if (ctx) {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            thumbnails.push(canvas.toDataURL('image/jpeg'));
-            loaded++;
-            
-            if (loaded === timePoints.length) {
-              resolve(thumbnails);
-            }
-          }
-        });
-      });
-      
-      video.addEventListener('error', (e) => {
-        reject(new Error('Error generating thumbnails: ' + e.message));
-      });
-      
-      video.src = URL.createObjectURL(videoFile);
-    });
-  };
-
   const selectThumbnail = (index: number) => {
     setSelectedThumbnail(index);
   };
-
-  const cleanupProgressInterval = useCallback(() => {
-    if (progressIntervalRef.current !== null) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-  }, []);
 
   return (
     <motion.div
@@ -360,6 +338,7 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
                     onUpdateValues({ videoFile: null });
                     setVideoDuration(null);
                     setVideoThumbnails([]);
+                    setUploadComplete(false);
                   }}
                 >
                   <X size={16} />
@@ -391,7 +370,7 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-medium">{Math.round(uploadProgress)}%</span>
+                    <span className="text-sm font-medium">{Math.min(Math.round(uploadProgress), 100)}%</span>
                   </div>
                 </div>
                 <p className="text-sm">Processing your video...</p>
@@ -435,6 +414,13 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
               }
             }}
           />
+          
+          {uploadComplete && values.videoFile && (
+            <div className="flex items-center mt-2 text-green-500 text-sm">
+              <CheckCircle size={16} className="mr-2" />
+              Video successfully uploaded and ready to publish
+            </div>
+          )}
         </motion.div>
       </div>
       
