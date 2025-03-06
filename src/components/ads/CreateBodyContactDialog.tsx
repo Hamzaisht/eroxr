@@ -12,7 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Upload, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export const CreateBodyContactDialog = () => {
+interface CreateBodyContactDialogProps {
+  onSuccess?: () => void;
+}
+
+export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogProps) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState("");
@@ -175,6 +179,10 @@ export const CreateBodyContactDialog = () => {
       
       setOpen(false);
       resetForm();
+      
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error("Error creating ad:", error);
       toast({
