@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { DatingAd } from './types/dating';
@@ -8,7 +9,9 @@ import { ProfileStats } from './video-profile/ProfileStats';
 import { ProfileActions } from './video-profile/ProfileActions';
 import { useToast } from '@/hooks/use-toast';
 import { X, ZoomIn, ZoomOut } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VideoProfileCardProps {
   ad: DatingAd;
@@ -21,6 +24,28 @@ export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProf
   const [isHovered, setIsHovered] = useState(false);
   const [showEnlarged, setShowEnlarged] = useState(false);
   const { toast } = useToast();
+
+  // Track view when card is shown
+  useQuery({
+    queryKey: ['track-ad-view', ad.id],
+    queryFn: async () => {
+      if (isActive && ad.id) {
+        try {
+          const { error } = await supabase
+            .from('dating_ads')
+            .update({ view_count: (ad.view_count || 0) + 1 })
+            .eq('id', ad.id);
+          
+          if (error) throw error;
+        } catch (error) {
+          console.error('Error tracking ad view:', error);
+        }
+      }
+      return null;
+    },
+    enabled: isActive && !!ad.id,
+    staleTime: Infinity, // Only track once per session
+  });
 
   const handleShare = async () => {
     try {
@@ -53,6 +78,17 @@ export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProf
     const x = e.clientX - rect.left;
     if (!showEnlarged) {
       setShowEnlarged(true);
+      
+      // Track click
+      if (ad.id) {
+        supabase
+          .from('dating_ads')
+          .update({ click_count: (ad.click_count || 0) + 1 })
+          .eq('id', ad.id)
+          .then(({ error }) => {
+            if (error) console.error('Error tracking ad click:', error);
+          });
+      }
     } else if (x < rect.width / 2) {
       onPrevious?.();
     } else {
@@ -86,6 +122,7 @@ export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProf
           viewCount={ad.view_count || 0}
           messageCount={ad.message_count || 0}
           clickCount={ad.click_count || 0}
+          userId={ad.user_id}
         />
 
         {/* Content */}
@@ -124,6 +161,7 @@ export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProf
       {/* Enlarged View Dialog */}
       <Dialog open={showEnlarged} onOpenChange={setShowEnlarged}>
         <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-luxury-dark/95 border-luxury-primary/20">
+          <DialogTitle className="sr-only">Profile Details</DialogTitle>
           <div className="relative w-full h-full overflow-hidden">
             {/* Close button */}
             <button

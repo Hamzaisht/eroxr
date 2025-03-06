@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { VideoProfileCarousel } from "@/components/ads/VideoProfileCarousel";
 import { AdFilters } from "@/components/ads/AdFilters";
 import { useAdsQuery } from "@/components/ads/useAdsQuery";
@@ -6,7 +7,12 @@ import { FilterOptions, SearchCategory } from "@/components/ads/types/dating";
 import { NewMessageDialog } from "@/components/messages/NewMessageDialog";
 import { CreateBodyContactDialog } from "@/components/ads/CreateBodyContactDialog";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Info } from "lucide-react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Dating() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -14,8 +20,35 @@ export default function Dating() {
   const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
+  const session = useSession();
+  const navigate = useNavigate();
 
-  const { data: ads, isLoading } = useAdsQuery();
+  const { data: ads, isLoading, refetch } = useAdsQuery({
+    country: selectedCountry,
+    seeker: selectedSeeker,
+    lookingFor: selectedLookingFor,
+    filterOptions,
+  });
+
+  // Handle view count tracking
+  useEffect(() => {
+    const trackPageView = async () => {
+      try {
+        // Track view for analytics
+        if (session?.user) {
+          await supabase.from('user_analytics').insert({
+            user_id: session.user.id,
+            page: 'dating',
+            timestamp: new Date().toISOString(),
+          }).select();
+        }
+      } catch (error) {
+        console.error('Error tracking page view:', error);
+      }
+    };
+    
+    trackPageView();
+  }, [session]);
 
   const searchCategories: SearchCategory[] = [
     { seeker: "couple", looking_for: "female" },
@@ -30,6 +63,29 @@ export default function Dating() {
     { seeker: "any", looking_for: "any" }, // A4A - Anyone for Anyone
     { seeker: "couple", looking_for: "couple" }, // MF4MF - Couple for Couple
   ];
+
+  // Check user verification/subscription status
+  const { data: userProfile, isLoading: isProfileLoading } = 
+    useSession().user ? 
+      // @ts-ignore - We know this might be undefined
+      useAdsQuery.useQuery({
+        queryKey: ['user-profile', session?.user?.id],
+        queryFn: async () => {
+          if (!session?.user?.id) return null;
+          
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('is_paying_customer, id_verification_status')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (error) throw error;
+          return data;
+        },
+        enabled: !!session?.user?.id,
+      }) : { data: null, isLoading: false };
+
+  const canAccessBodyContact = userProfile?.is_paying_customer || userProfile?.id_verification_status === 'verified';
 
   if (isLoading) {
     return (
@@ -62,7 +118,23 @@ export default function Dating() {
                   </p>
                 </div>
                 <div className="flex gap-3">
-                  <CreateBodyContactDialog />
+                  {!session?.user ? (
+                    <Button 
+                      onClick={() => navigate('/login')}
+                      className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
+                    >
+                      Login to Create
+                    </Button>
+                  ) : !canAccessBodyContact ? (
+                    <Button 
+                      onClick={() => navigate('/subscription')}
+                      className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
+                    >
+                      Upgrade to Create
+                    </Button>
+                  ) : (
+                    <CreateBodyContactDialog onSuccess={() => refetch()} />
+                  )}
                   <NewMessageDialog 
                     open={isNewMessageOpen} 
                     onOpenChange={setIsNewMessageOpen} 
@@ -72,6 +144,15 @@ export default function Dating() {
               </div>
             </div>
           </div>
+
+          {!session?.user && (
+            <Alert className="bg-luxury-dark/70 backdrop-blur-sm border-luxury-primary/20">
+              <Info className="h-4 w-4 text-luxury-primary" />
+              <AlertDescription className="text-luxury-neutral">
+                Sign in to create your own profile and connect with others
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Sidebar - Filters */}
@@ -109,9 +190,32 @@ export default function Dating() {
                   <Sparkles className="w-12 h-12 text-luxury-primary animate-pulse" />
                   <h3 className="text-2xl font-semibold text-white">No Profiles Found</h3>
                   <p className="text-luxury-neutral max-w-md">
-                    Be the first to create a profile in this category and start connecting with others
+                    {session?.user 
+                      ? canAccessBodyContact 
+                        ? "Be the first to create a profile in this category and start connecting with others" 
+                        : "Upgrade to a paying account to create your profile and connect with others"
+                      : "Sign in to see more profiles or create your own"
+                    }
                   </p>
-                  <CreateBodyContactDialog />
+                  {session?.user ? (
+                    canAccessBodyContact ? (
+                      <CreateBodyContactDialog onSuccess={() => refetch()} />
+                    ) : (
+                      <Button 
+                        onClick={() => navigate('/subscription')}
+                        className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
+                      >
+                        Upgrade Now
+                      </Button>
+                    )
+                  ) : (
+                    <Button 
+                      onClick={() => navigate('/login')}
+                      className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
+                    >
+                      Sign In
+                    </Button>
+                  )}
                 </div>
               )}
             </motion.div>
