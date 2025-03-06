@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AdFormValues } from "../types";
@@ -7,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
+import { validateAdSubmission } from "../hooks/useAdValidation";
 
 interface ReviewStepProps {
   values: AdFormValues;
@@ -17,23 +19,17 @@ interface ReviewStepProps {
 export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  const validateForm = (): boolean => {
-    const errors: string[] = [];
-    
-    if (!values.title) errors.push("Title is required");
-    if (!values.description) errors.push("Description is required");
-    if (!values.location) errors.push("Location is required");
-    if (!values.avatarFile && !values.videoFile) errors.push("At least one photo or video is required");
-    if (values.lookingFor.length === 0) errors.push("Please select at least one 'Looking For' option");
-    
-    setValidationErrors(errors);
-    return errors.length === 0;
-  };
-
   const handleSubmit = () => {
-    if (validateForm()) {
-      onSubmit();
+    // Use the validation function from the hook
+    const validation = validateAdSubmission(values);
+    
+    if (!validation.isValid && validation.error) {
+      setValidationErrors([validation.error]);
+      return;
     }
+    
+    setValidationErrors([]);
+    onSubmit();
   };
 
   const containerVariants = {

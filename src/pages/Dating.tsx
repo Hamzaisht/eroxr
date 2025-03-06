@@ -33,11 +33,11 @@ export default function Dating() {
   // Check if user is verified and/or premium
   const isVerified = userProfile?.id_verification_status === 'verified';
   const isPremium = userProfile?.is_paying_customer;
-  const canAccessFullFeatures = isVerified && isPremium;
+  const canAccessFullFeatures = isVerified || isPremium; // Changed to OR logic
   
   // Fetch ads data with special options for verified users
   const { data: ads, isLoading, refetch } = useAdsQuery({
-    // If user is verified and premium, we'll skip moderation checks
+    // If user is verified or premium, we'll skip moderation checks
     // This allows users to see their own ads immediately
     skipModeration: canAccessFullFeatures,
     includeMyPendingAds: true,
@@ -81,7 +81,7 @@ export default function Dating() {
   ];
 
   // Check if user can access body contact features
-  const canAccessBodyContact = isVerified || isPremium;
+  const canAccessBodyContact = isVerified || isPremium; // Changed to OR logic
 
   // Handler to refresh ads after creating a new one
   const handleAdCreationSuccess = () => {

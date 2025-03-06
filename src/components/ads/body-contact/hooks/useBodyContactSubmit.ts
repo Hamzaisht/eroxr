@@ -49,6 +49,7 @@ export const useBodyContactSubmit = ({
       }
 
       // 2. Check user permissions (premium, verification)
+      // For verified users or super admins, we'll skip moderation
       const permissionCheck = await checkPermissions(isSuperAdmin);
       if (!permissionCheck.isAllowed) {
         toast({
