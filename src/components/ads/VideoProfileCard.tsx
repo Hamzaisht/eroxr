@@ -1,230 +1,194 @@
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { DatingAd } from './types/dating';
-import { ProfileHeader } from './video-profile/ProfileHeader';
-import { ProfileTags } from './video-profile/ProfileTags';
-import { VideoControls } from './video-profile/VideoControls';
-import { ProfileStats } from './video-profile/ProfileStats';
-import { ProfileActions } from './video-profile/ProfileActions';
-import { useToast } from '@/hooks/use-toast';
-import { X, ZoomIn, ZoomOut } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { DatingAd } from './types/dating';
+import { Video, Play, Pause, Volume2, VolumeX, Shield, Info } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ModerationBadge } from './body-contact/components/ModerationBadge';
 
 interface VideoProfileCardProps {
   ad: DatingAd;
-  isActive: boolean;
-  onNext?: () => void;
-  onPrevious?: () => void;
+  isActive?: boolean;
 }
 
-export const VideoProfileCard = ({ ad, isActive, onNext, onPrevious }: VideoProfileCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [showEnlarged, setShowEnlarged] = useState(false);
-  const { toast } = useToast();
-
-  // Track view when card is shown
-  useQuery({
-    queryKey: ['track-ad-view', ad.id],
-    queryFn: async () => {
-      if (isActive && ad.id) {
-        try {
-          const { error } = await supabase
-            .from('dating_ads')
-            .update({ view_count: (ad.view_count || 0) + 1 })
-            .eq('id', ad.id);
-          
-          if (error) throw error;
-        } catch (error) {
-          console.error('Error tracking ad view:', error);
-        }
-      }
-      return null;
-    },
-    enabled: isActive && !!ad.id,
-    staleTime: Infinity, // Only track once per session
-  });
-
-  const handleShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "Check out this profile",
-          text: ad.description,
-          url: window.location.href
-        });
+export const VideoProfileCard = ({ ad, isActive = false }: VideoProfileCardProps) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Format age range for display
+  const ageRangeDisplay = `${ad.age_range.lower}-${ad.age_range.upper}`;
+  
+  // Auto-play video when card becomes active
+  useEffect(() => {
+    if (isActive && videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play().catch(e => console.error("Autoplay failed:", e));
       } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "Link copied",
-          description: "Profile link copied to clipboard",
-        });
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name !== "AbortError") {
-        toast({
-          title: "Share failed",
-          description: "Could not share profile",
-          variant: "destructive",
-        });
+        videoRef.current.pause();
       }
     }
+  }, [isActive, isPlaying]);
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    
+    if (isPlaying) {
+      videoRef.current.pause();
+    } else {
+      videoRef.current.play().catch(e => console.error("Play failed:", e));
+    }
+    
+    setIsPlaying(!isPlaying);
   };
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    if (!showEnlarged) {
-      setShowEnlarged(true);
-      
-      // Track click
-      if (ad.id) {
-        supabase
-          .from('dating_ads')
-          .update({ click_count: (ad.click_count || 0) + 1 })
-          .eq('id', ad.id)
-          .then(({ error }) => {
-            if (error) console.error('Error tracking ad click:', error);
-          });
-      }
-    } else if (x < rect.width / 2) {
-      onPrevious?.();
-    } else {
-      onNext?.();
-    }
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = !isMuted;
+    setIsMuted(!isMuted);
   };
 
   return (
-    <>
-      <motion.div
-        className="relative w-full h-[85vh] rounded-xl overflow-hidden group cursor-pointer transform-gpu"
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-        whileHover={{ scale: 1.01 }}
-        onClick={handleCardClick}
-      >
-        {/* Video Background */}
-        <div className="absolute inset-0 bg-luxury-dark/50">
-          <VideoControls 
-            videoUrl={ad.video_url} 
-            avatarUrl={ad.avatar_url} 
-            isActive={isActive && !showEnlarged} 
+    <div className="w-full max-w-4xl rounded-xl overflow-hidden relative glass-card">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 z-10 pointer-events-none" />
+      
+      {/* Video */}
+      <div className="relative aspect-video w-full h-[60vh] overflow-hidden bg-black">
+        {ad.video_url ? (
+          <video
+            ref={videoRef}
+            src={ad.video_url}
+            className={cn(
+              "w-full h-full object-cover transition-opacity",
+              isPlaying ? "opacity-100" : "opacity-90"
+            )}
+            loop
+            muted={isMuted}
+            playsInline
           />
-        </div>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-luxury-darker/50">
+            <Video className="w-16 h-16 text-luxury-neutral/30" />
+          </div>
+        )}
         
-        {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-luxury-dark/95 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-luxury-dark/30 pointer-events-none" />
-        
-        <ProfileStats 
-          viewCount={ad.view_count || 0}
-          messageCount={ad.message_count || 0}
-          clickCount={ad.click_count || 0}
-          userId={ad.user_id}
-        />
-
-        {/* Content */}
-        <div className="absolute inset-x-0 bottom-0 p-8 z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="space-y-6"
+        {/* Video controls */}
+        <div className="absolute bottom-4 left-4 z-20 flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={togglePlay}
+            className="w-12 h-12 rounded-full bg-luxury-primary/80 backdrop-blur-sm flex items-center justify-center hover:bg-luxury-primary transition-colors"
           >
-            <ProfileHeader ad={ad} />
-            <ProfileTags ad={ad} />
-
-            <p className="text-luxury-neutral line-clamp-2 text-lg">
-              {ad.description}
-            </p>
-
-            <ProfileActions 
-              userId={ad.user_id} 
-              onShare={handleShare}
-              source="dating"
-            />
-          </motion.div>
+            {isPlaying ? (
+              <Pause className="w-5 h-5 text-white" />
+            ) : (
+              <Play className="w-5 h-5 text-white" />
+            )}
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={toggleMute}
+            className="w-10 h-10 rounded-full bg-luxury-dark/80 backdrop-blur-sm flex items-center justify-center hover:bg-luxury-dark transition-colors"
+          >
+            {isMuted ? (
+              <VolumeX className="w-4 h-4 text-white" />
+            ) : (
+              <Volume2 className="w-4 h-4 text-white" />
+            )}
+          </motion.button>
         </div>
-
-        {/* Zoom indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isHovered ? 1 : 0 }}
-          className="absolute top-4 right-4 p-2 bg-luxury-dark/80 rounded-full"
-        >
-          <ZoomIn className="w-6 h-6 text-luxury-primary" />
-        </motion.div>
-      </motion.div>
-
-      {/* Enlarged View Dialog */}
-      <Dialog open={showEnlarged} onOpenChange={setShowEnlarged}>
-        <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-luxury-dark/95 border-luxury-primary/20">
-          <DialogTitle className="sr-only">Profile Details</DialogTitle>
-          <div className="relative w-full h-full overflow-hidden">
-            {/* Close button */}
-            <button
-              onClick={() => setShowEnlarged(false)}
-              className="absolute top-4 right-4 z-50 p-2 bg-luxury-dark/80 rounded-full hover:bg-luxury-primary/20 transition-colors"
-            >
-              <X className="w-6 h-6 text-luxury-primary" />
-            </button>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 h-full">
-              {/* Video Section */}
-              <div className="relative h-full">
-                <VideoControls 
-                  videoUrl={ad.video_url} 
-                  avatarUrl={ad.avatar_url} 
-                  isActive={showEnlarged} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-luxury-dark/30" />
-              </div>
-
-              {/* Content Section */}
-              <div className="relative p-8 overflow-y-auto">
-                <div className="space-y-8">
-                  <ProfileHeader ad={ad} />
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-semibold text-luxury-primary">About</h3>
-                    <p className="text-luxury-neutral text-lg leading-relaxed">
-                      {ad.description}
-                    </p>
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-semibold text-luxury-primary">Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-luxury-neutral/60">Age Range</p>
-                        <p className="text-luxury-neutral">{ad.age_range.lower}-{ad.age_range.upper}</p>
-                      </div>
-                      <div>
-                        <p className="text-luxury-neutral/60">Location</p>
-                        <p className="text-luxury-neutral">{ad.city}, {ad.country}</p>
-                      </div>
-                      <div>
-                        <p className="text-luxury-neutral/60">Status</p>
-                        <p className="text-luxury-neutral">{ad.relationship_status}</p>
-                      </div>
-                      <div>
-                        <p className="text-luxury-neutral/60">Body Type</p>
-                        <p className="text-luxury-neutral">{ad.body_type}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <ProfileTags ad={ad} />
-                  <ProfileActions 
-                    userId={ad.user_id} 
-                    onShare={handleShare}
-                    source="dating"
-                  />
-                </div>
+      </div>
+      
+      {/* Profile Information */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
+        <div className="flex justify-between items-end">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-2xl font-bold text-white">{ad.title}</h2>
+              
+              {/* Verification Badges */}
+              <div className="flex gap-1">
+                {ad.is_verified && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge className="bg-blue-500 text-white">
+                          <Shield className="w-3 h-3 mr-1" /> Verified
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>ID Verified User</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                
+                {ad.is_premium && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge className="bg-purple-500 text-white">Premium</Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Premium User</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                
+                {/* Moderation Status - Show only for pending ads */}
+                {ad.moderation_status === 'pending' && (
+                  <ModerationBadge status="pending" />
+                )}
               </div>
             </div>
+            
+            <div className="flex flex-wrap gap-2 text-sm text-white/80">
+              <span>{ad.relationship_status}</span>
+              <span>•</span>
+              <span>{ageRangeDisplay}</span>
+              <span>•</span>
+              <span>{ad.city}, {ad.country}</span>
+            </div>
+            
+            <p className="text-white/70 line-clamp-2 max-w-2xl">{ad.description}</p>
+            
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {ad.tags && ad.tags.map(tag => (
+                <Badge key={tag} variant="outline" className="bg-luxury-dark/50 text-luxury-neutral border-none">
+                  {tag}
+                </Badge>
+              ))}
+              
+              {Array.isArray(ad.looking_for) && ad.looking_for.map(seekingType => (
+                <Badge key={seekingType} className="bg-luxury-primary/80 text-white">
+                  Seeking {seekingType}
+                </Badge>
+              ))}
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+          
+          {/* Profile Image */}
+          {ad.avatar_url && (
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              className="w-16 h-16 rounded-full overflow-hidden border-2 border-luxury-primary"
+            >
+              <img 
+                src={ad.avatar_url} 
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
