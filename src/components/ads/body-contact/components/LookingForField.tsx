@@ -15,30 +15,26 @@ export const LookingForField = ({ lookingFor, onUpdateLookingFor }: LookingForFi
   const [searchTerm, setSearchTerm] = useState("");
   const [showAllOptions, setShowAllOptions] = useState(false);
 
-  // Define all relationship option tags
+  // Define all relationship option tags - compressed to take less vertical space
   const tagOptions = [
-    // Couple seeking options
-    { value: "MF4A", label: "MF4A (Couple seeking Anyone)" },
+    // Relationship tags (alphabetically sorted)
+    { value: "F4A", label: "F4A (Female seeking Any)" },
+    { value: "F4F", label: "F4F (Female seeking Female)" },
+    { value: "F4M", label: "F4M (Female seeking Male)" },
+    { value: "F4MF", label: "F4MF (Female seeking Couple)" },
+    { value: "F4T", label: "F4T (Female seeking Trans)" },
+    { value: "M4A", label: "M4A (Male seeking Any)" },
+    { value: "M4F", label: "M4F (Male seeking Female)" },
+    { value: "M4M", label: "M4M (Male seeking Male)" },
+    { value: "M4MF", label: "M4MF (Male seeking Couple)" },
+    { value: "M4T", label: "M4T (Male seeking Trans)" },
+    { value: "MF4A", label: "MF4A (Couple seeking Any)" },
     { value: "MF4F", label: "MF4F (Couple seeking Female)" },
     { value: "MF4M", label: "MF4M (Couple seeking Male)" },
     { value: "MF4MF", label: "MF4MF (Couple seeking Couple)" },
     { value: "MF4T", label: "MF4T (Couple seeking Trans)" },
     
-    // Male seeking options
-    { value: "M4A", label: "M4A (Male seeking Anyone)" },
-    { value: "M4F", label: "M4F (Male seeking Female)" },
-    { value: "M4M", label: "M4M (Male seeking Male)" },
-    { value: "M4MF", label: "M4MF (Male seeking Couple)" },
-    { value: "M4T", label: "M4T (Male seeking Trans)" },
-    
-    // Female seeking options
-    { value: "F4A", label: "F4A (Female seeking Anyone)" },
-    { value: "F4F", label: "F4F (Female seeking Female)" },
-    { value: "F4M", label: "F4M (Female seeking Male)" },
-    { value: "F4MF", label: "F4MF (Female seeking Couple)" },
-    { value: "F4T", label: "F4T (Female seeking Trans)" },
-    
-    // Generic tags for multi-selection
+    // Generic categories for multi-selection
     { value: "male", label: "Men" },
     { value: "female", label: "Women" },
     { value: "couple", label: "Couples" },
@@ -55,7 +51,7 @@ export const LookingForField = ({ lookingFor, onUpdateLookingFor }: LookingForFi
   // Show either all options or a limited set if not searching
   const displayOptions = searchTerm 
     ? filteredOptions 
-    : (showAllOptions ? tagOptions : tagOptions.slice(0, 8));
+    : (showAllOptions ? tagOptions : tagOptions.slice(0, 6));
 
   const toggleOption = (value: string) => {
     if (lookingFor.includes(value)) {
@@ -69,53 +65,56 @@ export const LookingForField = ({ lookingFor, onUpdateLookingFor }: LookingForFi
     <div className="space-y-2">
       <Label className="font-medium">Looking For</Label>
       
+      {/* Search input - made smaller and more compact */}
       <div className="relative">
         <Input
           type="text"
           placeholder="Search relationship tags..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-8 h-9 text-sm"
         />
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
         {searchTerm && (
           <Button 
             variant="ghost" 
             size="icon" 
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6"
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5"
             onClick={() => setSearchTerm("")}
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </Button>
         )}
       </div>
       
-      <div className="flex flex-wrap gap-2">
+      {/* Tags container - made more compact with smaller tags */}
+      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
         {displayOptions.map((option) => (
           <button
             key={option.value}
             type="button"
             onClick={() => toggleOption(option.value)}
             className={cn(
-              "flex items-center gap-2 px-3 py-1 rounded-full border text-sm transition-all",
+              "flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs transition-all",
               lookingFor.includes(option.value)
                 ? "bg-luxury-primary/10 border-luxury-primary text-luxury-primary"
                 : "border-border bg-background/60 hover:bg-background/80"
             )}
           >
             {lookingFor.includes(option.value) && (
-              <Check className="h-3 w-3" />
+              <Check className="h-2.5 w-2.5" />
             )}
             {option.value}
           </button>
         ))}
       </div>
       
-      {!searchTerm && tagOptions.length > 8 && (
+      {/* Show more/less button - made smaller */}
+      {!searchTerm && tagOptions.length > 6 && (
         <Button 
           variant="ghost" 
           size="sm" 
-          className="text-xs text-muted-foreground hover:text-foreground mt-1"
+          className="text-xs text-muted-foreground hover:text-foreground mt-0.5 h-6 px-2 py-0"
           onClick={() => setShowAllOptions(!showAllOptions)}
         >
           {showAllOptions ? "Show less" : "Show more tags"}
@@ -123,7 +122,7 @@ export const LookingForField = ({ lookingFor, onUpdateLookingFor }: LookingForFi
       )}
       
       {lookingFor.length === 0 && (
-        <p className="text-sm text-muted-foreground">Select at least one option</p>
+        <p className="text-xs text-muted-foreground">Select at least one option</p>
       )}
     </div>
   );

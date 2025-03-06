@@ -83,18 +83,26 @@ export default function Dating() {
 
   // Define shortcut map for reference in this component
   const shortcutMap = {
+    // Couple seeking tags
     "MF4A": { seeker: "couple", looking_for: "any" },
     "MF4F": { seeker: "couple", looking_for: "female" },
     "MF4M": { seeker: "couple", looking_for: "male" },
     "MF4MF": { seeker: "couple", looking_for: "couple" },
+    "MF4T": { seeker: "couple", looking_for: "trans" },
+    
+    // Female seeking tags
     "F4A": { seeker: "female", looking_for: "any" },
     "F4M": { seeker: "female", looking_for: "male" },
     "F4F": { seeker: "female", looking_for: "female" },
     "F4MF": { seeker: "female", looking_for: "couple" },
+    "F4T": { seeker: "female", looking_for: "trans" },
+    
+    // Male seeking tags
     "M4A": { seeker: "male", looking_for: "any" },
     "M4F": { seeker: "male", looking_for: "female" },
     "M4M": { seeker: "male", looking_for: "male" },
-    "M4MF": { seeker: "male", looking_for: "couple" }
+    "M4MF": { seeker: "male", looking_for: "couple" },
+    "M4T": { seeker: "male", looking_for: "trans" }
   };
 
   return (

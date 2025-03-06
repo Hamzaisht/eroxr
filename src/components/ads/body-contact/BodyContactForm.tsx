@@ -80,34 +80,40 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <ProfileImageUpload 
         avatarPreview={avatarPreview} 
         onAvatarChange={handleAvatarChange} 
       />
 
-      <BasicInfoFields
-        title={values.title}
-        description={values.description}
-        relationshipStatus={values.relationshipStatus}
-        bodyType={values.bodyType}
-        onUpdateTitle={(value) => updateField('title', value)}
-        onUpdateDescription={(value) => updateField('description', value)}
-        onUpdateRelationshipStatus={(value) => updateField('relationshipStatus', value)}
-        onUpdateBodyType={(value) => updateField('bodyType', value)}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <BasicInfoFields
+            title={values.title}
+            description={values.description}
+            relationshipStatus={values.relationshipStatus}
+            bodyType={values.bodyType}
+            onUpdateTitle={(value) => updateField('title', value)}
+            onUpdateDescription={(value) => updateField('description', value)}
+            onUpdateRelationshipStatus={(value) => updateField('relationshipStatus', value)}
+            onUpdateBodyType={(value) => updateField('bodyType', value)}
+          />
+        </div>
+        
+        <div>
+          <LookingForField
+            lookingFor={values.lookingFor}
+            onUpdateLookingFor={(value) => updateField('lookingFor', value)}
+          />
 
-      <LookingForField
-        lookingFor={values.lookingFor}
-        onUpdateLookingFor={(value) => updateField('lookingFor', value)}
-      />
-
-      <LocationAgeFields
-        location={values.location}
-        ageRange={values.ageRange}
-        onUpdateLocation={(value) => updateField('location', value)}
-        onUpdateAgeRange={(value) => updateField('ageRange', value)}
-      />
+          <LocationAgeFields
+            location={values.location}
+            ageRange={values.ageRange}
+            onUpdateLocation={(value) => updateField('location', value)}
+            onUpdateAgeRange={(value) => updateField('ageRange', value)}
+          />
+        </div>
+      </div>
 
       <TagsField
         tags={values.tags}
@@ -120,7 +126,7 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
       />
 
       {validationErrors.length > 0 && (
-        <Alert variant="destructive" className="mt-4">
+        <Alert variant="destructive" className="mt-3">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <div className="font-semibold mb-1">Please fix the following errors:</div>
@@ -135,18 +141,19 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
 
       {submitError && <FormSubmitError error={submitError} />}
 
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onCancel}>
+      <div className="flex justify-end gap-2 pt-2 sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2">
+        <Button variant="outline" onClick={onCancel} size="sm">
           Cancel
         </Button>
         <Button 
           onClick={handleSubmit}
           disabled={isLoading}
+          size="sm"
           className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary text-white"
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
               Creating...
             </>
           ) : (

@@ -51,9 +51,9 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="space-y-6 p-6">
-            <h2 className="text-2xl font-bold text-center bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="space-y-4 p-4">
+            <h2 className="text-xl font-bold text-center bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
               Create Body Contact Ad
             </h2>
 

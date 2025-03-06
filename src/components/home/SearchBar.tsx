@@ -12,7 +12,7 @@ export const SearchBar = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Check if it's a relationship tag search (e.g., "M4F")
+      // Enhanced regex to match all relationship tag patterns
       const isRelationshipTag = /^(M|F|MF)4(M|F|MF|T|A)$/i.test(searchQuery.trim());
       
       if (isRelationshipTag) {
@@ -30,7 +30,7 @@ export const SearchBar = () => {
       <div className="relative flex items-center gap-2 group">
         <Input
           type="search"
-          placeholder="Search or enter relationship tag (e.g., M4F)..."
+          placeholder="Search or enter relationship tag (e.g., M4F, F4A, MF4MF)..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="bg-luxury-dark/30 border-luxury-neutral/10 focus:ring-2 focus:ring-luxury-primary/50 
