@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Upload, X, AlertCircle, Check, Camera, Video as VideoIcon, CheckCircle } from "lucide-react";
@@ -30,7 +29,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
   const progressIntervalRef = useRef<number | null>(null);
   const { toast } = useToast();
   
-  // Cleanup progress interval on unmount
   useEffect(() => {
     return () => {
       if (progressIntervalRef.current) {
@@ -153,11 +151,8 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
     }
 
     try {
-      // Start progress simulation that never exceeds 100%
       progressIntervalRef.current = window.setInterval(() => {
         setUploadProgress(prev => {
-          // Ensure we never exceed 95% during processing
-          // The last 5% will be set when processing is complete
           if (prev >= 95) {
             return 95;
           } else if (prev >= 80) {
@@ -170,7 +165,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
         });
       }, 150);
       
-      // Validate video format
       const isValidVideo = await validateVideoFormat(file);
       if (!isValidVideo) {
         cleanupProgressInterval();
@@ -199,11 +193,9 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
         return;
       }
       
-      // Generate thumbnails from the video
       const thumbnails = await generateVideoThumbnails(file);
       setVideoThumbnails(thumbnails);
       
-      // Processing complete
       cleanupProgressInterval();
       setUploadProgress(100);
       setUploadComplete(true);
@@ -245,7 +237,7 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
           Media Upload
         </h3>
         <p className="text-sm text-muted-foreground">
-          Upload your profile video and photo. A video is required to create your ad.
+          Upload your profile photo OR video. At least one media item is required to create your ad.
         </p>
       </motion.div>
       
@@ -472,6 +464,9 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
         <p className="text-sm text-luxury-neutral flex items-center">
           <Check size={16} className="mr-2 text-green-500" />
           Your uploads are private and only visible to approved users
+        </p>
+        <p className="text-xs text-luxury-primary mt-2">
+          Note: Your ad will be reviewed before it goes live
         </p>
       </motion.div>
     </motion.div>

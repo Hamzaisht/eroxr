@@ -12,9 +12,9 @@ export const validateAdSubmission = (values: AdFormValues): { isValid: boolean; 
     return { isValid: false, error: "Please select at least one 'Looking For' option" };
   }
 
-  // Check for at least one media item (photo or video)
-  if (!values.videoFile && !values.avatarFile) {
-    return { isValid: false, error: "At least one photo or video is required. Please upload media content." };
+  // Check for at least one media item (photo OR video)
+  if (!values.avatarFile && !values.videoFile) {
+    return { isValid: false, error: "Please upload at least one photo or video. Media content is required." };
   }
 
   return { isValid: true };

@@ -209,101 +209,211 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     );
   }
 
+  // Group media items by type (regular posts vs. BD ads)
+  const bdMediaItems = mediaItems.filter(item => item.url.includes('dating-ads') || item.url.includes('dating-videos'));
+  const regularMediaItems = mediaItems.filter(item => !item.url.includes('dating-ads') && !item.url.includes('dating-videos'));
+
   return (
     <>
-      <motion.div
-        variants={{
-          hidden: { opacity: 0 },
-          show: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1 }
-          }
-        }}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-4"
-      >
-        {mediaItems.map((mediaItem, index) => {
-          const isOwner = session?.user?.id === mediaItem.creator_id;
-          
-          return (
-            <motion.div
-              key={`${mediaItem.id}-${index}`}
-              variants={{
-                hidden: { y: 20, opacity: 0 },
-                show: { y: 0, opacity: 1 }
-              }}
-              className="relative aspect-[4/5] rounded-lg overflow-hidden group cursor-pointer"
-            >
-              {isOwner && (
-                <div 
-                  className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeletePostId(mediaItem.id);
+      {bdMediaItems.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4 px-4 bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
+            Body Contact Media
+          </h3>
+          <motion.div
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.1 }
+              }
+            }}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-4"
+          >
+            {bdMediaItems.map((mediaItem, index) => {
+              const isOwner = session?.user?.id === mediaItem.creator_id;
+              
+              return (
+                <motion.div
+                  key={`bd-${mediaItem.id}-${index}`}
+                  variants={{
+                    hidden: { y: 20, opacity: 0 },
+                    show: { y: 0, opacity: 1 }
                   }}
+                  className="relative aspect-[4/5] rounded-lg overflow-hidden group cursor-pointer"
                 >
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-8 w-8 shadow-lg"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              <div 
-                onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
-                className="w-full h-full"
-              >
-                {mediaItem.type === 'video' ? (
-                  <video
-                    src={mediaItem.url}
-                    className={cn(
-                      "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                      mediaItem.isPremium ? "blur-lg" : ""
-                    )}
-                    muted
-                    playsInline
-                    onError={(e) => {
-                      console.error("Video loading error:", e);
-                    }}
-                  />
-                ) : (
-                  <img
-                    src={mediaItem.url}
-                    alt="Media content"
-                    className={cn(
-                      "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                      mediaItem.isPremium ? "blur-lg" : ""
-                    )}
-                    loading="lazy"
-                    onError={(e) => {
-                      console.error("Image loading error:", e);
-                      e.currentTarget.src = "/placeholder.svg";
-                    }}
-                  />
-                )}
-                
-                {mediaItem.isPremium && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
-                    <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
-                    <Button 
-                      size="sm"
-                      variant="secondary"
-                      className="mt-2 text-xs sm:text-sm"
+                  {isOwner && (
+                    <div 
+                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeletePostId(mediaItem.id);
+                      }}
                     >
-                      Subscribe to Unlock
-                    </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8 shadow-lg"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  <div 
+                    onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
+                    className="w-full h-full"
+                  >
+                    {mediaItem.type === 'video' ? (
+                      <video
+                        src={mediaItem.url}
+                        className={cn(
+                          "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                          mediaItem.isPremium ? "blur-lg" : ""
+                        )}
+                        muted
+                        playsInline
+                        onError={(e) => {
+                          console.error("Video loading error:", e);
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src={mediaItem.url}
+                        alt="Media content"
+                        className={cn(
+                          "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                          mediaItem.isPremium ? "blur-lg" : ""
+                        )}
+                        loading="lazy"
+                        onError={(e) => {
+                          console.error("Image loading error:", e);
+                          e.currentTarget.src = "/placeholder.svg";
+                        }}
+                      />
+                    )}
+                    
+                    {mediaItem.isPremium && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                        <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+                        <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
+                        <Button 
+                          size="sm"
+                          variant="secondary"
+                          className="mt-2 text-xs sm:text-sm"
+                        >
+                          Subscribe to Unlock
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      )}
+
+      {regularMediaItems.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4 px-4">Regular Media</h3>
+          <motion.div
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.1 }
+              }
+            }}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-4"
+          >
+            {regularMediaItems.map((mediaItem, index) => {
+              const isOwner = session?.user?.id === mediaItem.creator_id;
+              
+              return (
+                <motion.div
+                  key={`${mediaItem.id}-${index}`}
+                  variants={{
+                    hidden: { y: 20, opacity: 0 },
+                    show: { y: 0, opacity: 1 }
+                  }}
+                  className="relative aspect-[4/5] rounded-lg overflow-hidden group cursor-pointer"
+                >
+                  {isOwner && (
+                    <div 
+                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeletePostId(mediaItem.id);
+                      }}
+                    >
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8 shadow-lg"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  <div 
+                    onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
+                    className="w-full h-full"
+                  >
+                    {mediaItem.type === 'video' ? (
+                      <video
+                        src={mediaItem.url}
+                        className={cn(
+                          "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                          mediaItem.isPremium ? "blur-lg" : ""
+                        )}
+                        muted
+                        playsInline
+                        onError={(e) => {
+                          console.error("Video loading error:", e);
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src={mediaItem.url}
+                        alt="Media content"
+                        className={cn(
+                          "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                          mediaItem.isPremium ? "blur-lg" : ""
+                        )}
+                        loading="lazy"
+                        onError={(e) => {
+                          console.error("Image loading error:", e);
+                          e.currentTarget.src = "/placeholder.svg";
+                        }}
+                      />
+                    )}
+                    
+                    {mediaItem.isPremium && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                        <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+                        <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
+                        <Button 
+                          size="sm"
+                          variant="secondary"
+                          className="mt-2 text-xs sm:text-sm"
+                        >
+                          Subscribe to Unlock
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      )}
 
       <MediaViewer 
         media={selectedMedia}

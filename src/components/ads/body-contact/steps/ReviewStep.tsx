@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AdFormValues } from "../types";
@@ -52,7 +51,6 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
     visible: { y: 0, opacity: 1 }
   };
   
-  // Get appropriate icon for relationship status
   const getRelationshipIcon = () => {
     switch (values.relationshipStatus) {
       case 'single':
@@ -80,13 +78,11 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
         </p>
       </motion.div>
       
-      {/* Preview Card - This shows how the ad will look in the main BD page */}
       <motion.div 
         variants={itemVariants}
         className="p-6 rounded-xl border border-luxury-primary/20 bg-black/20 backdrop-blur-sm overflow-hidden"
       >
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          {/* Left side - profile pic and basic info */}
           <div className="col-span-1 md:col-span-2 flex flex-col items-center md:items-start">
             <Avatar className="h-24 w-24 mb-4 border-2 border-luxury-primary/30 shadow-[0_0_15px_rgba(155,135,245,0.3)]">
               <AvatarImage 
@@ -123,7 +119,6 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
             </p>
           </div>
           
-          {/* Right side - video preview */}
           <div className="col-span-1 md:col-span-3">
             {values.videoFile ? (
               <div className="aspect-video rounded-lg overflow-hidden bg-black">
@@ -177,7 +172,6 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
         </div>
       </motion.div>
       
-      {/* Validation errors */}
       {validationErrors.length > 0 && (
         <motion.div variants={itemVariants}>
           <Alert variant="destructive" className="mt-3">
@@ -194,7 +188,6 @@ export const ReviewStep = ({ values, onSubmit, isLoading }: ReviewStepProps) => 
         </motion.div>
       )}
       
-      {/* Submit section */}
       <motion.div variants={itemVariants} className="flex items-center justify-center gap-4 pt-4">
         <Button
           variant="outline"
