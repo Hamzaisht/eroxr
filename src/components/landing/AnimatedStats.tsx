@@ -8,11 +8,13 @@ export const AnimatedStats = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["platform-stats"],
     queryFn: async () => {
-      const { data: profilesCount, error: profilesError } = await supabase
+      // For profiles, we need to get the exact count
+      const { count: profilesCount, error: profilesError } = await supabase
         .from("profiles")
         .select("id", { count: "exact", head: true });
       
-      const { data: datingsCount, error: datingsError } = await supabase
+      // For dating ads, we need to get the exact count
+      const { count: datingsCount, error: datingsError } = await supabase
         .from("dating_ads")
         .select("id", { count: "exact", head: true });
       
@@ -28,8 +30,8 @@ export const AnimatedStats = () => {
       }
 
       return {
-        creators: profilesCount?.count || 0,
-        users: (profilesCount?.count || 0) * 10, // Estimate monthly users as 10x creators
+        creators: profilesCount || 0,
+        users: (profilesCount || 0) * 10, // Estimate monthly users as 10x creators
         earnings: earnings?.total_earnings || 0
       };
     },

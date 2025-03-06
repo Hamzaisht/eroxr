@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
@@ -53,3 +54,6 @@ export const useAdsQuery = () => {
     staleTime: 0,
   });
 };
+
+// Export the useQuery hook as well for direct access
+useAdsQuery.useQuery = useQuery;

@@ -23,12 +23,7 @@ export default function Dating() {
   const session = useSession();
   const navigate = useNavigate();
 
-  const { data: ads, isLoading, refetch } = useAdsQuery({
-    country: selectedCountry,
-    seeker: selectedSeeker,
-    lookingFor: selectedLookingFor,
-    filterOptions,
-  });
+  const { data: ads, isLoading, refetch } = useAdsQuery();
 
   // Handle view count tracking
   useEffect(() => {
@@ -66,9 +61,9 @@ export default function Dating() {
 
   // Check user verification/subscription status
   const { data: userProfile, isLoading: isProfileLoading } = 
-    useSession().user ? 
+    session?.user ? 
       // @ts-ignore - We know this might be undefined
-      useAdsQuery.useQuery({
+      useQuery({
         queryKey: ['user-profile', session?.user?.id],
         queryFn: async () => {
           if (!session?.user?.id) return null;
@@ -94,6 +89,11 @@ export default function Dating() {
       </div>
     );
   }
+
+  // Handler to refresh ads after creating a new one
+  const handleAdCreationSuccess = () => {
+    refetch();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to">
@@ -133,7 +133,7 @@ export default function Dating() {
                       Upgrade to Create
                     </Button>
                   ) : (
-                    <CreateBodyContactDialog onSuccess={() => refetch()} />
+                    <CreateBodyContactDialog onSuccess={handleAdCreationSuccess} />
                   )}
                   <NewMessageDialog 
                     open={isNewMessageOpen} 
@@ -199,7 +199,7 @@ export default function Dating() {
                   </p>
                   {session?.user ? (
                     canAccessBodyContact ? (
-                      <CreateBodyContactDialog onSuccess={() => refetch()} />
+                      <CreateBodyContactDialog onSuccess={handleAdCreationSuccess} />
                     ) : (
                       <Button 
                         onClick={() => navigate('/subscription')}
