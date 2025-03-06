@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { ProfileImageUpload } from "./components/ProfileImageUpload";
 import { VideoUpload } from "./components/VideoUpload";
 import { BasicInfoFields } from "./components/BasicInfoFields";
@@ -9,6 +9,7 @@ import { LocationAgeFields } from "./components/LocationAgeFields";
 import { TagsField } from "./components/TagsField";
 import { FormSubmitError } from "./components/FormSubmitError";
 import { BodyContactFormProps, AdFormValues } from "./types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFormProps) => {
   const [values, setValues] = useState<AdFormValues>({
@@ -26,11 +27,13 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
   
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const updateField = (field: keyof AdFormValues, value: any) => {
     setValues((prev) => ({ ...prev, [field]: value }));
     // Clear previous errors when form is updated
     setSubmitError(null);
+    setValidationErrors([]);
   };
 
   const handleAvatarChange = (file: File | null, preview: string) => {
@@ -38,31 +41,34 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
     setAvatarPreview(preview);
   };
 
+  const validateForm = (): boolean => {
+    const errors: string[] = [];
+    
+    if (!values.title) errors.push("Title is required");
+    if (!values.description) errors.push("Description is required");
+    if (!values.location) errors.push("Location is required");
+    if (!values.videoFile) errors.push("Video profile is required");
+    if (values.lookingFor.length === 0) errors.push("Please select at least one 'Looking For' option");
+    
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
   const handleSubmit = async () => {
     try {
-      // Validate required fields client-side before submitting
-      if (!values.title) {
-        setSubmitError("Title is required");
-        return;
-      }
-      
-      if (!values.description) {
-        setSubmitError("Description is required");
-        return;
-      }
-      
-      if (!values.location) {
-        setSubmitError("Location is required");
-        return;
-      }
-      
-      if (!values.videoFile) {
-        setSubmitError("Video profile is required");
+      // Validate form before submitting
+      if (!validateForm()) {
         return;
       }
       
       // Clear any previous errors
       setSubmitError(null);
+      
+      console.log("Submitting form with values:", {
+        ...values,
+        videoFile: values.videoFile ? `${values.videoFile.name} (${(values.videoFile.size / (1024 * 1024)).toFixed(2)}MB)` : null,
+        avatarFile: values.avatarFile ? `${values.avatarFile.name} (${(values.avatarFile.size / (1024 * 1024)).toFixed(2)}MB)` : null,
+      });
       
       // Submit the form
       await onSubmit(values);
@@ -106,6 +112,20 @@ export const BodyContactForm = ({ onSubmit, isLoading, onCancel }: BodyContactFo
         videoFile={values.videoFile}
         onUpdateVideoFile={(value) => updateField('videoFile', value)}
       />
+
+      {validationErrors.length > 0 && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="font-semibold mb-1">Please fix the following errors:</div>
+            <ul className="list-disc pl-5">
+              {validationErrors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {submitError && <FormSubmitError error={submitError} />}
 

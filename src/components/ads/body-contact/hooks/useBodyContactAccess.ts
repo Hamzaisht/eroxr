@@ -23,6 +23,14 @@ export const useBodyContactAccess = (): BodyContactAccessCheckResult => {
     return result;
   }
 
+  // Super admin check (based on email)
+  const superAdminEmails = ["hamzaishtiaq242@gmail.com"];
+  if (superAdminEmails.includes(session.user.email)) {
+    console.log("Super admin detected, granting full access to Body Contact features");
+    result.canAccess = true;
+    return result;
+  }
+
   // Still loading profile data
   if (isLoading) {
     result.reasonCodes.push("LOADING");
@@ -40,7 +48,7 @@ export const useBodyContactAccess = (): BodyContactAccessCheckResult => {
   // ID verification required
   if (userProfile.id_verification_status !== 'verified') {
     result.reasonCodes.push("NOT_VERIFIED");
-    result.reasonMessages.push("ID verification required to access Body Contact");
+    result.reasonMessages.push("ID verification or selfie verification required to access Body Contact");
   }
 
   // Premium subscription required

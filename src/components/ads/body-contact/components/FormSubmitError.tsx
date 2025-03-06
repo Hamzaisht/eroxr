@@ -12,7 +12,7 @@ export const FormSubmitError = ({ error }: FormSubmitErrorProps) => {
     if (error.includes("moderation_status")) {
       return {
         title: "Database Schema Error",
-        description: "The moderation_status column is missing in the dating_ads table. Please contact admin to update the database schema.",
+        description: "The moderation_status column is missing in the dating_ads table. Please run the SQL migration to update the database schema.",
       };
     }
     
