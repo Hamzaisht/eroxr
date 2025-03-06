@@ -95,44 +95,51 @@ export const useAdsQuery = (options: UseAdsQueryOptions = {}) => {
       }
       
       // If includeMsgCount is true, fetch message counts for each ad
-      if (includeMsgCount) {
+      if (includeMsgCount && allAds.length > 0) {
         const adIds = allAds.map(ad => ad.id);
         
-        if (adIds.length > 0) {
-          // Get message counts from direct_messages table
-          // This will count how many messages were sent regarding each ad
-          try {
-            // Use a simple select and filter approach instead of count(*)
-            const { data: messages, error: msgError } = await supabase
-              .from('direct_messages')
-              .select('content, recipient_id')
-              .contains('content', { ad_id: adIds })
-              .eq('message_type', 'ad_message');
+        try {
+          // Simplify the approach to avoid TypeScript and parsing errors
+          const { data: messages, error: msgError } = await supabase
+            .from('direct_messages')
+            .select('id, content, message_type')
+            .eq('message_type', 'ad_message');
+          
+          if (!msgError && messages) {
+            console.log("Retrieved messages:", messages.length);
             
-            if (!msgError && messages) {
-              // Process message counts and associate with ads
-              allAds = allAds.map(ad => {
-                const adMessages = messages.filter(msg => {
-                  try {
-                    const content = JSON.parse(msg.content || '{}');
-                    return content.ad_id === ad.id;
-                  } catch (e) {
-                    return false;
+            // Count messages per ad
+            const messageCounts: Record<string, number> = {};
+            
+            // Process each message and track the count per ad
+            messages.forEach(msg => {
+              try {
+                // Safety check for content being a string that can be parsed
+                if (typeof msg.content === 'string') {
+                  const contentObj = JSON.parse(msg.content);
+                  const adId = contentObj?.ad_id;
+                  
+                  // If we found an ad_id and it's in our list of ads
+                  if (adId && adIds.includes(adId)) {
+                    messageCounts[adId] = (messageCounts[adId] || 0) + 1;
                   }
-                });
-                
-                const messageCount = adMessages.length;
-                
-                return {
-                  ...ad,
-                  message_count: messageCount
-                };
-              });
-            }
-          } catch (error) {
-            console.error("Error fetching message counts:", error);
-            // Continue without message counts if there's an error
+                }
+              } catch (error) {
+                // Silently handle parse errors for individual messages
+                console.log("Failed to parse message content", error);
+              }
+            });
+            
+            // Now apply the counts to each ad
+            allAds = allAds.map(ad => ({
+              ...ad,
+              message_count: messageCounts[ad.id] || 0
+            }));
+          } else if (msgError) {
+            console.error("Error fetching messages:", msgError);
           }
+        } catch (error) {
+          console.error("Error in message counting process:", error);
         }
       }
       
