@@ -7,10 +7,13 @@ import { SearchCategories } from "./filters/SearchCategories";
 import { CountrySelect } from "./CountrySelect";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, User } from "lucide-react";
+import { type Database } from "@/integrations/supabase/types";
+
+type NordicCountry = Database['public']['Enums']['nordic_country'];
 
 interface AdFiltersProps {
-  selectedCountry: string | null;
-  setSelectedCountry: (country: string | null) => void;
+  selectedCountry: NordicCountry | null;
+  setSelectedCountry: (country: NordicCountry | null) => void;
   selectedSeeker: string | null;
   selectedLookingFor: string | null;
   setSelectedSeeker: (seeker: string | null) => void;
@@ -18,7 +21,7 @@ interface AdFiltersProps {
   searchCategories: SearchCategory[];
   filterOptions: FilterOptions;
   setFilterOptions: (options: FilterOptions) => void;
-  countries: string[];
+  countries: NordicCountry[];
   selectedTag: string | null;
   setSelectedTag: (tag: string | null) => void;
 }
@@ -172,7 +175,7 @@ export const AdFilters = ({
       <div className="mb-6">
         <h3 className="text-sm font-medium text-luxury-neutral mb-2">Search Categories</h3>
         <SearchCategories
-          categories={searchCategories}
+          searchCategories={searchCategories}
           selectedSeeker={selectedSeeker}
           selectedLookingFor={selectedLookingFor}
           setSelectedSeeker={setSelectedSeeker}

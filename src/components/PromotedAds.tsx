@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -34,6 +35,7 @@ export const PromotedAds = () => {
   const [selectedCountry, setSelectedCountry] = useState<NordicCountry | null>(null);
   const [selectedSeeker, setSelectedSeeker] = useState<string | null>(null);
   const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
 
   const { data: ads, isLoading } = useQuery({
@@ -149,7 +151,7 @@ export const PromotedAds = () => {
             <div className="lg:w-1/4">
               <AdFilters
                 selectedCountry={selectedCountry}
-                setSelectedCountry={handleCountryChange}
+                setSelectedCountry={setSelectedCountry}
                 selectedSeeker={selectedSeeker}
                 selectedLookingFor={selectedLookingFor}
                 setSelectedSeeker={setSelectedSeeker}
@@ -158,6 +160,8 @@ export const PromotedAds = () => {
                 countries={countries}
                 filterOptions={filterOptions}
                 setFilterOptions={setFilterOptions}
+                selectedTag={selectedTag}
+                setSelectedTag={setSelectedTag}
               />
             </div>
 
