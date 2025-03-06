@@ -48,6 +48,8 @@ export interface DatingAd {
   // Properties for verification status and premium status
   isUserVerified?: boolean;
   isUserPremium?: boolean;
+  // Moderation status for dating ads
+  moderation_status?: 'pending' | 'approved' | 'rejected';
   // Additional computed properties not present in the database
   profiles?: {
     id_verification_status?: string;
