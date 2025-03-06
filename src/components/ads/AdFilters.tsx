@@ -1,14 +1,12 @@
 
-import { useState, useEffect } from "react";
-import { type SearchCategory, type FilterOptions } from "./types/dating";
-import { SearchCategories } from "./filters/SearchCategories";
+import { useEffect } from "react";
+import { Slider } from "@/components/ui/slider";
+import { FilterOptions, SearchCategory } from "./types/dating";
 import { FilterAccordion } from "./filters/FilterAccordion";
-import { X, Tag, Search, Users, CheckCircle, Crown } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { SearchCategories } from "./filters/SearchCategories";
+import { CountrySelect } from "./CountrySelect";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox"; 
-import { Label } from "@/components/ui/label";
+import { Search, MapPin, User } from "lucide-react";
 
 interface AdFiltersProps {
   selectedCountry: string | null;
@@ -18,14 +16,16 @@ interface AdFiltersProps {
   setSelectedSeeker: (seeker: string | null) => void;
   setSelectedLookingFor: (lookingFor: string | null) => void;
   searchCategories: SearchCategory[];
-  countries: string[];
   filterOptions: FilterOptions;
   setFilterOptions: (options: FilterOptions) => void;
-  selectedTag?: string | null;
-  setSelectedTag?: (tag: string | null) => void;
+  countries: string[];
+  selectedTag: string | null;
+  setSelectedTag: (tag: string | null) => void;
 }
 
 export const AdFilters = ({
+  selectedCountry,
+  setSelectedCountry,
   selectedSeeker,
   selectedLookingFor,
   setSelectedSeeker,
@@ -33,183 +33,222 @@ export const AdFilters = ({
   searchCategories,
   filterOptions,
   setFilterOptions,
+  countries,
   selectedTag,
-  setSelectedTag,
+  setSelectedTag
 }: AdFiltersProps) => {
-  const [usernameSearch, setUsernameSearch] = useState("");
-  const [locationSearch, setLocationSearch] = useState("");
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [premiumOnly, setPremiumOnly] = useState(false);
-  const bodyTypes = ['athletic', 'average', 'slim', 'curvy', 'muscular', 'plus_size'];
-  const educationLevels = ['high_school', 'college', 'bachelor', 'master', 'phd'];
+  // Function to handle search tag clear
+  const handleClearTag = () => {
+    setSelectedTag(null);
+  };
 
-  // Handle verified filter change
-  useEffect(() => {
-    if (selectedSeeker === 'verified') {
-      setVerifiedOnly(true);
-    } else if (verifiedOnly) {
-      setSelectedSeeker('verified');
-      setSelectedLookingFor('any');
-    }
-  }, [selectedSeeker, verifiedOnly, setSelectedSeeker, setSelectedLookingFor]);
+  // Handle username search
+  const handleUsernameSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFilterOptions({
+      ...filterOptions,
+      username: value.length > 0 ? value : undefined
+    });
+  };
 
-  // Handle premium filter change
-  useEffect(() => {
-    if (selectedSeeker === 'premium') {
-      setPremiumOnly(true);
-    } else if (premiumOnly) {
-      setSelectedSeeker('premium');
-      setSelectedLookingFor('any');
+  // Handle city search
+  const handleCitySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFilterOptions({
+      ...filterOptions,
+      city: value.length > 0 ? value : undefined
+    });
+  };
+
+  // Update age range when min or max age changes
+  const handleAgeRangeChange = (values: number[]) => {
+    if (values.length === 2) {
+      setFilterOptions({
+        ...filterOptions,
+        minAge: values[0],
+        maxAge: values[1]
+      });
     }
-  }, [selectedSeeker, premiumOnly, setSelectedSeeker, setSelectedLookingFor]);
+  };
+
+  // Update distance when max distance changes
+  const handleDistanceChange = (values: number[]) => {
+    if (values.length === 1) {
+      setFilterOptions({
+        ...filterOptions,
+        maxDistance: values[0]
+      });
+    }
+  };
+
+  // Update verification filter
+  const handleVerifiedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterOptions({
+      ...filterOptions,
+      isVerified: e.target.checked
+    });
+  };
+
+  // Update premium filter
+  const handlePremiumChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterOptions({
+      ...filterOptions,
+      isPremium: e.target.checked
+    });
+  };
+
+  // Reset filters when country changes
+  useEffect(() => {
+    if (selectedCountry) {
+      setFilterOptions({
+        ...filterOptions,
+        country: selectedCountry
+      });
+    } else {
+      const { country, ...rest } = filterOptions;
+      setFilterOptions(rest);
+    }
+  }, [selectedCountry]);
 
   return (
-    <div className="bg-[#1A1F2C]/50 backdrop-blur-sm p-4 rounded-xl shadow-lg space-y-4">
+    <div className="bg-luxury-dark/50 backdrop-blur-sm p-5 rounded-xl border border-luxury-primary/10">
+      <h2 className="text-xl font-semibold mb-4 text-white">Find BD Ads</h2>
+
       {/* Username Search */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium text-luxury-neutral/80 flex items-center gap-1">
-          <Users className="h-4 w-4" /> Find by Username
-        </h3>
+      <div className="mb-6">
+        <label className="text-sm font-medium text-luxury-neutral mb-2 block">Search by Username</label>
         <div className="relative">
+          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-luxury-neutral h-4 w-4" />
           <Input
             type="text"
-            placeholder="Username search..."
-            value={usernameSearch}
-            onChange={(e) => setUsernameSearch(e.target.value)}
-            className="pl-8 bg-luxury-darker/50 border-luxury-primary/20 text-luxury-neutral"
+            placeholder="Enter username..."
+            className="pl-9 bg-luxury-darker border-luxury-primary/20 text-white"
+            onChange={handleUsernameSearch}
           />
-          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-luxury-neutral/50" />
-          {usernameSearch && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 text-luxury-neutral/50 hover:text-luxury-neutral"
-              onClick={() => setUsernameSearch("")}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
         </div>
       </div>
 
       {/* Location Search */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium text-luxury-neutral/80 flex items-center gap-1">
-          <Tag className="h-4 w-4" /> Location
-        </h3>
+      <div className="mb-6">
+        <label className="text-sm font-medium text-luxury-neutral mb-2 block">Search by Location</label>
         <div className="relative">
+          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-luxury-neutral h-4 w-4" />
           <Input
             type="text"
-            placeholder="City or country..."
-            value={locationSearch}
-            onChange={(e) => setLocationSearch(e.target.value)}
-            className="pl-8 bg-luxury-darker/50 border-luxury-primary/20 text-luxury-neutral"
+            placeholder="Enter city..."
+            className="pl-9 bg-luxury-darker border-luxury-primary/20 text-white"
+            onChange={handleCitySearch}
           />
-          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-luxury-neutral/50" />
-          {locationSearch && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 text-luxury-neutral/50 hover:text-luxury-neutral"
-              onClick={() => setLocationSearch("")}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
         </div>
       </div>
 
-      {/* Tag Filter Display */}
-      {selectedTag && setSelectedTag && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-luxury-neutral/80 flex items-center gap-1">
-              <Tag className="h-4 w-4" /> Tag Filter
-            </h3>
+      {/* Selected Tag (if any) */}
+      {selectedTag && (
+        <div className="mb-4 p-2 bg-luxury-primary/10 rounded-md flex items-center justify-between">
+          <div className="flex items-center">
+            <Search className="h-4 w-4 text-luxury-primary mr-2" />
+            <span className="text-sm text-white">Tag: {selectedTag}</span>
           </div>
-          <div className="flex">
-            <Badge 
-              className="bg-luxury-primary text-white flex items-center gap-1"
-            >
-              {selectedTag}
-              <button 
-                className="ml-1 hover:text-white/80"
-                onClick={() => setSelectedTag(null)}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          </div>
+          <button
+            className="text-xs text-luxury-neutral hover:text-white"
+            onClick={handleClearTag}
+          >
+            Clear
+          </button>
         </div>
       )}
 
-      {/* Verification & Premium Filters */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-luxury-neutral/80">User Type Filters</h3>
-        
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="verified-only" 
-            checked={verifiedOnly} 
-            onCheckedChange={(checked) => {
-              setVerifiedOnly(checked === true);
-              if (checked) {
-                setSelectedSeeker('verified');
-                setSelectedLookingFor('any');
-              } else if (selectedSeeker === 'verified') {
-                setSelectedSeeker(null);
-                setSelectedLookingFor(null);
-              }
-            }}
-          />
-          <Label 
-            htmlFor="verified-only" 
-            className="text-sm text-luxury-neutral flex items-center gap-1.5 cursor-pointer"
-          >
-            <CheckCircle className="h-4 w-4 text-green-500" />
-            Verified Profiles Only
-          </Label>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="premium-only" 
-            checked={premiumOnly} 
-            onCheckedChange={(checked) => {
-              setPremiumOnly(checked === true);
-              if (checked) {
-                setSelectedSeeker('premium');
-                setSelectedLookingFor('any');
-              } else if (selectedSeeker === 'premium') {
-                setSelectedSeeker(null);
-                setSelectedLookingFor(null);
-              }
-            }}
-          />
-          <Label 
-            htmlFor="premium-only" 
-            className="text-sm text-luxury-neutral flex items-center gap-1.5 cursor-pointer"
-          >
-            <Crown className="h-4 w-4 text-yellow-500" />
-            Premium Profiles Only
-          </Label>
-        </div>
+      {/* Country Filter */}
+      <div className="mb-6">
+        <label className="text-sm font-medium text-luxury-neutral mb-2 block">Country</label>
+        <CountrySelect
+          selectedCountry={selectedCountry}
+          setSelectedCountry={setSelectedCountry}
+          countries={countries}
+        />
       </div>
 
-      <SearchCategories 
-        selectedSeeker={selectedSeeker}
-        selectedLookingFor={selectedLookingFor}
-        setSelectedSeeker={setSelectedSeeker}
-        setSelectedLookingFor={setSelectedLookingFor}
-        searchCategories={searchCategories}
-      />
+      {/* Search Categories */}
+      <div className="mb-6">
+        <h3 className="text-sm font-medium text-luxury-neutral mb-2">Search Categories</h3>
+        <SearchCategories
+          categories={searchCategories}
+          selectedSeeker={selectedSeeker}
+          selectedLookingFor={selectedLookingFor}
+          setSelectedSeeker={setSelectedSeeker}
+          setSelectedLookingFor={setSelectedLookingFor}
+        />
+      </div>
 
-      <FilterAccordion 
-        bodyTypes={bodyTypes}
-        educationLevels={educationLevels}
-        filterOptions={filterOptions}
-        setFilterOptions={setFilterOptions}
-      />
+      {/* Age Range Filter */}
+      <FilterAccordion title="Age Range" defaultOpen={true}>
+        <div className="mt-2 px-1">
+          <div className="flex justify-between text-sm text-luxury-neutral mb-2">
+            <span>{filterOptions.minAge} years</span>
+            <span>{filterOptions.maxAge} years</span>
+          </div>
+          <Slider
+            defaultValue={[filterOptions.minAge || 18, filterOptions.maxAge || 99]}
+            max={99}
+            min={18}
+            step={1}
+            onValueChange={handleAgeRangeChange}
+          />
+        </div>
+      </FilterAccordion>
+
+      {/* Distance Filter */}
+      <FilterAccordion title="Maximum Distance" defaultOpen={true}>
+        <div className="mt-2 px-1">
+          <div className="flex justify-between text-sm text-luxury-neutral mb-2">
+            <span>Distance</span>
+            <span>{filterOptions.maxDistance} km</span>
+          </div>
+          <Slider
+            defaultValue={[filterOptions.maxDistance || 50]}
+            max={500}
+            min={5}
+            step={5}
+            onValueChange={handleDistanceChange}
+          />
+        </div>
+      </FilterAccordion>
+
+      {/* Verification */}
+      <FilterAccordion title="Verification" defaultOpen={true}>
+        <div className="space-y-2 mt-2">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="verified-only"
+              className="rounded h-4 w-4 bg-luxury-darker border-luxury-primary/20 text-luxury-primary"
+              checked={!!filterOptions.isVerified}
+              onChange={handleVerifiedChange}
+            />
+            <label
+              htmlFor="verified-only"
+              className="ml-2 text-sm text-luxury-neutral"
+            >
+              Verified Profiles Only
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="premium-only"
+              className="rounded h-4 w-4 bg-luxury-darker border-luxury-primary/20 text-luxury-primary"
+              checked={!!filterOptions.isPremium}
+              onChange={handlePremiumChange}
+            />
+            <label
+              htmlFor="premium-only"
+              className="ml-2 text-sm text-luxury-neutral"
+            >
+              Premium Profiles Only
+            </label>
+          </div>
+        </div>
+      </FilterAccordion>
     </div>
   );
 };

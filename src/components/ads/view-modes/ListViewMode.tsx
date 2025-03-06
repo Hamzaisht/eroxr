@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, Eye, MapPin, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
   const session = useSession();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Format age range for display
   const formatAgeRange = (ad: DatingAd) => {
@@ -85,7 +86,7 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
 
   return (
     <>
-      <div className="space-y-4">
+      <div ref={containerRef} className="space-y-4">
         {ads.map((ad) => (
           <motion.div
             key={ad.id}
@@ -107,6 +108,7 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
                     url={ad.video_url} 
                     className="w-full h-full"
                     playOnHover={true}
+                    autoPlay={false}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-luxury-darker">

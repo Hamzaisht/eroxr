@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
@@ -9,7 +8,7 @@ import { DatingContent } from "@/components/dating/DatingContent";
 import { useUserProfile } from "@/components/dating/hooks/useUserProfile";
 import { useViewTracking } from "@/components/dating/hooks/useViewTracking";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Award, ArrowRight, Clock, CheckCircle, Users } from "lucide-react";
+import { Award, ArrowRight, Clock, CheckCircle, Users, Shield, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -25,24 +24,20 @@ export default function Dating() {
   });
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
-  
+  const [timeRemaining, setTimeRemaining] = useState(1800);
+
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Track page views
   useViewTracking();
 
-  // Get user profile data
   const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
   
-  // Check if user is verified and/or premium
   const isVerified = userProfile?.id_verification_status === 'verified';
   const isPremium = userProfile?.is_paying_customer;
-  const canAccessFullFeatures = isVerified || isPremium; // Changed to OR logic
-  
-  // Fetch ads data with special options - always skip moderation checks
+  const canAccessFullFeatures = isVerified || isPremium;
+
   const { data: ads, isLoading, refetch } = useAdsQuery({
-    // Always show all ads regardless of moderation status
     skipModeration: true,
     includeMyPendingAds: true,
     filterOptions,
@@ -51,7 +46,6 @@ export default function Dating() {
     premiumOnly: selectedSeeker === 'premium'
   });
 
-  // Handle URL parameters for tag searching and filtering
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tagParam = params.get('tag');
@@ -72,58 +66,47 @@ export default function Dating() {
     }
   }, [location.search]);
 
-  // Handle tag click for filtering
   const handleTagClick = (tag: string) => {
     setSelectedTag(tag);
-    // Update URL without reloading the page
     const params = new URLSearchParams(location.search);
     params.set('tag', tag);
     navigate(`${location.pathname}?${params.toString()}`);
   };
 
-  // Define search categories
   const searchCategories: SearchCategory[] = [
-    // Couple seeking
     { seeker: "couple", looking_for: "female" },
     { seeker: "couple", looking_for: "male" },
     { seeker: "couple", looking_for: "couple" },
     { seeker: "couple", looking_for: "trans" },
     { seeker: "couple", looking_for: "any" },
     
-    // Female seeking
     { seeker: "female", looking_for: "male" },
     { seeker: "female", looking_for: "female" },
     { seeker: "female", looking_for: "couple" },
     { seeker: "female", looking_for: "trans" },
     { seeker: "female", looking_for: "any" },
     
-    // Male seeking
     { seeker: "male", looking_for: "female" },
     { seeker: "male", looking_for: "male" },
     { seeker: "male", looking_for: "couple" },
     { seeker: "male", looking_for: "trans" },
     { seeker: "male", looking_for: "any" },
     
-    // Special categories
     { seeker: "verified", looking_for: "any" },
     { seeker: "premium", looking_for: "any" },
   ];
 
-  // Check if user can access body contact features
-  const canAccessBodyContact = isVerified || isPremium; // Changed to OR logic
+  const canAccessBodyContact = isVerified || isPremium;
 
-  // Handler to refresh ads after creating a new one
   const handleAdCreationSuccess = () => {
     refetch();
   };
 
-  // Handler for subscription button click
   const handleSubscriptionClick = () => {
     setShowSubscriptionDialog(true);
-    // Here you would eventually redirect to Stripe
+    setTimeRemaining(1800);
   };
 
-  // Show loading state
   if (isLoading || isProfileLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -132,28 +115,46 @@ export default function Dating() {
     );
   }
 
-  // Define shortcut map for reference in this component
   const shortcutMap = {
-    // Couple seeking tags
     "MF4A": { seeker: "couple", looking_for: "any" },
     "MF4F": { seeker: "couple", looking_for: "female" },
     "MF4M": { seeker: "couple", looking_for: "male" },
     "MF4MF": { seeker: "couple", looking_for: "couple" },
     "MF4T": { seeker: "couple", looking_for: "trans" },
     
-    // Female seeking tags
     "F4A": { seeker: "female", looking_for: "any" },
     "F4M": { seeker: "female", looking_for: "male" },
     "F4F": { seeker: "female", looking_for: "female" },
     "F4MF": { seeker: "female", looking_for: "couple" },
     "F4T": { seeker: "female", looking_for: "trans" },
     
-    // Male seeking tags
     "M4A": { seeker: "male", looking_for: "any" },
     "M4F": { seeker: "male", looking_for: "female" },
     "M4M": { seeker: "male", looking_for: "male" },
     "M4MF": { seeker: "male", looking_for: "couple" },
     "M4T": { seeker: "male", looking_for: "trans" }
+  };
+
+  useEffect(() => {
+    if (!showSubscriptionDialog) return;
+    
+    const timer = setInterval(() => {
+      setTimeRemaining(prevTime => {
+        if (prevTime <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [showSubscriptionDialog]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   return (
@@ -213,7 +214,6 @@ export default function Dating() {
           )}
 
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Left Sidebar - Filters */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -236,7 +236,6 @@ export default function Dating() {
               />
             </motion.div>
 
-            {/* Main Content - Video Profile Carousel */}
             <DatingContent 
               ads={ads}
               canAccessBodyContact={!!canAccessBodyContact}
@@ -247,7 +246,6 @@ export default function Dating() {
         </motion.div>
       </div>
 
-      {/* Subscription Modal */}
       <Dialog open={showSubscriptionDialog} onOpenChange={setShowSubscriptionDialog}>
         <DialogContent className="bg-luxury-darker border-luxury-primary/20 sm:max-w-md">
           <DialogHeader>
@@ -256,6 +254,16 @@ export default function Dating() {
               Get full access to BD Ads for only 59 SEK/month
             </DialogDescription>
           </DialogHeader>
+
+          <div className="bg-purple-900/30 rounded-md p-3 mb-3 border border-purple-500/20">
+            <p className="text-center text-white font-medium">Limited-Time Offer!</p>
+            <div className="flex justify-center items-center gap-2 mt-1">
+              <Clock className="h-4 w-4 text-purple-300" />
+              <p className="text-purple-300 font-mono text-sm">
+                Offer expires in: <span className="font-bold">{formatTime(timeRemaining)}</span>
+              </p>
+            </div>
+          </div>
 
           <div className="space-y-4 py-3">
             <div className="space-y-2">
@@ -272,8 +280,12 @@ export default function Dating() {
                 <p className="text-luxury-neutral">Access verified users only</p>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <Shield className="h-5 w-5 text-green-500" />
                 <p className="text-luxury-neutral">Cancel anytime with no commitments</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-green-500" />
+                <p className="text-luxury-neutral">30-day money-back guarantee</p>
               </div>
             </div>
 
@@ -288,7 +300,6 @@ export default function Dating() {
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white py-6 rounded-lg text-lg"
                 onClick={() => {
                   setShowSubscriptionDialog(false);
-                  // Here you'd redirect to Stripe checkout
                   navigate('/subscription');
                 }}
               >
