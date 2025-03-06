@@ -71,46 +71,66 @@ export const useBodyContactSubmit = ({
       let videoUrl = null;
       let avatarUrl = null;
 
-      // Video Upload Process
+      // Validate required fields before uploading
+      if (!values.title || !values.description || !values.relationshipStatus || !values.location) {
+        throw new Error("Please fill all required fields");
+      }
+
+      // Check if Looking For is selected
+      if (!values.lookingFor || values.lookingFor.length === 0) {
+        throw new Error("Please select at least one 'Looking For' option");
+      }
+
+      if (!values.videoFile) {
+        throw new Error("Video is required. Please upload a video.");
+      }
+
+      // Video Upload Process - with improved error handling
       if (values.videoFile) {
-        console.log("Validating video file:", values.videoFile.name, values.videoFile.size);
+        console.log("Processing video file:", values.videoFile.name, values.videoFile.size);
         
-        // Validate video format
-        const isValidVideo = await validateVideoFormat(values.videoFile);
-        if (!isValidVideo) {
-          throw new Error("Invalid video format. Please upload a valid video file.");
-        }
-        
-        // Get video duration
-        const duration = await getVideoDuration(values.videoFile);
-        console.log("Video duration:", duration);
-        
-        if (duration > 120) { // More than 2 minutes
-          throw new Error("Video is too long. Maximum duration is 2 minutes.");
-        }
-        
-        const videoFileName = `${session.user.id}/${Date.now()}_video.mp4`;
-        console.log("Uploading video to path:", videoFileName);
-        
-        const { error: videoError, data: videoData } = await supabase.storage
-          .from('dating-videos')
-          .upload(videoFileName, values.videoFile);
+        try {
+          // Validate video format
+          const isValidVideo = await validateVideoFormat(values.videoFile);
+          if (!isValidVideo) {
+            throw new Error("Invalid video format. Please upload a valid video file.");
+          }
+          
+          // Get video duration
+          const duration = await getVideoDuration(values.videoFile);
+          console.log("Video duration:", duration);
+          
+          if (duration > 120) { // More than 2 minutes
+            throw new Error("Video is too long. Maximum duration is 2 minutes.");
+          }
+          
+          const videoFileName = `${session.user.id}/${Date.now()}_video.mp4`;
+          console.log("Uploading video to path:", videoFileName);
+          
+          const { error: videoError, data: videoData } = await supabase.storage
+            .from('dating-videos')
+            .upload(videoFileName, values.videoFile, {
+              cacheControl: '3600',
+              upsert: false
+            });
 
-        if (videoError) {
-          console.error("Video upload error:", videoError);
-          throw new Error(`Video upload failed: ${videoError.message}`);
-        }
+          if (videoError) {
+            console.error("Video upload error:", videoError);
+            throw new Error(`Video upload failed: ${videoError.message}`);
+          }
 
-        console.log("Video upload successful:", videoData);
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('dating-videos')
-          .getPublicUrl(videoFileName);
-        
-        videoUrl = publicUrl;
-        console.log("Generated video URL:", videoUrl);
-      } else {
-        console.log("No video file provided");
+          console.log("Video upload successful:", videoData);
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('dating-videos')
+            .getPublicUrl(videoFileName);
+          
+          videoUrl = publicUrl;
+          console.log("Generated video URL:", videoUrl);
+        } catch (error: any) {
+          console.error("Video processing error:", error);
+          throw new Error(`Video processing failed: ${error.message}`);
+        }
       }
 
       // Avatar Upload Process
@@ -120,7 +140,10 @@ export const useBodyContactSubmit = ({
         const avatarFileName = `${session.user.id}/${Date.now()}_avatar.jpg`;
         const { error: avatarError, data: avatarData } = await supabase.storage
           .from('avatars')
-          .upload(avatarFileName, values.avatarFile);
+          .upload(avatarFileName, values.avatarFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
         if (avatarError) {
           console.error("Avatar upload error:", avatarError);
@@ -135,20 +158,6 @@ export const useBodyContactSubmit = ({
         
         avatarUrl = publicUrl;
         console.log("Generated avatar URL:", avatarUrl);
-      }
-
-      // Validate required fields
-      if (!values.title || !values.description || !values.relationshipStatus || !values.location) {
-        throw new Error("Please fill all required fields");
-      }
-
-      // Check if Looking For is selected
-      if (!values.lookingFor || values.lookingFor.length === 0) {
-        throw new Error("Please select at least one 'Looking For' option");
-      }
-
-      if (!videoUrl) {
-        throw new Error("Video is required. Please upload a video.");
       }
 
       // Prepare the age range
@@ -224,7 +233,7 @@ export const useBodyContactSubmit = ({
       if (onComplete) {
         onComplete();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating ad:", error);
       toast({
         title: "Error",

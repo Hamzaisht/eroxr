@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Upload, X, AlertCircle, Check, Camera, Video as VideoIcon } from "lucide-react";
@@ -27,6 +26,7 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
   const videoInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const progressIntervalRef = useRef<number | null>(null);
   const { toast } = useToast();
   
   const containerVariants = {
@@ -64,7 +64,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
   }, []);
 
   const handleAvatarFile = (file: File) => {
-    // Check file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Invalid file type",
@@ -74,7 +73,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
       return;
     }
     
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -107,13 +105,13 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
   }, []);
 
   const handleVideoFile = async (file: File) => {
-    // Reset states
     setVideoError(null);
     setVideoThumbnails([]);
     setProcessingVideo(true);
     setUploadProgress(0);
     
-    // Check file type
+    cleanupProgressInterval();
+    
     if (!file.type.startsWith('video/')) {
       setVideoError("Please upload a video file");
       setProcessingVideo(false);
@@ -125,7 +123,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
       return;
     }
     
-    // Check file size (max 100MB)
     if (file.size > 100 * 1024 * 1024) {
       setVideoError("Video must be smaller than 100MB");
       setProcessingVideo(false);
@@ -138,25 +135,25 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
     }
 
     try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
+      progressIntervalRef.current = window.setInterval(() => {
         setUploadProgress(prev => {
-          if (prev >= 95) {
-            clearInterval(progressInterval);
-            return 95;
+          if (prev >= 98) {
+            return prev + 0.1;
+          } else if (prev >= 90) {
+            return prev + 0.5;
+          } else {
+            return prev + 5;
           }
-          return prev + 5;
         });
       }, 200);
       
-      // Check video duration
       const duration = await getVideoDuration(file);
       setVideoDuration(duration);
       
-      if (duration > 120) { // 2 minutes
+      if (duration > 120) {
+        cleanupProgressInterval();
         setVideoError("Video must be shorter than 2 minutes");
         setProcessingVideo(false);
-        clearInterval(progressInterval);
         toast({
           title: "Video too long",
           description: "Video must be shorter than 2 minutes",
@@ -165,13 +162,11 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
         return;
       }
       
-      // Generate thumbnails
       const thumbnails = await generateThumbnails(file);
       setVideoThumbnails(thumbnails);
       
-      // Complete the upload
+      cleanupProgressInterval();
       setUploadProgress(100);
-      clearInterval(progressInterval);
       
       onUpdateValues({ videoFile: file });
       setProcessingVideo(false);
@@ -179,8 +174,9 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
         title: "Video uploaded",
         description: "Your video has been successfully processed",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing video:", error);
+      cleanupProgressInterval();
       setVideoError(error.message || "Failed to process video");
       setProcessingVideo(false);
       toast({
@@ -202,7 +198,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         
-        // Generate 3 thumbnails at different points
         const timePoints = [
           video.duration * 0.25,
           video.duration * 0.5,
@@ -238,8 +233,14 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
 
   const selectThumbnail = (index: number) => {
     setSelectedThumbnail(index);
-    // In a real implementation, we would save this selected thumbnail
   };
+
+  const cleanupProgressInterval = useCallback(() => {
+    if (progressIntervalRef.current !== null) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  }, []);
 
   return (
     <motion.div
@@ -258,7 +259,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
       </motion.div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Profile Avatar Upload */}
         <motion.div variants={itemVariants} className="space-y-2">
           <label className="text-sm font-medium">Profile Image</label>
           <div
@@ -321,7 +321,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
           />
         </motion.div>
         
-        {/* Video Upload */}
         <motion.div variants={itemVariants} className="space-y-2">
           <label className="text-sm font-medium flex justify-between items-center">
             <span>Profile Video <span className="text-red-500">*</span></span>
@@ -392,7 +391,7 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-medium">{uploadProgress}%</span>
+                    <span className="text-sm font-medium">{Math.round(uploadProgress)}%</span>
                   </div>
                 </div>
                 <p className="text-sm">Processing your video...</p>
@@ -439,7 +438,6 @@ export const MediaUploadStep = ({ values, onUpdateValues }: MediaUploadStepProps
         </motion.div>
       </div>
       
-      {/* Video Thumbnails */}
       {videoThumbnails.length > 0 && (
         <motion.div
           variants={itemVariants}
