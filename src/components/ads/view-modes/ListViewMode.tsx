@@ -75,11 +75,11 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
   };
   
   // Handle clicking on a tag
-  const handleTagClick = (tag: string, e: React.MouseEvent) => {
+  const handleTagClick = (tag: string, e: React.MouseEvent, adToTag: DatingAd) => {
     e.stopPropagation(); // Prevent opening the full view
     
-    if (ad.onTagClick) {
-      ad.onTagClick(tag);
+    if (adToTag.onTagClick) {
+      adToTag.onTagClick(tag);
     }
   };
 
@@ -159,7 +159,7 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
                           key={tag} 
                           variant="outline" 
                           className="bg-luxury-darker/50 text-xs cursor-pointer hover:bg-luxury-primary/20"
-                          onClick={(e) => handleTagClick(tag, e)}
+                          onClick={(e) => handleTagClick(tag, e, ad)}
                         >
                           {tag}
                         </Badge>
