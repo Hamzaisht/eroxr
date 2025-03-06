@@ -1,7 +1,7 @@
 
 import { motion } from "framer-motion";
 import { DatingAd } from "@/components/ads/types/dating";
-import { VideoProfileCarousel } from "@/components/ads/VideoProfileCarousel";
+import { VideoProfileCarousel } from "@/components/ads/video-profile-carousel";
 import { EmptyProfilesState } from "./EmptyProfilesState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useSession } from "@supabase/auth-helpers-react";

@@ -7,7 +7,7 @@ import { CreatorsFeed } from "@/components/CreatorsFeed";
 import { MediaGrid } from "./MediaGrid";
 import { EmptyState } from "./EmptyState";
 import { useParams } from "react-router-dom";
-import { VideoProfileCarousel } from "@/components/ads/VideoProfileCarousel";
+import { VideoProfileCarousel } from "@/components/ads/video-profile-carousel";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { useState, useEffect } from "react";
 
