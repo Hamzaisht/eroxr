@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Search, Filter, HelpCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -19,15 +20,21 @@ interface SearchCategoriesProps {
 }
 
 const shortcutMap = {
+  "MF4A": { seeker: "couple", looking_for: "any" },
   "MF4F": { seeker: "couple", looking_for: "female" },
   "MF4M": { seeker: "couple", looking_for: "male" },
   "MF4MF": { seeker: "couple", looking_for: "couple" },
+  "MF4T": { seeker: "couple", looking_for: "trans" },
+  "F4A": { seeker: "female", looking_for: "any" },
   "F4M": { seeker: "female", looking_for: "male" },
   "F4F": { seeker: "female", looking_for: "female" },
   "F4MF": { seeker: "female", looking_for: "couple" },
+  "F4T": { seeker: "female", looking_for: "trans" },
+  "M4A": { seeker: "male", looking_for: "any" },
   "M4F": { seeker: "male", looking_for: "female" },
   "M4M": { seeker: "male", looking_for: "male" },
   "M4MF": { seeker: "male", looking_for: "couple" },
+  "M4T": { seeker: "male", looking_for: "trans" },
 };
 
 const getShortcutFromCategory = (seeker: string, looking_for: string) => {
@@ -83,7 +90,11 @@ export const SearchCategories = ({
                 <h4 className="font-medium">Understanding Shortcuts</h4>
                 <p className="text-sm text-muted-foreground">
                   MF4F means a couple (Male+Female) looking for a Female.
-                  M4F means a Male looking for a Female, and so on.
+                  M4F means a Male looking for a Female.
+                  The format is [who you are]4[who you seek].
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  A = Anyone, MF = Couple, M = Male, F = Female, T = Trans
                 </p>
               </div>
             </HoverCardContent>

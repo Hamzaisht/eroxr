@@ -12,7 +12,16 @@ export const SearchBar = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      // Check if it's a relationship tag search (e.g., "M4F")
+      const isRelationshipTag = /^(M|F|MF)4(M|F|MF|T|A)$/i.test(searchQuery.trim());
+      
+      if (isRelationshipTag) {
+        // Redirect to dating page with the tag as a query parameter
+        navigate(`/dating?tag=${encodeURIComponent(searchQuery.trim().toUpperCase())}`);
+      } else {
+        // Regular search
+        navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      }
     }
   };
 
@@ -21,7 +30,7 @@ export const SearchBar = () => {
       <div className="relative flex items-center gap-2 group">
         <Input
           type="search"
-          placeholder="Search..."
+          placeholder="Search or enter relationship tag (e.g., M4F)..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="bg-luxury-dark/30 border-luxury-neutral/10 focus:ring-2 focus:ring-luxury-primary/50 

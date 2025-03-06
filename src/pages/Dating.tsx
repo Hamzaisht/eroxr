@@ -8,6 +8,7 @@ import { DatingHeader } from "@/components/dating/DatingHeader";
 import { DatingContent } from "@/components/dating/DatingContent";
 import { useUserProfile } from "@/components/dating/hooks/useUserProfile";
 import { useViewTracking } from "@/components/dating/hooks/useViewTracking";
+import { useLocation } from "react-router-dom";
 
 export default function Dating() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -15,6 +16,8 @@ export default function Dating() {
   const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
+  
+  const location = useLocation();
 
   // Track page views
   useViewTracking();
@@ -25,19 +28,40 @@ export default function Dating() {
   // Get user profile data
   const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
 
+  // Handle URL parameters for tag searching
+  useState(() => {
+    const params = new URLSearchParams(location.search);
+    const tagParam = params.get('tag');
+    
+    if (tagParam && shortcutMap[tagParam.toUpperCase()]) {
+      const { seeker, looking_for } = shortcutMap[tagParam.toUpperCase()];
+      setSelectedSeeker(seeker);
+      setSelectedLookingFor(looking_for);
+    }
+  });
+
   // Define search categories
   const searchCategories: SearchCategory[] = [
+    // Couple seeking
     { seeker: "couple", looking_for: "female" },
     { seeker: "couple", looking_for: "male" },
     { seeker: "couple", looking_for: "couple" },
+    { seeker: "couple", looking_for: "trans" },
+    { seeker: "couple", looking_for: "any" },
+    
+    // Female seeking
     { seeker: "female", looking_for: "male" },
     { seeker: "female", looking_for: "female" },
     { seeker: "female", looking_for: "couple" },
+    { seeker: "female", looking_for: "trans" },
+    { seeker: "female", looking_for: "any" },
+    
+    // Male seeking
     { seeker: "male", looking_for: "female" },
     { seeker: "male", looking_for: "male" },
     { seeker: "male", looking_for: "couple" },
-    { seeker: "any", looking_for: "any" }, // A4A - Anyone for Anyone
-    { seeker: "couple", looking_for: "couple" }, // MF4MF - Couple for Couple
+    { seeker: "male", looking_for: "trans" },
+    { seeker: "male", looking_for: "any" }
   ];
 
   // Check if user can access body contact features
@@ -56,6 +80,22 @@ export default function Dating() {
       </div>
     );
   }
+
+  // Define shortcut map for reference in this component
+  const shortcutMap = {
+    "MF4A": { seeker: "couple", looking_for: "any" },
+    "MF4F": { seeker: "couple", looking_for: "female" },
+    "MF4M": { seeker: "couple", looking_for: "male" },
+    "MF4MF": { seeker: "couple", looking_for: "couple" },
+    "F4A": { seeker: "female", looking_for: "any" },
+    "F4M": { seeker: "female", looking_for: "male" },
+    "F4F": { seeker: "female", looking_for: "female" },
+    "F4MF": { seeker: "female", looking_for: "couple" },
+    "M4A": { seeker: "male", looking_for: "any" },
+    "M4F": { seeker: "male", looking_for: "female" },
+    "M4M": { seeker: "male", looking_for: "male" },
+    "M4MF": { seeker: "male", looking_for: "couple" }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to">
