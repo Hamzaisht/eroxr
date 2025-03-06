@@ -13,13 +13,13 @@ export const TagDisplay = ({
   if (!selectedTag) return null;
   
   return (
-    <div className="mb-4 p-2 bg-luxury-primary/10 rounded-md flex items-center justify-between">
+    <div className="mb-4 p-3 bg-gradient-to-r from-luxury-primary/10 to-luxury-secondary/10 rounded-lg flex items-center justify-between backdrop-blur-sm border border-luxury-primary/10">
       <div className="flex items-center">
         <Search className="h-4 w-4 text-luxury-primary mr-2" />
         <span className="text-sm text-white">Tag: {selectedTag}</span>
       </div>
       <button
-        className="text-xs text-luxury-neutral hover:text-white"
+        className="text-xs bg-luxury-dark/60 px-2 py-1 rounded-md text-luxury-neutral hover:text-white hover:bg-luxury-dark/80 transition-colors"
         onClick={handleClearTag}
       >
         Clear

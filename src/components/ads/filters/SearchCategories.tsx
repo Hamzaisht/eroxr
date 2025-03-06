@@ -1,7 +1,7 @@
 
 import { ReactNode } from 'react';
 import { SearchCategory } from "../types/dating";
-import { User, Users, Heart, CheckCircle, Star, UserPlus } from "lucide-react";
+import { User, Users, Heart, CheckCircle, Star, Sparkles, Flame } from "lucide-react";
 
 export interface SearchCategoriesProps {
   searchCategories: SearchCategory[];
@@ -40,10 +40,11 @@ export const SearchCategories = ({
   });
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {Object.entries(categoryGroups).map(([seeker, categories]) => (
         <div key={seeker} className="space-y-2">
-          <h4 className="text-xs uppercase text-luxury-muted font-medium tracking-wider">
+          <h4 className="text-xs uppercase text-luxury-neutral font-medium tracking-wider flex items-center gap-1.5">
+            {getCategoryGroupIcon(seeker)}
             {getCategoryGroupLabel(seeker)}
           </h4>
           <div className="grid grid-cols-3 gap-2">
@@ -55,19 +56,23 @@ export const SearchCategories = ({
               return (
                 <button
                   key={`${category.seeker}-${category.looking_for}`}
-                  className={`relative flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs transition-all ${
+                  className={`relative flex flex-col items-center justify-center p-2.5 rounded-lg text-xs transition-all ${
                     isSelected 
-                      ? "bg-luxury-primary/80 text-white shadow-sm shadow-luxury-primary/25" 
-                      : "bg-luxury-darker hover:bg-luxury-dark/80 text-luxury-neutral"
+                      ? "bg-gradient-to-r from-luxury-primary to-luxury-secondary text-white shadow-md shadow-luxury-primary/25" 
+                      : "bg-luxury-darker hover:bg-luxury-dark/80 text-luxury-neutral hover:text-white"
                   }`}
                   onClick={() => handleCategoryClick(category.seeker, category.looking_for)}
                 >
-                  <div className="mb-1">
+                  <div className="mb-1.5">
                     {getCategoryIcon(category)}
                   </div>
                   <span className="text-xs font-medium">
                     {formatCategoryLabel(category)}
                   </span>
+                  
+                  {isSelected && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-luxury-primary rounded-full animate-pulse" />
+                  )}
                 </button>
               );
             })}
@@ -79,6 +84,21 @@ export const SearchCategories = ({
 };
 
 // Helper functions
+
+// Function to get group icon
+function getCategoryGroupIcon(seeker: string): ReactNode {
+  const iconSize = 14;
+  const iconClassName = "text-luxury-primary";
+
+  switch (seeker) {
+    case "male": return <User size={iconSize} className={iconClassName} />;
+    case "female": return <User size={iconSize} className={iconClassName} />;
+    case "couple": return <Users size={iconSize} className={iconClassName} />;
+    case "verified": return <CheckCircle size={iconSize} className={iconClassName} />;
+    case "premium": return <Star size={iconSize} className={iconClassName} />;
+    default: return <Sparkles size={iconSize} className={iconClassName} />;
+  }
+}
 
 // Function to get group label
 function getCategoryGroupLabel(seeker: string): string {
@@ -94,8 +114,8 @@ function getCategoryGroupLabel(seeker: string): string {
 
 // Function to get appropriate icon for category
 function getCategoryIcon(category: SearchCategory): ReactNode {
-  const iconSize = 16;
-  const iconClassName = "opacity-80";
+  const iconSize = 18;
+  const iconClassName = "opacity-90";
 
   // Special categories first
   if (category.seeker === "verified") {
@@ -107,6 +127,10 @@ function getCategoryIcon(category: SearchCategory): ReactNode {
   }
 
   // For regular categories, show icon based on seeker/looking_for combination
+  if (category.looking_for === "any") {
+    return <Flame size={iconSize} className={iconClassName} />;
+  }
+  
   switch (category.seeker) {
     case "male":
       return <User size={iconSize} className={iconClassName} />;
@@ -115,11 +139,7 @@ function getCategoryIcon(category: SearchCategory): ReactNode {
     case "couple":
       return <Users size={iconSize} className={iconClassName} />;
     default:
-      // For other combinations (fallback)
-      if (category.looking_for === "any") {
-        return <Heart size={iconSize} className={iconClassName} />;
-      }
-      return <UserPlus size={iconSize} className={iconClassName} />;
+      return <Heart size={iconSize} className={iconClassName} />;
   }
 }
 
