@@ -1,13 +1,6 @@
 
-import { useState, useEffect, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { type FilterOptions } from "../types/dating";
-import { Badge } from "@/components/ui/badge";
-import { X, Filter, Map, Calendar, Users, Award, Shield } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface FilterAccordionProps {
   title: string;
