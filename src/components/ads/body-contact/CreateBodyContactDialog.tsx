@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ImmersiveAdCreation } from "./ImmersiveAdCreation";
+import { ImmersiveAdCreation } from "./immersive-creation";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import "./styles.css";
