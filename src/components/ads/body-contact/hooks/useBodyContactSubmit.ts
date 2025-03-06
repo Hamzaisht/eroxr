@@ -187,10 +187,12 @@ export const useBodyContactSubmit = ({
       
       console.log("Submitting ad data:", adData);
 
-      // Insert ad
-      const { error: insertError } = await supabase
+      // Insert ad and get the returned id
+      const { data: insertedAd, error: insertError } = await supabase
         .from("dating_ads")
-        .insert(adData);
+        .insert(adData)
+        .select('id')
+        .single();
 
       if (insertError) {
         console.error("Ad insertion error:", insertError);
@@ -207,20 +209,24 @@ export const useBodyContactSubmit = ({
         }
       }
 
-      // Track the dating ad media for the user profile
-      const { error: trackingError } = await supabase
-        .from("dating_ad_media")
-        .insert({
-          user_id: session.user.id,
-          ad_id: adData.id,
-          video_url: videoUrl,
-          avatar_url: avatarUrl,
-          created_at: new Date().toISOString()
-        });
+      // Track the dating ad media for the user profile (using the returned id)
+      if (insertedAd) {
+        console.log("Ad created with ID:", insertedAd.id);
+        
+        const { error: trackingError } = await supabase
+          .from("dating_ad_media")
+          .insert({
+            user_id: session.user.id,
+            ad_id: insertedAd.id,
+            video_url: videoUrl,
+            avatar_url: avatarUrl,
+            created_at: new Date().toISOString()
+          });
 
-      if (trackingError) {
-        console.error("Media tracking error:", trackingError);
-        // Don't throw, just log - we've already created the ad
+        if (trackingError) {
+          console.error("Media tracking error:", trackingError);
+          // Don't throw, just log - we've already created the ad
+        }
       }
 
       if (avatarUrl) {
