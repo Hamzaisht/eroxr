@@ -1,0 +1,2 @@
+
+export { VideoProfileCarousel } from './VideoProfileCarousel';
