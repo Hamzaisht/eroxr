@@ -3,10 +3,13 @@ import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { FilterOptions } from "../types/dating";
+import { type Database } from "@/integrations/supabase/types";
+
+type NordicCountry = Database['public']['Enums']['nordic_country'];
 
 interface ActiveFiltersProps {
   filterOptions: FilterOptions;
-  selectedCountry: string | null;
+  selectedCountry: NordicCountry | null;
   selectedSeeker: string | null;
   selectedLookingFor: string | null;
   selectedTag: string | null;
@@ -30,6 +33,13 @@ export const ActiveFilters = ({
     });
   }
 
+  if (filterOptions.maxDistance && filterOptions.maxDistance !== 50) {
+    activeFilters.push({
+      type: 'distance',
+      label: `Distance: ${filterOptions.maxDistance}km`
+    });
+  }
+
   if (selectedSeeker && selectedLookingFor) {
     activeFilters.push({
       type: 'seeking',
@@ -44,17 +54,24 @@ export const ActiveFilters = ({
     });
   }
 
-  if (filterOptions.minAge && filterOptions.maxAge) {
+  if (filterOptions.minAge !== 18 || filterOptions.maxAge !== 99) {
     activeFilters.push({
       type: 'age',
       label: `Age: ${filterOptions.minAge}-${filterOptions.maxAge}`
     });
   }
 
-  if (filterOptions.maxDistance) {
+  if (filterOptions.isVerified) {
     activeFilters.push({
-      type: 'distance',
-      label: `Distance: ${filterOptions.maxDistance}km`
+      type: 'verification',
+      label: `Verified only`
+    });
+  }
+
+  if (filterOptions.isPremium) {
+    activeFilters.push({
+      type: 'premium',
+      label: `Premium only`
     });
   }
 
@@ -76,11 +93,23 @@ export const ActiveFilters = ({
           <button
             onClick={() => onClearFilter(type)}
             className="ml-1 hover:text-white transition-colors"
+            aria-label={`Remove ${label} filter`}
           >
             <X className="h-3 w-3" />
           </button>
         </Badge>
       ))}
+
+      {activeFilters.length > 1 && (
+        <Badge
+          variant="outline"
+          className="bg-luxury-dark/50 border-luxury-primary/20 text-luxury-neutral pl-3 pr-2 py-1.5 flex items-center gap-1 cursor-pointer hover:bg-luxury-dark/80"
+          onClick={() => activeFilters.forEach(filter => onClearFilter(filter.type))}
+        >
+          Clear all
+          <X className="h-3 w-3 ml-1" />
+        </Badge>
+      )}
     </motion.div>
   );
 };

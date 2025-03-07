@@ -9,18 +9,20 @@ interface FilterGroupProps {
   icon?: React.ReactNode;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  className?: string;
 }
 
 export const FilterGroup = ({ 
   title, 
   icon, 
   children, 
-  defaultOpen = false 
+  defaultOpen = false,
+  className = ""
 }: FilterGroupProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-luxury-primary/10 last:border-none">
+    <div className={`border-b border-luxury-primary/10 last:border-none ${className}`}>
       <Button
         variant="ghost"
         onClick={() => setIsOpen(!isOpen)}

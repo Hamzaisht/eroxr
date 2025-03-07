@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { Users, MapPin, Tags, Shield, Crown, Ruler } from "lucide-react";
+import { Users, MapPin, Tags, Shield, Crown, Ruler, Search } from "lucide-react";
 import { FilterOptions, SearchCategory } from "./types/dating";
 import { SearchCategories } from "./filters/SearchCategories";
 import { CountrySelect } from "./CountrySelect";
@@ -49,6 +49,9 @@ export const AdFilters = ({
       case 'country':
         setSelectedCountry(null);
         break;
+      case 'distance':
+        setFilterOptions({ ...filterOptions, maxDistance: 50 });
+        break;
       case 'seeking':
         setSelectedSeeker(null);
         setSelectedLookingFor(null);
@@ -59,8 +62,11 @@ export const AdFilters = ({
       case 'age':
         setFilterOptions({ ...filterOptions, minAge: 18, maxAge: 99 });
         break;
-      case 'distance':
-        setFilterOptions({ ...filterOptions, maxDistance: 50 });
+      case 'verification':
+        setFilterOptions({ ...filterOptions, isVerified: false });
+        break;
+      case 'premium':
+        setFilterOptions({ ...filterOptions, isPremium: false });
         break;
     }
   };
@@ -81,6 +87,13 @@ export const AdFilters = ({
       />
 
       <div className="divide-y divide-luxury-primary/10">
+        <FilterGroup title="Search by Keyword or Username" icon={<Search className="h-4 w-4" />} defaultOpen>
+          <UserSearchFields
+            filterOptions={filterOptions}
+            setFilterOptions={setFilterOptions}
+          />
+        </FilterGroup>
+
         <FilterGroup title="Location" icon={<MapPin className="h-4 w-4" />} defaultOpen>
           <CountrySelect
             selectedCountry={selectedCountry}
@@ -93,7 +106,7 @@ export const AdFilters = ({
           />
         </FilterGroup>
 
-        <FilterGroup title="Search Categories" icon={<Users className="h-4 w-4" />} defaultOpen>
+        <FilterGroup title="Search Categories" icon={<Users className="h-4 w-4" />}>
           <SearchCategories
             searchCategories={searchCategories}
             selectedSeeker={selectedSeeker}

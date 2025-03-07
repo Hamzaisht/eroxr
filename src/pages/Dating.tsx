@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { FilterOptions } from "@/components/ads/types/dating";
@@ -9,13 +10,49 @@ import { useUserProfile } from "@/components/dating/hooks/useUserProfile";
 import { useViewTracking } from "@/components/dating/hooks/useViewTracking";
 import { PremiumPromoBanner } from "@/components/dating/PremiumPromoBanner";
 import { SubscriptionDialog } from "@/components/dating/SubscriptionDialog";
-import { useSearchParams } from "@/components/dating/hooks/useSearchParams";
 import { defaultSearchCategories, nordicCountries } from "@/components/dating/utils/datingUtils";
 import { type Database } from "@/integrations/supabase/types";
 import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "react-router-dom";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
+
+// Modified version of useSearchParams without page refreshes
+const useModifiedSearchParams = ({
+  setSelectedTag,
+  setSelectedSeeker,
+  setSelectedLookingFor
+}: {
+  setSelectedTag: (tag: string | null) => void;
+  setSelectedSeeker: (seeker: string | null) => void;
+  setSelectedLookingFor: (lookingFor: string | null) => void;
+}) => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tagParam = params.get('tag');
+    const seekerParam = params.get('seeker');
+    const lookingForParam = params.get('looking_for');
+    
+    if (tagParam) {
+      setSelectedTag(tagParam);
+    }
+    
+    if (seekerParam && lookingForParam) {
+      setSelectedSeeker(seekerParam);
+      setSelectedLookingFor(lookingForParam);
+    }
+  }, [location.search, setSelectedTag, setSelectedSeeker, setSelectedLookingFor]);
+
+  const handleTagClick = (tag: string) => {
+    setSelectedTag(tag);
+    // We're not updating the URL here to avoid page refresh
+  };
+
+  return { handleTagClick };
+};
 
 export default function Dating() {
   const [selectedCountry, setSelectedCountry] = useState<NordicCountry | null>(null);
@@ -40,7 +77,7 @@ export default function Dating() {
   const isPremium = userProfile?.is_paying_customer;
   const canAccessFullFeatures = isVerified || isPremium;
 
-  const { handleTagClick } = useSearchParams({
+  const { handleTagClick } = useModifiedSearchParams({
     setSelectedTag,
     setSelectedSeeker,
     setSelectedLookingFor
@@ -51,9 +88,14 @@ export default function Dating() {
     includeMyPendingAds: true,
     filterOptions,
     tagFilter: selectedTag,
-    verifiedOnly: selectedSeeker === 'verified',
-    premiumOnly: selectedSeeker === 'premium'
+    verifiedOnly: filterOptions.isVerified || selectedSeeker === 'verified',
+    premiumOnly: filterOptions.isPremium || selectedSeeker === 'premium'
   });
+
+  useEffect(() => {
+    // This will refetch ads when filter options change without refreshing the page
+    refetch();
+  }, [filterOptions, selectedTag, selectedSeeker, selectedLookingFor, selectedCountry, refetch]);
 
   const handleAdCreationSuccess = () => {
     refetch();
@@ -93,7 +135,7 @@ export default function Dating() {
             <PremiumPromoBanner onSubscriptionClick={handleSubscriptionClick} />
           )}
 
-          <div className="lg:hidden">
+          <div className="lg:hidden mb-4">
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
@@ -164,4 +206,4 @@ export default function Dating() {
       />
     </div>
   );
-}
+};
