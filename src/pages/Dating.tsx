@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
@@ -13,7 +12,8 @@ import { SubscriptionDialog } from "@/components/dating/SubscriptionDialog";
 import { useSearchParams } from "@/components/dating/hooks/useSearchParams";
 import { defaultSearchCategories, nordicCountries } from "@/components/dating/utils/datingUtils";
 import { type Database } from "@/integrations/supabase/types";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
@@ -30,6 +30,7 @@ export default function Dating() {
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   useViewTracking();
 
@@ -92,8 +93,18 @@ export default function Dating() {
             <PremiumPromoBanner onSubscriptionClick={handleSubscriptionClick} />
           )}
 
+          <div className="lg:hidden">
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+          </div>
+
           <div className="flex flex-col lg:flex-row gap-8 relative">
-            {/* Collapsible sidebar with toggle button */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ 
@@ -102,12 +113,15 @@ export default function Dating() {
                 width: isFilterCollapsed ? '40px' : '320px',
               }}
               transition={{ duration: 0.3 }}
-              className={`flex-shrink-0 relative ${isFilterCollapsed ? 'w-10' : 'lg:w-80'}`}
+              className={`
+                ${isFilterCollapsed ? 'w-10' : 'w-full lg:w-80'} 
+                flex-shrink-0 relative
+                ${!showFilters && 'hidden lg:block'}
+              `}
             >
-              {/* Toggle button */}
               <button
                 onClick={() => setIsFilterCollapsed(!isFilterCollapsed)}
-                className="absolute -right-4 top-20 z-10 w-8 h-16 bg-luxury-dark/80 border border-luxury-primary/30 rounded-r-lg flex items-center justify-center text-luxury-primary hover:bg-luxury-dark transition-colors"
+                className="hidden lg:flex absolute -right-4 top-20 z-10 w-8 h-16 bg-luxury-dark/80 border border-luxury-primary/30 rounded-r-lg items-center justify-center text-luxury-primary hover:bg-luxury-dark transition-colors"
               >
                 {isFilterCollapsed ? (
                   <ChevronRight className="w-5 h-5" />
@@ -116,7 +130,6 @@ export default function Dating() {
                 )}
               </button>
               
-              {/* Filters */}
               <div className={`${isFilterCollapsed ? 'invisible opacity-0' : 'visible opacity-100'} transition-opacity duration-300`}>
                 <AdFilters
                   selectedCountry={selectedCountry}

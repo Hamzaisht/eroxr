@@ -1,5 +1,6 @@
 
 import { useEffect } from "react";
+import { Users, MapPin, Tags, Shield, Crown, Ruler } from "lucide-react";
 import { FilterOptions, SearchCategory } from "./types/dating";
 import { SearchCategories } from "./filters/SearchCategories";
 import { CountrySelect } from "./CountrySelect";
@@ -8,6 +9,8 @@ import { TagDisplay } from "./filters/TagDisplay";
 import { AgeRangeFilter } from "./filters/AgeRangeFilter";
 import { DistanceFilter } from "./filters/DistanceFilter";
 import { VerificationFilter } from "./filters/VerificationFilter";
+import { ActiveFilters } from "./filters/ActiveFilters";
+import { FilterGroup } from "./filters/FilterGroup";
 import { type Database } from "@/integrations/supabase/types";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
@@ -41,79 +44,88 @@ export const AdFilters = ({
   selectedTag,
   setSelectedTag
 }: AdFiltersProps) => {
-  // Function to handle search tag clear
-  const handleClearTag = () => {
-    setSelectedTag(null);
+  const handleClearFilter = (filterType: string) => {
+    switch (filterType) {
+      case 'country':
+        setSelectedCountry(null);
+        break;
+      case 'seeking':
+        setSelectedSeeker(null);
+        setSelectedLookingFor(null);
+        break;
+      case 'tag':
+        setSelectedTag(null);
+        break;
+      case 'age':
+        setFilterOptions({ ...filterOptions, minAge: 18, maxAge: 99 });
+        break;
+      case 'distance':
+        setFilterOptions({ ...filterOptions, maxDistance: 50 });
+        break;
+    }
   };
 
-  // Reset filters when country changes
-  useEffect(() => {
-    if (selectedCountry) {
-      setFilterOptions({
-        ...filterOptions,
-        country: selectedCountry
-      });
-    } else {
-      const { country, ...rest } = filterOptions;
-      setFilterOptions(rest);
-    }
-  }, [selectedCountry]);
-
   return (
-    <div className="bg-luxury-dark/50 backdrop-blur-sm p-5 rounded-xl border border-luxury-primary/10">
-      <h2 className="text-xl font-semibold mb-4 text-white">Find BD Ads</h2>
-
-      {/* User and Location Search Fields */}
-      <UserSearchFields 
-        filterOptions={filterOptions} 
-        setFilterOptions={setFilterOptions} 
-      />
-
-      {/* Selected Tag (if any) */}
-      <TagDisplay 
-        selectedTag={selectedTag} 
-        handleClearTag={handleClearTag} 
-      />
-
-      {/* Country Filter */}
-      <div className="mb-6">
-        <label className="text-sm font-medium text-luxury-neutral mb-2 block">Country</label>
-        <CountrySelect
-          selectedCountry={selectedCountry}
-          setSelectedCountry={setSelectedCountry}
-          countries={countries}
-        />
+    <div className="bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-primary/10 overflow-hidden">
+      <div className="p-4 border-b border-luxury-primary/10">
+        <h2 className="text-xl font-semibold text-white">Find BD Ads</h2>
       </div>
 
-      {/* Search Categories */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-luxury-neutral mb-2">Search Categories</h3>
-        <SearchCategories
-          searchCategories={searchCategories}
-          selectedSeeker={selectedSeeker}
-          selectedLookingFor={selectedLookingFor}
-          setSelectedSeeker={setSelectedSeeker}
-          setSelectedLookingFor={setSelectedLookingFor}
-        />
+      <ActiveFilters
+        filterOptions={filterOptions}
+        selectedCountry={selectedCountry}
+        selectedSeeker={selectedSeeker}
+        selectedLookingFor={selectedLookingFor}
+        selectedTag={selectedTag}
+        onClearFilter={handleClearFilter}
+      />
+
+      <div className="divide-y divide-luxury-primary/10">
+        <FilterGroup title="Location" icon={<MapPin className="h-4 w-4" />} defaultOpen>
+          <CountrySelect
+            selectedCountry={selectedCountry}
+            setSelectedCountry={setSelectedCountry}
+            countries={countries}
+          />
+          <DistanceFilter 
+            filterOptions={filterOptions} 
+            setFilterOptions={setFilterOptions} 
+          />
+        </FilterGroup>
+
+        <FilterGroup title="Search Categories" icon={<Users className="h-4 w-4" />} defaultOpen>
+          <SearchCategories
+            searchCategories={searchCategories}
+            selectedSeeker={selectedSeeker}
+            selectedLookingFor={selectedLookingFor}
+            setSelectedSeeker={setSelectedSeeker}
+            setSelectedLookingFor={setSelectedLookingFor}
+          />
+        </FilterGroup>
+
+        <FilterGroup title="Age Range" icon={<Ruler className="h-4 w-4" />}>
+          <AgeRangeFilter 
+            filterOptions={filterOptions} 
+            setFilterOptions={setFilterOptions} 
+          />
+        </FilterGroup>
+
+        <FilterGroup title="Verification" icon={<Shield className="h-4 w-4" />}>
+          <VerificationFilter 
+            filterOptions={filterOptions} 
+            setFilterOptions={setFilterOptions} 
+          />
+        </FilterGroup>
+
+        {selectedTag && (
+          <FilterGroup title="Active Tag" icon={<Tags className="h-4 w-4" />}>
+            <TagDisplay 
+              selectedTag={selectedTag} 
+              handleClearTag={() => setSelectedTag(null)} 
+            />
+          </FilterGroup>
+        )}
       </div>
-
-      {/* Age Range Filter */}
-      <AgeRangeFilter 
-        filterOptions={filterOptions} 
-        setFilterOptions={setFilterOptions} 
-      />
-
-      {/* Distance Filter */}
-      <DistanceFilter 
-        filterOptions={filterOptions} 
-        setFilterOptions={setFilterOptions} 
-      />
-
-      {/* Verification Filter */}
-      <VerificationFilter 
-        filterOptions={filterOptions} 
-        setFilterOptions={setFilterOptions} 
-      />
     </div>
   );
 };
