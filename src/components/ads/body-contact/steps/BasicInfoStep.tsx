@@ -8,6 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AdFormValues } from "../types";
 import { User } from "lucide-react";
+import { LocationSearch } from "../../LocationSearch";
+import { type Database } from "@/integrations/supabase/types";
+
+type NordicCountry = Database['public']['Enums']['nordic_country'];
 
 interface BasicInfoStepProps {
   values: AdFormValues;
@@ -16,6 +20,8 @@ interface BasicInfoStepProps {
 
 export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) => {
   const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [selectedCountry, setSelectedCountry] = useState<NordicCountry | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
   
   const bodyTypes = [
     "athletic", "average", "slim", "curvy", "muscular", "plus_size"
@@ -25,6 +31,22 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
     onUpdateValues({ avatarFile: file });
     setAvatarPreview(preview);
   };
+
+  // Update location when city or country changes
+  const handleLocationChange = () => {
+    if (selectedCity && selectedCountry) {
+      onUpdateValues({ location: `${selectedCity}, ${selectedCountry}` });
+    } else if (selectedCountry) {
+      onUpdateValues({ location: selectedCountry });
+    } else {
+      onUpdateValues({ location: '' });
+    }
+  };
+
+  // Set location when city or country changes
+  React.useEffect(() => {
+    handleLocationChange();
+  }, [selectedCity, selectedCountry]);
 
   return (
     <motion.div 
@@ -168,13 +190,11 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
         className="space-y-2"
       >
         <Label htmlFor="location" className="text-luxury-neutral">Location</Label>
-        <Input
-          id="location"
-          placeholder="Enter your city"
-          value={values.location}
-          onChange={(e) => onUpdateValues({ location: e.target.value })}
-          className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 focus:ring-luxury-primary/20
-            transition-all duration-300 hover:border-luxury-primary/30"
+        <LocationSearch
+          selectedCountry={selectedCountry}
+          setSelectedCountry={setSelectedCountry as (country: NordicCountry | null) => void}
+          selectedCity={selectedCity}
+          setSelectedCity={setSelectedCity}
         />
       </motion.div>
     </motion.div>

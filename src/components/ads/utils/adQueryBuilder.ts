@@ -15,7 +15,8 @@ export const buildAdsQuery = (
     premiumOnly, 
     filterOptions, 
     userId,
-    tagFilter
+    tagFilter,
+    locationFilters
   } = options;
 
   // Main query to get dating ads
@@ -29,6 +30,16 @@ export const buildAdsQuery = (
     adsQuery = adsQuery.eq("user_id", userId);
   } else {
     // For the main dating page
+    
+    // Apply country filter
+    if (locationFilters?.country) {
+      adsQuery = adsQuery.eq("country", locationFilters.country);
+    }
+    
+    // Apply city filter if provided
+    if (locationFilters?.city) {
+      adsQuery = adsQuery.ilike("city", `%${locationFilters.city}%`);
+    }
     
     // Apply any additional filters from filterOptions
     if (filterOptions?.country) {

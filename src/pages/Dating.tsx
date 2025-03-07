@@ -56,6 +56,7 @@ const useModifiedSearchParams = ({
 
 export default function Dating() {
   const [selectedCountry, setSelectedCountry] = useState<NordicCountry | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedSeeker, setSelectedSeeker] = useState<string | null>(null);
   const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -89,13 +90,18 @@ export default function Dating() {
     filterOptions,
     tagFilter: selectedTag,
     verifiedOnly: filterOptions.isVerified || selectedSeeker === 'verified',
-    premiumOnly: filterOptions.isPremium || selectedSeeker === 'premium'
+    premiumOnly: filterOptions.isPremium || selectedSeeker === 'premium',
+    // Pass location filters
+    locationFilters: {
+      country: selectedCountry,
+      city: selectedCity
+    }
   });
 
   useEffect(() => {
     // This will refetch ads when filter options change without refreshing the page
     refetch();
-  }, [filterOptions, selectedTag, selectedSeeker, selectedLookingFor, selectedCountry, refetch]);
+  }, [filterOptions, selectedTag, selectedSeeker, selectedLookingFor, selectedCountry, selectedCity, refetch]);
 
   const handleAdCreationSuccess = () => {
     refetch();
@@ -186,6 +192,8 @@ export default function Dating() {
                   countries={nordicCountries as NordicCountry[]}
                   selectedTag={selectedTag}
                   setSelectedTag={setSelectedTag}
+                  selectedCity={selectedCity}
+                  setSelectedCity={setSelectedCity}
                 />
               </div>
             </motion.div>

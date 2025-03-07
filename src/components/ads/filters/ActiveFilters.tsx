@@ -10,6 +10,7 @@ type NordicCountry = Database['public']['Enums']['nordic_country'];
 interface ActiveFiltersProps {
   filterOptions: FilterOptions;
   selectedCountry: NordicCountry | null;
+  selectedCity: string | null;
   selectedSeeker: string | null;
   selectedLookingFor: string | null;
   selectedTag: string | null;
@@ -19,6 +20,7 @@ interface ActiveFiltersProps {
 export const ActiveFilters = ({
   filterOptions,
   selectedCountry,
+  selectedCity,
   selectedSeeker,
   selectedLookingFor,
   selectedTag,
@@ -29,7 +31,14 @@ export const ActiveFilters = ({
   if (selectedCountry) {
     activeFilters.push({
       type: 'country',
-      label: `Location: ${selectedCountry}`
+      label: `Country: ${selectedCountry}`
+    });
+  }
+  
+  if (selectedCity) {
+    activeFilters.push({
+      type: 'city',
+      label: `City: ${selectedCity}`
     });
   }
 
@@ -81,7 +90,7 @@ export const ActiveFilters = ({
     <motion.div 
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-wrap gap-2 mb-4 p-3 bg-luxury-dark/30 backdrop-blur-sm rounded-lg border border-luxury-primary/10"
+      className="flex flex-wrap gap-2 m-4 p-3 bg-luxury-dark/30 backdrop-blur-sm rounded-lg border border-luxury-primary/10"
     >
       {activeFilters.map(({ type, label }) => (
         <Badge

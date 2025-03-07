@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { Users, MapPin, Tags, Shield, Crown, Ruler, Search } from "lucide-react";
 import { FilterOptions, SearchCategory } from "./types/dating";
 import { SearchCategories } from "./filters/SearchCategories";
-import { CountrySelect } from "./CountrySelect";
 import { UserSearchFields } from "./filters/UserSearchFields";
 import { TagDisplay } from "./filters/TagDisplay";
 import { AgeRangeFilter } from "./filters/AgeRangeFilter";
@@ -12,6 +11,7 @@ import { VerificationFilter } from "./filters/VerificationFilter";
 import { ActiveFilters } from "./filters/ActiveFilters";
 import { FilterGroup } from "./filters/FilterGroup";
 import { type Database } from "@/integrations/supabase/types";
+import { LocationSearch } from "./LocationSearch";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
@@ -28,6 +28,8 @@ interface AdFiltersProps {
   countries: NordicCountry[];
   selectedTag: string | null;
   setSelectedTag: (tag: string | null) => void;
+  selectedCity: string | null;
+  setSelectedCity: (city: string | null) => void;
 }
 
 export const AdFilters = ({
@@ -42,12 +44,18 @@ export const AdFilters = ({
   setFilterOptions,
   countries,
   selectedTag,
-  setSelectedTag
+  setSelectedTag,
+  selectedCity,
+  setSelectedCity
 }: AdFiltersProps) => {
   const handleClearFilter = (filterType: string) => {
     switch (filterType) {
       case 'country':
         setSelectedCountry(null);
+        setSelectedCity(null);
+        break;
+      case 'city':
+        setSelectedCity(null);
         break;
       case 'distance':
         setFilterOptions({ ...filterOptions, maxDistance: 50 });
@@ -80,6 +88,7 @@ export const AdFilters = ({
       <ActiveFilters
         filterOptions={filterOptions}
         selectedCountry={selectedCountry}
+        selectedCity={selectedCity}
         selectedSeeker={selectedSeeker}
         selectedLookingFor={selectedLookingFor}
         selectedTag={selectedTag}
@@ -95,15 +104,19 @@ export const AdFilters = ({
         </FilterGroup>
 
         <FilterGroup title="Location" icon={<MapPin className="h-4 w-4" />} defaultOpen>
-          <CountrySelect
+          <LocationSearch
             selectedCountry={selectedCountry}
             setSelectedCountry={setSelectedCountry}
-            countries={countries}
+            selectedCity={selectedCity}
+            setSelectedCity={setSelectedCity}
+            filterByDistance={true}
           />
-          <DistanceFilter 
-            filterOptions={filterOptions} 
-            setFilterOptions={setFilterOptions} 
-          />
+          <div className="mt-4">
+            <DistanceFilter 
+              filterOptions={filterOptions} 
+              setFilterOptions={setFilterOptions} 
+            />
+          </div>
         </FilterGroup>
 
         <FilterGroup title="Search Categories" icon={<Users className="h-4 w-4" />}>

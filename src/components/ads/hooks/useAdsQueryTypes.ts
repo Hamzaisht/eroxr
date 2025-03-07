@@ -1,5 +1,15 @@
 
 import { DatingAd } from "../types/dating";
+import { type Database } from "@/integrations/supabase/types";
+
+type NordicCountry = Database['public']['Enums']['nordic_country'];
+
+export interface LocationFilters {
+  country?: NordicCountry | null;
+  city?: string | null;
+  latitude?: number;
+  longitude?: number;
+}
 
 export interface UseAdsQueryOptions {
   verifiedOnly?: boolean;
@@ -10,6 +20,7 @@ export interface UseAdsQueryOptions {
   userId?: string; // Added to fetch ads for a specific user
   includeMsgCount?: boolean; // Added to include message counts
   tagFilter?: string; // Added to filter by specific tag
+  locationFilters?: LocationFilters; // New location filters
 }
 
 // Define the type for raw data from Supabase
