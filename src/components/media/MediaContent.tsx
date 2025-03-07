@@ -31,7 +31,7 @@ export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
           src={url}
           className={cn(
             "max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain",
-            "rounded-lg"
+            "rounded-lg shadow-xl"
           )}
           controls
           autoPlay
@@ -52,7 +52,7 @@ export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
           alt="Enlarged media"
           className={cn(
             "max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain",
-            "rounded-lg"
+            "rounded-lg shadow-xl"
           )}
           style={getEnlargedImageStyles()}
           srcSet={generateSrcSet(url)}

@@ -13,6 +13,7 @@ import { SubscriptionDialog } from "@/components/dating/SubscriptionDialog";
 import { useSearchParams } from "@/components/dating/hooks/useSearchParams";
 import { defaultSearchCategories, nordicCountries } from "@/components/dating/utils/datingUtils";
 import { type Database } from "@/integrations/supabase/types";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
@@ -28,6 +29,7 @@ export default function Dating() {
   });
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
 
   useViewTracking();
 
@@ -90,27 +92,47 @@ export default function Dating() {
             <PremiumPromoBanner onSubscriptionClick={handleSubscriptionClick} />
           )}
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-8 relative">
+            {/* Collapsible sidebar with toggle button */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="lg:w-80 flex-shrink-0"
+              animate={{ 
+                opacity: 1, 
+                x: 0,
+                width: isFilterCollapsed ? '40px' : '320px',
+              }}
+              transition={{ duration: 0.3 }}
+              className={`flex-shrink-0 relative ${isFilterCollapsed ? 'w-10' : 'lg:w-80'}`}
             >
-              <AdFilters
-                selectedCountry={selectedCountry}
-                setSelectedCountry={setSelectedCountry}
-                selectedSeeker={selectedSeeker}
-                selectedLookingFor={selectedLookingFor}
-                setSelectedSeeker={setSelectedSeeker}
-                setSelectedLookingFor={setSelectedLookingFor}
-                searchCategories={defaultSearchCategories}
-                filterOptions={filterOptions}
-                setFilterOptions={setFilterOptions}
-                countries={nordicCountries as NordicCountry[]}
-                selectedTag={selectedTag}
-                setSelectedTag={setSelectedTag}
-              />
+              {/* Toggle button */}
+              <button
+                onClick={() => setIsFilterCollapsed(!isFilterCollapsed)}
+                className="absolute -right-4 top-20 z-10 w-8 h-16 bg-luxury-dark/80 border border-luxury-primary/30 rounded-r-lg flex items-center justify-center text-luxury-primary hover:bg-luxury-dark transition-colors"
+              >
+                {isFilterCollapsed ? (
+                  <ChevronRight className="w-5 h-5" />
+                ) : (
+                  <ChevronLeft className="w-5 h-5" />
+                )}
+              </button>
+              
+              {/* Filters */}
+              <div className={`${isFilterCollapsed ? 'invisible opacity-0' : 'visible opacity-100'} transition-opacity duration-300`}>
+                <AdFilters
+                  selectedCountry={selectedCountry}
+                  setSelectedCountry={setSelectedCountry}
+                  selectedSeeker={selectedSeeker}
+                  selectedLookingFor={selectedLookingFor}
+                  setSelectedSeeker={setSelectedSeeker}
+                  setSelectedLookingFor={setSelectedLookingFor}
+                  searchCategories={defaultSearchCategories}
+                  filterOptions={filterOptions}
+                  setFilterOptions={setFilterOptions}
+                  countries={nordicCountries as NordicCountry[]}
+                  selectedTag={selectedTag}
+                  setSelectedTag={setSelectedTag}
+                />
+              </div>
             </motion.div>
 
             <DatingContent 

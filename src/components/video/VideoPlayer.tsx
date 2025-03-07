@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Maximize, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +12,8 @@ interface VideoPlayerProps {
   onError?: () => void;
   autoPlay?: boolean;
   playOnHover?: boolean;
+  onClose?: () => void;
+  showCloseButton?: boolean;
 }
 
 export const VideoPlayer = ({ 
@@ -20,7 +22,9 @@ export const VideoPlayer = ({
   className,
   onError,
   autoPlay = false,
-  playOnHover = false
+  playOnHover = false,
+  onClose,
+  showCloseButton = false
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
@@ -186,6 +190,18 @@ export const VideoPlayer = ({
           onClick={togglePlay}
         />
       </div>
+      
+      {/* Close button if provided */}
+      {showCloseButton && onClose && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 z-50 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
       
       {/* Gradient overlay for controls */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
