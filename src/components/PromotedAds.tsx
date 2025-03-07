@@ -33,13 +33,14 @@ type RawDatingAd = Omit<DatingAd, 'age_range'> & {
 
 export const PromotedAds = () => {
   const [selectedCountry, setSelectedCountry] = useState<NordicCountry | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedSeeker, setSelectedSeeker] = useState<string | null>(null);
   const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
 
   const { data: ads, isLoading } = useQuery({
-    queryKey: ["dating-ads", selectedCountry, selectedSeeker, selectedLookingFor, filterOptions],
+    queryKey: ["dating-ads", selectedCountry, selectedCity, selectedSeeker, selectedLookingFor, filterOptions],
     queryFn: async () => {
       let query = supabase
         .from("dating_ads")
@@ -152,6 +153,8 @@ export const PromotedAds = () => {
               <AdFilters
                 selectedCountry={selectedCountry}
                 setSelectedCountry={setSelectedCountry}
+                selectedCity={selectedCity}
+                setSelectedCity={setSelectedCity}
                 selectedSeeker={selectedSeeker}
                 selectedLookingFor={selectedLookingFor}
                 setSelectedSeeker={setSelectedSeeker}
