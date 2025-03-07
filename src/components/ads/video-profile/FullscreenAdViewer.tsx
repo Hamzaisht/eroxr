@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { X, MessageCircle, Eye, Map, Clock, Calendar } from 'lucide-react';
+import { X, MessageCircle, Eye, Map, Clock, Calendar, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 interface FullscreenAdViewerProps {
   ad: DatingAd;
@@ -22,6 +23,7 @@ export const FullscreenAdViewer = ({ ad, onClose }: FullscreenAdViewerProps) => 
   const { toast } = useToast();
   const session = useSession();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   
   // Update view count on open
   useEffect(() => {
@@ -91,28 +93,42 @@ export const FullscreenAdViewer = ({ ad, onClose }: FullscreenAdViewerProps) => 
   return (
     <AnimatePresence>
       <motion.div 
-        className="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg flex items-center justify-center"
+        className="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg flex items-center justify-center overflow-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
+        {/* Close Button - Always Visible */}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={onClose}
-          className="absolute top-4 right-4 text-white hover:bg-white/10 z-50"
+          className="fixed top-4 right-4 text-white hover:bg-white/10 z-[60] bg-black/30 backdrop-blur-sm"
         >
           <X size={24} />
         </Button>
         
-        <div className="container max-w-7xl h-[90vh] grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6">
-          {/* Left side - Video */}
+        {/* Back to Browse Button - Mobile Only */}
+        {isMobile && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClose}
+            className="fixed top-4 left-4 text-white hover:bg-white/10 z-[60] bg-black/30 backdrop-blur-sm flex items-center gap-1"
+          >
+            <ChevronLeft size={16} />
+            Back
+          </Button>
+        )}
+        
+        <div className={`container h-[90vh] ${isMobile ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-[2fr,1fr] gap-6'}`}>
+          {/* Left side - Video Container */}
           <div className="relative h-full flex flex-col">
-            <div className="flex-1 overflow-hidden rounded-xl">
+            <div className="flex-1 overflow-hidden rounded-xl bg-black">
               {ad.video_url ? (
                 <VideoPlayer 
                   url={ad.video_url} 
-                  className="w-full h-full object-contain bg-black"
+                  className="w-full h-full"
                   autoPlay
                 />
               ) : (
@@ -122,21 +138,24 @@ export const FullscreenAdViewer = ({ ad, onClose }: FullscreenAdViewerProps) => 
               )}
             </div>
             
-            <div className="mt-4 flex items-center justify-between">
+            {/* Engagement Metrics */}
+            <div className="mt-4 flex items-center justify-between bg-luxury-dark/40 backdrop-blur-sm p-3 rounded-lg">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 text-luxury-neutral/80">
+                <div className="flex items-center gap-1.5 text-white/80">
                   <Eye className="h-5 w-5" />
                   <span>{viewCount} views</span>
                 </div>
-                <div className="flex items-center gap-1 text-luxury-neutral/80">
+                <div className="flex items-center gap-1.5 text-white/80">
                   <MessageCircle className="h-5 w-5" />
                   <span>{replyCount} replies</span>
                 </div>
               </div>
               
+              {/* Message CTA Button */}
               <Button 
                 onClick={handleMessageClick}
                 className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary"
+                size={isMobile ? "lg" : "default"}
               >
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Message
@@ -145,7 +164,7 @@ export const FullscreenAdViewer = ({ ad, onClose }: FullscreenAdViewerProps) => 
           </div>
           
           {/* Right side - Profile Info */}
-          <div className="bg-luxury-dark/60 backdrop-blur-md rounded-xl p-6 flex flex-col">
+          <div className="bg-luxury-dark/60 backdrop-blur-md rounded-xl p-6 flex flex-col h-full overflow-y-auto">
             <div className="flex items-center gap-4 mb-6">
               {ad.avatar_url ? (
                 <img 
@@ -165,48 +184,49 @@ export const FullscreenAdViewer = ({ ad, onClose }: FullscreenAdViewerProps) => 
               </div>
             </div>
             
-            <div className="space-y-4 mb-6">
-              <div>
-                <h3 className="text-sm font-medium text-luxury-neutral/60 mb-1">Relationship Status</h3>
-                <p className="text-white flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
+            <div className="space-y-5 mb-6">
+              {/* Profile Information with Clear Spacing */}
+              <div className="bg-black/20 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Relationship Status</h3>
+                <p className="text-white flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-luxury-primary" />
                   {ad.relationship_status}
                 </p>
               </div>
               
-              <div>
-                <h3 className="text-sm font-medium text-luxury-neutral/60 mb-1">Looking For</h3>
+              <div className="bg-black/20 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Looking For</h3>
                 <div className="flex flex-wrap gap-2">
                   {Array.isArray(ad.looking_for) && ad.looking_for.map(type => (
-                    <Badge key={type} className="bg-luxury-primary/80 text-white">
+                    <Badge key={type} className="bg-luxury-primary/80 text-white px-3 py-1 text-sm">
                       {type}
                     </Badge>
                   ))}
                 </div>
               </div>
               
-              <div>
-                <h3 className="text-sm font-medium text-luxury-neutral/60 mb-1">Age Range</h3>
-                <p className="text-white flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
+              <div className="bg-black/20 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Age Range</h3>
+                <p className="text-white flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-luxury-primary" />
                   {ageRangeDisplay}
                 </p>
               </div>
               
-              <div>
-                <h3 className="text-sm font-medium text-luxury-neutral/60 mb-1">Location</h3>
-                <p className="text-white flex items-center gap-1">
-                  <Map className="h-4 w-4" />
+              <div className="bg-black/20 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Location</h3>
+                <p className="text-white flex items-center gap-2">
+                  <Map className="h-4 w-4 text-luxury-primary" />
                   {ad.city}, {ad.country}
                 </p>
               </div>
               
               {ad.tags && ad.tags.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium text-luxury-neutral/60 mb-1">Tags</h3>
+                <div className="bg-black/20 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Tags</h3>
                   <div className="flex flex-wrap gap-2">
                     {ad.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="bg-luxury-dark/50 text-luxury-neutral border-none">
+                      <Badge key={tag} variant="outline" className="bg-luxury-dark/50 text-luxury-neutral border-none px-2 py-1">
                         {tag}
                       </Badge>
                     ))}
@@ -216,15 +236,21 @@ export const FullscreenAdViewer = ({ ad, onClose }: FullscreenAdViewerProps) => 
             </div>
             
             <div className="mt-auto">
-              <p className="text-sm text-luxury-neutral/80 mb-4 line-clamp-4">{ad.description}</p>
+              <div className="bg-black/20 rounded-lg p-4 mb-4">
+                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Description</h3>
+                <p className="text-white/90 whitespace-pre-line">{ad.description}</p>
+              </div>
               
-              <Button 
-                onClick={handleMessageClick}
-                className="w-full bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary"
-              >
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Message
-              </Button>
+              {/* Mobile-optimized Message Button */}
+              {isMobile && (
+                <Button 
+                  onClick={handleMessageClick}
+                  className="w-full bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary py-4 text-lg"
+                >
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  Message
+                </Button>
+              )}
             </div>
           </div>
         </div>

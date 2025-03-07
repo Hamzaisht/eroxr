@@ -1,5 +1,6 @@
 
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface TagDisplayProps {
   selectedTag: string | null;
@@ -13,17 +14,26 @@ export const TagDisplay = ({
   if (!selectedTag) return null;
   
   return (
-    <div className="mb-4 p-3 bg-gradient-to-r from-luxury-primary/10 to-luxury-secondary/10 rounded-lg flex items-center justify-between backdrop-blur-sm border border-luxury-primary/10">
+    <motion.div 
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="mb-4 px-4 py-3 bg-gradient-to-r from-luxury-primary/15 to-luxury-secondary/15 rounded-lg flex items-center justify-between backdrop-blur-sm border border-luxury-primary/20 shadow-sm"
+    >
       <div className="flex items-center">
-        <Search className="h-4 w-4 text-luxury-primary mr-2" />
-        <span className="text-sm text-white">Tag: {selectedTag}</span>
+        <div className="bg-luxury-primary/20 rounded-full p-1.5 mr-3">
+          <Search className="h-3.5 w-3.5 text-luxury-primary" />
+        </div>
+        <span className="text-sm font-medium text-white">Tag: {selectedTag}</span>
       </div>
       <button
-        className="text-xs bg-luxury-dark/60 px-2 py-1 rounded-md text-luxury-neutral hover:text-white hover:bg-luxury-dark/80 transition-colors"
+        className="text-xs bg-luxury-dark/60 hover:bg-luxury-dark/80 px-2.5 py-1.5 rounded-md text-luxury-neutral hover:text-white transition-colors flex items-center gap-1"
         onClick={handleClearTag}
+        aria-label="Clear tag filter"
       >
+        <X className="h-3.5 w-3.5" />
         Clear
       </button>
-    </div>
+    </motion.div>
   );
 };
