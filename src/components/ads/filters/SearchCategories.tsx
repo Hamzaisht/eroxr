@@ -19,6 +19,7 @@ export const SearchCategories = ({
   setSelectedLookingFor,
 }: SearchCategoriesProps) => {
   const handleCategoryClick = (seeker: string, lookingFor: string) => {
+    // Prevent default to avoid any form submissions or URL changes
     if (selectedSeeker === seeker && selectedLookingFor === lookingFor) {
       // Toggle off if already selected
       setSelectedSeeker(null);
@@ -56,12 +57,16 @@ export const SearchCategories = ({
               return (
                 <button
                   key={`${category.seeker}-${category.looking_for}`}
+                  type="button" // Explicitly set button type to prevent form submission
                   className={`relative flex flex-col items-center justify-center p-2.5 rounded-lg text-xs transition-all ${
                     isSelected 
                       ? "bg-gradient-to-r from-luxury-primary to-luxury-secondary text-white shadow-md shadow-luxury-primary/25" 
                       : "bg-luxury-darker hover:bg-luxury-dark/80 text-luxury-neutral hover:text-white"
                   }`}
-                  onClick={() => handleCategoryClick(category.seeker, category.looking_for)}
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent any default behavior
+                    handleCategoryClick(category.seeker, category.looking_for);
+                  }}
                 >
                   <div className="mb-1.5">
                     {getCategoryIcon(category)}

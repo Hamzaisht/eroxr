@@ -18,7 +18,7 @@ import { useLocation } from "react-router-dom";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
-// Modified version of useSearchParams without page refreshes
+// Modified version without any URL parameter updates
 const useModifiedSearchParams = ({
   setSelectedTag,
   setSelectedSeeker,
@@ -30,6 +30,7 @@ const useModifiedSearchParams = ({
 }) => {
   const location = useLocation();
   
+  // Only process URL parameters on initial load, not on user interactions
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tagParam = params.get('tag');
@@ -44,11 +45,11 @@ const useModifiedSearchParams = ({
       setSelectedSeeker(seekerParam);
       setSelectedLookingFor(lookingForParam);
     }
-  }, [location.search, setSelectedTag, setSelectedSeeker, setSelectedLookingFor]);
+  }, []); // Empty dependency array to only run once on component mount
 
   const handleTagClick = (tag: string) => {
+    // Just update the state directly without modifying URL
     setSelectedTag(tag);
-    // We're not updating the URL here to avoid page refresh
   };
 
   return { handleTagClick };
@@ -98,6 +99,7 @@ export default function Dating() {
     }
   });
 
+  // Use effect to handle filter changes without page refresh
   useEffect(() => {
     // This will refetch ads when filter options change without refreshing the page
     refetch();
