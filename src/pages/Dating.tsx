@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { FilterOptions } from "@/components/ads/types/dating";
@@ -47,7 +47,8 @@ export default function Dating() {
     setSelectedLookingFor
   });
 
-  const { data: ads, isLoading, refetch } = useAdsQuery({
+  // Memoize the query options to prevent unnecessary re-renders
+  const queryOptions = useCallback(() => ({
     skipModeration: true,
     includeMyPendingAds: true,
     filterOptions,
@@ -59,13 +60,30 @@ export default function Dating() {
       country: selectedCountry,
       city: selectedCity
     }
-  });
+  }), [
+    filterOptions, 
+    selectedTag, 
+    selectedSeeker, 
+    selectedCountry, 
+    selectedCity
+  ]);
+
+  const { data: ads, isLoading, refetch } = useAdsQuery(queryOptions());
 
   // Use effect to handle filter changes without page refresh
   useEffect(() => {
+    console.log("Filters changed, refetching ads...");
     // This will refetch ads when filter options change without refreshing the page
     refetch();
-  }, [filterOptions, selectedTag, selectedSeeker, selectedLookingFor, selectedCountry, selectedCity, refetch]);
+  }, [
+    filterOptions, 
+    selectedTag, 
+    selectedSeeker, 
+    selectedLookingFor, 
+    selectedCountry, 
+    selectedCity, 
+    refetch
+  ]);
 
   const handleAdCreationSuccess = () => {
     refetch();
@@ -73,6 +91,12 @@ export default function Dating() {
 
   const handleSubscriptionClick = () => {
     setShowSubscriptionDialog(true);
+  };
+
+  // Safe way to prevent any form submission on the entire page
+  const preventFormSubmission = (e: React.FormEvent) => {
+    e.preventDefault();
+    return false;
   };
 
   if (isLoading || isProfileLoading) {
@@ -86,7 +110,20 @@ export default function Dating() {
   const canAccessBodyContact = isVerified || isPremium;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to"
+      onClick={(e) => {
+        // Only prevent default if the event target is a form element
+        if (
+          e.target instanceof HTMLButtonElement || 
+          e.target instanceof HTMLInputElement || 
+          e.target instanceof HTMLSelectElement
+        ) {
+          e.preventDefault();
+        }
+      }}
+      onSubmit={preventFormSubmission}
+    >
       <div className="container-fluid px-4 py-8 max-w-none">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}

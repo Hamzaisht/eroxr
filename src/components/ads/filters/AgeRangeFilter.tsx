@@ -26,11 +26,12 @@ export const AgeRangeFilter = ({
   const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    return false; // Ensure the event doesn't bubble up
   };
   
   return (
     <FilterAccordion title="Age Range" defaultOpen={true}>
-      <div className="mt-2 px-1">
+      <div className="mt-2 px-1" onMouseDown={preventFormSubmission} onTouchStart={preventFormSubmission}>
         <div className="flex justify-between text-sm text-luxury-neutral mb-2">
           <span>{filterOptions.minAge} years</span>
           <span>{filterOptions.maxAge} years</span>

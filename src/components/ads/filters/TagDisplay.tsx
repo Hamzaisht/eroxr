@@ -11,18 +11,20 @@ export const TagDisplay = ({
   selectedTag, 
   handleClearTag 
 }: TagDisplayProps) => {
-  const preventFormSubmission = (e: React.MouseEvent) => {
+  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    return false;
   };
   
   return (
-    <div className="mt-2">
+    <div className="mt-2" onMouseDown={preventFormSubmission} onTouchStart={preventFormSubmission}>
       <Badge 
         variant="outline" 
         className="gap-1 px-2 py-1 border-luxury-primary/20 bg-luxury-primary/10 text-luxury-primary
           hover:bg-luxury-primary/20 transition-all"
         onMouseDown={preventFormSubmission}
+        onTouchStart={preventFormSubmission}
       >
         {selectedTag}
         <button
@@ -33,6 +35,7 @@ export const TagDisplay = ({
             handleClearTag(e);
           }}
           onMouseDown={preventFormSubmission}
+          onTouchStart={preventFormSubmission}
           className="hover:text-red-400 transition-colors"
         >
           <X className="h-3 w-3" />

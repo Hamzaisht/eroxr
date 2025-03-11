@@ -60,15 +60,22 @@ export const LocationSearch = ({
   };
 
   // Prevent form submission for any mouse interactions
-  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent) => {
+  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent | React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    return false;
   };
 
   return (
-    <div className="space-y-3" onMouseDown={preventFormSubmission}>
+    <div 
+      className="space-y-3" 
+      onMouseDown={preventFormSubmission}
+      onTouchStart={preventFormSubmission}
+      onClick={preventFormSubmission}
+      onSubmit={preventFormSubmission}
+    >
       {/* Country Search */}
-      <div className="relative">
+      <div className="relative" onMouseDown={preventFormSubmission} onTouchStart={preventFormSubmission}>
         <div className="flex items-center gap-2 mb-1">
           <MapPin className="h-4 w-4 text-luxury-primary" />
           <span className="text-sm text-luxury-neutral">Country</span>
@@ -85,8 +92,11 @@ export const LocationSearch = ({
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
+              return false;
             }
           }}
+          onMouseDown={preventFormSubmission}
+          onTouchStart={preventFormSubmission}
         />
         {filteredCountries.length > 0 && (
           <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg">
@@ -95,6 +105,7 @@ export const LocationSearch = ({
                 key={country}
                 onClick={(e) => onSelectCountry(e, country)}
                 onMouseDown={preventFormSubmission}
+                onTouchStart={preventFormSubmission}
                 className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
               >
                 {country}
@@ -106,7 +117,7 @@ export const LocationSearch = ({
 
       {/* City Search - Only show if country is selected */}
       {selectedCountry && (
-        <div className="relative">
+        <div className="relative" onMouseDown={preventFormSubmission} onTouchStart={preventFormSubmission}>
           <div className="flex items-center gap-2 mb-1">
             <MapPin className="h-4 w-4 text-luxury-primary" />
             <span className="text-sm text-luxury-neutral">City</span>
@@ -123,8 +134,11 @@ export const LocationSearch = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
+                return false;
               }
             }}
+            onMouseDown={preventFormSubmission}
+            onTouchStart={preventFormSubmission}
           />
           {filteredCities.length > 0 && (
             <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg">
@@ -133,6 +147,7 @@ export const LocationSearch = ({
                   key={city}
                   onClick={(e) => onSelectCity(e, city)}
                   onMouseDown={preventFormSubmission}
+                  onTouchStart={preventFormSubmission}
                   className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
                 >
                   {city}

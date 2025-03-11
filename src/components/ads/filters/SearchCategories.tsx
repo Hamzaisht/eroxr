@@ -1,5 +1,5 @@
 
-import { ReactNode } from 'react';
+import { ReactNode, MouseEvent, TouchEvent } from 'react';
 import { SearchCategory } from "../types/dating";
 import { User, Users, Heart, CheckCircle, Star, Sparkles, Flame } from "lucide-react";
 
@@ -18,7 +18,7 @@ export const SearchCategories = ({
   setSelectedSeeker,
   setSelectedLookingFor,
 }: SearchCategoriesProps) => {
-  const handleCategoryClick = (e: React.MouseEvent, seeker: string, lookingFor: string) => {
+  const handleCategoryClick = (e: MouseEvent, seeker: string, lookingFor: string) => {
     // Prevent any default form behavior
     e.preventDefault();
     e.stopPropagation();
@@ -34,6 +34,13 @@ export const SearchCategories = ({
     }
   };
 
+  // Prevent any form submission
+  const preventFormSubmission = (e: MouseEvent | TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  };
+
   // Group categories by seeker type
   const categoryGroups: Record<string, SearchCategory[]> = {};
   searchCategories.forEach(category => {
@@ -44,7 +51,11 @@ export const SearchCategories = ({
   });
 
   return (
-    <div className="space-y-4" onMouseDown={(e) => e.preventDefault()}>
+    <div 
+      className="space-y-4" 
+      onMouseDown={preventFormSubmission}
+      onTouchStart={preventFormSubmission}
+    >
       {Object.entries(categoryGroups).map(([seeker, categories]) => (
         <div key={seeker} className="space-y-2">
           <h4 className="text-xs uppercase text-luxury-neutral font-medium tracking-wider flex items-center gap-1.5">
@@ -67,7 +78,8 @@ export const SearchCategories = ({
                       : "bg-luxury-darker hover:bg-luxury-dark/80 text-luxury-neutral hover:text-white"
                   }`}
                   onClick={(e) => handleCategoryClick(e, category.seeker, category.looking_for)}
-                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseDown={preventFormSubmission}
+                  onTouchStart={preventFormSubmission}
                 >
                   <div className="mb-1.5">
                     {getCategoryIcon(category)}
