@@ -12,7 +12,7 @@ export const AgeRangeFilter = ({
   filterOptions, 
   setFilterOptions 
 }: AgeRangeFilterProps) => {
-  const handleAgeRangeChange = (values: number[]) => {
+  const handleAgeChange = (values: number[]) => {
     if (values.length === 2) {
       setFilterOptions({
         ...filterOptions,
@@ -34,7 +34,10 @@ export const AgeRangeFilter = ({
           max={99}
           min={18}
           step={1}
-          onValueChange={handleAgeRangeChange}
+          onValueChange={(values) => {
+            // Prevent any form submission by explicitly handling the event
+            handleAgeChange(values);
+          }}
         />
       </div>
     </FilterAccordion>

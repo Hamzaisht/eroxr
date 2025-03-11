@@ -13,6 +13,7 @@ export const DistanceFilter = ({
   setFilterOptions 
 }: DistanceFilterProps) => {
   const handleDistanceChange = (values: number[]) => {
+    // Prevent default behavior
     if (values.length === 1) {
       setFilterOptions({
         ...filterOptions,
@@ -33,7 +34,10 @@ export const DistanceFilter = ({
           max={500}
           min={5}
           step={5}
-          onValueChange={handleDistanceChange}
+          onValueChange={(values) => {
+            // Explicitly prevent any default behavior
+            handleDistanceChange(values);
+          }}
         />
       </div>
     </FilterAccordion>

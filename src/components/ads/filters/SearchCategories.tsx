@@ -18,8 +18,11 @@ export const SearchCategories = ({
   setSelectedSeeker,
   setSelectedLookingFor,
 }: SearchCategoriesProps) => {
-  const handleCategoryClick = (seeker: string, lookingFor: string) => {
-    // Prevent default to avoid any form submissions or URL changes
+  const handleCategoryClick = (e: React.MouseEvent, seeker: string, lookingFor: string) => {
+    // Prevent any default behavior
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (selectedSeeker === seeker && selectedLookingFor === lookingFor) {
       // Toggle off if already selected
       setSelectedSeeker(null);
@@ -63,10 +66,7 @@ export const SearchCategories = ({
                       ? "bg-gradient-to-r from-luxury-primary to-luxury-secondary text-white shadow-md shadow-luxury-primary/25" 
                       : "bg-luxury-darker hover:bg-luxury-dark/80 text-luxury-neutral hover:text-white"
                   }`}
-                  onClick={(e) => {
-                    e.preventDefault(); // Prevent any default behavior
-                    handleCategoryClick(category.seeker, category.looking_for);
-                  }}
+                  onClick={(e) => handleCategoryClick(e, category.seeker, category.looking_for)}
                 >
                   <div className="mb-1.5">
                     {getCategoryIcon(category)}

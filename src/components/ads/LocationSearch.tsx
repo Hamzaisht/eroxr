@@ -45,12 +45,16 @@ export const LocationSearch = ({
   }, [selectedCountry, selectedCity]);
 
   // Update the parent component's state when a selection is made
-  const onSelectCountry = (country: string) => {
+  const onSelectCountry = (e: React.MouseEvent, country: string) => {
+    e.preventDefault(); // Prevent form submission
+    e.stopPropagation(); // Stop event propagation
     handleSelectCountry(country as NordicCountry);
     setSelectedCountry(country as NordicCountry);
   };
 
-  const onSelectCity = (city: string) => {
+  const onSelectCity = (e: React.MouseEvent, city: string) => {
+    e.preventDefault(); // Prevent form submission
+    e.stopPropagation(); // Stop event propagation
     handleSelectCity(city);
     setSelectedCity(city);
   };
@@ -77,10 +81,7 @@ export const LocationSearch = ({
             {filteredCountries.map((country) => (
               <div
                 key={country}
-                onClick={(e) => {
-                  e.preventDefault(); // Prevent form submission
-                  onSelectCountry(country);
-                }}
+                onClick={(e) => onSelectCountry(e, country)}
                 className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
               >
                 {country}
@@ -111,10 +112,7 @@ export const LocationSearch = ({
               {filteredCities.map((city) => (
                 <div
                   key={city}
-                  onClick={(e) => {
-                    e.preventDefault(); // Prevent form submission
-                    onSelectCity(city);
-                  }}
+                  onClick={(e) => onSelectCity(e, city)}
                   className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
                 >
                   {city}

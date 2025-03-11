@@ -48,7 +48,12 @@ export const AdFilters = ({
   selectedCity,
   setSelectedCity
 }: AdFiltersProps) => {
-  const handleClearFilter = (filterType: string) => {
+  const handleClearFilter = (e: React.MouseEvent | null, filterType: string) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     switch (filterType) {
       case 'country':
         setSelectedCountry(null);
@@ -92,7 +97,7 @@ export const AdFilters = ({
         selectedSeeker={selectedSeeker}
         selectedLookingFor={selectedLookingFor}
         selectedTag={selectedTag}
-        onClearFilter={handleClearFilter}
+        onClearFilter={(filterType) => handleClearFilter(null, filterType)}
       />
 
       <div className="divide-y divide-luxury-primary/10">
@@ -147,7 +152,10 @@ export const AdFilters = ({
           <FilterGroup title="Active Tag" icon={<Tags className="h-4 w-4" />}>
             <TagDisplay 
               selectedTag={selectedTag} 
-              handleClearTag={() => setSelectedTag(null)} 
+              handleClearTag={(e) => {
+                if (e) e.preventDefault();
+                setSelectedTag(null);
+              }} 
             />
           </FilterGroup>
         )}
