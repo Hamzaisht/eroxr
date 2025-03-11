@@ -27,8 +27,15 @@ export const FilterBadge = ({
       <button 
         type="button"
         className="ml-2 hover:text-red-400 transition-colors" 
-        onClick={onClear}
-        onMouseDown={onMouseDown}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClear(e);
+        }}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
       >
         <X className="h-3 w-3" />
       </button>

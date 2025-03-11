@@ -2,11 +2,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image, Camera } from "lucide-react";
+import { Send, Image, Camera, Loader } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { motion } from "framer-motion";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface MessageInputProps {
   onSendMessage: (content: string, mediaUrl?: string[]) => void;
@@ -25,12 +26,26 @@ export const MessageInput = ({
 }: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const session = useSession();
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  
+  // Use debounced value for typing indicator
+  const debouncedMessage = useDebounce(message, 500);
 
-  const emitTypingEvent = () => {
+  useEffect(() => {
+    if (debouncedMessage && debouncedMessage !== "" && !isTyping) {
+      setIsTyping(true);
+      emitTypingEvent(true);
+    } else if ((!debouncedMessage || debouncedMessage === "") && isTyping) {
+      setIsTyping(false);
+      emitTypingEvent(false);
+    }
+  }, [debouncedMessage]);
+
+  const emitTypingEvent = (isTyping: boolean) => {
     if (!session?.user?.id) return;
 
     // Emit typing event through Supabase realtime
@@ -41,7 +56,7 @@ export const MessageInput = ({
         payload: {
           user_id: session.user.id,
           recipient_id: recipientId,
-          is_typing: true
+          is_typing: isTyping
         }
       });
 
@@ -51,18 +66,20 @@ export const MessageInput = ({
     }
 
     // Set new timeout to clear typing status
-    typingTimeoutRef.current = setTimeout(() => {
-      supabase.channel('typing-status')
-        .send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            user_id: session.user.id,
-            recipient_id: recipientId,
-            is_typing: false
-          }
-        });
-    }, 2000); // Stop showing typing indicator after 2 seconds of no input
+    if (isTyping) {
+      typingTimeoutRef.current = setTimeout(() => {
+        supabase.channel('typing-status')
+          .send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              user_id: session.user.id,
+              recipient_id: recipientId,
+              is_typing: false
+            }
+          });
+      }, 2000); // Stop showing typing indicator after 2 seconds of no input
+    }
   };
 
   useEffect(() => {
@@ -122,7 +139,9 @@ export const MessageInput = ({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (message.trim() || fileInputRef.current?.files?.length) {
+        handleSend();
+      }
     }
   };
 
@@ -135,11 +154,6 @@ export const MessageInput = ({
         ref={fileInputRef}
         accept="image/*"
         className="hidden"
-        onChange={() => {
-          if (fileInputRef.current?.files?.length) {
-            handleSend();
-          }
-        }}
       />
 
       <div className="relative flex items-center gap-2 bg-luxury-darker/50 backdrop-blur-sm rounded-full p-1.5">
@@ -168,7 +182,6 @@ export const MessageInput = ({
           value={message}
           onChange={(e) => {
             setMessage(e.target.value);
-            emitTypingEvent();
           }}
           onKeyPress={handleKeyPress}
           placeholder="Type a message..."
@@ -188,7 +201,11 @@ export const MessageInput = ({
           disabled={isLoading || isUploading || (!message.trim() && !fileInputRef.current?.files?.length)}
           className="rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-300 disabled:opacity-50 disabled:hover:bg-luxury-primary shadow-lg hover:shadow-luxury-primary/25"
         >
-          <Send className="h-5 w-5" />
+          {isLoading || isUploading ? (
+            <Loader className="h-5 w-5 animate-spin" />
+          ) : (
+            <Send className="h-5 w-5" />
+          )}
         </Button>
       </motion.div>
     </div>
