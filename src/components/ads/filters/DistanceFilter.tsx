@@ -13,13 +13,18 @@ export const DistanceFilter = ({
   setFilterOptions 
 }: DistanceFilterProps) => {
   const handleDistanceChange = (values: number[]) => {
-    // Prevent default behavior
     if (values.length === 1) {
       setFilterOptions({
         ...filterOptions,
         maxDistance: values[0]
       });
     }
+  };
+  
+  // Prevent form submission on mouse/touch interactions with the slider
+  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
   
   return (
@@ -29,16 +34,22 @@ export const DistanceFilter = ({
           <span>Distance</span>
           <span>{filterOptions.maxDistance} km</span>
         </div>
-        <Slider
-          defaultValue={[filterOptions.maxDistance || 50]}
-          max={500}
-          min={5}
-          step={5}
-          onValueChange={(values) => {
-            // Explicitly prevent any default behavior
-            handleDistanceChange(values);
-          }}
-        />
+        <div 
+          onMouseDown={preventFormSubmission}
+          onTouchStart={preventFormSubmission}
+        >
+          <Slider
+            defaultValue={[filterOptions.maxDistance || 50]}
+            max={500}
+            min={5}
+            step={5}
+            onValueChange={handleDistanceChange}
+            onValueCommit={(value) => {
+              // Final value confirmation on release
+              handleDistanceChange(value);
+            }}
+          />
+        </div>
       </div>
     </FilterAccordion>
   );

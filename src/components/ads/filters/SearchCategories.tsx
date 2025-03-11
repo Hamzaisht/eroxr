@@ -19,7 +19,7 @@ export const SearchCategories = ({
   setSelectedLookingFor,
 }: SearchCategoriesProps) => {
   const handleCategoryClick = (e: React.MouseEvent, seeker: string, lookingFor: string) => {
-    // Prevent any default behavior
+    // Prevent any default form behavior
     e.preventDefault();
     e.stopPropagation();
     
@@ -44,7 +44,7 @@ export const SearchCategories = ({
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" onMouseDown={(e) => e.preventDefault()}>
       {Object.entries(categoryGroups).map(([seeker, categories]) => (
         <div key={seeker} className="space-y-2">
           <h4 className="text-xs uppercase text-luxury-neutral font-medium tracking-wider flex items-center gap-1.5">
@@ -67,6 +67,7 @@ export const SearchCategories = ({
                       : "bg-luxury-darker hover:bg-luxury-dark/80 text-luxury-neutral hover:text-white"
                   }`}
                   onClick={(e) => handleCategoryClick(e, category.seeker, category.looking_for)}
+                  onMouseDown={(e) => e.preventDefault()}
                 >
                   <div className="mb-1.5">
                     {getCategoryIcon(category)}

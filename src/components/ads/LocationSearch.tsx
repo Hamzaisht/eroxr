@@ -59,8 +59,14 @@ export const LocationSearch = ({
     setSelectedCity(city);
   };
 
+  // Prevent form submission for any mouse interactions
+  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" onMouseDown={preventFormSubmission}>
       {/* Country Search */}
       <div className="relative">
         <div className="flex items-center gap-2 mb-1">
@@ -68,6 +74,7 @@ export const LocationSearch = ({
           <span className="text-sm text-luxury-neutral">Country</span>
         </div>
         <Input
+          type="text"
           value={countrySearch}
           onChange={(e) => {
             e.preventDefault(); // Prevent any form submission
@@ -75,6 +82,11 @@ export const LocationSearch = ({
           }}
           placeholder="Search for a country..."
           className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
         />
         {filteredCountries.length > 0 && (
           <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg">
@@ -82,6 +94,7 @@ export const LocationSearch = ({
               <div
                 key={country}
                 onClick={(e) => onSelectCountry(e, country)}
+                onMouseDown={preventFormSubmission}
                 className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
               >
                 {country}
@@ -99,6 +112,7 @@ export const LocationSearch = ({
             <span className="text-sm text-luxury-neutral">City</span>
           </div>
           <Input
+            type="text"
             value={citySearch}
             onChange={(e) => {
               e.preventDefault(); // Prevent any form submission
@@ -106,6 +120,11 @@ export const LocationSearch = ({
             }}
             placeholder="Search for a city..."
             className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+              }
+            }}
           />
           {filteredCities.length > 0 && (
             <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg">
@@ -113,6 +132,7 @@ export const LocationSearch = ({
                 <div
                   key={city}
                   onClick={(e) => onSelectCity(e, city)}
+                  onMouseDown={preventFormSubmission}
                   className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
                 >
                   {city}

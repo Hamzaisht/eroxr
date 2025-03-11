@@ -39,23 +39,33 @@ export const ActiveFilters = ({
   
   if (!isAnyFilterActive) return null;
   
+  const preventFormSubmission = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  
+  const handleFilterClear = (e: React.MouseEvent, filterType: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClearFilter(filterType);
+  };
+  
   return (
-    <div className="p-3 border-b border-luxury-primary/10 bg-luxury-primary/5">
+    <div className="p-3 border-b border-luxury-primary/10 bg-luxury-primary/5" onMouseDown={preventFormSubmission}>
       <h4 className="text-xs text-luxury-neutral mb-2">Active Filters</h4>
       <div className="flex flex-wrap gap-2">
         {selectedCountry && (
           <Badge 
             variant="secondary" 
             className="px-2 py-1 bg-luxury-primary/10 text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-200"
+            onMouseDown={preventFormSubmission}
           >
             {selectedCountry}
             <button 
+              type="button"
               className="ml-2 hover:text-red-400 transition-colors" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClearFilter('country');
-              }}
+              onClick={(e) => handleFilterClear(e, 'country')}
+              onMouseDown={preventFormSubmission}
             >
               <X className="h-3 w-3" />
             </button>
@@ -66,15 +76,14 @@ export const ActiveFilters = ({
           <Badge 
             variant="secondary" 
             className="px-2 py-1 bg-luxury-primary/10 text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-200"
+            onMouseDown={preventFormSubmission}
           >
             {selectedCity}
             <button 
+              type="button"
               className="ml-2 hover:text-red-400 transition-colors" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClearFilter('city');
-              }}
+              onClick={(e) => handleFilterClear(e, 'city')}
+              onMouseDown={preventFormSubmission}
             >
               <X className="h-3 w-3" />
             </button>
@@ -85,15 +94,14 @@ export const ActiveFilters = ({
           <Badge 
             variant="secondary" 
             className="px-2 py-1 bg-luxury-primary/10 text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-200"
+            onMouseDown={preventFormSubmission}
           >
             Age: {filterOptions.minAge}-{filterOptions.maxAge}
             <button 
+              type="button"
               className="ml-2 hover:text-red-400 transition-colors" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClearFilter('age');
-              }}
+              onClick={(e) => handleFilterClear(e, 'age')}
+              onMouseDown={preventFormSubmission}
             >
               <X className="h-3 w-3" />
             </button>
@@ -104,15 +112,14 @@ export const ActiveFilters = ({
           <Badge 
             variant="secondary" 
             className="px-2 py-1 bg-luxury-primary/10 text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-200"
+            onMouseDown={preventFormSubmission}
           >
             {`${selectedSeeker}4${selectedLookingFor}`}
             <button 
+              type="button"
               className="ml-2 hover:text-red-400 transition-colors" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClearFilter('seeking');
-              }}
+              onClick={(e) => handleFilterClear(e, 'seeking')}
+              onMouseDown={preventFormSubmission}
             >
               <X className="h-3 w-3" />
             </button>
@@ -123,15 +130,14 @@ export const ActiveFilters = ({
           <Badge 
             variant="secondary" 
             className="px-2 py-1 bg-luxury-primary/10 text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-200"
+            onMouseDown={preventFormSubmission}
           >
             Tag: {selectedTag}
             <button 
+              type="button"
               className="ml-2 hover:text-red-400 transition-colors" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClearFilter('tag');
-              }}
+              onClick={(e) => handleFilterClear(e, 'tag')}
+              onMouseDown={preventFormSubmission}
             >
               <X className="h-3 w-3" />
             </button>
@@ -142,15 +148,14 @@ export const ActiveFilters = ({
           <Badge 
             variant="secondary" 
             className="px-2 py-1 bg-luxury-primary/10 text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-200"
+            onMouseDown={preventFormSubmission}
           >
             Distance: {filterOptions.maxDistance}km
             <button 
+              type="button"
               className="ml-2 hover:text-red-400 transition-colors" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClearFilter('distance');
-              }}
+              onClick={(e) => handleFilterClear(e, 'distance')}
+              onMouseDown={preventFormSubmission}
             >
               <X className="h-3 w-3" />
             </button>
@@ -161,15 +166,14 @@ export const ActiveFilters = ({
           <Badge 
             variant="secondary" 
             className="px-2 py-1 bg-luxury-primary/10 text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-200"
+            onMouseDown={preventFormSubmission}
           >
             Verified Only
             <button 
+              type="button"
               className="ml-2 hover:text-red-400 transition-colors" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClearFilter('verification');
-              }}
+              onClick={(e) => handleFilterClear(e, 'verification')}
+              onMouseDown={preventFormSubmission}
             >
               <X className="h-3 w-3" />
             </button>
@@ -180,15 +184,14 @@ export const ActiveFilters = ({
           <Badge 
             variant="secondary" 
             className="px-2 py-1 bg-luxury-primary/10 text-luxury-primary hover:bg-luxury-primary/20 transition-all duration-200"
+            onMouseDown={preventFormSubmission}
           >
             Premium Only
             <button 
+              type="button"
               className="ml-2 hover:text-red-400 transition-colors" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClearFilter('premium');
-              }}
+              onClick={(e) => handleFilterClear(e, 'premium')}
+              onMouseDown={preventFormSubmission}
             >
               <X className="h-3 w-3" />
             </button>
