@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ interface ShareDialogProps {
 export const ShareDialog = ({ open, onOpenChange, postId }: ShareDialogProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const postUrl = `${window.location.origin}/post/${postId}`;
+  const postUrl = `https://www.eroxr.se/post/${postId}`;
 
   const handleCopyLink = async () => {
     try {

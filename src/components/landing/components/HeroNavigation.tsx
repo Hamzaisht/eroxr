@@ -18,7 +18,7 @@ export const HeroNavigation = ({ headerBg }: HeroNavigationProps) => {
         <div className="flex items-center justify-between relative z-10">
           <Link to="/" className="flex items-center space-x-2">
             <h1 className="text-3xl font-bold text-white">
-              Eroxr
+              Eroxr.se
             </h1>
           </Link>
 

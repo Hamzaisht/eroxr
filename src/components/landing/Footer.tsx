@@ -1,5 +1,7 @@
-import { Facebook, Twitter, Instagram, Youtube, Share2 } from "lucide-react";
+
+import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
+
 const Footer = () => {
   const footerLinks = {
     creators: [{
@@ -168,10 +170,11 @@ const Footer = () => {
 
           <div className="text-center mt-8 text-sm text-luxury-neutral/60">
             <p>© 2024 Eroxr. All rights reserved.</p>
-            <p className="mt-2">Hades IO | Sweden</p>
+            <p className="mt-2">Hades IO | Sweden | <a href="https://www.eroxr.se" className="hover:text-luxury-primary transition-colors">www.eroxr.se</a></p>
           </div>
         </div>
       </div>
     </footer>;
 };
+
 export default Footer;
