@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
@@ -36,7 +35,6 @@ export function DashboardCharts({
     }
   };
 
-  // Colors for the pie chart
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658'];
 
   const EarningsChart = () => (
