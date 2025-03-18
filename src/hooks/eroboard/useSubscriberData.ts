@@ -2,7 +2,7 @@
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isAfter, subMonths } from "date-fns";
-import { DateRange } from "./types";
+import type { DateRange } from "./types";
 import { format } from "date-fns";
 
 export function useSubscriberData() {
@@ -81,32 +81,38 @@ export function useSubscriberData() {
 
   const fetchVipFansData = async () => {
     if (!session?.user?.id) return 0;
-
-    const { data: vipFansData, error: vipFansError } = await supabase
-      .from('post_purchases')
-      .select('user_id')
-      .eq('posts.creator_id', session.user.id)
-      .gte('created_at', format(subMonths(new Date(), 3), 'yyyy-MM-dd'));
-
-    if (vipFansError) {
-      console.error("Error fetching VIP fans data:", vipFansError);
+    
+    try {
+      // Fix the query to avoid RLS error
+      const { data: purchases, error } = await supabase
+        .from('post_purchases')
+        .select('user_id')
+        .eq('creator_id', session.user.id)
+        .gte('created_at', format(subMonths(new Date(), 3), 'yyyy-MM-dd'));
+      
+      if (error) {
+        console.error("Error fetching VIP fans data:", error);
+        return 0;
+      }
+      
+      let vipFansCount = 0;
+      
+      if (purchases && purchases.length > 0) {
+        const purchasesByUser: Record<string, number> = {};
+        
+        purchases.forEach(purchase => {
+          const userId = purchase.user_id;
+          purchasesByUser[userId] = (purchasesByUser[userId] || 0) + 1;
+        });
+        
+        vipFansCount = Object.values(purchasesByUser).filter(count => count > 5).length;
+      }
+      
+      return vipFansCount;
+    } catch (error) {
+      console.error("Error in VIP fans calculation:", error);
       return 0;
     }
-    
-    let vipFansCount = 0;
-    
-    if (vipFansData && vipFansData.length > 0) {
-      const purchasesByUser: Record<string, number> = {};
-      
-      vipFansData.forEach(purchase => {
-        const userId = purchase.user_id;
-        purchasesByUser[userId] = (purchasesByUser[userId] || 0) + 1;
-      });
-      
-      vipFansCount = Object.values(purchasesByUser).filter(count => count > 5).length;
-    }
-
-    return vipFansCount;
   };
 
   return {

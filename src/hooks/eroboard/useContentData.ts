@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { DateRange } from "./types";
+import type { DateRange } from "./types";
 import { generateMockEngagementData } from "./utils";
 
 export function useContentData() {
@@ -75,38 +75,44 @@ export function useContentData() {
 
     setContentPerformanceData(contentPerformance);
 
-    const { data: engagementActionData, error: engagementError } = await supabase
-      .from('post_media_actions')
-      .select('created_at, action_type')
-      .eq('posts.creator_id', session.user.id)
-      .gte('created_at', format(dateRange.from, 'yyyy-MM-dd'))
-      .lte('created_at', format(dateRange.to, 'yyyy-MM-dd'));
+    try {
+      const { data: actionsData, error: actionsError } = await supabase
+        .from('post_media_actions')
+        .select('created_at, action_type')
+        .eq('creator_id', session.user.id)
+        .gte('created_at', format(dateRange.from, 'yyyy-MM-dd'))
+        .lte('created_at', format(dateRange.to, 'yyyy-MM-dd'));
 
-    if (engagementError) {
-      console.error("Error fetching engagement data:", engagementError);
+      if (actionsError) {
+        throw actionsError;
+      }
+
+      const engagementByDate = actionsData?.reduce((acc: any, action) => {
+        const date = format(new Date(action.created_at), 'yyyy-MM-dd');
+        if (!acc[date]) acc[date] = 0;
+        acc[date] += 1;
+        return acc;
+      }, {}) || {};
+
+      const engagementChartData = Object.entries(engagementByDate).map(
+        ([date, count]) => ({ date, count })
+      ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      const finalEngagementData = engagementChartData.length > 0 
+        ? engagementChartData 
+        : generateMockEngagementData(dateRange.from, dateRange.to);
+      
+      setEngagementData(finalEngagementData);
+    } catch (error) {
+      console.error("Error fetching engagement data:", error);
+      const mockData = generateMockEngagementData(dateRange.from, dateRange.to);
+      setEngagementData(mockData);
     }
-
-    const engagementByDate = engagementActionData?.reduce((acc: any, action) => {
-      const date = format(new Date(action.created_at), 'yyyy-MM-dd');
-      if (!acc[date]) acc[date] = 0;
-      acc[date] += 1;
-      return acc;
-    }, {}) || {};
-
-    const engagementChartData = Object.entries(engagementByDate).map(
-      ([date, count]) => ({ date, count })
-    ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    const finalEngagementData = engagementChartData.length > 0 
-      ? engagementChartData 
-      : generateMockEngagementData(dateRange.from, dateRange.to);
-    
-    setEngagementData(finalEngagementData);
 
     const totalViews = postsData?.reduce((sum, post) => sum + (post.view_count || 0), 0) || 0;
 
     return { 
-      engagementData: finalEngagementData, 
+      engagementData: engagementData, 
       contentTypeData: updatedContentTypeData, 
       contentPerformanceData: contentPerformance,
       totalViews,

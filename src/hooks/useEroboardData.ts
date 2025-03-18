@@ -1,7 +1,7 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { DateRange, EroboardStats, RevenueBreakdown } from "./eroboard/types";
 import { useEarningsData } from "./eroboard/useEarningsData";
 import { useSubscriberData } from "./eroboard/useSubscriberData";
 import { useContentData } from "./eroboard/useContentData";
@@ -9,9 +9,9 @@ import { usePayoutData } from "./eroboard/usePayoutData";
 import { useCreatorStats } from "./eroboard/useCreatorStats";
 import { calculateEngagementRate, calculateTimeOnPlatform } from "./eroboard/utils";
 import { subDays } from "date-fns";
+import type { EroboardStats, RevenueBreakdown, DateRange, PayoutInfo } from "./eroboard/types";
 
-export type { EroboardStats, RevenueBreakdown, DateRange } from "./eroboard/types";
-export type { PayoutInfo } from "./eroboard/types";
+export type { EroboardStats, RevenueBreakdown, DateRange, PayoutInfo };
 
 export function useEroboardData() {
   const session = useSession();
