@@ -12,10 +12,10 @@ export const RollingText = ({ children, href }: RollingTextProps) => {
       to={href} 
       className="group relative inline-block overflow-hidden px-4 py-2 text-white"
     >
-      <span className="relative inline-block transition-transform duration-300 group-hover:translate-y-full opacity-0">
+      <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-full">
         {children}
       </span>
-      <span className="absolute left-0 top-0 inline-block transition-transform duration-300">
+      <span className="absolute left-0 top-0 inline-block transition-transform duration-300 group-hover:translate-y-0 transform translate-y-full">
         {children}
       </span>
     </Link>

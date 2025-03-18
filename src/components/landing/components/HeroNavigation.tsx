@@ -1,10 +1,13 @@
+
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { RollingText } from "./RollingText";
 import { WaveButton } from "./WaveButton";
+
 interface HeroNavigationProps {
   headerBg: any;
 }
+
 export const HeroNavigation = ({
   headerBg
 }: HeroNavigationProps) => {
@@ -18,8 +21,8 @@ export const HeroNavigation = ({
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <div className="flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-4">
+            <div className="flex items-center space-x-8 mr-4">
               <RollingText href="/explore">Explore</RollingText>
               <RollingText href="/pricing">Pricing</RollingText>
               <RollingText href="/creators">Creators</RollingText>
