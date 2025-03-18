@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Maximize, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { VideoLoadingState } from "./VideoLoadingState";
+import { VideoErrorState } from "./VideoErrorState";
 
 interface VideoPlayerProps {
   url: string;
@@ -30,6 +32,8 @@ export const VideoPlayer = ({
   const [isMuted, setIsMuted] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -40,6 +44,7 @@ export const VideoPlayer = ({
 
     const handleLoadedData = () => {
       setIsLoaded(true);
+      setHasError(false);
       console.log("Video loaded successfully:", url);
       if (autoPlay) {
         video.play().catch(e => console.error("Autoplay failed:", e));
@@ -48,12 +53,9 @@ export const VideoPlayer = ({
 
     const handleError = (e: Event) => {
       console.error("Video loading error:", e);
+      setHasError(true);
+      setIsLoaded(false);
       if (onError) onError();
-      toast({
-        title: "Error",
-        description: "Failed to load video. Please try again.",
-        variant: "destructive",
-      });
     };
 
     video.addEventListener("loadeddata", handleLoadedData);
@@ -62,13 +64,14 @@ export const VideoPlayer = ({
     // Reset video state when URL changes
     setIsPlaying(autoPlay);
     setIsLoaded(false);
+    setHasError(false);
     video.load();
 
     return () => {
       video.removeEventListener("loadeddata", handleLoadedData);
       video.removeEventListener("error", handleError);
     };
-  }, [url, onError, toast, autoPlay]);
+  }, [url, onError, autoPlay]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -110,6 +113,21 @@ export const VideoPlayer = ({
       document.exitFullscreen();
       setIsFullscreen(false);
     }
+  };
+
+  const handleRetry = () => {
+    if (!videoRef.current) return;
+    
+    setIsRetrying(true);
+    setHasError(false);
+    
+    // Force reload the video element
+    videoRef.current.load();
+    
+    // Set a timeout to reset retry state
+    setTimeout(() => {
+      setIsRetrying(false);
+    }, 3000);
   };
 
   // Handle fullscreen change event
@@ -165,11 +183,18 @@ export const VideoPlayer = ({
     >
       {/* Video container with proper aspect ratio preservation */}
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-        {!isLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <div className="w-10 h-10 border-2 border-luxury-primary/50 border-t-luxury-primary rounded-full animate-spin"></div>
-          </div>
+        {/* Loading state */}
+        {!isLoaded && !hasError && !isRetrying && <VideoLoadingState />}
+        
+        {/* Error state */}
+        {hasError && !isRetrying && (
+          <VideoErrorState 
+            onRetry={handleRetry} 
+            errorDetails="The video could not be loaded. It may be unavailable or in an unsupported format."
+          />
         )}
+        
+        {isRetrying && <VideoLoadingState />}
         
         <video
           ref={videoRef}
@@ -178,7 +203,11 @@ export const VideoPlayer = ({
           muted={isMuted}
           playsInline
           loop
-          className="w-full h-full object-contain"
+          className={cn(
+            "w-full h-full object-contain",
+            (hasError || !isLoaded) && "opacity-0",
+            isLoaded && !hasError && "opacity-100 transition-opacity duration-300"
+          )}
           style={{
             objectFit: "contain",
             backgroundColor: "black",

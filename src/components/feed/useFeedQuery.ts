@@ -21,7 +21,8 @@ export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
         .select(`
           *,
           creator:profiles(id, username, avatar_url),
-          post_likes(user_id)
+          post_likes(user_id),
+          post_saves(user_id)
         `)
         .order('created_at', { ascending: false })
         .range(from, to);
@@ -54,7 +55,8 @@ export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
 
       return posts?.map(post => ({
         ...post,
-        has_liked: post.post_likes?.length > 0,
+        has_liked: post.post_likes?.some(like => like.user_id === userId) || false,
+        has_saved: post.post_saves?.some(save => save.user_id === userId) || false,
         visibility: post.visibility || 'public',
         screenshots_count: post.screenshots_count || 0,
         downloads_count: post.downloads_count || 0,

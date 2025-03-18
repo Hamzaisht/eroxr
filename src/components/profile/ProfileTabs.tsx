@@ -1,6 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Image, Users, CircuitBoard, MessageCircle } from "lucide-react";
+import { Heart, Image, Users, CircuitBoard, MessageCircle, Video } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreatorsFeed } from "@/components/CreatorsFeed";
@@ -10,12 +10,18 @@ import { useParams } from "react-router-dom";
 import { VideoProfileCarousel } from "@/components/ads/video-profile-carousel";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { useState, useEffect } from "react";
+import { useFeedQuery } from "@/components/feed/useFeedQuery";
+import { useSession } from "@supabase/auth-helpers-react";
+import { ShortsList } from "./ShortsList";
 
 export const ProfileTabs = ({ profile }: { profile: any }) => {
   const { id } = useParams();
+  const session = useSession();
   const canAccessBodyContact = profile?.is_paying_customer || profile?.id_verification_status === 'verified';
   const [bodyContactAds, setBodyContactAds] = useState<any[]>([]);
   const [hasAds, setHasAds] = useState(false);
+
+  const isCurrentUserProfile = session?.user?.id === id;
   
   // Fetch body contact ads for this specific profile - skip moderation status filter
   const { data: profileAds, isLoading: adsLoading } = useAdsQuery({
@@ -23,6 +29,10 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
     includeMyPendingAds: true,
     skipModeration: true
   });
+  
+  // Fetch videos for this user
+  const { data: videosData, isLoading: videosLoading } = useFeedQuery(id, 'shorts');
+  const hasVideos = videosData?.pages?.[0]?.length > 0;
   
   useEffect(() => {
     if (profileAds) {
@@ -44,6 +54,28 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
       label: "Media",
       icon: Image,
       content: <MediaGrid onImageClick={() => {}} />
+    },
+    {
+      value: "eros",
+      label: "Eros",
+      icon: Video,
+      content: videosLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
+        </div>
+      ) : hasVideos ? (
+        <ShortsList shorts={videosData?.pages.flatMap(page => page) || []} />
+      ) : (
+        <EmptyState 
+          icon={Video} 
+          message={isCurrentUserProfile 
+            ? "You haven't uploaded any videos yet" 
+            : "No videos uploaded yet"
+          }
+          actionLabel={isCurrentUserProfile ? "Upload Video" : undefined}
+          actionHref={isCurrentUserProfile ? "/shorts" : undefined}
+        />
+      )
     },
     {
       value: "subscribers",

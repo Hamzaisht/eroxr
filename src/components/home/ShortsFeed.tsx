@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { ShareDialog } from "@/components/feed/ShareDialog";
 import { Short } from "./types/short";
 import { useShortActions } from "./hooks/useShortActions";
-import { VideoPlayer } from "./components/VideoPlayer";
+import { VideoPlayer } from "../video/VideoPlayer";
 import { ShortContent } from "./components/ShortContent";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useFeedQuery } from "../feed/useFeedQuery";
@@ -15,6 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 export const ShortsFeed = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -23,9 +26,17 @@ export const ShortsFeed = () => {
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
-  const { handleLike, handleSave } = useShortActions();
+  const { handleLike, handleSave, handleDelete } = useShortActions();
   const session = useSession();
-  const { data, refetch, fetchNextPage, hasNextPage } = useFeedQuery(session?.user?.id, 'shorts');
+  const queryClient = useQueryClient();
+  const { 
+    data, 
+    refetch, 
+    fetchNextPage, 
+    hasNextPage,
+    isError,
+    error 
+  } = useFeedQuery(session?.user?.id, 'shorts');
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { toast } = useToast();
   const { playLikeSound, playCommentSound } = useSoundEffects();
@@ -36,15 +47,60 @@ export const ShortsFeed = () => {
     id: post.id,
     creator: {
       username: post.creator?.username || 'Anonymous',
-      avatar_url: post.creator?.avatar_url || null
+      avatar_url: post.creator?.avatar_url || null,
+      id: post.creator_id
     },
+    creator_id: post.creator_id,
     content: post.content,
     video_urls: post.video_urls,
     likes_count: post.likes_count,
     comments_count: post.comments_count,
     has_liked: post.has_liked,
-    has_saved: false // Now always providing a boolean value
+    has_saved: post.has_saved || false,
+    created_at: post.created_at
   }));
+
+  // Reset loading state when data is loaded or on error
+  useEffect(() => {
+    if (data || isError) {
+      setIsLoading(false);
+    }
+  }, [data, isError]);
+
+  useEffect(() => {
+    // Subscribe to real-time updates for posts with videos
+    if (!session?.user?.id) return;
+
+    const channel = supabase
+      .channel('public:video_posts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'posts',
+          filter: `video_urls.neq.null`
+        },
+        (payload) => {
+          console.log('Real-time post update:', payload);
+          queryClient.invalidateQueries({ queryKey: ['posts'] });
+          
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "New short",
+              description: "A new short has been posted!",
+            });
+            // Refetch to get the latest posts
+            refetch();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id, queryClient, toast, refetch]);
 
   useEffect(() => {
     // Subscribe to real-time updates for comments
@@ -110,6 +166,57 @@ export const ShortsFeed = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentVideoIndex, shorts.length]);
 
+  // Load more content when reaching the end
+  useEffect(() => {
+    if (currentVideoIndex >= shorts.length - 2 && hasNextPage && !isLoading) {
+      fetchNextPage();
+    }
+  }, [currentVideoIndex, shorts.length, fetchNextPage, hasNextPage, isLoading]);
+
+  const handleRetryLoad = () => {
+    setIsLoading(true);
+    refetch();
+  };
+
+  // Show error state if there's an issue
+  if (isError && !isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-luxury-darker">
+        <ErrorState 
+          title="Failed to load shorts" 
+          description={error?.message || "We couldn't load videos. Please try again."} 
+          onRetry={handleRetryLoad}
+        />
+      </div>
+    );
+  }
+
+  // Show empty state if there are no shorts
+  if (!isLoading && shorts.length === 0) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-luxury-darker text-white text-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md"
+        >
+          <h2 className="text-2xl font-bold mb-2">No videos yet</h2>
+          <p className="text-luxury-neutral mb-8">Be the first to upload a short video and start the trend!</p>
+          
+          {session?.user && (
+            <Button 
+              size="lg" 
+              className="bg-luxury-primary hover:bg-luxury-primary/80"
+              onClick={() => document.getElementById('upload-video-button')?.click()}
+            >
+              Upload Your First Short
+            </Button>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div 
       className="fixed inset-0 bg-black"
@@ -129,12 +236,9 @@ export const ShortsFeed = () => {
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
               <VideoPlayer
                 url={short.video_urls?.[0] ?? ""}
-                index={index}
-                isMuted={isMuted}
-                onMuteChange={setIsMuted}
-                isCurrentVideo={index === currentVideoIndex}
-                onIndexChange={setCurrentVideoIndex}
+                poster={`${short.video_urls?.[0]?.split('.').slice(0, -1).join('.')}.jpg`}
                 className="h-full w-full object-cover"
+                autoPlay={index === currentVideoIndex}
                 onError={() => {
                   toast({
                     title: "Video Error",
@@ -154,6 +258,11 @@ export const ShortsFeed = () => {
                 onComment={() => handleCommentClick(short.id)}
                 handleLike={handleLike}
                 handleSave={handleSave}
+                onDelete={
+                  session?.user?.id === short.creator_id 
+                    ? () => handleDelete(short.id) 
+                    : undefined
+                }
                 isCurrentVideo={index === currentVideoIndex}
                 className={`absolute bottom-0 left-0 right-0 z-20 p-4 ${isMobile ? 'pb-16' : 'p-6'}`}
               />
@@ -204,7 +313,20 @@ export const ShortsFeed = () => {
       {/* Loading indicator */}
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <Loader2 className="w-8 h-8 animate-spin text-luxury-primary" />
+          <div className="bg-luxury-darker/80 rounded-lg p-6 backdrop-blur-lg flex flex-col items-center">
+            <Loader2 className="w-8 h-8 animate-spin text-luxury-primary mb-2" />
+            <p className="text-luxury-neutral">Loading videos...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Load more indicator */}
+      {hasNextPage && currentVideoIndex >= shorts.length - 2 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-luxury-darker/80 rounded-full px-4 py-2 backdrop-blur-lg flex items-center">
+            <Loader2 className="w-4 h-4 animate-spin text-luxury-primary mr-2" />
+            <p className="text-luxury-neutral text-sm">Loading more videos...</p>
+          </div>
         </div>
       )}
     </div>

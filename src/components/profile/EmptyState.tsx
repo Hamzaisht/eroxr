@@ -1,21 +1,49 @@
+
 import { LucideIcon } from "lucide-react";
-import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface EmptyStateProps {
   icon: LucideIcon;
   message: string;
+  description?: string;
+  actionLabel?: string;
+  actionHref?: string;
+  onAction?: () => void;
 }
 
-export const EmptyState = ({ icon: Icon, message }: EmptyStateProps) => {
+export const EmptyState = ({ 
+  icon: Icon, 
+  message, 
+  description, 
+  actionLabel,
+  actionHref,
+  onAction
+}: EmptyStateProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="text-center text-luxury-neutral/70 p-12 rounded-2xl border border-luxury-primary/20 bg-luxury-dark/30 backdrop-blur-sm"
-    >
-      <Icon className="w-12 h-12 mx-auto mb-4 text-luxury-primary animate-pulse" />
-      <p className="text-lg">{message}</p>
-    </motion.div>
+    <div className="flex flex-col items-center justify-center text-center py-16 px-4">
+      <div className="w-16 h-16 rounded-full bg-luxury-primary/10 flex items-center justify-center mb-4">
+        <Icon className="h-8 w-8 text-luxury-primary/70" />
+      </div>
+      <h3 className="text-xl font-semibold text-white mb-2">{message}</h3>
+      {description && (
+        <p className="text-luxury-neutral max-w-md mb-6">{description}</p>
+      )}
+      
+      {(actionLabel && actionHref) && (
+        <Button asChild className="bg-luxury-primary hover:bg-luxury-primary/90">
+          <Link to={actionHref}>{actionLabel}</Link>
+        </Button>
+      )}
+      
+      {(actionLabel && onAction) && (
+        <Button 
+          className="bg-luxury-primary hover:bg-luxury-primary/90"
+          onClick={onAction}
+        >
+          {actionLabel}
+        </Button>
+      )}
+    </div>
   );
 };

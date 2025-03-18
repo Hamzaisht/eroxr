@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 export default function Shorts() {
   const session = useSession();
@@ -47,10 +48,12 @@ export default function Shorts() {
 
   return (
     <div className="min-h-screen bg-luxury-dark">
-      <div className="fixed inset-0 flex items-center justify-center">
-        <ShortsFeed />
-      </div>
-      {session && <UploadVideoButton />}
+      <ErrorBoundary fallback={<div className="p-8 text-center">Something went wrong loading Eros. Please try refreshing.</div>}>
+        <div className="fixed inset-0 flex items-center justify-center">
+          <ShortsFeed />
+        </div>
+        {session && <UploadVideoButton />}
+      </ErrorBoundary>
     </div>
   );
 }
