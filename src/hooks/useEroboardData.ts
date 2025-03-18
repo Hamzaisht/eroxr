@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +10,8 @@ import { useCreatorStats } from "./eroboard/useCreatorStats";
 import { calculateEngagementRate, calculateTimeOnPlatform } from "./eroboard/utils";
 import { subDays } from "date-fns";
 
-export { EroboardStats, RevenueBreakdown, DateRange, PayoutInfo } from "./eroboard/types";
+export type { EroboardStats, RevenueBreakdown, DateRange } from "./eroboard/types";
+export type { PayoutInfo } from "./eroboard/types";
 
 export function useEroboardData() {
   const session = useSession();
@@ -74,22 +74,16 @@ export function useEroboardData() {
         to: new Date()
       };
 
-      // Fetch creator stats (earnings, percentile, followers)
       const creatorStats = await fetchCreatorStats();
       
-      // Fetch earnings data
       const earningsResult = await fetchEarningsData(effectiveDateRange, stats.revenueShare);
       
-      // Fetch subscriber data
       const subscriberData = await fetchSubscriberData(effectiveDateRange);
       
-      // Fetch VIP fans data
       const vipFansCount = await fetchVipFansData();
       
-      // Fetch content data
       const contentData = await fetchContentData(effectiveDateRange);
       
-      // Fetch payout data
       await fetchPayoutData();
 
       setStats({

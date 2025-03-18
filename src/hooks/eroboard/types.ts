@@ -1,6 +1,4 @@
 
-import { DateRange } from "date-fns";
-
 export type EroboardStats = {
   totalEarnings: number;
   totalSubscribers: number;
