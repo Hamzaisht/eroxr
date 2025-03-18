@@ -1,5 +1,4 @@
 
-import { useEffect } from "react";
 import { Users, MapPin, Tags, Shield, Crown, Ruler, Search } from "lucide-react";
 import { FilterOptions, SearchCategory } from "./types/dating";
 import { SearchCategories } from "./filters/SearchCategories";
@@ -12,6 +11,9 @@ import { ActiveFilters } from "./filters/ActiveFilters";
 import { FilterGroup } from "./filters/FilterGroup";
 import { type Database } from "@/integrations/supabase/types";
 import { LocationSearch } from "./LocationSearch";
+import { useClearFilters } from "./filters/useClearFilters";
+import { usePreventFormSubmission } from "./filters/usePreventFormSubmission";
+import { FilterSections } from "./filters/FilterSections";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
@@ -48,48 +50,17 @@ export const AdFilters = ({
   selectedCity,
   setSelectedCity
 }: AdFiltersProps) => {
-  const handleClearFilter = (e: React.MouseEvent | null, filterType: string) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    switch (filterType) {
-      case 'country':
-        setSelectedCountry(null);
-        setSelectedCity(null);
-        break;
-      case 'city':
-        setSelectedCity(null);
-        break;
-      case 'distance':
-        setFilterOptions({ ...filterOptions, maxDistance: 50 });
-        break;
-      case 'seeking':
-        setSelectedSeeker(null);
-        setSelectedLookingFor(null);
-        break;
-      case 'tag':
-        setSelectedTag(null);
-        break;
-      case 'age':
-        setFilterOptions({ ...filterOptions, minAge: 18, maxAge: 99 });
-        break;
-      case 'verification':
-        setFilterOptions({ ...filterOptions, isVerified: false });
-        break;
-      case 'premium':
-        setFilterOptions({ ...filterOptions, isPremium: false });
-        break;
-    }
-  };
+  const { handleClearFilter } = useClearFilters({
+    setSelectedCountry,
+    setSelectedCity,
+    setFilterOptions,
+    filterOptions,
+    setSelectedSeeker,
+    setSelectedLookingFor,
+    setSelectedTag
+  });
 
-  // Prevent form submission for all events in this component
-  const preventFormSubmission = (e: React.FormEvent | React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  };
+  const { preventFormSubmission } = usePreventFormSubmission();
 
   return (
     <div 
@@ -113,89 +84,29 @@ export const AdFilters = ({
         onClearFilter={(filterType) => handleClearFilter(null, filterType)}
       />
 
-      <div className="divide-y divide-luxury-primary/10">
-        <FilterGroup title="Search by Keyword or Username" icon={<Search className="h-4 w-4" />} defaultOpen>
-          <UserSearchFields
-            filterOptions={filterOptions}
-            setFilterOptions={setFilterOptions}
-          />
-        </FilterGroup>
-
-        <FilterGroup title="Location" icon={<MapPin className="h-4 w-4" />} defaultOpen>
-          <LocationSearch
-            selectedCountry={selectedCountry}
-            setSelectedCountry={setSelectedCountry}
-            selectedCity={selectedCity}
-            setSelectedCity={setSelectedCity}
-            filterByDistance={true}
-          />
-          <div 
-            className="mt-4" 
-            onSubmit={preventFormSubmission}
-            onClick={preventFormSubmission}
-            onMouseDown={preventFormSubmission}
-            onTouchStart={preventFormSubmission}
-          >
-            <DistanceFilter 
-              filterOptions={filterOptions} 
-              setFilterOptions={setFilterOptions} 
-            />
-          </div>
-        </FilterGroup>
-
-        <FilterGroup title="Search Categories" icon={<Users className="h-4 w-4" />}>
-          <SearchCategories
-            searchCategories={searchCategories}
-            selectedSeeker={selectedSeeker}
-            selectedLookingFor={selectedLookingFor}
-            setSelectedSeeker={setSelectedSeeker}
-            setSelectedLookingFor={setSelectedLookingFor}
-          />
-        </FilterGroup>
-
-        <FilterGroup title="Age Range" icon={<Ruler className="h-4 w-4" />}>
-          <div 
-            onSubmit={preventFormSubmission}
-            onClick={preventFormSubmission}
-            onMouseDown={preventFormSubmission}
-            onTouchStart={preventFormSubmission}
-          >
-            <AgeRangeFilter 
-              filterOptions={filterOptions} 
-              setFilterOptions={setFilterOptions} 
-            />
-          </div>
-        </FilterGroup>
-
-        <FilterGroup title="Verification" icon={<Shield className="h-4 w-4" />}>
-          <div 
-            onSubmit={preventFormSubmission}
-            onClick={preventFormSubmission}
-            onMouseDown={preventFormSubmission}
-            onTouchStart={preventFormSubmission}
-          >
-            <VerificationFilter 
-              filterOptions={filterOptions} 
-              setFilterOptions={setFilterOptions} 
-            />
-          </div>
-        </FilterGroup>
-
-        {selectedTag && (
-          <FilterGroup title="Active Tag" icon={<Tags className="h-4 w-4" />}>
-            <TagDisplay 
-              selectedTag={selectedTag} 
-              handleClearTag={(e) => {
-                if (e) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }
-                setSelectedTag(null);
-              }} 
-            />
-          </FilterGroup>
-        )}
-      </div>
+      <FilterSections 
+        selectedCountry={selectedCountry}
+        setSelectedCountry={setSelectedCountry}
+        selectedCity={selectedCity}
+        setSelectedCity={setSelectedCity}
+        selectedSeeker={selectedSeeker}
+        selectedLookingFor={selectedLookingFor}
+        setSelectedSeeker={setSelectedSeeker}
+        setSelectedLookingFor={setSelectedLookingFor}
+        searchCategories={searchCategories}
+        filterOptions={filterOptions}
+        setFilterOptions={setFilterOptions}
+        selectedTag={selectedTag}
+        setSelectedTag={setSelectedTag}
+        preventFormSubmission={preventFormSubmission}
+        handleClearTag={(e) => {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          setSelectedTag(null);
+        }}
+      />
     </div>
   );
 };
