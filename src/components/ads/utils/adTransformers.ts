@@ -31,13 +31,13 @@ export const transformRawAds = (rawAds: RawDatingAd[]): DatingAd[] => {
       age_range: ageRange,
       user: user,
       // Set default verified/premium status
-      is_verified: false,
-      is_premium: false,
+      is_verified: ad.is_verified ?? false,
+      is_premium: ad.is_premium ?? false,
       // Set default view and message counts if not present
       view_count: ad.view_count || 0,
       message_count: ad.message_count || 0,
       // Set moderation status to approved by default
-      moderation_status: 'approved'
+      moderation_status: ad.moderation_status || 'approved'
     } as DatingAd;
   });
 };
