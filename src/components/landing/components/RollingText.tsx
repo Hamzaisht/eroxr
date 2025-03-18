@@ -15,7 +15,7 @@ export const RollingText = ({ children, href }: RollingTextProps) => {
       <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-full">
         {children}
       </span>
-      <span className="absolute left-0 top-0 inline-block transition-transform duration-300 group-hover:translate-y-0 transform translate-y-full">
+      <span className="absolute left-0 top-full inline-block transition-transform duration-300 group-hover:-translate-y-full">
         {children}
       </span>
     </Link>
