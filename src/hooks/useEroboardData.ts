@@ -195,17 +195,21 @@ export function useEroboardData() {
 
       const { data: vipFansData, error: vipFansError } = await supabase
         .from('post_purchases')
-        .select('user_id, count(*)')
+        .select('user_id')
         .eq('posts.creator_id', session.user.id)
-        .gte('created_at', format(subMonths(new Date(), 3), 'yyyy-MM-dd'))
-        .order('count', { ascending: false })
-        .limit(100);
+        .gte('created_at', format(subMonths(new Date(), 3), 'yyyy-MM-dd'));
 
       if (vipFansError) {
         console.error("Error fetching VIP fans data:", vipFansError);
       }
 
-      const vipFansCount = vipFansData ? vipFansData.filter(fan => fan.count > 5).length : 0;
+      const vipFansCount = vipFansData ? 
+        Object.entries(
+          vipFansData.reduce((acc: Record<string, number>, purchase: any) => {
+            acc[purchase.user_id] = (acc[purchase.user_id] || 0) + 1;
+            return acc;
+          }, {})
+        ).filter(([_, count]) => count > 5).length : 0;
 
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
