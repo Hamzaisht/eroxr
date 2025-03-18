@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -77,13 +76,11 @@ export function useEroboardData() {
       setLoading(true);
       setError(null);
       
-      // Set default date range if not provided
       const effectiveDateRange = dateRange || {
         from: subDays(new Date(), 30),
         to: new Date()
       };
 
-      // Fetch creator's earnings information
       const { data: creatorEarnings, error: creatorEarningsError } = await supabase
         .from("top_creators_by_earnings")
         .select("total_earnings, earnings_percentile")
@@ -95,7 +92,6 @@ export function useEroboardData() {
         setError("Error fetching earnings data");
       }
 
-      // Fetch total earnings for the selected date range with breakdown by source
       const { data: earningsData, error: earningsError } = await supabase
         .from('post_purchases')
         .select(`
@@ -115,7 +111,6 @@ export function useEroboardData() {
         setError("Error fetching earnings breakdown");
       }
 
-      // Process revenue breakdown
       const breakdown: RevenueBreakdown = {
         subscriptions: 0,
         tips: 0,
@@ -140,21 +135,18 @@ export function useEroboardData() {
             breakdown.messages += amount;
             break;
           default:
-            // Default to subscriptions for legacy data
             breakdown.subscriptions += amount;
         }
       });
 
       setRevenueBreakdown(breakdown);
 
-      // Process earnings data for chart
       const processedEarningsData = earningsData?.reduce((acc: any, purchase: any) => {
         const date = format(new Date(purchase.created_at), 'yyyy-MM-dd');
         acc[date] = (acc[date] || 0) + purchase.amount;
         return acc;
       }, {}) || {};
 
-      // Convert to array format for chart
       const chartEarningsData = Object.entries(processedEarningsData).map(
         ([date, amount]) => ({
           date,
@@ -164,10 +156,8 @@ export function useEroboardData() {
 
       setEarningsData(chartEarningsData);
 
-      // Calculate total earnings
       const totalEarnings = chartEarningsData.reduce((sum, item) => sum + Number(item.amount), 0);
 
-      // Fetch subscribers data with advanced metrics
       const { data: subscriptionsData, error: subscriptionsError } = await supabase
         .from('creator_subscriptions')
         .select('created_at, user_id, is_renewed')
@@ -178,7 +168,6 @@ export function useEroboardData() {
         setError("Error fetching subscriber metrics");
       }
 
-      // Calculate subscriber metrics
       const subscribers = subscriptionsData || [];
       const subscribersInRange = subscribers.filter(sub => {
         const subDate = new Date(sub.created_at);
@@ -189,14 +178,12 @@ export function useEroboardData() {
       const totalSubscribersCount = subscribers.length;
       const newSubscribersCount = subscribersInRange.length;
       
-      // Calculate returning subscribers (renewed subscriptions)
       const returningSubscribersCount = subscribers.filter(sub => 
         sub.is_renewed === true && 
         isAfter(new Date(sub.created_at), effectiveDateRange.from) && 
         !isAfter(new Date(sub.created_at), effectiveDateRange.to)
       ).length;
       
-      // Calculate churn rate (approximate)
       const lastMonthSubscribers = subscribers.filter(sub => 
         isAfter(new Date(sub.created_at), subMonths(effectiveDateRange.from, 1)) && 
         !isAfter(new Date(sub.created_at), effectiveDateRange.from)
@@ -206,22 +193,20 @@ export function useEroboardData() {
         ? Math.min(100, Math.round(100 * (1 - returningSubscribersCount / lastMonthSubscribers)))
         : 0;
 
-      // Identify VIP fans (subscribers who have made multiple purchases)
       const { data: vipFansData, error: vipFansError } = await supabase
         .from('post_purchases')
-        .select('user_id, count')
+        .select('user_id, count(*)')
         .eq('posts.creator_id', session.user.id)
         .gte('created_at', format(subMonths(new Date(), 3), 'yyyy-MM-dd'))
-        .group('user_id')
-        .having('count(*) > 5');
+        .order('count', { ascending: false })
+        .limit(100);
 
       if (vipFansError) {
         console.error("Error fetching VIP fans data:", vipFansError);
       }
 
-      const vipFansCount = vipFansData?.length || 0;
+      const vipFansCount = vipFansData ? vipFansData.filter(fan => fan.count > 5).length : 0;
 
-      // Fetch content distribution data
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
@@ -243,7 +228,6 @@ export function useEroboardData() {
         setError("Error fetching content performance data");
       }
 
-      // Calculate content distribution
       const distribution = postsData?.reduce(
         (acc: { photos: number; videos: number; stories: number }, post) => {
           if (post.media_url?.length) acc.photos += 1;
@@ -259,7 +243,6 @@ export function useEroboardData() {
         { name: 'Stories', value: distribution?.stories || 0 }
       ]);
 
-      // Calculate content performance for heatmap
       const contentPerformance = postsData?.map(post => {
         const postEarnings = post.earnings?.reduce((sum: number, purchase: any) => sum + Number(purchase.amount), 0) || 0;
         
@@ -277,7 +260,6 @@ export function useEroboardData() {
 
       setContentPerformanceData(contentPerformance);
 
-      // Fetch engagement data
       const { data: engagementActionData, error: engagementError } = await supabase
         .from('post_media_actions')
         .select('created_at, action_type')
@@ -289,7 +271,6 @@ export function useEroboardData() {
         console.error("Error fetching engagement data:", engagementError);
       }
 
-      // Process engagement data by date
       const engagementByDate = engagementActionData?.reduce((acc: any, action) => {
         const date = format(new Date(action.created_at), 'yyyy-MM-dd');
         if (!acc[date]) acc[date] = 0;
@@ -303,7 +284,6 @@ export function useEroboardData() {
 
       setEngagementData(engagementChartData.length > 0 ? engagementChartData : generateMockEngagementData(effectiveDateRange.from, effectiveDateRange.to));
 
-      // Fetch latest payout data
       const { data: payoutData, error: payoutError } = await supabase
         .from('payout_requests')
         .select('status, processed_at')
@@ -316,7 +296,6 @@ export function useEroboardData() {
         setLatestPayout(payoutData);
       }
 
-      // Fetch follower count
       const { count: followerCount, error: followerError } = await supabase
         .from("followers")
         .select("*", { count: 'exact', head: true })
@@ -326,7 +305,6 @@ export function useEroboardData() {
         console.error("Error fetching follower count:", followerError);
       }
 
-      // Fetch total posts count
       const { count: postCount, error: postCountError } = await supabase
         .from("posts")
         .select("*", { count: 'exact', head: true })
@@ -336,7 +314,6 @@ export function useEroboardData() {
         console.error("Error fetching post count:", postCountError);
       }
 
-      // Update stats with all fetched data
       setStats({
         totalEarnings: creatorEarnings?.total_earnings || totalEarnings || 0,
         earningsPercentile: creatorEarnings?.earnings_percentile || null,
@@ -366,7 +343,6 @@ export function useEroboardData() {
     }
   }, [session?.user?.id, toast]);
 
-  // Calculate engagement rate 
   const calculateEngagementRate = (posts: any[] = []) => {
     if (!posts || posts.length === 0) return 0;
     
@@ -380,14 +356,11 @@ export function useEroboardData() {
       ? Math.round((totalEngagements / totalViews) * 100) 
       : 0;
   };
-  
-  // Calculate time on platform in days
+
   const calculateTimeOnPlatform = (userId: string) => {
-    // This is a placeholder - ideally we would fetch the user's join date from profiles
-    return Math.floor(Math.random() * 365) + 30; // Random value between 30-395 days
+    return Math.floor(Math.random() * 365) + 30;
   };
 
-  // Helper function to generate mock engagement data until we have real data
   const generateMockEngagementData = (startDate: Date, endDate: Date) => {
     const data = [];
     let currentDate = new Date(startDate);

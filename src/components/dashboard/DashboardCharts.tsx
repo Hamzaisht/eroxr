@@ -29,9 +29,11 @@ export function DashboardCharts({
     to: new Date(),
   });
 
-  const handleDateRangeChange = (range: { from: Date; to: Date }) => {
-    setDateRange(range);
-    onDateRangeChange(range);
+  const handleDateRangeChange = (range: { from: Date | null; to: Date | null }) => {
+    if (range.from && range.to) {
+      setDateRange({ from: range.from, to: range.to });
+      onDateRangeChange({ from: range.from, to: range.to });
+    }
   };
 
   // Colors for the pie chart
@@ -46,8 +48,9 @@ export function DashboardCharts({
         </div>
         {!showOnlyEarnings && !showOnlyEngagement && (
           <DateRangePicker
-            value={dateRange}
-            onValueChange={handleDateRangeChange}
+            from={dateRange.from}
+            to={dateRange.to}
+            onSelect={handleDateRangeChange}
           />
         )}
       </div>
@@ -111,8 +114,9 @@ export function DashboardCharts({
         </div>
         {!showOnlyEarnings && !showOnlyEngagement && (
           <DateRangePicker
-            value={dateRange}
-            onValueChange={handleDateRangeChange}
+            from={dateRange.from}
+            to={dateRange.to}
+            onSelect={handleDateRangeChange}
           />
         )}
       </div>
