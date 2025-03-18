@@ -8,7 +8,7 @@ const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
 >(({ className, ...props }, ref) => {
-  // Comprehensive event prevention
+  // More comprehensive event prevention
   const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent | React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();

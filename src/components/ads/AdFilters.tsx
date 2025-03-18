@@ -95,6 +95,8 @@ export const AdFilters = ({
     <div 
       className="bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-primary/10 overflow-hidden"
       onClick={preventFormSubmission}
+      onMouseDown={preventFormSubmission}
+      onTouchStart={preventFormSubmission}
       onSubmit={preventFormSubmission}
     >
       <div className="p-4 border-b border-luxury-primary/10">
@@ -127,7 +129,13 @@ export const AdFilters = ({
             setSelectedCity={setSelectedCity}
             filterByDistance={true}
           />
-          <div className="mt-4" onSubmit={preventFormSubmission}>
+          <div 
+            className="mt-4" 
+            onSubmit={preventFormSubmission}
+            onClick={preventFormSubmission}
+            onMouseDown={preventFormSubmission}
+            onTouchStart={preventFormSubmission}
+          >
             <DistanceFilter 
               filterOptions={filterOptions} 
               setFilterOptions={setFilterOptions} 
@@ -146,7 +154,12 @@ export const AdFilters = ({
         </FilterGroup>
 
         <FilterGroup title="Age Range" icon={<Ruler className="h-4 w-4" />}>
-          <div onSubmit={preventFormSubmission}>
+          <div 
+            onSubmit={preventFormSubmission}
+            onClick={preventFormSubmission}
+            onMouseDown={preventFormSubmission}
+            onTouchStart={preventFormSubmission}
+          >
             <AgeRangeFilter 
               filterOptions={filterOptions} 
               setFilterOptions={setFilterOptions} 
@@ -155,7 +168,12 @@ export const AdFilters = ({
         </FilterGroup>
 
         <FilterGroup title="Verification" icon={<Shield className="h-4 w-4" />}>
-          <div onSubmit={preventFormSubmission}>
+          <div 
+            onSubmit={preventFormSubmission}
+            onClick={preventFormSubmission}
+            onMouseDown={preventFormSubmission}
+            onTouchStart={preventFormSubmission}
+          >
             <VerificationFilter 
               filterOptions={filterOptions} 
               setFilterOptions={setFilterOptions} 
@@ -168,7 +186,10 @@ export const AdFilters = ({
             <TagDisplay 
               selectedTag={selectedTag} 
               handleClearTag={(e) => {
-                if (e) e.preventDefault();
+                if (e) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
                 setSelectedTag(null);
               }} 
             />

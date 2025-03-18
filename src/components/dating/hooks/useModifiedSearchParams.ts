@@ -30,12 +30,13 @@ export const useModifiedSearchParams = ({
       setSelectedSeeker(seekerParam);
       setSelectedLookingFor(lookingForParam);
     }
-    // This will only run once on component mount, no matter how many times we update the filters
-  }, []); 
+    // This empty dependency array ensures this only runs once on component mount
+  }, []);  // ⚠️ Intentionally empty - we only want to process URL params on mount 
 
   const handleTagClick = (tag: string) => {
     // Just update the state directly without modifying URL
     setSelectedTag(tag);
+    // No URL manipulation to prevent page refreshes
   };
 
   return { handleTagClick };

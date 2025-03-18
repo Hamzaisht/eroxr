@@ -34,6 +34,8 @@ export const AgeRangeFilter = ({
       <form 
         onSubmit={preventFormSubmission}
         onClick={preventFormSubmission}
+        onMouseDown={preventFormSubmission}
+        onTouchStart={preventFormSubmission}
         className="mt-2 px-1"
       >
         <div className="flex justify-between text-sm text-luxury-neutral mb-2">

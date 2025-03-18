@@ -32,7 +32,7 @@ export const VerificationFilter = ({
   };
   
   // Prevent form submission
-  const preventFormSubmission = (e: React.FormEvent) => {
+  const preventFormSubmission = (e: React.FormEvent | React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     return false;
@@ -40,7 +40,13 @@ export const VerificationFilter = ({
   
   return (
     <FilterAccordion title="Verification" defaultOpen={true}>
-      <form onSubmit={preventFormSubmission} className="space-y-2 mt-2">
+      <form 
+        onSubmit={preventFormSubmission} 
+        onClick={preventFormSubmission}
+        onMouseDown={preventFormSubmission}
+        onTouchStart={preventFormSubmission}
+        className="space-y-2 mt-2"
+      >
         <div className="flex items-center">
           <input
             type="checkbox"
@@ -48,13 +54,21 @@ export const VerificationFilter = ({
             className="rounded h-4 w-4 bg-luxury-darker border-luxury-primary/20 text-luxury-primary"
             checked={!!filterOptions.isVerified}
             onChange={handleVerifiedChange}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setFilterOptions({
+                ...filterOptions,
+                isVerified: !filterOptions.isVerified
+              });
+            }}
           />
           <label
             htmlFor="verified-only"
             className="ml-2 text-sm text-luxury-neutral"
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setFilterOptions({
                 ...filterOptions,
                 isVerified: !filterOptions.isVerified
@@ -71,13 +85,21 @@ export const VerificationFilter = ({
             className="rounded h-4 w-4 bg-luxury-darker border-luxury-primary/20 text-luxury-primary"
             checked={!!filterOptions.isPremium}
             onChange={handlePremiumChange}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setFilterOptions({
+                ...filterOptions,
+                isPremium: !filterOptions.isPremium
+              });
+            }}
           />
           <label
             htmlFor="premium-only"
             className="ml-2 text-sm text-luxury-neutral"
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setFilterOptions({
                 ...filterOptions,
                 isPremium: !filterOptions.isPremium
