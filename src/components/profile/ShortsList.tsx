@@ -6,7 +6,7 @@ import { Play, Eye, Heart, MessageCircle, Clock, MoreVertical, Trash, Edit } fro
 import { useSession } from "@supabase/auth-helpers-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useRouter } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useShortActions } from "@/components/home/hooks/useShortActions";
 import { 
   DropdownMenu,
@@ -20,11 +20,11 @@ import { VideoPlayer } from "@/components/video/VideoPlayer";
 export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
   const [selectedVideo, setSelectedVideo] = useState<Post | null>(null);
   const session = useSession();
-  const router = useRouter();
+  const navigate = useNavigate();
   const { handleDelete } = useShortActions();
   
   const viewShort = (short: Post) => {
-    router.navigate(`/shorts?id=${short.id}`);
+    navigate(`/shorts?id=${short.id}`);
   };
   
   const handleVideoPreview = (short: Post) => {

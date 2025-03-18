@@ -14,4 +14,6 @@ export interface Short {
   has_liked?: boolean;
   has_saved?: boolean;
   created_at?: string;
+  video_thumbnail_url?: string;
+  view_count?: number;
 }

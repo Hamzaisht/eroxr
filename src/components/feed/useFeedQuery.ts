@@ -62,7 +62,9 @@ export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
         downloads_count: post.downloads_count || 0,
         video_urls: post.video_urls || [],
         media_url: post.media_url || [],
-        updated_at: post.updated_at || post.created_at
+        updated_at: post.updated_at || post.created_at,
+        view_count: post.view_count || 0,
+        video_thumbnail_url: post.video_thumbnail_url || null
       })) as Post[];
     },
     getNextPageParam: (lastPage, allPages) => {

@@ -132,11 +132,12 @@ export const UploadVideoButton = () => {
         .from('videos')
         .upload(filePath, selectedFile, {
           upsert: true,
-          onUploadProgress: (progress) => {
-            const percent = (progress.loaded / progress.total) * 100;
-            setUploadProgress(percent);
-          },
+          cacheControl: '3600',
+          contentType: selectedFile.type
         });
+      
+      // Handle upload progress manually since onUploadProgress isn't available
+      setUploadProgress(100);
       
       if (uploadError) {
         throw uploadError;

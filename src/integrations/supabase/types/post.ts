@@ -1,3 +1,4 @@
+
 import { Creator } from './profile';
 
 export type Post = {
@@ -15,8 +16,11 @@ export type Post = {
   is_ppv: boolean;
   video_urls: string[] | null;
   has_liked: boolean;
+  has_saved?: boolean;
   has_purchased?: boolean;
   screenshots_count: number;
   downloads_count: number;
   creator: Creator;
+  video_thumbnail_url?: string;
+  view_count?: number;
 };
