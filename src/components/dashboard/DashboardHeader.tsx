@@ -1,5 +1,7 @@
 
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { Sparkles } from "lucide-react";
 
 interface DashboardHeaderProps {
   totalEarnings: number;
@@ -17,12 +19,17 @@ export function DashboardHeader({
   payoutTooltip
 }: DashboardHeaderProps) {
   return (
-    <div className="flex justify-between items-center mb-8">
+    <motion.div 
+      className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
           Creator Dashboard
         </h1>
-        <p className="text-luxury-muted mt-1">
+        <p className="text-luxury-muted mt-1 text-lg">
           Track your performance and earnings
         </p>
       </div>
@@ -34,10 +41,11 @@ export function DashboardHeader({
         )}
         <Button 
           onClick={onRequestPayout}
-          className="bg-luxury-primary hover:bg-luxury-primary/90"
+          className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:opacity-90 transition-opacity"
           disabled={isPayoutDisabled}
           title={payoutTooltip}
         >
+          <Sparkles className="mr-2 h-4 w-4" />
           Request Payout
           {totalEarnings < 100 && (
             <span className="ml-2 text-xs opacity-70">
@@ -46,6 +54,6 @@ export function DashboardHeader({
           )}
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }

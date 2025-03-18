@@ -6,6 +6,9 @@ import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { PayoutSection } from "@/components/dashboard/PayoutSection";
 import { useEroboardData } from "@/hooks/useEroboardData";
 import { useState } from "react";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 
 export default function Eroboard() {
   const {
@@ -20,6 +23,11 @@ export default function Eroboard() {
   } = useEroboardData();
 
   const [payoutDialogOpen, setPayoutDialogOpen] = useState(false);
+
+  // Set up realtime updates for relevant tables
+  useRealtimeUpdates('post_purchases');
+  useRealtimeUpdates('creator_subscriptions');
+  useRealtimeUpdates('payout_requests');
 
   const handleDateRangeChange = (range: { from: Date; to: Date }) => {
     fetchDashboardData(range);
@@ -55,11 +63,7 @@ export default function Eroboard() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
-      </div>
-    );
+    return <LoadingState message="Loading your dashboard data..." />;
   }
 
   return (
