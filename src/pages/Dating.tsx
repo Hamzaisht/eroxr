@@ -93,9 +93,10 @@ export default function Dating() {
     setShowSubscriptionDialog(true);
   };
 
-  // Safe way to prevent any form submission on the entire page
-  const preventFormSubmission = (e: React.FormEvent) => {
+  // IMPROVED: More comprehensive form submission prevention
+  const preventFormSubmission = (e: React.FormEvent | React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     return false;
   };
 
@@ -112,16 +113,6 @@ export default function Dating() {
   return (
     <div 
       className="min-h-screen bg-gradient-to-br from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to"
-      onClick={(e) => {
-        // Only prevent default if the event target is a form element
-        if (
-          e.target instanceof HTMLButtonElement || 
-          e.target instanceof HTMLInputElement || 
-          e.target instanceof HTMLSelectElement
-        ) {
-          e.preventDefault();
-        }
-      }}
       onSubmit={preventFormSubmission}
     >
       <div className="container-fluid px-4 py-8 max-w-none">

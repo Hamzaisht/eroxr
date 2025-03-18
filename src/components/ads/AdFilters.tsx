@@ -84,8 +84,19 @@ export const AdFilters = ({
     }
   };
 
+  // Prevent form submission for all events in this component
+  const preventFormSubmission = (e: React.FormEvent | React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  };
+
   return (
-    <div className="bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-primary/10 overflow-hidden">
+    <div 
+      className="bg-luxury-dark/50 backdrop-blur-sm rounded-xl border border-luxury-primary/10 overflow-hidden"
+      onClick={preventFormSubmission}
+      onSubmit={preventFormSubmission}
+    >
       <div className="p-4 border-b border-luxury-primary/10">
         <h2 className="text-xl font-semibold text-white">Find BD Ads</h2>
       </div>
@@ -116,7 +127,7 @@ export const AdFilters = ({
             setSelectedCity={setSelectedCity}
             filterByDistance={true}
           />
-          <div className="mt-4">
+          <div className="mt-4" onSubmit={preventFormSubmission}>
             <DistanceFilter 
               filterOptions={filterOptions} 
               setFilterOptions={setFilterOptions} 
@@ -135,17 +146,21 @@ export const AdFilters = ({
         </FilterGroup>
 
         <FilterGroup title="Age Range" icon={<Ruler className="h-4 w-4" />}>
-          <AgeRangeFilter 
-            filterOptions={filterOptions} 
-            setFilterOptions={setFilterOptions} 
-          />
+          <div onSubmit={preventFormSubmission}>
+            <AgeRangeFilter 
+              filterOptions={filterOptions} 
+              setFilterOptions={setFilterOptions} 
+            />
+          </div>
         </FilterGroup>
 
         <FilterGroup title="Verification" icon={<Shield className="h-4 w-4" />}>
-          <VerificationFilter 
-            filterOptions={filterOptions} 
-            setFilterOptions={setFilterOptions} 
-          />
+          <div onSubmit={preventFormSubmission}>
+            <VerificationFilter 
+              filterOptions={filterOptions} 
+              setFilterOptions={setFilterOptions} 
+            />
+          </div>
         </FilterGroup>
 
         {selectedTag && (

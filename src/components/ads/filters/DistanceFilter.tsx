@@ -21,16 +21,20 @@ export const DistanceFilter = ({
     }
   };
   
-  // Prevent form submission on mouse/touch interactions with the slider
-  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent) => {
+  // Comprehensive event prevention
+  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent | React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    return false; // Ensure the event doesn't bubble up
+    return false;
   };
   
   return (
     <FilterAccordion title="Maximum Distance" defaultOpen={true}>
-      <div className="mt-2 px-1" onMouseDown={preventFormSubmission} onTouchStart={preventFormSubmission}>
+      <form 
+        onSubmit={preventFormSubmission} 
+        onClick={preventFormSubmission}
+        className="mt-2 px-1"
+      >
         <div className="flex justify-between text-sm text-luxury-neutral mb-2">
           <span>Distance</span>
           <span>{filterOptions.maxDistance} km</span>
@@ -38,6 +42,7 @@ export const DistanceFilter = ({
         <div 
           onMouseDown={preventFormSubmission}
           onTouchStart={preventFormSubmission}
+          onClick={preventFormSubmission}
         >
           <Slider
             defaultValue={[filterOptions.maxDistance || 50]}
@@ -46,12 +51,11 @@ export const DistanceFilter = ({
             step={5}
             onValueChange={handleDistanceChange}
             onValueCommit={(value) => {
-              // Final value confirmation on release
               handleDistanceChange(value);
             }}
           />
         </div>
-      </div>
+      </form>
     </FilterAccordion>
   );
 };

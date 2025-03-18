@@ -22,16 +22,20 @@ export const AgeRangeFilter = ({
     }
   };
   
-  // Prevent form submission on mouse/touch interactions with the slider
-  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent) => {
+  // Comprehensive event prevention
+  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent | React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    return false; // Ensure the event doesn't bubble up
+    return false;
   };
   
   return (
     <FilterAccordion title="Age Range" defaultOpen={true}>
-      <div className="mt-2 px-1" onMouseDown={preventFormSubmission} onTouchStart={preventFormSubmission}>
+      <form 
+        onSubmit={preventFormSubmission}
+        onClick={preventFormSubmission}
+        className="mt-2 px-1"
+      >
         <div className="flex justify-between text-sm text-luxury-neutral mb-2">
           <span>{filterOptions.minAge} years</span>
           <span>{filterOptions.maxAge} years</span>
@@ -39,6 +43,7 @@ export const AgeRangeFilter = ({
         <div 
           onMouseDown={preventFormSubmission}
           onTouchStart={preventFormSubmission}
+          onClick={preventFormSubmission}
         >
           <Slider
             defaultValue={[filterOptions.minAge || 18, filterOptions.maxAge || 99]}
@@ -47,12 +52,11 @@ export const AgeRangeFilter = ({
             step={1}
             onValueChange={handleAgeChange}
             onValueCommit={(value) => {
-              // Final value confirmation on release
               handleAgeChange(value);
             }}
           />
         </div>
-      </div>
+      </form>
     </FilterAccordion>
   );
 };
