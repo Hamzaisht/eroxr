@@ -1,35 +1,36 @@
-import { useState } from "react";
-import { Plus, Loader2, Video } from "lucide-react";
+
+import { useState, useRef } from "react";
+import { Plus, Loader2, Video, Upload } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { generateVideoThumbnails, getVideoDuration } from "@/utils/videoProcessing";
+import { Progress } from "@/components/ui/progress";
 
 export const UploadShortButton = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const session = useSession();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    if (!session?.user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to upload shorts",
-        variant: "destructive",
-      });
-      return;
-    }
 
     // Check file type and size
     if (!file.type.startsWith('video/')) {
@@ -51,32 +52,102 @@ export const UploadShortButton = () => {
       return;
     }
 
+    setSelectedFile(file);
+    
+    // Create a preview
+    const objectUrl = URL.createObjectURL(file);
+    setVideoPreview(objectUrl);
+    
+    // Generate a default title from the filename
+    const defaultTitle = file.name.split('.')[0].replace(/_/g, ' ');
+    setTitle(defaultTitle);
+    
+    return () => URL.revokeObjectURL(objectUrl);
+  };
+
+  const resetForm = () => {
+    setSelectedFile(null);
+    setVideoPreview(null);
+    setUploadProgress(0);
+    setTitle("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !session?.user) {
+      toast({
+        title: "Cannot upload",
+        description: selectedFile ? "Please sign in to upload" : "Please select a video first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsUploading(true);
-      const fileExt = file.name.split('.').pop();
+      setUploadProgress(10); // Start progress indicator
+      
+      // Process file
+      const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
 
-      // Upload to storage
+      // Get video duration
+      const duration = await getVideoDuration(selectedFile);
+      setUploadProgress(20);
+      
+      // Generate thumbnail
+      let thumbnailUrl = null;
+      try {
+        const thumbnails = await generateVideoThumbnails(selectedFile, 1);
+        setUploadProgress(40);
+        
+        if (thumbnails.length > 0) {
+          // Convert data URL to Blob
+          const response = await fetch(thumbnails[0]);
+          const blob = await response.blob();
+          
+          // Upload thumbnail
+          const thumbnailPath = `${session.user.id}/${fileName.split('.')[0]}.jpg`;
+          const { error: thumbnailError } = await supabase.storage
+            .from('shorts')
+            .upload(thumbnailPath, blob, {
+              contentType: 'image/jpeg'
+            });
+            
+          if (!thumbnailError) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('shorts')
+              .getPublicUrl(thumbnailPath);
+              
+            thumbnailUrl = publicUrl;
+          }
+        }
+      } catch (thumbnailError) {
+        console.error('Thumbnail generation error:', thumbnailError);
+        // Continue with upload even if thumbnail fails
+      }
+      
+      setUploadProgress(60);
+
+      // Upload video
       const { error: uploadError } = await supabase.storage
         .from('shorts')
-        .upload(filePath, file);
+        .upload(filePath, selectedFile, {
+          upsert: true,
+          cacheControl: '3600',
+          contentType: selectedFile.type
+        });
 
       if (uploadError) throw uploadError;
+      setUploadProgress(80);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('shorts')
         .getPublicUrl(filePath);
-
-      // Get video duration
-      const video = document.createElement('video');
-      video.src = URL.createObjectURL(file);
-      const duration = await new Promise<number>((resolve) => {
-        video.onloadedmetadata = () => {
-          resolve(Math.round(video.duration));
-        };
-      });
 
       // Create post record
       const { error: postError } = await supabase
@@ -84,19 +155,26 @@ export const UploadShortButton = () => {
         .insert([
           {
             creator_id: session.user.id,
-            content: "New short video",
+            content: title || "New short video",
             video_urls: [publicUrl],
-            duration,
-            visibility: 'public'
+            duration: Math.round(duration) || 30,
+            visibility: 'public',
+            video_thumbnail_url: thumbnailUrl,
           },
         ]);
 
       if (postError) throw postError;
+      setUploadProgress(100);
+
+      // Invalidate and refetch query to update UI immediately
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
 
       toast({
         title: "Upload successful",
         description: "Your short has been uploaded successfully",
       });
+      
+      resetForm();
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Upload error:', error);
@@ -115,6 +193,7 @@ export const UploadShortButton = () => {
       <motion.div
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        id="upload-video-button" // ID referenced from ShortsFeed
       >
         <Button
           onClick={() => setIsDialogOpen(true)}
@@ -125,42 +204,117 @@ export const UploadShortButton = () => {
         </Button>
       </motion.div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) resetForm();
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Upload a Short</DialogTitle>
           </DialogHeader>
           <div className="grid gap-6">
-            <div className="flex flex-col items-center gap-4">
-              <input
-                type="file"
-                id="video-upload"
-                accept="video/*"
-                className="hidden"
-                onChange={handleVideoUpload}
-                disabled={isUploading}
-              />
-              <Button
-                onClick={() => document.getElementById('video-upload')?.click()}
-                className="w-full h-32 rounded-lg border-2 border-dashed border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors"
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span>Uploading...</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Video className="h-8 w-8" />
-                    <span>Click to select video</span>
-                    <span className="text-sm text-luxury-neutral/60">
-                      Maximum size: 100MB
-                    </span>
+            {!videoPreview ? (
+              <div className="flex flex-col items-center gap-4">
+                <input
+                  type="file"
+                  id="video-upload"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={handleFileSelection}
+                  disabled={isUploading}
+                  ref={fileInputRef}
+                />
+                <Button
+                  onClick={() => document.getElementById('video-upload')?.click()}
+                  className="w-full h-32 rounded-lg border-2 border-dashed border-luxury-primary/20 hover:border-luxury-primary/40 transition-colors"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span>Uploading...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <Video className="h-8 w-8" />
+                      <span>Click to select video</span>
+                      <span className="text-sm text-luxury-neutral/60">
+                        Maximum size: 100MB
+                      </span>
+                    </div>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden">
+                  <video 
+                    src={videoPreview} 
+                    className="w-full h-full object-contain" 
+                    autoPlay 
+                    muted 
+                    loop
+                    controls
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="video-title" className="text-sm font-medium">
+                    Title (optional)
+                  </label>
+                  <input
+                    id="video-title"
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Add a title to your short"
+                    className="w-full px-3 py-2 bg-luxury-darker border border-luxury-primary/20 rounded-md focus:outline-none focus:ring-2 focus:ring-luxury-primary/40"
+                    disabled={isUploading}
+                  />
+                </div>
+                
+                {isUploading && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Uploading...</span>
+                      <span>{Math.round(uploadProgress)}%</span>
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
                   </div>
                 )}
-              </Button>
-            </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      URL.revokeObjectURL(videoPreview);
+                      setVideoPreview(null);
+                      setSelectedFile(null);
+                    }}
+                    disabled={isUploading}
+                  >
+                    Change Video
+                  </Button>
+                  <Button
+                    onClick={handleUpload}
+                    disabled={isUploading}
+                    className="bg-luxury-primary hover:bg-luxury-primary/90"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
