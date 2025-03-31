@@ -27,7 +27,7 @@ export const HeroContent = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        Join thousands of creators earning $1,000+ monthly through exclusive content and direct fan connections.
+        Join thousands of creators earning $5,000+ monthly through exclusive content and direct fan connections.
       </motion.p>
 
       <motion.div 
@@ -50,7 +50,7 @@ export const HeroContent = () => {
       </motion.div>
 
       <motion.div 
-        className="flex justify-center gap-8 text-luxury-neutral/80 text-sm md:text-base"
+        className="flex justify-center lg:justify-start gap-8 text-luxury-neutral/80 text-sm md:text-base flex-wrap"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.8 }}
