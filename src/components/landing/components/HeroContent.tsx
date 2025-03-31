@@ -1,73 +1,108 @@
 
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { WaveButton } from "./WaveButton";
 
 export const HeroContent = () => {
   return (
-    <motion.div 
-      className="flex-1 text-center lg:text-left pt-32 px-4 md:px-8 max-w-7xl mx-auto"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <motion.h1 
-        className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-luxury-primary to-luxury-accent bg-clip-text text-transparent"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        Turn Your Passion Into Profit
-      </motion.h1>
-      
-      <motion.p 
-        className="text-lg md:text-xl text-luxury-neutral mb-8 max-w-2xl mx-auto lg:mx-0"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-      >
-        Join thousands of creators earning $5,000+ monthly through exclusive content and direct fan connections.
-      </motion.p>
+    <div className="relative min-h-screen flex items-center justify-center">
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-center space-y-8"
+          >
+            {/* Main Value Proposition */}
+            <motion.h1 
+              className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              Turn Your Passion Into Profit
+            </motion.h1>
 
-      <motion.div 
-        className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mb-12"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-      >
-        <Button size="lg" asChild className="bg-luxury-primary hover:bg-luxury-primary/90 min-w-[200px]">
-          <Link to="/register" className="text-lg">
-            Start Creating - It's Free
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
-        </Button>
-        <Button size="lg" variant="outline" asChild className="min-w-[200px]">
-          <Link to="/creators" className="text-lg">
-            Explore Top Creators
-          </Link>
-        </Button>
-      </motion.div>
+            {/* Clear Benefits Statement */}
+            <motion.p 
+              className="text-xl md:text-2xl text-luxury-neutral max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              Join thousands of creators earning <span className="text-luxury-primary font-semibold">$5,000+</span> monthly through exclusive content and direct fan connections.
+            </motion.p>
 
-      <motion.div 
-        className="flex justify-center lg:justify-start gap-8 text-luxury-neutral/80 text-sm md:text-base flex-wrap"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
-      >
-        <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-green-400 mr-2"></div>
-          <span>50,000+ Active Creators</span>
+            {/* Social Proof */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="flex flex-wrap justify-center gap-8 text-sm text-luxury-neutral/80"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span>50,000+ Active Creators</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span>2M+ Monthly Users</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                <span>95% Creator Satisfaction</span>
+              </div>
+            </motion.div>
+
+            {/* CTAs */}
+            <motion.div 
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+            >
+              <Link to="/register" className="w-full sm:w-auto">
+                <WaveButton className="bg-luxury-primary w-full text-lg py-4 px-8 font-medium">
+                  Start Creating - It's Free
+                </WaveButton>
+              </Link>
+              <Link to="/explore" className="w-full sm:w-auto">
+                <WaveButton className="bg-transparent border-2 border-white/20 hover:border-white w-full text-lg py-4 px-8 font-medium">
+                  Explore Top Creators
+                </WaveButton>
+              </Link>
+            </motion.div>
+
+            {/* Trust Indicators */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
+              className="pt-8 flex flex-wrap justify-center items-center gap-6 text-sm text-luxury-neutral/60"
+            >
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>Secure Payments</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>24/7 Support</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>Instant Payouts</span>
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
-        <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-blue-400 mr-2"></div>
-          <span>2M+ Monthly Users</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-purple-400 mr-2"></div>
-          <span>95% Creator Satisfaction</span>
-        </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };

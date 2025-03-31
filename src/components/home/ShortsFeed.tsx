@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { ShareDialog } from "@/components/feed/ShareDialog";
 import { Short } from "./types/short";
 import { useShortActions } from "./hooks/useShortActions";
-import { VideoPlayerMobile } from "../video/VideoPlayerMobile";
+import { VideoPlayer } from "../video/VideoPlayer";
 import { ShortContent } from "./components/ShortContent";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useFeedQuery } from "../feed/useFeedQuery";
@@ -52,14 +52,12 @@ export const ShortsFeed = () => {
     },
     creator_id: post.creator_id,
     content: post.content,
-    video_urls: post.video_urls || [],
-    likes_count: post.likes_count || 0,
-    comments_count: post.comments_count || 0,
-    has_liked: post.has_liked || false,
+    video_urls: post.video_urls,
+    likes_count: post.likes_count,
+    comments_count: post.comments_count,
+    has_liked: post.has_liked,
     has_saved: post.has_saved || false,
-    created_at: post.created_at,
-    video_thumbnail_url: post.video_thumbnail_url,
-    view_count: post.view_count || 0
+    created_at: post.created_at
   }));
 
   // Reset loading state when data is loaded or on error
@@ -153,35 +151,6 @@ export const ShortsFeed = () => {
     }
   };
 
-  const handleSwipeUp = () => {
-    if (currentVideoIndex < shorts.length - 1) {
-      setCurrentVideoIndex(prev => prev + 1);
-    }
-  };
-
-  const handleSwipeDown = () => {
-    if (currentVideoIndex > 0) {
-      setCurrentVideoIndex(prev => prev - 1);
-    }
-  };
-
-  // Listen for swipe events
-  useEffect(() => {
-    const container = feedContainerRef.current;
-    if (!container) return;
-    
-    const handleSwipeUpEvent = () => handleSwipeUp();
-    const handleSwipeDownEvent = () => handleSwipeDown();
-    
-    container.addEventListener('swipeUp', handleSwipeUpEvent);
-    container.addEventListener('swipeDown', handleSwipeDownEvent);
-    
-    return () => {
-      container.removeEventListener('swipeUp', handleSwipeUpEvent);
-      container.removeEventListener('swipeDown', handleSwipeDownEvent);
-    };
-  }, [shorts.length, currentVideoIndex]);
-
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'ArrowUp' && currentVideoIndex > 0) {
       setCurrentVideoIndex(prev => prev - 1);
@@ -203,33 +172,6 @@ export const ShortsFeed = () => {
       fetchNextPage();
     }
   }, [currentVideoIndex, shorts.length, fetchNextPage, hasNextPage, isLoading]);
-
-  // Increment view count for current video
-  useEffect(() => {
-    if (shorts.length === 0 || !session?.user?.id) return;
-    
-    const currentShort = shorts[currentVideoIndex];
-    if (!currentShort) return;
-    
-    // Only update view count if we have a valid short
-    const updateViewCount = async () => {
-      try {
-        const { error } = await supabase
-          .from('posts')
-          .update({ view_count: (currentShort.view_count || 0) + 1 })
-          .eq('id', currentShort.id);
-        
-        if (error) {
-          console.error('Error updating view count:', error);
-        }
-      } catch (err) {
-        console.error('Failed to update view count:', err);
-      }
-    };
-    
-    // Update the view count
-    updateViewCount();
-  }, [currentVideoIndex, shorts, session?.user?.id]);
 
   const handleRetryLoad = () => {
     setIsLoading(true);
@@ -292,11 +234,10 @@ export const ShortsFeed = () => {
               className="relative h-[100dvh] w-full snap-start snap-always"
             >
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
-              <VideoPlayerMobile
+              <VideoPlayer
                 url={short.video_urls?.[0] ?? ""}
-                poster={short.video_thumbnail_url}
+                poster={`${short.video_urls?.[0]?.split('.').slice(0, -1).join('.')}.jpg`}
                 className="h-full w-full object-cover"
-                isActive={index === currentVideoIndex}
                 autoPlay={index === currentVideoIndex}
                 onError={() => {
                   toast({

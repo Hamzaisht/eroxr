@@ -13,7 +13,6 @@ import { useState, useEffect } from "react";
 import { useFeedQuery } from "@/components/feed/useFeedQuery";
 import { useSession } from "@supabase/auth-helpers-react";
 import { ShortsList } from "./ShortsList";
-import { Post as SupabasePost } from "@/integrations/supabase/types/post";
 
 export const ProfileTabs = ({ profile }: { profile: any }) => {
   const { id } = useParams();
@@ -65,7 +64,7 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
         </div>
       ) : hasVideos ? (
-        <ShortsList shorts={videosData?.pages.flatMap(page => page) as SupabasePost[]} />
+        <ShortsList shorts={videosData?.pages.flatMap(page => page) || []} />
       ) : (
         <EmptyState 
           icon={Video} 

@@ -3,16 +3,14 @@ import { Suspense, lazy } from "react";
 import { motion, LazyMotion, domAnimation } from "framer-motion";
 import { HeroSection } from "@/components/landing/HeroSection";
 import Footer from "@/components/landing/Footer";
-import Features3D from "@/components/landing/Features3D";
 
 // Lazy load other sections
+const Features3D = lazy(() => import("@/components/landing/Features3D"));
 const CreatorShowcase = lazy(() => import("@/components/landing/CreatorShowcase"));
 const AnimatedStats = lazy(() => import("@/components/landing/AnimatedStats"));
 const InteractiveFeatures = lazy(() => import("@/components/landing/InteractiveFeatures"));
 const CreatorCategories = lazy(() => import("@/components/landing/sections/CreatorCategories"));
 const PlatformPreview = lazy(() => import("@/components/landing/PlatformPreview"));
-const CTASection = lazy(() => import("@/components/CTASection").then(module => ({ default: module.CTASection })));
-const FeaturesSection = lazy(() => import("@/components/FeaturesSection").then(module => ({ default: module.FeaturesSection })));
 
 // Loading placeholder with skeleton UI
 const LoadingSection = () => (
@@ -46,18 +44,6 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
-        {/* Features Section */}
-        <Suspense fallback={<LoadingSection />}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5 }}
-          >
-            <FeaturesSection />
-          </motion.div>
-        </Suspense>
-
         {/* Platform Preview - Show Value */}
         <Suspense fallback={<LoadingSection />}>
           <motion.div
@@ -82,15 +68,17 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
-        {/* Features 3D Section - Benefits - Now directly imported */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5 }}
-        >
-          <Features3D />
-        </motion.div>
+        {/* Features Section - Benefits */}
+        <Suspense fallback={<LoadingSection />}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <Features3D />
+          </motion.div>
+        </Suspense>
 
         {/* Creator Showcase - Social Proof */}
         <Suspense fallback={<LoadingSection />}>
@@ -101,18 +89,6 @@ const Landing = () => {
             transition={{ duration: 0.5 }}
           >
             <CreatorShowcase />
-          </motion.div>
-        </Suspense>
-
-        {/* CTA Section */}
-        <Suspense fallback={<LoadingSection />}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5 }}
-          >
-            <CTASection />
           </motion.div>
         </Suspense>
 
