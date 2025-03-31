@@ -16,4 +16,5 @@ export interface Short {
   created_at?: string;
   video_thumbnail_url?: string;
   view_count?: number;
+  share_count?: number;
 }

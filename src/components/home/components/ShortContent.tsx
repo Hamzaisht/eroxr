@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Heart, MessageCircle, Share2, Bookmark, MoreVertical, Trash } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, MoreVertical, Trash, Eye } from "lucide-react";
 import { Short } from "../types/short";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { formatNumber } from "@/lib/utils";
 
 interface ShortContentProps {
   short: {
@@ -28,6 +29,7 @@ interface ShortContentProps {
     has_liked?: boolean;
     has_saved?: boolean;
     created_at?: string;
+    view_count?: number;
   };
   onShare: (shortId: string) => void;
   onComment: () => void;
@@ -154,7 +156,7 @@ export const ShortContent = ({
                 <Heart className={`w-5 h-5 ${short.has_liked ? 'fill-luxury-primary text-luxury-primary' : ''}`} />
               )}
             </div>
-            <span className="text-xs">{short.likes}</span>
+            <span className="text-xs">{formatNumber(short.likes)}</span>
           </button>
           
           <button
@@ -164,7 +166,7 @@ export const ShortContent = ({
             <div className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center hover:bg-luxury-primary/20 transition-colors">
               <MessageCircle className="w-5 h-5" />
             </div>
-            <span className="text-xs">{short.comments}</span>
+            <span className="text-xs">{formatNumber(short.comments)}</span>
           </button>
           
           <button
@@ -176,6 +178,13 @@ export const ShortContent = ({
             </div>
             <span className="text-xs">Share</span>
           </button>
+
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center">
+              <Eye className="w-5 h-5" />
+            </div>
+            <span className="text-xs">{formatNumber(short.view_count || 0)}</span>
+          </div>
         </div>
         
         <button
