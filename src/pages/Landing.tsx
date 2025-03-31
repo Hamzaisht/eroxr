@@ -1,5 +1,5 @@
 
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { motion, LazyMotion, domAnimation } from "framer-motion";
 import { HeroSection } from "@/components/landing/HeroSection";
 import Footer from "@/components/landing/Footer";
@@ -13,9 +13,6 @@ const CreatorCategories = lazy(() => import("@/components/landing/sections/Creat
 const PlatformPreview = lazy(() => import("@/components/landing/PlatformPreview"));
 const CTASection = lazy(() => import("@/components/CTASection").then(module => ({ default: module.CTASection })));
 const FeaturesSection = lazy(() => import("@/components/FeaturesSection").then(module => ({ default: module.FeaturesSection })));
-
-// Add the import for the lazy function since we're no longer importing it as part of Suspense
-import { lazy } from "react";
 
 // Loading placeholder with skeleton UI
 const LoadingSection = () => (
