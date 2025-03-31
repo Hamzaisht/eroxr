@@ -57,14 +57,13 @@ export const useShortPostSubmit = () => {
       // 2. Get video duration
       const duration = await getVideoDuration(data.videoFile);
       
-      // 3. Create post record
+      // 3. Create post record - Remove the description field as it doesn't exist in the posts table
       const { error: postError } = await supabase
         .from('posts')
         .insert([
           {
             creator_id: session.user.id,
             content: data.title,
-            description: data.description || null,
             video_urls: [videoUrl],
             visibility: 'public',
             tags: data.tags || ['eros', 'short'],
