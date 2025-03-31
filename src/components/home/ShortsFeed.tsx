@@ -41,6 +41,7 @@ export const ShortsFeed = () => {
   const { toast } = useToast();
   const { playLikeSound, playCommentSound } = useSoundEffects();
   const feedContainerRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
 
   // Transform posts data into shorts format
   const shorts: Short[] = (data?.pages.flatMap(page => page) ?? []).map(post => ({
@@ -102,6 +103,33 @@ export const ShortsFeed = () => {
     };
   }, [session?.user?.id, queryClient, toast, refetch]);
 
+  // Track video views
+  useEffect(() => {
+    if (!shorts[currentVideoIndex] || !session?.user?.id) return;
+    
+    const videoId = shorts[currentVideoIndex].id;
+    
+    // Increment view count in database
+    const updateViewCount = async () => {
+      try {
+        const { error } = await supabase
+          .from('posts')
+          .update({ view_count: supabase.sql`view_count + 1` })
+          .eq('id', videoId);
+          
+        if (error) console.error('Error updating view count:', error);
+      } catch (err) {
+        console.error('Failed to update view count:', err);
+      }
+    };
+    
+    // Only update view count if we're on a new video
+    updateViewCount();
+    
+    // Invalidate the query to refresh the UI
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+  }, [currentVideoIndex, session?.user?.id, shorts, queryClient]);
+
   useEffect(() => {
     // Subscribe to real-time updates for comments
     if (!session?.user?.id) return;
@@ -144,9 +172,31 @@ export const ShortsFeed = () => {
   };
 
   const handleScroll = (event: React.WheelEvent) => {
+    // Prevent default to stop page scrolling
+    event.preventDefault();
+    
     if (event.deltaY > 0 && currentVideoIndex < shorts.length - 1) {
       setCurrentVideoIndex(prev => prev + 1);
     } else if (event.deltaY < 0 && currentVideoIndex > 0) {
+      setCurrentVideoIndex(prev => prev - 1);
+    }
+  };
+
+  // Touch handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaY = touchStartY.current - touchEndY;
+    
+    // Swipe up (next video)
+    if (deltaY > 50 && currentVideoIndex < shorts.length - 1) {
+      setCurrentVideoIndex(prev => prev + 1);
+    } 
+    // Swipe down (previous video)
+    else if (deltaY < -50 && currentVideoIndex > 0) {
       setCurrentVideoIndex(prev => prev - 1);
     }
   };
@@ -221,16 +271,22 @@ export const ShortsFeed = () => {
     <div 
       className="fixed inset-0 bg-black"
       onWheel={handleScroll}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       ref={feedContainerRef}
     >
-      <div className="h-full snap-y snap-mandatory overflow-y-auto scrollbar-hide">
+      <div className="h-full snap-y snap-mandatory overflow-y-auto overflow-x-hidden scrollbar-hide">
         <AnimatePresence initial={false}>
           {shorts.map((short, index) => (
             <motion.div
               key={short.id}
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              animate={{ 
+                opacity: 1,
+                scale: index === currentVideoIndex ? 1 : 0.95
+              }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
               className="relative h-[100dvh] w-full snap-start snap-always"
             >
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
@@ -267,25 +323,27 @@ export const ShortsFeed = () => {
                 className={`absolute bottom-0 left-0 right-0 z-20 p-4 ${isMobile ? 'pb-16' : 'p-6'}`}
               />
               
-              {/* Navigation buttons */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-4">
-                <button
-                  onClick={() => currentVideoIndex > 0 && setCurrentVideoIndex(prev => prev - 1)}
-                  className={`p-2 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 transition-colors
-                    ${currentVideoIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={currentVideoIndex === 0}
-                >
-                  <ChevronUp className="w-6 h-6 text-white" />
-                </button>
-                <button
-                  onClick={() => currentVideoIndex < shorts.length - 1 && setCurrentVideoIndex(prev => prev + 1)}
-                  className={`p-2 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 transition-colors
-                    ${currentVideoIndex === shorts.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={currentVideoIndex === shorts.length - 1}
-                >
-                  <ChevronDown className="w-6 h-6 text-white" />
-                </button>
-              </div>
+              {/* Navigation buttons - show only on desktop */}
+              {!isMobile && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-4">
+                  <button
+                    onClick={() => currentVideoIndex > 0 && setCurrentVideoIndex(prev => prev - 1)}
+                    className={`p-2 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 transition-colors
+                      ${currentVideoIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={currentVideoIndex === 0}
+                  >
+                    <ChevronUp className="w-6 h-6 text-white" />
+                  </button>
+                  <button
+                    onClick={() => currentVideoIndex < shorts.length - 1 && setCurrentVideoIndex(prev => prev + 1)}
+                    className={`p-2 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 transition-colors
+                      ${currentVideoIndex === shorts.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={currentVideoIndex === shorts.length - 1}
+                  >
+                    <ChevronDown className="w-6 h-6 text-white" />
+                  </button>
+                </div>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -326,6 +384,15 @@ export const ShortsFeed = () => {
           <div className="bg-luxury-darker/80 rounded-full px-4 py-2 backdrop-blur-lg flex items-center">
             <Loader2 className="w-4 h-4 animate-spin text-luxury-primary mr-2" />
             <p className="text-luxury-neutral text-sm">Loading more videos...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Swipe indicators (mobile only) */}
+      {isMobile && shorts.length > 0 && (
+        <div className="fixed top-1/2 right-4 -translate-y-1/2 z-30 flex flex-col gap-2 items-center">
+          <div className="text-white/70 text-xs bg-black/30 rounded-full px-2 py-1 backdrop-blur-sm">
+            Swipe to navigate
           </div>
         </div>
       )}

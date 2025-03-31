@@ -16,12 +16,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
   const [selectedVideo, setSelectedVideo] = useState<Post | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const session = useSession();
   const navigate = useNavigate();
   const { handleDelete } = useShortActions();
+  const { toast } = useToast();
   
   const viewShort = (short: Post) => {
     navigate(`/shorts?id=${short.id}`);
@@ -31,9 +45,32 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
     setSelectedVideo(short);
   };
   
-  const handleDeleteVideo = async (id: string) => {
-    await handleDelete(id);
-    setSelectedVideo(null);
+  const confirmDelete = (id: string) => {
+    setDeletingVideoId(id);
+    setIsDeleteAlertOpen(true);
+  };
+  
+  const handleDeleteVideo = async () => {
+    if (!deletingVideoId) return;
+    
+    try {
+      await handleDelete(deletingVideoId);
+      setIsDeleteAlertOpen(false);
+      setSelectedVideo(null);
+      toast({
+        title: "Success",
+        description: "Video deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingVideoId(null);
+    }
   };
 
   return (
@@ -57,6 +94,10 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
                     alt={short.content || "Video thumbnail"} 
                     className="w-full h-full object-cover"
                   />
+                ) : short.video_urls && short.video_urls[0] ? (
+                  <div className="flex items-center justify-center h-full bg-luxury-darker/50">
+                    <Play className="h-12 w-12 text-white/50" />
+                  </div>
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <Play className="h-12 w-12 text-white/50" />
@@ -95,7 +136,7 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
               {/* Duration indicator */}
               <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/70 text-xs text-white/90 flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                <span>00:30</span>
+                <span>{short.video_duration ? `${Math.floor(short.video_duration / 60)}:${(short.video_duration % 60).toString().padStart(2, '0')}` : "00:30"}</span>
               </div>
             </div>
             
@@ -120,8 +161,15 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-luxury-darker border-luxury-primary/20">
                       <DropdownMenuItem 
+                        className="cursor-pointer"
+                        onClick={() => navigate(`/shorts?id=${short.id}`)}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        View
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
                         className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
-                        onClick={() => handleDeleteVideo(short.id)}
+                        onClick={() => confirmDelete(short.id)}
                       >
                         <Trash className="w-4 h-4 mr-2" />
                         Delete
@@ -151,6 +199,24 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent className="bg-black border-luxury-primary/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Video</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this video? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteVideo} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

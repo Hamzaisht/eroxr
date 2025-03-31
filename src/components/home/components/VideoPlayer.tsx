@@ -118,6 +118,14 @@ export const VideoPlayer = ({
     onMuteChange(!isMuted);
   };
 
+  // Handle video tap to toggle play/pause
+  const handleVideoTap = (e: React.MouseEvent) => {
+    // Prevent click from reaching controls underneath
+    e.preventDefault();
+    e.stopPropagation();
+    togglePlay();
+  };
+
   return (
     <div className={cn("relative group", className)}>
       {isBuffering && (
@@ -136,6 +144,7 @@ export const VideoPlayer = ({
         className="w-full h-full object-cover"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        onClick={handleVideoTap}
       />
       
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">

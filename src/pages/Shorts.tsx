@@ -8,12 +8,28 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Shorts() {
   const session = useSession();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const specificShortId = queryParams.get('id');
+
+  // Handle direct links to a specific short
+  useEffect(() => {
+    if (specificShortId) {
+      // In a real implementation, you would use this ID to scroll to the specific short
+      console.log('Viewing specific short:', specificShortId);
+      
+      // If needed, you could pre-fetch the specific short data here
+      // This would ensure it's available when the feed loads
+    }
+  }, [specificShortId]);
 
   useEffect(() => {
     if (!session?.user?.id) return;
