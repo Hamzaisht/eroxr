@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { StoryReel } from "@/components/StoryReel";
+import { InteractiveNav } from "@/components/layout/InteractiveNav";
 
 const Index = () => {
   const [loading, setLoading] = useState(true);
@@ -23,7 +25,10 @@ const Index = () => {
   useEffect(() => {
     const checkProfile = async () => {
       try {
-        if (!session?.user?.id) return;
+        if (!session?.user?.id) {
+          setLoading(false);
+          return;
+        }
 
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -54,6 +59,7 @@ const Index = () => {
   }
 
   if (!session?.user) {
+    // Redirect to landing page handled in App.tsx
     return null;
   }
 

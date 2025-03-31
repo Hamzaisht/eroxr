@@ -5,7 +5,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
-import Home from "@/pages/Home";
+import Index from "@/pages/Index";
 import Profile from "@/pages/Profile";
 import Messages from "@/pages/Messages";
 import Dating from "@/pages/Dating";
@@ -27,7 +27,7 @@ function App() {
           {/* Public routes - accessible to everyone */}
           <Route 
             path="/" 
-            element={<Landing />} 
+            element={session ? <Navigate to="/home" replace /> : <Landing />} 
           />
           <Route 
             path="/login" 
@@ -42,7 +42,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route 
               path="/home" 
-              element={!session ? <Navigate to="/login" replace /> : <Home />} 
+              element={!session ? <Navigate to="/login" replace /> : <Index />} 
             />
             <Route 
               path="/profile/:id?" 
