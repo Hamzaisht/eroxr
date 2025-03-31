@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef } from "react";
 import { ShareDialog } from "@/components/feed/ShareDialog";
-import { useShortActions } from "./hooks/useShortActions";
+import { useShortActions } from "./hooks/actions";
 import { VideoPlayer } from "../video/VideoPlayer";
 import { ShortContent } from "./components/ShortContent";
 import { useSession } from "@supabase/auth-helpers-react";

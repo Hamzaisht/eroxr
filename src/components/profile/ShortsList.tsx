@@ -7,7 +7,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { useShortActions } from "@/components/home/hooks/useShortActions";
+import { useShortActions } from "@/components/home/hooks/actions";
 import { 
   DropdownMenu,
   DropdownMenuContent,
