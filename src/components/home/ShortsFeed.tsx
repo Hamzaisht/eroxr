@@ -114,7 +114,7 @@ export const ShortsFeed = () => {
       try {
         const { error } = await supabase
           .from('posts')
-          .update({ view_count: supabase.sql`view_count + 1` })
+          .update({ view_count: supabase.rpc('increment_counter', { row_id: videoId, counter_name: 'view_count' }) })
           .eq('id', videoId);
           
         if (error) console.error('Error updating view count:', error);

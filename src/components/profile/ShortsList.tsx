@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Post } from "@/integrations/supabase/types/post";
 import { motion } from "framer-motion";
@@ -73,6 +72,16 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
     }
   };
 
+  const formatVideoDuration = (post: Post) => {
+    if (post.video_duration) {
+      const minutes = Math.floor(post.video_duration / 60);
+      const seconds = (post.video_duration % 60).toString().padStart(2, '0');
+      return `${minutes}:${seconds}`;
+    }
+    
+    return "00:30";
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
@@ -86,7 +95,6 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
             transition={{ duration: 0.2 }}
           >
             <div className="aspect-[9/16] relative cursor-pointer" onClick={() => handleVideoPreview(short)}>
-              {/* Thumbnail with poster */}
               <div className="absolute inset-0 bg-black">
                 {short.video_thumbnail_url ? (
                   <img 
@@ -105,14 +113,12 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
                 )}
               </div>
               
-              {/* Overlay with play button */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                 <div className="w-16 h-16 rounded-full bg-luxury-primary/30 backdrop-blur-md flex items-center justify-center">
                   <Play className="h-8 w-8 text-white" fill="white" />
                 </div>
               </div>
               
-              {/* Video metadata */}
               <div className={cn(
                 "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-transparent",
                 "opacity-100 group-hover:opacity-0 transition-opacity duration-300"
@@ -133,14 +139,12 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
                 </div>
               </div>
               
-              {/* Duration indicator */}
               <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/70 text-xs text-white/90 flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                <span>{short.video_duration ? `${Math.floor(short.video_duration / 60)}:${(short.video_duration % 60).toString().padStart(2, '0')}` : "00:30"}</span>
+                <span>{formatVideoDuration(short)}</span>
               </div>
             </div>
             
-            {/* Footer */}
             <div className="p-3">
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
@@ -183,7 +187,6 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
         ))}
       </div>
       
-      {/* Video preview dialog */}
       <Dialog open={!!selectedVideo} onOpenChange={(open) => !open && setSelectedVideo(null)}>
         <DialogContent className="sm:max-w-md md:max-w-xl bg-black border-luxury-primary/20 p-0 gap-0 overflow-hidden">
           {selectedVideo && (
@@ -200,7 +203,6 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent className="bg-black border-luxury-primary/20">
           <AlertDialogHeader>

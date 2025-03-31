@@ -23,4 +23,5 @@ export type Post = {
   creator: Creator;
   video_thumbnail_url?: string;
   view_count?: number;
+  video_duration?: number; // Added this field to match the usage in the code
 };

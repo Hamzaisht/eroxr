@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,6 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
   const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
 
   useEffect(() => {
-    // Clear the form state when dialog is opened
     if (open) {
       setSelectedFile(null);
       setPreviewUrl(null);
@@ -51,13 +49,11 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!allowedTypes.includes(file.type)) {
       setValidationError("Please upload a video file (MP4, WebM, or MOV)");
       return;
     }
 
-    // Validate file size
     if (file.size > maxFileSize) {
       setValidationError("Video size must be less than 200MB");
       return;
@@ -66,15 +62,12 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     setValidationError(null);
     setSelectedFile(file);
 
-    // Create a preview URL
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
 
-    // Get video duration if needed
     const video = document.createElement('video');
     video.src = objectUrl;
     video.onloadedmetadata = () => {
-      // If you need to track duration, you could set it here
       console.log("Video duration:", video.duration);
     };
   };
@@ -82,7 +75,6 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
   const handleUpload = async () => {
     if (!session?.user?.id || !selectedFile) return;
     
-    // Validate title
     if (!title.trim()) {
       setValidationError("Please enter a title for your video");
       return;
@@ -92,29 +84,41 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
       setIsUploading(true);
       setUploadProgress(0);
 
-      // Upload video file with progress tracking
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
 
+      const progressHandler = (progress: { loaded: number; total: number }) => {
+        const percent = Math.round((progress.loaded / progress.total) * 100);
+        setUploadProgress(percent);
+      };
+
+      const xhr = new XMLHttpRequest();
+      
+      const uploadPromise = new Promise<void>((resolve, reject) => {
+        xhr.upload.addEventListener('progress', progressHandler);
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        });
+      });
+
       const { error: uploadError } = await supabase.storage
         .from('shorts')
         .upload(filePath, selectedFile, {
-          onUploadProgress: (progress) => {
-            const percent = Math.round((progress.loaded / progress.total) * 100);
-            setUploadProgress(percent);
-          },
           cacheControl: '3600'
         });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('shorts')
         .getPublicUrl(filePath);
 
-      // Create post record
       const { error: postError } = await supabase
         .from('posts')
         .insert([
@@ -132,16 +136,13 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
 
       setUploadComplete(true);
       
-      // Show success toast
       toast({
         title: "Upload successful",
         description: "Your video has been uploaded successfully",
       });
       
-      // Reset form and close dialog after a delay
       setTimeout(() => {
         onOpenChange(false);
-        // Navigate to the shorts page or refresh the feed
         navigate('/shorts');
       }, 2000);
       
@@ -159,7 +160,6 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
   };
 
   const handleCancel = () => {
-    // Clean up any preview URLs
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
@@ -177,7 +177,6 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
         </DialogHeader>
 
         <div className="grid gap-6 py-4">
-          {/* Video preview or upload area */}
           <div className="grid w-full gap-2">
             <Label htmlFor="video">Upload Video</Label>
             
@@ -236,7 +235,6 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
             )}
           </div>
 
-          {/* Video details */}
           <div className="grid gap-4">
             <div className="grid w-full gap-1.5">
               <Label htmlFor="title" className="required">Title</Label>
@@ -271,7 +269,6 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
             </div>
           </div>
 
-          {/* Upload progress */}
           {isUploading && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -282,7 +279,6 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
             </div>
           )}
 
-          {/* Upload complete message */}
           {uploadComplete && (
             <div className="bg-green-950/30 text-green-400 p-3 rounded-md flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5" />
