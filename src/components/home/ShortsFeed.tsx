@@ -1,4 +1,3 @@
-
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { ShareDialog } from "@/components/feed/ShareDialog";
@@ -43,7 +42,6 @@ export const ShortsFeed = () => {
   const feedContainerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number>(0);
 
-  // Transform posts data into shorts format
   const shorts: Short[] = (data?.pages.flatMap(page => page) ?? []).map(post => ({
     id: post.id,
     creator: {
@@ -61,7 +59,6 @@ export const ShortsFeed = () => {
     created_at: post.created_at
   }));
 
-  // Reset loading state when data is loaded or on error
   useEffect(() => {
     if (data || isError) {
       setIsLoading(false);
@@ -69,7 +66,6 @@ export const ShortsFeed = () => {
   }, [data, isError]);
 
   useEffect(() => {
-    // Subscribe to real-time updates for posts with videos
     if (!session?.user?.id) return;
 
     const channel = supabase
@@ -91,7 +87,6 @@ export const ShortsFeed = () => {
               title: "New short",
               description: "A new short has been posted!",
             });
-            // Refetch to get the latest posts
             refetch();
           }
         }
@@ -103,13 +98,11 @@ export const ShortsFeed = () => {
     };
   }, [session?.user?.id, queryClient, toast, refetch]);
 
-  // Track video views
   useEffect(() => {
     if (!shorts[currentVideoIndex] || !session?.user?.id) return;
     
     const videoId = shorts[currentVideoIndex].id;
     
-    // Increment view count in database
     const updateViewCount = async () => {
       try {
         const { error } = await supabase
@@ -123,15 +116,12 @@ export const ShortsFeed = () => {
       }
     };
     
-    // Only update view count if we're on a new video
     updateViewCount();
     
-    // Invalidate the query to refresh the UI
     queryClient.invalidateQueries({ queryKey: ['posts'] });
   }, [currentVideoIndex, session?.user?.id, shorts, queryClient]);
 
   useEffect(() => {
-    // Subscribe to real-time updates for comments
     if (!session?.user?.id) return;
 
     const channel = supabase
@@ -172,7 +162,6 @@ export const ShortsFeed = () => {
   };
 
   const handleScroll = (event: React.WheelEvent) => {
-    // Prevent default to stop page scrolling
     event.preventDefault();
     
     if (event.deltaY > 0 && currentVideoIndex < shorts.length - 1) {
@@ -182,7 +171,6 @@ export const ShortsFeed = () => {
     }
   };
 
-  // Touch handlers for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
   };
@@ -191,11 +179,9 @@ export const ShortsFeed = () => {
     const touchEndY = e.changedTouches[0].clientY;
     const deltaY = touchStartY.current - touchEndY;
     
-    // Swipe up (next video)
     if (deltaY > 50 && currentVideoIndex < shorts.length - 1) {
       setCurrentVideoIndex(prev => prev + 1);
     } 
-    // Swipe down (previous video)
     else if (deltaY < -50 && currentVideoIndex > 0) {
       setCurrentVideoIndex(prev => prev - 1);
     }
@@ -216,7 +202,6 @@ export const ShortsFeed = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentVideoIndex, shorts.length]);
 
-  // Load more content when reaching the end
   useEffect(() => {
     if (currentVideoIndex >= shorts.length - 2 && hasNextPage && !isLoading) {
       fetchNextPage();
@@ -228,7 +213,6 @@ export const ShortsFeed = () => {
     refetch();
   };
 
-  // Show error state if there's an issue
   if (isError && !isLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-luxury-darker">
@@ -241,7 +225,6 @@ export const ShortsFeed = () => {
     );
   }
 
-  // Show empty state if there are no shorts
   if (!isLoading && shorts.length === 0) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-luxury-darker text-white text-center p-4">
@@ -323,7 +306,6 @@ export const ShortsFeed = () => {
                 className={`absolute bottom-0 left-0 right-0 z-20 p-4 ${isMobile ? 'pb-16' : 'p-6'}`}
               />
               
-              {/* Navigation buttons - show only on desktop */}
               {!isMobile && (
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-4">
                   <button
@@ -368,7 +350,6 @@ export const ShortsFeed = () => {
         </>
       )}
 
-      {/* Loading indicator */}
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-luxury-darker/80 rounded-lg p-6 backdrop-blur-lg flex flex-col items-center">
@@ -378,7 +359,6 @@ export const ShortsFeed = () => {
         </div>
       )}
 
-      {/* Load more indicator */}
       {hasNextPage && currentVideoIndex >= shorts.length - 2 && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <div className="bg-luxury-darker/80 rounded-full px-4 py-2 backdrop-blur-lg flex items-center">
@@ -388,7 +368,6 @@ export const ShortsFeed = () => {
         </div>
       )}
 
-      {/* Swipe indicators (mobile only) */}
       {isMobile && shorts.length > 0 && (
         <div className="fixed top-1/2 right-4 -translate-y-1/2 z-30 flex flex-col gap-2 items-center">
           <div className="text-white/70 text-xs bg-black/30 rounded-full px-2 py-1 backdrop-blur-sm">

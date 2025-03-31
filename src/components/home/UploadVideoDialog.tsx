@@ -115,6 +115,8 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
 
       if (uploadError) throw uploadError;
 
+      await uploadPromise;
+
       const { data: { publicUrl } } = supabase.storage
         .from('shorts')
         .getPublicUrl(filePath);
@@ -128,7 +130,8 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
             description: description,
             video_urls: [publicUrl],
             visibility: 'public',
-            tags: ['eros', 'short']
+            tags: ['eros', 'short'],
+            video_duration: document.createElement('video').duration || 30 // Default to 30 seconds if we can't get actual duration
           },
         ]);
 

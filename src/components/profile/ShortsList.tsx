@@ -75,7 +75,7 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
   const formatVideoDuration = (post: Post) => {
     if (post.video_duration) {
       const minutes = Math.floor(post.video_duration / 60);
-      const seconds = (post.video_duration % 60).toString().padStart(2, '0');
+      const seconds = Math.floor(post.video_duration % 60).toString().padStart(2, '0');
       return `${minutes}:${seconds}`;
     }
     

@@ -184,14 +184,24 @@ export const useShortActions = () => {
 
       // Try to delete the video file from storage (best effort)
       if (post.video_urls && post.video_urls.length > 0) {
-        // Extract the path from URL
-        const videoUrl = post.video_urls[0];
-        const path = videoUrl.split("/").pop();
-        
-        if (path) {
-          await supabase.storage
-            .from("videos")
-            .remove([`${session.user.id}/${path}`]);
+        try {
+          // Extract the path from URL
+          const videoUrl = post.video_urls[0];
+          const urlParts = videoUrl.split('/');
+          const bucketName = 'shorts';
+          
+          // The path should be everything after the bucket name in the URL
+          const pathIndex = urlParts.findIndex(part => part === bucketName) + 1;
+          if (pathIndex > 0 && pathIndex < urlParts.length) {
+            const path = urlParts.slice(pathIndex).join('/');
+            
+            await supabase.storage
+              .from(bucketName)
+              .remove([path]);
+          }
+        } catch (storageError) {
+          console.error("Failed to remove video file from storage:", storageError);
+          // We continue even if file deletion fails
         }
       }
 
@@ -202,6 +212,8 @@ export const useShortActions = () => {
         title: "Video deleted",
         description: "Your video has been deleted successfully",
       });
+      
+      return true;
     } catch (error) {
       console.error("Error deleting video:", error);
       toast({
@@ -209,6 +221,7 @@ export const useShortActions = () => {
         description: "Failed to delete the video",
         variant: "destructive",
       });
+      return false;
     }
   };
 
