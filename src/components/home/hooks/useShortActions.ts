@@ -225,5 +225,26 @@ export const useShortActions = () => {
     }
   };
 
-  return { handleLike, handleSave, handleDelete };
+  // Add view tracking function
+  const handleView = async (shortId: string) => {
+    try {
+      // Update view count in the database
+      const { error: updateError } = await supabase
+        .from("posts")
+        .update({ view_count: supabase.rpc('increment', { count: 1 }) })
+        .eq("id", shortId);
+
+      if (updateError) throw updateError;
+
+      // No need to invalidate queries here as this is a background operation
+      // and we don't want to trigger unnecessary re-renders
+      
+      return true;
+    } catch (error) {
+      console.error("Error tracking view:", error);
+      return false;
+    }
+  };
+
+  return { handleLike, handleSave, handleDelete, handleView };
 };

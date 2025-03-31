@@ -24,4 +24,6 @@ export type Post = {
   video_thumbnail_url?: string;
   view_count?: number;
   video_duration?: number;
+  // Add these fields for view tracking and real-time updates
+  viewed?: boolean;
 };

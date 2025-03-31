@@ -69,7 +69,7 @@ export default function Shorts() {
     <div className="min-h-screen bg-luxury-dark overflow-hidden">
       <ErrorBoundary fallback={<div className="p-4 md:p-8 text-center">Something went wrong loading Eros. Please try refreshing.</div>}>
         <div className="fixed inset-0 flex items-center justify-center">
-          <ShortsFeed />
+          <ShortsFeed specificShortId={specificShortId} />
         </div>
         {session && (
           <div className={`fixed ${isMobile ? 'bottom-4 right-4' : 'bottom-8 right-8'} z-50`}>

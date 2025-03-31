@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const UploadVideoButton = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -22,12 +23,19 @@ export const UploadVideoButton = () => {
   const [canUpload, setCanUpload] = useState(false);
   const session = useSession();
   const { toast } = useToast();
-
+  const { data: userRole } = useUserRole();
+  
   // Check if user is verified or premium
   useEffect(() => {
     const checkUserStatus = async () => {
       if (!session?.user) {
         setCanUpload(false);
+        return;
+      }
+
+      // Admin users always have access
+      if (userRole === 'admin') {
+        setCanUpload(true);
         return;
       }
 
@@ -56,7 +64,7 @@ export const UploadVideoButton = () => {
     if (session?.user) {
       checkUserStatus();
     }
-  }, [session]);
+  }, [session, userRole]);
 
   const handleButtonClick = () => {
     if (!session) {
@@ -78,20 +86,15 @@ export const UploadVideoButton = () => {
   // Handler for subscription checkout
   const handleSubscribeClick = async () => {
     try {
-      // This would be replaced with your actual Stripe integration code
-      toast({
-        title: "Redirecting to checkout",
-        description: "You'll be redirected to complete your subscription",
-      });
+      // Redirect to subscription page
+      window.location.href = '/subscription';
       
-      // Redirect to Stripe checkout would go here
-      // For now, we'll just close the dialog
       setIsPaywallOpen(false);
     } catch (error) {
       console.error('Error redirecting to checkout:', error);
       toast({
-        title: "Checkout error",
-        description: "Failed to open checkout. Please try again.",
+        title: "Navigation error",
+        description: "Failed to open subscription page. Please try again.",
         variant: "destructive",
       });
     }

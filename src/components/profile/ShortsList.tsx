@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { Post } from "@/integrations/supabase/types/post";
 import { motion } from "framer-motion";
-import { Play, Eye, Heart, MessageCircle, Clock, MoreVertical, Trash, Edit } from "lucide-react";
+import { Play, Eye, Heart, MessageCircle, Clock, MoreVertical, Trash } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,7 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
   const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const session = useSession();
   const navigate = useNavigate();
-  const { handleDelete } = useShortActions();
+  const { handleDelete, handleView } = useShortActions();
   const { toast } = useToast();
   
   const viewShort = (short: Post) => {
@@ -42,6 +43,10 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
   
   const handleVideoPreview = (short: Post) => {
     setSelectedVideo(short);
+    // Track view when previewing
+    if (short.id) {
+      handleView(short.id);
+    }
   };
   
   const confirmDelete = (id: string) => {
@@ -166,7 +171,7 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
                     <DropdownMenuContent align="end" className="bg-luxury-darker border-luxury-primary/20">
                       <DropdownMenuItem 
                         className="cursor-pointer"
-                        onClick={() => navigate(`/shorts?id=${short.id}`)}
+                        onClick={() => viewShort(short)}
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         View
