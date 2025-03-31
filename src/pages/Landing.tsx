@@ -11,6 +11,8 @@ const AnimatedStats = lazy(() => import("@/components/landing/AnimatedStats"));
 const InteractiveFeatures = lazy(() => import("@/components/landing/InteractiveFeatures"));
 const CreatorCategories = lazy(() => import("@/components/landing/sections/CreatorCategories"));
 const PlatformPreview = lazy(() => import("@/components/landing/PlatformPreview"));
+const CTASection = lazy(() => import("@/components/CTASection").then(module => ({ default: module.CTASection })));
+const FeaturesSection = lazy(() => import("@/components/FeaturesSection").then(module => ({ default: module.FeaturesSection })));
 
 // Loading placeholder with skeleton UI
 const LoadingSection = () => (
@@ -44,6 +46,18 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
+        {/* Features Section */}
+        <Suspense fallback={<LoadingSection />}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <FeaturesSection />
+          </motion.div>
+        </Suspense>
+
         {/* Platform Preview - Show Value */}
         <Suspense fallback={<LoadingSection />}>
           <motion.div
@@ -68,7 +82,7 @@ const Landing = () => {
           </motion.div>
         </Suspense>
 
-        {/* Features Section - Benefits */}
+        {/* Features 3D Section - Benefits */}
         <Suspense fallback={<LoadingSection />}>
           <motion.div
             initial={{ opacity: 0 }}
@@ -89,6 +103,18 @@ const Landing = () => {
             transition={{ duration: 0.5 }}
           >
             <CreatorShowcase />
+          </motion.div>
+        </Suspense>
+
+        {/* CTA Section */}
+        <Suspense fallback={<LoadingSection />}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <CTASection />
           </motion.div>
         </Suspense>
 

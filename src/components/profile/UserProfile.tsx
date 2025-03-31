@@ -52,7 +52,6 @@ export const UserProfile = () => {
     <div className="min-h-screen bg-luxury-dark">
       <ProfileHeader 
         profile={profile} 
-        isLoading={profileLoading} 
         isCurrentUser={session?.user?.id === id}
       />
       

@@ -1,122 +1,100 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "@supabase/auth-helpers-react";
-import { Play, Trash2, Share, MessageCircle, Heart } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Play, Heart, MessageSquare, Eye, MoreVertical, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareDialog } from "@/components/feed/ShareDialog";
-import { Post } from "@/integrations/supabase/types/post";
-import { useQueryClient } from "@tanstack/react-query";
-import { useSoundEffects } from "@/hooks/use-sound-effects";
-import { ErrorState } from "@/components/ui/ErrorState";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "./EmptyState";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { motion } from "framer-motion";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface Post {
+  id: string;
+  creator_id: string;
+  content: string;
+  media_url: string[];
+  video_urls?: string[];
+  video_thumbnail_url?: string;
+  likes_count: number;
+  comments_count: number;
+  view_count?: number;
+  created_at: string;
+  updated_at: string;
+  visibility: string;
+  is_premium: boolean;
+  post_type: string;
+  has_saved?: boolean;
+  price?: number;
+  tags?: string[];
+}
 
 export const ShortsList = () => {
-  const [shorts, setShorts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [selectedShortId, setSelectedShortId] = useState<string | null>(null);
-  const [isShareOpen, setIsShareOpen] = useState(false);
-  const session = useSession();
   const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { playLikeSound } = useSoundEffects();
-  const isCurrentUser = session?.user?.id === id;
+  const session = useSession();
+  const { toast } = useToast();
+  const [shorts, setShorts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedShort, setSelectedShort] = useState<Post | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
+  const isOwner = session?.user?.id === id;
 
   useEffect(() => {
     const fetchShorts = async () => {
       try {
-        setIsLoading(true);
-        setIsError(false);
-        
         const { data, error } = await supabase
           .from('posts')
-          .select(`
-            id, 
-            content, 
-            video_urls,
-            video_thumbnail_url,
-            likes_count, 
-            comments_count,
-            view_count,
-            created_at
-          `)
+          .select('*')
           .eq('creator_id', id)
-          .not('video_urls', 'is', null)
+          .eq('post_type', 'short')
           .order('created_at', { ascending: false });
           
         if (error) throw error;
         
-        setShorts(data || []);
+        const formattedShorts = data?.map(short => ({
+          id: short.id,
+          creator_id: short.creator_id,
+          content: short.content,
+          media_url: short.media_url,
+          video_urls: short.video_urls,
+          video_thumbnail_url: short.video_thumbnail_url,
+          likes_count: short.likes_count,
+          comments_count: short.comments_count,
+          view_count: short.view_count,
+          created_at: short.created_at,
+          updated_at: short.updated_at,
+          visibility: short.visibility,
+          is_premium: short.is_premium,
+          post_type: short.post_type,
+          has_saved: short.has_saved || false,
+          price: short.price,
+          tags: short.tags
+        })) as Post[];
+        
+        setShorts(formattedShorts || []);
       } catch (error) {
         console.error('Error fetching shorts:', error);
-        setIsError(true);
-        toast({
-          title: "Error loading shorts",
-          description: "Failed to load user's shorts. Please try again.",
-          variant: "destructive",
-        });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    
+
     if (id) {
       fetchShorts();
     }
-  }, [id, toast]);
+  }, [id]);
 
-  // Subscribe to real-time updates for the user's shorts
-  useEffect(() => {
-    if (!id) return;
-    
-    const channel = supabase
-      .channel(`user-shorts-${id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'posts',
-          filter: `creator_id=eq.${id}`
-        },
-        (payload) => {
-          // Refresh the shorts list on any changes
-          if (payload.eventType === 'INSERT') {
-            // For new posts, add it to the list
-            const newPost = payload.new as Post;
-            // Only add if it has video URLs
-            if (newPost.video_urls && newPost.video_urls.length > 0) {
-              setShorts(prev => [newPost, ...prev]);
-            }
-          } else if (payload.eventType === 'DELETE') {
-            // For deleted posts, remove it from the list
-            const deletedId = payload.old.id;
-            setShorts(prev => prev.filter(short => short.id !== deletedId));
-          } else {
-            // For updates, refresh the list through the API
-            queryClient.invalidateQueries({ queryKey: ['posts'] });
-          }
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [id, queryClient]);
-
-  const handlePlayShort = (shortId: string) => {
-    navigate(`/shorts?id=${shortId}`);
-  };
-
-  const handleDeleteShort = async (shortId: string) => {
+  const handleDelete = async (shortId: string) => {
     try {
       const { error } = await supabase
         .from('posts')
@@ -125,189 +103,129 @@ export const ShortsList = () => {
         
       if (error) throw error;
       
-      setShorts(prev => prev.filter(short => short.id !== shortId));
+      setShorts(shorts.filter(short => short.id !== shortId));
       toast({
         title: "Short deleted",
-        description: "Your short has been successfully deleted.",
+        description: "Your short has been successfully deleted",
       });
-      
-      // Invalidate queries to update the UI
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
     } catch (error) {
       console.error('Error deleting short:', error);
       toast({
-        title: "Error deleting short",
-        description: "Failed to delete your short. Please try again.",
+        title: "Error",
+        description: "Failed to delete short",
         variant: "destructive",
       });
-    } finally {
-      setConfirmDeleteId(null);
     }
   };
 
-  const handleShareShort = (shortId: string) => {
-    setSelectedShortId(shortId);
-    setIsShareOpen(true);
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-[300px] w-full flex items-center justify-center p-8">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="w-16 h-16 bg-luxury-darker rounded-full mb-4"></div>
-          <div className="h-4 bg-luxury-darker rounded w-32 mb-2"></div>
-          <div className="h-3 bg-luxury-darker/70 rounded w-40"></div>
-        </div>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {Array(8).fill(0).map((_, i) => (
+          <Skeleton key={i} className="aspect-[9/16] rounded-xl" />
+        ))}
       </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <ErrorState 
-        title="Couldn't load shorts" 
-        description="We had trouble loading this user's shorts. Please try again later."
-        onRetry={() => window.location.reload()}
-      />
     );
   }
 
   if (shorts.length === 0) {
     return (
-      <div className="min-h-[300px] w-full flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-luxury-darker flex items-center justify-center mb-4">
-          <Play className="w-8 h-8 text-luxury-neutral/50" />
-        </div>
-        <h3 className="text-xl font-semibold mb-2">No shorts yet</h3>
-        <p className="text-luxury-neutral mb-6 max-w-md">
-          {isCurrentUser 
-            ? "You haven't uploaded any short videos yet. Short videos are a great way to engage with your audience."
-            : "This user hasn't uploaded any short videos yet."}
-        </p>
-        
-        {isCurrentUser && (
-          <Button 
-            className="bg-luxury-primary hover:bg-luxury-primary/80"
-            onClick={() => navigate("/shorts")}
-          >
-            Create Your First Short
-          </Button>
-        )}
-      </div>
+      <EmptyState
+        title="No Shorts Yet"
+        description={isOwner ? "Upload your first short to get started!" : "This user hasn't uploaded any shorts yet."}
+        icon="🎬"
+        actionLabel={isOwner ? "Upload Short" : undefined}
+        onAction={isOwner ? () => navigate("/shorts/upload") : undefined}
+      />
     );
   }
 
   return (
-    <div className="w-full">
-      <AnimatePresence>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4">
-          {shorts.map((short) => (
-            <motion.div
-              key={short.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative aspect-[9/16] overflow-hidden rounded-lg group bg-luxury-darker"
-            >
-              {/* Thumbnail */}
-              <div 
-                className="absolute inset-0 bg-cover bg-center cursor-pointer"
-                style={{ 
-                  backgroundImage: short.video_thumbnail_url 
-                    ? `url(${short.video_thumbnail_url})` 
-                    : `url(${short.video_urls?.[0]?.replace(/\.[^/.]+$/, ".jpg")})` 
-                }}
-                onClick={() => handlePlayShort(short.id)}
-              >
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+    <>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {shorts.map((short) => (
+          <motion.div
+            key={short.id}
+            className="group relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer"
+            whileHover={{ scale: 1.03 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => {
+              setSelectedShort(short);
+              setIsPreviewOpen(true);
+            }}
+          >
+            {/* Thumbnail */}
+            <img 
+              src={short.video_thumbnail_url || short.video_urls?.[0] || "/placeholder.svg"} 
+              alt={short.content}
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              {/* Play Icon */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <Play className="w-12 h-12 text-white" fill="white" />
               </div>
               
-              {/* Play button */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
-                <button
-                  className="w-12 h-12 rounded-full bg-luxury-primary/80 backdrop-blur-sm flex items-center justify-center hover:bg-luxury-primary transition-colors"
-                  onClick={() => handlePlayShort(short.id)}
-                >
-                  <Play className="w-6 h-6 text-white ml-1" />
-                </button>
-              </div>
-              
-              {/* Stats overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-transparent">
-                <div className="flex items-center space-x-2 text-white/90 text-xs">
-                  <div className="flex items-center">
-                    <Heart className="w-3 h-3 mr-1" />
-                    <span>{short.likes_count || 0}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <MessageCircle className="w-3 h-3 mr-1" />
-                    <span>{short.comments_count || 0}</span>
-                  </div>
-                  <div className="flex items-center ml-auto">
-                    <span>{short.view_count || 0} views</span>
-                  </div>
+              {/* Stats */}
+              <div className="absolute bottom-2 left-2 right-2 flex justify-between text-white text-sm">
+                <div className="flex items-center space-x-2">
+                  <Heart className="w-4 h-4" />
+                  <span>{short.likes_count}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="w-4 h-4" />
+                  <span>{short.comments_count}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Eye className="w-4 h-4" />
+                  <span>{short.view_count || 0}</span>
                 </div>
               </div>
-              
-              {/* Action buttons */}
-              {isCurrentUser && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col space-y-2">
-                  <button
-                    className="p-2 rounded-full bg-luxury-darker/80 backdrop-blur-sm hover:bg-red-500/80 transition-colors"
-                    onClick={() => setConfirmDeleteId(short.id)}
-                  >
-                    <Trash2 className="w-4 h-4 text-white" />
-                  </button>
-                  <button
-                    className="p-2 rounded-full bg-luxury-darker/80 backdrop-blur-sm hover:bg-luxury-primary/80 transition-colors"
-                    onClick={() => handleShareShort(short.id)}
-                  >
-                    <Share className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
-      </AnimatePresence>
-      
-      {/* Delete confirmation dialog */}
-      <Dialog
-        open={!!confirmDeleteId}
-        onOpenChange={(open) => !open && setConfirmDeleteId(null)}
-      >
-        <DialogContent className="sm:max-w-[425px]">
-          <div className="text-center sm:text-left">
-            <h3 className="text-lg font-semibold mb-2">Delete short</h3>
-            <p className="text-luxury-neutral mb-6">
-              Are you sure you want to delete this short? This action cannot be undone.
-            </p>
-            <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setConfirmDeleteId(null)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => confirmDeleteId && handleDeleteShort(confirmDeleteId)}
-              >
-                Delete
-              </Button>
             </div>
-          </div>
+            
+            {/* Actions (only for owner) */}
+            {isOwner && (
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 bg-black/50 rounded-full">
+                      <MoreVertical className="h-4 w-4 text-white" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(short.id);
+                    }}>
+                      <Trash className="mr-2 h-4 w-4" />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+      
+      {/* Preview Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden bg-black">
+          {selectedShort && (
+            <div className="relative w-full aspect-[9/16]">
+              <video
+                src={selectedShort.video_urls?.[0] || selectedShort.media_url[0]}
+                poster={selectedShort.video_thumbnail_url}
+                controls
+                autoPlay
+                className="w-full h-full object-contain"
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
-      
-      {/* Share dialog */}
-      {selectedShortId && (
-        <ShareDialog
-          open={isShareOpen}
-          onOpenChange={setIsShareOpen}
-          postId={selectedShortId}
-        />
-      )}
-    </div>
+    </>
   );
 };

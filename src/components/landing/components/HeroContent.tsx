@@ -14,9 +14,19 @@ export const HeroContent = () => {
             transition={{ duration: 0.3 }}
             className="text-center space-y-8"
           >
-            {/* Main Value Proposition */}
+            {/* Eroxr Brand */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="mb-2"
+            >
+              <h2 className="text-3xl text-white">Eroxr</h2>
+            </motion.div>
+
+            {/* Main Headline */}
             <motion.h1 
-              className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary bg-clip-text text-transparent"
+              className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-purple-500 bg-clip-text text-transparent"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
@@ -24,14 +34,14 @@ export const HeroContent = () => {
               Turn Your Passion Into Profit
             </motion.h1>
 
-            {/* Clear Benefits Statement */}
+            {/* Subheadline */}
             <motion.p 
-              className="text-xl md:text-2xl text-luxury-neutral max-w-2xl mx-auto"
+              className="text-xl md:text-2xl text-luxury-neutral max-w-3xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
             >
-              Join thousands of creators earning <span className="text-luxury-primary font-semibold">$5,000+</span> monthly through exclusive content and direct fan connections.
+              Join thousands of creators earning <span className="text-purple-400 font-semibold">$5,000+</span> monthly through exclusive content and direct fan connections.
             </motion.p>
 
             {/* Social Proof */}
@@ -63,7 +73,7 @@ export const HeroContent = () => {
               transition={{ duration: 0.3, delay: 0.3 }}
             >
               <Link to="/register" className="w-full sm:w-auto">
-                <WaveButton className="bg-luxury-primary w-full text-lg py-4 px-8 font-medium">
+                <WaveButton className="bg-purple-500 w-full text-lg py-4 px-8 font-medium">
                   Start Creating - It's Free
                 </WaveButton>
               </Link>

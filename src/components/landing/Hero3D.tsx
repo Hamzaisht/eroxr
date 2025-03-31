@@ -26,13 +26,17 @@ export const Hero3D = () => {
 
   useEffect(() => {
     const loadVideo = async () => {
-      const { data: { publicUrl } } = supabase
-        .storage
-        .from('landing-videos')
-        .getPublicUrl('background.mp4');
-      
-      if (publicUrl) {
-        setVideoUrl(publicUrl);
+      try {
+        const { data: { publicUrl } } = supabase
+          .storage
+          .from('landing-videos')
+          .getPublicUrl('background.mp4');
+        
+        if (publicUrl) {
+          setVideoUrl(publicUrl);
+        }
+      } catch (error) {
+        console.error("Error loading video:", error);
       }
     };
 
