@@ -1,12 +1,15 @@
 
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface HomeLayoutProps {
   children: ReactNode;
 }
 
 export const HomeLayout = ({ children }: HomeLayoutProps) => {
+  const isMobile = useMediaQuery("(max-width: 640px)");
+  
   return (
     <div className="min-h-screen w-full bg-[#0D1117] relative overflow-hidden">
       {/* Dynamic Background */}
@@ -24,7 +27,7 @@ export const HomeLayout = ({ children }: HomeLayoutProps) => {
             repeat: Infinity,
             repeatType: "reverse",
           }}
-          className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-luxury-primary/20 blur-3xl"
+          className={`absolute -top-20 sm:-top-40 -right-20 sm:-right-40 h-[300px] sm:h-[500px] w-[300px] sm:w-[500px] rounded-full bg-luxury-primary/20 blur-3xl`}
         />
         <motion.div
           animate={{
@@ -37,7 +40,7 @@ export const HomeLayout = ({ children }: HomeLayoutProps) => {
             repeat: Infinity,
             repeatType: "reverse",
           }}
-          className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-luxury-accent/20 blur-3xl"
+          className={`absolute -bottom-20 sm:-bottom-40 -left-20 sm:-left-40 h-[300px] sm:h-[500px] w-[300px] sm:w-[500px] rounded-full bg-luxury-accent/20 blur-3xl`}
         />
       </div>
       
@@ -47,7 +50,7 @@ export const HomeLayout = ({ children }: HomeLayoutProps) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="w-full mx-auto px-0 sm:px-2 md:px-4 py-4 space-y-6"
+          className="w-full mx-auto px-0 sm:px-2 md:px-4 py-2 sm:py-4 space-y-4 sm:space-y-6"
         >
           {children}
         </motion.div>

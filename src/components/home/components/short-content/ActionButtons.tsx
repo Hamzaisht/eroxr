@@ -26,24 +26,40 @@ export const ActionButtons = ({
   onSave,
   onShare,
 }: ActionButtonsProps) => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 640px)");
+  const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1024px)");
+
+  const getButtonSize = () => {
+    if (isMobile) return 'h-10 w-10';
+    if (isTablet) return 'h-12 w-12';
+    return 'h-14 w-14';
+  };
+
+  const getIconSize = () => {
+    if (isMobile) return 'h-5 w-5';
+    if (isTablet) return 'h-6 w-6';
+    return 'h-7 w-7';
+  };
+
+  const buttonSize = getButtonSize();
+  const iconSize = getIconSize();
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6">
       <Button
         variant="ghost"
         size="icon"
-        className={`${isMobile ? 'h-12 w-12' : 'h-14 w-14'} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
+        className={`${buttonSize} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
         onClick={() => onLike(shortId)}
       >
         <Heart
-          className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} transition-all duration-300 ${
+          className={`${iconSize} transition-all duration-300 ${
             hasLiked
               ? "text-red-500 fill-red-500 scale-110"
               : "text-white group-hover:text-red-500"
           }`}
         />
-        <span className="absolute -bottom-6 text-sm font-medium text-white">
+        <span className="absolute -bottom-5 text-xs sm:text-sm font-medium text-white">
           {likes}
         </span>
       </Button>
@@ -51,11 +67,11 @@ export const ActionButtons = ({
       <Button
         variant="ghost"
         size="icon"
-        className={`${isMobile ? 'h-12 w-12' : 'h-14 w-14'} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
+        className={`${buttonSize} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
         onClick={() => onComment(shortId)}
       >
-        <MessageCircle className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} text-white group-hover:text-luxury-primary`} />
-        <span className="absolute -bottom-6 text-sm font-medium text-white">
+        <MessageCircle className={`${iconSize} text-white group-hover:text-luxury-primary`} />
+        <span className="absolute -bottom-5 text-xs sm:text-sm font-medium text-white">
           {comments}
         </span>
       </Button>
@@ -63,11 +79,11 @@ export const ActionButtons = ({
       <Button
         variant="ghost"
         size="icon"
-        className={`${isMobile ? 'h-12 w-12' : 'h-14 w-14'} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
+        className={`${buttonSize} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
         onClick={() => onSave(shortId)}
       >
         <Bookmark
-          className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} transition-all duration-300 ${
+          className={`${iconSize} transition-all duration-300 ${
             hasSaved
               ? "text-luxury-primary fill-luxury-primary scale-110"
               : "text-white group-hover:text-luxury-primary"
@@ -78,10 +94,10 @@ export const ActionButtons = ({
       <Button
         variant="ghost"
         size="icon"
-        className={`${isMobile ? 'h-12 w-12' : 'h-14 w-14'} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
+        className={`${buttonSize} rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 group`}
         onClick={() => onShare(shortId)}
       >
-        <Share2 className={`${isMobile ? 'h-6 w-6' : 'h-7 w-7'} text-white group-hover:text-luxury-primary`} />
+        <Share2 className={`${iconSize} text-white group-hover:text-luxury-primary`} />
       </Button>
     </div>
   );

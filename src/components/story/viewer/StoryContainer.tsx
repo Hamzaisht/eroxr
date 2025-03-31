@@ -7,6 +7,7 @@ import { StoryProgress } from "./StoryProgress";
 import { StoryHeader } from "./StoryHeader";
 import { StoryActions } from "./StoryActions";
 import { ViewersSheet } from "./ViewersSheet";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface StoryContainerProps {
   stories: Story[];
@@ -39,12 +40,14 @@ export const StoryContainer = ({
   onDelete,
   onEdit,
 }: StoryContainerProps) => {
+  const isMobile = useMediaQuery("(max-width: 640px)");
+
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center z-[100] overflow-hidden">
-      <div className="relative w-full h-full md:max-w-[500px] mx-auto bg-black overflow-hidden">
+      <div className={`relative w-full h-full ${isMobile ? 'max-w-full' : 'md:max-w-[500px]'} mx-auto bg-black overflow-hidden`}>
         <div className="absolute inset-0 flex flex-col overflow-hidden">
           {/* Progress Bar */}
-          <div className="absolute top-0 left-0 right-0 z-50 p-4">
+          <div className="absolute top-0 left-0 right-0 z-50 p-2 sm:p-4">
             <StoryProgress
               stories={stories}
               currentIndex={currentIndex}
@@ -78,7 +81,7 @@ export const StoryContainer = ({
           />
 
           {/* Action Buttons */}
-          <div className="absolute bottom-4 right-4 z-50">
+          <div className={`absolute ${isMobile ? 'bottom-2 right-2' : 'bottom-4 right-4'} z-50`}>
             <StoryActions
               story={currentStory}
               onDelete={onDelete}

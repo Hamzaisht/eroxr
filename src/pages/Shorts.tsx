@@ -7,11 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 export default function Shorts() {
   const session = useSession();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -35,6 +37,7 @@ export default function Shorts() {
             toast({
               title: "New short",
               description: "A new short has been posted!",
+              duration: isMobile ? 3000 : 5000,
             });
           }
         }
@@ -44,15 +47,19 @@ export default function Shorts() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session?.user?.id, queryClient, toast]);
+  }, [session?.user?.id, queryClient, toast, isMobile]);
 
   return (
-    <div className="min-h-screen bg-luxury-dark">
-      <ErrorBoundary fallback={<div className="p-8 text-center">Something went wrong loading Eros. Please try refreshing.</div>}>
+    <div className="min-h-screen bg-luxury-dark overflow-hidden">
+      <ErrorBoundary fallback={<div className="p-4 md:p-8 text-center">Something went wrong loading Eros. Please try refreshing.</div>}>
         <div className="fixed inset-0 flex items-center justify-center">
           <ShortsFeed />
         </div>
-        {session && <UploadVideoButton />}
+        {session && (
+          <div className={`fixed ${isMobile ? 'bottom-4 right-4' : 'bottom-8 right-8'} z-50`}>
+            <UploadVideoButton />
+          </div>
+        )}
       </ErrorBoundary>
     </div>
   );
