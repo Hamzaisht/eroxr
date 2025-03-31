@@ -62,52 +62,98 @@ export const useVideoUpload = () => {
       const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
       const filePath = fileName;
 
-      const onProgress = (progress: { loaded: number; total: number }) => {
-        const percent = Math.round((progress.loaded / progress.total) * 100);
-        setUploadState(prev => ({ ...prev, progress: percent }));
-        if (options?.onProgress) {
-          options.onProgress(percent);
-        }
-      };
-
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('shorts')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-          onUploadProgress: onProgress
+      // We'll use the XMLHttpRequest to track progress manually since
+      // Supabase's upload method doesn't directly support progress tracking
+      return new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            setUploadState(prev => ({ ...prev, progress: percent }));
+            if (options?.onProgress) {
+              options.onProgress(percent);
+            }
+          }
         });
-
-      if (error) {
-        console.error("Storage upload error:", error);
-        setUploadState(prev => ({ 
-          ...prev, 
-          isUploading: false, 
-          error: error.message
-        }));
-        return { 
-          success: false, 
-          error: error.message
-        };
-      }
-
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('shorts')
-        .getPublicUrl(filePath);
-
-      setUploadState({
-        isUploading: false,
-        progress: 100,
-        isComplete: true,
-        error: null
+        
+        xhr.addEventListener("error", () => {
+          const errorMsg = "Upload failed due to network error";
+          setUploadState(prev => ({ 
+            ...prev, 
+            isUploading: false, 
+            error: errorMsg
+          }));
+          resolve({ 
+            success: false, 
+            error: errorMsg
+          });
+        });
+        
+        xhr.addEventListener("load", async () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Upload succeeded, get the public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('shorts')
+              .getPublicUrl(filePath);
+            
+            setUploadState({
+              isUploading: false,
+              progress: 100,
+              isComplete: true,
+              error: null
+            });
+            
+            resolve({ 
+              success: true, 
+              videoUrl: publicUrl
+            });
+          } else {
+            const errorMsg = `Upload failed with status ${xhr.status}`;
+            setUploadState(prev => ({ 
+              ...prev, 
+              isUploading: false, 
+              error: errorMsg
+            }));
+            resolve({ 
+              success: false, 
+              error: errorMsg
+            });
+          }
+        });
+        
+        // Start the direct upload to Supabase storage using a signed URL
+        (async () => {
+          try {
+            // Create a signed URL for the upload
+            const { data: { signedURL }, error: signedURLError } = await supabase.storage
+              .from('shorts')
+              .createSignedUploadUrl(filePath);
+            
+            if (signedURLError) {
+              throw signedURLError;
+            }
+            
+            // Open the request
+            xhr.open('PUT', signedURL);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.send(file);
+          } catch (error: any) {
+            console.error("Signed URL error:", error);
+            
+            setUploadState(prev => ({ 
+              ...prev, 
+              isUploading: false, 
+              error: error.message || "Failed to get upload URL"
+            }));
+            
+            resolve({ 
+              success: false, 
+              error: error.message || "Failed to get upload URL"
+            });
+          }
+        })();
       });
-
-      return { 
-        success: true, 
-        videoUrl: publicUrl
-      };
     } catch (error: any) {
       console.error("Video upload error:", error);
       
