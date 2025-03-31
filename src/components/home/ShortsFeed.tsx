@@ -18,7 +18,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 
-export const ShortsFeed = () => {
+interface ShortsFeedProps {
+  specificShortId?: string | null;
+}
+
+export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [selectedShortId, setSelectedShortId] = useState<string | null>(null);
@@ -149,6 +153,15 @@ export const ShortsFeed = () => {
       supabase.removeChannel(channel);
     };
   }, [session?.user?.id, refetch, toast]);
+
+  useEffect(() => {
+    if (specificShortId && shorts.length > 0) {
+      const index = shorts.findIndex(short => short.id === specificShortId);
+      if (index !== -1) {
+        setCurrentVideoIndex(index);
+      }
+    }
+  }, [specificShortId, shorts]);
 
   const handleShare = (shortId: string) => {
     setSelectedShortId(shortId);
