@@ -27,9 +27,11 @@ export const useTrackingAction = () => {
 
       // Update view count in the database
       const { error: updateError } = await supabase
-        .from("posts")
-        .update({ view_count: supabase.rpc('increment', { count: 1 }) })
-        .eq("id", shortId);
+        .rpc('increment_counter', { 
+          row_id: shortId, 
+          counter_name: 'view_count', 
+          table_name: 'posts' 
+        });
 
       if (updateError) {
         console.error("Error tracking view:", updateError);
@@ -53,9 +55,11 @@ export const useTrackingAction = () => {
     try {
       // Update share count in the database
       const { error: updateError } = await supabase
-        .from("posts")
-        .update({ share_count: supabase.rpc('increment', { count: 1 }) })
-        .eq("id", shortId);
+        .rpc('increment_counter', { 
+          row_id: shortId, 
+          counter_name: 'share_count', 
+          table_name: 'posts' 
+        });
 
       if (updateError) {
         console.error("Error tracking share:", updateError);

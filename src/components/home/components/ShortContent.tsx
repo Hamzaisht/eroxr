@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Heart, MessageCircle, Share2, Bookmark, MoreVertical, Trash, Eye } from "lucide-react";
 import { Short } from "../types/short";
@@ -36,6 +35,7 @@ interface ShortContentProps {
   handleLike: (shortId: string) => Promise<void>;
   handleSave: (shortId: string) => Promise<void>;
   onDelete?: () => void;
+  isDeleting?: boolean;
   isCurrentVideo?: boolean;
   className?: string;
 }
@@ -47,12 +47,12 @@ export const ShortContent = ({
   handleLike,
   handleSave,
   onDelete,
+  isDeleting = false,
   isCurrentVideo = false,
   className = "",
 }: ShortContentProps) => {
   const [isLiking, setIsLiking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleLikeClick = async () => {
     try {
@@ -69,17 +69,6 @@ export const ShortContent = ({
       await handleSave(short.id);
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleDeleteClick = async () => {
-    if (onDelete) {
-      try {
-        setIsDeleting(true);
-        await onDelete();
-      } finally {
-        setIsDeleting(false);
-      }
     }
   };
 
@@ -127,7 +116,7 @@ export const ShortContent = ({
             <DropdownMenuContent align="end" className="bg-luxury-darker border-luxury-primary/20">
               <DropdownMenuItem 
                 className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
-                onClick={handleDeleteClick}
+                onClick={onDelete}
                 disabled={isDeleting}
               >
                 {isDeleting ? (

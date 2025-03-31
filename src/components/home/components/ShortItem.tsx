@@ -30,6 +30,7 @@ export const ShortItem = ({
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [viewTracked, setViewTracked] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Hooks
   const { handleLike, handleSave, handleDelete, handleShare, handleShareTracking, handleView } = useShortActions();
@@ -114,17 +115,20 @@ export const ShortItem = ({
     }
     
     try {
+      setIsDeleting(true);
       await handleDelete(shortId);
       toast({
         title: "Short deleted",
         description: "Your short has been successfully deleted",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Delete failed",
-        description: "An error occurred while deleting your short",
+        description: error.message || "An error occurred while deleting your short",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -167,6 +171,7 @@ export const ShortItem = ({
             ? () => handleDeleteClick(short.id) 
             : undefined
         }
+        isDeleting={isDeleting}
         isCurrentVideo={isCurrentVideo}
         className={`absolute bottom-0 left-0 right-0 z-20 p-4 ${isMobile ? 'pb-16' : 'p-6'}`}
       />

@@ -1,39 +1,35 @@
 
 import { useLikeAction } from "./useLikeAction";
-import { useSaveAction } from "./useSaveAction";
 import { useDeleteAction } from "./useDeleteAction";
-import { useViewAction } from "./useViewAction";
 import { useTrackingAction } from "./useTrackingAction";
-import { useShareAction } from "./useShareAction";
+import { useViewAction } from "./useViewAction";
 
-/**
- * Combined hook for all short video actions
- * This hook aggregates all the individual action hooks to provide a unified API
- */
 export const useShortActions = () => {
   const { handleLike } = useLikeAction();
-  const { handleSave } = useSaveAction();
   const { handleDelete } = useDeleteAction();
   const { handleView } = useViewAction();
   const { handleShareTracking } = useTrackingAction();
-  const { handleShare } = useShareAction();
+
+  const handleSave = async (shortId: string) => {
+    // This is a placeholder - to be implemented when save functionality is needed
+    console.log(`Save functionality for short ${shortId} not yet implemented`);
+    return true;
+  };
+
+  const handleShare = (shortId: string) => {
+    // Placeholder for actual share implementation
+    // Currently just tracks the share action
+    handleShareTracking(shortId);
+    // Return the URL that can be shared
+    return `${window.location.origin}/shorts?id=${shortId}`;
+  };
 
   return {
     handleLike,
-    handleSave,
     handleDelete,
-    handleView,
-    handleShareTracking,
+    handleSave,
     handleShare,
+    handleShareTracking,
+    handleView
   };
-};
-
-// Export individual hooks for direct use when needed
-export { 
-  useLikeAction, 
-  useSaveAction, 
-  useDeleteAction, 
-  useViewAction,
-  useTrackingAction,
-  useShareAction
 };
