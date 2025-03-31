@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useEffect } from "react";
@@ -125,17 +126,24 @@ export const UserMenu = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log("Attempting to sign out...");
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Logout error:", error);
+        throw error;
+      }
+      console.log("Sign out successful");
       navigate('/login');
       toast({
         title: "Signed out successfully",
         description: "Come back soon!",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error during logout:", error);
       toast({
         variant: "destructive",
         title: "Error signing out",
-        description: "Please try again later",
+        description: error.message || "Please try again later",
       });
     }
   };
@@ -152,7 +160,7 @@ export const UserMenu = () => {
       />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div onClick={() => navigate(`/profile/${session.user.id}`)}>
+          <div>
             <UserAvatar 
               avatarUrl={profile?.avatar_url}
               email={session.user.email}

@@ -42,17 +42,22 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error("Logout error:", error);
+        throw error;
+      }
+      
       navigate("/login");
       toast({
         title: "Logged out successfully",
         description: "See you soon!",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error during logout:", error);
       toast({
         variant: "destructive",
         title: "Error signing out",
-        description: "Please try again",
+        description: error.message || "Please try again",
       });
     }
   };
