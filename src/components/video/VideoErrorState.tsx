@@ -1,7 +1,5 @@
-
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
 
 interface VideoErrorStateProps {
   onRetry?: () => void;
@@ -10,35 +8,24 @@ interface VideoErrorStateProps {
 
 export const VideoErrorState = ({ onRetry, errorDetails }: VideoErrorStateProps) => {
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-10"
-    >
-      <div className="flex flex-col items-center space-y-4 text-center max-w-xs">
-        <div className="bg-red-500/10 p-3 rounded-full">
-          <AlertCircle className="h-10 w-10 text-red-500" />
-        </div>
-        <h3 className="text-lg font-medium text-white">Video Failed to Load</h3>
-        
-        {errorDetails && (
-          <p className="text-sm text-white/70">
-            {errorDetails}
-          </p>
-        )}
-        
-        {onRetry && (
-          <Button 
-            variant="outline" 
-            onClick={onRetry}
-            className="mt-2 bg-white/10 hover:bg-white/20 border-white/20"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Retry
-          </Button>
-        )}
-      </div>
-    </motion.div>
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-500/10 backdrop-blur-sm z-10 p-4">
+      <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
+      <p className="text-sm text-red-500 mb-2 text-center">Failed to load video</p>
+      {errorDetails && (
+        <p className="text-xs text-red-400/80 mb-4 text-center max-w-xs">
+          {errorDetails}
+        </p>
+      )}
+      {onRetry && (
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={onRetry}
+          className="bg-white/10 hover:bg-white/20"
+        >
+          Try Again
+        </Button>
+      )}
+    </div>
   );
 };
