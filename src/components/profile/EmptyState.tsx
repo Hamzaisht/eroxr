@@ -6,7 +6,7 @@ import type { LucideIcon } from "lucide-react";
 interface EmptyStateProps {
   title?: string;
   description?: string;
-  icon: LucideIcon | React.FC<React.SVGProps<SVGSVGElement>>;
+  icon: LucideIcon;
   message?: string;
   actionLabel?: string;
   actionHref?: string;
@@ -25,11 +25,7 @@ export const EmptyState = ({
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-luxury-darker rounded-lg">
       <div className="bg-luxury-dark/50 p-4 rounded-full mb-4">
-        {typeof Icon === 'string' ? (
-          <div className="text-4xl">{Icon}</div>
-        ) : (
-          <Icon className="h-8 w-8 text-luxury-neutral" />
-        )}
+        <Icon className="h-8 w-8 text-luxury-neutral" />
       </div>
       <h3 className="text-xl font-semibold text-white mb-2">
         {title || message || "Nothing to see here"}

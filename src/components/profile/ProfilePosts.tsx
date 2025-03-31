@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PostCard } from "@/components/feed/PostCard";
 import { EmptyState } from "./EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText } from "lucide-react"; // Import Lucide icon instead of string
+import { FileText } from "lucide-react";
 
 interface ProfilePostsProps {
   userId: string;
@@ -53,7 +53,7 @@ export const ProfilePosts = ({ userId }: ProfilePostsProps) => {
       <EmptyState
         title="No Posts Yet"
         description="This user hasn't posted any content yet."
-        icon={FileText} // Use the Lucide icon component
+        icon={FileText}
       />
     );
   }

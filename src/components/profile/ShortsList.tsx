@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,9 @@ import { motion } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
+import { Post as SupabasePost } from "@/integrations/supabase/types/post";
 
+// Modified interface to handle both our internal Post type and the Supabase Post type
 interface Post {
   id: string;
   creator_id: string;
@@ -29,15 +32,15 @@ interface Post {
   created_at: string;
   updated_at: string;
   visibility: string;
-  is_premium: boolean;
-  post_type: string;
+  is_premium?: boolean;
+  post_type?: string;
   has_saved?: boolean;
   price?: number;
   tags?: string[];
 }
 
 interface ShortsListProps {
-  shorts?: Post[];
+  shorts?: SupabasePost[] | Post[];
 }
 
 export const ShortsList = ({ shorts: propShorts }: ShortsListProps = {}) => {
@@ -54,7 +57,28 @@ export const ShortsList = ({ shorts: propShorts }: ShortsListProps = {}) => {
 
   useEffect(() => {
     if (propShorts && propShorts.length > 0) {
-      setShorts(propShorts);
+      // Convert the Supabase Post type to our internal Post type
+      const formattedShorts = propShorts.map(short => ({
+        id: short.id,
+        creator_id: short.creator_id,
+        content: short.content,
+        media_url: short.media_url || [],
+        video_urls: short.video_urls,
+        video_thumbnail_url: short.video_thumbnail_url,
+        likes_count: short.likes_count || 0,
+        comments_count: short.comments_count || 0,
+        view_count: short.view_count,
+        created_at: short.created_at,
+        updated_at: short.updated_at,
+        visibility: short.visibility || 'public',
+        is_premium: 'is_ppv' in short ? short.is_ppv : false,
+        post_type: 'post_type' in short ? short.post_type : 'short',
+        has_saved: short.has_saved || false,
+        price: 'ppv_amount' in short ? short.ppv_amount : undefined,
+        tags: short.tags || []
+      })) as Post[];
+      
+      setShorts(formattedShorts);
       setLoading(false);
       return;
     }
@@ -76,20 +100,20 @@ export const ShortsList = ({ shorts: propShorts }: ShortsListProps = {}) => {
           id: short.id,
           creator_id: short.creator_id,
           content: short.content,
-          media_url: short.media_url,
+          media_url: short.media_url || [],
           video_urls: short.video_urls,
           video_thumbnail_url: short.video_thumbnail_url,
-          likes_count: short.likes_count,
-          comments_count: short.comments_count,
+          likes_count: short.likes_count || 0,
+          comments_count: short.comments_count || 0,
           view_count: short.view_count,
           created_at: short.created_at,
           updated_at: short.updated_at,
-          visibility: short.visibility,
-          is_premium: short.is_premium,
-          post_type: short.post_type,
+          visibility: short.visibility || 'public',
+          is_premium: short.is_ppv || false,
+          post_type: short.post_type || 'short',
           has_saved: short.has_saved || false,
-          price: short.price,
-          tags: short.tags
+          price: short.ppv_amount,
+          tags: short.tags || []
         })) as Post[];
         
         setShorts(formattedShorts || []);
