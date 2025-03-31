@@ -2,6 +2,7 @@
 import { Slider } from "@/components/ui/slider";
 import { FilterAccordion } from "./FilterAccordion";
 import { FilterOptions } from "../types/dating";
+import { useState, useEffect } from "react";
 
 interface DistanceFilterProps {
   filterOptions: FilterOptions;
@@ -12,7 +13,22 @@ export const DistanceFilter = ({
   filterOptions, 
   setFilterOptions 
 }: DistanceFilterProps) => {
+  // Use local state to prevent too many rerenders
+  const [distance, setDistance] = useState<number>(filterOptions.maxDistance || 50);
+  
+  // Update local state when props change
+  useEffect(() => {
+    setDistance(filterOptions.maxDistance || 50);
+  }, [filterOptions.maxDistance]);
+
   const handleDistanceChange = (values: number[]) => {
+    if (values.length === 1) {
+      setDistance(values[0]);
+    }
+  };
+  
+  // Only update parent state on commit to avoid too many rerenders
+  const handleDistanceCommit = (values: number[]) => {
     if (values.length === 1) {
       setFilterOptions({
         ...filterOptions,
@@ -39,7 +55,7 @@ export const DistanceFilter = ({
       >
         <div className="flex justify-between text-sm text-luxury-neutral mb-2">
           <span>Distance</span>
-          <span>{filterOptions.maxDistance} km</span>
+          <span>{distance} km</span>
         </div>
         <div 
           onMouseDown={preventFormSubmission}
@@ -47,14 +63,12 @@ export const DistanceFilter = ({
           onClick={preventFormSubmission}
         >
           <Slider
-            defaultValue={[filterOptions.maxDistance || 50]}
+            value={[distance]}
             max={500}
             min={5}
             step={5}
             onValueChange={handleDistanceChange}
-            onValueCommit={(value) => {
-              handleDistanceChange(value);
-            }}
+            onValueCommit={handleDistanceCommit}
           />
         </div>
       </form>

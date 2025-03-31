@@ -1,6 +1,7 @@
 
 import { FilterAccordion } from "./FilterAccordion";
 import { FilterOptions } from "../types/dating";
+import { useState, useEffect } from "react";
 
 interface VerificationFilterProps {
   filterOptions: FilterOptions;
@@ -11,23 +12,37 @@ export const VerificationFilter = ({
   filterOptions, 
   setFilterOptions 
 }: VerificationFilterProps) => {
-  // Update verification filter
-  const handleVerifiedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Use local state for checkboxes
+  const [isVerified, setIsVerified] = useState(!!filterOptions.isVerified);
+  const [isPremium, setIsPremium] = useState(!!filterOptions.isPremium);
+  
+  // Update local state when props change
+  useEffect(() => {
+    setIsVerified(!!filterOptions.isVerified);
+    setIsPremium(!!filterOptions.isPremium);
+  }, [filterOptions.isVerified, filterOptions.isPremium]);
+
+  // Toggle verified status
+  const toggleVerified = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const newValue = !isVerified;
+    setIsVerified(newValue);
     setFilterOptions({
       ...filterOptions,
-      isVerified: e.target.checked
+      isVerified: newValue
     });
   };
 
-  // Update premium filter
-  const handlePremiumChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Toggle premium status
+  const togglePremium = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const newValue = !isPremium;
+    setIsPremium(newValue);
     setFilterOptions({
       ...filterOptions,
-      isPremium: e.target.checked
+      isPremium: newValue
     });
   };
   
@@ -52,28 +67,14 @@ export const VerificationFilter = ({
             type="checkbox"
             id="verified-only"
             className="rounded h-4 w-4 bg-luxury-darker border-luxury-primary/20 text-luxury-primary"
-            checked={!!filterOptions.isVerified}
-            onChange={handleVerifiedChange}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setFilterOptions({
-                ...filterOptions,
-                isVerified: !filterOptions.isVerified
-              });
-            }}
+            checked={isVerified}
+            onChange={() => {}} // Empty handler since we're using custom handlers
+            onClick={toggleVerified}
           />
           <label
             htmlFor="verified-only"
-            className="ml-2 text-sm text-luxury-neutral"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setFilterOptions({
-                ...filterOptions,
-                isVerified: !filterOptions.isVerified
-              });
-            }}
+            className="ml-2 text-sm text-luxury-neutral cursor-pointer"
+            onClick={toggleVerified}
           >
             Verified Profiles Only
           </label>
@@ -83,28 +84,14 @@ export const VerificationFilter = ({
             type="checkbox"
             id="premium-only"
             className="rounded h-4 w-4 bg-luxury-darker border-luxury-primary/20 text-luxury-primary"
-            checked={!!filterOptions.isPremium}
-            onChange={handlePremiumChange}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setFilterOptions({
-                ...filterOptions,
-                isPremium: !filterOptions.isPremium
-              });
-            }}
+            checked={isPremium}
+            onChange={() => {}} // Empty handler since we're using custom handlers
+            onClick={togglePremium}
           />
           <label
             htmlFor="premium-only"
-            className="ml-2 text-sm text-luxury-neutral"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setFilterOptions({
-                ...filterOptions,
-                isPremium: !filterOptions.isPremium
-              });
-            }}
+            className="ml-2 text-sm text-luxury-neutral cursor-pointer"
+            onClick={togglePremium}
           >
             Premium Profiles Only
           </label>

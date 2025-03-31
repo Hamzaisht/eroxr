@@ -2,6 +2,7 @@
 import { Slider } from "@/components/ui/slider";
 import { FilterAccordion } from "./FilterAccordion";
 import { FilterOptions } from "../types/dating";
+import { useState, useEffect } from "react";
 
 interface AgeRangeFilterProps {
   filterOptions: FilterOptions;
@@ -12,7 +13,28 @@ export const AgeRangeFilter = ({
   filterOptions, 
   setFilterOptions 
 }: AgeRangeFilterProps) => {
+  // Use local state to manage slider values
+  const [ageRange, setAgeRange] = useState<[number, number]>([
+    filterOptions.minAge || 18, 
+    filterOptions.maxAge || 99
+  ]);
+  
+  // Update local state when props change
+  useEffect(() => {
+    setAgeRange([
+      filterOptions.minAge || 18,
+      filterOptions.maxAge || 99
+    ]);
+  }, [filterOptions.minAge, filterOptions.maxAge]);
+
   const handleAgeChange = (values: number[]) => {
+    if (values.length === 2) {
+      setAgeRange([values[0], values[1]]);
+    }
+  };
+  
+  // Only update parent state on commit to avoid too many rerenders
+  const handleAgeCommit = (values: number[]) => {
     if (values.length === 2) {
       setFilterOptions({
         ...filterOptions,
@@ -39,8 +61,8 @@ export const AgeRangeFilter = ({
         className="mt-2 px-1"
       >
         <div className="flex justify-between text-sm text-luxury-neutral mb-2">
-          <span>{filterOptions.minAge} years</span>
-          <span>{filterOptions.maxAge} years</span>
+          <span>{ageRange[0]} years</span>
+          <span>{ageRange[1]} years</span>
         </div>
         <div 
           onMouseDown={preventFormSubmission}
@@ -48,14 +70,12 @@ export const AgeRangeFilter = ({
           onClick={preventFormSubmission}
         >
           <Slider
-            defaultValue={[filterOptions.minAge || 18, filterOptions.maxAge || 99]}
+            value={ageRange}
             max={99}
             min={18}
             step={1}
             onValueChange={handleAgeChange}
-            onValueCommit={(value) => {
-              handleAgeChange(value);
-            }}
+            onValueCommit={handleAgeCommit}
           />
         </div>
       </form>

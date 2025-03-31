@@ -45,10 +45,20 @@ export const FilterSections = ({
   setFilterOptions,
   selectedTag,
   preventFormSubmission,
-  handleClearTag
+  handleClearTag,
+  setSelectedTag
 }: FilterSectionsProps) => {
+  const stopPropagation = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className="divide-y divide-luxury-primary/10">
+    <div 
+      className="divide-y divide-luxury-primary/10" 
+      onClick={stopPropagation}
+      onMouseDown={stopPropagation}
+      onTouchStart={stopPropagation}
+    >
       <FilterGroup title="Search by Keyword or Username" icon={<Search className="h-4 w-4" />} defaultOpen>
         <UserSearchFields
           filterOptions={filterOptions}

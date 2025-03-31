@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { type Database } from "@/integrations/supabase/types";
 import { useLocationSearch } from './hooks/useLocationSearch';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,14 @@ export const LocationSearch = ({
     handleSelectCity
   } = useLocationSearch(selectedCountry, selectedCity);
 
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  
+  const countryInputRef = useRef<HTMLInputElement>(null);
+  const cityInputRef = useRef<HTMLInputElement>(null);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
+
   // Sync the external state with our internal state
   useEffect(() => {
     if (selectedCountry) {
@@ -44,12 +52,39 @@ export const LocationSearch = ({
     }
   }, [selectedCountry, selectedCity, setCountrySearch, setCitySearch]);
 
+  // Handle clicks outside the dropdowns to close them
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Handle country dropdown
+      if (countryDropdownRef.current && 
+          countryInputRef.current && 
+          !countryDropdownRef.current.contains(event.target as Node) &&
+          !countryInputRef.current.contains(event.target as Node)) {
+        setShowCountryDropdown(false);
+      }
+      
+      // Handle city dropdown
+      if (cityDropdownRef.current && 
+          cityInputRef.current && 
+          !cityDropdownRef.current.contains(event.target as Node) &&
+          !cityInputRef.current.contains(event.target as Node)) {
+        setShowCityDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Update the parent component's state when a selection is made
   const onSelectCountry = (e: React.MouseEvent, country: string) => {
     e.preventDefault(); // Prevent form submission
     e.stopPropagation(); // Stop event propagation
     handleSelectCountry(country as NordicCountry);
     setSelectedCountry(country as NordicCountry);
+    setShowCountryDropdown(false);
   };
 
   const onSelectCity = (e: React.MouseEvent, city: string) => {
@@ -57,6 +92,7 @@ export const LocationSearch = ({
     e.stopPropagation(); // Stop event propagation
     handleSelectCity(city);
     setSelectedCity(city);
+    setShowCityDropdown(false);
   };
 
   // Comprehensive event prevention
@@ -64,6 +100,14 @@ export const LocationSearch = ({
     e.preventDefault();
     e.stopPropagation();
     return false;
+  };
+
+  const handleCountryFocus = () => {
+    setShowCountryDropdown(true);
+  };
+
+  const handleCityFocus = () => {
+    setShowCityDropdown(true);
   };
 
   return (
@@ -79,12 +123,15 @@ export const LocationSearch = ({
           <span className="text-sm text-luxury-neutral">Country</span>
         </div>
         <Input
+          ref={countryInputRef}
           type="text"
           value={countrySearch}
           onChange={(e) => {
             e.preventDefault(); // Prevent any form submission
             setCountrySearch(e.target.value);
+            setShowCountryDropdown(true);
           }}
+          onFocus={handleCountryFocus}
           placeholder="Search for a country..."
           className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3"
           onKeyDown={(e) => {
@@ -93,10 +140,16 @@ export const LocationSearch = ({
               return false;
             }
           }}
-          onClick={preventFormSubmission}
+          onClick={(e) => {
+            e.stopPropagation();
+            preventFormSubmission(e);
+          }}
         />
-        {filteredCountries.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg">
+        {filteredCountries.length > 0 && showCountryDropdown && (
+          <div 
+            ref={countryDropdownRef}
+            className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg"
+          >
             {filteredCountries.map((country) => (
               <div
                 key={country}
@@ -118,12 +171,15 @@ export const LocationSearch = ({
             <span className="text-sm text-luxury-neutral">City</span>
           </div>
           <Input
+            ref={cityInputRef}
             type="text"
             value={citySearch}
             onChange={(e) => {
               e.preventDefault(); // Prevent any form submission
               setCitySearch(e.target.value);
+              setShowCityDropdown(true);
             }}
+            onFocus={handleCityFocus}
             placeholder="Search for a city..."
             className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3"
             onKeyDown={(e) => {
@@ -132,10 +188,16 @@ export const LocationSearch = ({
                 return false;
               }
             }}
-            onClick={preventFormSubmission}
+            onClick={(e) => {
+              e.stopPropagation();
+              preventFormSubmission(e);
+            }}
           />
-          {filteredCities.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg">
+          {filteredCities.length > 0 && showCityDropdown && (
+            <div 
+              ref={cityDropdownRef}
+              className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg"
+            >
               {filteredCities.map((city) => (
                 <div
                   key={city}

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { FilterOptions } from "@/components/ads/types/dating";
@@ -47,8 +47,8 @@ export default function Dating() {
     setSelectedLookingFor
   });
 
-  // Memoize the query options to prevent unnecessary re-renders
-  const queryOptions = useCallback(() => ({
+  // Use useMemo for stable query options
+  const queryOptions = useMemo(() => ({
     skipModeration: true,
     includeMyPendingAds: true,
     filterOptions,
@@ -68,7 +68,7 @@ export default function Dating() {
     selectedCity
   ]);
 
-  const { data: ads, isLoading, refetch } = useAdsQuery(queryOptions());
+  const { data: ads, isLoading, refetch } = useAdsQuery(queryOptions);
 
   // Use effect to handle filter changes without page refresh
   useEffect(() => {
