@@ -62,10 +62,9 @@ export const ProfileHeader = ({ profile, isCurrentUser }: ProfileHeaderProps) =>
         {/* Avatar */}
         <div className="absolute -top-16 left-4">
           <ProfileAvatar 
-            profileId={profile?.id} 
-            avatarUrl={profile?.avatar_url} 
-            username={profile?.username} 
-            size="lg" 
+            profile={profile}
+            getMediaType={(url) => url?.match(/\.(mp4|webm|ogg)$/i) ? 'video' : url?.match(/\.gif$/i) ? 'gif' : 'image'}
+            isOwnProfile={isCurrentUser} 
           />
         </div>
         

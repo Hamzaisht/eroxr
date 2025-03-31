@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Heart, MessageSquare, Eye, MoreVertical, Trash } from "lucide-react";
+import { Play, Heart, MessageSquare, Eye, MoreVertical, Trash, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./EmptyState";
@@ -37,7 +36,11 @@ interface Post {
   tags?: string[];
 }
 
-export const ShortsList = () => {
+interface ShortsListProps {
+  shorts?: Post[];
+}
+
+export const ShortsList = ({ shorts: propShorts }: ShortsListProps = {}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const session = useSession();
@@ -50,7 +53,15 @@ export const ShortsList = () => {
   const isOwner = session?.user?.id === id;
 
   useEffect(() => {
+    if (propShorts && propShorts.length > 0) {
+      setShorts(propShorts);
+      setLoading(false);
+      return;
+    }
+    
     const fetchShorts = async () => {
+      if (!id) return;
+      
       try {
         const { data, error } = await supabase
           .from('posts')
@@ -92,7 +103,7 @@ export const ShortsList = () => {
     if (id) {
       fetchShorts();
     }
-  }, [id]);
+  }, [id, propShorts]);
 
   const handleDelete = async (shortId: string) => {
     try {
@@ -133,7 +144,7 @@ export const ShortsList = () => {
       <EmptyState
         title="No Shorts Yet"
         description={isOwner ? "Upload your first short to get started!" : "This user hasn't uploaded any shorts yet."}
-        icon="🎬"
+        icon={Video}
         actionLabel={isOwner ? "Upload Short" : undefined}
         onAction={isOwner ? () => navigate("/shorts/upload") : undefined}
       />
@@ -154,21 +165,17 @@ export const ShortsList = () => {
               setIsPreviewOpen(true);
             }}
           >
-            {/* Thumbnail */}
             <img 
               src={short.video_thumbnail_url || short.video_urls?.[0] || "/placeholder.svg"} 
               alt={short.content}
               className="w-full h-full object-cover"
             />
             
-            {/* Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              {/* Play Icon */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                 <Play className="w-12 h-12 text-white" fill="white" />
               </div>
               
-              {/* Stats */}
               <div className="absolute bottom-2 left-2 right-2 flex justify-between text-white text-sm">
                 <div className="flex items-center space-x-2">
                   <Heart className="w-4 h-4" />
@@ -185,7 +192,6 @@ export const ShortsList = () => {
               </div>
             </div>
             
-            {/* Actions (only for owner) */}
             {isOwner && (
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
@@ -210,7 +216,6 @@ export const ShortsList = () => {
         ))}
       </div>
       
-      {/* Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden bg-black">
           {selectedShort && (
