@@ -1,6 +1,6 @@
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ShareDialog } from "@/components/feed/ShareDialog";
 import { useShortActions } from "./hooks/actions";
 import { VideoPlayer } from "../video/VideoPlayer";
@@ -17,6 +17,7 @@ import { useShortNavigation } from "./hooks/useShortNavigation";
 import { ShortsLoadingIndicator } from "./components/ShortsLoadingIndicator";
 import { ShortNavigationButtons } from "./components/ShortNavigationButtons";
 import { EmptyShortsState } from "./components/EmptyShortsState";
+import { useTrackingAction } from "./hooks/actions/useTrackingAction";
 
 interface ShortsFeedProps {
   specificShortId?: string | null;
@@ -44,7 +45,8 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
   
   useRealtimeShorts(refetch);
   
-  const { handleLike, handleSave, handleDelete } = useShortActions();
+  const { handleLike, handleSave, handleDelete, handleShareTracking } = useShortActions();
+  const { handleView } = useTrackingAction();
   const session = useSession();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { playCommentSound } = useSoundEffects();
@@ -57,10 +59,22 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
     setIsMuted
   });
 
+  // Track view when current video changes
+  useEffect(() => {
+    if (shorts.length > 0 && currentVideoIndex >= 0 && currentVideoIndex < shorts.length) {
+      const currentShort = shorts[currentVideoIndex];
+      handleView(currentShort.id);
+    }
+  }, [currentVideoIndex, shorts, handleView]);
+
   // Actions
   const handleShare = (shortId: string) => {
     setSelectedShortId(shortId);
     setIsShareOpen(true);
+    // Track share action
+    if (handleShareTracking) {
+      handleShareTracking(shortId);
+    }
   };
 
   const handleCommentClick = (shortId: string) => {

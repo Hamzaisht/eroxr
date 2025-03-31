@@ -1,23 +1,16 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { useTrackingAction } from "./useTrackingAction";
 
+/**
+ * Hook for tracking views on shorts
+ * This is a thin wrapper around the tracking functionality to maintain backward compatibility
+ */
 export const useViewAction = () => {
-  // Add view tracking function
-  const handleView = async (shortId: string) => {
-    try {
-      // Update view count in the database
-      const { error: updateError } = await supabase
-        .from("posts")
-        .update({ view_count: supabase.rpc('increment', { count: 1 }) })
-        .eq("id", shortId);
+  const { handleView: trackView } = useTrackingAction();
 
-      if (updateError) throw updateError;
-      
-      return true;
-    } catch (error) {
-      console.error("Error tracking view:", error);
-      return false;
-    }
+  // Simply delegate to the tracking action
+  const handleView = async (shortId: string) => {
+    return trackView(shortId);
   };
 
   return { handleView };
