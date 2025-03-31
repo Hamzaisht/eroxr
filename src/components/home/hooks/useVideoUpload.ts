@@ -126,7 +126,7 @@ export const useVideoUpload = () => {
         (async () => {
           try {
             // Create a signed URL for the upload
-            const { data: { signedURL }, error: signedURLError } = await supabase.storage
+            const { data: { signedUrl }, error: signedURLError } = await supabase.storage
               .from('shorts')
               .createSignedUploadUrl(filePath);
             
@@ -135,7 +135,7 @@ export const useVideoUpload = () => {
             }
             
             // Open the request
-            xhr.open('PUT', signedURL);
+            xhr.open('PUT', signedUrl);
             xhr.setRequestHeader('Content-Type', file.type);
             xhr.send(file);
           } catch (error: any) {
