@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Maximize, X } from "lucide-react";
@@ -8,6 +9,7 @@ import { VideoErrorState } from "./VideoErrorState";
 import { PremiumErosOverlay } from "@/components/home/PremiumErosOverlay";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
+import { VideoControls } from "./VideoControls";
 
 interface VideoPlayerProps {
   url: string;
@@ -41,6 +43,7 @@ export const VideoPlayer = ({
   const [hasError, setHasError] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [canPlayFull, setCanPlayFull] = useState(false);
+  const [previewDuration, setPreviewDuration] = useState(5);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -49,32 +52,56 @@ export const VideoPlayer = ({
 
   useEffect(() => {
     const checkPremiumStatus = async () => {
-      if (!session?.user?.id || !isPremium) return;
+      if (!session?.user?.id || !isPremium) {
+        setCanPlayFull(!isPremium);
+        return;
+      }
 
       try {
+        // Check if user is admin
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (userRole?.role === 'admin') {
+          setCanPlayFull(true);
+          return;
+        }
+
+        // Check if user is premium
         const { data: profile } = await supabase
           .from('profiles')
           .select('is_paying_customer, id_verification_status')
           .eq('id', session.user.id)
           .single();
 
-        setCanPlayFull(
+        const hasAccess = 
           profile?.is_paying_customer === true || 
-          profile?.id_verification_status === 'verified'
-        );
+          profile?.id_verification_status === 'verified' ||
+          session.user.id === videoId; // Owner can always see full content
+
+        setCanPlayFull(hasAccess);
+        
+        // Set longer preview for non-premium users
+        if (!hasAccess) {
+          setPreviewDuration(10); // 10 seconds preview for non-premium
+        }
       } catch (error) {
         console.error('Error checking premium status:', error);
+        setCanPlayFull(false);
       }
     };
 
     checkPremiumStatus();
-  }, [session, isPremium]);
+  }, [session, isPremium, videoId]);
 
   const handleTimeUpdate = () => {
     if (!canPlayFull && videoRef.current) {
-      if (videoRef.current.currentTime > 5) {
+      if (videoRef.current.currentTime > previewDuration) {
         videoRef.current.pause();
-        videoRef.current.currentTime = 0;
+        setIsPlaying(false);
       }
     }
   };
@@ -254,12 +281,19 @@ export const VideoPlayer = ({
         />
       </div>
       
-      {isPremium && !canPlayFull && (
+      {/* Premium overlay for non-premium users */}
+      {isPremium && !canPlayFull && isLoaded && (
         <PremiumErosOverlay 
           thumbnailUrl={poster}
-          previewDuration={5}
+          previewDuration={previewDuration}
         />
       )}
+      
+      {/* Top gradient overlay to help buttons stand out */}
+      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/60 to-transparent z-10"></div>
+      
+      {/* Bottom gradient overlay to help buttons stand out */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
       
       {showCloseButton && onClose && (
         <Button

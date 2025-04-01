@@ -3,6 +3,7 @@ import React from 'react';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 interface PremiumErosOverlayProps {
   previewDuration?: number;
@@ -20,7 +21,12 @@ export const PremiumErosOverlay: React.FC<PremiumErosOverlayProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center space-y-4 p-4">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center space-y-4 p-4 z-50"
+    >
       {thumbnailUrl && (
         <img 
           src={thumbnailUrl} 
@@ -29,24 +35,40 @@ export const PremiumErosOverlay: React.FC<PremiumErosOverlayProps> = ({
         />
       )}
       
-      <div className="relative z-10 text-center">
-        <Lock className="mx-auto h-12 w-12 text-luxury-primary mb-4 animate-pulse" />
+      <div className="relative z-10 text-center max-w-md">
+        <motion.div
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5, type: "spring" }}
+        >
+          <Lock className="mx-auto h-12 w-12 text-luxury-primary mb-4 animate-pulse" />
+        </motion.div>
         
         <h2 className="text-xl font-bold text-white mb-2">
           Unlock Full Eros Content
         </h2>
         
         <p className="text-luxury-neutral mb-4">
-          Preview limited to {previewDuration} seconds. Subscribe to view full content.
+          Preview limited to {previewDuration} seconds. Subscribe to unlock unlimited access to premium content.
         </p>
         
-        <Button 
-          onClick={handleUnlockClick}
-          className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary text-white"
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          Subscribe Now - 59 SEK/month
-        </Button>
+          <Button 
+            onClick={handleUnlockClick}
+            className="bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary text-white py-6 px-8 rounded-full shadow-lg"
+            size="lg"
+          >
+            Subscribe Now - 59 SEK/month
+          </Button>
+        </motion.div>
+        
+        <p className="text-luxury-neutral/70 mt-4 text-sm">
+          Cancel anytime. No refunds.
+        </p>
       </div>
-    </div>
+    </motion.div>
   );
 };

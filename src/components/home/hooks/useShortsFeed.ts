@@ -36,7 +36,10 @@ export const useShortsFeed = (specificShortId?: string | null) => {
     comments_count: post.comments_count,
     has_liked: post.has_liked,
     has_saved: post.has_saved || false,
-    created_at: post.created_at
+    created_at: post.created_at,
+    view_count: post.view_count || 0,
+    visibility: post.visibility,
+    description: post.description
   }));
 
   // Update loading state when data changes
@@ -62,30 +65,6 @@ export const useShortsFeed = (specificShortId?: string | null) => {
       }
     }
   }, [specificShortId, shorts]);
-
-  // Handle view tracking
-  useEffect(() => {
-    if (!shorts[currentVideoIndex] || !session?.user?.id) return;
-    
-    const videoId = shorts[currentVideoIndex].id;
-    
-    const updateViewCount = async () => {
-      try {
-        const { error } = await supabase
-          .from('posts')
-          .update({ view_count: supabase.rpc('increment_counter', { row_id: videoId, counter_name: 'view_count' }) })
-          .eq('id', videoId);
-          
-        if (error) console.error('Error updating view count:', error);
-      } catch (err) {
-        console.error('Failed to update view count:', err);
-      }
-    };
-    
-    updateViewCount();
-    
-    queryClient.invalidateQueries({ queryKey: ['posts'] });
-  }, [currentVideoIndex, session?.user?.id, shorts, queryClient]);
 
   const handleRetryLoad = () => {
     setIsLoading(true);

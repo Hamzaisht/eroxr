@@ -58,6 +58,12 @@ export const useShortPostSubmit = () => {
       
       if (!data.publicUrl) throw new Error('Failed to get public URL');
 
+      // Add tags for premium content
+      const tags = ['eros', 'short'];
+      if (isPremium) {
+        tags.push('premium');
+      }
+
       // Insert post record
       const { data: postData, error: postError } = await supabase
         .from('posts')
@@ -68,7 +74,8 @@ export const useShortPostSubmit = () => {
           video_urls: [data.publicUrl],
           video_thumbnail_url: data.publicUrl, 
           visibility: isPremium ? 'subscribers_only' : 'public',
-          video_processing_status: 'completed'
+          video_processing_status: 'completed',
+          tags: tags
         })
         .select('id')
         .single();

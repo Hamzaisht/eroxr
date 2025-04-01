@@ -25,16 +25,14 @@ export const useTrackingAction = () => {
       // Record view in local state to prevent duplicate counts
       setTrackedViews(prev => ({ ...prev, [shortId]: true }));
 
-      // Update view count in the database
-      const { error: updateError } = await supabase
-        .rpc('increment_counter', { 
-          row_id: shortId, 
-          counter_name: 'view_count', 
-          table_name: 'posts' 
-        });
+      // Update view count in the database directly
+      const { error } = await supabase
+        .from('posts')
+        .update({ view_count: supabase.rpc('increment', { count: 1 }) })
+        .eq('id', shortId);
 
-      if (updateError) {
-        console.error("Error tracking view:", updateError);
+      if (error) {
+        console.error("Error incrementing view count:", error);
         return false;
       }
       
@@ -54,15 +52,13 @@ export const useTrackingAction = () => {
   const handleShareTracking = useCallback(async (shortId: string) => {
     try {
       // Update share count in the database
-      const { error: updateError } = await supabase
-        .rpc('increment_counter', { 
-          row_id: shortId, 
-          counter_name: 'share_count', 
-          table_name: 'posts' 
-        });
+      const { error } = await supabase
+        .from('posts')
+        .update({ share_count: supabase.rpc('increment', { count: 1 }) })
+        .eq('id', shortId);
 
-      if (updateError) {
-        console.error("Error tracking share:", updateError);
+      if (error) {
+        console.error("Error tracking share:", error);
         return false;
       }
       
