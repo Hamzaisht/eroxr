@@ -4,7 +4,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Ghost, Eye, EyeOff } from "lucide-react";
+import { Ghost, Eye } from "lucide-react";
 
 interface GhostModeContextType {
   isGhostMode: boolean;
@@ -51,7 +51,7 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         description: isGhostMode 
           ? "Your actions are now visible to users" 
           : "You are now browsing invisibly",
-        icon: isGhostMode ? <Eye className="h-4 w-4" /> : <Ghost className="h-4 w-4" />,
+        // Remove the problematic 'icon' property
       });
     } catch (error) {
       console.error("Error toggling ghost mode:", error);
