@@ -48,6 +48,24 @@ import { format } from "date-fns";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { LoadingState } from "@/components/ui/LoadingState";
 
+// Define proper types for our data
+interface ProfileData {
+  username?: string;
+  avatar_url?: string | null;
+}
+
+interface DeletedContentItem {
+  id: string;
+  created_at: string;
+  last_modified_by?: string;
+  user_id: string;
+  profiles?: ProfileData;
+  content_type: string;
+  title?: string; // Some items might not have a title
+  sender_id?: string; // For messages
+  creator_id?: string; // For stories
+}
+
 export const DeletedContent = () => {
   const navigate = useNavigate();
   const { isGhostMode } = useGhostMode();
@@ -98,10 +116,11 @@ export const DeletedContent = () => {
         if (contentType === "all" || contentType === "posts") {
           const { data, error } = await buildQuery("posts");
           if (error) throw error;
-          return data.map((post) => ({
+          return data.map((post: any) => ({
             ...post,
             content_type: "post",
-            title: "Post",
+            title: post.title || "Post", // Provide default title if missing
+            profiles: post.profiles ? post.profiles[0] : undefined // Access first item in profiles array
           }));
         }
         return [];
@@ -112,10 +131,11 @@ export const DeletedContent = () => {
         if (contentType === "all" || contentType === "dating") {
           const { data, error } = await buildQuery("dating_ads");
           if (error) throw error;
-          return data.map((ad) => ({
+          return data.map((ad: any) => ({
             ...ad,
             content_type: "dating",
             title: ad.title || "Dating Ad",
+            profiles: ad.profiles ? ad.profiles[0] : undefined // Access first item in profiles array
           }));
         }
         return [];
@@ -139,11 +159,12 @@ export const DeletedContent = () => {
           
           if (error) throw error;
           
-          return data.map((message) => ({
+          return data.map((message: any) => ({
             ...message,
             content_type: "message",
             title: "Message",
             user_id: message.sender_id,
+            profiles: message.profiles ? message.profiles[0] : undefined // Access first item in profiles array
           }));
         }
         return [];
@@ -166,11 +187,12 @@ export const DeletedContent = () => {
           
           if (error) throw error;
           
-          return data.map((story) => ({
+          return data.map((story: any) => ({
             ...story,
             content_type: "story",
             title: "Story",
             user_id: story.creator_id,
+            profiles: story.profiles ? story.profiles[0] : undefined // Access first item in profiles array
           }));
         }
         return [];
@@ -192,7 +214,7 @@ export const DeletedContent = () => {
   });
 
   // Function to restore content
-  const handleRestore = async (item: any) => {
+  const handleRestore = async (item: DeletedContentItem) => {
     try {
       let table = "";
       
@@ -245,7 +267,7 @@ export const DeletedContent = () => {
   };
 
   // Function to permanently delete content
-  const handlePermanentDelete = async (item: any) => {
+  const handlePermanentDelete = async (item: DeletedContentItem) => {
     try {
       let table = "";
       
@@ -388,7 +410,7 @@ export const DeletedContent = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {deletedContent.map((item) => (
+                {deletedContent.map((item: DeletedContentItem) => (
                   <TableRow key={`${item.content_type}-${item.id}`}>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -396,7 +418,7 @@ export const DeletedContent = () => {
                           {getContentTypeIcon(item.content_type)}
                         </div>
                         <span className="font-medium">
-                          {item.title}
+                          {item.title || item.content_type}
                         </span>
                         <Badge variant="outline" className="ml-2 text-xs">
                           {item.content_type}

@@ -57,6 +57,42 @@ import {
   TableRow 
 } from "@/components/ui/table";
 
+// Define interfaces to help TypeScript understand the data structure
+interface ViewedProfile {
+  id: string;
+  count: number;
+  username: string;
+  avatar_url: string | null;
+}
+
+interface ActivityTimeline {
+  date: string;
+  posts: number;
+  likes: number;
+  comments: number;
+  views: number;
+  messages: number;
+}
+
+interface ContentDistribution {
+  name: string;
+  value: number;
+}
+
+interface Analytics {
+  totalPosts: number;
+  totalLikes: number;
+  totalComments: number;
+  totalViews: number;
+  totalMessages: number;
+  tipsAmount: number;
+  uniqueMessageRecipients: number;
+  contentDistribution: ContentDistribution[];
+  timeline: ActivityTimeline[];
+  topProfiles: ViewedProfile[];
+  lastActive: Date | null;
+}
+
 export const UserAnalytics = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -191,7 +227,7 @@ export const UserAnalytics = () => {
           created_at,
           posts!inner (
             creator_id,
-            profiles:creator_id (
+            profiles!creator_id (
               username,
               avatar_url
             )
@@ -206,17 +242,19 @@ export const UserAnalytics = () => {
       const profileViewCount: { [key: string]: { count: number, username: string, avatar_url: string | null } } = {};
       
       if (mostViewedProfiles) {
-        mostViewedProfiles.forEach((view) => {
-          const creatorId = view.posts.creator_id;
-          if (creatorId && creatorId !== userId) { // Don't count self-views
-            if (!profileViewCount[creatorId]) {
-              profileViewCount[creatorId] = { 
+        mostViewedProfiles.forEach((view: any) => {
+          const creator = view.posts.creator_id;
+          const profile = view.posts.profiles;
+          
+          if (creator && creator !== userId) { // Don't count self-views
+            if (!profileViewCount[creator]) {
+              profileViewCount[creator] = { 
                 count: 0, 
-                username: view.posts.profiles.username, 
-                avatar_url: view.posts.profiles.avatar_url 
+                username: profile?.username || "Unknown", 
+                avatar_url: profile?.avatar_url 
               };
             }
-            profileViewCount[creatorId].count++;
+            profileViewCount[creator].count++;
           }
         });
       }
@@ -249,7 +287,7 @@ export const UserAnalytics = () => {
         }
         
         // Add post counts to timeline
-        postsData.data?.forEach(post => {
+        postsData.data?.forEach((post: any) => {
           const dateStr = format(new Date(post.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].posts++;
@@ -257,7 +295,7 @@ export const UserAnalytics = () => {
         });
         
         // Add like counts to timeline
-        likesData.data?.forEach(like => {
+        likesData.data?.forEach((like: any) => {
           const dateStr = format(new Date(like.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].likes++;
@@ -265,7 +303,7 @@ export const UserAnalytics = () => {
         });
         
         // Add comment counts to timeline
-        commentsData.data?.forEach(comment => {
+        commentsData.data?.forEach((comment: any) => {
           const dateStr = format(new Date(comment.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].comments++;
@@ -273,7 +311,7 @@ export const UserAnalytics = () => {
         });
         
         // Add view counts to timeline
-        viewsData.data?.forEach(view => {
+        viewsData.data?.forEach((view: any) => {
           const dateStr = format(new Date(view.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].views++;
@@ -281,7 +319,7 @@ export const UserAnalytics = () => {
         });
         
         // Add message counts to timeline
-        messagesData.data?.forEach(message => {
+        messagesData.data?.forEach((message: any) => {
           const dateStr = format(new Date(message.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].messages++;
@@ -311,15 +349,15 @@ export const UserAnalytics = () => {
       const tipsAmount = tipsData.data?.reduce((sum, tip) => sum + (parseFloat(tip.amount) || 0), 0) || 0;
       
       // Get unique recipients
-      const uniqueMessageRecipients = new Set(messagesData.data?.map(m => m.recipient_id) || []);
+      const uniqueMessageRecipients = new Set(messagesData.data?.map((m: any) => m.recipient_id) || []);
       
       // Get last active date
       const allDates = [
-        ...(postsData.data?.map(p => new Date(p.created_at).getTime()) || []),
-        ...(likesData.data?.map(l => new Date(l.created_at).getTime()) || []),
-        ...(commentsData.data?.map(c => new Date(c.created_at).getTime()) || []),
-        ...(viewsData.data?.map(v => new Date(v.created_at).getTime()) || []),
-        ...(messagesData.data?.map(m => new Date(m.created_at).getTime()) || [])
+        ...(postsData.data?.map((p: any) => new Date(p.created_at).getTime()) || []),
+        ...(likesData.data?.map((l: any) => new Date(l.created_at).getTime()) || []),
+        ...(commentsData.data?.map((c: any) => new Date(c.created_at).getTime()) || []),
+        ...(viewsData.data?.map((v: any) => new Date(v.created_at).getTime()) || []),
+        ...(messagesData.data?.map((m: any) => new Date(m.created_at).getTime()) || [])
       ];
       
       const lastActiveTimestamp = allDates.length > 0 ? Math.max(...allDates) : null;
@@ -634,10 +672,8 @@ export const UserAnalytics = () => {
                     <YAxis />
                     <Tooltip 
                       formatter={(value, name) => {
-                        if (typeof name === 'string') {
-                          return [value, name.charAt(0).toUpperCase() + name.slice(1)];
-                        }
-                        return [value, name];
+                        const nameStr = typeof name === 'string' ? name : String(name);
+                        return [value, nameStr.charAt(0).toUpperCase() + nameStr.slice(1)];
                       }}
                       labelFormatter={(date) => format(new Date(date as string), "MMMM d, yyyy")}
                     />
@@ -702,10 +738,8 @@ export const UserAnalytics = () => {
                       <YAxis />
                       <Tooltip 
                         formatter={(value, name) => {
-                          if (typeof name === 'string') {
-                            return [value, name.charAt(0).toUpperCase() + name.slice(1)];
-                          }
-                          return [value, name];
+                          const nameStr = typeof name === 'string' ? name : String(name);
+                          return [value, nameStr.charAt(0).toUpperCase() + nameStr.slice(1)];
                         }}
                         labelFormatter={(date) => format(new Date(date as string), "EEEE, MMMM d")}
                       />

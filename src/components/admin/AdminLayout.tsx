@@ -24,7 +24,7 @@ export const AdminLayout = () => {
     return <LoadingScreen />;
   }
 
-  // If not an admin or super admin, show unauthorized page
+  // If not a super admin, show unauthorized page
   if (!isSuperAdmin) {
     return <NotAuthorized />;
   }
