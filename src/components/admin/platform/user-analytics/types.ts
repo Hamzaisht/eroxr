@@ -66,7 +66,7 @@ export interface ProfileData {
   is_suspended: boolean;
 }
 
-// Add the missing Analytics and ViewedProfile interfaces
+// Add the missing ViewedProfile interface
 export interface ViewedProfile {
   id: string;
   viewer_id: string;
@@ -79,6 +79,7 @@ export interface ViewedProfile {
 }
 
 export interface Analytics {
+  // Base fields
   posts: number;
   comments: number;
   likes: number;
@@ -87,11 +88,11 @@ export interface Analytics {
   content_views: number;
   profile_views: number;
   
-  // Additional fields
+  // Additional fields for analytics visualization
   totalPosts: number;
   totalLikes: number;
   totalComments: number;
-  totalViews: number;
+  totalViews: number; // This is the only occurrence of totalViews
   totalMessages: number;
   tipsAmount: number;
   uniqueMessageRecipients: number;
@@ -106,5 +107,4 @@ export interface Analytics {
   }>;
   topProfiles: ViewedProfile[];
   lastActive: Date | null;
-  totalViews: number;
 }
