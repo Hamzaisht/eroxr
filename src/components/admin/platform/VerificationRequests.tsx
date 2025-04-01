@@ -1,208 +1,188 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription 
-} from "@/components/ui/card";
-import { 
-  CheckCircle,
-  XCircle,
-  User,
-  Calendar,
-  FileText,
-  Eye,
-  Filter
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-import { IdVerification } from "@/integrations/supabase/types/verification";
-import { LoadingState } from "@/components/ui/LoadingState";
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 import { 
   Dialog, 
   DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Search, 
+  Check, 
+  X, 
+  AlertCircle, 
+  Eye, 
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  DownloadCloud
+} from "lucide-react";
+import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const VerificationRequests = () => {
-  const [filter, setFilter] = useState("pending");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [viewDocument, setViewDocument] = useState<string | null>(null);
+  const [selectedVerification, setSelectedVerification] = useState<any>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [actionType, setActionType] = useState<'approve' | 'reject' | 'fraud' | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<IdVerification | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const pageSize = 10;
+  
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["verification-requests", filter, searchTerm],
+  // Fetch verification requests
+  const { data, isLoading } = useQuery({
+    queryKey: ["verification-requests", currentPage, statusFilter, searchTerm],
     queryFn: async () => {
       let query = supabase
-        .from("id_verifications")
+        .from('id_verifications')
         .select(`
           *,
-          profiles:user_id (
+          profiles!id_verifications_user_id_fkey(
+            id,
             username,
-            first_name,
-            last_name,
             avatar_url,
-            id_verification_status
+            first_name,
+            last_name
           )
-        `);
-
+        `, { count: 'exact' });
+      
       // Apply status filter
-      if (filter !== "all") {
-        query = query.eq("status", filter);
+      if (statusFilter !== "all") {
+        query = query.eq('status', statusFilter);
       }
-
-      // Apply search if present
+      
+      // Apply search filter
       if (searchTerm) {
         query = query.or(`profiles.username.ilike.%${searchTerm}%,profiles.first_name.ilike.%${searchTerm}%,profiles.last_name.ilike.%${searchTerm}%`);
       }
-
-      query = query.order("submitted_at", { ascending: false });
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching verification requests:", error);
-        throw error;
-      }
-
-      return data;
-    },
+      
+      // Apply pagination
+      const from = (currentPage - 1) * pageSize;
+      query = query.range(from, from + pageSize - 1).order('submitted_at', { ascending: false });
+      
+      const { data, error, count } = await query;
+      
+      if (error) throw error;
+      return { verifications: data, totalCount: count || 0 };
+    }
   });
 
-  const handleApproveRequest = async (request: IdVerification) => {
-    try {
-      // Update verification status in id_verifications table
+  // Handle verification actions (approve/reject/mark as fraud)
+  const handleVerification = useMutation({
+    mutationFn: async ({ 
+      id, 
+      action, 
+      reason = null 
+    }: { 
+      id: string; 
+      action: 'approve' | 'reject' | 'fraud'; 
+      reason?: string | null 
+    }) => {
+      // Update verification status
       const { error: verificationError } = await supabase
-        .from("id_verifications")
+        .from('id_verifications')
         .update({
-          status: "approved",
-          verified_at: new Date().toISOString(),
+          status: action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'fraud',
+          rejected_reason: reason,
+          verified_at: action === 'approve' ? new Date().toISOString() : null
         })
-        .eq("id", request.id);
-
+        .eq('id', id);
+      
       if (verificationError) throw verificationError;
-
-      // Update user profile verification status
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          id_verification_status: "verified",
-        })
-        .eq("id", request.user_id);
-
-      if (profileError) throw profileError;
-
+      
+      // If approved, update the user's profile
+      if (action === 'approve') {
+        const verification = data?.verifications.find(v => v.id === id);
+        
+        if (verification) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              id_verification_status: 'verified',
+              is_age_verified: true
+            })
+            .eq('id', verification.user_id);
+          
+          if (profileError) throw profileError;
+        }
+      }
+      
       // Log admin action
-      await supabase.from("admin_audit_logs").insert({
+      await supabase.from('admin_audit_logs').insert({
         user_id: (await supabase.auth.getSession()).data.session?.user.id,
-        action: "verification_approved",
+        action: `verification_${action}`,
         details: {
-          verification_id: request.id,
-          user_id: request.user_id,
+          verification_id: id,
           timestamp: new Date().toISOString(),
-        },
+          reason: reason || undefined
+        }
       });
-
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["verification-requests"] });
+      setActionDialogOpen(false);
+      setRejectionReason("");
+      
+      const actionMessages = {
+        approve: "Verification approved successfully",
+        reject: "Verification rejected",
+        fraud: "Account marked as fraudulent"
+      };
+      
       toast({
-        title: "Verification Approved",
-        description: "The user has been successfully verified.",
+        title: "Action Complete",
+        description: actionType ? actionMessages[actionType] : "Verification updated",
       });
-
-      refetch();
-    } catch (error) {
-      console.error("Error approving verification:", error);
+    },
+    onError: (error) => {
+      console.error("Error processing verification:", error);
       toast({
-        title: "Approval Failed",
-        description: "There was an error approving this verification.",
+        title: "Action Failed",
+        description: "There was an error processing this verification",
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const openRejectionDialog = (request: IdVerification) => {
-    setSelectedRequest(request);
-    setRejectionReason("");
-    setRejectionDialogOpen(true);
-  };
+  // Calculate total pages
+  const totalPages = Math.ceil((data?.totalCount || 0) / pageSize);
 
-  const handleRejectRequest = async () => {
-    if (!selectedRequest) return;
-    
-    try {
-      // Update verification status in id_verifications table
-      const { error: verificationError } = await supabase
-        .from("id_verifications")
-        .update({
-          status: "rejected",
-          rejected_reason: rejectionReason,
-        })
-        .eq("id", selectedRequest.id);
-
-      if (verificationError) throw verificationError;
-
-      // Update user profile verification status
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          id_verification_status: "rejected",
-        })
-        .eq("id", selectedRequest.user_id);
-
-      if (profileError) throw profileError;
-
-      // Log admin action
-      await supabase.from("admin_audit_logs").insert({
-        user_id: (await supabase.auth.getSession()).data.session?.user.id,
-        action: "verification_rejected",
-        details: {
-          verification_id: selectedRequest.id,
-          user_id: selectedRequest.user_id,
-          reason: rejectionReason,
-          timestamp: new Date().toISOString(),
-        },
-      });
-
-      toast({
-        title: "Verification Rejected",
-        description: "The verification request has been rejected.",
-      });
-
-      setRejectionDialogOpen(false);
-      refetch();
-    } catch (error) {
-      console.error("Error rejecting verification:", error);
-      toast({
-        title: "Rejection Failed",
-        description: "There was an error rejecting this verification.",
-        variant: "destructive",
-      });
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">Pending</Badge>;
+      case 'approved':
+        return <Badge className="bg-green-500/20 text-green-500 border-green-500/30">Approved</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500/20 text-red-500 border-red-500/30">Rejected</Badge>;
+      case 'fraud':
+        return <Badge className="bg-purple-900/20 text-purple-400 border-purple-400/30">Fraud</Badge>;
+      default:
+        return <Badge className="bg-gray-500/20 text-gray-500 border-gray-500/30">Unknown</Badge>;
     }
   };
 
@@ -211,207 +191,320 @@ export const VerificationRequests = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between gap-3">
-        <div className="relative w-full sm:w-64">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+        <div className="relative w-full sm:w-auto sm:min-w-[300px]">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            type="text"
-            placeholder="Search users..."
+            placeholder="Search by username..."
+            className="pl-10 bg-[#0D1117]/50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-[#0D1117]/50"
           />
         </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="bg-[#0D1117]/50">
-              <Filter className="mr-2 h-4 w-4" />
-              {filter === "all"
-                ? "All Statuses"
-                : filter === "pending"
-                ? "Pending"
-                : filter === "approved"
-                ? "Approved"
-                : "Rejected"}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => setFilter("all")}>
-              All Statuses
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setFilter("pending")}>
-              Pending
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setFilter("approved")}>
-              Approved
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setFilter("rejected")}>
-              Rejected
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px] bg-[#0D1117]/50">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="fraud">Marked as Fraud</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {data && data.length === 0 ? (
-        <div className="text-center p-8 bg-[#0D1117]/50 border border-white/10 rounded-lg">
-          <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-semibold">No verification requests found</h3>
-          <p className="mt-2 text-muted-foreground">
-            {filter === "pending"
-              ? "There are no pending verification requests."
-              : filter === "approved"
-              ? "No approved verifications found."
-              : filter === "rejected"
-              ? "No rejected verification requests."
-              : "No verification requests match your search."}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data?.map((request: any) => (
-            <Card key={request.id} className="bg-[#0D1117]/50 border-white/10">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
-                      {request.profiles?.avatar_url ? (
-                        <img
-                          src={request.profiles.avatar_url}
-                          alt={request.profiles.username || "User"}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <User className="h-5 w-5 text-gray-400" />
+      <div className="rounded-md border border-white/10 overflow-hidden">
+        <Table>
+          <TableHeader className="bg-[#0D1117]">
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Document Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Submitted</TableHead>
+              <TableHead>Verified</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.verifications.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                  No verification requests found
+                </TableCell>
+              </TableRow>
+            ) : (
+              data?.verifications.map((verification) => (
+                <TableRow key={verification.id} className="border-white/5 hover:bg-[#0D1117]/50">
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
+                        {verification.profiles?.avatar_url ? (
+                          <img 
+                            src={verification.profiles.avatar_url} 
+                            alt={verification.profiles.username || 'User'} 
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-5 w-5 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-semibold">{verification.profiles?.username || 'Unknown User'}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {verification.profiles?.first_name && verification.profiles?.last_name 
+                            ? `${verification.profiles.first_name} ${verification.profiles.last_name}` 
+                            : 'No name provided'}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{verification.document_type}</TableCell>
+                  <TableCell>{getStatusBadge(verification.status)}</TableCell>
+                  <TableCell>
+                    {format(new Date(verification.submitted_at), 'MMM d, yyyy')}
+                  </TableCell>
+                  <TableCell>
+                    {verification.verified_at 
+                      ? format(new Date(verification.verified_at), 'MMM d, yyyy')
+                      : '—'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-8 w-8 p-0 bg-[#0D1117]/50"
+                        onClick={() => {
+                          setSelectedVerification(verification);
+                          setViewDialogOpen(true);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      
+                      {verification.status === 'pending' && (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 w-8 p-0 text-green-500 border-green-500/30 bg-green-500/10"
+                            onClick={() => {
+                              setSelectedVerification(verification);
+                              setActionType('approve');
+                              setActionDialogOpen(true);
+                            }}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-500 border-red-500/30 bg-red-500/10"
+                            onClick={() => {
+                              setSelectedVerification(verification);
+                              setActionType('reject');
+                              setActionDialogOpen(true);
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 w-8 p-0 text-purple-400 border-purple-400/30 bg-purple-900/10"
+                            onClick={() => {
+                              setSelectedVerification(verification);
+                              setActionType('fraud');
+                              setActionDialogOpen(true);
+                            }}
+                          >
+                            <AlertCircle className="h-4 w-4" />
+                          </Button>
+                        </>
                       )}
                     </div>
-                    <div>
-                      <CardTitle className="text-md">
-                        {request.profiles?.username || "Unnamed User"}
-                      </CardTitle>
-                      <CardDescription>
-                        {request.profiles?.first_name && request.profiles?.last_name
-                          ? `${request.profiles.first_name} ${request.profiles.last_name}`
-                          : "No name provided"}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    request.status === "pending"
-                      ? "bg-yellow-500/20 text-yellow-500"
-                      : request.status === "approved"
-                      ? "bg-green-500/20 text-green-500"
-                      : "bg-red-500/20 text-red-500"
-                  }`}>
-                    {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center text-sm">
-                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>Submitted: {format(new Date(request.submitted_at), "MMM d, yyyy")}</span>
-                </div>
-                <div className="flex items-center text-sm">
-                  <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>Document: {request.document_type}</span>
-                </div>
-                {request.rejected_reason && (
-                  <div className="mt-3 p-2 bg-red-900/20 border border-red-900/40 rounded text-sm">
-                    <span className="font-semibold">Rejection reason:</span> {request.rejected_reason}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setViewDocument(request.document_url)}
-                  className="bg-[#161B22] hover:bg-[#1D2433]"
-                >
-                  <Eye className="mr-1 h-4 w-4" />
-                  View Document
-                </Button>
-                {request.status === "pending" && (
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openRejectionDialog(request)}
-                      className="bg-red-900/20 hover:bg-red-900/40 border-red-900/40 text-red-500"
-                    >
-                      <XCircle className="mr-1 h-4 w-4" />
-                      Reject
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleApproveRequest(request)}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="mr-1 h-4 w-4" />
-                      Approve
-                    </Button>
-                  </div>
-                )}
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-      {/* Document Viewer Dialog */}
-      <Dialog open={!!viewDocument} onOpenChange={() => setViewDocument(null)}>
-        <DialogContent className="max-w-3xl">
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing {data?.verifications.length ? ((currentPage - 1) * pageSize) + 1 : 0}-
+          {Math.min(currentPage * pageSize, data?.totalCount || 0)} of {data?.totalCount || 0} requests
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="bg-[#0D1117]/50"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages || totalPages === 0}
+            className="bg-[#0D1117]/50"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* View Document Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Verification Document</DialogTitle>
+            <DialogDescription>
+              Submitted by {selectedVerification?.profiles?.username || 'Unknown User'} on {' '}
+              {selectedVerification?.submitted_at && format(new Date(selectedVerification.submitted_at), 'MMMM d, yyyy')}
+            </DialogDescription>
           </DialogHeader>
-          <div className="aspect-video bg-black/50 rounded-md overflow-hidden">
-            {viewDocument && viewDocument.toLowerCase().endsWith('.pdf') ? (
-              <iframe 
-                src={viewDocument} 
-                className="w-full h-[500px]"
-                title="Verification Document"
-              />
-            ) : (
-              <img 
-                src={viewDocument || ''} 
-                alt="Verification Document" 
-                className="w-full h-full object-contain"
-              />
+          
+          <div className="grid gap-6">
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Document Type</h3>
+              <p className="text-sm">{selectedVerification?.document_type}</p>
+            </div>
+            
+            {selectedVerification?.document_url && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-medium">Uploaded Document</h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center gap-1 h-7 text-xs"
+                    onClick={() => window.open(selectedVerification.document_url, '_blank')}
+                  >
+                    <DownloadCloud className="h-3 w-3" />
+                    Download
+                  </Button>
+                </div>
+                <div className="border border-white/10 rounded-md overflow-hidden">
+                  <img 
+                    src={selectedVerification.document_url} 
+                    alt="Verification Document" 
+                    className="w-full h-auto max-h-[400px] object-contain bg-black"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {selectedVerification?.status === 'rejected' && selectedVerification?.rejected_reason && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Rejection Reason</h3>
+                <Card className="p-3 bg-red-900/10 border-red-500/20">
+                  <p className="text-sm">{selectedVerification.rejected_reason}</p>
+                </Card>
+              </div>
             )}
           </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline"
+              onClick={() => setViewDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Rejection Reason Dialog */}
-      <AlertDialog open={rejectionDialogOpen} onOpenChange={setRejectionDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reject Verification Request</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please provide a reason for rejecting this verification request:
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="my-4">
-            <Input
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Rejection reason"
-              className="w-full"
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleRejectRequest}
-              disabled={!rejectionReason.trim()}
-              className="bg-red-600 hover:bg-red-700"
+      {/* Action Dialog */}
+      <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === 'approve' ? 'Approve Verification' : 
+               actionType === 'reject' ? 'Reject Verification' : 
+               'Mark as Fraudulent'}
+            </DialogTitle>
+            <DialogDescription>
+              {actionType === 'approve' ? 'This will verify the user\'s identity.' : 
+               actionType === 'reject' ? 'Please provide a reason for rejection.' : 
+               'This will flag the account as fraudulent and may lead to account suspension.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {(actionType === 'reject' || actionType === 'fraud') && (
+            <div className="py-2">
+              <Textarea
+                placeholder={`Enter reason for ${actionType === 'reject' ? 'rejection' : 'fraud report'}...`}
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="min-h-[100px] bg-[#0D1117]/50"
+              />
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setActionDialogOpen(false);
+                setRejectionReason("");
+              }}
             >
-              Reject
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              Cancel
+            </Button>
+            <Button 
+              variant={actionType === 'approve' ? 'default' : 'destructive'}
+              onClick={() => {
+                if (selectedVerification && actionType) {
+                  handleVerification.mutate({
+                    id: selectedVerification.id,
+                    action: actionType,
+                    reason: (actionType === 'reject' || actionType === 'fraud') ? rejectionReason : null
+                  });
+                }
+              }}
+              disabled={
+                (actionType === 'reject' || actionType === 'fraud') && !rejectionReason
+              }
+            >
+              {actionType === 'approve' ? 'Approve' : 
+               actionType === 'reject' ? 'Reject' : 
+               'Mark as Fraud'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+// Helper component for consistency
+const User = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+);

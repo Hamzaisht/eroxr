@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Table, 
@@ -11,71 +11,91 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { 
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
-import { 
-  CreditCard, 
-  Search, 
-  ChevronLeft, 
-  ChevronRight, 
-  CheckCircle, 
-  XCircle,
-  User
-} from "lucide-react";
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Search, 
+  Eye, 
+  Check, 
+  X, 
+  DollarSign,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  CreditCard,
+  Clipboard
+} from "lucide-react";
 import { format } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  DateRangePicker, 
+  DateRange 
+} from "@/components/ui/date-range-picker";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { useGhostMode } from "@/hooks/useGhostMode";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export const PayoutsManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
   const [currentPage, setCurrentPage] = useState(1);
-  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [selectedPayout, setSelectedPayout] = useState(null);
+  const [selectedPayout, setSelectedPayout] = useState<any>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
+  const [actionNotes, setActionNotes] = useState("");
   const pageSize = 10;
+  const platformFeePercentage = 7; // 7% platform fee
+  
   const { toast } = useToast();
-  const { isGhostMode } = useGhostMode();
+  const queryClient = useQueryClient();
 
   // Fetch payout requests
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["payout-requests", currentPage, searchTerm, statusFilter],
+  const { data, isLoading } = useQuery({
+    queryKey: ["payout-requests", currentPage, statusFilter, dateRange, searchTerm],
     queryFn: async () => {
       let query = supabase
         .from('payout_requests')
         .select(`
           *,
-          profiles:creator_id (username, avatar_url, first_name, last_name)
-        `);
+          profiles:profiles!payout_requests_creator_id_fkey(
+            username,
+            avatar_url,
+            first_name,
+            last_name
+          )
+        `, { count: 'exact' });
 
       // Apply status filter
       if (statusFilter !== "all") {
         query = query.eq('status', statusFilter);
+      }
+
+      // Apply date range filter
+      if (dateRange.from) {
+        query = query.gte('requested_at', dateRange.from.toISOString());
+      }
+      if (dateRange.to) {
+        // Add one day to include requests from the last day
+        const endDate = new Date(dateRange.to);
+        endDate.setDate(endDate.getDate() + 1);
+        query = query.lt('requested_at', endDate.toISOString());
       }
 
       // Apply search filter
@@ -90,109 +110,120 @@ export const PayoutsManagement = () => {
         .order('requested_at', { ascending: false });
 
       const { data, error, count } = await query;
-
-      if (error) {
-        console.error("Error fetching payout requests:", error);
-        throw error;
-      }
-
-      return {
-        payouts: data,
-        totalCount: count || 0
-      };
+      
+      if (error) throw error;
+      return { payouts: data, totalCount: count || 0 };
     },
   });
 
-  const handleApprove = async () => {
-    if (!selectedPayout) return;
-    
-    try {
-      const { error } = await supabase
+  // Handle payout action
+  const handlePayoutAction = useMutation({
+    mutationFn: async ({ 
+      id, 
+      action, 
+      notes = null 
+    }: { 
+      id: string; 
+      action: 'approve' | 'reject'; 
+      notes?: string | null 
+    }) => {
+      // Get the payout request
+      const { data: payoutRequest } = await supabase
+        .from('payout_requests')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (!payoutRequest) {
+        throw new Error("Payout request not found");
+      }
+      
+      // Calculate platform fee and final amount
+      const platformFee = Number((payoutRequest.amount * (platformFeePercentage / 100)).toFixed(2));
+      const finalAmount = Number((payoutRequest.amount - platformFee).toFixed(2));
+      
+      // Update payout request
+      const { error: updateError } = await supabase
         .from('payout_requests')
         .update({
-          status: 'approved',
-          approved_at: new Date().toISOString(),
-          processed_by: (await supabase.auth.getSession()).data.session?.user.id,
-        })
-        .eq('id', selectedPayout.id);
-
-      if (error) throw error;
-
-      // Log the admin action
-      await supabase.from('admin_audit_logs').insert({
-        user_id: (await supabase.auth.getSession()).data.session?.user.id,
-        action: 'payout_approved',
-        details: {
-          payout_id: selectedPayout.id,
-          creator_id: selectedPayout.creator_id,
-          amount: selectedPayout.amount,
-          timestamp: new Date().toISOString()
-        }
-      });
-
-      toast({
-        title: "Payout Approved",
-        description: `Payout of $${selectedPayout.final_amount} has been approved.`,
-      });
-
-      setApproveDialogOpen(false);
-      refetch();
-    } catch (error) {
-      console.error("Error approving payout:", error);
-      toast({
-        title: "Action Failed",
-        description: "There was an error processing your request.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleReject = async () => {
-    if (!selectedPayout) return;
-    
-    try {
-      const { error } = await supabase
-        .from('payout_requests')
-        .update({
-          status: 'rejected',
+          status: action === 'approve' ? 'approved' : 'rejected',
           processed_at: new Date().toISOString(),
           processed_by: (await supabase.auth.getSession()).data.session?.user.id,
+          platform_fee: platformFee,
+          final_amount: finalAmount,
+          notes: notes,
+          ...(action === 'approve' ? { approved_at: new Date().toISOString() } : {})
         })
-        .eq('id', selectedPayout.id);
-
-      if (error) throw error;
-
-      // Log the admin action
+        .eq('id', id);
+      
+      if (updateError) throw updateError;
+      
+      // Log admin action
       await supabase.from('admin_audit_logs').insert({
         user_id: (await supabase.auth.getSession()).data.session?.user.id,
-        action: 'payout_rejected',
+        action: `payout_${action}`,
         details: {
-          payout_id: selectedPayout.id,
-          creator_id: selectedPayout.creator_id,
-          amount: selectedPayout.amount,
-          timestamp: new Date().toISOString()
+          payout_id: id,
+          creator_id: payoutRequest.creator_id,
+          amount: payoutRequest.amount,
+          platform_fee: platformFee,
+          final_amount: finalAmount,
+          timestamp: new Date().toISOString(),
+          notes: notes
         }
       });
-
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payout-requests"] });
+      setActionDialogOpen(false);
+      setActionNotes("");
+      
+      const actionMessages = {
+        approve: "Payout approved successfully",
+        reject: "Payout request rejected"
+      };
+      
       toast({
-        title: "Payout Rejected",
-        description: `Payout request has been rejected.`,
+        title: "Action Complete",
+        description: actionType ? actionMessages[actionType] : "Payout request updated",
       });
-
-      setRejectDialogOpen(false);
-      refetch();
-    } catch (error) {
-      console.error("Error rejecting payout:", error);
+    },
+    onError: (error) => {
+      console.error("Error processing payout action:", error);
       toast({
         title: "Action Failed",
-        description: "There was an error processing your request.",
+        description: "There was an error processing this payout request",
         variant: "destructive",
       });
     }
-  };
+  });
 
   // Calculate total pages
   const totalPages = Math.ceil((data?.totalCount || 0) / pageSize);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">Pending</Badge>;
+      case 'approved':
+        return <Badge className="bg-green-500/20 text-green-500 border-green-500/30">Approved</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500/20 text-red-500 border-red-500/30">Rejected</Badge>;
+      case 'paid':
+        return <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30">Paid</Badge>;
+      case 'failed':
+        return <Badge className="bg-purple-900/20 text-purple-400 border-purple-400/30">Failed</Badge>;
+      default:
+        return <Badge className="bg-gray-500/20 text-gray-500 border-gray-500/30">Unknown</Badge>;
+    }
+  };
+
+  // Calculate platform fee and final amount
+  const calculateFee = (amount: number) => {
+    const platformFee = Number((amount * (platformFeePercentage / 100)).toFixed(2));
+    const finalAmount = Number((amount - platformFee).toFixed(2));
+    return { platformFee, finalAmount };
+  };
 
   if (isLoading) {
     return <LoadingState message="Loading payout requests..." />;
@@ -200,223 +231,405 @@ export const PayoutsManagement = () => {
 
   return (
     <div className="space-y-4">
-      {isGhostMode && (
-        <div className="bg-purple-900/20 border border-purple-500/30 text-purple-300 px-4 py-3 rounded-lg flex items-center">
-          <CreditCard className="h-5 w-5 mr-2 text-purple-400" />
-          <span>Ghost Mode - Viewing Creator Payout Requests</span>
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-        <div className="relative w-full sm:w-auto sm:min-w-[300px]">
+      <div className="flex flex-col md:flex-row gap-3 justify-between items-start md:items-center">
+        <div className="relative w-full md:w-auto md:min-w-[250px] lg:flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search creators..."
+            placeholder="Search by creator name..."
             className="pl-10 bg-[#0D1117]/50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] bg-[#0D1117]/50">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Requests</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px] bg-[#0D1117]/50">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <DateRangePicker
+            from={dateRange.from}
+            to={dateRange.to}
+            onSelect={setDateRange}
+          />
+        </div>
       </div>
 
-      <Card className="bg-[#161B22]/50 border-white/10">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-luxury-primary" />
-            Creator Payout Requests
-          </CardTitle>
-          <CardDescription>
-            Review and process creator payout requests with 7% platform fee
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-white/10 overflow-hidden">
-            <Table>
-              <TableHeader className="bg-[#0D1117]">
-                <TableRow>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Requested Amount</TableHead>
-                  <TableHead>Platform Fee (7%)</TableHead>
-                  <TableHead>Final Amount</TableHead>
-                  <TableHead>Requested On</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data?.payouts && data.payouts.length > 0 ? (
-                  data.payouts.map((payout) => (
-                    <TableRow key={payout.id} className="border-white/5 hover:bg-[#0D1117]/50">
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
-                            {payout.profiles?.avatar_url ? (
-                              <img 
-                                src={payout.profiles.avatar_url} 
-                                alt={payout.profiles.username || 'Creator'} 
-                                className="h-10 w-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <User className="h-5 w-5 text-gray-400" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-semibold">{payout.profiles?.username || 'Unnamed Creator'}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {payout.profiles?.first_name && payout.profiles?.last_name 
-                                ? `${payout.profiles.first_name} ${payout.profiles.last_name}` 
-                                : 'No name provided'}
-                            </div>
+      <div className="rounded-md border border-white/10 overflow-hidden">
+        <Table>
+          <TableHeader className="bg-[#0D1117]">
+            <TableRow>
+              <TableHead>Creator</TableHead>
+              <TableHead>Request Date</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Platform Fee (7%)</TableHead>
+              <TableHead>Final Amount</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.payouts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                  No payout requests found
+                </TableCell>
+              </TableRow>
+            ) : (
+              data?.payouts.map((payout) => {
+                const { platformFee, finalAmount } = calculateFee(payout.amount);
+                
+                return (
+                  <TableRow key={payout.id} className="border-white/5 hover:bg-[#0D1117]/50">
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
+                          {payout.profiles?.avatar_url ? (
+                            <img 
+                              src={payout.profiles.avatar_url} 
+                              alt={payout.profiles.username || 'Creator'} 
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-5 w-5 text-gray-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-semibold">{payout.profiles?.username || 'Unknown Creator'}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {payout.profiles?.first_name && payout.profiles?.last_name 
+                              ? `${payout.profiles.first_name} ${payout.profiles.last_name}` 
+                              : 'No name provided'}
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>${payout.amount.toFixed(2)}</TableCell>
-                      <TableCell>${payout.platform_fee.toFixed(2)}</TableCell>
-                      <TableCell>${payout.final_amount.toFixed(2)}</TableCell>
-                      <TableCell>{format(new Date(payout.requested_at), 'MMM d, yyyy')}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={payout.status === 'approved' ? 'default' : 
-                                   payout.status === 'rejected' ? 'destructive' : 'outline'}
-                          className={payout.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' : ''}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(payout.requested_at), 'MMM d, yyyy')}
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">{payout.amount.toFixed(2)} SEK</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-amber-500">{platformFee.toFixed(2)} SEK</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-green-500">{finalAmount.toFixed(2)} SEK</div>
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(payout.status)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="h-8 w-8 p-0 bg-[#0D1117]/50"
+                          onClick={() => {
+                            setSelectedPayout({
+                              ...payout,
+                              calculatedPlatformFee: platformFee,
+                              calculatedFinalAmount: finalAmount
+                            });
+                            setViewDialogOpen(true);
+                          }}
                         >
-                          {payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        
                         {payout.status === 'pending' && (
-                          <div className="flex justify-end space-x-2">
-                            <Button
-                              variant="outline"
+                          <>
+                            <Button 
+                              variant="outline" 
                               size="sm"
+                              className="h-8 w-8 p-0 text-green-500 border-green-500/30 bg-green-500/10"
                               onClick={() => {
-                                setSelectedPayout(payout);
-                                setRejectDialogOpen(true);
+                                setSelectedPayout({
+                                  ...payout,
+                                  calculatedPlatformFee: platformFee,
+                                  calculatedFinalAmount: finalAmount
+                                });
+                                setActionType('approve');
+                                setActionDialogOpen(true);
                               }}
-                              className="bg-red-900/20 hover:bg-red-900/40 border-red-900/40 text-red-500"
                             >
-                              <XCircle className="mr-1 h-4 w-4" />
-                              Reject
+                              <Check className="h-4 w-4" />
                             </Button>
-                            <Button
+                            
+                            <Button 
+                              variant="outline" 
                               size="sm"
+                              className="h-8 w-8 p-0 text-red-500 border-red-500/30 bg-red-500/10"
                               onClick={() => {
-                                setSelectedPayout(payout);
-                                setApproveDialogOpen(true);
+                                setSelectedPayout({
+                                  ...payout,
+                                  calculatedPlatformFee: platformFee,
+                                  calculatedFinalAmount: finalAmount
+                                });
+                                setActionType('reject');
+                                setActionDialogOpen(true);
                               }}
-                              className="bg-green-600 hover:bg-green-700"
                             >
-                              <CheckCircle className="mr-1 h-4 w-4" />
-                              Approve
+                              <X className="h-4 w-4" />
                             </Button>
-                          </div>
+                          </>
                         )}
-                        {payout.status !== 'pending' && (
-                          <Badge variant="outline" className="bg-[#0D1117]/50">
-                            {payout.status === 'approved' ? 'Processed' : 'Rejected'}
-                          </Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                      <p>No payout requests found for the selected filters</p>
+                      </div>
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, data?.totalCount || 0)} of {data?.totalCount || 0} requests
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing {data?.payouts.length ? ((currentPage - 1) * pageSize) + 1 : 0}-
+          {Math.min(currentPage * pageSize, data?.totalCount || 0)} of {data?.totalCount || 0} payout requests
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="bg-[#0D1117]/50"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages || totalPages === 0}
+            className="bg-[#0D1117]/50"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* View Payout Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Payout Request Details</DialogTitle>
+            <DialogDescription>
+              Requested on {selectedPayout?.requested_at && format(new Date(selectedPayout.requested_at), 'MMMM d, yyyy')}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4">
+            <div className="flex items-center space-x-3 mb-2">
+              <div className="h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                {selectedPayout?.profiles?.avatar_url ? (
+                  <img 
+                    src={selectedPayout.profiles.avatar_url} 
+                    alt={selectedPayout.profiles.username || 'Creator'} 
+                    className="h-12 w-12 object-cover"
+                  />
+                ) : (
+                  <User className="h-6 w-6 text-gray-400" />
+                )}
               </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="bg-[#0D1117]/50"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0}
-                  className="bg-[#0D1117]/50"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div>
+                <div className="font-semibold">{selectedPayout?.profiles?.username || 'Unknown Creator'}</div>
+                <div className="text-sm text-muted-foreground">
+                  {selectedPayout?.profiles?.first_name && selectedPayout?.profiles?.last_name 
+                    ? `${selectedPayout.profiles.first_name} ${selectedPayout.profiles.last_name}` 
+                    : 'No name provided'}
+                </div>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            
+            <div className="grid grid-cols-2 gap-4 p-4 bg-[#0D1117]/50 rounded-md border border-white/10">
+              <div>
+                <div className="text-sm text-muted-foreground">Requested Amount</div>
+                <div className="text-lg font-semibold">{selectedPayout?.amount.toFixed(2)} SEK</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Status</div>
+                <div>{selectedPayout && getStatusBadge(selectedPayout.status)}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Platform Fee (7%)</div>
+                <div className="text-amber-500">{selectedPayout?.calculatedPlatformFee.toFixed(2)} SEK</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Final Amount</div>
+                <div className="text-green-500 font-semibold">{selectedPayout?.calculatedFinalAmount.toFixed(2)} SEK</div>
+              </div>
+            </div>
+            
+            {selectedPayout?.processed_at && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Processed</div>
+                <div className="text-sm">{format(new Date(selectedPayout.processed_at), 'MMMM d, yyyy')}</div>
+              </div>
+            )}
+            
+            {selectedPayout?.notes && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Notes</div>
+                <div className="p-3 bg-[#161B22] border border-white/10 rounded-md text-sm">
+                  {selectedPayout.notes}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            {selectedPayout?.status === 'pending' && (
+              <div className="flex justify-between w-full">
+                <Button 
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    setViewDialogOpen(false);
+                    setActionType('reject');
+                    setActionDialogOpen(true);
+                  }}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Reject
+                </Button>
+                <Button 
+                  variant="default"
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    setViewDialogOpen(false);
+                    setActionType('approve');
+                    setActionDialogOpen(true);
+                  }}
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Approve
+                </Button>
+              </div>
+            )}
+            {selectedPayout?.status !== 'pending' && (
+              <Button 
+                variant="outline"
+                onClick={() => setViewDialogOpen(false)}
+              >
+                Close
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Approve Dialog */}
-      <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Approve Payout Request</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to approve this payout request? 
-              The creator will receive ${selectedPayout?.final_amount.toFixed(2)} after the 7% platform fee.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleApprove}
-              className="bg-green-600 hover:bg-green-700"
+      {/* Action Dialog */}
+      <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === 'approve' ? 'Approve Payout Request' : 'Reject Payout Request'}
+            </DialogTitle>
+            <DialogDescription>
+              {actionType === 'approve' 
+                ? 'This will approve the payout request and mark it ready for payment.' 
+                : 'This will reject the payout request.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-2">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                  {selectedPayout?.profiles?.avatar_url ? (
+                    <img 
+                      src={selectedPayout.profiles.avatar_url} 
+                      alt={selectedPayout.profiles.username || 'Creator'} 
+                      className="h-8 w-8 object-cover"
+                    />
+                  ) : (
+                    <User className="h-4 w-4 text-gray-400" />
+                  )}
+                </div>
+                <span className="font-medium">{selectedPayout?.profiles?.username || 'Unknown Creator'}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <DollarSign className="h-4 w-4 text-green-500" />
+                <span className="font-semibold">{selectedPayout?.amount.toFixed(2)} SEK</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mb-4 p-2 bg-[#0D1117]/50 rounded-md border border-white/10">
+              <div>
+                <div className="text-xs text-muted-foreground">Platform Fee (7%)</div>
+                <div className="text-amber-500">{selectedPayout?.calculatedPlatformFee.toFixed(2)} SEK</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Final Amount</div>
+                <div className="text-green-500 font-semibold">{selectedPayout?.calculatedFinalAmount.toFixed(2)} SEK</div>
+              </div>
+            </div>
+            
+            <div className="mb-1">
+              <div className="text-sm font-medium mb-1">Notes {actionType === 'reject' && '(Required)'}</div>
+              <Textarea
+                placeholder={`Enter notes for ${actionType === 'approve' ? 'approval' : 'rejection'}...`}
+                value={actionNotes}
+                onChange={(e) => setActionNotes(e.target.value)}
+                className="min-h-[100px] bg-[#0D1117]/50"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setActionDialogOpen(false);
+                setActionNotes("");
+              }}
             >
-              Approve Payout
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Reject Dialog */}
-      <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reject Payout Request</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to reject this payout request?
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleReject}
-              className="bg-red-600 hover:bg-red-700"
+              Cancel
+            </Button>
+            <Button 
+              variant={actionType === 'approve' ? 'default' : 'destructive'}
+              onClick={() => {
+                if (selectedPayout && actionType) {
+                  handlePayoutAction.mutate({
+                    id: selectedPayout.id,
+                    action: actionType,
+                    notes: actionNotes
+                  });
+                }
+              }}
+              disabled={actionType === 'reject' && !actionNotes}
+              className={actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}
             >
-              Reject Payout
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {actionType === 'approve' ? (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Approve Payout
+                </>
+              ) : (
+                <>
+                  <X className="mr-2 h-4 w-4" />
+                  Reject Payout
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

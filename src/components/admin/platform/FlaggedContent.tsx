@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Table, 
@@ -11,285 +11,300 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { 
-  Search, 
-  MoreHorizontal, 
-  Trash, 
-  Shield, 
-  Eye, 
-  AlertTriangle,
-  Ban,
-  CheckCircle
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-import { LoadingState } from "@/components/ui/LoadingState";
-import { 
   Dialog, 
   DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Search, 
+  AlertTriangle, 
+  Ban, 
+  CheckCircle, 
+  Eye, 
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Trash2
+} from "lucide-react";
+import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  DateRangePicker, 
+  DateRange 
+} from "@/components/ui/date-range-picker";
+import { useToast } from "@/hooks/use-toast";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 export const FlaggedContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [contentTypeFilter, setContentTypeFilter] = useState("all");
-  const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [viewContentDialog, setViewContentDialog] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState(false);
-  const [banDialog, setBanDialog] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [actionType, setActionType] = useState<'resolve' | 'delete' | 'ban' | null>(null);
+  const [actionReason, setActionReason] = useState("");
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  
+  const pageSize = 10;
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["flagged-content", searchTerm, contentTypeFilter],
+  // Fetch flagged content reports
+  const { data, isLoading } = useQuery({
+    queryKey: ["flagged-content", currentPage, contentTypeFilter, statusFilter, dateRange, searchTerm],
     queryFn: async () => {
       let query = supabase
-        .from("reports")
+        .from('reports')
         .select(`
           *,
-          reporter:reporter_id (username, avatar_url),
-          reported:reported_id (username, avatar_url)
-        `)
-        .eq("status", "pending")
-        .order("is_emergency", { ascending: false })
-        .order("created_at", { ascending: false });
+          reporter:profiles!reports_reporter_id_fkey(username, avatar_url),
+          reported:profiles!reports_reported_id_fkey(username, avatar_url)
+        `, { count: 'exact' });
 
       // Apply content type filter
       if (contentTypeFilter !== "all") {
-        query = query.eq("content_type", contentTypeFilter);
+        query = query.eq('content_type', contentTypeFilter);
       }
 
-      // Apply search if present
+      // Apply status filter
+      if (statusFilter !== "all") {
+        query = query.eq('status', statusFilter);
+      }
+
+      // Apply date range filter
+      if (dateRange.from) {
+        query = query.gte('created_at', dateRange.from.toISOString());
+      }
+      if (dateRange.to) {
+        // Add one day to include reports from the last day
+        const endDate = new Date(dateRange.to);
+        endDate.setDate(endDate.getDate() + 1);
+        query = query.lt('created_at', endDate.toISOString());
+      }
+
+      // Apply search term filter
       if (searchTerm) {
         query = query.or(`reason.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,reporter.username.ilike.%${searchTerm}%,reported.username.ilike.%${searchTerm}%`);
       }
 
-      const { data, error } = await query;
+      // Apply pagination
+      const from = (currentPage - 1) * pageSize;
+      query = query
+        .range(from, from + pageSize - 1)
+        .order('is_emergency', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching flagged content:", error);
-        throw error;
-      }
-
-      // Fetch additional content details based on content_type
-      const contentDetailsPromises = data.map(async (report) => {
-        if (report.content_id) {
-          let contentDetails = null;
-          
-          switch (report.content_type) {
-            case "post":
-              const { data: postData } = await supabase
-                .from("posts")
-                .select("*")
-                .eq("id", report.content_id)
-                .single();
-              contentDetails = postData;
-              break;
-            case "dating_ad":
-              const { data: adData } = await supabase
-                .from("dating_ads")
-                .select("*")
-                .eq("id", report.content_id)
-                .single();
-              contentDetails = adData;
-              break;
-            case "message":
-              const { data: messageData } = await supabase
-                .from("direct_messages")
-                .select("*")
-                .eq("id", report.content_id)
-                .single();
-              contentDetails = messageData;
-              break;
-            // Add other content types as needed
-          }
-          
-          return { ...report, contentDetails };
-        }
-        return report;
-      });
-
-      return Promise.all(contentDetailsPromises);
+      const { data, error, count } = await query;
+      
+      if (error) throw error;
+      return { reports: data, totalCount: count || 0 };
     },
   });
 
-  const handleViewContent = (content: any) => {
-    setSelectedContent(content);
-    setViewContentDialog(true);
-  };
-
-  const handleMarkSafe = async (reportId: string) => {
-    try {
-      const { error } = await supabase
-        .from("reports")
+  // Handle report actions
+  const handleReportAction = useMutation({
+    mutationFn: async ({ 
+      id, 
+      action, 
+      reason = null 
+    }: { 
+      id: string; 
+      action: 'resolve' | 'delete' | 'ban'; 
+      reason?: string | null 
+    }) => {
+      // Update report status
+      const { error: reportError } = await supabase
+        .from('reports')
         .update({
-          status: "resolved",
-          action_taken: "marked_safe",
-          resolved_by: (await supabase.auth.getSession()).data.session?.user.id,
+          status: action === 'resolve' ? 'resolved' : 'pending',
+          action_taken: action,
+          resolution_notes: reason,
+          updated_at: new Date().toISOString()
         })
-        .eq("id", reportId);
+        .eq('id', id);
+      
+      if (reportError) throw reportError;
+      
+      // If action is ban, update the user's profile
+      if (action === 'ban') {
+        const report = data?.reports.find(r => r.id === id);
+        
+        if (report && report.reported_id) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              is_suspended: true,
+              suspended_at: new Date().toISOString()
+            })
+            .eq('id', report.reported_id);
+          
+          if (profileError) throw profileError;
+        }
+      }
 
-      if (error) throw error;
-
-      // Log admin action
-      await supabase.from("admin_audit_logs").insert({
-        user_id: (await supabase.auth.getSession()).data.session?.user.id,
-        action: "report_marked_safe",
-        details: {
-          report_id: reportId,
-          timestamp: new Date().toISOString(),
-        },
-      });
-
-      toast({
-        title: "Content Marked Safe",
-        description: "The report has been resolved as safe.",
-      });
-
-      refetch();
-    } catch (error) {
-      console.error("Error marking content as safe:", error);
-      toast({
-        title: "Action Failed",
-        description: "There was an error processing your request.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteContent = async () => {
-    if (!selectedContent) return;
-    
-    try {
-      // Delete content based on content_type
-      if (selectedContent.content_type === "post") {
-        await supabase
-          .from("posts")
-          .delete()
-          .eq("id", selectedContent.content_id);
-      } else if (selectedContent.content_type === "dating_ad") {
-        await supabase
-          .from("dating_ads")
-          .delete()
-          .eq("id", selectedContent.content_id);
-      } else if (selectedContent.content_type === "message") {
-        await supabase
-          .from("direct_messages")
-          .delete()
-          .eq("id", selectedContent.content_id);
+      // If action is delete, handle content deletion based on content type
+      if (action === 'delete') {
+        const report = data?.reports.find(r => r.id === id);
+        
+        if (report && report.content_id) {
+          const { content_type, content_id } = report;
+          
+          // Delete the reported content based on its type
+          let error;
+          
+          switch (content_type) {
+            case 'post':
+              ({ error } = await supabase
+                .from('posts')
+                .update({ visibility: 'deleted' })
+                .eq('id', content_id));
+              break;
+            case 'message':
+              ({ error } = await supabase
+                .from('direct_messages')
+                .update({ content: '[Content removed by moderator]' })
+                .eq('id', content_id));
+              break;
+            case 'comment':
+              ({ error } = await supabase
+                .from('comments')
+                .update({ content: '[Content removed by moderator]' })
+                .eq('id', content_id));
+              break;
+            case 'dating_ad':
+              ({ error } = await supabase
+                .from('dating_ads')
+                .update({ is_active: false })
+                .eq('id', content_id));
+              break;
+            case 'video':
+              ({ error } = await supabase
+                .from('videos')
+                .update({ visibility: 'deleted' })
+                .eq('id', content_id));
+              break;
+          }
+          
+          if (error) throw error;
+        }
       }
       
-      // Update report status
-      const { error } = await supabase
-        .from("reports")
-        .update({
-          status: "resolved",
-          action_taken: "content_deleted",
-          resolved_by: (await supabase.auth.getSession()).data.session?.user.id,
-        })
-        .eq("id", selectedContent.id);
-
-      if (error) throw error;
-
       // Log admin action
-      await supabase.from("admin_audit_logs").insert({
+      await supabase.from('admin_audit_logs').insert({
         user_id: (await supabase.auth.getSession()).data.session?.user.id,
-        action: "content_deleted",
+        action: `report_${action}`,
         details: {
-          report_id: selectedContent.id,
-          content_id: selectedContent.content_id,
-          content_type: selectedContent.content_type,
+          report_id: id,
           timestamp: new Date().toISOString(),
-        },
+          reason: reason || undefined
+        }
       });
-
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flagged-content"] });
+      setActionDialogOpen(false);
+      setActionReason("");
+      
+      const actionMessages = {
+        resolve: "Report marked as resolved",
+        delete: "Content deleted and report resolved",
+        ban: "User banned and report resolved"
+      };
+      
       toast({
-        title: "Content Deleted",
-        description: "The reported content has been deleted.",
+        title: "Action Complete",
+        description: actionType ? actionMessages[actionType] : "Report updated",
       });
-
-      setDeleteDialog(false);
-      refetch();
-    } catch (error) {
-      console.error("Error deleting content:", error);
+    },
+    onError: (error) => {
+      console.error("Error processing report action:", error);
       toast({
-        title: "Delete Failed",
-        description: "There was an error deleting the content.",
+        title: "Action Failed",
+        description: "There was an error processing this action",
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const handleBanUser = async () => {
-    if (!selectedContent || !selectedContent.reported_id) return;
-    
-    try {
-      // Ban user
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          is_suspended: true,
-          suspended_at: new Date().toISOString(),
-        })
-        .eq("id", selectedContent.reported_id);
+  // Handle bulk actions
+  const handleBulkAction = useMutation({
+    mutationFn: async ({ items, action }: { items: string[]; action: string }) => {
+      for (const id of items) {
+        // Update report status
+        const { error } = await supabase
+          .from('reports')
+          .update({ 
+            status: action === 'resolve' ? 'resolved' : 'dismissed',
+            action_taken: action,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', id);
 
-      if (error) throw error;
-      
-      // Update report status
-      await supabase
-        .from("reports")
-        .update({
-          status: "resolved",
-          action_taken: "user_banned",
-          resolved_by: (await supabase.auth.getSession()).data.session?.user.id,
-        })
-        .eq("id", selectedContent.id);
+        if (error) throw error;
+      }
 
       // Log admin action
-      await supabase.from("admin_audit_logs").insert({
+      await supabase.from('admin_audit_logs').insert({
         user_id: (await supabase.auth.getSession()).data.session?.user.id,
-        action: "user_banned_from_report",
+        action: `bulk_report_${action}`,
         details: {
-          report_id: selectedContent.id,
-          user_id: selectedContent.reported_id,
-          content_id: selectedContent.content_id,
-          content_type: selectedContent.content_type,
-          timestamp: new Date().toISOString(),
-        },
+          report_ids: items,
+          timestamp: new Date().toISOString()
+        }
       });
-
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flagged-content"] });
+      
       toast({
-        title: "User Banned",
-        description: "The user has been banned from the platform.",
+        title: "Bulk Action Completed",
+        description: `Successfully processed ${selectedItems.length} reports`,
       });
-
-      setBanDialog(false);
-      refetch();
-    } catch (error) {
-      console.error("Error banning user:", error);
+      
+      setSelectedItems([]);
+    },
+    onError: (error) => {
+      console.error("Error processing bulk action:", error);
       toast({
-        title: "Ban Failed",
-        description: "There was an error banning the user.",
+        title: "Bulk Action Failed",
+        description: "There was an error processing the selected reports",
         variant: "destructive",
       });
+    }
+  });
+
+  // Calculate total pages
+  const totalPages = Math.ceil((data?.totalCount || 0) / pageSize);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">Pending</Badge>;
+      case 'reviewing':
+        return <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30">Reviewing</Badge>;
+      case 'resolved':
+        return <Badge className="bg-green-500/20 text-green-500 border-green-500/30">Resolved</Badge>;
+      case 'dismissed':
+        return <Badge className="bg-gray-500/20 text-gray-500 border-gray-500/30">Dismissed</Badge>;
+      default:
+        return <Badge className="bg-gray-500/20 text-gray-500 border-gray-500/30">Unknown</Badge>;
     }
   };
 
@@ -299,8 +314,8 @@ export const FlaggedContent = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-        <div className="relative w-full sm:w-auto sm:min-w-[300px]">
+      <div className="flex flex-col md:flex-row gap-4 flex-wrap">
+        <div className="relative w-full md:w-auto md:min-w-[250px] lg:flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Search reports..."
@@ -310,324 +325,456 @@ export const FlaggedContent = () => {
           />
         </div>
         
-        <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="bg-[#0D1117]/50">
-                Type: {contentTypeFilter === "all" ? "All" : contentTypeFilter}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setContentTypeFilter("all")}>All Types</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setContentTypeFilter("post")}>Posts</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setContentTypeFilter("dating_ad")}>Dating Ads</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setContentTypeFilter("message")}>Messages</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex flex-wrap gap-2">
+          <Select value={contentTypeFilter} onValueChange={setContentTypeFilter}>
+            <SelectTrigger className="w-[180px] bg-[#0D1117]/50">
+              <SelectValue placeholder="Content type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="post">Posts</SelectItem>
+              <SelectItem value="message">Messages</SelectItem>
+              <SelectItem value="comment">Comments</SelectItem>
+              <SelectItem value="dating_ad">Dating Ads</SelectItem>
+              <SelectItem value="video">Videos</SelectItem>
+              <SelectItem value="user">User Reports</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px] bg-[#0D1117]/50">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="reviewing">Reviewing</SelectItem>
+              <SelectItem value="resolved">Resolved</SelectItem>
+              <SelectItem value="dismissed">Dismissed</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <div className="w-full md:w-auto">
+            <DateRangePicker
+              from={dateRange.from}
+              to={dateRange.to}
+              onSelect={setDateRange}
+            />
+          </div>
         </div>
       </div>
+
+      {/* Bulk actions */}
+      {selectedItems.length > 0 && (
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            size="sm"
+            className="bg-green-500/10 text-green-500 border-green-500/30 hover:bg-green-500/20"
+            onClick={() => handleBulkAction.mutate({
+              items: selectedItems,
+              action: 'resolve'
+            })}
+          >
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Resolve {selectedItems.length} Selected
+          </Button>
+          <Button 
+            variant="outline"
+            size="sm"
+            className="bg-gray-500/10 text-gray-500 border-gray-500/30 hover:bg-gray-500/20"
+            onClick={() => handleBulkAction.mutate({
+              items: selectedItems,
+              action: 'dismiss'
+            })}
+          >
+            <Ban className="mr-2 h-4 w-4" />
+            Dismiss {selectedItems.length} Selected
+          </Button>
+        </div>
+      )}
 
       <div className="rounded-md border border-white/10 overflow-hidden">
         <Table>
           <TableHeader className="bg-[#0D1117]">
             <TableRow>
-              <TableHead className="w-[180px]">Reported By</TableHead>
-              <TableHead className="w-[180px]">Reported User</TableHead>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={data?.reports.length ? selectedItems.length === data.reports.length : false}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedItems(data?.reports.map(r => r.id) || []);
+                    } else {
+                      setSelectedItems([]);
+                    }
+                  }}
+                />
+              </TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Reporter</TableHead>
+              <TableHead>Reported</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Reason</TableHead>
-              <TableHead className="w-[100px]">Type</TableHead>
-              <TableHead className="w-[100px]">Severity</TableHead>
-              <TableHead className="w-[120px]">Date</TableHead>
-              <TableHead className="text-right w-[100px]">Actions</TableHead>
+              <TableHead>Time</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.map((report: any) => (
-              <TableRow key={report.id} className="border-white/5 hover:bg-[#0D1117]/50">
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {report.reporter?.avatar_url ? (
-                      <img
-                        src={report.reporter.avatar_url}
-                        alt={report.reporter.username || "Reporter"}
-                        className="h-6 w-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="h-6 w-6 rounded-full bg-gray-700" />
-                    )}
-                    <span className="text-sm truncate max-w-[100px]">
-                      {report.reporter?.username || "Anonymous"}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {report.reported?.avatar_url ? (
-                      <img
-                        src={report.reported.avatar_url}
-                        alt={report.reported.username || "Reported User"}
-                        className="h-6 w-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="h-6 w-6 rounded-full bg-gray-700" />
-                    )}
-                    <span className="text-sm truncate max-w-[100px]">
-                      {report.reported?.username || "Unknown User"}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm truncate max-w-[200px]">
-                    {report.reason}
-                    {report.description && (
-                      <p className="text-xs text-muted-foreground mt-1 truncate">
-                        {report.description}
-                      </p>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="capitalize">
-                    {report.content_type}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {report.is_emergency ? (
-                    <Badge variant="destructive" className="bg-red-600">Urgent</Badge>
-                  ) : (
-                    <Badge variant="outline">Normal</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {format(new Date(report.created_at), "MMM d, yyyy")}
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem 
-                        onClick={() => handleViewContent(report)}
-                        className="cursor-pointer"
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Content
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => {
-                          setSelectedContent(report);
-                          setDeleteDialog(true);
-                        }}
-                        className="cursor-pointer text-red-500"
-                      >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete Content
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => {
-                          setSelectedContent(report);
-                          setBanDialog(true);
-                        }}
-                        className="cursor-pointer text-red-500"
-                      >
-                        <Ban className="mr-2 h-4 w-4" />
-                        Ban User
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => handleMarkSafe(report.id)}
-                        className="cursor-pointer text-green-500"
-                      >
-                        <Shield className="mr-2 h-4 w-4" />
-                        Mark as Safe
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-            {(!data || data.length === 0) && (
+            {data?.reports.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center h-32 text-muted-foreground">
-                  No flagged content found
+                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                  No flagged content found matching your criteria
                 </TableCell>
               </TableRow>
+            ) : (
+              data?.reports.map((report) => (
+                <TableRow key={report.id} className="border-white/5 hover:bg-[#0D1117]/50">
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedItems.includes(report.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedItems([...selectedItems, report.id]);
+                        } else {
+                          setSelectedItems(selectedItems.filter(id => id !== report.id));
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(report.status)}
+                      {report.is_emergency && (
+                        <Badge variant="destructive">URGENT</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <div className="h-7 w-7 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                        {report.reporter?.avatar_url ? (
+                          <img 
+                            src={report.reporter.avatar_url} 
+                            alt={report.reporter.username} 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm">{report.reporter?.username || 'Unknown'}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <div className="h-7 w-7 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                        {report.reported?.avatar_url ? (
+                          <img 
+                            src={report.reported.avatar_url} 
+                            alt={report.reported.username} 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm">{report.reported?.username || 'Unknown'}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {report.content_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="max-w-[180px] truncate" title={report.reason}>
+                      {report.reason}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(report.created_at), 'MMM d, yyyy')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-8 w-8 p-0 bg-[#0D1117]/50"
+                        onClick={() => {
+                          setSelectedItem(report);
+                          setViewDialogOpen(true);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      
+                      {report.status !== 'resolved' && (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 w-8 p-0 text-green-500 border-green-500/30 bg-green-500/10"
+                            onClick={() => {
+                              setSelectedItem(report);
+                              setActionType('resolve');
+                              setActionDialogOpen(true);
+                            }}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-500 border-red-500/30 bg-red-500/10"
+                            onClick={() => {
+                              setSelectedItem(report);
+                              setActionType('delete');
+                              setActionDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 w-8 p-0 text-amber-500 border-amber-500/30 bg-amber-900/10"
+                            onClick={() => {
+                              setSelectedItem(report);
+                              setActionType('ban');
+                              setActionDialogOpen(true);
+                            }}
+                          >
+                            <Ban className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
       </div>
 
-      {/* View content dialog */}
-      <Dialog open={viewContentDialog} onOpenChange={setViewContentDialog}>
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing {data?.reports.length ? ((currentPage - 1) * pageSize) + 1 : 0}-
+          {Math.min(currentPage * pageSize, data?.totalCount || 0)} of {data?.totalCount || 0} reports
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="bg-[#0D1117]/50"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages || totalPages === 0}
+            className="bg-[#0D1117]/50"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* View Report Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Reported Content</DialogTitle>
+            <DialogTitle>Flagged Content Report</DialogTitle>
+            <DialogDescription>
+              Report filed on {selectedItem?.created_at && format(new Date(selectedItem.created_at), 'MMMM d, yyyy')}
+            </DialogDescription>
           </DialogHeader>
-          {selectedContent && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Badge variant="outline" className="capitalize">
-                  {selectedContent.content_type}
-                </Badge>
-                {selectedContent.is_emergency && (
-                  <Badge variant="destructive" className="bg-red-600">
-                    <AlertTriangle className="mr-1 h-3 w-3" />
-                    Urgent Report
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="bg-[#0D1117] p-4 rounded-md border border-white/10">
-                <h3 className="font-semibold mb-2">Report Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Reason:</span>
-                    <span>{selectedContent.reason}</span>
+          
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="font-medium mb-2">Reporter Details</h3>
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                    {selectedItem?.reporter?.avatar_url ? (
+                      <img 
+                        src={selectedItem.reporter.avatar_url} 
+                        alt={selectedItem.reporter.username} 
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                    )}
                   </div>
-                  {selectedContent.description && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Description:</span>
-                      <span>{selectedContent.description}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Reported at:</span>
-                    <span>{format(new Date(selectedContent.created_at), "PPpp")}</span>
+                  <div>
+                    <div className="font-medium">{selectedItem?.reporter?.username || 'Unknown User'}</div>
                   </div>
                 </div>
+                <p className="text-sm text-muted-foreground">Report Time: {selectedItem?.created_at && format(new Date(selectedItem.created_at), 'MMMM d, yyyy h:mm a')}</p>
+                {selectedItem?.ip_address && (
+                  <p className="text-sm text-muted-foreground">IP Address: {selectedItem.ip_address}</p>
+                )}
               </div>
               
-              <div className="bg-[#0D1117] p-4 rounded-md border border-white/10">
-                <h3 className="font-semibold mb-2">Content Preview</h3>
-                {selectedContent.content_type === "post" && selectedContent.contentDetails && (
-                  <div className="space-y-3">
-                    <p>{selectedContent.contentDetails.content}</p>
-                    {selectedContent.contentDetails.media_url && selectedContent.contentDetails.media_url.length > 0 && (
-                      <div className="grid grid-cols-2 gap-2">
-                        {selectedContent.contentDetails.media_url.map((url: string, index: number) => (
-                          <img 
-                            key={index} 
-                            src={url} 
-                            alt={`Media ${index}`} 
-                            className="w-full h-48 object-cover rounded"
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {selectedContent.content_type === "dating_ad" && selectedContent.contentDetails && (
-                  <div className="space-y-3">
-                    <h4 className="font-medium">{selectedContent.contentDetails.title}</h4>
-                    <p>{selectedContent.contentDetails.description}</p>
-                    <p>{selectedContent.contentDetails.about_me}</p>
-                  </div>
-                )}
-                
-                {selectedContent.content_type === "message" && selectedContent.contentDetails && (
-                  <div className="space-y-3">
-                    <p>{selectedContent.contentDetails.content}</p>
-                    {selectedContent.contentDetails.media_url && selectedContent.contentDetails.media_url.length > 0 && (
-                      <div className="grid grid-cols-2 gap-2">
-                        {selectedContent.contentDetails.media_url.map((url: string, index: number) => (
-                          <img 
-                            key={index} 
-                            src={url} 
-                            alt={`Media ${index}`} 
-                            className="w-full h-48 object-cover rounded"
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {(!selectedContent.contentDetails || Object.keys(selectedContent.contentDetails).length === 0) && (
-                  <p className="text-muted-foreground italic">
-                    Content details not available or content may have been deleted
+              <div>
+                <h3 className="font-medium mb-2">Reported Content</h3>
+                <p className="text-sm">Type: <Badge>{selectedItem?.content_type}</Badge></p>
+                <p className="text-sm">Status: {selectedItem && getStatusBadge(selectedItem.status)}</p>
+                {selectedItem?.is_emergency && (
+                  <p className="text-sm mt-2">
+                    <Badge variant="destructive">URGENT REPORT</Badge>
                   </p>
                 )}
               </div>
-              
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleMarkSafe(selectedContent.id)}
-                  className="bg-green-700/20 hover:bg-green-700/40 border-green-700/40 text-green-500"
-                >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Mark as Safe
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setViewContentDialog(false);
-                    setBanDialog(true);
-                  }}
-                  className="bg-red-900/20 hover:bg-red-900/40 border-red-900/40 text-red-500"
-                >
-                  <Ban className="mr-2 h-4 w-4" />
-                  Ban User
-                </Button>
-                <Button
-                  onClick={() => {
-                    setViewContentDialog(false);
-                    setDeleteDialog(true);
-                  }}
-                  variant="destructive"
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete Content
-                </Button>
+            </div>
+            
+            <div>
+              <h3 className="font-medium mb-2">Report Reason</h3>
+              <div className="p-3 bg-[#0D1117]/50 border border-white/10 rounded-md">
+                <p className="text-sm">{selectedItem?.reason}</p>
               </div>
             </div>
-          )}
+            
+            {selectedItem?.description && (
+              <div>
+                <h3 className="font-medium mb-2">Additional Details</h3>
+                <div className="p-3 bg-[#0D1117]/50 border border-white/10 rounded-md">
+                  <p className="text-sm">{selectedItem.description}</p>
+                </div>
+              </div>
+            )}
+            
+            {selectedItem?.action_taken && (
+              <div>
+                <h3 className="font-medium mb-2">Action Taken</h3>
+                <div className="p-3 bg-[#161B22] border border-white/10 rounded-md">
+                  <p className="text-sm">
+                    <span className="font-medium">Action:</span> {selectedItem.action_taken}
+                  </p>
+                  {selectedItem?.resolution_notes && (
+                    <p className="text-sm mt-2">
+                      <span className="font-medium">Notes:</span> {selectedItem.resolution_notes}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="flex justify-between">
+            <div className="flex gap-2">
+              {selectedItem?.status !== 'resolved' && (
+                <>
+                  <Button 
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setViewDialogOpen(false);
+                      setActionType('ban');
+                      setActionDialogOpen(true);
+                    }}
+                  >
+                    <Ban className="mr-2 h-4 w-4" />
+                    Ban User
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setViewDialogOpen(false);
+                      setActionType('delete');
+                      setActionDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Content
+                  </Button>
+                </>
+              )}
+            </div>
+            <Button 
+              variant="outline"
+              onClick={() => setViewDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={deleteDialog} onOpenChange={setDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Content</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this content? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteContent}
-              className="bg-red-600 hover:bg-red-700"
+      {/* Action Dialog */}
+      <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === 'resolve' ? 'Resolve Report' : 
+               actionType === 'delete' ? 'Delete Flagged Content' : 
+               'Ban Reported User'}
+            </DialogTitle>
+            <DialogDescription>
+              {actionType === 'resolve' ? 'This will mark the report as resolved without taking further action.' : 
+               actionType === 'delete' ? 'This will delete the reported content and mark the report as resolved.' : 
+               'This will ban the reported user and mark the report as resolved.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-2">
+            <Textarea
+              placeholder={`Enter reason for ${actionType === 'resolve' ? 'resolution' : 
+                                              actionType === 'delete' ? 'content deletion' : 
+                                              'user ban'}...`}
+              value={actionReason}
+              onChange={(e) => setActionReason(e.target.value)}
+              className="min-h-[100px] bg-[#0D1117]/50"
+            />
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setActionDialogOpen(false);
+                setActionReason("");
+              }}
             >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Ban user confirmation dialog */}
-      <AlertDialog open={banDialog} onOpenChange={setBanDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Ban User</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to ban this user? They will no longer be able to access the platform.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleBanUser}
-              className="bg-red-600 hover:bg-red-700"
+              Cancel
+            </Button>
+            <Button 
+              variant={actionType === 'resolve' ? 'default' : 'destructive'}
+              onClick={() => {
+                if (selectedItem && actionType) {
+                  handleReportAction.mutate({
+                    id: selectedItem.id,
+                    action: actionType,
+                    reason: actionReason
+                  });
+                }
+              }}
+              disabled={!actionReason}
             >
-              Ban User
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {actionType === 'resolve' ? 'Resolve Report' : 
+               actionType === 'delete' ? 'Delete Content' : 
+               'Ban User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
