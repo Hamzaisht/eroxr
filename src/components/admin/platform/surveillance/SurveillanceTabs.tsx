@@ -44,11 +44,13 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
         </TabsTrigger>
       </TabsList>
       
+      {/* Add activeTab prop to each TabContent */}
       <TabsContent value="streams">
         <TabContent 
           sessions={liveSessions}
           isLoading={isLoading}
           error={error}
+          activeTab="streams"
         />
       </TabsContent>
       
@@ -57,6 +59,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
           sessions={liveSessions}
           isLoading={isLoading}
           error={error}
+          activeTab="calls"
         />
       </TabsContent>
       
@@ -65,6 +68,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
           sessions={liveSessions}
           isLoading={isLoading}
           error={error}
+          activeTab="chats"
         />
       </TabsContent>
       
@@ -73,6 +77,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
           sessions={liveSessions}
           isLoading={isLoading}
           error={error}
+          activeTab="bodycontact"
         />
       </TabsContent>
       

@@ -7,9 +7,15 @@ interface TabContentProps {
   sessions: LiveSession[];
   isLoading: boolean;
   error?: string | null;
+  activeTab?: string;
 }
 
-export const TabContent = ({ sessions, isLoading, error }: TabContentProps) => {
+export const TabContent = ({ 
+  sessions, 
+  isLoading, 
+  error,
+  activeTab 
+}: TabContentProps) => {
   const { handleStartSurveillance } = useSurveillance();
   
   return (
@@ -18,6 +24,7 @@ export const TabContent = ({ sessions, isLoading, error }: TabContentProps) => {
       isLoading={isLoading}
       error={error}
       onMonitorSession={handleStartSurveillance}
+      activeTab={activeTab}
     />
   );
 };

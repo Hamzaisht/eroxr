@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AlertCircle, MessageCircle, UserIcon, MapPin } from "lucide-react";
 import { LiveSession } from "../user-analytics/types";
@@ -12,13 +11,15 @@ interface SessionListProps {
   isLoading: boolean;
   error?: string | null;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
+  activeTab?: string;
 }
 
 export const SessionList = ({ 
   sessions, 
   isLoading, 
   error, 
-  onMonitorSession 
+  onMonitorSession,
+  activeTab = 'streams'
 }: SessionListProps) => {  
   const [showMediaPreview, setShowMediaPreview] = useState<LiveSession | null>(null);
   const { actionInProgress, handleModeration } = useModerationActions();
@@ -45,24 +46,25 @@ export const SessionList = ({
   }
   
   if (sessions.length === 0) {
-    // Get the current tab type from the session data or default to "content"
     const emptyStateIcon = () => {
-      if (sessions.type === 'bodycontact') {
-        return <UserIcon className="h-12 w-12 opacity-50" />;
-      } else if (sessions.type === 'chats') {
-        return <MessageCircle className="h-12 w-12 opacity-50" />;
-      } else {
-        return <MessageCircle className="h-12 w-12 opacity-50" />;
+      switch (activeTab) {
+        case 'bodycontact':
+          return <UserIcon className="h-12 w-12 opacity-50" />;
+        case 'chats':
+          return <MessageCircle className="h-12 w-12 opacity-50" />;
+        default:
+          return <MessageCircle className="h-12 w-12 opacity-50" />;
       }
     };
 
     const emptyStateMessage = () => {
-      if (sessions.type === 'bodycontact') {
-        return "No active BodyContact ads at the moment";
-      } else if (sessions.type === 'chats') {
-        return "No active chats at the moment";
-      } else {
-        return "No active sessions at the moment";
+      switch (activeTab) {
+        case 'bodycontact':
+          return "No active BodyContact ads at the moment";
+        case 'chats':
+          return "No active chats at the moment";
+        default:
+          return "No active sessions at the moment";
       }
     };
 
