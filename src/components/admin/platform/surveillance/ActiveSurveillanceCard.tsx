@@ -33,11 +33,11 @@ export const ActiveSurveillanceCard = ({
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 border border-white/10">
-              <AvatarImage src={session.avatar_url || undefined} alt={session.username} />
-              <AvatarFallback>{session.username.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={session.avatar_url || undefined} alt={session.username || 'Unknown'} />
+              <AvatarFallback>{(session.username || 'Unknown').charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium">{session.username}</div>
+              <div className="font-medium">{session.username || 'Unknown'}</div>
               <div className="text-sm text-gray-400">
                 {session.type.charAt(0).toUpperCase() + session.type.slice(1)}: {session.title || "Unnamed"}
               </div>

@@ -1,5 +1,4 @@
 
-
 import { format } from "date-fns";
 import { Clock } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -41,12 +40,12 @@ export const SessionList = ({ sessions, isLoading, onMonitorSession }: SessionLi
         >
           <Avatar>
             <AvatarImage src={sessionItem.avatar_url || undefined} />
-            <AvatarFallback>{sessionItem.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+            <AvatarFallback>{(sessionItem.username || 'Unknown')?.[0]?.toUpperCase() || '?'}</AvatarFallback>
           </Avatar>
           
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-medium">{sessionItem.username}</h3>
+              <h3 className="font-medium">{sessionItem.username || 'Unknown'}</h3>
               {sessionItem.type === 'stream' && (
                 <Badge 
                   variant="outline" 
@@ -124,4 +123,3 @@ export const SessionList = ({ sessions, isLoading, onMonitorSession }: SessionLi
     </div>
   );
 };
-

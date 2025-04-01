@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -95,8 +96,8 @@ export const SurveillanceProvider = ({
               id: call.id,
               type: 'call',
               user_id: call.initiator_id,
-              username: call.username,
-              avatar_url: call.avatar_url,
+              username: call.username || 'Unknown',
+              avatar_url: call.avatar_url || '',
               started_at: call.started_at,
               participants: call.participant_count,
               status: 'active',
@@ -127,7 +128,7 @@ export const SurveillanceProvider = ({
             const chatKey = `${chat.sender_id}:${chat.recipient_id}`;
             if (!uniqueChats.has(chatKey)) {
               const username = chat.sender?.[0]?.username || 'Unknown';
-              const avatar_url = chat.sender?.[0]?.avatar_url || null;
+              const avatar_url = chat.sender?.[0]?.avatar_url || '';
               
               uniqueChats.set(chatKey, {
                 id: chatKey,
@@ -164,7 +165,7 @@ export const SurveillanceProvider = ({
           
           data = ads.map(ad => {
             const username = ad.profiles?.[0]?.username || 'Unknown';
-            const avatar_url = ad.profiles?.[0]?.avatar_url || null;
+            const avatar_url = ad.profiles?.[0]?.avatar_url || '';
             
             return {
               id: ad.id,

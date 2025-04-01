@@ -39,7 +39,7 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
             session_id: targetSession.id,
             session_type: targetSession.type,
             target_user_id: targetSession.user_id,
-            target_username: targetSession.username
+            target_username: targetSession.username || 'Unknown'
           }
         });
         
@@ -58,7 +58,7 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
       
       toast({
         title: "Surveillance Active",
-        description: `Monitoring ${targetSession.type}: ${targetSession.title || targetSession.username}`,
+        description: `Monitoring ${targetSession.type}: ${targetSession.title || targetSession.username || 'Unknown'}`,
       });
       
       console.log("Ghost surveillance started:", targetSession);
@@ -90,7 +90,7 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
             session_id: activeSurveillance.session.id,
             session_type: activeSurveillance.session.type,
             target_user_id: activeSurveillance.session.user_id,
-            target_username: activeSurveillance.session.username,
+            target_username: activeSurveillance.session.username || 'Unknown',
             duration_minutes: durationMinutes
           }
         });
