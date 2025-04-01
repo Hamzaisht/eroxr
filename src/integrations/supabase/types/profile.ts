@@ -35,3 +35,11 @@ export type MutualFollower = {
   following_id: string;
   following: Profile;
 };
+
+// Add a type for Supabase join responses
+export type WithProfile<T> = T & {
+  profiles?: {
+    username?: string | null;
+    avatar_url?: string | null;
+  } | null;
+};

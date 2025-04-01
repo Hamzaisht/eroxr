@@ -388,7 +388,7 @@ export const LiveSurveillance = () => {
                         >
                           <Avatar>
                             <AvatarImage src={streamSession.avatar_url || undefined} />
-                            <AvatarFallback>{streamSession.username[0].toUpperCase()}</AvatarFallback>
+                            <AvatarFallback>{streamSession.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                           </Avatar>
                           
                           <div className="flex-1">
@@ -461,7 +461,7 @@ export const LiveSurveillance = () => {
                         >
                           <Avatar>
                             <AvatarImage src={callSession.avatar_url || undefined} />
-                            <AvatarFallback>{callSession.username[0].toUpperCase()}</AvatarFallback>
+                            <AvatarFallback>{callSession.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                           </Avatar>
                           
                           <div className="flex-1">
@@ -534,7 +534,7 @@ export const LiveSurveillance = () => {
                         >
                           <Avatar>
                             <AvatarImage src={chatSession.avatar_url || undefined} />
-                            <AvatarFallback>{chatSession.username[0].toUpperCase()}</AvatarFallback>
+                            <AvatarFallback>{chatSession.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                           </Avatar>
                           
                           <div className="flex-1">
@@ -603,7 +603,7 @@ export const LiveSurveillance = () => {
                         >
                           <Avatar>
                             <AvatarImage src={adSession.avatar_url || undefined} />
-                            <AvatarFallback>{adSession.username[0].toUpperCase()}</AvatarFallback>
+                            <AvatarFallback>{adSession.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                           </Avatar>
                           
                           <div className="flex-1">
@@ -679,7 +679,7 @@ export const LiveSurveillance = () => {
                         >
                           <Avatar>
                             <AvatarImage src={alert.avatar_url || undefined} />
-                            <AvatarFallback>{alert.username[0].toUpperCase()}</AvatarFallback>
+                            <AvatarFallback>{alert.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                           </Avatar>
                           
                           <div className="flex-1">
@@ -737,7 +737,7 @@ export const LiveSurveillance = () => {
               <div className="flex items-center gap-3">
                 <Avatar>
                   <AvatarImage src={activeSurveillance.session.avatar_url || undefined} />
-                  <AvatarFallback>{activeSurveillance.session.username[0].toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{activeSurveillance.session.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
                 </Avatar>
                 
                 <div>
