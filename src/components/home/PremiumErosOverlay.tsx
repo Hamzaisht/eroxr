@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, Ghost } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useGhostMode } from '@/hooks/useGhostMode';
 
 interface PremiumErosOverlayProps {
   previewDuration?: number;
@@ -15,10 +16,21 @@ export const PremiumErosOverlay: React.FC<PremiumErosOverlayProps> = ({
   thumbnailUrl 
 }) => {
   const navigate = useNavigate();
+  const { isGhostMode } = useGhostMode();
 
   const handleUnlockClick = () => {
     navigate('/subscription');
   };
+
+  // If in ghost mode, render a simplified overlay that doesn't block content
+  if (isGhostMode) {
+    return (
+      <div className="absolute top-2 right-2 z-50 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs text-white border border-purple-500/30 shadow-lg flex items-center space-x-1">
+        <Ghost className="h-3.5 w-3.5 text-purple-400" />
+        <span>Viewing premium content (Ghost)</span>
+      </div>
+    );
+  }
 
   return (
     <motion.div 

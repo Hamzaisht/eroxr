@@ -12,9 +12,13 @@ import {
   Heart,
   Flag,
   BookMarked,
-  BadgeAlert
+  BadgeAlert,
+  Ghost
 } from "lucide-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import { useGhostMode } from "@/hooks/useGhostMode";
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const adminRoutes = [
   {
@@ -77,6 +81,7 @@ const adminRoutes = [
 export const Sidebar = () => {
   const location = useLocation();
   const { isSuperAdmin } = useSuperAdminCheck();
+  const { isGhostMode, toggleGhostMode, isLoading } = useGhostMode();
 
   // If not a super admin, don't render the sidebar
   if (!isSuperAdmin) {
@@ -101,6 +106,30 @@ export const Sidebar = () => {
             <span>{route.label}</span>
           </Link>
         ))}
+
+        <div className="h-px bg-white/5 my-2" />
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center justify-between px-3 py-2 rounded-lg text-luxury-neutral/80 hover:text-luxury-neutral">
+                <div className="flex items-center space-x-2">
+                  <Ghost className="w-5 h-5" />
+                  <span>Ghost Mode</span>
+                </div>
+                <Switch 
+                  checked={isGhostMode} 
+                  onCheckedChange={toggleGhostMode}
+                  disabled={isLoading}
+                  className={isGhostMode ? "bg-purple-600" : ""}
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Browse invisibly - no typing indicators, read receipts, or presence</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );

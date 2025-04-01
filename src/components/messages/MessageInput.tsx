@@ -1,18 +1,16 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image, Camera, Loader } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Paperclip, Send, Image as ImageIcon, Smile, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
-import { motion } from "framer-motion";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useGhostMode } from "@/hooks/useGhostMode";
 
 interface MessageInputProps {
-  onSendMessage: (content: string, mediaUrl?: string[]) => void;
-  onMediaSelect?: (files: FileList) => Promise<void>;
-  onSnapStart?: () => void;
+  onSendMessage: (content: string) => Promise<void>;
+  onMediaSelect: (files: FileList) => void;
+  onSnapStart: () => void;
   isLoading?: boolean;
   recipientId: string;
 }
@@ -22,35 +20,59 @@ export const MessageInput = ({
   onMediaSelect, 
   onSnapStart,
   isLoading,
-  recipientId 
+  recipientId
 }: MessageInputProps) => {
   const [message, setMessage] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isUserTyping, setIsUserTyping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
   const session = useSession();
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
-  
-  // Use debounced value for typing indicator
-  const debouncedMessage = useDebounce(message, 500);
+  const { isGhostMode } = useGhostMode();
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (debouncedMessage && debouncedMessage !== "" && !isTyping) {
-      setIsTyping(true);
-      emitTypingEvent(true);
-    } else if ((!debouncedMessage || debouncedMessage === "") && isTyping) {
-      setIsTyping(false);
-      emitTypingEvent(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim() && !isLoading) return;
+    
+    await onSendMessage(message);
+    setMessage("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
     }
-  }, [debouncedMessage]);
+  };
 
-  const emitTypingEvent = (isTyping: boolean) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+    
+    // Skip typing indicators in ghost mode
+    if (isGhostMode) return;
+    
+    // If the user wasn't already typing, broadcast that they are typing
+    if (!isUserTyping) {
+      broadcastTypingStatus(true);
+      setIsUserTyping(true);
+    }
+    
+    // Clear any existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Set a new timeout to stop typing indicator after 2 seconds of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      broadcastTypingStatus(false);
+      setIsUserTyping(false);
+    }, 2000);
+  };
+
+  const broadcastTypingStatus = async (isTyping: boolean) => {
     if (!session?.user?.id) return;
-
-    // Emit typing event through Supabase realtime
-    supabase.channel('typing-status')
-      .send({
+    
+    try {
+      await supabase.channel('typing-status').send({
         type: 'broadcast',
         event: 'typing',
         payload: {
@@ -59,155 +81,79 @@ export const MessageInput = ({
           is_typing: isTyping
         }
       });
-
-    // Clear previous timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+    } catch (error) {
+      console.error('Error broadcasting typing status:', error);
     }
+  };
 
-    // Set new timeout to clear typing status
-    if (isTyping) {
-      typingTimeoutRef.current = setTimeout(() => {
-        supabase.channel('typing-status')
-          .send({
-            type: 'broadcast',
-            event: 'typing',
-            payload: {
-              user_id: session.user.id,
-              recipient_id: recipientId,
-              is_typing: false
-            }
-          });
-      }, 2000); // Stop showing typing indicator after 2 seconds of no input
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      onMediaSelect(e.target.files);
+      e.target.value = ""; // Reset input
     }
   };
 
   useEffect(() => {
     return () => {
+      // Clean up typing status when component unmounts
+      if (isUserTyping && !isGhostMode) {
+        broadcastTypingStatus(false);
+      }
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, []);
-
-  const handleSend = async () => {
-    if (!message.trim() && !fileInputRef.current?.files?.length) return;
-    
-    try {
-      let mediaUrls: string[] = [];
-      
-      if (fileInputRef.current?.files?.length) {
-        if (onMediaSelect) {
-          await onMediaSelect(fileInputRef.current.files);
-        } else {
-          setIsUploading(true);
-          const file = fileInputRef.current.files[0];
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${crypto.randomUUID()}.${fileExt}`;
-          
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('messages')
-            .upload(fileName, file);
-
-          if (uploadError) throw uploadError;
-
-          if (uploadData) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('messages')
-              .getPublicUrl(fileName);
-            
-            mediaUrls = [publicUrl];
-          }
-        }
-      }
-
-      onSendMessage(message, mediaUrls);
-      setMessage("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (error: any) {
-      console.error("Upload error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to upload image. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (message.trim() || fileInputRef.current?.files?.length) {
-        handleSend();
-      }
-    }
-  };
+  }, [isUserTyping]);
 
   return (
-    <div className="relative flex items-center gap-3 p-6 border-t border-white/5 bg-luxury-dark">
-      <div className="absolute inset-0 bg-gradient-to-t from-luxury-darker to-transparent opacity-50"></div>
-      
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept="image/*"
-        className="hidden"
-      />
-
-      <div className="relative flex items-center gap-2 bg-luxury-darker/50 backdrop-blur-sm rounded-full p-1.5">
+    <form onSubmit={handleSubmit} className="bg-[#161B22] border-t border-white/5 p-3">
+      <div className="flex items-center gap-2">
         <Button
+          type="button"
           variant="ghost"
           size="icon"
+          className="text-luxury-neutral/60 hover:text-luxury-neutral"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isLoading || isUploading}
-          className="rounded-full hover:bg-luxury-primary/20 transition-colors duration-300"
         >
-          <Image className="h-5 w-5 text-luxury-neutral" />
+          <Paperclip className="h-5 w-5" />
         </Button>
+        
         <Button
+          type="button"
           variant="ghost"
           size="icon"
+          className="text-luxury-neutral/60 hover:text-luxury-neutral"
           onClick={onSnapStart}
-          disabled={isLoading || isUploading}
-          className="rounded-full hover:bg-luxury-primary/20 transition-colors duration-300"
         >
-          <Camera className="h-5 w-5 text-luxury-neutral" />
+          <Camera className="h-5 w-5" />
         </Button>
-      </div>
-
-      <div className="relative flex-1">
+        
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          className="hidden"
+          accept="image/*,video/*"
+          multiple
+        />
+        
         <Input
           value={message}
-          onChange={(e) => {
-            setMessage(e.target.value);
-          }}
-          onKeyPress={handleKeyPress}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
           placeholder="Type a message..."
-          disabled={isLoading || isUploading}
-          className="bg-luxury-darker/50 backdrop-blur-sm border-none rounded-full px-6 py-3 text-luxury-neutral placeholder:text-luxury-neutral/50 focus-visible:ring-1 focus-visible:ring-luxury-primary/50 transition-all duration-300"
+          className="flex-1 bg-[#0D1117] border-white/5 focus-visible:ring-0 focus-visible:ring-offset-0 text-white/90"
         />
-      </div>
-
-      <motion.div
-        initial={{ scale: 1 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="relative"
-      >
+        
         <Button
-          onClick={handleSend}
-          disabled={isLoading || isUploading || (!message.trim() && !fileInputRef.current?.files?.length)}
-          className="rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-300 disabled:opacity-50 disabled:hover:bg-luxury-primary shadow-lg hover:shadow-luxury-primary/25"
+          type="submit"
+          size="icon"
+          disabled={isLoading || !message.trim()}
+          className={`${isLoading ? 'opacity-50' : 'opacity-100'}`}
         >
-          {isLoading || isUploading ? (
-            <Loader className="h-5 w-5 animate-spin" />
-          ) : (
-            <Send className="h-5 w-5" />
-          )}
+          <Send className="h-4 w-4" />
         </Button>
-      </motion.div>
-    </div>
+      </div>
+    </form>
   );
 };

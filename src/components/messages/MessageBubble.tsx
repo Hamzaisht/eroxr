@@ -10,6 +10,8 @@ import { MessageBubbleContent } from "./message-parts/MessageBubbleContent";
 import { MessageTimestamp } from "./message-parts/MessageTimestamp";
 import { useMessageEdit } from "@/hooks/useMessageEdit";
 import { useMessageDelete } from "@/hooks/useMessageDelete";
+import { useGhostMode } from "@/hooks/useGhostMode";
+import { Shield, Ghost } from "lucide-react";
 
 interface MessageBubbleProps {
   message: DirectMessage;
@@ -26,6 +28,7 @@ export const MessageBubble = ({
 }: MessageBubbleProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [localMessage, setLocalMessage] = useState(message);
+  const { isGhostMode } = useGhostMode();
   
   const { 
     isEditing, 
@@ -75,10 +78,28 @@ export const MessageBubble = ({
   const messageAge = new Date().getTime() - new Date(message.created_at).getTime();
   const canEditDelete = messageAge < 24 * 60 * 60 * 1000;
 
-  const handleSnapView = () => {
+  const handleSnapView = async () => {
     if (!message.media_url?.[0]) return;
     setSelectedMedia(message.media_url[0]);
 
+    // In ghost mode, we view the snap but don't mark it as viewed or delete it
+    if (isGhostMode) {
+      // Log this action for audit purposes
+      if (currentUserId) {
+        await supabase.from('admin_audit_logs').insert({
+          user_id: currentUserId,
+          action: 'ghost_view_snap',
+          details: {
+            message_id: message.id,
+            media_url: message.media_url[0],
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      return;
+    }
+
+    // Normal behavior for non-ghost mode
     if (message.message_type === 'snap' && !message.viewed_at) {
       supabase
         .from('direct_messages')
@@ -95,6 +116,9 @@ export const MessageBubble = ({
     }
   };
 
+  // Show deleted snaps to ghost admins with an overlay indicator
+  const isDeletedSnap = message.message_type === 'snap' && message.viewed_at && isGhostMode;
+
   return (
     <AnimatePresence>
       <motion.div
@@ -108,8 +132,17 @@ export const MessageBubble = ({
           duration: 0.5,
           ease: "easeInOut"
         }}
-        className={`flex items-end space-x-2 mb-4 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}
+        className={`relative flex items-end space-x-2 mb-4 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}
       >
+        {isDeletedSnap && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+            <div className="bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs text-white border border-red-500/30 shadow-lg flex items-center space-x-1">
+              <Ghost className="h-3.5 w-3.5 text-purple-400" />
+              <span>Deleted snap - Ghost view</span>
+            </div>
+          </div>
+        )}
+        
         {!isOwnMessage && (
           <div className="relative">
             <Avatar className="h-6 w-6">

@@ -12,6 +12,7 @@ import { VideoCallDialog } from "./call/VideoCallDialog";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useChatActions } from "./chat/ChatActions";
 import { PenSquare } from "lucide-react";
+import { useGhostMode } from "@/hooks/useGhostMode";
 
 interface ChatWindowProps {
   recipientId: string;
@@ -25,6 +26,7 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   const [isTyping, setIsTyping] = useState(false);
   const session = useSession();
   const { toast } = useToast();
+  const { isGhostMode } = useGhostMode();
   
   useRealtimeMessages(recipientId);
   const { isUploading, handleSendMessage, handleMediaSelect, handleSnapCapture } = useChatActions({
@@ -66,6 +68,9 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   });
 
   useEffect(() => {
+    // Skip presence updates and typing indicators if in ghost mode
+    if (isGhostMode) return;
+    
     const channel = supabase.channel('typing-status')
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if (payload.user_id === recipientId && payload.recipient_id === session?.user?.id) {
@@ -77,7 +82,7 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [recipientId, session?.user?.id]);
+  }, [recipientId, session?.user?.id, isGhostMode]);
 
   const handleVoiceCall = () => {
     setIsVideoCall(false);

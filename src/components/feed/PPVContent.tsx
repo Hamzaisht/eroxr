@@ -1,9 +1,11 @@
+
 import { Button } from "@/components/ui/button";
-import { Lock } from "lucide-react";
+import { Lock, Ghost } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useGhostMode } from "@/hooks/useGhostMode";
 
 interface PPVContentProps {
   postId: string;
@@ -15,6 +17,7 @@ export const PPVContent = ({ postId, amount, mediaUrl }: PPVContentProps) => {
   const { toast } = useToast();
   const session = useSession();
   const queryClient = useQueryClient();
+  const { isGhostMode } = useGhostMode();
 
   const handlePurchase = async () => {
     if (!session) {
@@ -53,6 +56,16 @@ export const PPVContent = ({ postId, amount, mediaUrl }: PPVContentProps) => {
       });
     }
   };
+
+  // In ghost mode, we don't block the content, but show a ghost indicator
+  if (isGhostMode) {
+    return (
+      <div className="absolute top-2 right-2 z-50 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs text-white border border-purple-500/30 shadow-lg flex items-center space-x-1">
+        <Ghost className="h-3.5 w-3.5 text-purple-400" />
+        <span>Viewing paid content (${amount}) in Ghost Mode</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full min-h-[300px] group">

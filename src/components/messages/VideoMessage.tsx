@@ -1,8 +1,11 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Video, Play, Loader2 } from "lucide-react";
+import { Video, Play, Loader2, Ghost } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useGhostMode } from "@/hooks/useGhostMode";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface VideoMessageProps {
   messageId: string;
@@ -16,6 +19,8 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
   const [isLoading, setIsLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
+  const { isGhostMode } = useGhostMode();
+  const session = useSession();
 
   useEffect(() => {
     if (videoRef.current) {
@@ -32,9 +37,28 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
   }, [toast]);
 
   const handlePlay = async () => {
-    if (videoRef.current && !isViewed) {
+    if (videoRef.current) {
       setIsPlaying(true);
       videoRef.current.play();
+      
+      // In Ghost Mode, we view the content but don't mark it as viewed
+      if (isGhostMode) {
+        // Log this action for audit purposes
+        if (session?.user?.id) {
+          await supabase.from('admin_audit_logs').insert({
+            user_id: session.user.id,
+            action: 'ghost_view_video',
+            details: {
+              message_id: messageId,
+              video_url: videoUrl,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
+        return;
+      }
+      
+      // Normal behavior for non-ghost mode
       onView();
       
       // Mark message as viewed in database
@@ -56,13 +80,8 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
     }
   };
 
-  if (isViewed) {
-    return (
-      <div className="text-center text-muted-foreground p-4">
-        This video message has expired
-      </div>
-    );
-  }
+  // In ghost mode, we can view expired content
+  const showExpiredMessage = isViewed && !isGhostMode;
 
   return (
     <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
@@ -71,20 +90,37 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       )}
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        className="w-full h-full object-contain"
-        onEnded={handleEnded}
-        style={{ display: isPlaying ? 'block' : 'none' }}
-      />
-      {!isPlaying && !isViewed && (
-        <Button
-          onClick={handlePlay}
-          className="absolute inset-0 w-full h-full bg-black/50 hover:bg-black/60"
-        >
-          <Play className="h-12 w-12" />
-        </Button>
+      
+      {showExpiredMessage ? (
+        <div className="text-center text-muted-foreground p-4">
+          This video message has expired
+        </div>
+      ) : (
+        <>
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className="w-full h-full object-contain"
+            onEnded={handleEnded}
+            style={{ display: isPlaying ? 'block' : 'none' }}
+          />
+          
+          {!isPlaying && (
+            <Button
+              onClick={handlePlay}
+              className="absolute inset-0 w-full h-full bg-black/50 hover:bg-black/60"
+            >
+              <Play className="h-12 w-12" />
+            </Button>
+          )}
+          
+          {isGhostMode && isViewed && (
+            <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-white border border-purple-500/30 shadow-lg flex items-center space-x-1">
+              <Ghost className="h-3 w-3 text-purple-400" />
+              <span>Ghost View</span>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
