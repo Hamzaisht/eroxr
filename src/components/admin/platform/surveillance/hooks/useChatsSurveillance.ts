@@ -11,28 +11,31 @@ export function useChatsSurveillance() {
     if (!session?.user?.id) return [];
     
     try {
-      // Get recent messages - last 30 mins
+      // Get recent messages - last 60 mins to capture more data
       const { data, error } = await supabase
-        .from('messages')
+        .from('direct_messages')
         .select(`
           id,
           sender_id,
-          receiver_id,
+          recipient_id,
           message_type,
           content,
           created_at,
           media_url,
+          video_url,
           sender:sender_id (username, avatar_url),
-          receiver:receiver_id (username, avatar_url)
+          receiver:recipient_id (username, avatar_url)
         `)
-        .gte('created_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
+        .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
       
       if (error) {
         console.error("Error fetching chat data:", error);
         throw new Error("Failed to load chat data");
       }
+      
+      console.log("Chat data fetched:", data?.length || 0, "messages");
       
       if (!data) return [];
       
@@ -48,8 +51,16 @@ export function useChatsSurveillance() {
         started_at: message.created_at,
         content: message.content,
         content_type: message.message_type,
-        sender_profiles: message.sender?.[0],
-        receiver_profiles: message.receiver?.[0]
+        sender_profiles: {
+          username: message.sender?.[0]?.username || "Unknown",
+          avatar_url: message.sender?.[0]?.avatar_url || null
+        },
+        receiver_profiles: {
+          username: message.receiver?.[0]?.username || "Unknown", 
+          avatar_url: message.receiver?.[0]?.avatar_url || null
+        },
+        media_url: message.media_url || [],
+        video_url: message.video_url
       }));
     } catch (error) {
       console.error("Error in fetchChats:", error);

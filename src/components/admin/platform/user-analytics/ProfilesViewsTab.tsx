@@ -18,9 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TabProps, Analytics } from "./types";
+import { TabProps, Analytics, ViewedProfile } from "./types";
 
-interface ProfilesViewsTabProps extends TabProps {
+export interface ProfilesViewsTabProps extends TabProps {
   navigate: (path: string) => void;
 }
 

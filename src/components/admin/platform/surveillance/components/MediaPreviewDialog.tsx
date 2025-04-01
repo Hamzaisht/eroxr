@@ -1,4 +1,5 @@
 
+import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,99 +7,141 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { MediaPreviewDialogProps } from "../types";
+import { LiveSession } from "../../user-analytics/types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-export const MediaPreviewDialog = ({ session, onOpenChange, open }: MediaPreviewDialogProps) => {
+interface MediaPreviewDialogProps {
+  session: LiveSession | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export const MediaPreviewDialog: React.FC<MediaPreviewDialogProps> = ({
+  session,
+  open,
+  onOpenChange,
+}) => {
   if (!session) return null;
-  
+
+  const hasMedia = (session.media_url && session.media_url.length > 0);
+  const hasVideo = !!session.video_url;
+  const hasProfile = !!(session.type === "bodycontact" && session.about_me);
+
+  // Show default tab based on available content
+  const defaultTab = hasVideo ? "video" : hasMedia ? "images" : "profile";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-4xl bg-[#0D1117]/95 border-purple-950/50">
         <DialogHeader>
-          <DialogTitle>Content Preview - {session.type}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={session.avatar_url || undefined} alt={session.username || "User"} />
+              <AvatarFallback>{session.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+            </Avatar>
+            <span>
+              {session.username || "Unknown User"} - {session.type.charAt(0).toUpperCase() + session.type.slice(1)} Content
+            </span>
+          </DialogTitle>
           <DialogDescription>
-            {session.username}'s {session.type} content
+            Previewing content {session.type === "bodycontact" ? "from ad" : "from message"}
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="mt-4 space-y-4">
-          {session.type === 'stream' && (
-            <div className="aspect-video bg-black/50 rounded-lg flex items-center justify-center">
-              <p className="text-gray-400">Stream preview would appear here</p>
-              {/* In a real implementation, you would embed the stream here */}
-            </div>
+
+        <Tabs defaultValue={defaultTab} className="w-full">
+          <TabsList className="w-full grid grid-cols-3">
+            {hasVideo && <TabsTrigger value="video">Video</TabsTrigger>}
+            {hasMedia && <TabsTrigger value="images">Images</TabsTrigger>}
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+          </TabsList>
+
+          {hasVideo && (
+            <TabsContent value="video" className="h-[500px] flex justify-center items-center">
+              <video
+                src={session.video_url}
+                controls
+                className="max-h-full max-w-full rounded-md"
+              />
+            </TabsContent>
           )}
-          
-          {session.type === 'chat' && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">Message Content:</h3>
-              <div className="p-3 bg-gray-900 rounded-lg">
-                {session.content ? (
-                  <p className="text-gray-300">{session.content}</p>
-                ) : (
-                  <p className="text-gray-500 italic">No text content</p>
+
+          {hasMedia && (
+            <TabsContent value="images" className="h-[500px]">
+              <ScrollArea className="h-full w-full">
+                <div className="grid grid-cols-2 gap-4 p-4">
+                  {session.media_url?.map((url, index) => (
+                    <img
+                      key={index}
+                      src={url}
+                      alt={`Media ${index + 1}`}
+                      className="w-full h-auto rounded-md object-cover max-h-[300px]"
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          )}
+
+          <TabsContent value="profile" className="h-[500px]">
+            <ScrollArea className="h-full w-full p-4">
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={session.avatar_url || undefined} alt={session.username || "User"} />
+                    <AvatarFallback>{session.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="text-lg font-bold">{session.username || "Unknown User"}</h3>
+                    {session.type === "chat" && (
+                      <p className="text-sm text-muted-foreground">
+                        Message to: {session.recipient_username}
+                      </p>
+                    )}
+                    {session.type === "bodycontact" && session.title && (
+                      <p className="text-sm font-medium">{session.title}</p>
+                    )}
+                  </div>
+                </div>
+
+                {session.description && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-purple-400">Description</h4>
+                    <p className="text-sm whitespace-pre-wrap">{session.description}</p>
+                  </div>
+                )}
+
+                {session.content && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-purple-400">Message Content</h4>
+                    <p className="text-sm whitespace-pre-wrap">{session.content}</p>
+                  </div>
+                )}
+
+                {session.about_me && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-purple-400">About Me</h4>
+                    <p className="text-sm whitespace-pre-wrap">{session.about_me}</p>
+                  </div>
+                )}
+
+                {session.tags && session.tags.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-purple-400">Tags</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {session.tags.map((tag, index) => (
+                        <span key={index} className="px-2 py-1 bg-purple-900/30 text-purple-200 text-xs rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-              
-              {session.media_url && session.media_url.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Media:</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {session.media_url.map((url, index) => (
-                      <img 
-                        key={index}
-                        src={url} 
-                        alt={`Media ${index}`} 
-                        className="w-full h-32 object-cover rounded-md"
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {session.video_url && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Video:</h3>
-                  <div className="aspect-video bg-black rounded-lg">
-                    <video 
-                      src={session.video_url} 
-                      controls
-                      className="w-full h-full"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {session.type === 'bodycontact' && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium">About:</h3>
-                <p className="text-gray-300 mt-1">{session.about_me || session.description || 'No description provided'}</p>
-              </div>
-              
-              {session.tags && session.tags.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium">Tags:</h3>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {session.tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div>
-                <h3 className="text-sm font-medium">Location:</h3>
-                <p className="text-gray-300 mt-1">{session.location || 'Unknown location'}</p>
-              </div>
-            </div>
-          )}
-        </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

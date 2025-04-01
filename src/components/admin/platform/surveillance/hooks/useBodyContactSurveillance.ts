@@ -11,9 +11,9 @@ export function useBodyContactSurveillance() {
     if (!session?.user?.id) return [];
     
     try {
-      // Get active body contact ads
+      // Get active body contact ads - include specific user data
       const { data, error } = await supabase
-        .from('body_contact_ads')
+        .from('dating_ads')
         .select(`
           id,
           user_id,
@@ -24,21 +24,26 @@ export function useBodyContactSurveillance() {
           created_at,
           updated_at,
           status,
-          is_verified,
-          is_premium,
+          is_active,
+          video_url,
+          about_me,
+          avatar_url,
           profiles:user_id (
             username,
-            avatar_url
+            avatar_url,
+            about_me
           )
         `)
-        .eq('status', 'active')
+        .eq('is_active', true)
         .order('updated_at', { ascending: false })
-        .limit(20);
+        .limit(30);
       
       if (error) {
         console.error("Error fetching body contact data:", error);
         throw new Error("Failed to load BodyContact data");
       }
+      
+      console.log("Body contact data fetched:", data?.length || 0, "records");
       
       if (!data) return [];
       
@@ -48,15 +53,18 @@ export function useBodyContactSurveillance() {
         type: 'bodycontact' as const,
         user_id: ad.user_id,
         username: ad.profiles?.[0]?.username || "Unknown",
-        avatar_url: ad.profiles?.[0]?.avatar_url || null,
+        avatar_url: ad.profiles?.[0]?.avatar_url || ad.avatar_url || null,
         title: ad.title || "Untitled Ad",
         description: ad.description,
-        status: ad.status,
+        status: ad.is_active ? 'active' : 'inactive',
         location: ad.location,
         tags: ad.tags,
         started_at: ad.created_at,
         created_at: ad.created_at,
-        content_type: ad.is_premium ? 'premium' : 'standard'
+        about_me: ad.about_me || ad.profiles?.[0]?.about_me,
+        video_url: ad.video_url,
+        media_url: ad.avatar_url ? [ad.avatar_url] : [],
+        content_type: 'bodycontact'
       }));
     } catch (error) {
       console.error("Error in fetchBodyContact:", error);
