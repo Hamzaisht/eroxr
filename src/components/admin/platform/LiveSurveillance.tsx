@@ -78,17 +78,23 @@ export const LiveSurveillance = () => {
             
           if (streamsError) throw streamsError;
           
-          data = streams.map(stream => ({
-            id: stream.id,
-            type: 'stream',
-            user_id: stream.creator_id,
-            username: stream.profiles?.username || 'Unknown',
-            avatar_url: stream.profiles?.avatar_url,
-            started_at: stream.started_at,
-            status: 'active',
-            title: stream.title,
-            content_type: 'video'
-          }));
+          data = streams.map(stream => {
+            // Use optional chaining with fallbacks for profile data
+            const username = stream.profiles?.username || 'Unknown';
+            const avatar_url = stream.profiles?.avatar_url || null;
+            
+            return {
+              id: stream.id,
+              type: 'stream',
+              user_id: stream.creator_id,
+              username: username,
+              avatar_url: avatar_url,
+              started_at: stream.started_at,
+              status: 'active',
+              title: stream.title,
+              content_type: 'video'
+            };
+          });
           break;
           
         case 'calls':

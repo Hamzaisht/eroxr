@@ -1,5 +1,6 @@
 
 import { DateRange } from "@/components/ui/date-range-picker";
+import { WithProfile } from "@/integrations/supabase/types/profile";
 
 export interface TabProps {
   analytics: any;
@@ -57,7 +58,7 @@ export interface LiveSession {
   type: 'stream' | 'call' | 'chat' | 'bodycontact';
   user_id: string;
   username: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   started_at: string;
   participants?: number;
   status: 'active' | 'flagged' | 'reported';
@@ -70,7 +71,7 @@ export interface LiveAlert {
   type: 'flag' | 'report' | 'risk';
   user_id: string;
   username: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   created_at: string;
   content_type: 'stream' | 'call' | 'message' | 'post' | 'ad';
   reason: string;

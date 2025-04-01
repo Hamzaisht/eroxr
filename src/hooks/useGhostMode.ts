@@ -24,8 +24,9 @@ export const useGhostMode = () => {
       console.log("God mode user detected in useGhostMode");
       console.log("isSuperAdmin status:", isSuperAdmin);
       console.log("Ghost mode active:", isGhostMode);
+      console.log("Live alerts count:", liveAlerts.length);
     }
-  }, [session, isSuperAdmin, isGhostMode]);
+  }, [session, isSuperAdmin, isGhostMode, liveAlerts]);
   
   // If user is not a super admin, always return false for ghost mode
   return {

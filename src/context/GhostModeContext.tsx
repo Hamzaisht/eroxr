@@ -74,18 +74,24 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
         
         if (data) {
-          setLiveAlerts(data.map(alert => ({
-            id: alert.id,
-            type: alert.type,
-            user_id: alert.user_id,
-            username: alert.profiles?.username || 'Unknown',
-            avatar_url: alert.profiles?.avatar_url,
-            created_at: alert.created_at,
-            content_type: alert.content_type,
-            reason: alert.reason,
-            severity: alert.severity,
-            content_id: alert.content_id
-          })));
+          setLiveAlerts(data.map(alert => {
+            // Properly handle profile data, using optional chaining and fallbacks
+            const username = alert.profiles?.username || 'Unknown';
+            const avatar_url = alert.profiles?.avatar_url || null;
+            
+            return {
+              id: alert.id,
+              type: alert.type,
+              user_id: alert.user_id,
+              username: username,
+              avatar_url: avatar_url,
+              created_at: alert.created_at,
+              content_type: alert.content_type,
+              reason: alert.reason,
+              severity: alert.severity,
+              content_id: alert.content_id
+            };
+          }));
         }
       } catch (error) {
         console.error("Error fetching alerts:", error);
@@ -121,18 +127,24 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
       
       if (data) {
-        setLiveAlerts(data.map(alert => ({
-          id: alert.id,
-          type: alert.type,
-          user_id: alert.user_id,
-          username: alert.profiles?.username || 'Unknown',
-          avatar_url: alert.profiles?.avatar_url,
-          created_at: alert.created_at,
-          content_type: alert.content_type,
-          reason: alert.reason,
-          severity: alert.severity,
-          content_id: alert.content_id
-        })));
+        setLiveAlerts(data.map(alert => {
+          // Consistently handle profile data
+          const username = alert.profiles?.username || 'Unknown';
+          const avatar_url = alert.profiles?.avatar_url || null;
+          
+          return {
+            id: alert.id,
+            type: alert.type,
+            user_id: alert.user_id,
+            username: username,
+            avatar_url: avatar_url,
+            created_at: alert.created_at,
+            content_type: alert.content_type,
+            reason: alert.reason,
+            severity: alert.severity,
+            content_id: alert.content_id
+          };
+        }));
       }
     } catch (error) {
       console.error("Error refreshing alerts:", error);
