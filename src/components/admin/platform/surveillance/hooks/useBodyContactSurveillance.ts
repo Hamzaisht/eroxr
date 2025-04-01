@@ -4,6 +4,27 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveSession } from "../../user-analytics/types";
 
+// Define a type for BodyContact ads
+type BodyContactAd = {
+  id: string;
+  title: string;
+  description?: string;
+  location: string;
+  created_at: string;
+  updated_at?: string;
+  user_id: string;
+  tags?: string[];
+  about_me?: string;
+  video_url?: string;
+  avatar_url?: string;
+  is_active?: boolean;
+  profiles?: {
+    username?: string;
+    avatar_url?: string;
+    about_me?: string;
+  };
+};
+
 export function useBodyContactSurveillance() {
   const session = useSession();
   
@@ -30,14 +51,14 @@ export function useBodyContactSurveillance() {
           video_url,
           about_me,
           avatar_url,
-          profiles:user_id (
+          profiles:profiles!dating_ads_user_id_fkey (
             username,
             avatar_url,
             about_me
           )
         `)
         .order('updated_at', { ascending: false })
-        .limit(50);
+        .limit(50) as unknown as { data: BodyContactAd[]; error: any };
       
       if (error) {
         console.error("Error fetching body contact data:", error);
@@ -54,8 +75,8 @@ export function useBodyContactSurveillance() {
         id: ad.id,
         type: 'bodycontact' as const,
         user_id: ad.user_id,
-        username: ad.profiles?.[0]?.username || "Unknown",
-        avatar_url: ad.profiles?.[0]?.avatar_url || ad.avatar_url || null,
+        username: ad.profiles?.username || "Unknown",
+        avatar_url: ad.profiles?.avatar_url || ad.avatar_url || null,
         title: ad.title || "Untitled Ad",
         description: ad.description,
         status: ad.is_active ? 'active' : 'inactive',
@@ -63,7 +84,7 @@ export function useBodyContactSurveillance() {
         tags: ad.tags,
         started_at: ad.created_at,
         created_at: ad.created_at,
-        about_me: ad.about_me || ad.profiles?.[0]?.about_me,
+        about_me: ad.about_me || ad.profiles?.about_me,
         video_url: ad.video_url,
         media_url: ad.avatar_url ? [ad.avatar_url] : [],
         content_type: 'bodycontact'

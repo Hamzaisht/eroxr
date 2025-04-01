@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { AlertCircle, MessageCircle, UserIcon } from "lucide-react";
+import { AlertCircle, MessageCircle, UserIcon, MapPin } from "lucide-react";
 import { LiveSession } from "../user-analytics/types";
 import { SessionItem } from "./components/SessionItem";
 import { MediaPreviewDialog } from "./components/MediaPreviewDialog";
@@ -45,13 +45,33 @@ export const SessionList = ({
   }
   
   if (sessions.length === 0) {
+    // Get the current tab type from the session data or default to "content"
+    const emptyStateIcon = () => {
+      if (sessions.type === 'bodycontact') {
+        return <UserIcon className="h-12 w-12 opacity-50" />;
+      } else if (sessions.type === 'chats') {
+        return <MessageCircle className="h-12 w-12 opacity-50" />;
+      } else {
+        return <MessageCircle className="h-12 w-12 opacity-50" />;
+      }
+    };
+
+    const emptyStateMessage = () => {
+      if (sessions.type === 'bodycontact') {
+        return "No active BodyContact ads at the moment";
+      } else if (sessions.type === 'chats') {
+        return "No active chats at the moment";
+      } else {
+        return "No active sessions at the moment";
+      }
+    };
+
     return (
       <div className="text-center py-12 text-gray-400 bg-[#161B22] rounded-lg">
         <div className="flex justify-center mb-4">
-          {/* Fix: Check the current tab type instead of sessions.type */}
-          <MessageCircle className="h-12 w-12 opacity-50" />
+          {emptyStateIcon()}
         </div>
-        <p className="text-lg font-medium">No active sessions at the moment</p>
+        <p className="text-lg font-medium">{emptyStateMessage()}</p>
         <p className="mt-2 text-sm text-gray-500">
           Users' activities will appear here when they become active
         </p>
