@@ -74,8 +74,8 @@ const VideoCallDialog = ({
   // Use the hooks correctly
   useMediaTracks(localStream, !audioEnabled, videoEnabled);
   
-  // Use the tip notifications hook
-  const tipNotifications = useTipNotifications();
+  // Use the tip notifications hook correctly with proper type
+  const { showTipNotification } = useTipNotifications();
 
   // Helper functions for media controls  
   const toggleAudio = () => {
@@ -135,7 +135,7 @@ const VideoCallDialog = ({
   
   // Handle tip notification
   const handleSendTip = (amount: number) => {
-    tipNotifications.showTipNotification(`Sent ${amount} SEK tip`);
+    showTipNotification(`Sent ${amount} SEK tip`);
   };
   
   return (
@@ -154,7 +154,7 @@ const VideoCallDialog = ({
               </Button>
               <Button 
                 className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => tipNotifications.showTipNotification('Recording started')}
+                onClick={() => showTipNotification('Recording started')}
               >
                 <Camera className="h-4 w-4 mr-2" />
                 Record Evidence

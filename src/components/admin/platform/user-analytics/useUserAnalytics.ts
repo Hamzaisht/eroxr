@@ -49,81 +49,63 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
       if (!userId) return null;
       const dateRange = getDateRange();
 
-      const [
-        postsData,
-        likesData,
-        commentsData,
-        viewsData,
-        tipsData,
-        messagesData,
-        datingViewsData,
-        contentTypesData,
-      ] = await Promise.all([
-        // Posts created by user
-        supabase
-          .from("posts")
-          .select("id, created_at, likes_count, comments_count, view_count")
-          .eq("creator_id", userId)
-          .gte("created_at", dateRange.start)
-          .lte("created_at", dateRange.end),
-          
-        // Likes by user
-        supabase
-          .from("post_likes")
-          .select("id, created_at, posts!inner(creator_id)")
-          .eq("user_id", userId)
-          .gte("created_at", dateRange.start)
-          .lte("created_at", dateRange.end),
-          
-        // Comments by user  
-        supabase
-          .from("comments")
-          .select("id, created_at, posts!inner(creator_id)")
-          .eq("user_id", userId)
-          .gte("created_at", dateRange.start)
-          .lte("created_at", dateRange.end),
-          
-        // Post views (approximate from post_media_actions)
-        supabase
-          .from("post_media_actions")
-          .select("id, created_at, action_type")
-          .eq("user_id", userId)
-          .eq("action_type", "view")
-          .gte("created_at", dateRange.start)
-          .lte("created_at", dateRange.end),
-          
-        // Tips sent by user  
-        supabase
-          .from("tips")
-          .select("id, amount, created_at, recipient_id")
-          .eq("sender_id", userId)
-          .gte("created_at", dateRange.start)
-          .lte("created_at", dateRange.end),
-          
-        // Messages sent by user  
-        supabase
-          .from("direct_messages")
-          .select("id, created_at, message_type, recipient_id")
-          .eq("sender_id", userId)
-          .gte("created_at", dateRange.start)
-          .lte("created_at", dateRange.end),
-          
-        // Dating ad views
-        supabase
-          .from("dating_ads")
-          .select("id, view_count, click_count, created_at")
-          .eq("user_id", userId)
-          .gte("created_at", dateRange.start)
-          .lte("created_at", dateRange.end),
-          
-        // Content type preferences (posts vs dating vs stories)
-        supabase
-          .from("post_media_actions")
-          .select("id, post_id, created_at")
-          .eq("user_id", userId)
-          .gte("created_at", dateRange.start)
-          .lte("created_at", dateRange.end)
-      ]);
+      // Fetch user analytics data
+      const { data: postsData, error: postsError } = await supabase
+        .from("posts")
+        .select("id, created_at, likes_count, comments_count, view_count")
+        .eq("creator_id", userId)
+        .gte("created_at", dateRange.start)
+        .lte("created_at", dateRange.end);
+
+      const { data: likesData, error: likesError } = await supabase
+        .from("post_likes")
+        .select("id, created_at, posts!inner(creator_id)")
+        .eq("user_id", userId)
+        .gte("created_at", dateRange.start)
+        .lte("created_at", dateRange.end);
+
+      const { data: commentsData, error: commentsError } = await supabase
+        .from("comments")
+        .select("id, created_at, posts!inner(creator_id)")
+        .eq("user_id", userId)
+        .gte("created_at", dateRange.start)
+        .lte("created_at", dateRange.end);
+
+      const { data: viewsData, error: viewsError } = await supabase
+        .from("post_media_actions")
+        .select("id, created_at, action_type")
+        .eq("user_id", userId)
+        .eq("action_type", "view")
+        .gte("created_at", dateRange.start)
+        .lte("created_at", dateRange.end);
+
+      const { data: tipsData, error: tipsError } = await supabase
+        .from("tips")
+        .select("id, amount, created_at, recipient_id")
+        .eq("sender_id", userId)
+        .gte("created_at", dateRange.start)
+        .lte("created_at", dateRange.end);
+
+      const { data: messagesData, error: messagesError } = await supabase
+        .from("direct_messages")
+        .select("id, created_at, message_type, recipient_id")
+        .eq("sender_id", userId)
+        .gte("created_at", dateRange.start)
+        .lte("created_at", dateRange.end);
+
+      const { data: datingViewsData, error: datingViewsError } = await supabase
+        .from("dating_ads")
+        .select("id, view_count, click_count, created_at")
+        .eq("user_id", userId)
+        .gte("created_at", dateRange.start)
+        .lte("created_at", dateRange.end);
+
+      const { data: contentTypesData, error: contentTypesError } = await supabase
+        .from("post_media_actions")
+        .select("id, post_id, created_at")
+        .eq("user_id", userId)
+        .gte("created_at", dateRange.start)
+        .lte("created_at", dateRange.end);
 
       // Extract most viewed profiles
       const { data: mostViewedProfiles } = await supabase
@@ -145,7 +127,7 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
         .lte("created_at", dateRange.end);
 
       // Process most viewed profiles
-      const profileViewCount: { [key: string]: { count: number, username: string, avatar_url: string | null } } = {};
+      const profileViewCount: { [key: string]: { count: number, username: string, avatar_url: string | null, lastViewed: string } } = {};
       
       if (mostViewedProfiles) {
         mostViewedProfiles.forEach((view: any) => {
@@ -157,18 +139,30 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
               profileViewCount[creator] = { 
                 count: 0, 
                 username: profile?.username || "Unknown", 
-                avatar_url: profile?.avatar_url 
+                avatar_url: profile?.avatar_url,
+                lastViewed: view.created_at
               };
             }
             profileViewCount[creator].count++;
+            // Update last viewed time if this view is more recent
+            if (new Date(view.created_at) > new Date(profileViewCount[creator].lastViewed)) {
+              profileViewCount[creator].lastViewed = view.created_at;
+            }
           }
         });
       }
       
-      const topProfiles = Object.entries(profileViewCount)
+      // Convert to ViewedProfile[] format to match the required interface
+      const topProfiles: ViewedProfile[] = Object.entries(profileViewCount)
         .map(([id, data]) => ({ 
-          id, 
-          ...data 
+          id,
+          viewer_id: userId,
+          viewer_username: profile?.username || "Unknown",
+          view_count: data.count,
+          last_viewed: data.lastViewed,
+          username: data.username,
+          avatar_url: data.avatar_url,
+          count: data.count
         }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
@@ -193,7 +187,7 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
         }
         
         // Add post counts to timeline
-        postsData.data?.forEach((post: any) => {
+        postsData?.forEach((post: any) => {
           const dateStr = format(new Date(post.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].posts++;
@@ -201,7 +195,7 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
         });
         
         // Add like counts to timeline
-        likesData.data?.forEach((like: any) => {
+        likesData?.forEach((like: any) => {
           const dateStr = format(new Date(like.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].likes++;
@@ -209,7 +203,7 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
         });
         
         // Add comment counts to timeline
-        commentsData.data?.forEach((comment: any) => {
+        commentsData?.forEach((comment: any) => {
           const dateStr = format(new Date(comment.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].comments++;
@@ -217,7 +211,7 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
         });
         
         // Add view counts to timeline
-        viewsData.data?.forEach((view: any) => {
+        viewsData?.forEach((view: any) => {
           const dateStr = format(new Date(view.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].views++;
@@ -225,7 +219,7 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
         });
         
         // Add message counts to timeline
-        messagesData.data?.forEach((message: any) => {
+        messagesData?.forEach((message: any) => {
           const dateStr = format(new Date(message.created_at), "yyyy-MM-dd");
           if (timeline[dateStr]) {
             timeline[dateStr].messages++;
@@ -239,31 +233,31 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
 
       // Calculate content type distribution
       const contentDistribution = [
-        { name: "Posts", value: postsData.data?.length || 0 },
-        { name: "Dating", value: datingViewsData.data?.length || 0 },
-        { name: "Messages", value: messagesData.data?.length || 0 }
+        { name: "Posts", value: postsData?.length || 0 },
+        { name: "Dating", value: datingViewsData?.length || 0 },
+        { name: "Messages", value: messagesData?.length || 0 }
       ];
 
       // Calculate total statistics
-      const totalPosts = postsData.data?.length || 0;
-      const totalLikes = likesData.data?.length || 0; 
-      const totalComments = commentsData.data?.length || 0;
-      const totalViews = viewsData.data?.length || 0;
-      const totalMessages = messagesData.data?.length || 0;
+      const totalPosts = postsData?.length || 0;
+      const totalLikes = likesData?.length || 0; 
+      const totalComments = commentsData?.length || 0;
+      const totalViews = viewsData?.length || 0;
+      const totalMessages = messagesData?.length || 0;
       
       // Calculate tips amount
-      const tipsAmount = tipsData.data?.reduce((sum, tip) => sum + (parseFloat(tip.amount) || 0), 0) || 0;
+      const tipsAmount = tipsData?.reduce((sum, tip) => sum + (parseFloat(tip.amount) || 0), 0) || 0;
       
       // Get unique recipients
-      const uniqueMessageRecipients = new Set(messagesData.data?.map((m: any) => m.recipient_id) || []);
+      const uniqueMessageRecipients = new Set(messagesData?.map((m: any) => m.recipient_id) || []);
       
       // Get last active date
       const allDates = [
-        ...(postsData.data?.map((p: any) => new Date(p.created_at).getTime()) || []),
-        ...(likesData.data?.map((l: any) => new Date(l.created_at).getTime()) || []),
-        ...(commentsData.data?.map((c: any) => new Date(c.created_at).getTime()) || []),
-        ...(viewsData.data?.map((v: any) => new Date(v.created_at).getTime()) || []),
-        ...(messagesData.data?.map((m: any) => new Date(m.created_at).getTime()) || [])
+        ...(postsData?.map((p: any) => new Date(p.created_at).getTime()) || []),
+        ...(likesData?.map((l: any) => new Date(l.created_at).getTime()) || []),
+        ...(commentsData?.map((c: any) => new Date(c.created_at).getTime()) || []),
+        ...(viewsData?.map((v: any) => new Date(v.created_at).getTime()) || []),
+        ...(messagesData?.map((m: any) => new Date(m.created_at).getTime()) || [])
       ];
       
       const lastActiveTimestamp = allDates.length > 0 ? Math.max(...allDates) : null;
