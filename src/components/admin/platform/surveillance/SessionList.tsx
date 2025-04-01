@@ -1,17 +1,25 @@
 
 import { useState } from "react";
+import { AlertCircle } from "lucide-react";
 import { LiveSession } from "../user-analytics/types";
 import { SessionItem } from "./components/SessionItem";
 import { MediaPreviewDialog } from "./components/MediaPreviewDialog";
 import { useModerationActions } from "./hooks/useModerationActions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SessionListProps {
   sessions: LiveSession[];
   isLoading: boolean;
+  error?: string | null;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
 }
 
-export const SessionList = ({ sessions, isLoading, onMonitorSession }: SessionListProps) => {  
+export const SessionList = ({ 
+  sessions, 
+  isLoading, 
+  error, 
+  onMonitorSession 
+}: SessionListProps) => {  
   const [showMediaPreview, setShowMediaPreview] = useState<LiveSession | null>(null);
   const { actionInProgress, handleModeration } = useModerationActions();
 
@@ -27,9 +35,18 @@ export const SessionList = ({ sessions, isLoading, onMonitorSession }: SessionLi
     );
   }
   
+  if (error) {
+    return (
+      <Alert className="bg-red-900/20 border-red-800 text-red-300">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+  
   if (sessions.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400">
+      <div className="text-center py-12 text-gray-400 bg-[#161B22] rounded-lg">
         <div className="h-10 w-10 mx-auto mb-2 opacity-50" />
         <p>No active sessions at the moment</p>
       </div>

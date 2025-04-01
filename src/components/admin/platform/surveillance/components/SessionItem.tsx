@@ -14,6 +14,11 @@ export const SessionItem = ({
   onModerate,
   actionInProgress
 }: SessionItemProps) => {
+  // Helper function to get first character for avatar fallback
+  const getInitial = (name: string | undefined) => {
+    return (name || 'Unknown')?.[0]?.toUpperCase() || '?';
+  };
+
   return (
     <div 
       key={session.id} 
@@ -23,7 +28,7 @@ export const SessionItem = ({
         <div className="flex items-start gap-3">
           <Avatar className="h-10 w-10 border border-white/10">
             <AvatarImage src={session.avatar_url || undefined} alt={session.username || 'Unknown'} />
-            <AvatarFallback>{(session.username || 'Unknown')?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+            <AvatarFallback>{getInitial(session.username)}</AvatarFallback>
           </Avatar>
           
           <div className="flex-1">
@@ -92,12 +97,15 @@ export const SessionItem = ({
               </div>
             )}
             
-            {session.type === 'chat' && session.recipient_username && (
+            {session.type === 'chat' && (
               <div className="text-sm text-gray-400 mt-1">
                 <div className="flex items-center space-x-2">
                   <User className="h-3 w-3" />
-                  <span>To: {session.recipient_username}</span>
+                  <span>From: @{session.username} → To: @{session.recipient_username || 'Unknown'}</span>
                 </div>
+                {session.content && (
+                  <p className="mt-1 text-xs opacity-70 truncate">{session.content}</p>
+                )}
               </div>
             )}
             

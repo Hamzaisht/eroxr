@@ -27,7 +27,7 @@ export function useBodyContactSurveillance() {
           country,
           tags,
           avatar_url,
-          profiles(username, avatar_url)
+          profiles!user_id(username, avatar_url)
         `)
         .order('last_active', { ascending: false })
         .limit(30);
@@ -51,11 +51,11 @@ export function useBodyContactSurveillance() {
           avatar_url: ad.profiles && ad.profiles[0] ? ad.profiles[0].avatar_url || ad.avatar_url || '' : ad.avatar_url || '',
           started_at: ad.last_active || ad.created_at,
           status: ad.moderation_status === 'pending' ? 'active' : 'flagged',
-          title: ad.title,
-          description: ad.description,
-          about_me: ad.about_me,
-          location: `${ad.city}, ${ad.country}`,
-          tags: ad.tags,
+          title: ad.title || 'Untitled Ad',
+          description: ad.description || '',
+          about_me: ad.about_me || '',
+          location: ad.city && ad.country ? `${ad.city}, ${ad.country}` : (ad.city || ad.country || 'Unknown location'),
+          tags: ad.tags || [],
           content_type: 'ad',
           created_at: ad.created_at
         };

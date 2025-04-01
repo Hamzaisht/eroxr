@@ -10,6 +10,8 @@ export interface SurveillanceContextType {
   setIsLoading: (loading: boolean) => void;
   isRefreshing: boolean;
   setIsRefreshing: (refreshing: boolean) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
   fetchLiveSessions: () => Promise<void>;
   handleRefresh: () => Promise<void>;
   handleStartSurveillance: (session: LiveSession) => Promise<boolean>;

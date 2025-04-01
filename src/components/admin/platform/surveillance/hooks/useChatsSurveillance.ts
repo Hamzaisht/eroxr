@@ -23,8 +23,8 @@ export function useChatsSurveillance() {
           content,
           media_url,
           video_url,
-          sender:sender_id(username, avatar_url),
-          recipient:recipient_id(username, avatar_url)
+          sender:profiles!sender_id(username, avatar_url),
+          recipient:profiles!recipient_id(username, avatar_url)
         `)
         .order('created_at', { ascending: false })
         .limit(20);

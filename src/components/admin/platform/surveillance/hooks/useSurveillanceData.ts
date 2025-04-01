@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { LiveSession } from "../../user-analytics/types";
 import { SurveillanceTab } from "../types";
@@ -13,6 +13,7 @@ export function useSurveillanceData() {
   const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const session = useSession();
   const { fetchStreams } = useStreamsSurveillance();
@@ -24,6 +25,7 @@ export function useSurveillanceData() {
     if (!session?.user?.id) return;
     
     setIsLoading(true);
+    setError(null);
     
     try {
       let data: LiveSession[] = [];
@@ -53,6 +55,8 @@ export function useSurveillanceData() {
       setLiveSessions(data);
     } catch (error) {
       console.error(`Error fetching ${activeTab}:`, error);
+      setError(`Could not load ${activeTab} data. Please try again.`);
+      setLiveSessions([]);
     } finally {
       setIsLoading(false);
     }
@@ -67,6 +71,8 @@ export function useSurveillanceData() {
     setIsLoading,
     isRefreshing,
     setIsRefreshing,
+    error,
+    setError,
     fetchLiveSessions
   };
 }
