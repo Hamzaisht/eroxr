@@ -190,9 +190,9 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       // Log the surveillance start for audit purposes
-      if (session?.user?.id) {
+      if (session?.user_id) {
         await supabase.from('admin_audit_logs').insert({
-          user_id: session.user.id,
+          user_id: session.user_id,
           action: 'ghost_surveillance_started',
           details: {
             timestamp: new Date().toISOString(),

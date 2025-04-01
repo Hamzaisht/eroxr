@@ -5,7 +5,16 @@ import { useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 
 export const useGhostMode = () => {
-  const { isGhostMode, toggleGhostMode, isLoading } = useGhostModeContext();
+  const { 
+    isGhostMode, 
+    toggleGhostMode, 
+    isLoading, 
+    activeSurveillance,
+    startSurveillance,
+    stopSurveillance,
+    liveAlerts,
+    refreshAlerts
+  } = useGhostModeContext();
   const { isSuperAdmin } = useSuperAdminCheck();
   const session = useSession();
   
@@ -22,6 +31,11 @@ export const useGhostMode = () => {
     isGhostMode: isSuperAdmin ? isGhostMode : false,
     toggleGhostMode,
     isLoading,
-    canUseGhostMode: isSuperAdmin
+    canUseGhostMode: isSuperAdmin,
+    activeSurveillance,
+    startSurveillance,
+    stopSurveillance,
+    liveAlerts,
+    refreshAlerts
   };
 };
