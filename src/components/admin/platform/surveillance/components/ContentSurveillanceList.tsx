@@ -97,13 +97,13 @@ export const ContentSurveillanceList = ({
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               <Avatar className="h-10 w-10 border border-white/10">
-                <AvatarImage src={item.creator_avatar_url || undefined} alt={item.creator_username || 'Unknown'} />
-                <AvatarFallback>{(item.creator_username || 'Unknown').charAt(0).toUpperCase() || '?'}</AvatarFallback>
+                <AvatarImage src={item.creator_avatar_url || item.avatar_url || undefined} alt={item.creator_username || item.username || 'Unknown'} />
+                <AvatarFallback>{(item.creator_username || item.username || 'Unknown').charAt(0).toUpperCase() || '?'}</AvatarFallback>
               </Avatar>
               
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-medium">{item.creator_username || 'Unknown'}</h3>
+                  <h3 className="font-medium">{item.creator_username || item.username || 'Unknown'}</h3>
                   {item.content_type && (
                     <Badge 
                       variant="outline" 
@@ -142,9 +142,11 @@ export const ContentSurveillanceList = ({
                 </div>
                 
                 {/* Content preview */}
-                <p className="text-sm text-gray-400 mt-1 line-clamp-2">
-                  {item.content || 'No text content'}
-                </p>
+                {item.content && (
+                  <p className="text-sm text-gray-400 mt-1 line-clamp-2">
+                    {item.content}
+                  </p>
+                )}
                 
                 {/* Media preview counts */}
                 {item.media_urls && item.media_urls.length > 0 && (
@@ -217,7 +219,7 @@ export const ContentSurveillanceList = ({
                   <DialogTrigger asChild>
                     <DropdownMenuItem
                       className="text-red-500 flex items-center"
-                      onClick={() => handleActionClick(item, 'ban')}
+                      onSelect={(e) => e.preventDefault()}
                     >
                       <User className="h-4 w-4 mr-2" />
                       Ban Creator
@@ -237,7 +239,7 @@ export const ContentSurveillanceList = ({
             <DialogHeader>
               <DialogTitle>Ban Creator</DialogTitle>
               <DialogDescription>
-                Are you sure you want to ban {selectedItem.creator_username || 'this creator'}? This will remove all their content and prevent them from logging in.
+                Are you sure you want to ban {selectedItem.creator_username || selectedItem.username || 'this creator'}? This will remove all their content and prevent them from logging in.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex justify-between">

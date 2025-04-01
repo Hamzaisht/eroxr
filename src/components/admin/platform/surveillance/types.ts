@@ -6,7 +6,7 @@ export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'c
 export interface LiveSession {
   id: string;
   type: 'stream' | 'call' | 'chat' | 'bodycontact';
-  user_id?: string;
+  user_id: string; // Making this required to match user-analytics type
   username?: string;
   avatar_url?: string | null;
   started_at?: string;
@@ -21,6 +21,7 @@ export interface LiveSession {
   recipient_id?: string;
   recipient_username?: string;
   recipient_avatar?: string;
+  sender_username?: string;
   content?: string;
   media_url?: string | string[];
   video_url?: string;
@@ -33,11 +34,15 @@ export interface SurveillanceContentItem {
   id: string;
   content_type: string;
   creator_id: string;
+  creator_username?: string; // Add this to fix ContentSurveillanceList errors
   username?: string;
   avatar_url?: string | null;
+  creator_avatar_url?: string | null; // Add this to fix ContentSurveillanceList errors
   created_at: string;
   title: string;
   description: string;
+  content?: string; // Add this to fix ContentSurveillanceList errors
+  location?: string; // Add this to fix ContentSurveillanceList errors
   media_urls?: string[];
   video_url?: string | null;
   video_urls?: string[];
@@ -60,9 +65,15 @@ export interface SurveillanceContentItem {
 export interface LiveAlert {
   id: string;
   type: string;
+  user_id: string; // Add this to match user-analytics LiveAlert
   username?: string;
   avatar_url?: string | null;
   timestamp: string;
+  created_at: string; // Add this to match user-analytics LiveAlert
+  content_type: string; // Add this to match user-analytics LiveAlert
+  reason: string; // Add this to match user-analytics LiveAlert
+  severity: string; // Add this to match user-analytics LiveAlert
+  content_id: string; // Add this to match user-analytics LiveAlert
   priority: 'low' | 'medium' | 'high';
   message: string;
   source: string;
@@ -114,12 +125,36 @@ export interface StripeAccount {
   is_verified: boolean;
   country: string;
   default_currency: string;
+  status?: string; // Add missing property
+  currency?: string; // Add missing property
 }
 
 export interface SessionListProps {
   sessions: LiveSession[];
   isLoading: boolean;
   error?: string | null;
-  onStartSurveillance?: (session: LiveSession) => void;
+  onMonitorSession?: (session: LiveSession) => Promise<boolean>;
   activeTab: string;
+}
+
+export interface SessionItemProps {
+  session: LiveSession;
+  onMonitorSession: (session: LiveSession) => Promise<boolean>;
+  onShowMediaPreview: (session: LiveSession) => void;
+  onModerate: (session: LiveSession, action: string) => void;
+  actionInProgress: string | null;
+}
+
+// Add the SurveillanceContextType interface
+export interface SurveillanceContextType {
+  activeTab: SurveillanceTab;
+  setActiveTab: (tab: SurveillanceTab) => void;
+  liveSessions: LiveSession[];
+  isLoading: boolean;
+  isRefreshing: boolean;
+  setIsRefreshing: (value: boolean) => void;
+  error: string | null;
+  fetchLiveSessions: () => Promise<void>;
+  handleRefresh: () => Promise<void>;
+  handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
 }

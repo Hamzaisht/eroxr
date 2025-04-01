@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useCreatorEarnings } from "./hooks/useCreatorEarnings";
 import { 
@@ -464,36 +463,37 @@ const StripeAccountRow = ({ account }: StripeAccountRowProps) => {
   return (
     <div className="flex items-center justify-between p-3 bg-[#161B22] rounded-lg border border-gray-800">
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-full ${account.is_verified ? 'bg-green-500/20' : 'bg-orange-500/20'}`}>
-          <CreditCard className={`h-5 w-5 ${account.is_verified ? 'text-green-500' : 'text-orange-500'}`} />
+        <div className="h-10 w-10 bg-[#3C4EA0] rounded-lg flex items-center justify-center text-white font-bold">
+          S
         </div>
         <div>
-          <div className="font-medium">Account ID: {account.stripe_account_id.substring(0, 8)}...</div>
-          <div className="text-sm text-gray-400 mt-1">
-            Created: {format(new Date(account.created_at), 'PPP')}
+          <div className="font-medium">
+            <span className="text-gray-500">acct_</span>
+            {account.stripe_account_id.slice(5, 15)}...
+          </div>
+          <div className="text-xs text-gray-400">
+            {account.is_verified ? 'Verified' : (account.status || 'Pending verification')}
           </div>
         </div>
       </div>
       <div className="flex items-center gap-6">
-        <div className="text-right">
-          <Badge 
-            variant="outline" 
-            className={account.is_verified ? 'border-green-500 text-green-500' : 'border-orange-500 text-orange-500'}
-          >
-            {account.is_verified ? 'Verified' : account.status}
-          </Badge>
-        </div>
         <div className="text-right">
           <div className="text-xs text-gray-400">Country</div>
           <div className="font-medium">{account.country}</div>
         </div>
         <div className="text-right">
           <div className="text-xs text-gray-400">Currency</div>
-          <div className="font-medium">{account.currency.toUpperCase()}</div>
+          <div className="font-medium">{account.currency || account.default_currency}</div>
         </div>
-        <Button variant="outline" size="sm">
-          View Details
-        </Button>
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={account.is_verified ? "outline" : "secondary"}
+            className={account.is_verified ? "bg-green-900/30 text-green-300" : ""}
+          >
+            {account.is_verified ? "Verified" : "Pending"}
+          </Badge>
+          <Button variant="outline" size="sm">Details</Button>
+        </div>
       </div>
     </div>
   );

@@ -4,8 +4,16 @@ import { Clock, ExternalLink, Ghost, Users, User } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SessionItemProps } from "../types";
+import { LiveSession } from "../types";
 import { ModerationActions } from "./ModerationActions";
+
+interface SessionItemProps {
+  session: LiveSession;
+  onMonitorSession: (session: LiveSession) => Promise<boolean>;
+  onShowMediaPreview: (session: LiveSession) => void;
+  onModerate: (session: LiveSession, action: string) => void;
+  actionInProgress: string | null;
+}
 
 export const SessionItem = ({ 
   session, 
@@ -148,8 +156,8 @@ export const SessionItem = ({
               <Clock className="h-3 w-3" />
               <span>
                 {session.type === 'bodycontact' 
-                  ? `Active since ${format(new Date(session.started_at || session.created_at), 'HH:mm:ss')}`
-                  : `Started ${format(new Date(session.started_at || session.created_at), 'HH:mm:ss')}`
+                  ? `Active since ${format(new Date(session.started_at || session.created_at || new Date()), 'HH:mm:ss')}`
+                  : `Started ${format(new Date(session.started_at || session.created_at || new Date()), 'HH:mm:ss')}`
                 }
               </span>
             </div>

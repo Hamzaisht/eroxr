@@ -28,7 +28,7 @@ export function useModerationActions() {
       // Helper function to get the username consistently
       const getUsername = (item: LiveSession | SurveillanceContentItem): string => {
         if ('creator_username' in item && item.creator_username) return item.creator_username;
-        if ('username' in item && item.username) return item.username;
+        if ('username' in item && item.username) return item.username || 'Unknown';
         return 'Unknown';
       };
       

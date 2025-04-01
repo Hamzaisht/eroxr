@@ -8,8 +8,7 @@ import { GhostModePrompt } from "./surveillance/GhostModePrompt";
 import { SurveillanceProvider, useSurveillance } from "./surveillance/SurveillanceContext";
 import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { ActiveSurveillanceCard } from "./surveillance/ActiveSurveillanceCard";
-import { LiveSession } from "./surveillance/types";
-import { LiveAlert } from "./surveillance/types";
+import { LiveSession, LiveAlert } from "./surveillance/types";
 
 export const LiveSurveillance = () => {
   const { isSuperAdmin } = useSuperAdminCheck();
@@ -30,7 +29,7 @@ export const LiveSurveillance = () => {
   return (
     <div className="p-4 space-y-4">
       <SurveillanceProvider
-        liveAlerts={liveAlerts as LiveAlert[]}
+        liveAlerts={liveAlerts as unknown as LiveAlert[]} // Type conversion to match our interface
         refreshAlerts={refreshAlerts}
         startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
       >
@@ -41,7 +40,7 @@ export const LiveSurveillance = () => {
             startTime?: string;
           }}
           stopSurveillance={stopSurveillance}
-          liveAlerts={liveAlerts as LiveAlert[]}
+          liveAlerts={liveAlerts as unknown as LiveAlert[]} // Type conversion to match our interface
         />
       </SurveillanceProvider>
     </div>
@@ -94,7 +93,7 @@ const SurveillanceContent = ({
       
       {activeSurveillance.isWatching && activeSurveillance.session && (
         <ActiveSurveillanceCard
-          session={activeSurveillance.session}
+          session={activeSurveillance.session as LiveSession} // Type assertion to match our interface
           onEndSurveillance={stopSurveillance}
         />
       )}

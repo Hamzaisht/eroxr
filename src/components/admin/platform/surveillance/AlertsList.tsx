@@ -1,11 +1,10 @@
 
-
 import { format } from "date-fns";
 import { AlertTriangle, Clock } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LiveAlert } from "../user-analytics/types";
+import { LiveAlert } from "./types";
 
 interface AlertsListProps {
   alerts: LiveAlert[];
@@ -70,13 +69,13 @@ export const AlertsList = ({ alerts, isLoading }: AlertsListProps) => {
             </div>
             
             <p className="text-sm text-gray-400">
-              <span className="font-medium">{alert.type}:</span> {alert.reason}
+              <span className="font-medium">{alert.type}:</span> {alert.reason || alert.message}
             </p>
             
             <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
               <Clock className="h-3 w-3" />
               <span>
-                {format(new Date(alert.created_at), 'yyyy-MM-dd HH:mm:ss')}
+                {format(new Date(alert.created_at || alert.timestamp), 'yyyy-MM-dd HH:mm:ss')}
               </span>
               <span className="mx-1">•</span>
               <span className="capitalize">
@@ -98,4 +97,3 @@ export const AlertsList = ({ alerts, isLoading }: AlertsListProps) => {
     </div>
   );
 };
-
