@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Ghost, Eye, AlertTriangle } from "lucide-react";
 import { LiveSession, LiveAlert } from "@/components/admin/platform/user-analytics/types";
+import { WithProfile } from "@/integrations/supabase/types/profile";
 
 interface GhostModeContextType {
   isGhostMode: boolean;

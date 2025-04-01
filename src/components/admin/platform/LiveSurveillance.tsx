@@ -18,6 +18,7 @@ import {
   UserCheck, ShieldAlert, RefreshCw, Webcam, Clock, Info, 
   Play, Pause, X, Flag, Download, User
 } from "lucide-react";
+import { WithProfile } from "@/integrations/supabase/types/profile";
 
 export const LiveSurveillance = () => {
   const [activeTab, setActiveTab] = useState('streams');
