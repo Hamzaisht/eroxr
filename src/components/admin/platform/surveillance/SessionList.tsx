@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { AlertCircle, MessageCircle, UserIcon } from "lucide-react";
 import { LiveSession } from "./types";
@@ -37,6 +38,10 @@ export const SessionList = ({
                  session.media_url ? [session.media_url] : []
     };
     setShowMediaPreview(sessionForPreview);
+  };
+
+  const handleModerateContent = (session: LiveSession, action: string, editedContent?: string) => {
+    handleModeration(session, action, editedContent);
   };
 
   if (isLoading) {
@@ -90,7 +95,7 @@ export const SessionList = ({
           session={sessionItem}
           onMonitorSession={onMonitorSession}
           onShowMediaPreview={handleShowMediaPreview}
-          onModerate={handleModeration}
+          onModerate={handleModerateContent}
           actionInProgress={actionInProgress}
         />
       ))}

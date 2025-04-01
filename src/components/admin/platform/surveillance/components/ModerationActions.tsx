@@ -1,5 +1,5 @@
 
-import { Ban, Flag, MessageSquare } from "lucide-react";
+import { Ban, Flag, MessageSquare, Trash2, Eye, Edit, MoreVertical, Shield, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SessionModerationActionProps } from "../types";
 import {
@@ -9,6 +9,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -19,74 +23,213 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
 
 export const ModerationActions = ({ 
   session, 
   onModerate, 
   actionInProgress 
 }: SessionModerationActionProps) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentAction, setCurrentAction] = useState<string | null>(null);
+  const [editedContent, setEditedContent] = useState("");
+
+  const handleActionClick = (action: string) => {
+    if (action === 'edit') {
+      setEditedContent(session.content || '');
+      setCurrentAction('edit');
+      setDialogOpen(true);
+    } else if (action === 'ban' || action === 'force_delete') {
+      setCurrentAction(action);
+      setDialogOpen(true);
+    } else {
+      onModerate(session, action);
+    }
+  };
+
+  const handleConfirmAction = () => {
+    if (currentAction === 'edit') {
+      onModerate(session, 'edit', editedContent);
+    } else {
+      onModerate(session, currentAction!);
+    }
+    setDialogOpen(false);
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          size="sm"
-          variant="ghost"
-          className="bg-red-900/20 hover:bg-red-800/30 text-red-300"
-        >
-          <span className="sr-only">Open menu</span>
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
-          </svg>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Moderation Actions</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-yellow-400 flex items-center space-x-2"
-          onClick={() => onModerate(session, 'flag')}
-          disabled={!!actionInProgress}
-        >
-          <Flag className="h-4 w-4" />
-          <span>Flag Content</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="text-orange-400 flex items-center space-x-2"
-          onClick={() => onModerate(session, 'warn')}
-          disabled={!!actionInProgress}
-        >
-          <MessageSquare className="h-4 w-4" />
-          <span>Send Warning</span>
-        </DropdownMenuItem>
-        <Dialog>
-          <DialogTrigger asChild>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            size="sm"
+            variant="ghost"
+            className="bg-red-900/20 hover:bg-red-800/30 text-red-300"
+          >
+            <span className="sr-only">Moderation menu</span>
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>Moderation Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuGroup>
             <DropdownMenuItem
-              className="text-red-400 flex items-center space-x-2"
-              onSelect={(e) => e.preventDefault()}
+              className="text-blue-400 flex items-center space-x-2"
+              onClick={() => handleActionClick('view')}
+              disabled={!!actionInProgress}
             >
-              <Ban className="h-4 w-4" />
-              <span>Ban User</span>
+              <Eye className="h-4 w-4 mr-2" />
+              <span>View Content</span>
             </DropdownMenuItem>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Ban User</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to ban {session.username || 'this user'}? This action will remove all their content and block their account.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="mt-4">
-              <Button 
-                variant="destructive" 
-                onClick={() => onModerate(session, 'ban')}
+            
+            {session.content && (
+              <DropdownMenuItem
+                className="text-green-400 flex items-center space-x-2"
+                onClick={() => handleActionClick('edit')}
                 disabled={!!actionInProgress}
               >
-                {actionInProgress === session.id ? 'Processing...' : 'Confirm Ban'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </DropdownMenuContent>
-    </DropdownMenu>
+                <Edit className="h-4 w-4 mr-2" />
+                <span>Edit Content</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuGroup>
+          
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              className="text-yellow-400 flex items-center space-x-2"
+              onClick={() => handleActionClick('flag')}
+              disabled={!!actionInProgress}
+            >
+              <Flag className="h-4 w-4 mr-2" />
+              <span>Flag Content</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem
+              className="text-orange-400 flex items-center space-x-2"
+              onClick={() => handleActionClick('warn')}
+              disabled={!!actionInProgress}
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              <span>Send Warning</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              className="text-purple-400 flex items-center space-x-2"
+              onClick={() => handleActionClick('shadowban')}
+              disabled={!!actionInProgress}
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              <span>Shadow Ban</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem
+              className="text-rose-400 flex items-center space-x-2"
+              onClick={() => handleActionClick('delete')}
+              disabled={!!actionInProgress}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              <span>Hide Content</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem
+              className="text-red-400 flex items-center space-x-2"
+              onClick={() => handleActionClick('ban')}
+              disabled={!!actionInProgress}
+            >
+              <Ban className="h-4 w-4 mr-2" />
+              <span>Ban User</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="text-gray-400">
+              Advanced Actions
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem
+                className="text-green-400 flex items-center space-x-2"
+                onClick={() => handleActionClick('restore')}
+                disabled={!!actionInProgress}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                <span>Restore Content</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem
+                className="text-red-400 flex items-center space-x-2 font-bold"
+                onClick={() => handleActionClick('force_delete')}
+                disabled={!!actionInProgress}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                <span>Force Delete</span>
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {currentAction === 'edit' ? 'Edit Content' : 
+               currentAction === 'ban' ? 'Ban User' : 
+               currentAction === 'force_delete' ? 'Permanently Delete Content' : 
+               'Take Action'}
+            </DialogTitle>
+            <DialogDescription>
+              {currentAction === 'edit' ? 'Edit the content below. This will keep a record of the original content.' : 
+               currentAction === 'ban' ? `Are you sure you want to ban ${session.username || 'this user'}? This will hide all their content.` : 
+               currentAction === 'force_delete' ? 'This will permanently delete the content from the database and cannot be undone.' : 
+               'Are you sure you want to continue?'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {currentAction === 'edit' && (
+            <div className="my-4">
+              <Textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                rows={6}
+                className="w-full"
+                placeholder="Edit content here..."
+              />
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            
+            <Button 
+              variant={currentAction === 'edit' ? 'default' : 'destructive'} 
+              onClick={handleConfirmAction}
+              disabled={actionInProgress === session.id}
+            >
+              {actionInProgress === session.id ? 'Processing...' : 
+               currentAction === 'edit' ? 'Save Changes' : 
+               currentAction === 'ban' ? 'Ban User' : 
+               currentAction === 'force_delete' ? 'Permanently Delete' : 
+               'Confirm'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

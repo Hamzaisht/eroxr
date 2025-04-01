@@ -3,13 +3,14 @@ import { useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveSession } from "../../user-analytics/types";
-import { WithProfile } from "@/integrations/supabase/types/profile";
+import { LiveSession } from "../types";
+import { useDebounce } from "@/hooks/use-debounce";
 
 // Define a type for profile data
 type ProfileData = {
   username?: string;
   avatar_url?: string;
+  id_verification_status?: string;
 };
 
 // Define the direct message type with proper typing
@@ -24,17 +25,18 @@ type DirectMessage = {
   video_url?: string | null;
   sender?: ProfileData;
   receiver?: ProfileData;
+  message_source?: string;
 };
 
 export function useChatsSurveillance() {
   const session = useSession();
+  const { toast } = useToast();
   
   const fetchChats = useCallback(async (): Promise<LiveSession[]> => {
     if (!session?.user?.id) return [];
     
     try {
       // Get recent messages - last 60 mins to capture more data
-      // Added logging to debug the issue
       console.log("Fetching chats for surveillance...");
       
       const { data, error } = await supabase
@@ -48,13 +50,18 @@ export function useChatsSurveillance() {
           created_at,
           media_url,
           video_url,
+          message_source,
+          viewed_at,
+          original_content,
           sender:profiles!direct_messages_sender_id_fkey (
             username, 
-            avatar_url
+            avatar_url,
+            id_verification_status
           ),
           receiver:profiles!direct_messages_recipient_id_fkey (
             username, 
-            avatar_url
+            avatar_url,
+            id_verification_status
           )
         `)
         .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
@@ -67,7 +74,6 @@ export function useChatsSurveillance() {
       }
       
       console.log("Chat data fetched:", data?.length || 0, "messages");
-      console.log("Sample message data:", data?.[0] || "No messages found");
       
       if (!data || data.length === 0) return [];
       
@@ -113,14 +119,27 @@ export function useChatsSurveillance() {
           about_me: isSelfMessage ? "Note to self" : undefined,
           title: isSelfMessage 
             ? `Self message from @${senderUsername}` 
-            : `Message from @${senderUsername} to @${recipientUsername}`
+            : `Message from @${senderUsername} to @${recipientUsername}`,
+          // Additional metadata for moderation
+          metadata: {
+            message_source: message.message_source || 'regular',
+            viewed_at: message.viewed_at,
+            original_content: message.original_content,
+            sender_verification: message.sender?.id_verification_status || 'unknown',
+            recipient_verification: message.receiver?.id_verification_status || 'unknown'
+          }
         };
       });
     } catch (error) {
       console.error("Error in fetchChats:", error);
+      toast({
+        title: "Error",
+        description: "Could not load chat data",
+        variant: "destructive"
+      });
       return [];
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, toast]);
   
   return { fetchChats };
 }

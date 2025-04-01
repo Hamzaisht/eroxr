@@ -28,7 +28,12 @@ export function useBodyContactSurveillance() {
           country,
           tags,
           avatar_url,
-          profiles(username, avatar_url)
+          latitude,
+          longitude,
+          view_count,
+          click_count,
+          message_count,
+          profiles(username, avatar_url, id_verification_status)
         `)
         .order('last_active', { ascending: false })
         .limit(30);
@@ -62,7 +67,16 @@ export function useBodyContactSurveillance() {
           tags: ad.tags,
           content_type: 'ad',
           created_at: ad.created_at,
-          media_url: [] // Always provide an empty array as default
+          media_url: [], // Always provide an empty array as default
+          // Additional metadata for moderation
+          metadata: {
+            latitude: ad.latitude,
+            longitude: ad.longitude,
+            view_count: ad.view_count,
+            click_count: ad.click_count,
+            message_count: ad.message_count,
+            verification_status: ad.profiles && ad.profiles[0] ? ad.profiles[0].id_verification_status : 'unknown'
+          }
         };
       });
     } catch (error) {

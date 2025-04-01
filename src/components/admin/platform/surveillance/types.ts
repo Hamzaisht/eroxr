@@ -1,14 +1,32 @@
+
 // Creating this file if it doesn't exist or updating it if it does
 export type ContentType = 'post' | 'story' | 'video' | 'ppv' | 'audio';
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
 
+export interface SessionMetadata {
+  // For BodyContact ads
+  latitude?: number;
+  longitude?: number;
+  view_count?: number;
+  click_count?: number;
+  message_count?: number;
+  verification_status?: string;
+  
+  // For chat messages
+  message_source?: string;
+  viewed_at?: string;
+  original_content?: string;
+  sender_verification?: string;
+  recipient_verification?: string;
+}
+
 export interface LiveSession {
   id: string;
   type: 'stream' | 'call' | 'chat' | 'bodycontact';
-  user_id: string; // Making this required to match user-analytics type
+  user_id: string;
   username?: string;
   avatar_url?: string | null;
-  started_at: string; // Making this required to match user-analytics type
+  started_at: string;
   status?: string;
   title?: string;
   description?: string;
@@ -22,26 +40,36 @@ export interface LiveSession {
   recipient_avatar?: string;
   sender_username?: string;
   content?: string;
-  media_url?: string[]; // Changed from string | string[] to string[]
+  media_url: string[];
   video_url?: string;
   about_me?: string;
   location?: string;
   tags?: string[];
+  metadata?: SessionMetadata;
+  // User profiles for chats
+  sender_profiles?: {
+    username?: string;
+    avatar_url?: string | null;
+  };
+  receiver_profiles?: {
+    username?: string;
+    avatar_url?: string | null;
+  };
 }
 
 export interface SurveillanceContentItem {
   id: string;
   content_type: string;
   creator_id: string;
-  creator_username?: string; // Add this to fix ContentSurveillanceList errors
+  creator_username?: string;
   username?: string;
   avatar_url?: string | null;
-  creator_avatar_url?: string | null; // Add this to fix ContentSurveillanceList errors
+  creator_avatar_url?: string | null;
   created_at: string;
   title: string;
   description: string;
-  content?: string; // Add this to fix ContentSurveillanceList errors
-  location?: string; // Add this to fix ContentSurveillanceList errors
+  content?: string;
+  location?: string;
   media_urls?: string[];
   video_url?: string | null;
   video_urls?: string[];
@@ -64,15 +92,15 @@ export interface SurveillanceContentItem {
 export interface LiveAlert {
   id: string;
   type: string;
-  user_id: string; // Add this to match user-analytics LiveAlert
+  user_id: string;
   username?: string;
   avatar_url?: string | null;
   timestamp: string;
-  created_at: string; // Add this to match user-analytics LiveAlert
-  content_type: string; // Add this to match user-analytics LiveAlert
-  reason: string; // Add this to match user-analytics LiveAlert
-  severity: string; // Add this to match user-analytics LiveAlert
-  content_id: string; // Add this to match user-analytics LiveAlert
+  created_at: string;
+  content_type: string;
+  reason: string;
+  severity: string;
+  content_id: string;
   priority: 'low' | 'medium' | 'high';
   message: string;
   source: string;
@@ -81,7 +109,7 @@ export interface LiveAlert {
 
 export interface SessionModerationActionProps {
   session: LiveSession | SurveillanceContentItem;
-  onModerate: (session: LiveSession | SurveillanceContentItem, action: string) => void;
+  onModerate: (session: LiveSession | SurveillanceContentItem, action: string, editedContent?: string) => void;
   actionInProgress: string | null;
 }
 
@@ -124,8 +152,8 @@ export interface StripeAccount {
   is_verified: boolean;
   country: string;
   default_currency: string;
-  status?: string; // Add missing property
-  currency?: string; // Add missing property
+  status?: string;
+  currency?: string;
 }
 
 export interface SessionListProps {
@@ -140,7 +168,7 @@ export interface SessionItemProps {
   session: LiveSession;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
   onShowMediaPreview: (session: LiveSession) => void;
-  onModerate: (session: LiveSession, action: string) => void;
+  onModerate: (session: LiveSession, action: string, editedContent?: string) => void;
   actionInProgress: string | null;
 }
 
@@ -156,4 +184,24 @@ export interface SurveillanceContextType {
   fetchLiveSessions: () => Promise<void>;
   handleRefresh: () => Promise<void>;
   handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
+}
+
+// Add interfaces for content interaction data
+export interface ContentInteractionUser {
+  user_id: string;
+  created_at: string;
+  profiles?: {
+    username: string;
+    avatar_url: string | null;
+  };
+}
+
+export interface ContentPurchaseUser extends ContentInteractionUser {
+  amount: number;
+}
+
+export interface ContentInteractions {
+  viewers: ContentInteractionUser[];
+  likers: ContentInteractionUser[];
+  buyers: ContentPurchaseUser[];
 }
