@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Ghost, Camera, AlertTriangle, Pause, Play } from 'lucide-react';
 import { useGhostMode } from '@/hooks/useGhostMode';
+import { useToast } from '@/hooks/use-toast';
 
 interface LiveStreamViewerProps {
   streamId: string;
@@ -21,7 +22,9 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
   const [isPaused, setIsPaused] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
-  const { isGhostMode } = useGhostMode();
+  const { isGhostMode, activeSurveillance } = useGhostMode();
+  const { toast } = useToast();
+  const [isScreenshotting, setIsScreenshotting] = useState(false);
 
   useEffect(() => {
     if (!streamId) return;
@@ -81,16 +84,19 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
         action: 'ghost_view_stream',
         details: {
           stream_id: streamId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          surveillance_active: !!activeSurveillance.isWatching
         }
       });
+      
+      console.log("Ghost mode stream viewing active:", streamId);
     }
 
     return () => {
       supabase.removeChannel(chatChannel);
       supabase.removeChannel(viewerChannel);
     };
-  }, [streamId, session?.user?.id, isGhostMode]);
+  }, [streamId, session?.user?.id, isGhostMode, activeSurveillance]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +123,8 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
     if (!videoRef.current || !session?.user?.id) return;
     
     try {
+      setIsScreenshotting(true);
+      
       // Create a canvas element to capture the video frame
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth;
@@ -138,7 +146,8 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
         details: {
           stream_id: streamId,
           timestamp: new Date().toISOString(),
-          screenshot_taken: true
+          screenshot_taken: true,
+          surveillance_active: !!activeSurveillance.isWatching
         }
       });
       
@@ -147,8 +156,20 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
       link.href = screenshotDataUrl;
       link.download = `stream-${streamId}-${new Date().toISOString()}.jpg`;
       link.click();
+      
+      toast({
+        title: "Screenshot Captured",
+        description: "Evidence has been saved to your downloads",
+      });
     } catch (error) {
       console.error('Error capturing screenshot:', error);
+      toast({
+        title: "Screenshot Failed",
+        description: "Unable to capture screenshot",
+        variant: "destructive"
+      });
+    } finally {
+      setIsScreenshotting(false);
     }
   };
   
@@ -172,11 +193,22 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
         action: 'ghost_stream_flagged',
         details: {
           stream_id: streamId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          surveillance_active: !!activeSurveillance.isWatching
         }
+      });
+      
+      toast({
+        title: "Stream Flagged",
+        description: "This stream has been reported for review",
       });
     } catch (error) {
       console.error('Error reporting stream:', error);
+      toast({
+        title: "Flag Failed",
+        description: "Unable to flag the stream",
+        variant: "destructive"
+      });
     }
   };
   
@@ -184,7 +216,14 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
     if (!videoRef.current) return;
     
     if (isPaused) {
-      videoRef.current.play();
+      videoRef.current.play().catch(e => {
+        console.error("Error playing video:", e);
+        toast({
+          title: "Playback Error",
+          description: "Could not resume playback",
+          variant: "destructive"
+        });
+      });
     } else {
       videoRef.current.pause();
     }
@@ -198,10 +237,12 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
         <video
           ref={videoRef}
           className="w-full h-full object-cover rounded-lg"
-          controls
+          controls={!isGhostMode}
           autoPlay
           playsInline
           src={playbackUrl}
+          onPlay={() => setIsPaused(false)}
+          onPause={() => setIsPaused(true)}
         />
         <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded-full text-sm">
           {!isGhostMode && `${viewerCount} viewing`}
@@ -220,6 +261,7 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
               size="sm"
               className="bg-black/50 hover:bg-black/70 text-white"
               onClick={togglePlayPause}
+              disabled={isScreenshotting}
             >
               {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
             </Button>
@@ -229,8 +271,9 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
               size="sm"
               className="bg-black/50 hover:bg-black/70 text-white"
               onClick={captureScreenshot}
+              disabled={isScreenshotting}
             >
-              <Camera className="h-4 w-4" />
+              <Camera className={`h-4 w-4 ${isScreenshotting ? 'animate-pulse' : ''}`} />
             </Button>
             
             <Button
@@ -238,6 +281,7 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
               size="sm"
               className="bg-red-900/50 hover:bg-red-900/70 text-white"
               onClick={reportStream}
+              disabled={isScreenshotting}
             >
               <AlertTriangle className="h-4 w-4" />
             </Button>
@@ -246,6 +290,10 @@ export const LiveStreamViewer = ({ streamId, playbackUrl }: LiveStreamViewerProp
       </div>
 
       <div className="flex flex-col h-[600px] bg-luxury-dark/30 rounded-lg">
+        <div className="p-2 border-b border-luxury-neutral/10 bg-black/30">
+          <h3 className="text-sm font-medium">Live Chat</h3>
+        </div>
+        
         <ScrollArea className="flex-1 p-4" ref={chatRef}>
           <div className="space-y-4">
             {messages.map((msg) => (

@@ -1,6 +1,5 @@
 
-
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { LiveSession, LiveAlert } from "../user-analytics/types";
@@ -41,7 +40,7 @@ export const SurveillanceProvider = ({
   const session = useSession();
   const { toast } = useToast();
   
-  const fetchLiveSessions = async () => {
+  const fetchLiveSessions = useCallback(async () => {
     if (!session?.user?.id) return;
     
     setIsLoading(true);
@@ -187,6 +186,7 @@ export const SurveillanceProvider = ({
           break;
       }
       
+      console.log(`Fetched ${data.length} ${activeTab} for surveillance`);
       setLiveSessions(data);
     } catch (error) {
       console.error(`Error fetching ${activeTab}:`, error);
@@ -198,7 +198,7 @@ export const SurveillanceProvider = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeTab, session?.user?.id, toast]);
   
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -213,22 +213,28 @@ export const SurveillanceProvider = ({
   };
   
   const handleStartSurveillance = async (session: LiveSession) => {
-    await startSurveillance(session);
+    const success = await startSurveillance(session);
     
-    switch (session.type) {
-      case 'stream':
-        window.open(`/livestream/${session.id}`, '_blank');
-        break;
-      case 'call':
-        break;
-      case 'chat':
-        window.open(`/messages?userId=${session.user_id}`, '_blank');
-        break;
-      case 'bodycontact':
-        window.open(`/dating/ad/${session.id}`, '_blank');
-        break;
-      default:
-        break;
+    if (success) {
+      switch (session.type) {
+        case 'stream':
+          window.open(`/livestream/${session.id}`, '_blank');
+          break;
+        case 'call':
+          toast({
+            title: "Call Monitoring",
+            description: "This feature requires additional setup. Use the surveillance panel."
+          });
+          break;
+        case 'chat':
+          window.open(`/messages?userId=${session.user_id}`, '_blank');
+          break;
+        case 'bodycontact':
+          window.open(`/dating/ad/${session.id}`, '_blank');
+          break;
+        default:
+          break;
+      }
     }
   };
 
@@ -258,4 +264,3 @@ export const useSurveillance = () => {
   }
   return context;
 };
-

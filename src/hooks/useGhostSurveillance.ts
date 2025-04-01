@@ -9,6 +9,7 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
   const [activeSurveillance, setActiveSurveillance] = useState<{
     session?: LiveSession;
     isWatching: boolean;
+    startTime?: string;
   }>({
     isWatching: false
   });
@@ -27,29 +28,41 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
     }
     
     try {
+      const startTime = new Date().toISOString();
+      
       if (session?.user?.id) {
         await supabase.from('admin_audit_logs').insert({
           user_id: session.user.id,
           action: 'ghost_surveillance_started',
           details: {
-            timestamp: new Date().toISOString(),
+            timestamp: startTime,
             session_id: targetSession.id,
             session_type: targetSession.type,
             target_user_id: targetSession.user_id,
             target_username: targetSession.username
           }
         });
+        
+        // Check if we're already monitoring something
+        if (activeSurveillance.isWatching && activeSurveillance.session) {
+          // End the previous surveillance session
+          await stopSurveillance();
+        }
       }
       
       setActiveSurveillance({
         session: targetSession,
-        isWatching: true
+        isWatching: true,
+        startTime
       });
       
       toast({
         title: "Surveillance Active",
         description: `Monitoring ${targetSession.type}: ${targetSession.title || targetSession.username}`,
       });
+      
+      console.log("Ghost surveillance started:", targetSession);
+      return true;
     } catch (error) {
       console.error("Error starting surveillance:", error);
       toast({
@@ -57,6 +70,7 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
         description: "Could not start monitoring session",
         variant: "destructive"
       });
+      return false;
     }
   };
 
@@ -65,6 +79,9 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
     
     try {
       if (session?.user?.id && activeSurveillance.session) {
+        const durationMinutes = activeSurveillance.startTime ? 
+          Math.round((new Date().getTime() - new Date(activeSurveillance.startTime).getTime()) / 60000) : 0;
+          
         await supabase.from('admin_audit_logs').insert({
           user_id: session.user.id,
           action: 'ghost_surveillance_ended',
@@ -74,12 +91,12 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
             session_type: activeSurveillance.session.type,
             target_user_id: activeSurveillance.session.user_id,
             target_username: activeSurveillance.session.username,
-            duration_minutes: Math.round(
-              (new Date().getTime() - new Date(activeSurveillance.session.started_at).getTime()) / 60000
-            )
+            duration_minutes: durationMinutes
           }
         });
       }
+      
+      console.log("Ghost surveillance ended");
       
       setActiveSurveillance({
         isWatching: false
@@ -89,8 +106,11 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
         title: "Surveillance Ended",
         description: "You are no longer monitoring the session",
       });
+      
+      return true;
     } catch (error) {
       console.error("Error stopping surveillance:", error);
+      return false;
     }
   };
 

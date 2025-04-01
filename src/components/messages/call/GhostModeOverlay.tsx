@@ -1,6 +1,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Ghost, Camera } from "lucide-react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GhostModeOverlayProps {
   isActive: boolean;
@@ -9,7 +12,36 @@ interface GhostModeOverlayProps {
 }
 
 export function GhostModeOverlay({ isActive, onExit, onRecord }: GhostModeOverlayProps) {
+  const session = useSession();
+  const { toast } = useToast();
+  
   if (!isActive) return null;
+  
+  const handleRecordEvidence = async () => {
+    try {
+      // Log the recording action for audit purposes
+      if (session?.user?.id) {
+        await supabase.from('admin_audit_logs').insert({
+          user_id: session.user.id,
+          action: 'ghost_surveillance_recording',
+          details: {
+            timestamp: new Date().toISOString(),
+            admin_email: session.user.email
+          }
+        });
+      }
+      
+      // Call the provided onRecord function
+      onRecord();
+      
+      toast({
+        title: "Recording Started",
+        description: "Evidence recording has been initiated",
+      });
+    } catch (error) {
+      console.error("Error starting recording:", error);
+    }
+  };
   
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 text-white p-4">
@@ -24,7 +56,7 @@ export function GhostModeOverlay({ isActive, onExit, onRecord }: GhostModeOverla
         </Button>
         <Button 
           className="bg-purple-600 hover:bg-purple-700"
-          onClick={onRecord}
+          onClick={handleRecordEvidence}
         >
           <Camera className="h-4 w-4 mr-2" />
           Record Evidence

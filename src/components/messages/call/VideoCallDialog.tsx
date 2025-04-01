@@ -13,9 +13,9 @@ import { RemoteVideo } from "./RemoteVideo";
 import { CallControlsSection } from "./CallControlsSection";
 import { GhostModeOverlay } from "./GhostModeOverlay";
 import { useGhostMode } from "@/hooks/useGhostMode";
+import { supabase } from "@/integrations/supabase/client";
 import type { VideoCallDialogProps } from "./types";
 
-// Add interface for props if not defined in types.ts
 interface VideoCallProps extends VideoCallDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,7 +24,6 @@ interface VideoCallProps extends VideoCallDialogProps {
   isVideoEnabled: boolean;
 }
 
-// Create the component with the VideoCallDialog name
 const VideoCallDialog = ({
   isOpen,
   onClose,
@@ -33,7 +32,8 @@ const VideoCallDialog = ({
   isVideoEnabled,
 }: VideoCallProps) => {
   const session = useSession();
-  const { isGhostMode } = useGhostMode();
+  const { isGhostMode, activeSurveillance } = useGhostMode();
+  const [hasLoggedView, setHasLoggedView] = useState(false);
   
   // Initialize with default values for frame rate and bitrate
   const frameRate = 30;
@@ -74,34 +74,39 @@ const VideoCallDialog = ({
     updateMediaStream 
   } = useCamera();
   
-  // Create state for media tracks
-  const [audioEnabled, setAudioEnabled] = useState(!isMuted);
-  const [videoEnabled, setVideoEnabled] = useState(!isVideoOff);
-  
   // Use the media tracks hook
   useMediaTracks(localStream, isMuted, !isVideoOff);
   
   // Use the tip notifications hook
   const { showTipNotification } = useTipNotifications();
   
-  // Update audio/video state when toggles change
+  // Log ghost mode viewing of calls
   useEffect(() => {
-    setAudioEnabled(!isMuted);
-    if (localStream) {
-      localStream.getAudioTracks().forEach(track => {
-        track.enabled = !isMuted;
-      });
-    }
-  }, [isMuted, localStream]);
-  
-  useEffect(() => {
-    setVideoEnabled(!isVideoOff);
-    if (localStream) {
-      localStream.getVideoTracks().forEach(track => {
-        track.enabled = !isVideoOff;
-      });
-    }
-  }, [isVideoOff, localStream]);
+    const logGhostViewing = async () => {
+      if (isGhostMode && session?.user?.id && isOpen && !hasLoggedView) {
+        try {
+          await supabase.from('admin_audit_logs').insert({
+            user_id: session.user.id,
+            action: 'ghost_view_call',
+            details: {
+              call_channel: channelName,
+              recipient_id: recipientId,
+              recipient_username: recipientProfile?.username,
+              timestamp: new Date().toISOString(),
+              surveillance_active: !!activeSurveillance.isWatching
+            }
+          });
+          
+          setHasLoggedView(true);
+          console.log("Ghost mode call viewing logged");
+        } catch (error) {
+          console.error("Error logging ghost call viewing:", error);
+        }
+      }
+    };
+    
+    logGhostViewing();
+  }, [isGhostMode, session?.user?.id, isOpen, recipientId, channelName, recipientProfile, hasLoggedView, activeSurveillance]);
   
   // Setup call initialization
   useEffect(() => {
@@ -136,8 +141,26 @@ const VideoCallDialog = ({
   };
   
   // Handle ghost mode record action
-  const handleRecordEvidence = () => {
-    showTipNotification('Recording started');
+  const handleRecordEvidence = async () => {
+    if (!isGhostMode || !session?.user?.id) return;
+    
+    try {
+      await supabase.from('admin_audit_logs').insert({
+        user_id: session.user.id,
+        action: 'ghost_call_recording',
+        details: {
+          call_channel: channelName,
+          recipient_id: recipientId,
+          recipient_username: recipientProfile?.username,
+          timestamp: new Date().toISOString(),
+          surveillance_active: !!activeSurveillance.isWatching
+        }
+      });
+      
+      showTipNotification('Recording started');
+    } catch (error) {
+      console.error("Error logging recording:", error);
+    }
   };
   
   return (
@@ -195,5 +218,4 @@ const VideoCallDialog = ({
   );
 };
 
-// Export the component
 export { VideoCallDialog };

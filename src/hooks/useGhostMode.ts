@@ -3,6 +3,8 @@ import { useGhostMode as useGhostModeContext } from "@/context/GhostModeContext"
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const useGhostMode = () => {
   const { 
@@ -15,26 +17,64 @@ export const useGhostMode = () => {
     liveAlerts,
     refreshAlerts
   } = useGhostModeContext();
-  const { isSuperAdmin } = useSuperAdminCheck();
+  const { isSuperAdmin, isLoading: isAdminCheckLoading } = useSuperAdminCheck();
   const session = useSession();
+  const { toast } = useToast();
   
-  // Add debugging
+  // Add debugging and verification
   useEffect(() => {
-    if (session?.user?.email === "hamzaishtiaq242@gmail.com") {
-      console.log("God mode user detected in useGhostMode");
-      console.log("isSuperAdmin status:", isSuperAdmin);
-      console.log("Ghost mode active:", isGhostMode);
-      console.log("Live alerts count:", liveAlerts.length);
+    const checkAndVerify = async () => {
+      if (!session?.user?.id) return;
       
-      // Add additional debugging for profiles data
-      if (liveAlerts.length > 0) {
-        console.log("Sample alert username:", liveAlerts[0].username);
-        console.log("Sample alert avatar_url:", liveAlerts[0].avatar_url);
+      // Debug info for god mode user
+      if (session?.user?.email === "hamzaishtiaq242@gmail.com") {
+        console.log("God mode user detected in useGhostMode");
+        console.log("isSuperAdmin status:", isSuperAdmin);
+        console.log("Ghost mode active:", isGhostMode);
+        console.log("Live alerts count:", liveAlerts.length);
+        
+        // Add additional debugging for profiles data
+        if (liveAlerts.length > 0) {
+          console.log("Sample alert username:", liveAlerts[0].username);
+          console.log("Sample alert avatar_url:", liveAlerts[0].avatar_url);
+        }
+        
+        if (activeSurveillance.isWatching && activeSurveillance.session) {
+          console.log("Active surveillance:", activeSurveillance.session.type, activeSurveillance.session.username);
+        }
+        
+        // Verify admin status if needed
+        if (!isSuperAdmin && !isAdminCheckLoading) {
+          console.warn("God mode user does not have super_admin role, attempting to verify...");
+          try {
+            const { data, error } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .single();
+              
+            if (error) {
+              console.error("Error checking admin role:", error);
+            } else if (!data || data.role !== 'super_admin') {
+              console.warn("User does not have super_admin role in database.");
+              
+              // Alert the user
+              toast({
+                title: "Admin Access Required",
+                description: "You need super admin access to use ghost mode.",
+                variant: "destructive"
+              });
+            }
+          } catch (error) {
+            console.error("Error verifying admin status:", error);
+          }
+        }
       }
-    }
-  }, [session, isSuperAdmin, isGhostMode, liveAlerts]);
+    };
+    
+    checkAndVerify();
+  }, [session, isSuperAdmin, isGhostMode, liveAlerts, activeSurveillance, isAdminCheckLoading, toast]);
   
-  // If user is not a super admin, always return false for ghost mode
   return {
     isGhostMode: isSuperAdmin ? isGhostMode : false,
     toggleGhostMode,
