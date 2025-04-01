@@ -14,6 +14,7 @@ import {
   BookMarked,
   BadgeAlert
 } from "lucide-react";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 
 const adminRoutes = [
   {
@@ -75,6 +76,12 @@ const adminRoutes = [
 
 export const Sidebar = () => {
   const location = useLocation();
+  const { isSuperAdmin } = useSuperAdminCheck();
+
+  // If not a super admin, don't render the sidebar
+  if (!isSuperAdmin) {
+    return null;
+  }
 
   return (
     <div className="w-64 border-r border-white/10 bg-[#0D1117]/50 p-4">

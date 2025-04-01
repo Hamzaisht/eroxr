@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
@@ -27,9 +28,7 @@ export const InteractiveNav = () => {
   const location = useLocation();
   const session = useSession();
   const isMobile = useMediaQuery("(max-width: 768px)");
-
-  // Check if user is super admin
-  const isGodMode = session?.user?.email === 'hamzaishtiaq242@gmail.com';
+  const { isSuperAdmin } = useSuperAdminCheck();
 
   const MobileNav = () => (
     <Sheet>
@@ -71,7 +70,7 @@ export const InteractiveNav = () => {
                 }}
               />
             ))}
-            {isGodMode && (
+            {isSuperAdmin && (
               <NavMenuItem
                 icon={Shield}
                 label="Platform Control"
@@ -140,7 +139,7 @@ export const InteractiveNav = () => {
               onClick={() => navigate(item.path)}
             />
           ))}
-          {isGodMode && (
+          {isSuperAdmin && (
             <NavMenuItem
               icon={Shield}
               label="Platform Control"
@@ -161,7 +160,7 @@ export const InteractiveNav = () => {
     <>
       <MobileNav />
       <DesktopNav />
-      {isGodMode && (
+      {isSuperAdmin && (
         <Button
           variant="destructive"
           size="sm"

@@ -64,7 +64,7 @@ function App() {
           />
         </Route>
 
-        {/* Admin routes */}
+        {/* Admin routes - protected by AdminLayout */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="users" element={<div>Users Management</div>} />
