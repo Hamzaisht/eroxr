@@ -120,7 +120,7 @@ export const DeletedContent = () => {
             ...post,
             content_type: "post",
             title: post.title || "Post", // Provide default title if missing
-            profiles: post.profiles ? post.profiles[0] : undefined // Access first item in profiles array
+            profiles: post.profiles || undefined 
           }));
         }
         return [];
@@ -135,7 +135,7 @@ export const DeletedContent = () => {
             ...ad,
             content_type: "dating",
             title: ad.title || "Dating Ad",
-            profiles: ad.profiles ? ad.profiles[0] : undefined // Access first item in profiles array
+            profiles: ad.profiles || undefined
           }));
         }
         return [];
@@ -164,7 +164,7 @@ export const DeletedContent = () => {
             content_type: "message",
             title: "Message",
             user_id: message.sender_id,
-            profiles: message.profiles ? message.profiles[0] : undefined // Access first item in profiles array
+            profiles: message.profiles || undefined
           }));
         }
         return [];
@@ -192,7 +192,7 @@ export const DeletedContent = () => {
             content_type: "story",
             title: "Story",
             user_id: story.creator_id,
-            profiles: story.profiles ? story.profiles[0] : undefined // Access first item in profiles array
+            profiles: story.profiles || undefined
           }));
         }
         return [];
