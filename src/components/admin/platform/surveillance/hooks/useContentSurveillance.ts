@@ -44,23 +44,28 @@ export function useContentSurveillance() {
             
           if (error) throw error;
           
-          const formattedPosts: SurveillanceContentItem[] = data.map(post => ({
-            id: post.id,
-            content_type: 'post',
-            creator_id: post.creator_id,
-            // Safe access the profiles data with proper type checking
-            creator_username: post.profiles && post.profiles.username ? post.profiles.username : 'Unknown',
-            creator_avatar_url: post.profiles && post.profiles.avatar_url ? post.profiles.avatar_url : null,
-            content: post.content || '',
-            media_urls: post.media_url || [],
-            created_at: post.created_at,
-            updated_at: post.updated_at,
-            is_ppv: post.is_ppv || false,
-            is_draft: false,
-            is_deleted: false,
-            visibility: post.visibility || 'public',
-            ppv_amount: post.ppv_amount
-          }));
+          const formattedPosts: SurveillanceContentItem[] = data.map(post => {
+            // Get the first profile item from the array if it exists
+            const profile = post.profiles?.[0];
+            
+            return {
+              id: post.id,
+              content_type: 'post',
+              creator_id: post.creator_id,
+              // Access profile data from the first item in the array
+              creator_username: profile?.username || 'Unknown',
+              creator_avatar_url: profile?.avatar_url || null,
+              content: post.content || '',
+              media_urls: post.media_url || [],
+              created_at: post.created_at,
+              updated_at: post.updated_at,
+              is_ppv: post.is_ppv || false,
+              is_draft: false,
+              is_deleted: false,
+              visibility: post.visibility || 'public',
+              ppv_amount: post.ppv_amount
+            };
+          });
           
           setPosts(formattedPosts);
           break;
@@ -84,23 +89,28 @@ export function useContentSurveillance() {
             
           if (error) throw error;
           
-          const formattedStories: SurveillanceContentItem[] = data.map(story => ({
-            id: story.id,
-            content_type: 'story',
-            creator_id: story.creator_id,
-            // Safe access the profiles data with proper type checking
-            creator_username: story.profiles && story.profiles.username ? story.profiles.username : 'Unknown',
-            creator_avatar_url: story.profiles && story.profiles.avatar_url ? story.profiles.avatar_url : null,
-            content: '',
-            media_urls: story.media_url ? [story.media_url] : [],
-            created_at: story.created_at,
-            updated_at: null,
-            is_ppv: false,
-            is_draft: false,
-            is_deleted: !story.is_active,
-            visibility: 'public',
-            expires_at: story.expires_at
-          }));
+          const formattedStories: SurveillanceContentItem[] = data.map(story => {
+            // Get the first profile item from the array if it exists
+            const profile = story.profiles?.[0];
+            
+            return {
+              id: story.id,
+              content_type: 'story',
+              creator_id: story.creator_id,
+              // Access profile data from the first item in the array
+              creator_username: profile?.username || 'Unknown',
+              creator_avatar_url: profile?.avatar_url || null,
+              content: '',
+              media_urls: story.media_url ? [story.media_url] : [],
+              created_at: story.created_at,
+              updated_at: null,
+              is_ppv: false,
+              is_draft: false,
+              is_deleted: !story.is_active,
+              visibility: 'public',
+              expires_at: story.expires_at
+            };
+          });
           
           setStories(formattedStories);
           break;
@@ -127,23 +137,28 @@ export function useContentSurveillance() {
             
           if (error) throw error;
           
-          const formattedVideos: SurveillanceContentItem[] = data.map(video => ({
-            id: video.id,
-            content_type: 'video',
-            creator_id: video.creator_id,
-            // Safe access the profiles data with proper type checking
-            creator_username: video.profiles && video.profiles.username ? video.profiles.username : 'Unknown',
-            creator_avatar_url: video.profiles && video.profiles.avatar_url ? video.profiles.avatar_url : null,
-            content: video.description || video.title || '',
-            media_urls: video.thumbnail_url ? [video.thumbnail_url] : [],
-            created_at: video.created_at,
-            updated_at: video.updated_at,
-            is_ppv: !!video.ppv_amount,
-            is_draft: false,
-            is_deleted: false,
-            visibility: video.visibility || 'public',
-            ppv_amount: video.ppv_amount
-          }));
+          const formattedVideos: SurveillanceContentItem[] = data.map(video => {
+            // Get the first profile item from the array if it exists
+            const profile = video.profiles?.[0];
+            
+            return {
+              id: video.id,
+              content_type: 'video',
+              creator_id: video.creator_id,
+              // Access profile data from the first item in the array
+              creator_username: profile?.username || 'Unknown',
+              creator_avatar_url: profile?.avatar_url || null,
+              content: video.description || video.title || '',
+              media_urls: video.thumbnail_url ? [video.thumbnail_url] : [],
+              created_at: video.created_at,
+              updated_at: video.updated_at,
+              is_ppv: !!video.ppv_amount,
+              is_draft: false,
+              is_deleted: false,
+              visibility: video.visibility || 'public',
+              ppv_amount: video.ppv_amount
+            };
+          });
           
           setVideos(formattedVideos);
           break;
@@ -169,23 +184,28 @@ export function useContentSurveillance() {
             
           if (postsError) throw postsError;
           
-          const formattedPpvPosts: SurveillanceContentItem[] = postsData.map(post => ({
-            id: post.id,
-            content_type: 'post',
-            creator_id: post.creator_id,
-            // Safe access the profiles data with proper type checking
-            creator_username: post.profiles && post.profiles.username ? post.profiles.username : 'Unknown',
-            creator_avatar_url: post.profiles && post.profiles.avatar_url ? post.profiles.avatar_url : null,
-            content: post.content || '',
-            media_urls: post.media_url || [],
-            created_at: post.created_at,
-            updated_at: post.updated_at,
-            is_ppv: true,
-            is_draft: false,
-            is_deleted: false,
-            visibility: post.visibility || 'public',
-            ppv_amount: post.ppv_amount
-          }));
+          const formattedPpvPosts: SurveillanceContentItem[] = postsData.map(post => {
+            // Get the first profile item from the array if it exists
+            const profile = post.profiles?.[0];
+            
+            return {
+              id: post.id,
+              content_type: 'post',
+              creator_id: post.creator_id,
+              // Access profile data from the first item in the array
+              creator_username: profile?.username || 'Unknown',
+              creator_avatar_url: profile?.avatar_url || null,
+              content: post.content || '',
+              media_urls: post.media_url || [],
+              created_at: post.created_at,
+              updated_at: post.updated_at,
+              is_ppv: true,
+              is_draft: false,
+              is_deleted: false,
+              visibility: post.visibility || 'public',
+              ppv_amount: post.ppv_amount
+            };
+          });
           
           setPpvContent(formattedPpvPosts);
           break;

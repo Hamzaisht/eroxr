@@ -71,20 +71,25 @@ export function useCreatorEarnings() {
       if (payoutError) throw payoutError;
       
       // Format payout data
-      const formattedPayouts: PayoutRequest[] = payoutData.map(payout => ({
-        id: payout.id,
-        creator_id: payout.creator_id,
-        creator_username: payout.profiles && payout.profiles.username ? payout.profiles.username : 'Unknown',
-        creator_avatar_url: payout.profiles && payout.profiles.avatar_url ? payout.profiles.avatar_url : null,
-        amount: parseFloat(payout.amount) || 0,
-        platform_fee: parseFloat(payout.platform_fee) || 0,
-        final_amount: parseFloat(payout.final_amount) || 0,
-        requested_at: payout.requested_at,
-        approved_at: payout.approved_at,
-        processed_at: payout.processed_at,
-        status: payout.status as any,
-        notes: payout.notes
-      }));
+      const formattedPayouts: PayoutRequest[] = payoutData.map(payout => {
+        // Get the first profile item from the array if it exists
+        const profile = payout.profiles?.[0];
+        
+        return {
+          id: payout.id,
+          creator_id: payout.creator_id,
+          creator_username: profile?.username || 'Unknown',
+          creator_avatar_url: profile?.avatar_url || null,
+          amount: parseFloat(payout.amount) || 0,
+          platform_fee: parseFloat(payout.platform_fee) || 0,
+          final_amount: parseFloat(payout.final_amount) || 0,
+          requested_at: payout.requested_at,
+          approved_at: payout.approved_at,
+          processed_at: payout.processed_at,
+          status: payout.status as any,
+          notes: payout.notes
+        };
+      });
       
       // Sort payouts by status
       setPendingPayouts(formattedPayouts.filter(p => p.status === 'pending'));
