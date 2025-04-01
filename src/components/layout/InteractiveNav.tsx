@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Home, Heart, MessageSquare, Play, Film, Menu, X, Shield } from "lucide-react";
+import { Home, Heart, MessageSquare, Play, Film, Menu, X, Shield, Ghost } from "lucide-react";
 import { NavMenuItem } from "./nav/NavMenuItem";
 import { UserProfileSection } from "./nav/UserProfileSection";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
-import { useGhostMode } from "@/hooks/use-ghost-mode";
+import { useGhostMode } from "@/hooks/useGhostMode";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
@@ -65,7 +65,6 @@ export const InteractiveNav = () => {
                 isExpanded={true}
                 onClick={() => {
                   navigate(item.path);
-                  // On mobile, close the sheet after navigation
                   const closeButton = document.querySelector('[data-radix-collection-item]') as HTMLElement;
                   if (closeButton) closeButton.click();
                 }}
