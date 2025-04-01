@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Maximize, X } from "lucide-react";
@@ -6,6 +5,9 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { VideoLoadingState } from "./VideoLoadingState";
 import { VideoErrorState } from "./VideoErrorState";
+import { PremiumErosOverlay } from "@/components/home/PremiumErosOverlay";
+import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VideoPlayerProps {
   url: string;
@@ -16,6 +18,8 @@ interface VideoPlayerProps {
   playOnHover?: boolean;
   onClose?: () => void;
   showCloseButton?: boolean;
+  isPremium?: boolean;
+  videoId?: string;
 }
 
 export const VideoPlayer = ({ 
@@ -26,7 +30,9 @@ export const VideoPlayer = ({
   autoPlay = false,
   playOnHover = false,
   onClose,
-  showCloseButton = false
+  showCloseButton = false,
+  isPremium = false,
+  videoId
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
@@ -34,9 +40,44 @@ export const VideoPlayer = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [canPlayFull, setCanPlayFull] = useState(false);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const session = useSession();
+
+  useEffect(() => {
+    const checkPremiumStatus = async () => {
+      if (!session?.user?.id || !isPremium) return;
+
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_paying_customer, id_verification_status')
+          .eq('id', session.user.id)
+          .single();
+
+        setCanPlayFull(
+          profile?.is_paying_customer === true || 
+          profile?.id_verification_status === 'verified'
+        );
+      } catch (error) {
+        console.error('Error checking premium status:', error);
+      }
+    };
+
+    checkPremiumStatus();
+  }, [session, isPremium]);
+
+  const handleTimeUpdate = () => {
+    if (!canPlayFull && videoRef.current) {
+      if (videoRef.current.currentTime > 5) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+    }
+  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -61,7 +102,6 @@ export const VideoPlayer = ({
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("error", handleError);
 
-    // Reset video state when URL changes
     setIsPlaying(autoPlay);
     setIsLoaded(false);
     setHasError(false);
@@ -121,16 +161,13 @@ export const VideoPlayer = ({
     setIsRetrying(true);
     setHasError(false);
     
-    // Force reload the video element
     videoRef.current.load();
     
-    // Set a timeout to reset retry state
     setTimeout(() => {
       setIsRetrying(false);
     }, 3000);
   };
 
-  // Handle fullscreen change event
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -143,7 +180,6 @@ export const VideoPlayer = ({
     };
   }, []);
 
-  // Handle play on hover
   useEffect(() => {
     if (!playOnHover || !videoRef.current) return;
     
@@ -181,12 +217,9 @@ export const VideoPlayer = ({
         className
       )}
     >
-      {/* Video container with proper aspect ratio preservation */}
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-        {/* Loading state */}
         {!isLoaded && !hasError && !isRetrying && <VideoLoadingState />}
         
-        {/* Error state */}
         {hasError && !isRetrying && (
           <VideoErrorState 
             onRetry={handleRetry} 
@@ -202,7 +235,8 @@ export const VideoPlayer = ({
           poster={poster}
           muted={isMuted}
           playsInline
-          loop
+          loop={canPlayFull}
+          onTimeUpdate={handleTimeUpdate}
           className={cn(
             "w-full h-full object-contain",
             (hasError || !isLoaded) && "opacity-0",
@@ -220,7 +254,13 @@ export const VideoPlayer = ({
         />
       </div>
       
-      {/* Close button if provided */}
+      {isPremium && !canPlayFull && (
+        <PremiumErosOverlay 
+          thumbnailUrl={poster}
+          previewDuration={5}
+        />
+      )}
+      
       {showCloseButton && onClose && (
         <Button
           variant="ghost"
@@ -232,7 +272,6 @@ export const VideoPlayer = ({
         </Button>
       )}
       
-      {/* Gradient overlay for controls */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <div className="absolute bottom-4 left-4 flex items-center gap-2">
           <Button

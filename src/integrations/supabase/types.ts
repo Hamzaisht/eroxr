@@ -2418,6 +2418,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      increment_counter: {
+        Args: {
+          row_id: string
+          counter_name: string
+          table_name?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

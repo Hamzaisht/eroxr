@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { Loader2, Upload, Video, CheckCircle2, AlertCircle, X } from "lucide-rea
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
 import { useShortPostSubmit } from "./hooks/useShortPostSubmit";
+import { Switch } from "@/components/ui/switch";
 
 interface UploadVideoDialogProps {
   open: boolean;
@@ -25,6 +25,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
   const [description, setDescription] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -97,6 +98,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
         title,
         description: description.trim() || undefined,
         videoFile: selectedFile,
+        isPremium
       });
 
       if (success) {
@@ -220,6 +222,17 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
               <div className="text-xs text-right text-luxury-neutral/60">
                 {description.length}/500
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2 mt-4">
+              <Switch
+                id="premium-toggle"
+                checked={isPremium}
+                onCheckedChange={setIsPremium}
+              />
+              <Label htmlFor="premium-toggle">
+                Make this Eros video Premium (59 SEK/month subscribers only)
+              </Label>
             </div>
           </div>
 

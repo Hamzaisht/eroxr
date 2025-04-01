@@ -1,108 +1,107 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { useVideoUpload } from "./useVideoUpload";
+import { useSession } from "@supabase/auth-helpers-react";
+import { v4 as uuidv4 } from 'uuid';
 
-interface ShortPostData {
+interface ShortPostSubmitParams {
   title: string;
   description?: string;
   videoFile: File;
-  tags?: string[];
+  isPremium?: boolean;
 }
 
 export const useShortPostSubmit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const session = useSession();
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const { uploadVideo, uploadState } = useVideoUpload();
-  const queryClient = useQueryClient();
+  const session = useSession();
 
-  const getVideoDuration = async (file: File): Promise<number> => {
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      video.preload = 'metadata';
-      
-      video.onloadedmetadata = () => {
-        window.URL.revokeObjectURL(video.src);
-        resolve(video.duration);
-      };
-      
-      video.src = URL.createObjectURL(file);
-    });
-  };
-
-  const submitShortPost = async (data: ShortPostData): Promise<boolean> => {
+  const submitShortPost = async ({
+    title, 
+    description, 
+    videoFile,
+    isPremium = false
+  }: ShortPostSubmitParams) => {
     if (!session?.user?.id) {
       toast({
-        title: "Authentication required",
-        description: "Please sign in to upload shorts",
-        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please log in to upload a short",
+        variant: "destructive"
       });
       return false;
     }
 
+    setIsSubmitting(true);
+    setIsUploading(true);
+
     try {
-      setIsSubmitting(true);
-      
-      // 1. Upload the video file
-      const { success, videoUrl, error } = await uploadVideo(data.videoFile);
-      
-      if (!success || !videoUrl) {
-        throw new Error(error || "Failed to upload video");
-      }
+      // Generate unique filename
+      const fileExt = videoFile.name.split('.').pop();
+      const fileName = `${session.user.id}/${uuidv4()}.${fileExt}`;
+      const filePath = fileName;
 
-      // 2. Get video duration
-      const duration = await getVideoDuration(data.videoFile);
-      
-      // 3. Create post record - Remove the description field as it doesn't exist in the posts table
-      const { error: postError } = await supabase
+      // Upload video to storage
+      const { error: uploadError } = await supabase.storage
+        .from('shorts')
+        .upload(filePath, videoFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl }, error: urlError } = supabase.storage
+        .from('shorts')
+        .getPublicUrl(filePath);
+
+      if (urlError) throw urlError;
+
+      // Insert post record
+      const { data: postData, error: postError } = await supabase
         .from('posts')
-        .insert([
-          {
-            creator_id: session.user.id,
-            content: data.title,
-            video_urls: [videoUrl],
-            visibility: 'public',
-            tags: data.tags || ['eros', 'short'],
-            video_duration: Math.round(duration) || 30
-          },
-        ]);
+        .insert({
+          creator_id: session.user.id,
+          content: title,
+          description,
+          video_urls: [publicUrl],
+          video_thumbnail_url: publicUrl, // Placeholder, replace with actual thumbnail generation
+          visibility: isPremium ? 'subscribers_only' : 'public',
+          video_processing_status: 'completed'
+        })
+        .select('id')
+        .single();
 
-      if (postError) {
-        throw postError;
-      }
-
-      // 4. Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      if (postError) throw postError;
 
       toast({
-        title: "Upload successful",
-        description: "Your short has been uploaded successfully",
+        title: "Upload Successful",
+        description: "Your Eros video is now live!",
       });
-      
+
       return true;
-    } catch (error: any) {
-      console.error('Short post submission error:', error);
-      
+    } catch (error) {
+      console.error("Short post upload error:", error);
       toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload your short. Please try again.",
-        variant: "destructive",
+        title: "Upload Failed",
+        description: "Unable to upload your video. Please try again.",
+        variant: "destructive"
       });
-      
       return false;
     } finally {
       setIsSubmitting(false);
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
-  return {
-    submitShortPost,
-    isSubmitting,
-    uploadProgress: uploadState.progress,
-    isUploading: uploadState.isUploading
+  return { 
+    submitShortPost, 
+    isSubmitting, 
+    uploadProgress, 
+    isUploading 
   };
 };
