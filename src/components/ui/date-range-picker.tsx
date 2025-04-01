@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -15,15 +16,41 @@ import {
 // Export DateRange type for use in other components
 export type { DateRange } from "react-day-picker";
 
+interface DateRangePickerProps {
+  className?: string;
+  value?: DateRangeType;
+  onChange?: (date: DateRangeType | undefined) => void;
+  // Support for older API
+  from?: Date;
+  to?: Date;
+  onSelect?: (range: { from: Date | null; to: Date | null }) => void;
+}
+
 export function DateRangePicker({
   className,
   value,
   onChange,
-}: {
-  className?: string;
-  value?: DateRangeType;
-  onChange?: (date: DateRangeType | undefined) => void;
-}) {
+  from,
+  to,
+  onSelect,
+}: DateRangePickerProps) {
+  // Determine which API is being used
+  const isUsingLegacyAPI = from !== undefined || to !== undefined;
+  
+  // Create a value object from legacy props if needed
+  const rangeValue = isUsingLegacyAPI
+    ? { from: from || null, to: to || null }
+    : value;
+    
+  // Handle changes appropriately based on which API is used
+  const handleSelect = (newRange: DateRangeType | undefined) => {
+    if (isUsingLegacyAPI && onSelect) {
+      onSelect(newRange || { from: null, to: null });
+    } else if (onChange) {
+      onChange(newRange);
+    }
+  };
+
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>
@@ -33,18 +60,18 @@ export function DateRangePicker({
             variant={"outline"}
             className={cn(
               "w-full justify-start text-left font-normal",
-              !value && "text-muted-foreground"
+              !rangeValue?.from && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {value?.from ? (
-              value.to ? (
+            {rangeValue?.from ? (
+              rangeValue.to ? (
                 <>
-                  {format(value.from, "LLL dd, y")} -{" "}
-                  {format(value.to, "LLL dd, y")}
+                  {format(rangeValue.from, "LLL dd, y")} -{" "}
+                  {format(rangeValue.to, "LLL dd, y")}
                 </>
               ) : (
-                format(value.from, "LLL dd, y")
+                format(rangeValue.from, "LLL dd, y")
               )
             ) : (
               <span>Pick a date range</span>
@@ -55,9 +82,9 @@ export function DateRangePicker({
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={value?.from}
-            selected={value}
-            onSelect={onChange}
+            defaultMonth={rangeValue?.from}
+            selected={rangeValue}
+            onSelect={handleSelect}
             numberOfMonths={2}
           />
         </PopoverContent>

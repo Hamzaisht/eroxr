@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -49,7 +48,6 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   const { isSuperAdmin } = useSuperAdminCheck();
   const { toast } = useToast();
 
-  // Poll for live alerts
   useEffect(() => {
     if (!isGhostMode || !isSuperAdmin || !session?.user?.id) return;
     
@@ -140,13 +138,11 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const toggleGhostMode = async () => {
-    // Only allow admins to toggle ghost mode
     if (!isSuperAdmin) return;
     
     setIsLoading(true);
     
     try {
-      // Log the ghost mode usage for audit purposes
       if (session?.user?.id) {
         await supabase.from('admin_audit_logs').insert({
           user_id: session.user.id,
@@ -158,7 +154,6 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         });
       }
       
-      // If turning off ghost mode, make sure to stop any active surveillance
       if (isGhostMode && activeSurveillance.isWatching) {
         await stopSurveillance();
       }
@@ -189,7 +184,6 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      // Log the surveillance start for audit purposes
       if (session?.user_id) {
         await supabase.from('admin_audit_logs').insert({
           user_id: session.user_id,
@@ -227,7 +221,6 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
     if (!activeSurveillance.isWatching) return;
     
     try {
-      // Log the surveillance end for audit purposes
       if (session?.user?.id && activeSurveillance.session) {
         await supabase.from('admin_audit_logs').insert({
           user_id: session.user.id,
