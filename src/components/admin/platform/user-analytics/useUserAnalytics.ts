@@ -270,7 +270,18 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
       const lastActiveTimestamp = allDates.length > 0 ? Math.max(...allDates) : null;
       const lastActive = lastActiveTimestamp ? new Date(lastActiveTimestamp) : null;
 
+      // Create the analytics object with all the required fields
       return {
+        // Fields for the Analytics type
+        posts: totalPosts,
+        comments: totalComments,
+        likes: totalLikes,
+        followers: 0, // Placeholder - we don't have this data yet
+        following: 0, // Placeholder - we don't have this data yet
+        content_views: totalViews,
+        profile_views: 0, // Placeholder - we don't have this data yet
+        
+        // Fields used in the implementation
         totalPosts,
         totalLikes,
         totalComments,
