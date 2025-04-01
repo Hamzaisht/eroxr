@@ -99,9 +99,15 @@ export const ErosMode = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const isGodMode = session?.user?.email === 'hamzaishtiaq242@gmail.com';
+  const isGodMode = session?.user?.email?.toLowerCase() === 'hamzaishtiaq242@gmail.com';
   
   if (!isGodMode) {
+    console.log("Access denied to God Mode. Current user email:", session?.user?.email);
+    toast({
+      title: "Access Denied",
+      description: "You don't have permission to access this area.",
+      variant: "destructive",
+    });
     navigate('/');
     return null;
   }

@@ -51,7 +51,7 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         description: isGhostMode 
           ? "Your actions are now visible to users" 
           : "You are now browsing invisibly",
-        // Remove the problematic 'icon' property
+        icon: isGhostMode ? <Eye className="h-4 w-4" /> : <Ghost className="h-4 w-4" />,
       });
     } catch (error) {
       console.error("Error toggling ghost mode:", error);
