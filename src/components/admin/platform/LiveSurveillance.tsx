@@ -18,7 +18,6 @@ import {
   UserCheck, ShieldAlert, RefreshCw, Webcam, Clock, Info, 
   Play, Pause, X, Flag, Download, User
 } from "lucide-react";
-import { WithProfile } from "@/integrations/supabase/types/profile";
 
 export const LiveSurveillance = () => {
   const [activeTab, setActiveTab] = useState('streams');
@@ -40,13 +39,11 @@ export const LiveSurveillance = () => {
   
   useEffect(() => {
     if (!isGhostMode || !isSuperAdmin) {
-      // Only accessible in ghost mode
       return;
     }
     
     fetchLiveSessions();
     
-    // Poll for live sessions every 30 seconds
     const interval = setInterval(fetchLiveSessions, 30000);
     
     return () => clearInterval(interval);
@@ -58,7 +55,6 @@ export const LiveSurveillance = () => {
     setIsLoading(true);
     
     try {
-      // Fetch different types of sessions based on active tab
       let data: LiveSession[] = [];
       
       switch (activeTab) {
@@ -79,7 +75,6 @@ export const LiveSurveillance = () => {
           if (streamsError) throw streamsError;
           
           data = streams.map(stream => {
-            // Fix: properly access profile data with optional chaining and fallbacks
             const username = stream.profiles?.[0]?.username || 'Unknown';
             const avatar_url = stream.profiles?.[0]?.avatar_url || null;
             
@@ -98,8 +93,6 @@ export const LiveSurveillance = () => {
           break;
           
         case 'calls':
-          // In a real implementation, we would query active calls
-          // This is a simplified example
           const { data: calls, error: callsError } = await supabase
             .rpc('get_active_calls');
             
@@ -133,16 +126,14 @@ export const LiveSurveillance = () => {
               sender:sender_id(username, avatar_url)
             `)
             .order('created_at', { ascending: false })
-            .limit(20); // Get recent messages
+            .limit(20);
             
           if (chatsError) throw chatsError;
           
-          // Group chats by sender_id and recipient_id pairs
           const uniqueChats = new Map();
           chats.forEach(chat => {
             const chatKey = `${chat.sender_id}:${chat.recipient_id}`;
             if (!uniqueChats.has(chatKey)) {
-              // Fix: properly access sender profile data with optional chaining
               const username = chat.sender?.[0]?.username || 'Unknown';
               const avatar_url = chat.sender?.[0]?.avatar_url || null;
               
@@ -179,7 +170,6 @@ export const LiveSurveillance = () => {
           if (adsError) throw adsError;
           
           data = ads.map(ad => {
-            // Fix: properly access profile data with optional chaining and fallbacks
             const username = ad.profiles?.[0]?.username || 'Unknown';
             const avatar_url = ad.profiles?.[0]?.avatar_url || null;
             
@@ -192,7 +182,8 @@ export const LiveSurveillance = () => {
               started_at: ad.created_at,
               status: ad.moderation_status === 'pending' ? 'active' : 'flagged',
               title: ad.title,
-              content_type: 'ad'
+              content_type: 'ad',
+              created_at: ad.created_at
             };
           });
           break;
@@ -229,22 +220,16 @@ export const LiveSurveillance = () => {
   const handleStartSurveillance = async (session: LiveSession) => {
     await startSurveillance(session);
     
-    // In a real implementation, we would navigate to the appropriate page
-    // based on the session type
     switch (session.type) {
       case 'stream':
-        // navigate to stream viewer
         window.open(`/livestream/${session.id}`, '_blank');
         break;
       case 'call':
-        // navigate to call viewer
         break;
       case 'chat':
-        // navigate to chat
         window.open(`/messages?userId=${session.user_id}`, '_blank');
         break;
       case 'bodycontact':
-        // navigate to ad
         window.open(`/dating/ad/${session.id}`, '_blank');
         break;
       default:

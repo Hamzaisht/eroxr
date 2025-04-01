@@ -64,6 +64,7 @@ export interface LiveSession {
   status: 'active' | 'flagged' | 'reported';
   content_type?: string;
   title?: string;
+  created_at?: string; // Add this property for bodycontact ads
 }
 
 export interface LiveAlert {

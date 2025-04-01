@@ -1,9 +1,11 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { LiveAlert } from "@/components/admin/platform/user-analytics/types";
+import { Ghost, AlertTriangle } from "lucide-react";
+import { LiveSession, LiveAlert } from "@/components/admin/platform/user-analytics/types";
 
 interface GhostModeContextType {
   isGhostMode: boolean;
