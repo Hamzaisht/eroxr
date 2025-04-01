@@ -93,7 +93,7 @@ const SurveillanceContent = ({
       
       {activeSurveillance.isWatching && activeSurveillance.session && (
         <ActiveSurveillanceCard
-          session={activeSurveillance.session as LiveSession} // Type assertion to match our interface
+          session={activeSurveillance.session} // Removed type assertion as types now match
           onEndSurveillance={stopSurveillance}
         />
       )}

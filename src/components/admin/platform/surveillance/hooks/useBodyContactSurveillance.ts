@@ -1,99 +1,79 @@
 
 import { useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveSession } from "../../user-analytics/types";
-
-// Define a type for BodyContact ads
-type BodyContactAd = {
-  id: string;
-  title: string;
-  description?: string;
-  location: string;
-  created_at: string;
-  updated_at?: string;
-  user_id: string;
-  tags?: string[];
-  about_me?: string;
-  video_url?: string;
-  avatar_url?: string;
-  is_active?: boolean;
-  profiles?: {
-    username?: string;
-    avatar_url?: string;
-    about_me?: string;
-  };
-};
+import { LiveSession } from "../types";
 
 export function useBodyContactSurveillance() {
+  const { toast } = useToast();
   const session = useSession();
-  
-  const fetchBodyContact = useCallback(async (): Promise<LiveSession[]> => {
+
+  const fetchBodyContact = useCallback(async () => {
     if (!session?.user?.id) return [];
     
     try {
-      // Get active body contact ads - include specific user data
-      console.log("Fetching body contact ads for surveillance...");
-      
-      const { data, error } = await supabase
+      const { data: ads, error: adsError } = await supabase
         .from('dating_ads')
         .select(`
           id,
           user_id,
           title,
           description,
-          location,
-          tags,
-          created_at,
-          updated_at,
-          status,
-          is_active,
-          video_url,
           about_me,
+          moderation_status,
+          created_at,
+          last_active,
+          city,
+          country,
+          tags,
           avatar_url,
-          profiles:profiles!dating_ads_user_id_fkey (
-            username,
-            avatar_url,
-            about_me
-          )
+          profiles(username, avatar_url)
         `)
-        .order('updated_at', { ascending: false })
-        .limit(50) as unknown as { data: BodyContactAd[]; error: any };
-      
-      if (error) {
-        console.error("Error fetching body contact data:", error);
-        throw new Error("Failed to load BodyContact data");
+        .order('last_active', { ascending: false })
+        .limit(30);
+        
+      if (adsError) {
+        console.error("Error loading bodycontact sessions:", adsError);
+        toast({
+          title: "Error",
+          description: "Could not load live bodycontact",
+          variant: "destructive"
+        });
+        return [];
       }
       
-      console.log("Body contact data fetched:", data?.length || 0, "records");
-      console.log("Sample body contact data:", data?.[0] || "No body contact ads found");
-      
-      if (!data) return [];
-      
-      // Transform data to match LiveSession format
-      return data.map(ad => ({
-        id: ad.id,
-        type: 'bodycontact' as const,
-        user_id: ad.user_id,
-        username: ad.profiles?.username || "Unknown",
-        avatar_url: ad.profiles?.avatar_url || ad.avatar_url || null,
-        title: ad.title || "Untitled Ad",
-        description: ad.description,
-        status: ad.is_active ? 'active' : 'inactive',
-        location: ad.location,
-        tags: ad.tags,
-        started_at: ad.created_at,
-        created_at: ad.created_at,
-        about_me: ad.about_me || ad.profiles?.about_me,
-        video_url: ad.video_url,
-        media_url: ad.avatar_url ? [ad.avatar_url] : [],
-        content_type: 'bodycontact'
-      }));
+      return ads.map(ad => {
+        // Ensure started_at is always present and valid
+        const startedAt = ad.last_active || ad.created_at || new Date().toISOString();
+        
+        return {
+          id: ad.id,
+          type: 'bodycontact' as const,
+          user_id: ad.user_id,
+          username: ad.profiles && ad.profiles[0] ? ad.profiles[0].username || 'Unknown' : 'Unknown',
+          avatar_url: ad.profiles && ad.profiles[0] ? ad.profiles[0].avatar_url || ad.avatar_url || '' : ad.avatar_url || '',
+          started_at: startedAt, // Ensure required field is present
+          status: ad.moderation_status === 'pending' ? 'active' : 'flagged',
+          title: ad.title,
+          description: ad.description,
+          about_me: ad.about_me,
+          location: `${ad.city}, ${ad.country}`,
+          tags: ad.tags,
+          content_type: 'ad',
+          created_at: ad.created_at
+        };
+      });
     } catch (error) {
-      console.error("Error in fetchBodyContact:", error);
+      console.error("Error fetching body contact ads:", error);
+      toast({
+        title: "Error",
+        description: "Could not load body contact ads",
+        variant: "destructive"
+      });
       return [];
     }
-  }, [session?.user?.id]);
-  
+  }, [session?.user?.id, toast]);
+
   return { fetchBodyContact };
 }

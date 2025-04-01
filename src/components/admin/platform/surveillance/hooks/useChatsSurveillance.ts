@@ -81,6 +81,9 @@ export function useChatsSurveillance() {
         const recipientUsername = message.receiver?.username || "Unknown";
         const recipientAvatar = message.receiver?.avatar_url || null;
         
+        // Ensure started_at is always present
+        const startedAt = message.created_at || new Date().toISOString();
+        
         return {
           id: message.id,
           type: 'chat' as const,
@@ -89,7 +92,7 @@ export function useChatsSurveillance() {
           avatar_url: senderAvatar,
           sender_username: senderUsername,
           recipient_username: recipientUsername,
-          started_at: message.created_at,
+          started_at: startedAt, // Ensure required field is present
           content: message.content,
           content_type: message.message_type,
           media_url: message.media_url || [],

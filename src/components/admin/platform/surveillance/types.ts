@@ -9,7 +9,7 @@ export interface LiveSession {
   user_id: string; // Making this required to match user-analytics type
   username?: string;
   avatar_url?: string | null;
-  started_at?: string;
+  started_at: string; // Making this required to match user-analytics type
   status?: string;
   title?: string;
   description?: string;
