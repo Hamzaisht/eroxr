@@ -39,7 +39,7 @@ export const useShortsFeed = (specificShortId?: string | null) => {
     created_at: post.created_at,
     view_count: post.view_count || 0,
     visibility: post.visibility,
-    description: post.description
+    description: post.content // Use content as description since description doesn't exist on Post
   }));
 
   // Update loading state when data changes
