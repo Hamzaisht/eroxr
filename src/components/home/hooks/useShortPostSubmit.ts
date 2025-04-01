@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -54,10 +53,8 @@ export const useShortPostSubmit = () => {
       if (uploadError) throw uploadError;
 
       // Get public URL
-      const { data } = supabase.storage
-        .from('shorts')
-        .getPublicUrl(filePath);
-
+      const { data } = supabase.storage.from('shorts').getPublicUrl(filePath);
+      
       if (!data.publicUrl) throw new Error('Failed to get public URL');
 
       // Insert post record
@@ -68,7 +65,7 @@ export const useShortPostSubmit = () => {
           content: title,
           description,
           video_urls: [data.publicUrl],
-          video_thumbnail_url: data.publicUrl, // Placeholder, replace with actual thumbnail generation
+          video_thumbnail_url: data.publicUrl, 
           visibility: isPremium ? 'subscribers_only' : 'public',
           video_processing_status: 'completed'
         })
