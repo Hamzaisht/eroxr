@@ -38,7 +38,7 @@ export const DistanceFilter = ({
     }
   };
   
-  const { preventFormSubmission } = usePreventFormSubmission();
+  const { preventFormSubmission, handleKeyDown } = usePreventFormSubmission();
   
   return (
     <FilterAccordion title="Maximum Distance" defaultOpen={true}>
@@ -47,6 +47,7 @@ export const DistanceFilter = ({
         onClick={preventFormSubmission}
         onMouseDown={preventFormSubmission}
         onTouchStart={preventFormSubmission}
+        onKeyDown={handleKeyDown}
         className="mt-2 px-1"
       >
         <div className="flex justify-between text-sm text-luxury-neutral mb-2">

@@ -3,6 +3,7 @@ import { Volume2, VolumeX, Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { usePreventFormSubmission } from "@/hooks/use-prevent-form-submission";
 
 interface VideoControlsProps {
   isPlaying: boolean;
@@ -21,6 +22,7 @@ export const VideoControls = ({
 }: VideoControlsProps) => {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
+  const { preventFormSubmission } = usePreventFormSubmission();
   
   return (
     <div 
@@ -31,7 +33,10 @@ export const VideoControls = ({
       )}
       role="group"
       aria-label="Video controls"
-      onClick={(e) => e.stopPropagation()} // Prevent clicks from bubbling up
+      onClick={(e) => {
+        e.stopPropagation();
+        preventFormSubmission(e);
+      }}
     >
       <Button
         onClick={(e) => {

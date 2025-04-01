@@ -45,7 +45,7 @@ export const AgeRangeFilter = ({
     }
   };
   
-  const { preventFormSubmission } = usePreventFormSubmission();
+  const { preventFormSubmission, handleKeyDown } = usePreventFormSubmission();
   
   return (
     <FilterAccordion title="Age Range" defaultOpen={true}>
@@ -54,6 +54,7 @@ export const AgeRangeFilter = ({
         onClick={preventFormSubmission}
         onMouseDown={preventFormSubmission}
         onTouchStart={preventFormSubmission}
+        onKeyDown={handleKeyDown}
         className="mt-2 px-1"
       >
         <div className="flex justify-between text-sm text-luxury-neutral mb-2">

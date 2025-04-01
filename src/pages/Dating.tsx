@@ -48,7 +48,7 @@ export default function Dating() {
     setSelectedLookingFor
   });
 
-  const { preventFormSubmission } = usePreventFormSubmission();
+  const { preventFormSubmission, handleKeyDown } = usePreventFormSubmission();
 
   // Use useMemo for stable query options
   const queryOptions = useMemo(() => ({
@@ -111,6 +111,7 @@ export default function Dating() {
       className="min-h-screen bg-gradient-to-br from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to"
       onSubmit={preventFormSubmission}
       onClick={(e) => e.target === e.currentTarget && preventFormSubmission(e)}
+      onKeyDown={handleKeyDown}
     >
       <div className="container-fluid px-4 py-8 max-w-none">
         <motion.div 
