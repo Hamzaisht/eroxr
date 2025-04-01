@@ -75,9 +75,9 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         
         if (data) {
           setLiveAlerts(data.map(alert => {
-            // Properly handle profile data, using optional chaining and fallbacks
-            const username = alert.profiles?.username || 'Unknown';
-            const avatar_url = alert.profiles?.avatar_url || null;
+            // Properly handle profile data with optional chaining and fallbacks
+            const username = alert.profiles?.[0]?.username || 'Unknown';
+            const avatar_url = alert.profiles?.[0]?.avatar_url || null;
             
             return {
               id: alert.id,
@@ -128,9 +128,9 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       
       if (data) {
         setLiveAlerts(data.map(alert => {
-          // Consistently handle profile data
-          const username = alert.profiles?.username || 'Unknown';
-          const avatar_url = alert.profiles?.avatar_url || null;
+          // Also update here with proper optional chaining and fallbacks
+          const username = alert.profiles?.[0]?.username || 'Unknown';
+          const avatar_url = alert.profiles?.[0]?.avatar_url || null;
           
           return {
             id: alert.id,

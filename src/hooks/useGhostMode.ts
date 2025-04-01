@@ -25,6 +25,12 @@ export const useGhostMode = () => {
       console.log("isSuperAdmin status:", isSuperAdmin);
       console.log("Ghost mode active:", isGhostMode);
       console.log("Live alerts count:", liveAlerts.length);
+      
+      // Add additional debugging for profiles data
+      if (liveAlerts.length > 0) {
+        console.log("Sample alert username:", liveAlerts[0].username);
+        console.log("Sample alert avatar_url:", liveAlerts[0].avatar_url);
+      }
     }
   }, [session, isSuperAdmin, isGhostMode, liveAlerts]);
   

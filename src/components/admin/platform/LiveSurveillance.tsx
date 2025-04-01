@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useGhostMode } from "@/hooks/useGhostMode";
@@ -79,9 +80,9 @@ export const LiveSurveillance = () => {
           if (streamsError) throw streamsError;
           
           data = streams.map(stream => {
-            // Use optional chaining with fallbacks for profile data
-            const username = stream.profiles?.username || 'Unknown';
-            const avatar_url = stream.profiles?.avatar_url || null;
+            // Fix: properly access profile data with optional chaining and fallbacks
+            const username = stream.profiles?.[0]?.username || 'Unknown';
+            const avatar_url = stream.profiles?.[0]?.avatar_url || null;
             
             return {
               id: stream.id,
@@ -142,12 +143,16 @@ export const LiveSurveillance = () => {
           chats.forEach(chat => {
             const chatKey = `${chat.sender_id}:${chat.recipient_id}`;
             if (!uniqueChats.has(chatKey)) {
+              // Fix: properly access sender profile data with optional chaining
+              const username = chat.sender?.[0]?.username || 'Unknown';
+              const avatar_url = chat.sender?.[0]?.avatar_url || null;
+              
               uniqueChats.set(chatKey, {
                 id: chatKey,
                 type: 'chat',
                 user_id: chat.sender_id,
-                username: chat.sender?.username || 'Unknown',
-                avatar_url: chat.sender?.avatar_url,
+                username: username,
+                avatar_url: avatar_url,
                 started_at: chat.created_at,
                 status: 'active',
                 content_type: chat.message_type
@@ -174,17 +179,23 @@ export const LiveSurveillance = () => {
             
           if (adsError) throw adsError;
           
-          data = ads.map(ad => ({
-            id: ad.id,
-            type: 'bodycontact',
-            user_id: ad.user_id,
-            username: ad.profiles?.username || 'Unknown',
-            avatar_url: ad.profiles?.avatar_url,
-            started_at: ad.created_at,
-            status: ad.moderation_status === 'pending' ? 'active' : 'flagged',
-            title: ad.title,
-            content_type: 'ad'
-          }));
+          data = ads.map(ad => {
+            // Fix: properly access profile data with optional chaining and fallbacks
+            const username = ad.profiles?.[0]?.username || 'Unknown';
+            const avatar_url = ad.profiles?.[0]?.avatar_url || null;
+            
+            return {
+              id: ad.id,
+              type: 'bodycontact',
+              user_id: ad.user_id,
+              username: username,
+              avatar_url: avatar_url,
+              started_at: ad.created_at,
+              status: ad.moderation_status === 'pending' ? 'active' : 'flagged',
+              title: ad.title,
+              content_type: 'ad'
+            };
+          });
           break;
           
         default:
