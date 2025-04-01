@@ -55,12 +55,15 @@ export function useChatsSurveillance() {
         // Handle case where sender and receiver are the same user
         const isSelfMessage = message.sender_id === message.recipient_id;
         
-        // Fix: The sender and receiver could be null or undefined, so we need to handle that
-        // and they are objects, not arrays, so we need to access properties directly
-        const senderUsername = message.sender?.username || "Unknown";
-        const senderAvatar = message.sender?.avatar_url || null;
-        const recipientUsername = message.receiver?.username || "Unknown";
-        const recipientAvatar = message.receiver?.avatar_url || null;
+        // The Supabase join returns sender and receiver as objects with nested properties
+        // Need to check if the objects exist first, then access their properties
+        const senderProfile = message.sender || {};
+        const receiverProfile = message.receiver || {};
+        
+        const senderUsername = typeof senderProfile.username === 'string' ? senderProfile.username : "Unknown";
+        const senderAvatar = senderProfile.avatar_url || null;
+        const recipientUsername = typeof receiverProfile.username === 'string' ? receiverProfile.username : "Unknown";
+        const recipientAvatar = receiverProfile.avatar_url || null;
         
         return {
           id: message.id,
