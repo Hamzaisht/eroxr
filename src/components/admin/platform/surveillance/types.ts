@@ -1,4 +1,3 @@
-
 import { LiveSession } from "../user-analytics/types";
 
 export interface SurveillanceContextType {
@@ -16,3 +15,23 @@ export interface SurveillanceContextType {
 }
 
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'alerts';
+
+export interface SessionModerationActionProps {
+  session: LiveSession;
+  onModerate: (session: LiveSession, action: string) => Promise<void>;
+  actionInProgress: string | null;
+}
+
+export interface SessionItemProps {
+  session: LiveSession;
+  onMonitorSession: (session: LiveSession) => Promise<boolean>;
+  onShowMediaPreview: (session: LiveSession) => void;
+  onModerate: (session: LiveSession, action: string) => Promise<void>;
+  actionInProgress: string | null;
+}
+
+export interface MediaPreviewDialogProps {
+  session: LiveSession | null;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+}
