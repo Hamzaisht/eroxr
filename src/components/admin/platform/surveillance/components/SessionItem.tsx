@@ -91,7 +91,7 @@ export const SessionItem = ({
                 {session.recipient_username && (
                   <div className="flex items-center space-x-2 mt-1">
                     <User className="h-3 w-3" />
-                    <span>With: {session.recipient_username}</span>
+                    <span>With: {session.recipient_username || 'Unknown'}</span>
                   </div>
                 )}
               </div>
@@ -101,7 +101,11 @@ export const SessionItem = ({
               <div className="text-sm text-gray-400 mt-1">
                 <div className="flex items-center space-x-2">
                   <User className="h-3 w-3" />
-                  <span>From: @{session.username} → To: @{session.recipient_username || 'Unknown'}</span>
+                  <span>
+                    From: @{session.sender_username || session.username || 'Unknown'} 
+                    {' → '} 
+                    To: @{session.recipient_username || 'Unknown'}
+                  </span>
                 </div>
                 {session.content && (
                   <p className="mt-1 text-xs opacity-70 truncate">{session.content}</p>
@@ -144,8 +148,8 @@ export const SessionItem = ({
               <Clock className="h-3 w-3" />
               <span>
                 {session.type === 'bodycontact' 
-                  ? `Active since ${format(new Date(session.started_at), 'HH:mm:ss')}`
-                  : `Started ${format(new Date(session.started_at), 'HH:mm:ss')}`
+                  ? `Active since ${format(new Date(session.started_at || session.created_at), 'HH:mm:ss')}`
+                  : `Started ${format(new Date(session.started_at || session.created_at), 'HH:mm:ss')}`
                 }
               </span>
             </div>

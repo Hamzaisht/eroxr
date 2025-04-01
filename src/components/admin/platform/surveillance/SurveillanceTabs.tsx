@@ -14,7 +14,8 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
     activeTab, 
     setActiveTab, 
     liveSessions, 
-    isLoading
+    isLoading,
+    error
   } = useSurveillance();
   
   // Handle tab change
@@ -47,6 +48,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
         <TabContent 
           sessions={liveSessions}
           isLoading={isLoading}
+          error={error}
         />
       </TabsContent>
       
@@ -54,6 +56,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
         <TabContent 
           sessions={liveSessions}
           isLoading={isLoading}
+          error={error}
         />
       </TabsContent>
       
@@ -61,6 +64,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
         <TabContent 
           sessions={liveSessions}
           isLoading={isLoading}
+          error={error}
         />
       </TabsContent>
       
@@ -68,6 +72,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
         <TabContent 
           sessions={liveSessions}
           isLoading={isLoading}
+          error={error}
         />
       </TabsContent>
       
