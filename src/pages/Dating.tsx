@@ -93,14 +93,14 @@ export default function Dating() {
     setShowSubscriptionDialog(true);
   };
 
-  // IMPROVED: More comprehensive form submission prevention
+  // Prevent form submission to avoid page refreshes
   const preventFormSubmission = (e: React.FormEvent | React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     return false;
   };
 
-  if (isLoading || isProfileLoading) {
+  if (isProfileLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
@@ -114,6 +114,7 @@ export default function Dating() {
     <div 
       className="min-h-screen bg-gradient-to-br from-luxury-gradient-from via-luxury-gradient-via to-luxury-gradient-to"
       onSubmit={preventFormSubmission}
+      onClick={(e) => e.target === e.currentTarget && preventFormSubmission(e)}
     >
       <div className="container-fluid px-4 py-8 max-w-none">
         <motion.div 
@@ -161,6 +162,7 @@ export default function Dating() {
               canAccessBodyContact={!!canAccessBodyContact}
               onAdCreationSuccess={handleAdCreationSuccess}
               onTagClick={handleTagClick}
+              isLoading={isLoading}
             />
           </div>
         </motion.div>

@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useRef } from "react";
-import { motion } from "framer-motion";
-import { MessageCircle, Eye, MapPin, Calendar } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MessageCircle, Eye, MapPin, Calendar, User, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,17 +12,23 @@ import { AdActions } from "../video-profile-card/AdActions";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface ListViewModeProps {
   ads: DatingAd[];
+  isLoading?: boolean;
 }
 
-export const ListViewMode = ({ ads }: ListViewModeProps) => {
+export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
   const [selectedAd, setSelectedAd] = useState<DatingAd | null>(null);
+  const [hoveredAdId, setHoveredAdId] = useState<string | null>(null);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
   const session = useSession();
   const navigate = useNavigate();
   const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMediaQuery("(max-width: 768px)");
   
   // Format age range for display
   const formatAgeRange = (ad: DatingAd) => {
@@ -84,8 +90,43 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
     }
   };
 
+  // Toggle description expansion
+  const toggleDescription = (adId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent opening the full view
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [adId]: !prev[adId]
+    }));
+  };
+
+  // Reset hovered ad when component unmounts or ads change
+  useEffect(() => {
+    return () => setHoveredAdId(null);
+  }, [ads]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3, 4].map((item) => (
+          <div 
+            key={item} 
+            className="h-40 sm:h-48 rounded-xl overflow-hidden bg-luxury-dark/40 animate-pulse"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (!ads || ads.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-luxury-neutral">No ads found matching your criteria</p>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <TooltipProvider>
       <div ref={containerRef} className="space-y-4">
         {ads.map((ad) => (
           <motion.div
@@ -93,27 +134,77 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            whileHover={{ scale: 1.01 }}
+            whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
             transition={{ duration: 0.2 }}
             className="bg-luxury-dark/50 backdrop-blur-sm rounded-xl overflow-hidden shadow-md border border-luxury-primary/10 group relative"
             onClick={() => setSelectedAd(ad)}
+            onMouseEnter={() => !isMobile && setHoveredAdId(ad.id)}
+            onMouseLeave={() => !isMobile && setHoveredAdId(null)}
+            onTouchStart={() => isMobile && setHoveredAdId(ad.id === hoveredAdId ? null : ad.id)}
           >
             <AdActions ad={ad} />
             
             <div className="flex flex-col sm:flex-row h-full">
               {/* Left side: Video thumbnail */}
               <div className="sm:w-80 h-48 sm:h-auto relative flex-shrink-0">
-                {ad.video_url ? (
-                  <VideoPlayer 
-                    url={ad.video_url} 
-                    className="w-full h-full"
-                    playOnHover={true}
-                    autoPlay={false}
-                  />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="absolute inset-0 z-20 opacity-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Click to view full ad</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                {!isMobile ? (
+                  // Desktop behavior (hover to play)
+                  <>
+                    {ad.video_url ? (
+                      <>
+                        {/* Thumbnail/poster image (shown by default) */}
+                        {hoveredAdId !== ad.id && (
+                          <div className="absolute inset-0 z-10 bg-black">
+                            <img
+                              src={`${ad.video_url?.split('.').slice(0, -1).join('.')}.jpg`}
+                              alt={ad.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Video (shown on hover) */}
+                        <VideoPlayer 
+                          url={ad.video_url} 
+                          className="w-full h-full"
+                          playOnHover={true}
+                          autoPlay={hoveredAdId === ad.id}
+                        />
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-luxury-darker">
+                        <p className="text-luxury-neutral">No video</p>
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-luxury-darker">
-                    <p className="text-luxury-neutral">No video</p>
-                  </div>
+                  // Mobile behavior (tap to preview)
+                  <>
+                    {ad.video_url ? (
+                      <VideoPlayer 
+                        url={ad.video_url}
+                        className="w-full h-full"
+                        autoPlay={hoveredAdId === ad.id}
+                        playOnHover={false}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-luxury-darker">
+                        <p className="text-luxury-neutral">No video</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
               
@@ -141,17 +232,37 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 mt-1">
                     <div className="flex items-center gap-1 text-sm text-luxury-neutral">
                       <Calendar className="h-4 w-4" />
                       <span>Age: {formatAgeRange(ad)}</span>
                     </div>
                     
                     <div className="flex items-center gap-1 text-sm text-luxury-neutral">
+                      <User className="h-4 w-4" />
                       <span className="font-medium">Looking for:</span>
                       <span>{formatLookingFor(ad)}</span>
                     </div>
                   </div>
+                  
+                  {/* Description with expand/collapse on mobile */}
+                  {ad.description && (
+                    <div className="mt-2">
+                      <p className={`text-sm text-luxury-neutral/90 ${isMobile && !expandedDescriptions[ad.id] ? 'line-clamp-2' : ''}`}>
+                        {ad.description}
+                      </p>
+                      {isMobile && ad.description.length > 120 && (
+                        <Button 
+                          variant="link" 
+                          size="sm" 
+                          className="text-[10px] text-luxury-primary p-0 h-auto mt-1"
+                          onClick={(e) => toggleDescription(ad.id, e)}
+                        >
+                          {expandedDescriptions[ad.id] ? 'Show less' : 'Read more'}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                   
                   {/* Tags */}
                   {ad.tags && ad.tags.length > 0 && (
@@ -185,6 +296,12 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
                       <MessageCircle className="h-4 w-4" />
                       <span>{ad.message_count || 0} replies</span>
                     </div>
+                    {ad.created_at && (
+                      <div className="hidden md:flex items-center gap-1 text-luxury-neutral/80">
+                        <Clock className="h-4 w-4" />
+                        <span>{new Date(ad.created_at).toLocaleDateString()}</span>
+                      </div>
+                    )}
                   </div>
                   
                   <Button 
@@ -203,12 +320,14 @@ export const ListViewMode = ({ ads }: ListViewModeProps) => {
       </div>
       
       {/* Fullscreen Ad Viewer */}
-      {selectedAd && (
-        <FullscreenAdViewer 
-          ad={selectedAd} 
-          onClose={() => setSelectedAd(null)} 
-        />
-      )}
-    </>
+      <AnimatePresence>
+        {selectedAd && (
+          <FullscreenAdViewer 
+            ad={selectedAd} 
+            onClose={() => setSelectedAd(null)} 
+          />
+        )}
+      </AnimatePresence>
+    </TooltipProvider>
   );
 };

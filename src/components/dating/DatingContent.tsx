@@ -1,29 +1,33 @@
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DatingAd } from "@/components/ads/types/dating";
 import { EmptyProfilesState } from "./EmptyProfilesState";
 import { useSession } from "@supabase/auth-helpers-react";
-import { TrendingUp, AlertCircle, Eye, Grid, List } from "lucide-react";
+import { TrendingUp, AlertCircle, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { GridViewMode, ListViewMode } from "@/components/ads/view-modes";
+import { ViewModeToggle } from "@/components/ads/view-modes/ViewModeToggle";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface DatingContentProps {
   ads: DatingAd[] | undefined;
   canAccessBodyContact: boolean;
   onAdCreationSuccess: () => void;
   onTagClick?: (tag: string) => void;
+  isLoading?: boolean;
 }
 
 export const DatingContent = ({ 
   ads, 
   canAccessBodyContact, 
   onAdCreationSuccess,
-  onTagClick
+  onTagClick,
+  isLoading = false
 }: DatingContentProps) => {
   const session = useSession();
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>('bd-view-mode', 'grid');
+  const [activeTab, setActiveTab] = useState('all');
   
   // Filter most viewed ads (top 5)
   const mostViewedAds = ads
@@ -66,6 +70,19 @@ export const DatingContent = ({
     }));
   };
 
+  // Maintain scroll position when changing tabs or view modes
+  useEffect(() => {
+    // Save scroll position to restore later
+    const scrollPosition = window.scrollY;
+    
+    // Return to the saved position after a short delay to allow rendering
+    const timer = setTimeout(() => {
+      window.scrollTo(0, scrollPosition);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [viewMode, activeTab]);
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
@@ -73,10 +90,14 @@ export const DatingContent = ({
       transition={{ duration: 0.5, delay: 0.4 }}
       className="flex-1 space-y-6"
     >
-      {hasAds ? (
+      {hasAds || isLoading ? (
         <>
           <div className="flex justify-between items-center">
-            <Tabs defaultValue="all" className="w-full">
+            <Tabs 
+              defaultValue="all" 
+              className="w-full"
+              onValueChange={(value) => setActiveTab(value)}
+            >
               <TabsList className="grid grid-cols-3 mb-6">
                 <TabsTrigger value="all" className="flex items-center gap-2">
                   All Ads
@@ -92,43 +113,23 @@ export const DatingContent = ({
               </TabsList>
               
               <div className="flex justify-end mb-4">
-                <div className="flex bg-luxury-dark/30 rounded-lg p-1">
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="flex items-center gap-1"
-                  >
-                    <Grid className="h-4 w-4" />
-                    Grid
-                  </Button>
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className="flex items-center gap-1"
-                  >
-                    <List className="h-4 w-4" />
-                    List
-                  </Button>
-                </div>
+                <ViewModeToggle 
+                  viewMode={viewMode} 
+                  setViewMode={setViewMode} 
+                />
               </div>
               
               <TabsContent value="all" className="space-y-4">
-                {allAds && allAds.length > 0 ? (
-                  viewMode === 'grid' ? (
-                    <GridViewMode ads={makeTagClickable(allAds) as DatingAd[]} />
-                  ) : (
-                    <ListViewMode ads={makeTagClickable(allAds) as DatingAd[]} />
-                  )
+                {viewMode === 'grid' ? (
+                  <GridViewMode 
+                    ads={makeTagClickable(allAds) as DatingAd[]} 
+                    isLoading={isLoading}
+                  />
                 ) : (
-                  <div className="flex flex-col items-center justify-center p-8 text-center bg-black/20 rounded-xl">
-                    <AlertCircle className="h-12 w-12 text-luxury-primary/40 mb-4" />
-                    <h3 className="text-xl font-bold text-luxury-primary mb-2">No Ads Available</h3>
-                    <p className="text-luxury-neutral/60 max-w-md">
-                      No body contact ads match your current filters. Adjust your filters or create your own ad.
-                    </p>
-                  </div>
+                  <ListViewMode 
+                    ads={makeTagClickable(allAds) as DatingAd[]} 
+                    isLoading={isLoading}
+                  />
                 )}
               </TabsContent>
               
