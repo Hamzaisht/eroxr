@@ -22,7 +22,7 @@ export function useCallsSurveillance() {
       
       return (calls || []).map((call: any) => ({
         id: call.id,
-        type: 'call',
+        type: 'call' as const,
         user_id: call.initiator_id,
         username: call.username || 'Unknown',
         avatar_url: call.avatar_url || '',

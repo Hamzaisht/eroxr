@@ -37,7 +37,7 @@ export function useChatsSurveillance() {
         if (!uniqueChats.has(chatKey)) {
           uniqueChats.set(chatKey, {
             id: chatKey,
-            type: 'chat',
+            type: 'chat' as const,
             user_id: chat.sender_id,
             username: chat.sender && chat.sender[0] ? chat.sender[0].username || 'Unknown' : 'Unknown',
             avatar_url: chat.sender && chat.sender[0] ? chat.sender[0].avatar_url || '' : '',

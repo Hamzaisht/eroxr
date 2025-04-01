@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +32,7 @@ export function useStreamsSurveillance() {
       
       return streams.map(stream => ({
         id: stream.id,
-        type: 'stream',
+        type: 'stream' as const,
         user_id: stream.creator_id,
         username: stream.profiles && stream.profiles[0] ? stream.profiles[0].username || 'Unknown' : 'Unknown',
         avatar_url: stream.profiles && stream.profiles[0] ? stream.profiles[0].avatar_url || null : null,

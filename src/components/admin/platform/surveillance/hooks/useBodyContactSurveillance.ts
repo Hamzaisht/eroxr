@@ -45,7 +45,7 @@ export function useBodyContactSurveillance() {
       return ads.map(ad => {
         return {
           id: ad.id,
-          type: 'bodycontact',
+          type: 'bodycontact' as const,
           user_id: ad.user_id,
           username: ad.profiles && ad.profiles[0] ? ad.profiles[0].username || 'Unknown' : 'Unknown',
           avatar_url: ad.profiles && ad.profiles[0] ? ad.profiles[0].avatar_url || ad.avatar_url || '' : ad.avatar_url || '',
