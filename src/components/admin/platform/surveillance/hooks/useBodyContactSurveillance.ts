@@ -61,7 +61,8 @@ export function useBodyContactSurveillance() {
           location: `${ad.city}, ${ad.country}`,
           tags: ad.tags,
           content_type: 'ad',
-          created_at: ad.created_at
+          created_at: ad.created_at,
+          media_url: [] // Always provide an empty array as default
         };
       });
     } catch (error) {

@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Clock, ExternalLink, Ghost, Users, User } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -25,6 +24,13 @@ export const SessionItem = ({
   // Helper function to get first character for avatar fallback
   const getInitial = (name: string | undefined) => {
     return (name || 'Unknown')?.[0]?.toUpperCase() || '?';
+  };
+
+  // Ensure media_url is always an array for compatibility
+  const sessionWithValidMediaUrl = {
+    ...session,
+    media_url: Array.isArray(session.media_url) ? session.media_url : 
+                session.media_url ? [session.media_url] : []
   };
 
   return (
@@ -170,7 +176,7 @@ export const SessionItem = ({
             size="sm" 
             variant="ghost"
             className="bg-blue-900/20 hover:bg-blue-800/30 text-blue-300"
-            onClick={() => onShowMediaPreview(session)}
+            onClick={() => onShowMediaPreview(sessionWithValidMediaUrl)}
           >
             <ExternalLink className="h-4 w-4 mr-2" />
             Preview
@@ -181,7 +187,7 @@ export const SessionItem = ({
             size="sm" 
             variant="ghost" 
             className="bg-purple-900/20 hover:bg-purple-800/30 text-purple-300 border-purple-800/50"
-            onClick={() => onMonitorSession(session)}
+            onClick={() => onMonitorSession(sessionWithValidMediaUrl)}
           >
             <Ghost className="h-4 w-4 mr-2" />
             Monitor
@@ -189,7 +195,7 @@ export const SessionItem = ({
           
           {/* Moderation actions dropdown */}
           <ModerationActions 
-            session={session} 
+            session={sessionWithValidMediaUrl} 
             onModerate={onModerate} 
             actionInProgress={actionInProgress} 
           />

@@ -25,7 +25,7 @@ export const MediaPreviewDialog: React.FC<MediaPreviewDialogProps> = ({
 }) => {
   if (!session) return null;
 
-  const hasMedia = (session.media_url && session.media_url.length > 0);
+  const hasMedia = session.media_url && session.media_url.length > 0;
   const hasVideo = !!session.video_url;
   const hasProfile = !!(session.type === "bodycontact" && session.about_me);
 
@@ -71,7 +71,8 @@ export const MediaPreviewDialog: React.FC<MediaPreviewDialogProps> = ({
             <TabsContent value="images" className="h-[500px]">
               <ScrollArea className="h-full w-full">
                 <div className="grid grid-cols-2 gap-4 p-4">
-                  {session.media_url?.map((url, index) => (
+                  {/* media_url is guaranteed to be an array */}
+                  {session.media_url.map((url, index) => (
                     <img
                       key={index}
                       src={url}

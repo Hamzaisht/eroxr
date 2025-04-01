@@ -1,6 +1,7 @@
 
 import { useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveSession } from "../../user-analytics/types";
 import { WithProfile } from "@/integrations/supabase/types/profile";
@@ -84,6 +85,10 @@ export function useChatsSurveillance() {
         // Ensure started_at is always present
         const startedAt = message.created_at || new Date().toISOString();
         
+        // Ensure media_url is always an array
+        const mediaUrls = Array.isArray(message.media_url) ? message.media_url : 
+                          message.media_url ? [message.media_url] : [];
+        
         return {
           id: message.id,
           type: 'chat' as const,
@@ -95,7 +100,7 @@ export function useChatsSurveillance() {
           started_at: startedAt, // Ensure required field is present
           content: message.content,
           content_type: message.message_type,
-          media_url: message.media_url || [],
+          media_url: mediaUrls, // Always use an array
           video_url: message.video_url,
           sender_profiles: {
             username: senderUsername,

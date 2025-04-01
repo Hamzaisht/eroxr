@@ -1,4 +1,3 @@
-
 // Creating this file if it doesn't exist or updating it if it does
 export type ContentType = 'post' | 'story' | 'video' | 'ppv' | 'audio';
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
@@ -23,7 +22,7 @@ export interface LiveSession {
   recipient_avatar?: string;
   sender_username?: string;
   content?: string;
-  media_url?: string | string[];
+  media_url?: string[]; // Changed from string | string[] to string[]
   video_url?: string;
   about_me?: string;
   location?: string;

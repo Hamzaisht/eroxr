@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AlertCircle, MessageCircle, UserIcon } from "lucide-react";
 import { LiveSession } from "./types";
@@ -25,8 +24,19 @@ export const SessionList = ({
   const [showMediaPreview, setShowMediaPreview] = useState<LiveSession | null>(null);
   const { actionInProgress, handleModeration } = useModerationActions();
 
+  const processedSessions = sessions.map(session => ({
+    ...session,
+    media_url: Array.isArray(session.media_url) ? session.media_url : 
+               session.media_url ? [session.media_url] : []
+  }));
+
   const handleShowMediaPreview = (session: LiveSession) => {
-    setShowMediaPreview(session);
+    const sessionForPreview = {
+      ...session,
+      media_url: Array.isArray(session.media_url) ? session.media_url : 
+                 session.media_url ? [session.media_url] : []
+    };
+    setShowMediaPreview(sessionForPreview);
   };
 
   if (isLoading) {
@@ -46,35 +56,25 @@ export const SessionList = ({
     );
   }
   
-  if (sessions.length === 0) {
-    const emptyStateIcon = () => {
-      switch (activeTab) {
-        case 'bodycontact':
-          return <UserIcon className="h-12 w-12 opacity-50" />;
-        case 'chats':
-          return <MessageCircle className="h-12 w-12 opacity-50" />;
-        default:
-          return <MessageCircle className="h-12 w-12 opacity-50" />;
-      }
-    };
-
-    const emptyStateMessage = () => {
-      switch (activeTab) {
-        case 'bodycontact':
-          return "No active BodyContact ads at the moment";
-        case 'chats':
-          return "No active chats at the moment";
-        default:
-          return "No active sessions at the moment";
-      }
-    };
-
+  if (processedSessions.length === 0) {
     return (
       <div className="text-center py-12 text-gray-400 bg-[#161B22] rounded-lg">
         <div className="flex justify-center mb-4">
-          {emptyStateIcon()}
+          {activeTab === 'bodycontact' ? (
+            <UserIcon className="h-12 w-12 opacity-50" />
+          ) : activeTab === 'chats' ? (
+            <MessageCircle className="h-12 w-12 opacity-50" />
+          ) : (
+            <MessageCircle className="h-12 w-12 opacity-50" />
+          )}
         </div>
-        <p className="text-lg font-medium">{emptyStateMessage()}</p>
+        <p className="text-lg font-medium">
+          {activeTab === 'bodycontact'
+            ? "No active BodyContact ads at the moment"
+            : activeTab === 'chats'
+            ? "No active chats at the moment"
+            : "No active sessions at the moment"}
+        </p>
         <p className="mt-2 text-sm text-gray-500">
           Users' activities will appear here when they become active
         </p>
@@ -84,7 +84,7 @@ export const SessionList = ({
   
   return (
     <div className="space-y-4">
-      {sessions.map((sessionItem) => (
+      {processedSessions.map((sessionItem) => (
         <SessionItem
           key={sessionItem.id}
           session={sessionItem}
