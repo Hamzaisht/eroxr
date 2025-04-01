@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveSession } from "../../user-analytics/types";
+import { WithProfile } from "@/integrations/supabase/types/profile";
 
 export function useChatsSurveillance() {
   const session = useSession();
@@ -54,8 +55,8 @@ export function useChatsSurveillance() {
         // Handle case where sender and receiver are the same user
         const isSelfMessage = message.sender_id === message.recipient_id;
         
-        // Fix: The sender and receiver are objects, not arrays
-        // Access them directly and provide fallbacks
+        // Fix: The sender and receiver could be null or undefined, so we need to handle that
+        // and they are objects, not arrays, so we need to access properties directly
         const senderUsername = message.sender?.username || "Unknown";
         const senderAvatar = message.sender?.avatar_url || null;
         const recipientUsername = message.receiver?.username || "Unknown";
