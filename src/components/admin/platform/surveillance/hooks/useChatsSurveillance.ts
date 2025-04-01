@@ -5,6 +5,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { LiveSession } from "../../user-analytics/types";
 import { WithProfile } from "@/integrations/supabase/types/profile";
 
+// Define a type for profile data
+type ProfileData = {
+  username?: string;
+  avatar_url?: string;
+};
+
+// Define the direct message type with proper typing
+type DirectMessage = {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  message_type: string;
+  content: string;
+  created_at: string;
+  media_url?: string[] | null;
+  video_url?: string | null;
+  sender?: ProfileData;
+  receiver?: ProfileData;
+};
+
 export function useChatsSurveillance() {
   const session = useSession();
   
@@ -38,7 +58,7 @@ export function useChatsSurveillance() {
         `)
         .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
-        .limit(100); // Increased limit to make sure we capture all recent messages
+        .limit(100) as unknown as { data: DirectMessage[]; error: any };
       
       if (error) {
         console.error("Error fetching chat data:", error);
@@ -55,15 +75,11 @@ export function useChatsSurveillance() {
         // Handle case where sender and receiver are the same user
         const isSelfMessage = message.sender_id === message.recipient_id;
         
-        // The Supabase join returns sender and receiver as objects with nested properties
-        // Need to check if the objects exist first, then access their properties
-        const senderProfile = message.sender || {};
-        const receiverProfile = message.receiver || {};
-        
-        const senderUsername = typeof senderProfile.username === 'string' ? senderProfile.username : "Unknown";
-        const senderAvatar = senderProfile.avatar_url || null;
-        const recipientUsername = typeof receiverProfile.username === 'string' ? receiverProfile.username : "Unknown";
-        const recipientAvatar = receiverProfile.avatar_url || null;
+        // Safely access profile data with proper fallbacks
+        const senderUsername = message.sender?.username || "Unknown";
+        const senderAvatar = message.sender?.avatar_url || null;
+        const recipientUsername = message.receiver?.username || "Unknown";
+        const recipientAvatar = message.receiver?.avatar_url || null;
         
         return {
           id: message.id,
