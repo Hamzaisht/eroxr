@@ -165,10 +165,10 @@ export const InteractiveNav = () => {
           variant="destructive"
           size="sm"
           className="fixed bottom-4 right-4 z-50 flex items-center gap-2"
-          onClick={() => navigate('/admin/features')}
+          onClick={() => navigate('/admin')}
         >
           <Shield className="w-4 h-4" />
-          {!isMobile && "God Mode"}
+          {!isMobile && "Admin Panel"}
         </Button>
       )}
     </>

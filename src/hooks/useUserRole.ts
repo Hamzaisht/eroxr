@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -9,6 +10,11 @@ export const useUserRole = () => {
     queryKey: ["userRole", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
+
+      // Special case for direct email check for top-level admins
+      if (session.user.email === 'hamzaishtiaq242@gmail.com') {
+        return 'super_admin';
+      }
 
       const { data, error } = await supabase
         .from("user_roles")
