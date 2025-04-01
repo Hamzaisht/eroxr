@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useGhostMode } from "@/hooks/useGhostMode";
@@ -644,7 +643,7 @@ export const LiveSurveillance = () => {
                             
                             <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                               <Clock className="h-3 w-3" />
-                              <span>Created {format(new Date(adSession.started_at), 'HH:mm:ss')}</span>
+                              <span>Created {format(new Date(adSession.created_at), 'HH:mm:ss')}</span>
                             </div>
                           </div>
                           

@@ -1,12 +1,9 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Ghost, Eye, AlertTriangle } from "lucide-react";
-import { LiveSession, LiveAlert } from "@/components/admin/platform/user-analytics/types";
-import { WithProfile } from "@/integrations/supabase/types/profile";
+import { LiveAlert } from "@/components/admin/platform/user-analytics/types";
 
 interface GhostModeContextType {
   isGhostMode: boolean;
@@ -74,24 +71,18 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
         
         if (data) {
-          setLiveAlerts(data.map(alert => {
-            // Properly handle profile data with optional chaining and fallbacks
-            const username = alert.profiles?.[0]?.username || 'Unknown';
-            const avatar_url = alert.profiles?.[0]?.avatar_url || null;
-            
-            return {
-              id: alert.id,
-              type: alert.type,
-              user_id: alert.user_id,
-              username: username,
-              avatar_url: avatar_url,
-              created_at: alert.created_at,
-              content_type: alert.content_type,
-              reason: alert.reason,
-              severity: alert.severity,
-              content_id: alert.content_id
-            };
-          }));
+          setLiveAlerts(data.map(alert => ({
+            id: alert.id,
+            type: alert.type,
+            user_id: alert.user_id,
+            username: alert.profiles?.[0]?.username || 'Unknown',
+            avatar_url: alert.profiles?.[0]?.avatar_url || null,
+            created_at: alert.created_at,
+            content_type: alert.content_type,
+            reason: alert.reason,
+            severity: alert.severity,
+            content_id: alert.content_id
+          })));
         }
       } catch (error) {
         console.error("Error fetching alerts:", error);
@@ -127,24 +118,18 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
       
       if (data) {
-        setLiveAlerts(data.map(alert => {
-          // Also update here with proper optional chaining and fallbacks
-          const username = alert.profiles?.[0]?.username || 'Unknown';
-          const avatar_url = alert.profiles?.[0]?.avatar_url || null;
-          
-          return {
-            id: alert.id,
-            type: alert.type,
-            user_id: alert.user_id,
-            username: username,
-            avatar_url: avatar_url,
-            created_at: alert.created_at,
-            content_type: alert.content_type,
-            reason: alert.reason,
-            severity: alert.severity,
-            content_id: alert.content_id
-          };
-        }));
+        setLiveAlerts(data.map(alert => ({
+          id: alert.id,
+          type: alert.type,
+          user_id: alert.user_id,
+          username: alert.profiles?.[0]?.username || 'Unknown',
+          avatar_url: alert.profiles?.[0]?.avatar_url || null,
+          created_at: alert.created_at,
+          content_type: alert.content_type,
+          reason: alert.reason,
+          severity: alert.severity,
+          content_id: alert.content_id
+        })));
       }
     } catch (error) {
       console.error("Error refreshing alerts:", error);
