@@ -54,11 +54,11 @@ export const useShortPostSubmit = () => {
       if (uploadError) throw uploadError;
 
       // Get public URL
-      const { data: { publicUrl }, error: urlError } = supabase.storage
+      const { data } = supabase.storage
         .from('shorts')
         .getPublicUrl(filePath);
 
-      if (urlError) throw urlError;
+      if (!data.publicUrl) throw new Error('Failed to get public URL');
 
       // Insert post record
       const { data: postData, error: postError } = await supabase
@@ -67,8 +67,8 @@ export const useShortPostSubmit = () => {
           creator_id: session.user.id,
           content: title,
           description,
-          video_urls: [publicUrl],
-          video_thumbnail_url: publicUrl, // Placeholder, replace with actual thumbnail generation
+          video_urls: [data.publicUrl],
+          video_thumbnail_url: data.publicUrl, // Placeholder, replace with actual thumbnail generation
           visibility: isPremium ? 'subscribers_only' : 'public',
           video_processing_status: 'completed'
         })
