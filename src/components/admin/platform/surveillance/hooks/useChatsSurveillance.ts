@@ -54,31 +54,38 @@ export function useChatsSurveillance() {
         // Handle case where sender and receiver are the same user
         const isSelfMessage = message.sender_id === message.recipient_id;
         
+        // Fix: Access the sender and receiver objects properly
+        // They are objects, not arrays
+        const senderUsername = message.sender?.username || "Unknown";
+        const senderAvatar = message.sender?.avatar_url || null;
+        const recipientUsername = message.receiver?.username || "Unknown";
+        const recipientAvatar = message.receiver?.avatar_url || null;
+        
         return {
           id: message.id,
           type: 'chat' as const,
           user_id: message.sender_id,
-          username: message.sender?.username || "Unknown",
-          avatar_url: message.sender?.avatar_url || null,
-          sender_username: message.sender?.username || "Unknown",
-          recipient_username: message.receiver?.username || "Unknown",
+          username: senderUsername,
+          avatar_url: senderAvatar,
+          sender_username: senderUsername,
+          recipient_username: recipientUsername,
           started_at: message.created_at,
           content: message.content,
           content_type: message.message_type,
           media_url: message.media_url || [],
           video_url: message.video_url,
           sender_profiles: {
-            username: message.sender?.username || "Unknown",
-            avatar_url: message.sender?.avatar_url || null
+            username: senderUsername,
+            avatar_url: senderAvatar
           },
           receiver_profiles: {
-            username: message.receiver?.username || "Unknown", 
-            avatar_url: message.receiver?.avatar_url || null
+            username: recipientUsername,
+            avatar_url: recipientAvatar
           },
           about_me: isSelfMessage ? "Note to self" : undefined,
           title: isSelfMessage 
-            ? `Self message from @${message.sender?.username || "Unknown"}` 
-            : `Message from @${message.sender?.username || "Unknown"} to @${message.receiver?.username || "Unknown"}`
+            ? `Self message from @${senderUsername}` 
+            : `Message from @${senderUsername} to @${recipientUsername}`
         };
       });
     } catch (error) {

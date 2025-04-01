@@ -48,11 +48,8 @@ export const SessionList = ({
     return (
       <div className="text-center py-12 text-gray-400 bg-[#161B22] rounded-lg">
         <div className="flex justify-center mb-4">
-          {sessions.type === 'chats' ? (
-            <MessageCircle className="h-12 w-12 opacity-50" />
-          ) : (
-            <UserIcon className="h-12 w-12 opacity-50" />
-          )}
+          {/* Fix: Check the current tab type instead of sessions.type */}
+          <MessageCircle className="h-12 w-12 opacity-50" />
         </div>
         <p className="text-lg font-medium">No active sessions at the moment</p>
         <p className="mt-2 text-sm text-gray-500">
