@@ -1,5 +1,4 @@
 
-
 import { useEffect } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -9,6 +8,7 @@ import { GhostModePrompt } from "./surveillance/GhostModePrompt";
 import { SurveillanceProvider, useSurveillance } from "./surveillance/SurveillanceContext";
 import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { ActiveSurveillanceCard } from "./surveillance/ActiveSurveillanceCard";
+import { LiveSession } from "./user-analytics/types";
 
 export const LiveSurveillance = () => {
   const { isSuperAdmin } = useSuperAdminCheck();
@@ -43,11 +43,20 @@ export const LiveSurveillance = () => {
   );
 };
 
+interface SurveillanceContentProps {
+  activeSurveillance: {
+    session?: LiveSession;
+    isWatching: boolean;
+  };
+  stopSurveillance: () => Promise<boolean>;
+  liveAlerts: any[];
+}
+
 const SurveillanceContent = ({
   activeSurveillance,
   stopSurveillance,
   liveAlerts
-}) => {
+}: SurveillanceContentProps) => {
   const { 
     fetchLiveSessions, 
     handleRefresh, 
@@ -90,4 +99,3 @@ const SurveillanceContent = ({
     </>
   );
 };
-

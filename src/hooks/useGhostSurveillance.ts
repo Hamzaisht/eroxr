@@ -17,14 +17,14 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
   const session = useSession();
   const { toast } = useToast();
 
-  const startSurveillance = async (targetSession: LiveSession) => {
+  const startSurveillance = async (targetSession: LiveSession): Promise<boolean> => {
     if (!isGhostMode || !isSuperAdmin) {
       toast({
         title: "Ghost Mode Required",
         description: "You must be in Ghost Mode to monitor user sessions",
         variant: "destructive"
       });
-      return;
+      return false;
     }
     
     try {
@@ -74,8 +74,8 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
     }
   };
 
-  const stopSurveillance = async () => {
-    if (!activeSurveillance.isWatching) return;
+  const stopSurveillance = async (): Promise<boolean> => {
+    if (!activeSurveillance.isWatching) return false;
     
     try {
       if (session?.user?.id && activeSurveillance.session) {

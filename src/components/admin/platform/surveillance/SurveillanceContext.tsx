@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -30,7 +29,7 @@ export const SurveillanceProvider = ({
   children: ReactNode;
   liveAlerts: LiveAlert[];
   refreshAlerts: () => Promise<void>;
-  startSurveillance: (session: LiveSession) => Promise<void>;
+  startSurveillance: (session: LiveSession) => Promise<boolean>;
 }) => {
   const [activeTab, setActiveTab] = useState('streams');
   const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);

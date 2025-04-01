@@ -18,8 +18,8 @@ interface GhostModeContextType {
     session?: LiveSession;
     isWatching: boolean;
   };
-  startSurveillance: (session: LiveSession) => Promise<void>;
-  stopSurveillance: () => Promise<void>;
+  startSurveillance: (session: LiveSession) => Promise<boolean>;
+  stopSurveillance: () => Promise<boolean>;
   liveAlerts: LiveAlert[];
   refreshAlerts: () => Promise<void>;
 }
@@ -31,8 +31,8 @@ const GhostModeContext = createContext<GhostModeContextType>({
   activeSurveillance: {
     isWatching: false
   },
-  startSurveillance: async () => {},
-  stopSurveillance: async () => {},
+  startSurveillance: async () => false,
+  stopSurveillance: async () => false,
   liveAlerts: [],
   refreshAlerts: async () => {}
 });
