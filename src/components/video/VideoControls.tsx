@@ -2,6 +2,7 @@
 import { Volume2, VolumeX, Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface VideoControlsProps {
   isPlaying: boolean;
@@ -18,6 +19,8 @@ export const VideoControls = ({
   onMuteToggle,
   className
 }: VideoControlsProps) => {
+  const isMobile = useMediaQuery("(max-width: 640px)");
+  
   return (
     <div 
       className={cn(
@@ -29,7 +32,10 @@ export const VideoControls = ({
     >
       <Button
         onClick={onPlayPause}
-        className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm"
+        className={cn(
+          "p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm",
+          isMobile && "scale-75"
+        )}
         aria-label={isPlaying ? "Pause video" : "Play video"}
       >
         {isPlaying ? (
@@ -41,7 +47,10 @@ export const VideoControls = ({
       
       <Button
         onClick={onMuteToggle}
-        className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm"
+        className={cn(
+          "p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm",
+          isMobile && "scale-75"
+        )}
         aria-label={isMuted ? "Unmute video" : "Mute video"}
       >
         {isMuted ? (

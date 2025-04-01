@@ -2,6 +2,7 @@
 import { FilterAccordion } from "./FilterAccordion";
 import { FilterOptions } from "../types/dating";
 import { useState, useEffect } from "react";
+import { usePreventFormSubmission } from "@/hooks/use-prevent-form-submission";
 
 interface VerificationFilterProps {
   filterOptions: FilterOptions;
@@ -46,12 +47,7 @@ export const VerificationFilter = ({
     });
   };
   
-  // Prevent form submission
-  const preventFormSubmission = (e: React.FormEvent | React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  };
+  const { preventFormSubmission } = usePreventFormSubmission();
   
   return (
     <FilterAccordion title="Verification" defaultOpen={true}>

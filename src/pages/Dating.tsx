@@ -14,6 +14,7 @@ import { type Database } from "@/integrations/supabase/types";
 import { useModifiedSearchParams } from "@/components/dating/hooks/useModifiedSearchParams";
 import { DatingFilterSidebar } from "@/components/dating/DatingFilterSidebar";
 import { MobileFilterToggle } from "@/components/dating/MobileFilterToggle";
+import { usePreventFormSubmission } from "@/hooks/use-prevent-form-submission";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
@@ -46,6 +47,8 @@ export default function Dating() {
     setSelectedSeeker,
     setSelectedLookingFor
   });
+
+  const { preventFormSubmission } = usePreventFormSubmission();
 
   // Use useMemo for stable query options
   const queryOptions = useMemo(() => ({
@@ -91,13 +94,6 @@ export default function Dating() {
 
   const handleSubscriptionClick = () => {
     setShowSubscriptionDialog(true);
-  };
-
-  // Prevent form submission to avoid page refreshes
-  const preventFormSubmission = (e: React.FormEvent | React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
   };
 
   if (isProfileLoading) {

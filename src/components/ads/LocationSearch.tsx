@@ -4,6 +4,7 @@ import { type Database } from "@/integrations/supabase/types";
 import { useLocationSearch } from './hooks/useLocationSearch';
 import { Input } from '@/components/ui/input';
 import { MapPin } from 'lucide-react';
+import { usePreventFormSubmission } from '@/hooks/use-prevent-form-submission';
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
@@ -40,17 +41,7 @@ export const LocationSearch = ({
   const cityInputRef = useRef<HTMLInputElement>(null);
   const countryDropdownRef = useRef<HTMLDivElement>(null);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Sync the external state with our internal state
-  useEffect(() => {
-    if (selectedCountry) {
-      setCountrySearch(selectedCountry);
-    }
-    
-    if (selectedCity) {
-      setCitySearch(selectedCity);
-    }
-  }, [selectedCountry, selectedCity, setCountrySearch, setCitySearch]);
+  const { preventFormSubmission } = usePreventFormSubmission();
 
   // Handle clicks outside the dropdowns to close them
   useEffect(() => {
@@ -95,13 +86,6 @@ export const LocationSearch = ({
     setShowCityDropdown(false);
   };
 
-  // Comprehensive event prevention
-  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent | React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  };
-
   const handleCountryFocus = () => {
     setShowCountryDropdown(true);
   };
@@ -115,6 +99,8 @@ export const LocationSearch = ({
       className="space-y-3" 
       onSubmit={preventFormSubmission}
       onClick={preventFormSubmission}
+      onMouseDown={preventFormSubmission}
+      onTouchStart={preventFormSubmission}
     >
       {/* Country Search */}
       <div className="relative">
@@ -127,7 +113,6 @@ export const LocationSearch = ({
           type="text"
           value={countrySearch}
           onChange={(e) => {
-            e.preventDefault(); // Prevent any form submission
             setCountrySearch(e.target.value);
             setShowCountryDropdown(true);
           }}
@@ -139,10 +124,6 @@ export const LocationSearch = ({
               e.preventDefault();
               return false;
             }
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            preventFormSubmission(e);
           }}
         />
         {filteredCountries.length > 0 && showCountryDropdown && (
@@ -175,7 +156,6 @@ export const LocationSearch = ({
             type="text"
             value={citySearch}
             onChange={(e) => {
-              e.preventDefault(); // Prevent any form submission
               setCitySearch(e.target.value);
               setShowCityDropdown(true);
             }}
@@ -187,10 +167,6 @@ export const LocationSearch = ({
                 e.preventDefault();
                 return false;
               }
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              preventFormSubmission(e);
             }}
           />
           {filteredCities.length > 0 && showCityDropdown && (

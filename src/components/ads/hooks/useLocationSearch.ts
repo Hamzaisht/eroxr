@@ -10,8 +10,8 @@ export type LocationSearchResult = {
 };
 
 export const useLocationSearch = (initialCountry: string | null = null, initialCity: string | null = null) => {
-  const [countrySearch, setCountrySearch] = useState<string>('');
-  const [citySearch, setCitySearch] = useState<string>('');
+  const [countrySearch, setCountrySearch] = useState<string>(initialCountry || '');
+  const [citySearch, setCitySearch] = useState<string>(initialCity || '');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(initialCountry);
   const [selectedCity, setSelectedCity] = useState<string | null>(initialCity);
   const [filteredCountries, setFilteredCountries] = useState<string[]>([]);
@@ -20,11 +20,17 @@ export const useLocationSearch = (initialCountry: string | null = null, initialC
   // Get all countries from the data
   const allCountries = Object.keys(countriesData);
 
-  // Filter countries based on search term
+  // Normalize text for searching (handle umlauts and accents)
+  const normalizeText = (text: string): string => {
+    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  };
+
+  // Filter countries based on search term with improved accent handling
   useEffect(() => {
     if (countrySearch.trim()) {
+      const normalizedSearch = normalizeText(countrySearch);
       const filtered = allCountries.filter(country => 
-        country.toLowerCase().includes(countrySearch.toLowerCase())
+        normalizeText(country).includes(normalizedSearch)
       );
       setFilteredCountries(filtered);
     } else {
@@ -32,12 +38,13 @@ export const useLocationSearch = (initialCountry: string | null = null, initialC
     }
   }, [countrySearch]);
 
-  // Filter cities based on selected country and search term
+  // Filter cities based on selected country and search term with improved accent handling
   useEffect(() => {
     if (selectedCountry && citySearch.trim()) {
       const countryCities = countriesData[selectedCountry as keyof typeof countriesData] || [];
+      const normalizedSearch = normalizeText(citySearch);
       const filtered = countryCities.filter(city => 
-        city.toLowerCase().includes(citySearch.toLowerCase())
+        normalizeText(city).includes(normalizedSearch)
       );
       setFilteredCities(filtered);
     } else {
@@ -52,6 +59,19 @@ export const useLocationSearch = (initialCountry: string | null = null, initialC
       setCitySearch('');
     }
   }, [selectedCountry, initialCountry]);
+
+  // Update local state when props change
+  useEffect(() => {
+    if (initialCountry !== selectedCountry && initialCountry !== null) {
+      setSelectedCountry(initialCountry);
+      setCountrySearch(initialCountry);
+    }
+    
+    if (initialCity !== selectedCity && initialCity !== null) {
+      setSelectedCity(initialCity);
+      setCitySearch(initialCity);
+    }
+  }, [initialCountry, initialCity]);
 
   const handleSelectCountry = (country: string) => {
     setSelectedCountry(country);

@@ -12,7 +12,7 @@ import { FilterGroup } from "./filters/FilterGroup";
 import { type Database } from "@/integrations/supabase/types";
 import { LocationSearch } from "./LocationSearch";
 import { useClearFilters } from "./filters/useClearFilters";
-import { usePreventFormSubmission } from "./filters/usePreventFormSubmission";
+import { usePreventFormSubmission } from "@/hooks/use-prevent-form-submission";
 import { FilterSections } from "./filters/FilterSections";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];

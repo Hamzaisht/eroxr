@@ -3,6 +3,7 @@ import { Slider } from "@/components/ui/slider";
 import { FilterAccordion } from "./FilterAccordion";
 import { FilterOptions } from "../types/dating";
 import { useState, useEffect } from "react";
+import { usePreventFormSubmission } from "@/hooks/use-prevent-form-submission";
 
 interface DistanceFilterProps {
   filterOptions: FilterOptions;
@@ -37,12 +38,7 @@ export const DistanceFilter = ({
     }
   };
   
-  // Comprehensive event prevention
-  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent | React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  };
+  const { preventFormSubmission } = usePreventFormSubmission();
   
   return (
     <FilterAccordion title="Maximum Distance" defaultOpen={true}>
@@ -57,11 +53,7 @@ export const DistanceFilter = ({
           <span>Distance</span>
           <span>{distance} km</span>
         </div>
-        <div 
-          onMouseDown={preventFormSubmission}
-          onTouchStart={preventFormSubmission}
-          onClick={preventFormSubmission}
-        >
+        <div>
           <Slider
             value={[distance]}
             max={500}

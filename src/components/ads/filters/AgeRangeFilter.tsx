@@ -3,6 +3,7 @@ import { Slider } from "@/components/ui/slider";
 import { FilterAccordion } from "./FilterAccordion";
 import { FilterOptions } from "../types/dating";
 import { useState, useEffect } from "react";
+import { usePreventFormSubmission } from "@/hooks/use-prevent-form-submission";
 
 interface AgeRangeFilterProps {
   filterOptions: FilterOptions;
@@ -44,12 +45,7 @@ export const AgeRangeFilter = ({
     }
   };
   
-  // Comprehensive event prevention
-  const preventFormSubmission = (e: React.MouseEvent | React.TouchEvent | React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  };
+  const { preventFormSubmission } = usePreventFormSubmission();
   
   return (
     <FilterAccordion title="Age Range" defaultOpen={true}>
@@ -64,11 +60,7 @@ export const AgeRangeFilter = ({
           <span>{ageRange[0]} years</span>
           <span>{ageRange[1]} years</span>
         </div>
-        <div 
-          onMouseDown={preventFormSubmission}
-          onTouchStart={preventFormSubmission}
-          onClick={preventFormSubmission}
-        >
+        <div>
           <Slider
             value={ageRange}
             max={99}
