@@ -20,18 +20,25 @@ export const VideoControls = ({
   className
 }: VideoControlsProps) => {
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
   
   return (
     <div 
       className={cn(
         "absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4",
+        isTablet && "opacity-100", // Always show controls on mobile/tablet
         className
       )}
       role="group"
       aria-label="Video controls"
+      onClick={(e) => e.stopPropagation()} // Prevent clicks from bubbling up
     >
       <Button
-        onClick={onPlayPause}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onPlayPause();
+        }}
         className={cn(
           "p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm",
           isMobile && "scale-75"
@@ -46,7 +53,11 @@ export const VideoControls = ({
       </Button>
       
       <Button
-        onClick={onMuteToggle}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onMuteToggle();
+        }}
         className={cn(
           "p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm",
           isMobile && "scale-75"

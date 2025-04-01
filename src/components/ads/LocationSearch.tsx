@@ -41,7 +41,7 @@ export const LocationSearch = ({
   const cityInputRef = useRef<HTMLInputElement>(null);
   const countryDropdownRef = useRef<HTMLDivElement>(null);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
-  const { preventFormSubmission } = usePreventFormSubmission();
+  const { preventFormSubmission, handleKeyDown } = usePreventFormSubmission();
 
   // Handle clicks outside the dropdowns to close them
   useEffect(() => {
@@ -117,14 +117,9 @@ export const LocationSearch = ({
             setShowCountryDropdown(true);
           }}
           onFocus={handleCountryFocus}
+          onKeyDown={handleKeyDown}
           placeholder="Search for a country..."
           className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              return false;
-            }
-          }}
         />
         {filteredCountries.length > 0 && showCountryDropdown && (
           <div 
@@ -160,14 +155,9 @@ export const LocationSearch = ({
               setShowCityDropdown(true);
             }}
             onFocus={handleCityFocus}
+            onKeyDown={handleKeyDown}
             placeholder="Search for a city..."
             className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                return false;
-              }
-            }}
           />
           {filteredCities.length > 0 && showCityDropdown && (
             <div 
