@@ -54,8 +54,8 @@ export function useChatsSurveillance() {
         // Handle case where sender and receiver are the same user
         const isSelfMessage = message.sender_id === message.recipient_id;
         
-        // Fix: Access the sender and receiver objects properly
-        // They are objects, not arrays
+        // Fix: The sender and receiver are objects, not arrays
+        // Access them directly and provide fallbacks
         const senderUsername = message.sender?.username || "Unknown";
         const senderAvatar = message.sender?.avatar_url || null;
         const recipientUsername = message.receiver?.username || "Unknown";
