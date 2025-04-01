@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, RefreshCw } from "lucide-react";
+import { CalendarIcon, RefreshCw, Music } from "lucide-react";
 import { ContentSurveillanceList } from "./components/ContentSurveillanceList";
 import { ContentType, SurveillanceContentItem } from "./types";
 import { useContentSurveillance } from "./hooks/useContentSurveillance";
@@ -23,6 +23,7 @@ export const ContentSurveillanceTabs = () => {
     stories, 
     videos, 
     ppvContent,
+    audioContent,
     isLoading,
     error,
     fetchContentByType
@@ -55,6 +56,7 @@ export const ContentSurveillanceTabs = () => {
       case 'story': return getFilteredContent(stories);
       case 'video': return getFilteredContent(videos);
       case 'ppv': return getFilteredContent(ppvContent);
+      case 'audio': return getFilteredContent(audioContent);
       default: return [];
     }
   };
@@ -65,6 +67,7 @@ export const ContentSurveillanceTabs = () => {
       case 'story': return stories.length;
       case 'video': return videos.length;
       case 'ppv': return ppvContent.length;
+      case 'audio': return audioContent.length;
       default: return 0;
     }
   };
@@ -133,6 +136,12 @@ export const ContentSurveillanceTabs = () => {
               {getItemCount('ppv')}
             </Badge>
           </TabsTrigger>
+          <TabsTrigger value="audio" className="relative">
+            Audio
+            <Badge variant="outline" className="ml-1.5 text-xs">
+              {getItemCount('audio')}
+            </Badge>
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="post">
@@ -171,6 +180,16 @@ export const ContentSurveillanceTabs = () => {
             isLoading={isLoading}
             error={error}
             type="ppv"
+            onViewContent={handleViewContent}
+          />
+        </TabsContent>
+        
+        <TabsContent value="audio">
+          <ContentSurveillanceList
+            items={getCurrentItems()}
+            isLoading={isLoading}
+            error={error}
+            type="audio"
             onViewContent={handleViewContent}
           />
         </TabsContent>
