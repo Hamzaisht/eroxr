@@ -6,13 +6,30 @@ import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { NotAuthorized } from "./NotAuthorized";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useGhostMode } from "@/hooks/useGhostMode";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export const AdminLayout = () => {
   const session = useSession();
   const { isSuperAdmin, isLoading: isAdminCheckLoading } = useSuperAdminCheck();
   const { data: userRole, isLoading: isRoleLoading } = useUserRole();
+  const { isGhostMode } = useGhostMode();
+  const { toast } = useToast();
 
   const isLoading = isAdminCheckLoading || isRoleLoading;
+
+  // Notify when admin enters the admin panel
+  useEffect(() => {
+    if (isSuperAdmin && !isLoading) {
+      toast({
+        title: isGhostMode ? "Ghost Mode Active" : "Admin Mode Active",
+        description: isGhostMode 
+          ? "You are browsing invisibly. Users cannot see your actions." 
+          : "Users can see your actions in this mode.",
+      });
+    }
+  }, [isSuperAdmin, isLoading, isGhostMode, toast]);
 
   // If no session, redirect to login
   if (!session) {

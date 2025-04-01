@@ -21,6 +21,7 @@ import { FlaggedContent } from "./components/admin/platform/FlaggedContent";
 import { DeletedContent } from "./components/admin/platform/DeletedContent";
 import { UserAnalytics } from "./components/admin/platform/UserAnalytics";
 import { PlatformControl } from "./components/admin/platform/PlatformControl";
+import { PayoutsManagement } from "./components/admin/platform/PayoutsManagement";
 
 function App() {
   const session = useSession();
@@ -84,7 +85,7 @@ function App() {
           <Route path="features" element={<ErosMode />} />
           <Route path="verifications" element={<div>User Verifications</div>} />
           
-          {/* New Platform Control routes */}
+          {/* Platform Control routes */}
           <Route path="platform" element={<PlatformControl />}>
             <Route index element={<UsersManagement />} />
             <Route path="users" element={<UsersManagement />} />
@@ -92,6 +93,7 @@ function App() {
             <Route path="flagged" element={<FlaggedContent />} />
             <Route path="deleted" element={<DeletedContent />} />
             <Route path="analytics/:userId?" element={<UserAnalytics />} />
+            <Route path="payouts" element={<PayoutsManagement />} />
           </Route>
         </Route>
       </Routes>

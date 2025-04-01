@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import { useGhostMode } from "@/hooks/use-ghost-mode";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/home" },
@@ -28,6 +29,7 @@ export const InteractiveNav = () => {
   const session = useSession();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { isSuperAdmin } = useSuperAdminCheck();
+  const { isGhostMode } = useGhostMode();
 
   const MobileNav = () => (
     <Sheet>
@@ -160,15 +162,24 @@ export const InteractiveNav = () => {
       <MobileNav />
       <DesktopNav />
       {isSuperAdmin && (
-        <Button
-          variant="destructive"
-          size="sm"
-          className="fixed bottom-4 right-4 z-50 flex items-center gap-2"
-          onClick={() => navigate('/admin')}
-        >
-          <Shield className="w-4 h-4" />
-          {!isMobile && "Admin Panel"}
-        </Button>
+        <>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="fixed bottom-4 right-4 z-50 flex items-center gap-2"
+            onClick={() => navigate('/admin')}
+          >
+            <Shield className="w-4 h-4" />
+            {!isMobile && "Admin Panel"}
+          </Button>
+          
+          {isGhostMode && (
+            <div className="fixed bottom-16 left-4 z-50 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs text-white border border-purple-500/30 shadow-lg flex items-center space-x-1">
+              <Ghost className="h-3.5 w-3.5 text-purple-400" />
+              <span>Ghost Mode Active</span>
+            </div>
+          )}
+        </>
       )}
     </>
   );

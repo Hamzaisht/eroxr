@@ -8,8 +8,9 @@ import {
   AlertTriangle, 
   Trash2, 
   BarChart, 
-  Ghost 
+  CreditCard
 } from "lucide-react";
+import { GhostModeToggle } from "./GhostModeToggle";
 
 export const PlatformControl = () => {
   const { isGhostMode } = useGhostMode();
@@ -23,6 +24,7 @@ export const PlatformControl = () => {
     if (location.pathname.includes('/flagged')) return 'flagged';
     if (location.pathname.includes('/deleted')) return 'deleted';
     if (location.pathname.includes('/analytics')) return 'analytics';
+    if (location.pathname.includes('/payouts')) return 'payouts';
     return 'users'; // Default
   };
 
@@ -34,19 +36,12 @@ export const PlatformControl = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-luxury-neutral">Platform Control</h1>
-        
-        {/* Ghost mode indicator */}
-        {isGhostMode && (
-          <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm text-white border border-purple-500/30 shadow-lg">
-            <Ghost className="h-4 w-4 text-purple-400" />
-            <span>Ghost Mode Active</span>
-          </div>
-        )}
+        <GhostModeToggle />
       </div>
       
       {/* Navigation tabs */}
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="w-full bg-[#161B22] p-1 rounded-lg grid grid-cols-5">
+        <TabsList className="w-full bg-[#161B22] p-1 rounded-lg grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             <span className="hidden md:inline">Users</span>
@@ -66,6 +61,10 @@ export const PlatformControl = () => {
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart className="w-4 h-4" />
             <span className="hidden md:inline">Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="payouts" className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            <span className="hidden md:inline">Payouts</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>
