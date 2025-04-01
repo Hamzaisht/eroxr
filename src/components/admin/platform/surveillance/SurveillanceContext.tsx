@@ -16,7 +16,7 @@ interface SurveillanceContextType {
   setIsRefreshing: (refreshing: boolean) => void;
   fetchLiveSessions: () => Promise<void>;
   handleRefresh: () => Promise<void>;
-  handleStartSurveillance: (session: LiveSession) => Promise<void>;
+  handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
 }
 
 const SurveillanceContext = createContext<SurveillanceContextType | undefined>(undefined);
@@ -56,8 +56,10 @@ export const SurveillanceProvider = ({
               id,
               creator_id,
               title,
+              description,
               status,
               started_at,
+              viewer_count,
               profiles:creator_id(username, avatar_url)
             `)
             .eq('status', 'live')
@@ -65,23 +67,20 @@ export const SurveillanceProvider = ({
             
           if (streamsError) throw streamsError;
           
-          data = streams.map(stream => {
-            const username = stream.profiles?.[0]?.username || 'Unknown';
-            const avatar_url = stream.profiles?.[0]?.avatar_url || null;
-            
-            return {
-              id: stream.id,
-              type: 'stream',
-              user_id: stream.creator_id,
-              username: username,
-              avatar_url: avatar_url,
-              started_at: stream.started_at,
-              status: 'active',
-              title: stream.title,
-              content_type: 'video',
-              created_at: stream.started_at,
-            };
-          });
+          data = streams.map(stream => ({
+            id: stream.id,
+            type: 'stream',
+            user_id: stream.creator_id,
+            username: stream.profiles?.username || 'Unknown',
+            avatar_url: stream.profiles?.avatar_url || null,
+            started_at: stream.started_at,
+            status: 'active',
+            title: stream.title,
+            description: stream.description,
+            viewer_count: stream.viewer_count,
+            content_type: 'video',
+            created_at: stream.started_at,
+          }));
           break;
           
         case 'calls':
@@ -103,6 +102,9 @@ export const SurveillanceProvider = ({
               status: 'active',
               content_type: call.call_type,
               created_at: call.started_at,
+              recipient_id: call.recipient_id,
+              recipient_username: call.recipient_username || 'Unknown',
+              recipient_avatar: call.recipient_avatar || '',
             }));
           }
           break;
@@ -116,7 +118,11 @@ export const SurveillanceProvider = ({
               recipient_id,
               created_at,
               message_type,
-              sender:sender_id(username, avatar_url)
+              content,
+              media_url,
+              video_url,
+              sender:sender_id(username, avatar_url),
+              recipient:recipient_id(username, avatar_url)
             `)
             .order('created_at', { ascending: false })
             .limit(20);
@@ -127,17 +133,25 @@ export const SurveillanceProvider = ({
           chats.forEach(chat => {
             const chatKey = `${chat.sender_id}:${chat.recipient_id}`;
             if (!uniqueChats.has(chatKey)) {
-              const username = chat.sender?.[0]?.username || 'Unknown';
-              const avatar_url = chat.sender?.[0]?.avatar_url || '';
+              const senderUsername = chat.sender?.username || 'Unknown';
+              const senderAvatar = chat.sender?.avatar_url || '';
+              const recipientUsername = chat.recipient?.username || 'Unknown';
+              const recipientAvatar = chat.recipient?.avatar_url || '';
               
               uniqueChats.set(chatKey, {
                 id: chatKey,
                 type: 'chat',
                 user_id: chat.sender_id,
-                username: username,
-                avatar_url: avatar_url,
+                username: senderUsername,
+                avatar_url: senderAvatar,
+                recipient_id: chat.recipient_id,
+                recipient_username: recipientUsername,
+                recipient_avatar: recipientAvatar,
                 started_at: chat.created_at,
                 status: 'active',
+                content: chat.content,
+                media_url: chat.media_url,
+                video_url: chat.video_url,
                 content_type: chat.message_type,
                 created_at: chat.created_at,
               });
@@ -154,28 +168,47 @@ export const SurveillanceProvider = ({
               id,
               user_id,
               title,
+              description,
+              about_me,
               moderation_status,
               created_at,
+              last_active,
+              city,
+              country,
+              tags,
+              avatar_url,
               profiles:user_id(username, avatar_url)
             `)
-            .order('created_at', { ascending: false })
-            .limit(20);
+            .order('last_active', { ascending: false })
+            .limit(30);
             
-          if (adsError) throw adsError;
+          if (adsError) {
+            console.error("Error loading bodycontact sessions:", adsError);
+            toast({
+              title: "Error",
+              description: "Could not load live bodycontact",
+              variant: "destructive"
+            });
+            break;
+          }
           
           data = ads.map(ad => {
-            const username = ad.profiles?.[0]?.username || 'Unknown';
-            const avatar_url = ad.profiles?.[0]?.avatar_url || '';
+            const username = ad.profiles?.username || 'Unknown';
+            const userAvatar = ad.profiles?.avatar_url || ad.avatar_url || '';
             
             return {
               id: ad.id,
               type: 'bodycontact',
               user_id: ad.user_id,
               username: username,
-              avatar_url: avatar_url,
-              started_at: ad.created_at,
+              avatar_url: userAvatar,
+              started_at: ad.last_active || ad.created_at,
               status: ad.moderation_status === 'pending' ? 'active' : 'flagged',
               title: ad.title,
+              description: ad.description,
+              about_me: ad.about_me,
+              location: `${ad.city}, ${ad.country}`,
+              tags: ad.tags,
               content_type: 'ad',
               created_at: ad.created_at
             };
@@ -236,6 +269,8 @@ export const SurveillanceProvider = ({
           break;
       }
     }
+    
+    return success;
   };
 
   return (

@@ -47,6 +47,7 @@ interface SurveillanceContentProps {
   activeSurveillance: {
     session?: LiveSession;
     isWatching: boolean;
+    startTime?: string;
   };
   stopSurveillance: () => Promise<boolean>;
   liveAlerts: any[];
@@ -67,7 +68,7 @@ const SurveillanceContent = ({
   useEffect(() => {
     fetchLiveSessions();
     
-    const interval = setInterval(fetchLiveSessions, 30000);
+    const interval = setInterval(fetchLiveSessions, 15000); // Poll every 15 seconds
     
     return () => clearInterval(interval);
   }, [activeTab, fetchLiveSessions]);
@@ -86,16 +87,16 @@ const SurveillanceContent = ({
         </Button>
       </div>
       
-      <SurveillanceTabs
-        liveAlerts={liveAlerts}
-      />
-      
       {activeSurveillance.isWatching && activeSurveillance.session && (
         <ActiveSurveillanceCard
           session={activeSurveillance.session}
           onEndSurveillance={stopSurveillance}
         />
       )}
+      
+      <SurveillanceTabs
+        liveAlerts={liveAlerts}
+      />
     </>
   );
 };
