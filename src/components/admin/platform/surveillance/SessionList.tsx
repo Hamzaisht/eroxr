@@ -1,4 +1,5 @@
 
+
 import { format } from "date-fns";
 import { Clock } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -123,3 +124,4 @@ export const SessionList = ({ sessions, isLoading, onMonitorSession }: SessionLi
     </div>
   );
 };
+

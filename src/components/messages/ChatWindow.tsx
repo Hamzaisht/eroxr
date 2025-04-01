@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -145,3 +146,4 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     </div>
   );
 };
+

@@ -1,4 +1,5 @@
 
+
 import { Ghost } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -26,3 +27,4 @@ export const GhostModePrompt = () => {
     </div>
   );
 };
+

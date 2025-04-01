@@ -1,11 +1,12 @@
 
+
 import { useEffect } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GhostModePrompt } from "./surveillance/GhostModePrompt";
-import { SurveillanceProvider } from "./surveillance/SurveillanceContext";
+import { SurveillanceProvider, useSurveillance } from "./surveillance/SurveillanceContext";
 import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { ActiveSurveillanceCard } from "./surveillance/ActiveSurveillanceCard";
 
@@ -89,3 +90,4 @@ const SurveillanceContent = ({
     </>
   );
 };
+

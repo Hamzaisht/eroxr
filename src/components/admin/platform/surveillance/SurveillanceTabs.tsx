@@ -1,4 +1,5 @@
 
+
 import { useSurveillance } from "./SurveillanceContext";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabContent } from "./TabContent";
@@ -59,3 +60,4 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
     </Tabs>
   );
 };
+
