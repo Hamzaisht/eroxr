@@ -45,7 +45,8 @@ export function DateRangePicker({
   // Handle changes appropriately based on which API is used
   const handleSelect = (newRange: DateRangeType | undefined) => {
     if (isUsingLegacyAPI && onSelect) {
-      onSelect(newRange || { from: null, to: null });
+      // Need to ensure we're passing the correct format for legacy API
+      onSelect(newRange ? { from: newRange.from, to: newRange.to || null } : { from: null, to: null });
     } else if (onChange) {
       onChange(newRange);
     }
