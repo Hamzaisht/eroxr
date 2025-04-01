@@ -72,7 +72,10 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
       </TabsContent>
       
       <TabsContent value="alerts">
-        <AlertsList alerts={liveAlerts} />
+        <AlertsList 
+          alerts={liveAlerts} 
+          isLoading={isLoading} 
+        />
       </TabsContent>
     </Tabs>
   );
