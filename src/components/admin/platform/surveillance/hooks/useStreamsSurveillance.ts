@@ -43,7 +43,7 @@ export function useStreamsSurveillance() {
         viewer_count: stream.viewer_count,
         content_type: 'video',
         created_at: stream.started_at,
-        media_url: [], // Add empty media_url array to match type requirements
+        media_url: [], // Add empty media_url array to match the LiveSession type
       }));
     } catch (error) {
       console.error("Error fetching streams:", error);

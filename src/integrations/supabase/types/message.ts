@@ -11,7 +11,7 @@ export type DirectMessage = {
   is_expired: boolean | null;
   video_url: string | null;
   duration: number | null;
-  viewed_at: string | null; // Add this property
-  original_content: string | null; // Add this property
+  viewed_at: string | null;
+  original_content: string | null;
   updated_at: string | null;
 };

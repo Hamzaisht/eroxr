@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,8 @@ type DirectMessage = {
   created_at: string;
   media_url?: string[] | null;
   video_url?: string | null;
+  viewed_at?: string | null;
+  original_content?: string | null;
   sender?: ProfileData;
   receiver?: ProfileData;
   message_source?: string;
