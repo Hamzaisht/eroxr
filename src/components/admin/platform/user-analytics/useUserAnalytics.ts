@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -44,7 +43,7 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
   });
 
   // Fetch user analytics data
-  const { data: analytics, isLoading: isAnalyticsLoading } = useQuery({
+  const { data: analyticsData, isLoading: isAnalyticsLoading } = useQuery({
     queryKey: ["user-analytics", userId, timeRange],
     queryFn: async () => {
       if (!userId) return null;
@@ -271,7 +270,7 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
       const lastActive = lastActiveTimestamp ? new Date(lastActiveTimestamp) : null;
 
       // Create the analytics object with all the required fields
-      return {
+      const analytics: Analytics = {
         // Fields for the Analytics type
         posts: totalPosts,
         comments: totalComments,
@@ -293,7 +292,9 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
         timeline,
         topProfiles,
         lastActive
-      } as Analytics;
+      };
+      
+      return analytics;
     },
     enabled: !!userId,
   });
@@ -302,7 +303,7 @@ export const useUserAnalytics = (userId: string | undefined, timeRange: string) 
 
   return {
     profile,
-    analytics,
+    analytics: analyticsData,
     isLoading
   };
 };

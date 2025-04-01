@@ -1,55 +1,84 @@
 
+import { 
+  Volume2, 
+  VolumeX, 
+  Phone, 
+  PhoneOff, 
+  Settings, 
+  Video, 
+  VideoOff 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 
-interface VideoControlsProps {
+export interface VideoControlsProps {
   isMuted: boolean;
-  setIsMuted: (muted: boolean) => void;
   isVideoOn: boolean;
-  setIsVideoOn: (on: boolean) => void;
-  isVideoEnabled: boolean;
+  onPlayPause?: () => void;
+  onMuteToggle: () => void;
+  onToggleVideo: () => void;
+  onSettings?: () => void;
+  onEndCall: () => void;
 }
 
-export function VideoControls({
+export const VideoControls = ({
   isMuted,
-  setIsMuted,
   isVideoOn,
-  setIsVideoOn,
-  isVideoEnabled,
-}: VideoControlsProps) {
+  onMuteToggle,
+  onToggleVideo,
+  onSettings,
+  onEndCall
+}: VideoControlsProps) => {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex justify-center items-center gap-4">
+      {/* Audio toggle */}
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setIsMuted(!isMuted)}
-        className={`rounded-full transition-all duration-300 hover:scale-110 ${
-          isMuted ? 'bg-red-500/20 text-red-500 hover:bg-red-500/30' : 'hover:bg-luxury-primary/20'
-        }`}
+        className="rounded-full bg-white/10 hover:bg-white/20"
+        onClick={onMuteToggle}
       >
         {isMuted ? (
-          <MicOff className="h-5 w-5" />
+          <VolumeX className="h-5 w-5 text-red-400" />
         ) : (
-          <Mic className="h-5 w-5" />
+          <Volume2 className="h-5 w-5 text-white" />
         )}
       </Button>
       
-      {isVideoEnabled && (
+      {/* Video toggle */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-full bg-white/10 hover:bg-white/20"
+        onClick={onToggleVideo}
+      >
+        {!isVideoOn ? (
+          <VideoOff className="h-5 w-5 text-red-400" />
+        ) : (
+          <Video className="h-5 w-5 text-white" />
+        )}
+      </Button>
+      
+      {/* Settings */}
+      {onSettings && (
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setIsVideoOn(!isVideoOn)}
-          className={`rounded-full transition-all duration-300 hover:scale-110 ${
-            !isVideoOn ? 'bg-red-500/20 text-red-500 hover:bg-red-500/30' : 'hover:bg-luxury-primary/20'
-          }`}
+          className="rounded-full bg-white/10 hover:bg-white/20"
+          onClick={onSettings}
         >
-          {isVideoOn ? (
-            <Video className="h-5 w-5" />
-          ) : (
-            <VideoOff className="h-5 w-5" />
-          )}
+          <Settings className="h-5 w-5 text-white" />
         </Button>
       )}
+      
+      {/* End call */}
+      <Button
+        variant="destructive"
+        size="icon"
+        className="rounded-full"
+        onClick={onEndCall}
+      >
+        <PhoneOff className="h-5 w-5" />
+      </Button>
     </div>
   );
-}
+};

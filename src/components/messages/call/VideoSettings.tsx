@@ -1,17 +1,15 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings, CameraOff, Camera } from "lucide-react";
-import { Select } from "@/components/ui/select";
+import { Settings, Camera } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
-interface VideoSettingsProps {
+export interface VideoSettingsProps {
   onCameraSwitch: () => void;
   onFrameRateChange: (fps: number) => void;
   onBitrateChange: (bitrate: number) => void;
@@ -28,22 +26,11 @@ export function VideoSettings({
   currentCamera,
   onCameraSelect
 }: VideoSettingsProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
   const frameRates = [30, 60];
   const bitrates = [1000, 2000, 4000, 6000, 8000];
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="rounded-full transition-all duration-300 hover:scale-110 hover:bg-luxury-primary/20"
-        >
-          <Settings className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={true} onOpenChange={() => {}}>
       <DialogContent className="bg-luxury-dark text-white">
         <DialogHeader>
           <DialogTitle>Video Settings</DialogTitle>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +8,7 @@ import { MessageInput } from "./MessageInput";
 import { ChatHeader } from "./chat/ChatHeader";
 import { MessageList } from "./chat/MessageList";
 import { SnapCamera } from "./chat/SnapCamera";
-import { VideoCallDialog } from "./call/VideoCallDialog";
+import { VideoCallDialog } from "./call/VideoCallDialog"; // Corrected import
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useChatActions } from "./chat/ChatActions";
 import { PenSquare } from "lucide-react";

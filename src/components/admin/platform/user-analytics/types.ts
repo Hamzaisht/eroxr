@@ -27,9 +27,9 @@ export interface LiveAlert {
 }
 
 export interface TabProps {
-  data: any;
+  analytics: Analytics;
   timeRange: string;
-  analytics: Analytics; // Adding the analytics property to fix errors
+  data?: any; // Making data optional to fix the TypeScript errors
 }
 
 export interface ProfileData {
@@ -39,7 +39,6 @@ export interface ProfileData {
   email: string;
   created_at: string;
   status: string;
-  // Adding missing properties from UserHeader.tsx
   user_roles: {
     role: string;
   };
@@ -56,7 +55,7 @@ export interface Analytics {
   following: number;
   content_views: number;
   profile_views: number;
-  // Adding missing properties from useUserAnalytics.ts
+  // Fields used in implementation
   totalPosts: number;
   totalLikes: number;
   totalComments: number;
@@ -75,7 +74,7 @@ export interface ViewedProfile {
   viewer_username: string;
   view_count: number;
   last_viewed: string;
-  // Adding fields needed for ProfilesViewsTab
+  // Additional fields needed for ProfilesViewsTab
   id: string;
   username: string;
   avatar_url: string | null;
@@ -83,7 +82,8 @@ export interface ViewedProfile {
 }
 
 export interface ProfilesViewsTabProps {
-  timeRange: string;
   analytics: Analytics;
+  timeRange: string;
   navigate: (path: string) => void;
+  data?: any; // Making data optional to fix the TypeScript errors
 }

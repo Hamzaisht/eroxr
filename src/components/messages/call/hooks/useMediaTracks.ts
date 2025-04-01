@@ -3,8 +3,8 @@ import { useEffect } from "react";
 
 export function useMediaTracks(
   localStream: MediaStream | null,
-  isMuted: boolean,
-  isVideoOn: boolean
+  isMuted: boolean = false,
+  isVideoOn: boolean = true
 ) {
   useEffect(() => {
     if (localStream) {

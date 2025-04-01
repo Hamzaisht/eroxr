@@ -35,46 +35,107 @@ const VideoCallDialog = ({
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(!isVideoEnabled);
   const [showSettings, setShowSettings] = useState(false);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const session = useSession();
   const { isGhostMode } = useGhostMode();
   
-  const { localStream, remoteStream, startCall, endCall } = useWebRTC({
-    initiator: true,
-    recipientId,
+  // Initialize with default values for frame rate and bitrate
+  const frameRate = 30;
+  const bitrate = 4000;
+  const channelName = `call-${session?.user?.id}-${recipientId}`;
+  
+  const {
+    localStream,
+    isConnecting,
+    localVideoRef,
+    remoteVideoRef,
+    peerConnectionRef,
+    initializeCall,
+    cleanup
+  } = useWebRTC({
+    isOpen,
+    channelName,
+    currentCameraId: '',
+    frameRate,
+    bitrate
   });
   
-  const { availableCameras, selectedCamera, selectCamera } = useCamera();
-  const { toggleAudio, toggleVideo } = useMediaTracks(localStream);
-
-  // Handle notifications for tips
-  const { showTipNotification } = useTipNotifications();
+  const { 
+    availableCameras, 
+    currentCameraId, 
+    setCurrentCameraId, 
+    updateMediaStream 
+  } = useCamera();
   
+  // Create state for the MediaTracks hook
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [videoEnabled, setVideoEnabled] = useState(isVideoEnabled);
+  
+  // Use the hooks correctly
+  useMediaTracks(localStream, !audioEnabled, videoEnabled);
+  
+  // Use the tip notifications hook
+  const tipNotifications = useTipNotifications();
+
+  // Helper functions for media controls  
+  const toggleAudio = () => {
+    if (localStream) {
+      localStream.getAudioTracks().forEach(track => {
+        track.enabled = !track.enabled;
+      });
+      setAudioEnabled(!audioEnabled);
+      setIsMuted(!audioEnabled);
+    }
+  };
+  
+  const toggleVideo = () => {
+    if (localStream) {
+      localStream.getVideoTracks().forEach(track => {
+        track.enabled = !track.enabled;
+      });
+      setVideoEnabled(!videoEnabled);
+      setIsVideoOff(!videoEnabled);
+    }
+  };
+  
+  // Setup call initialization
   useEffect(() => {
     if (isOpen && !isGhostMode) {
       // Start call when dialog opens, unless in ghost mode
-      startCall();
+      initializeCall();
     }
     
     return () => {
       if (!isGhostMode) {
-        endCall();
+        cleanup();
       }
     };
-  }, [isOpen, startCall, endCall, isGhostMode]);
+  }, [isOpen, initializeCall, cleanup, isGhostMode]);
+  
+  // Handle camera selection
+  const handleCameraSelect = (deviceId: string) => {
+    setCurrentCameraId(deviceId);
+    if (localStream && peerConnectionRef.current) {
+      updateMediaStream(deviceId, localStream, peerConnectionRef.current, frameRate, localVideoRef);
+    }
+  };
   
   const handleToggleAudio = () => {
     toggleAudio();
-    setIsMuted(!isMuted);
   };
   
   const handleToggleVideo = () => {
     toggleVideo();
-    setIsVideoOff(!isVideoOff);
   };
   
   const handleEndCall = () => {
-    endCall();
+    cleanup();
     onClose();
+  };
+  
+  // Handle tip notification
+  const handleSendTip = (amount: number) => {
+    tipNotifications.showTipNotification(`Sent ${amount} SEK tip`);
   };
   
   return (
@@ -93,7 +154,7 @@ const VideoCallDialog = ({
               </Button>
               <Button 
                 className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => showTipNotification('Recording started')}
+                onClick={() => tipNotifications.showTipNotification('Recording started')}
               >
                 <Camera className="h-4 w-4 mr-2" />
                 Record Evidence
@@ -106,11 +167,7 @@ const VideoCallDialog = ({
           {/* Local video */}
           <div className="relative bg-gray-900 rounded-lg overflow-hidden">
             <video 
-              ref={(video) => {
-                if (video && localStream) {
-                  video.srcObject = localStream;
-                }
-              }}
+              ref={localVideoRef}
               autoPlay 
               muted 
               className="w-full h-full object-cover" 
@@ -133,15 +190,11 @@ const VideoCallDialog = ({
           {/* Remote video */}
           <div className="relative bg-gray-900 rounded-lg overflow-hidden">
             <video 
-              ref={(video) => {
-                if (video && remoteStream) {
-                  video.srcObject = remoteStream;
-                }
-              }}
+              ref={remoteVideoRef}
               autoPlay 
               className="w-full h-full object-cover" 
             />
-            {!remoteStream && (
+            {(!remoteStream || isConnecting) && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                 <div className="text-center">
                   <AlertTriangle className="h-12 w-12 mx-auto mb-2 text-yellow-400" />
@@ -161,10 +214,11 @@ const VideoCallDialog = ({
         <div className="p-4 bg-gray-900 border-t border-gray-800">
           <VideoControls 
             isMuted={isMuted}
-            isVideoOff={isVideoOff}
-            onToggleAudio={handleToggleAudio}
+            isVideoOn={!isVideoOff}
+            onPlayPause={() => {}} // Not needed for calls
+            onMuteToggle={handleToggleAudio}
             onToggleVideo={handleToggleVideo}
-            onOpenSettings={() => setShowSettings(true)}
+            onSettings={() => setShowSettings(true)}
             onEndCall={handleEndCall}
           />
         </div>
@@ -174,9 +228,7 @@ const VideoCallDialog = ({
           <div className="p-4 bg-gray-900 border-t border-gray-800">
             <TippingControls 
               recipientId={recipientId} 
-              onSendTip={(amount) => {
-                showTipNotification(`Sent ${amount} SEK tip`);
-              }} 
+              onTip={handleSendTip} 
             />
           </div>
         )}
@@ -184,11 +236,12 @@ const VideoCallDialog = ({
         {/* Settings dialog */}
         {showSettings && (
           <VideoSettings 
-            isOpen={showSettings}
-            onClose={() => setShowSettings(false)}
-            cameras={availableCameras}
-            selectedCamera={selectedCamera}
-            onSelectCamera={selectCamera}
+            onCameraSwitch={() => {}} // Placeholder
+            onFrameRateChange={() => {}} // Placeholder
+            onBitrateChange={() => {}} // Placeholder
+            availableCameras={availableCameras}
+            currentCamera={currentCameraId}
+            onCameraSelect={handleCameraSelect}
           />
         )}
       </DialogContent>
@@ -196,5 +249,5 @@ const VideoCallDialog = ({
   );
 };
 
-// Add export statement
+// Export the component
 export { VideoCallDialog };
