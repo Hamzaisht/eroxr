@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { AlertCircle, MessageCircle, UserIcon } from "lucide-react";
 import { LiveSession } from "./types";
 import { SessionItem } from "./components/SessionItem";
 import { MediaPreviewDialog } from "./components/MediaPreviewDialog";
-import { useModerationActions } from "./hooks/useModerationActions";
+import { useModerationActions, ModerationAction } from "./hooks/useModerationActions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SessionListProps {
@@ -40,7 +39,7 @@ export const SessionList = ({
     setShowMediaPreview(sessionForPreview);
   };
 
-  const handleModerateContent = (session: LiveSession, action: string, editedContent?: string) => {
+  const handleModerateContent = (session: LiveSession, action: ModerationAction, editedContent?: string) => {
     handleModeration(session, action, editedContent);
   };
 

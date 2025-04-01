@@ -1,4 +1,3 @@
-
 // Creating this file if it doesn't exist or updating it if it does
 export type ContentType = 'post' | 'story' | 'video' | 'ppv' | 'audio';
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
@@ -46,14 +45,14 @@ export interface LiveSession {
   location?: string;
   tags?: string[];
   metadata?: SessionMetadata;
-  // User profiles for chats
+  // User profiles for chats - make values non-optional to match
   sender_profiles?: {
-    username?: string;
-    avatar_url?: string | null;
+    username: string;
+    avatar_url: string | null;
   };
   receiver_profiles?: {
-    username?: string;
-    avatar_url?: string | null;
+    username: string;
+    avatar_url: string | null;
   };
 }
 

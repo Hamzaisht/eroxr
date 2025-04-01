@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { LiveSession } from "../types"; // Updated import path
 
 export function useCallsSurveillance() {
   const { toast } = useToast();
@@ -34,6 +35,7 @@ export function useCallsSurveillance() {
         recipient_id: call.recipient_id,
         recipient_username: call.recipient_username || 'Unknown',
         recipient_avatar: call.recipient_avatar || '',
+        media_url: [], // Add empty media_url array to match the LiveSession type
       }));
     } catch (error) {
       console.error("Error fetching calls:", error);

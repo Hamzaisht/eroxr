@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { LiveSession, SurveillanceContentItem } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 
-type ModerationAction = 
+export type ModerationAction = 
   | 'flag' 
   | 'warn' 
   | 'ban' 

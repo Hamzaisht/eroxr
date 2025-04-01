@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AlertCircle, Clock, ExternalLink, MoreHorizontal, User, MessageSquare, Eye, Ban, Flag } from "lucide-react";
 import { SurveillanceContentItem } from "../types";
@@ -23,7 +22,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useModerationActions } from "../hooks/useModerationActions";
+import { useModerationActions, ModerationAction } from "../hooks/useModerationActions";
 
 interface ContentSurveillanceListProps {
   items: SurveillanceContentItem[];
@@ -77,7 +76,7 @@ export const ContentSurveillanceList = ({
     );
   }
 
-  const handleActionClick = (item: SurveillanceContentItem, action: string) => {
+  const handleActionClick = (item: SurveillanceContentItem, action: ModerationAction) => {
     setSelectedItem(item);
     
     if (action === 'ban') {
@@ -141,14 +140,12 @@ export const ContentSurveillanceList = ({
                   )}
                 </div>
                 
-                {/* Content preview */}
                 {item.content && (
                   <p className="text-sm text-gray-400 mt-1 line-clamp-2">
                     {item.content}
                   </p>
                 )}
                 
-                {/* Media preview counts */}
                 {item.media_urls && item.media_urls.length > 0 && (
                   <div className="text-xs text-gray-500 mt-1">
                     {item.media_urls.length} media item{item.media_urls.length > 1 ? 's' : ''}
@@ -171,7 +168,6 @@ export const ContentSurveillanceList = ({
             </div>
             
             <div className="flex gap-2 items-start">
-              {/* View content button */}
               <Button 
                 size="sm" 
                 variant="ghost"
@@ -182,7 +178,6 @@ export const ContentSurveillanceList = ({
                 View
               </Button>
               
-              {/* Action dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
@@ -232,7 +227,6 @@ export const ContentSurveillanceList = ({
         </div>
       ))}
       
-      {/* Ban confirmation dialog */}
       {selectedItem && (
         <Dialog open={showBanDialog} onOpenChange={setShowBanDialog}>
           <DialogContent>

@@ -1,15 +1,13 @@
-
 import { useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveSession } from "../types";
-import { useDebounce } from "@/hooks/use-debounce";
 
 // Define a type for profile data
 type ProfileData = {
-  username?: string;
-  avatar_url?: string;
+  username: string; // Non-optional field
+  avatar_url: string | null; // Can be null but not undefined
   id_verification_status?: string;
 };
 
@@ -98,23 +96,23 @@ export function useChatsSurveillance() {
         return {
           id: message.id,
           type: 'chat' as const,
-          user_id: message.sender_id,
+          user_id: message.sender_id || '',
           username: senderUsername,
           avatar_url: senderAvatar,
           sender_username: senderUsername,
           recipient_username: recipientUsername,
-          started_at: startedAt, // Ensure required field is present
-          content: message.content,
-          content_type: message.message_type,
-          media_url: mediaUrls, // Always use an array
+          started_at: startedAt,
+          content: message.content || '',
+          content_type: message.message_type || '',
+          media_url: mediaUrls,
           video_url: message.video_url,
           sender_profiles: {
-            username: senderUsername,
-            avatar_url: senderAvatar
+            username: senderUsername, // Non-optional
+            avatar_url: senderAvatar // Non-optional
           },
           receiver_profiles: {
-            username: recipientUsername,
-            avatar_url: recipientAvatar
+            username: recipientUsername, // Non-optional
+            avatar_url: recipientAvatar // Non-optional
           },
           about_me: isSelfMessage ? "Note to self" : undefined,
           title: isSelfMessage 

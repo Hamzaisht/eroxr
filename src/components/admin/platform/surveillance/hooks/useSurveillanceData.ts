@@ -50,8 +50,16 @@ export function useSurveillanceData() {
           break;
       }
       
-      console.log(`Fetched ${data.length} ${activeTab} for surveillance`);
-      setLiveSessions(data);
+      // Ensure all items comply with the LiveSession interface
+      const validatedData = data.map(item => ({
+        ...item,
+        media_url: Array.isArray(item.media_url) ? item.media_url : 
+                   item.media_url ? [item.media_url] : [],
+        started_at: item.started_at || item.created_at || new Date().toISOString()
+      }));
+      
+      console.log(`Fetched ${validatedData.length} ${activeTab} for surveillance`);
+      setLiveSessions(validatedData);
     } catch (error) {
       console.error(`Error fetching ${activeTab}:`, error);
       setError(`Could not load ${activeTab} data. Please try again.`);
