@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AlertCircle, Clock, ExternalLink, MoreHorizontal, User, MessageSquare, Eye, Ban, Flag } from "lucide-react";
-import { SurveillanceContentItem } from "../types";
+import { SurveillanceContentItem, ModerationAction } from "../types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useModerationActions, ModerationAction } from "../hooks/useModerationActions";
+import { useModerationActions } from "../hooks/useModerationActions";
 
 interface ContentSurveillanceListProps {
   items: SurveillanceContentItem[];

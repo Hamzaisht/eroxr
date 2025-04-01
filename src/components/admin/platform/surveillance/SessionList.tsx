@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { AlertCircle, MessageCircle, UserIcon } from "lucide-react";
-import { LiveSession } from "./types";
+import { LiveSession, ModerationAction } from "./types";
 import { SessionItem } from "./components/SessionItem";
 import { MediaPreviewDialog } from "./components/MediaPreviewDialog";
-import { useModerationActions, ModerationAction } from "./hooks/useModerationActions";
+import { useModerationActions } from "./hooks/useModerationActions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SessionListProps {

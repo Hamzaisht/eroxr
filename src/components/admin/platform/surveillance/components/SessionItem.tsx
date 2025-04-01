@@ -1,12 +1,10 @@
-
 import { format } from "date-fns";
 import { Clock, ExternalLink, Ghost, Users, User } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LiveSession } from "../types";
+import { LiveSession, ModerationAction } from "../types";
 import { ModerationActions } from "./ModerationActions";
-import { ModerationAction } from "../hooks/useModerationActions";
 
 interface SessionItemProps {
   session: LiveSession;
