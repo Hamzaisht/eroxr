@@ -1,7 +1,6 @@
-
 import { Ban, Flag, MessageSquare, Trash2, Eye, Edit, MoreVertical, Shield, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SessionModerationActionProps } from "../types";
+import { SessionModerationActionProps, ModerationAction } from "../types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,10 +31,10 @@ export const ModerationActions = ({
   actionInProgress 
 }: SessionModerationActionProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [currentAction, setCurrentAction] = useState<string | null>(null);
+  const [currentAction, setCurrentAction] = useState<ModerationAction | null>(null);
   const [editedContent, setEditedContent] = useState("");
 
-  const handleActionClick = (action: string) => {
+  const handleActionClick = (action: ModerationAction) => {
     if (action === 'edit') {
       setEditedContent(session.content || '');
       setCurrentAction('edit');
@@ -51,8 +50,8 @@ export const ModerationActions = ({
   const handleConfirmAction = () => {
     if (currentAction === 'edit') {
       onModerate(session, 'edit', editedContent);
-    } else {
-      onModerate(session, currentAction!);
+    } else if (currentAction) {
+      onModerate(session, currentAction);
     }
     setDialogOpen(false);
   };

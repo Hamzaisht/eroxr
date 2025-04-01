@@ -1,19 +1,8 @@
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { LiveSession, SurveillanceContentItem } from "../types";
+import { LiveSession, SurveillanceContentItem, ModerationAction } from "../types";
 import { supabase } from "@/integrations/supabase/client";
-
-export type ModerationAction = 
-  | 'flag' 
-  | 'warn' 
-  | 'ban' 
-  | 'delete' 
-  | 'edit' 
-  | 'shadowban' 
-  | 'restore' 
-  | 'force_delete' 
-  | 'view';
 
 export function useModerationActions() {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);

@@ -1,6 +1,17 @@
+
 // Creating this file if it doesn't exist or updating it if it does
 export type ContentType = 'post' | 'story' | 'video' | 'ppv' | 'audio';
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
+export type ModerationAction = 
+  | 'flag' 
+  | 'warn' 
+  | 'ban' 
+  | 'delete' 
+  | 'edit' 
+  | 'shadowban' 
+  | 'restore' 
+  | 'force_delete' 
+  | 'view';
 
 export interface SessionMetadata {
   // For BodyContact ads
@@ -108,7 +119,7 @@ export interface LiveAlert {
 
 export interface SessionModerationActionProps {
   session: LiveSession | SurveillanceContentItem;
-  onModerate: (session: LiveSession | SurveillanceContentItem, action: string, editedContent?: string) => void;
+  onModerate: (session: LiveSession | SurveillanceContentItem, action: ModerationAction, editedContent?: string) => void;
   actionInProgress: string | null;
 }
 
@@ -167,7 +178,7 @@ export interface SessionItemProps {
   session: LiveSession;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
   onShowMediaPreview: (session: LiveSession) => void;
-  onModerate: (session: LiveSession, action: string, editedContent?: string) => void;
+  onModerate: (session: LiveSession, action: ModerationAction, editedContent?: string) => void;
   actionInProgress: string | null;
 }
 
