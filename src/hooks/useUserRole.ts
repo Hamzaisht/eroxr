@@ -11,11 +11,6 @@ export const useUserRole = () => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
 
-      // Special case for direct email check for top-level admins
-      if (session.user.email === 'hamzaishtiaq242@gmail.com') {
-        return 'super_admin';
-      }
-
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")

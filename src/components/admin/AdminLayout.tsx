@@ -5,10 +5,14 @@ import { Sidebar } from "./Sidebar";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { NotAuthorized } from "./NotAuthorized";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const AdminLayout = () => {
   const session = useSession();
-  const { isSuperAdmin, isLoading } = useSuperAdminCheck();
+  const { isSuperAdmin, isLoading: isAdminCheckLoading } = useSuperAdminCheck();
+  const { data: userRole, isLoading: isRoleLoading } = useUserRole();
+
+  const isLoading = isAdminCheckLoading || isRoleLoading;
 
   // If no session, redirect to login
   if (!session) {
@@ -20,7 +24,7 @@ export const AdminLayout = () => {
     return <LoadingScreen />;
   }
 
-  // If not an admin, show unauthorized page
+  // If not an admin or super admin, show unauthorized page
   if (!isSuperAdmin) {
     return <NotAuthorized />;
   }

@@ -15,6 +15,12 @@ import { AdminLayout } from "./components/admin/AdminLayout";
 import { Dashboard } from "./components/admin/Dashboard";
 import { ErosMode } from "./components/admin/ErosMode";
 import { useSession } from "@supabase/auth-helpers-react";
+import { UsersManagement } from "./components/admin/platform/UsersManagement";
+import { VerificationRequests } from "./components/admin/platform/VerificationRequests";
+import { FlaggedContent } from "./components/admin/platform/FlaggedContent";
+import { DeletedContent } from "./components/admin/platform/DeletedContent";
+import { UserAnalytics } from "./components/admin/platform/UserAnalytics";
+import { PlatformControl } from "./components/admin/platform/PlatformControl";
 
 function App() {
   const session = useSession();
@@ -77,6 +83,16 @@ function App() {
           <Route path="violations" element={<div>Security Violations</div>} />
           <Route path="features" element={<ErosMode />} />
           <Route path="verifications" element={<div>User Verifications</div>} />
+          
+          {/* New Platform Control routes */}
+          <Route path="platform" element={<PlatformControl />}>
+            <Route index element={<UsersManagement />} />
+            <Route path="users" element={<UsersManagement />} />
+            <Route path="verifications" element={<VerificationRequests />} />
+            <Route path="flagged" element={<FlaggedContent />} />
+            <Route path="deleted" element={<DeletedContent />} />
+            <Route path="analytics/:userId?" element={<UserAnalytics />} />
+          </Route>
         </Route>
       </Routes>
       <Toaster />
