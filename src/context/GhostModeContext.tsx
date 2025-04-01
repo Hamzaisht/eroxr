@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -46,12 +45,12 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       
       setIsGhostMode(!isGhostMode);
       
+      // Remove the icon property
       toast({
         title: isGhostMode ? "Ghost Mode Deactivated" : "Ghost Mode Activated",
         description: isGhostMode 
           ? "Your actions are now visible to users" 
           : "You are now browsing invisibly",
-        icon: isGhostMode ? <Eye className="h-4 w-4" /> : <Ghost className="h-4 w-4" />,
       });
     } catch (error) {
       console.error("Error toggling ghost mode:", error);
