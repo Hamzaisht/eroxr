@@ -461,7 +461,7 @@ export const UserAnalytics = () => {
       {/* Analytics tabs */}
       <div className="flex overflow-x-auto pb-2 border-b border-white/10 gap-1">
         <Button
-          variant={selectedTab === "overview" ? "subtle" : "ghost"}
+          variant={selectedTab === "overview" ? "secondary" : "ghost"}
           className={selectedTab === "overview" ? "bg-purple-900/20" : ""}
           onClick={() => setSelectedTab("overview")}
         >
@@ -469,7 +469,7 @@ export const UserAnalytics = () => {
           Overview
         </Button>
         <Button
-          variant={selectedTab === "activity" ? "subtle" : "ghost"}
+          variant={selectedTab === "activity" ? "secondary" : "ghost"}
           className={selectedTab === "activity" ? "bg-purple-900/20" : ""}
           onClick={() => setSelectedTab("activity")}
         >
@@ -477,7 +477,7 @@ export const UserAnalytics = () => {
           Activity Timeline
         </Button>
         <Button
-          variant={selectedTab === "content" ? "subtle" : "ghost"}
+          variant={selectedTab === "content" ? "secondary" : "ghost"}
           className={selectedTab === "content" ? "bg-purple-900/20" : ""}
           onClick={() => setSelectedTab("content")}
         >
@@ -485,7 +485,7 @@ export const UserAnalytics = () => {
           Content Preferences
         </Button>
         <Button
-          variant={selectedTab === "profiles" ? "subtle" : "ghost"}
+          variant={selectedTab === "profiles" ? "secondary" : "ghost"}
           className={selectedTab === "profiles" ? "bg-purple-900/20" : ""}
           onClick={() => setSelectedTab("profiles")}
         >
@@ -633,8 +633,13 @@ export const UserAnalytics = () => {
                     />
                     <YAxis />
                     <Tooltip 
-                      formatter={(value, name) => [value, name.charAt(0).toUpperCase() + name.slice(1)]}
-                      labelFormatter={(date) => format(new Date(date), "MMMM d, yyyy")}
+                      formatter={(value, name) => {
+                        if (typeof name === 'string') {
+                          return [value, name.charAt(0).toUpperCase() + name.slice(1)];
+                        }
+                        return [value, name];
+                      }}
+                      labelFormatter={(date) => format(new Date(date as string), "MMMM d, yyyy")}
                     />
                     <Legend />
                     <Line 
@@ -685,7 +690,7 @@ export const UserAnalytics = () => {
               <CardContent>
                 <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
+                    <RechartsBarChart
                       data={analytics.timeline.slice(0, 7)} // Last 7 days regardless of time range
                       margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
                     >
@@ -696,8 +701,13 @@ export const UserAnalytics = () => {
                       />
                       <YAxis />
                       <Tooltip 
-                        formatter={(value, name) => [value, name.charAt(0).toUpperCase() + name.slice(1)]}
-                        labelFormatter={(date) => format(new Date(date), "EEEE, MMMM d")}
+                        formatter={(value, name) => {
+                          if (typeof name === 'string') {
+                            return [value, name.charAt(0).toUpperCase() + name.slice(1)];
+                          }
+                          return [value, name];
+                        }}
+                        labelFormatter={(date) => format(new Date(date as string), "EEEE, MMMM d")}
                       />
                       <Legend />
                       <Bar 
@@ -715,7 +725,7 @@ export const UserAnalytics = () => {
                         fill="#ff8042" 
                         name="Messages" 
                       />
-                    </BarChart>
+                    </RechartsBarChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
@@ -901,7 +911,7 @@ export const UserAnalytics = () => {
                           <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />
-                              <AvatarFallback>{profile.username[0]?.toUpperCase() || "U"}</AvatarFallback>
+                              <AvatarFallback>{profile.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                             </Avatar>
                             <span className="font-medium">{profile.username}</span>
                           </div>
