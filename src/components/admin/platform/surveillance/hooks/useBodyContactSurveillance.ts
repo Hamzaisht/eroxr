@@ -12,6 +12,8 @@ export function useBodyContactSurveillance() {
     
     try {
       // Get active body contact ads - include specific user data
+      console.log("Fetching body contact ads for surveillance...");
+      
       const { data, error } = await supabase
         .from('dating_ads')
         .select(`
@@ -34,9 +36,8 @@ export function useBodyContactSurveillance() {
             about_me
           )
         `)
-        .eq('is_active', true)
         .order('updated_at', { ascending: false })
-        .limit(30);
+        .limit(50);
       
       if (error) {
         console.error("Error fetching body contact data:", error);
@@ -44,6 +45,7 @@ export function useBodyContactSurveillance() {
       }
       
       console.log("Body contact data fetched:", data?.length || 0, "records");
+      console.log("Sample body contact data:", data?.[0] || "No body contact ads found");
       
       if (!data) return [];
       
