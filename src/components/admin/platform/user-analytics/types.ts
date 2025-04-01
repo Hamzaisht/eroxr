@@ -27,6 +27,10 @@ export interface LiveSession {
     username: string;
     avatar_url: string | null;
   };
+  // Fields needed for MediaPreviewDialog
+  media_url?: string[];
+  video_url?: string;
+  about_me?: string;
 }
 
 export interface LiveAlert {
@@ -40,4 +44,67 @@ export interface LiveAlert {
   reason: string;
   severity: string;
   content_id: string;
+}
+
+// Add the missing TabProps interface
+export interface TabProps {
+  analytics: Analytics;
+  timeRange: string;
+}
+
+// Add the missing ProfileData interface
+export interface ProfileData {
+  id: string;
+  username: string;
+  first_name?: string;
+  last_name?: string;
+  avatar_url: string | null;
+  created_at: string;
+  user_roles: {
+    role: string;
+  };
+  is_suspended: boolean;
+}
+
+// Add the missing Analytics and ViewedProfile interfaces
+export interface ViewedProfile {
+  id: string;
+  viewer_id: string;
+  viewer_username: string;
+  username: string;
+  avatar_url: string | null;
+  count: number;
+  view_count: number;
+  last_viewed: string;
+}
+
+export interface Analytics {
+  posts: number;
+  comments: number;
+  likes: number;
+  followers: number;
+  following: number;
+  content_views: number;
+  profile_views: number;
+  
+  // Additional fields
+  totalPosts: number;
+  totalLikes: number;
+  totalComments: number;
+  totalViews: number;
+  totalMessages: number;
+  tipsAmount: number;
+  uniqueMessageRecipients: number;
+  contentDistribution: Array<{name: string; value: number}>;
+  timeline: Array<{
+    date: string;
+    posts: number;
+    likes: number;
+    comments: number;
+    views: number;
+    messages: number;
+  }>;
+  topProfiles: ViewedProfile[];
+  lastActive: Date | null;
+  totalViews: number;
 }

@@ -18,13 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TabProps } from "./types";
+import { TabProps, Analytics } from "./types";
 
 interface ProfilesViewsTabProps extends TabProps {
   navigate: (path: string) => void;
 }
 
-export const ProfilesViewsTab: React.FC<ProfilesViewsTabProps> = ({ analytics, navigate }) => {
+export const ProfilesViewsTab: React.FC<ProfilesViewsTabProps> = ({ analytics, navigate, timeRange }) => {
   return (
     <div className="space-y-6">
       <Card className="bg-[#0D1117]/60 border-white/10">
