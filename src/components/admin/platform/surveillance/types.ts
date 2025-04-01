@@ -1,8 +1,9 @@
+
 import { LiveSession } from "../user-analytics/types";
 
 export interface SurveillanceContextType {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: SurveillanceTab;
+  setActiveTab: React.Dispatch<React.SetStateAction<SurveillanceTab>>;
   liveSessions: LiveSession[];
   setLiveSessions: (sessions: LiveSession[]) => void;
   isLoading: boolean;

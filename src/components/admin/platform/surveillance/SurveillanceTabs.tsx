@@ -5,6 +5,7 @@ import { TabContent } from "./TabContent";
 import { Badge } from "@/components/ui/badge";
 import { LiveAlert } from "../user-analytics/types";
 import { Webcam, Phone, MessageSquare, User, AlertTriangle } from "lucide-react";
+import { SurveillanceTab } from "./types";
 
 interface SurveillanceTabsProps {
   liveAlerts: LiveAlert[];
@@ -20,7 +21,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
   } = useSurveillance();
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
+    <Tabs value={activeTab} onValueChange={setActiveTab as (value: string) => void}>
       <TabsList className="grid grid-cols-5 mb-4">
         <TabsTrigger value="streams" className="flex items-center gap-2">
           <Webcam className="h-4 w-4" />
