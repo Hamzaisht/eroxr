@@ -60,7 +60,7 @@ export const SurveillanceProvider = ({
               status,
               started_at,
               viewer_count,
-              profiles:creator_id(username, avatar_url)
+              profiles(username, avatar_url)
             `)
             .eq('status', 'live')
             .order('started_at', { ascending: false });
@@ -137,11 +137,11 @@ export const SurveillanceProvider = ({
                 id: chatKey,
                 type: 'chat',
                 user_id: chat.sender_id,
-                username: chat.sender?.username || 'Unknown',
-                avatar_url: chat.sender?.avatar_url || '',
+                username: chat.sender ? chat.sender.username || 'Unknown' : 'Unknown',
+                avatar_url: chat.sender ? chat.sender.avatar_url || '' : '',
                 recipient_id: chat.recipient_id,
-                recipient_username: chat.recipient?.username || 'Unknown',
-                recipient_avatar: chat.recipient?.avatar_url || '',
+                recipient_username: chat.recipient ? chat.recipient.username || 'Unknown' : 'Unknown',
+                recipient_avatar: chat.recipient ? chat.recipient.avatar_url || '' : '',
                 started_at: chat.created_at,
                 status: 'active',
                 content: chat.content,
@@ -172,7 +172,7 @@ export const SurveillanceProvider = ({
               country,
               tags,
               avatar_url,
-              profiles:user_id(username, avatar_url)
+              profiles(username, avatar_url)
             `)
             .order('last_active', { ascending: false })
             .limit(30);
@@ -192,8 +192,8 @@ export const SurveillanceProvider = ({
               id: ad.id,
               type: 'bodycontact',
               user_id: ad.user_id,
-              username: ad.profiles?.username || 'Unknown',
-              avatar_url: ad.profiles?.avatar_url || ad.avatar_url || '',
+              username: ad.profiles ? ad.profiles.username || 'Unknown' : 'Unknown',
+              avatar_url: ad.profiles ? ad.profiles.avatar_url || ad.avatar_url || '' : ad.avatar_url || '',
               started_at: ad.last_active || ad.created_at,
               status: ad.moderation_status === 'pending' ? 'active' : 'flagged',
               title: ad.title,
