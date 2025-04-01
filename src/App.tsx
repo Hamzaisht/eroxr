@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -22,6 +21,7 @@ import { DeletedContent } from "./components/admin/platform/DeletedContent";
 import { UserAnalytics } from "./components/admin/platform/UserAnalytics";
 import { PlatformControl } from "./components/admin/platform/PlatformControl";
 import { PayoutsManagement } from "./components/admin/platform/PayoutsManagement";
+import { LiveSurveillance } from "./components/admin/platform/LiveSurveillance";
 
 function App() {
   const session = useSession();
@@ -29,7 +29,6 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes - accessible to everyone */}
         <Route 
           path="/" 
           element={<Landing />} 
@@ -43,7 +42,6 @@ function App() {
           element={session ? <Navigate to="/home" replace /> : <Register />} 
         />
         
-        {/* Protected routes - require authentication */}
         <Route element={<MainLayout />}>
           <Route 
             path="/home" 
@@ -71,7 +69,6 @@ function App() {
           />
         </Route>
 
-        {/* Admin routes - protected by AdminLayout */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="users" element={<div>Users Management</div>} />
@@ -85,15 +82,16 @@ function App() {
           <Route path="features" element={<ErosMode />} />
           <Route path="verifications" element={<div>User Verifications</div>} />
           
-          {/* Platform Control routes */}
           <Route path="platform" element={<PlatformControl />}>
             <Route index element={<UsersManagement />} />
             <Route path="users" element={<UsersManagement />} />
             <Route path="verifications" element={<VerificationRequests />} />
             <Route path="flagged" element={<FlaggedContent />} />
             <Route path="deleted" element={<DeletedContent />} />
-            <Route path="analytics/:userId?" element={<UserAnalytics />} />
+            <Route path="analytics" element={<UserAnalytics />} />
+            <Route path="analytics/:userId" element={<UserAnalytics />} />
             <Route path="payouts" element={<PayoutsManagement />} />
+            <Route path="surveillance" element={<LiveSurveillance />} />
           </Route>
         </Route>
       </Routes>

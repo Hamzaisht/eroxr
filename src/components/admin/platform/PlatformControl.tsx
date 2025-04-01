@@ -8,7 +8,8 @@ import {
   AlertTriangle, 
   Trash2, 
   BarChart, 
-  CreditCard
+  CreditCard,
+  Ghost
 } from "lucide-react";
 import { GhostModeToggle } from "./GhostModeToggle";
 
@@ -25,6 +26,7 @@ export const PlatformControl = () => {
     if (location.pathname.includes('/deleted')) return 'deleted';
     if (location.pathname.includes('/analytics')) return 'analytics';
     if (location.pathname.includes('/payouts')) return 'payouts';
+    if (location.pathname.includes('/surveillance')) return 'surveillance';
     return 'users'; // Default
   };
 
@@ -41,7 +43,7 @@ export const PlatformControl = () => {
       
       {/* Navigation tabs */}
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="w-full bg-[#161B22] p-1 rounded-lg grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6">
+        <TabsList className="w-full bg-[#161B22] p-1 rounded-lg grid grid-cols-1 sm:grid-cols-3 md:grid-cols-7">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             <span className="hidden md:inline">Users</span>
@@ -66,6 +68,12 @@ export const PlatformControl = () => {
             <CreditCard className="w-4 h-4" />
             <span className="hidden md:inline">Payouts</span>
           </TabsTrigger>
+          {isGhostMode && (
+            <TabsTrigger value="surveillance" className="flex items-center gap-2 bg-purple-900/30 text-purple-300 border-purple-700/50">
+              <Ghost className="w-4 h-4" />
+              <span className="hidden md:inline">Surveillance</span>
+            </TabsTrigger>
+          )}
         </TabsList>
       </Tabs>
       

@@ -50,3 +50,30 @@ export interface Analytics {
   topProfiles: ViewedProfile[];
   lastActive: Date | null;
 }
+
+// Ghost Mode Surveillance Types
+export interface LiveSession {
+  id: string;
+  type: 'stream' | 'call' | 'chat' | 'bodycontact';
+  user_id: string;
+  username: string;
+  avatar_url?: string;
+  started_at: string;
+  participants?: number;
+  status: 'active' | 'flagged' | 'reported';
+  content_type?: string;
+  title?: string;
+}
+
+export interface LiveAlert {
+  id: string;
+  type: 'flag' | 'report' | 'risk';
+  user_id: string;
+  username: string;
+  avatar_url?: string;
+  created_at: string;
+  content_type: 'stream' | 'call' | 'message' | 'post' | 'ad';
+  reason: string;
+  severity: 'low' | 'medium' | 'high';
+  content_id: string;
+}

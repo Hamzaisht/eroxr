@@ -19,7 +19,9 @@ import {
   AlertTriangle,
   Trash2,
   BarChart,
-  CreditCard
+  CreditCard,
+  Eye,
+  Webcam
 } from "lucide-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useGhostMode } from "@/hooks/useGhostMode";
@@ -119,6 +121,34 @@ const platformRoutes = [
   }
 ];
 
+const ghostModeRoutes = [
+  {
+    label: "Live Surveillance",
+    icon: Eye,
+    href: "/admin/platform/surveillance",
+  },
+  {
+    label: "Live Streams",
+    icon: Webcam,
+    href: "/livestreams",
+  },
+  {
+    label: "Active Calls",
+    icon: Video,
+    href: "/calls",
+  },
+  {
+    label: "Messaging Watch",
+    icon: MessageSquare,
+    href: "/messages",
+  },
+  {
+    label: "BodyContact Monitor",
+    icon: Heart,
+    href: "/dating",
+  }
+];
+
 export const Sidebar = () => {
   const location = useLocation();
   const { isSuperAdmin } = useSuperAdminCheck();
@@ -162,6 +192,28 @@ export const Sidebar = () => {
                 </Tooltip>
               </TooltipProvider>
             </div>
+          </div>
+        )}
+
+        {/* Ghost Mode Surveillance Routes */}
+        {isGhostMode && (
+          <div className="space-y-1 mb-4">
+            <p className="text-xs uppercase text-purple-300 mb-2">Ghost Surveillance</p>
+            {ghostModeRoutes.map((route) => (
+              <Link
+                key={route.href}
+                to={route.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                  location.pathname === route.href || location.pathname.startsWith(`${route.href}/`)
+                    ? "bg-purple-900/20 text-purple-300"
+                    : "text-purple-200/70 hover:bg-purple-900/10 hover:text-purple-300"
+                )}
+              >
+                <route.icon className="h-4 w-4" />
+                {route.label}
+              </Link>
+            ))}
           </div>
         )}
 
