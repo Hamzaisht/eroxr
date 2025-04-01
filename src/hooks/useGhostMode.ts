@@ -23,8 +23,9 @@ export const useGhostMode = () => {
     if (session?.user?.email === "hamzaishtiaq242@gmail.com") {
       console.log("God mode user detected in useGhostMode");
       console.log("isSuperAdmin status:", isSuperAdmin);
+      console.log("Ghost mode active:", isGhostMode);
     }
-  }, [session, isSuperAdmin]);
+  }, [session, isSuperAdmin, isGhostMode]);
   
   // If user is not a super admin, always return false for ghost mode
   return {
