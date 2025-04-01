@@ -1,5 +1,5 @@
 
-import { LiveSession } from "../user-analytics/types";
+import { LiveSession } from "./types";
 import { useSurveillance } from "./SurveillanceContext";
 import { SessionList } from "./SessionList";
 

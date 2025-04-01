@@ -1,13 +1,37 @@
 
-import { LiveAlert, LiveSession as AnalyticsLiveSession } from "../user-analytics/types";
+// Import LiveAlert from user-analytics types
+import { LiveAlert as UserAnalyticsLiveAlert } from "../user-analytics/types";
 
-// Extend the existing LiveSession type with additional properties needed for surveillance
-export interface LiveSession extends AnalyticsLiveSession {
-  username: string | null;
-  type: string;
+// Re-export LiveAlert for use in surveillance components
+export type LiveAlert = UserAnalyticsLiveAlert;
+
+// Define consistent LiveSession interface that extends the user-analytics LiveSession
+export interface LiveSession {
+  id: string;
+  type: "stream" | "call" | "chat" | "bodycontact";
   user_id: string;
+  username?: string;
+  avatar_url?: string | null;
+  started_at: string;
+  status?: string;
+  title?: string;
+  description?: string;
+  viewer_count?: number;
+  participants?: number;
+  recipient_username?: string;
+  sender_username?: string;
+  content?: string;
+  content_type?: string;
+  location?: string;
+  tags?: string[];
+  created_at?: string;
+  // Additional fields needed for surveillance
   creator_id?: string;
   creator_username?: string;
+  creator_avatar_url?: string;
+  media_url?: string[];
+  video_url?: string;
+  about_me?: string;
 }
 
 export type ContentType = 'post' | 'story' | 'video' | 'ppv';
@@ -32,7 +56,7 @@ export type SurveillanceContentItem = {
   expires_at?: string;
 };
 
-// Add missing interface definitions
+// Define SessionItemProps interface
 export interface SessionItemProps {
   session: LiveSession;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
@@ -41,6 +65,7 @@ export interface SessionItemProps {
   actionInProgress: string | null;
 }
 
+// Define SessionModerationActionProps interface
 export interface SessionModerationActionProps {
   session: LiveSession;
   onModerate: (session: LiveSession, action: string) => void;
@@ -86,6 +111,7 @@ export interface SurveillanceContextType {
   isLoading: boolean;
   error: string | null;
   isRefreshing: boolean;
+  setIsRefreshing: (value: boolean) => void;
   fetchLiveSessions: () => Promise<void>;
   handleRefresh: () => Promise<void>;
   handleStartSurveillance: (session: LiveSession) => Promise<boolean>;

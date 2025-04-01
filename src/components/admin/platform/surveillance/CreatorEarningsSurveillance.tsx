@@ -1,108 +1,108 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
+import { useCreatorEarnings } from "./hooks/useCreatorEarnings";
 import { 
-  AlertTriangle, 
-  CreditCard, 
-  DollarSign, 
-  Download, 
-  FileText, 
-  Filter, 
-  RefreshCw, 
-  Search, 
-  User, 
-  UserPlus, 
-  XCircle 
-} from "lucide-react";
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreatorEarnings } from "./hooks/useCreatorEarnings";
-import { CreatorEarnings, PayoutRequest } from "./types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import { 
+  Banknote, 
+  CreditCard, 
+  AlertCircle, 
+  CheckCircle, 
+  ChevronsUpDown, 
+  RefreshCw, 
+  UserX, 
+  Users, 
+  DollarSign,
+  Download
+} from "lucide-react";
+import { CreatorEarnings, PayoutRequest, StripeAccount } from "./types";
 
 export const CreatorEarningsSurveillance = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("earnings");
   const [selectedCreator, setSelectedCreator] = useState<CreatorEarnings | null>(null);
-  const [selectedPayout, setSelectedPayout] = useState<PayoutRequest | null>(null);
-  const [showCreatorDialog, setShowCreatorDialog] = useState(false);
-  const [showPayoutDialog, setShowPayoutDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState("creators");
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
   
-  const { toast } = useToast();
   const { 
-    creators, 
-    payouts,
-    isLoading, 
+    creatorEarnings,
+    pendingPayouts,
+    processingPayouts,
+    completedPayouts,
+    stripeAccounts,
+    isLoading,
     error,
-    isActionInProgress,
-    handleRefresh,
-    handleApprovePayoutRequest,
-    handleRejectPayoutRequest,
-    handleBlockCreatorPayouts,
-    handleDownloadReport
+    fetchCreatorEarnings,
+    handlePayoutAction
   } = useCreatorEarnings();
 
-  const filteredCreators = creators.filter(creator => {
-    if (searchTerm && !creator.username.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
-    
-    if (statusFilter === "stripe-connected" && !creator.stripe_connected) {
-      return false;
-    }
-    if (statusFilter === "stripe-missing" && creator.stripe_connected) {
-      return false;
-    }
-    
-    return true;
-  });
-  
-  const filteredPayouts = payouts.filter(payout => {
-    if (searchTerm && !payout.creator_username?.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
-    
-    if (statusFilter !== "all" && payout.status !== statusFilter) {
-      return false;
-    }
-    
-    return true;
-  });
+  useEffect(() => {
+    fetchCreatorEarnings();
+  }, [fetchCreatorEarnings]);
 
-  const openCreatorDetails = (creator: CreatorEarnings) => {
+  const handleRefresh = () => {
+    fetchCreatorEarnings();
+  };
+
+  const handleCreatorSelect = (creator: CreatorEarnings) => {
     setSelectedCreator(creator);
-    setShowCreatorDialog(true);
   };
 
-  const openPayoutDetails = (payout: PayoutRequest) => {
-    setSelectedPayout(payout);
-    setShowPayoutDialog(true);
+  const handlePayoutProcess = async (payoutId: string, action: string) => {
+    setProcessingAction(payoutId);
+    await handlePayoutAction(payoutId, action as any);
+    setProcessingAction(null);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  if (isLoading && creatorEarnings.length === 0) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Creator Earnings</CardTitle>
+          <CardDescription>Loading monetization data...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (error) {
     return (
-      <Alert className="bg-red-900/20 border-red-800 text-red-300 mb-4">
-        <AlertTriangle className="h-4 w-4" />
+      <Alert className="bg-red-900/20 border-red-800 text-red-300">
+        <AlertCircle className="h-4 w-4" />
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
@@ -110,567 +110,575 @@ export const CreatorEarningsSurveillance = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <h2 className="text-xl font-semibold">Monetization Surveillance</h2>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={handleDownloadReport}
-            disabled={isLoading || isActionInProgress}
-          >
-            <Download className="h-4 w-4 mr-1.5" />
-            Export Report
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={handleRefresh}
-            disabled={isLoading || isActionInProgress}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          </Button>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Monetization Surveillance</h2>
+          <p className="text-sm text-gray-400">Monitor creator earnings, payouts, and Stripe accounts</p>
         </div>
+        <Button onClick={handleRefresh} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Data
+        </Button>
       </div>
       
-      <Tabs 
-        value={activeTab} 
-        onValueChange={setActiveTab}
-        className="w-full"
-      >
-        <TabsList className="bg-[#161B22]/80 backdrop-blur-md">
-          <TabsTrigger value="creators">Creator Earnings</TabsTrigger>
-          <TabsTrigger value="payouts">
-            Payout Requests
-            <Badge 
-              variant={payouts.some(p => p.status === 'pending') ? "destructive" : "outline"} 
-              className="ml-2"
-            >
-              {payouts.filter(p => p.status === 'pending').length}
-            </Badge>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-card mb-4">
+          <TabsTrigger value="earnings">Creator Earnings</TabsTrigger>
+          <TabsTrigger value="pending">
+            Pending Payouts
+            {pendingPayouts.length > 0 && (
+              <Badge variant="destructive" className="ml-2">{pendingPayouts.length}</Badge>
+            )}
           </TabsTrigger>
-          <TabsTrigger value="stripe">Stripe Accounts</TabsTrigger>
+          <TabsTrigger value="processing">
+            Processing Payouts
+            {processingPayouts.length > 0 && (
+              <Badge variant="outline" className="ml-2">{processingPayouts.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="completed">Completed Payouts</TabsTrigger>
+          <TabsTrigger value="stripe">
+            Stripe Accounts
+            {stripeAccounts.filter(a => !a.is_verified).length > 0 && (
+              <Badge variant="outline" className="ml-2">
+                {stripeAccounts.filter(a => !a.is_verified).length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
         
-        <div className="flex flex-col sm:flex-row items-center gap-2 my-4">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="Search by username..."
-              className="pl-8 bg-[#161B22]/80"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <Select
-            value={statusFilter}
-            onValueChange={setStatusFilter}
-          >
-            <SelectTrigger className="w-[180px] bg-[#161B22]/80">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              {activeTab === 'creators' ? (
-                <>
-                  <SelectItem value="all">All Creators</SelectItem>
-                  <SelectItem value="stripe-connected">Stripe Connected</SelectItem>
-                  <SelectItem value="stripe-missing">Missing Stripe</SelectItem>
-                </>
-              ) : (
-                <>
-                  <SelectItem value="all">All Requests</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="processed">Processed</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </>
-              )}
-            </SelectContent>
-          </Select>
-          
-          <Button size="icon" variant="outline">
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <TabsContent value="creators" className="mt-0">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Gross Earnings</TableHead>
-                  <TableHead>Platform Fee</TableHead>
-                  <TableHead>Net Earnings</TableHead>
-                  <TableHead>Subscribers</TableHead>
-                  <TableHead>Stripe</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      <div className="flex items-center justify-center">
-                        <div className="h-8 w-8 animate-spin text-purple-400 border-2 border-current border-t-transparent rounded-full" />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredCreators.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      No creators found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredCreators.map(creator => (
-                    <TableRow key={creator.id} className="hover:bg-[#1C2128]/50">
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={creator.avatar_url || ''} alt={creator.username} />
-                            <AvatarFallback>{creator.username[0].toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{creator.username}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatCurrency(creator.gross_earnings)}</TableCell>
-                      <TableCell>{formatCurrency(creator.platform_fee)}</TableCell>
-                      <TableCell>{formatCurrency(creator.net_earnings)}</TableCell>
-                      <TableCell>{creator.subscription_count}</TableCell>
-                      <TableCell>
-                        {creator.stripe_connected ? (
-                          <Badge variant="default" className="bg-green-700 text-white">Connected</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-yellow-300 border-yellow-600">Missing</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => openCreatorDetails(creator)}
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleBlockCreatorPayouts(creator.id)}
-                            disabled={isActionInProgress}
-                          >
-                            <XCircle className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+        <TabsContent value="earnings">
+          <Card className="bg-card">
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Creator Earnings</CardTitle>
+                  <CardDescription>
+                    Total earnings and payouts for verified creators
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Report
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[350px] pr-4">
+                <div className="space-y-4">
+                  {creatorEarnings.map(creator => (
+                    <CreatorEarningsRow 
+                      key={creator.id} 
+                      creator={creator} 
+                      onSelect={() => handleCreatorSelect(creator)}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </TabsContent>
         
-        <TabsContent value="payouts" className="mt-0">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Requested</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Platform Fee</TableHead>
-                  <TableHead>Final Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      <div className="flex items-center justify-center">
-                        <div className="h-8 w-8 animate-spin text-purple-400 border-2 border-current border-t-transparent rounded-full" />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredPayouts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      No payout requests found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredPayouts.map(payout => (
-                    <TableRow key={payout.id} className="hover:bg-[#1C2128]/50">
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={payout.creator_avatar_url || ''} alt={payout.creator_username || 'User'} />
-                            <AvatarFallback>{(payout.creator_username?.[0] || 'U').toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{payout.creator_username || 'Unknown'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{format(new Date(payout.requested_at), 'MMM d, yyyy')}</TableCell>
-                      <TableCell>{formatCurrency(payout.amount)}</TableCell>
-                      <TableCell>{formatCurrency(payout.platform_fee)}</TableCell>
-                      <TableCell>{formatCurrency(payout.final_amount)}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            payout.status === 'pending' ? 'outline' :
-                            payout.status === 'approved' ? 'default' :
-                            payout.status === 'processed' ? 'default' : 'destructive'
-                          }
-                          className={payout.status === 'processed' ? 'bg-green-700 text-white' : ''}
-                        >
-                          {payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => openPayoutDetails(payout)}
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                          {payout.status === 'pending' && (
-                            <>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleApprovePayoutRequest(payout.id)}
-                                disabled={isActionInProgress}
-                              >
-                                <DollarSign className="h-4 w-4 text-green-500" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleRejectPayoutRequest(payout.id)}
-                                disabled={isActionInProgress}
-                              >
-                                <XCircle className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+        <TabsContent value="pending">
+          <PayoutsList 
+            title="Pending Payouts" 
+            description="Awaiting admin approval before processing"
+            payouts={pendingPayouts}
+            onAction={handlePayoutProcess}
+            processingAction={processingAction}
+            actions={[
+              { id: 'approve', label: 'Approve', variant: 'default', className: 'bg-green-600 hover:bg-green-700' },
+              { id: 'reject', label: 'Reject', variant: 'destructive' }
+            ]}
+          />
         </TabsContent>
         
-        <TabsContent value="stripe" className="mt-0">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Stripe Status</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead>Connected On</TableHead>
-                  <TableHead>Payment Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <div className="flex items-center justify-center">
-                        <div className="h-8 w-8 animate-spin text-purple-400 border-2 border-current border-t-transparent rounded-full" />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredCreators.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                      No creators found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredCreators.map(creator => (
-                    <TableRow key={creator.id} className="hover:bg-[#1C2128]/50">
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={creator.avatar_url || ''} alt={creator.username} />
-                            <AvatarFallback>{creator.username[0].toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{creator.username}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {creator.stripe_connected ? (
-                          <Badge variant="default" className="bg-green-700 text-white">Connected</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-yellow-300 border-yellow-600">Missing</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>United States</TableCell>
-                      <TableCell>{creator.stripe_connected ? '2023-10-15' : '-'}</TableCell>
-                      <TableCell>
-                        {creator.stripe_connected ? (
-                          <Badge variant="outline" className="text-green-300 border-green-600">Enabled</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-red-300 border-red-600">Disabled</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => {
-                              toast({
-                                title: "Stripe Dashboard",
-                                description: `Opening Stripe dashboard for ${creator.username}`,
-                              });
-                            }}
-                          >
-                            <CreditCard className="h-4 w-4 text-blue-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+        <TabsContent value="processing">
+          <PayoutsList 
+            title="Processing Payouts" 
+            description="Approved and awaiting transfer to creator"
+            payouts={processingPayouts}
+            onAction={handlePayoutProcess}
+            processingAction={processingAction}
+            actions={[
+              { id: 'process', label: 'Mark as Processed', variant: 'default', className: 'bg-green-600 hover:bg-green-700' },
+              { id: 'reject', label: 'Reject', variant: 'destructive' }
+            ]}
+          />
+        </TabsContent>
+        
+        <TabsContent value="completed">
+          <PayoutsList 
+            title="Completed Payouts" 
+            description="Successfully processed creator payments"
+            payouts={completedPayouts}
+            showActions={false}
+          />
+        </TabsContent>
+        
+        <TabsContent value="stripe">
+          <Card className="bg-card">
+            <CardHeader>
+              <CardTitle>Stripe Connected Accounts</CardTitle>
+              <CardDescription>
+                Creators and their payment processor status
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[350px] pr-4">
+                <div className="space-y-4">
+                  {stripeAccounts.map((account) => (
+                    <StripeAccountRow 
+                      key={account.id} 
+                      account={account} 
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
       
-      {/* Creator Details Dialog */}
       {selectedCreator && (
-        <Dialog open={showCreatorDialog} onOpenChange={setShowCreatorDialog}>
-          <DialogContent className="bg-[#161B22] max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center">
-                <User className="mr-2 h-5 w-5" />
-                Creator Earnings Details
-              </DialogTitle>
-              <DialogDescription>
-                Details for {selectedCreator.username}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={selectedCreator.avatar_url || ''} alt={selectedCreator.username} />
-                  <AvatarFallback>{selectedCreator.username[0].toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-lg font-semibold">{selectedCreator.username}</h3>
-                  <p className="text-sm text-gray-400">ID: {selectedCreator.id}</p>
-                  <div className="flex items-center mt-1">
-                    {selectedCreator.stripe_connected ? (
-                      <Badge variant="default" className="bg-green-700 text-white">Stripe Connected</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-yellow-300 border-yellow-600">Missing Stripe</Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">Gross Earnings</div>
-                  <div className="text-xl font-semibold">{formatCurrency(selectedCreator.gross_earnings)}</div>
-                </div>
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">Platform Fee (7%)</div>
-                  <div className="text-xl font-semibold">{formatCurrency(selectedCreator.platform_fee)}</div>
-                </div>
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">Net Earnings</div>
-                  <div className="text-xl font-semibold">{formatCurrency(selectedCreator.net_earnings)}</div>
-                </div>
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">Subscribers</div>
-                  <div className="text-xl font-semibold">{selectedCreator.subscription_count}</div>
-                </div>
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">PPV Sales</div>
-                  <div className="text-xl font-semibold">{selectedCreator.ppv_count}</div>
-                </div>
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">Tips Received</div>
-                  <div className="text-xl font-semibold">{selectedCreator.tip_count}</div>
-                </div>
-              </div>
-              
-              <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                <h4 className="font-medium mb-2">Last Payout</h4>
-                {selectedCreator.last_payout_date ? (
-                  <div className="flex justify-between">
-                    <div>
-                      <div className="text-sm text-gray-400">Date</div>
-                      <div>{format(new Date(selectedCreator.last_payout_date), 'MMM d, yyyy')}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-400">Amount</div>
-                      <div>{formatCurrency(selectedCreator.last_payout_amount || 0)}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-400">Status</div>
-                      <Badge variant="outline">
-                        {selectedCreator.payout_status || 'Processed'}
-                      </Badge>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-500">No payouts processed yet</div>
-                )}
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => handleDownloadReport()}>
-                  <Download className="h-4 w-4 mr-1.5" />
-                  Export Report
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={() => {
-                    handleBlockCreatorPayouts(selectedCreator.id);
-                    setShowCreatorDialog(false);
-                  }}
-                  disabled={isActionInProgress}
-                >
-                  <XCircle className="h-4 w-4 mr-1.5" />
-                  Block Payouts
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CreatorDetailsDialog 
+          creator={selectedCreator}
+          open={!!selectedCreator}
+          onOpenChange={(open) => !open && setSelectedCreator(null)}
+        />
       )}
-      
-      {/* Payout Request Dialog */}
-      {selectedPayout && (
-        <Dialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog}>
-          <DialogContent className="bg-[#161B22] max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center">
-                <DollarSign className="mr-2 h-5 w-5" />
-                Payout Request Details
-              </DialogTitle>
-              <DialogDescription>
-                Request #{selectedPayout.id.substring(0, 8)} from {selectedPayout.creator_username || 'Unknown'}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={selectedPayout.creator_avatar_url || ''} alt={selectedPayout.creator_username || 'User'} />
-                  <AvatarFallback>{(selectedPayout.creator_username?.[0] || 'U').toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-lg font-semibold">{selectedPayout.creator_username || 'Unknown'}</h3>
-                  <p className="text-sm text-gray-400">Creator ID: {selectedPayout.creator_id}</p>
-                  <div className="flex items-center mt-1">
-                    <Badge
-                      variant={
-                        selectedPayout.status === 'pending' ? 'outline' :
-                        selectedPayout.status === 'approved' ? 'default' :
-                        selectedPayout.status === 'processed' ? 'default' : 'destructive'
-                      }
-                      className={payout.status === 'processed' ? 'bg-green-700 text-white' : ''}
-                    >
-                      {selectedPayout.status.charAt(0).toUpperCase() + selectedPayout.status.slice(1)}
+    </div>
+  );
+};
+
+// Helper Components
+
+interface CreatorEarningsRowProps {
+  creator: CreatorEarnings;
+  onSelect: () => void;
+}
+
+const CreatorEarningsRow = ({ creator, onSelect }: CreatorEarningsRowProps) => {
+  return (
+    <div className="flex items-center justify-between p-3 bg-[#161B22] rounded-lg border border-gray-800 hover:bg-[#1c232c] transition-colors cursor-pointer" onClick={onSelect}>
+      <div className="flex items-center gap-3">
+        <Avatar className="h-10 w-10 border border-white/10">
+          <AvatarImage src={creator.avatar_url || undefined} alt={creator.username} />
+          <AvatarFallback>{creator.username.charAt(0).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <div>
+          <div className="font-medium flex items-center">
+            {creator.username}
+            <Badge variant={creator.stripe_connected ? "outline" : "destructive"} className="ml-2 text-xs">
+              {creator.stripe_connected ? "Stripe Connected" : "No Stripe Account"}
+            </Badge>
+          </div>
+          <div className="text-sm text-gray-400 mt-1">
+            <span className="mr-3">
+              {creator.subscription_count} subscriber{creator.subscription_count !== 1 ? 's' : ''}
+            </span>
+            <span className="mr-3">
+              {creator.ppv_count} PPV
+            </span>
+            <span>
+              {creator.tip_count} tips
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-6">
+        <div className="text-right">
+          <div className="text-xs text-gray-400">Gross Earnings</div>
+          <div className="font-medium">${creator.gross_earnings.toFixed(2)}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-gray-400">Platform Fee</div>
+          <div className="font-medium text-red-400">${creator.platform_fee.toFixed(2)}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-gray-400">Net Earnings</div>
+          <div className="font-medium text-green-400">${creator.net_earnings.toFixed(2)}</div>
+        </div>
+        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onSelect(); }}>
+          Details
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+interface PayoutsListProps {
+  title: string;
+  description: string;
+  payouts: PayoutRequest[];
+  onAction?: (payoutId: string, action: string) => void;
+  processingAction?: string | null;
+  actions?: { id: string; label: string; variant: "default" | "destructive" | "outline"; className?: string }[];
+  showActions?: boolean;
+}
+
+const PayoutsList = ({ 
+  title, 
+  description, 
+  payouts, 
+  onAction, 
+  processingAction,
+  actions = [],
+  showActions = true
+}: PayoutsListProps) => {
+  if (payouts.length === 0) {
+    return (
+      <Card className="bg-card">
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+            <CheckCircle className="h-12 w-12 mb-4 opacity-20" />
+            <p className="text-lg font-medium">No payouts found</p>
+            <p className="text-sm">All payouts have been processed</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <Card className="bg-card">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[350px] pr-4">
+          <div className="space-y-4">
+            {payouts.map((payoutItem) => (
+              <div key={payoutItem.id} className="flex items-center justify-between p-3 bg-[#161B22] rounded-lg border border-gray-800">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border border-white/10">
+                    <AvatarImage src={payoutItem.creator_avatar_url || undefined} alt={payoutItem.creator_username} />
+                    <AvatarFallback>{payoutItem.creator_username?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium">{payoutItem.creator_username}</div>
+                    <div className="text-sm text-gray-400 mt-1">
+                      Requested: {format(new Date(payoutItem.requested_at), 'PPP')}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <div className="text-xs text-gray-400">Amount</div>
+                    <div className="font-medium">${payoutItem.amount.toFixed(2)}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-400">Platform Fee</div>
+                    <div className="font-medium text-red-400">${payoutItem.platform_fee.toFixed(2)}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-400">Final Amount</div>
+                    <div className="font-medium text-green-400">${payoutItem.final_amount.toFixed(2)}</div>
+                  </div>
+                  
+                  {showActions && onAction && (
+                    <Dialog>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" disabled={processingAction === payoutItem.id}>
+                            {processingAction === payoutItem.id ? (
+                              <>Processing<RefreshCw className="h-3 w-3 ml-2 animate-spin" /></>
+                            ) : (
+                              <>Actions<ChevronsUpDown className="h-3 w-3 ml-2" /></>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {actions.map(action => (
+                            <DialogTrigger key={action.id} asChild>
+                              <DropdownMenuItem>
+                                {action.label}
+                              </DropdownMenuItem>
+                            </DialogTrigger>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      
+                      {actions.map(action => (
+                        <Dialog key={action.id}>
+                          <DialogTrigger asChild>
+                            <span style={{ display: 'none' }}>{action.label}</span>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>{action.label} Payout</DialogTitle>
+                              <DialogDescription>
+                                {action.id === 'approve' && 'Approve this payout request for processing.'}
+                                {action.id === 'reject' && 'Reject this payout request. The creator will be notified.'}
+                                {action.id === 'process' && 'Mark this payout as processed after completing the transfer.'}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                              <p className="mb-4">
+                                Creator: <span className="font-medium">{payoutItem.creator_username}</span>
+                              </p>
+                              <p className="mb-4">
+                                Amount: <span className="font-medium">${payoutItem.final_amount.toFixed(2)}</span> (after {(payoutItem.platform_fee / payoutItem.amount * 100).toFixed(0)}% platform fee)
+                              </p>
+                              <p>
+                                Requested: <span className="font-medium">{format(new Date(payoutItem.requested_at), 'PPP')}</span>
+                              </p>
+                            </div>
+                            <DialogFooter>
+                              <Button 
+                                variant={action.variant} 
+                                className={action.className} 
+                                onClick={() => {
+                                  const handleAction = (action: string) => onAction(payoutItem.id, action);
+                                  handleAction(action.id);
+                                }}
+                              >
+                                Confirm {action.label}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      ))}
+                    </Dialog>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
+};
+
+interface StripeAccountRowProps {
+  account: StripeAccount;
+}
+
+const StripeAccountRow = ({ account }: StripeAccountRowProps) => {
+  return (
+    <div className="flex items-center justify-between p-3 bg-[#161B22] rounded-lg border border-gray-800">
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-full ${account.is_verified ? 'bg-green-500/20' : 'bg-orange-500/20'}`}>
+          <CreditCard className={`h-5 w-5 ${account.is_verified ? 'text-green-500' : 'text-orange-500'}`} />
+        </div>
+        <div>
+          <div className="font-medium">Account ID: {account.stripe_account_id.substring(0, 8)}...</div>
+          <div className="text-sm text-gray-400 mt-1">
+            Created: {format(new Date(account.created_at), 'PPP')}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-6">
+        <div className="text-right">
+          <Badge 
+            variant="outline" 
+            className={account.is_verified ? 'border-green-500 text-green-500' : 'border-orange-500 text-orange-500'}
+          >
+            {account.is_verified ? 'Verified' : account.status}
+          </Badge>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-gray-400">Country</div>
+          <div className="font-medium">{account.country}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-gray-400">Currency</div>
+          <div className="font-medium">{account.currency.toUpperCase()}</div>
+        </div>
+        <Button variant="outline" size="sm">
+          View Details
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+interface CreatorDetailsDialogProps {
+  creator: CreatorEarnings;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const CreatorDetailsDialog = ({ creator, open, onOpenChange }: CreatorDetailsDialogProps) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Avatar className="h-6 w-6 mr-2">
+              <AvatarImage src={creator.avatar_url || undefined} alt={creator.username} />
+              <AvatarFallback>{creator.username.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            {creator.username} - Earnings Details
+          </DialogTitle>
+          <DialogDescription>
+            Detailed breakdown of this creator's earnings and statistics
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">Gross Earnings</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="flex items-baseline">
+                <DollarSign className="h-4 w-4 text-green-500 mr-1" />
+                <span className="text-2xl font-bold">
+                  ${creator.gross_earnings.toFixed(2)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">Platform Fee</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="flex items-baseline">
+                <DollarSign className="h-4 w-4 text-red-500 mr-1" />
+                <span className="text-2xl font-bold">
+                  ${creator.platform_fee.toFixed(2)}
+                </span>
+                <span className="text-sm ml-2">
+                  ({(creator.platform_fee / creator.gross_earnings * 100 || 0).toFixed(1)}%)
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">Net Earnings</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="flex items-baseline">
+                <DollarSign className="h-4 w-4 text-blue-500 mr-1" />
+                <span className="text-2xl font-bold">
+                  ${creator.net_earnings.toFixed(2)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400 flex items-center">
+                <Users className="h-4 w-4 mr-2" />
+                Subscribers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl font-bold">
+                {creator.subscription_count}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400 flex items-center">
+                <Banknote className="h-4 w-4 mr-2" />
+                PPV Purchases
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl font-bold">
+                {creator.ppv_count}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400 flex items-center">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Tips Received
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl font-bold">
+                {creator.tip_count}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400 flex items-center">
+                <CreditCard className="h-4 w-4 mr-2" />
+                Stripe Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <Badge variant={creator.stripe_connected ? "outline" : "destructive"} className="text-xs">
+                {creator.stripe_connected ? "Connected" : "Not Connected"}
+              </Badge>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">Last Payout Details</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              {creator.last_payout_date ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Date:</span>
+                    <span>{format(new Date(creator.last_payout_date), 'PP')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Amount:</span>
+                    <span>${creator.last_payout_amount?.toFixed(2) || '0.00'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Status:</span>
+                    <Badge variant="outline">
+                      {creator.payout_status || 'unknown'}
                     </Badge>
                   </div>
                 </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">Requested Amount</div>
-                  <div className="text-xl font-semibold">{formatCurrency(selectedPayout.amount)}</div>
-                </div>
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">Platform Fee (7%)</div>
-                  <div className="text-xl font-semibold">{formatCurrency(selectedPayout.platform_fee)}</div>
-                </div>
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">Final Payout</div>
-                  <div className="text-xl font-semibold">{formatCurrency(selectedPayout.final_amount)}</div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400">Requested Date</div>
-                  <div>{format(new Date(selectedPayout.requested_at), 'PPP')}</div>
-                  <div>{format(new Date(selectedPayout.requested_at), 'HH:mm:ss')}</div>
-                </div>
-                
-                {selectedPayout.approved_at && (
-                  <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                    <div className="text-sm text-gray-400">Approved Date</div>
-                    <div>{format(new Date(selectedPayout.approved_at), 'PPP')}</div>
-                    <div>{format(new Date(selectedPayout.approved_at), 'HH:mm:ss')}</div>
-                  </div>
-                )}
-                
-                {selectedPayout.processed_at && (
-                  <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                    <div className="text-sm text-gray-400">Processed Date</div>
-                    <div>{format(new Date(selectedPayout.processed_at), 'PPP')}</div>
-                    <div>{format(new Date(selectedPayout.processed_at), 'HH:mm:ss')}</div>
-                  </div>
-                )}
-              </div>
-              
-              {selectedPayout.notes && (
-                <div className="bg-[#1C2128]/80 p-4 rounded-md">
-                  <div className="text-sm text-gray-400 mb-1">Notes</div>
-                  <div className="text-sm">{selectedPayout.notes}</div>
-                </div>
+              ) : (
+                <div className="text-gray-400 text-sm">No previous payouts</div>
               )}
-              
-              {selectedPayout.status === 'pending' && (
-                <div className="flex justify-end space-x-2">
-                  <Button 
-                    variant="default" 
-                    onClick={() => {
-                      handleApprovePayoutRequest(selectedPayout.id);
-                      setShowPayoutDialog(false);
-                    }}
-                    disabled={isActionInProgress}
-                  >
-                    <DollarSign className="h-4 w-4 mr-1.5" />
-                    Approve Payout
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => {
-                      handleRejectPayoutRequest(selectedPayout.id);
-                      setShowPayoutDialog(false);
-                    }}
-                    disabled={isActionInProgress}
-                  >
-                    <XCircle className="h-4 w-4 mr-1.5" />
-                    Reject Payout
-                  </Button>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">Admin Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" className="w-full justify-start">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Earnings Report
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  View Stripe Account
+                </Button>
+                <Button variant="destructive" className="w-full justify-start">
+                  <UserX className="h-4 w-4 mr-2" />
+                  Suspend Monetization
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

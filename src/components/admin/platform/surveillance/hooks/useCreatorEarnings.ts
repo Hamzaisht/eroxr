@@ -3,14 +3,16 @@ import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CreatorEarnings, PayoutRequest } from "../types";
+import { CreatorEarnings, PayoutRequest, StripeAccount } from "../types";
 
 export function useCreatorEarnings() {
-  const [creators, setCreators] = useState<CreatorEarnings[]>([]);
-  const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
+  const [creatorEarnings, setCreatorEarnings] = useState<CreatorEarnings[]>([]);
+  const [pendingPayouts, setPendingPayouts] = useState<PayoutRequest[]>([]);
+  const [processingPayouts, setProcessingPayouts] = useState<PayoutRequest[]>([]);
+  const [completedPayouts, setCompletedPayouts] = useState<PayoutRequest[]>([]);
+  const [stripeAccounts, setStripeAccounts] = useState<StripeAccount[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isActionInProgress, setIsActionInProgress] = useState(false);
   
   const session = useSession();
   const { toast } = useToast();
@@ -22,29 +24,33 @@ export function useCreatorEarnings() {
     setError(null);
     
     try {
-      // Fetch creator profiles with earnings data
-      const { data, error } = await supabase.rpc('get_creator_earnings');
+      // Fetch creator earnings data
+      const { data: earningsData, error: earningsError } = await supabase
+        .rpc('get_creator_earnings')
+        .limit(50);
+        
+      if (earningsError) throw earningsError;
       
-      if (error) throw error;
-      
-      // Transform data to match our type
-      const earnings: CreatorEarnings[] = data.map((item: any) => ({
-        id: item.user_id,
-        username: item.username || 'Unknown',
-        avatar_url: item.avatar_url,
-        gross_earnings: parseFloat(item.total_earnings || '0'),
-        platform_fee: parseFloat(item.total_earnings || '0') * 0.07, // 7% platform fee
-        net_earnings: parseFloat(item.total_earnings || '0') * 0.93, // 93% to creator
-        subscription_count: item.subscriber_count || 0,
-        ppv_count: item.ppv_content_count || 0,
-        tip_count: item.tip_count || 0,
-        last_payout_date: item.last_payout_date,
-        stripe_connected: !!item.stripe_account_id
+      // Transform data into the expected format
+      const formattedEarnings: CreatorEarnings[] = earningsData.map((earning: any) => ({
+        id: earning.creator_id,
+        username: earning.username || 'Unknown Creator',
+        avatar_url: earning.avatar_url || null,
+        gross_earnings: parseFloat(earning.gross_earnings) || 0,
+        net_earnings: parseFloat(earning.net_earnings) || 0,
+        platform_fee: parseFloat(earning.platform_fee) || 0,
+        subscription_count: earning.subscription_count || 0,
+        ppv_count: earning.ppv_count || 0,
+        tip_count: earning.tip_count || 0,
+        last_payout_date: earning.last_payout_date,
+        last_payout_amount: earning.last_payout_amount ? parseFloat(earning.last_payout_amount) : 0,
+        payout_status: earning.payout_status || 'none',
+        stripe_connected: earning.stripe_connected || false
       }));
       
-      setCreators(earnings);
+      setCreatorEarnings(formattedEarnings);
       
-      // Fetch payout requests
+      // Fetch payout requests data
       const { data: payoutData, error: payoutError } = await supabase
         .from('payout_requests')
         .select(`
@@ -64,28 +70,40 @@ export function useCreatorEarnings() {
         
       if (payoutError) throw payoutError;
       
-      const payoutRequests: PayoutRequest[] = payoutData.map(payout => ({
+      // Format payout data
+      const formattedPayouts: PayoutRequest[] = payoutData.map(payout => ({
         id: payout.id,
         creator_id: payout.creator_id,
-        creator_username: payout.profiles ? payout.profiles.username : 'Unknown',
-        creator_avatar_url: payout.profiles ? payout.profiles.avatar_url : null,
-        amount: payout.amount,
-        platform_fee: payout.platform_fee,
-        final_amount: payout.final_amount,
+        creator_username: payout.profiles ? payout.profiles.username || 'Unknown' : 'Unknown',
+        creator_avatar_url: payout.profiles ? payout.profiles.avatar_url || null : null,
+        amount: parseFloat(payout.amount) || 0,
+        platform_fee: parseFloat(payout.platform_fee) || 0,
+        final_amount: parseFloat(payout.final_amount) || 0,
         requested_at: payout.requested_at,
         approved_at: payout.approved_at,
         processed_at: payout.processed_at,
-        status: payout.status as 'pending' | 'approved' | 'processed' | 'rejected',
+        status: payout.status as any,
         notes: payout.notes
       }));
       
-      setPayouts(payoutRequests);
+      // Sort payouts by status
+      setPendingPayouts(formattedPayouts.filter(p => p.status === 'pending'));
+      setProcessingPayouts(formattedPayouts.filter(p => p.status === 'approved'));
+      setCompletedPayouts(formattedPayouts.filter(p => p.status === 'processed'));
+      
+      // Fetch Stripe account data
+      const { data: stripeData, error: stripeError } = await supabase
+        .from('stripe_accounts')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (stripeError) throw stripeError;
+      
+      setStripeAccounts(stripeData);
+      
     } catch (error) {
       console.error("Error fetching creator earnings:", error);
-      setError("Failed to load creator earnings. Please try again.");
-      setCreators([]);
-      setPayouts([]);
-      
+      setError("Failed to load creator earnings data. Please try again.");
       toast({
         title: "Error",
         description: "Could not load creator earnings data",
@@ -96,219 +114,83 @@ export function useCreatorEarnings() {
     }
   }, [session?.user?.id, toast]);
   
-  const handleRefresh = async () => {
-    await fetchCreatorEarnings();
-    
-    toast({
-      title: "Refreshed",
-      description: "Creator earnings data has been updated",
-    });
-  };
-  
-  const handleApprovePayoutRequest = async (payoutId: string) => {
-    if (!session?.user?.id) return;
-    
-    setIsActionInProgress(true);
+  const handlePayoutAction = useCallback(async (payoutId: string, action: 'approve' | 'reject' | 'process') => {
+    if (!session?.user?.id) return false;
     
     try {
-      const { error } = await supabase
-        .from('payout_requests')
-        .update({
-          status: 'approved',
-          approved_at: new Date().toISOString()
-        })
-        .eq('id', payoutId);
-        
-      if (error) throw error;
+      let status = '';
+      let fieldToUpdate = {};
       
-      // Log the action
-      await supabase.from('admin_audit_logs').insert({
-        user_id: session.user.id,
-        action: 'payout_approved',
-        details: {
-          timestamp: new Date().toISOString(),
-          payout_id: payoutId
-        }
-      });
-      
-      // Refresh the data
-      await fetchCreatorEarnings();
-      
-      toast({
-        title: "Payout Approved",
-        description: "The payout request has been approved",
-      });
-    } catch (error) {
-      console.error("Error approving payout:", error);
-      toast({
-        title: "Action Failed",
-        description: "Could not approve payout request",
-        variant: "destructive"
-      });
-    } finally {
-      setIsActionInProgress(false);
-    }
-  };
-  
-  const handleRejectPayoutRequest = async (payoutId: string) => {
-    if (!session?.user?.id) return;
-    
-    setIsActionInProgress(true);
-    
-    try {
-      const { error } = await supabase
-        .from('payout_requests')
-        .update({
-          status: 'rejected'
-        })
-        .eq('id', payoutId);
-        
-      if (error) throw error;
-      
-      // Log the action
-      await supabase.from('admin_audit_logs').insert({
-        user_id: session.user.id,
-        action: 'payout_rejected',
-        details: {
-          timestamp: new Date().toISOString(),
-          payout_id: payoutId
-        }
-      });
-      
-      // Refresh the data
-      await fetchCreatorEarnings();
-      
-      toast({
-        title: "Payout Rejected",
-        description: "The payout request has been rejected",
-      });
-    } catch (error) {
-      console.error("Error rejecting payout:", error);
-      toast({
-        title: "Action Failed",
-        description: "Could not reject payout request",
-        variant: "destructive"
-      });
-    } finally {
-      setIsActionInProgress(false);
-    }
-  };
-  
-  const handleBlockCreatorPayouts = async (creatorId: string) => {
-    if (!session?.user?.id) return;
-    
-    setIsActionInProgress(true);
-    
-    try {
-      // In a real implementation, you'd update the creator's account status
-      // For now, we'll just simulate this and log it
-      
-      await supabase.from('admin_audit_logs').insert({
-        user_id: session.user.id,
-        action: 'creator_payouts_blocked',
-        details: {
-          timestamp: new Date().toISOString(),
-          creator_id: creatorId
-        }
-      });
-      
-      toast({
-        title: "Payouts Blocked",
-        description: "The creator's payout ability has been blocked",
-      });
-    } catch (error) {
-      console.error("Error blocking creator payouts:", error);
-      toast({
-        title: "Action Failed",
-        description: "Could not block creator payouts",
-        variant: "destructive"
-      });
-    } finally {
-      setIsActionInProgress(false);
-    }
-  };
-  
-  const handleDownloadReport = () => {
-    if (creators.length === 0) {
-      toast({
-        title: "No Data",
-        description: "There are no earnings to export",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      // Create CSV content
-      const headers = ["Username", "Gross Earnings", "Platform Fee", "Net Earnings", "Subscribers", "PPV", "Tips", "Stripe Connected"];
-      const rows = creators.map(creator => [
-        creator.username,
-        creator.gross_earnings.toFixed(2),
-        creator.platform_fee.toFixed(2),
-        creator.net_earnings.toFixed(2),
-        creator.subscription_count,
-        creator.ppv_count,
-        creator.tip_count,
-        creator.stripe_connected ? "Yes" : "No"
-      ]);
-      
-      const csvContent = [
-        headers.join(","),
-        ...rows.map(row => row.join(","))
-      ].join("\n");
-      
-      // Create blob and download link
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `creator_earnings_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast({
-        title: "Report Downloaded",
-        description: "The earnings report has been exported as CSV",
-      });
-      
-      // Log the action
-      if (session?.user?.id) {
-        supabase.from('admin_audit_logs').insert({
-          user_id: session.user.id,
-          action: 'earnings_report_exported',
-          details: {
-            timestamp: new Date().toISOString(),
-            creator_count: creators.length
-          }
-        });
+      switch (action) {
+        case 'approve':
+          status = 'approved';
+          fieldToUpdate = { 
+            status, 
+            approved_at: new Date().toISOString() 
+          };
+          break;
+        case 'reject':
+          status = 'rejected';
+          fieldToUpdate = { status };
+          break;
+        case 'process':
+          status = 'processed';
+          fieldToUpdate = { 
+            status, 
+            processed_at: new Date().toISOString(),
+            processed_by: session.user.id
+          };
+          break;
       }
-    } catch (error) {
-      console.error("Error downloading report:", error);
+      
+      // Update payout status
+      const { error } = await supabase
+        .from('payout_requests')
+        .update(fieldToUpdate)
+        .eq('id', payoutId);
+        
+      if (error) throw error;
+      
+      // Log admin action
+      await supabase.from('admin_audit_logs').insert({
+        user_id: session.user.id,
+        action: `ghost_payout_${action}`,
+        details: {
+          timestamp: new Date().toISOString(),
+          payout_id: payoutId,
+          action
+        }
+      });
+      
+      // Refresh data
+      await fetchCreatorEarnings();
+      
       toast({
-        title: "Export Failed",
-        description: "Could not download the earnings report",
+        title: "Payout Updated",
+        description: `Payout has been ${status} successfully`,
+      });
+      
+      return true;
+    } catch (error) {
+      console.error(`Error handling payout ${action}:`, error);
+      toast({
+        title: "Action Failed",
+        description: `Could not ${action} the payout. Please try again.`,
         variant: "destructive"
       });
+      return false;
     }
-  };
-  
-  // Initialize data when component mounts
-  useState(() => {
-    fetchCreatorEarnings();
-  });
+  }, [session?.user?.id, toast, fetchCreatorEarnings]);
   
   return {
-    creators,
-    payouts,
+    creatorEarnings,
+    pendingPayouts,
+    processingPayouts,
+    completedPayouts,
+    stripeAccounts,
     isLoading,
     error,
-    isActionInProgress,
-    handleRefresh,
-    handleApprovePayoutRequest,
-    handleRejectPayoutRequest,
-    handleBlockCreatorPayouts,
-    handleDownloadReport
+    fetchCreatorEarnings,
+    handlePayoutAction
   };
 }

@@ -20,14 +20,23 @@ export function useModerationActions() {
     try {
       // Helper function to get the user ID consistently
       const getUserId = (item: LiveSession | SurveillanceContentItem): string => {
-        if ('creator_id' in item) return item.creator_id;
-        return item.user_id;
+        if ('creator_id' in item && item.creator_id) return item.creator_id;
+        if ('user_id' in item && item.user_id) return item.user_id;
+        return 'unknown';
       };
       
       // Helper function to get the username consistently
-      const getUsername = (item: LiveSession | SurveillanceContentItem): string | null => {
-        if ('creator_username' in item) return item.creator_username || null;
-        return item.username || null;
+      const getUsername = (item: LiveSession | SurveillanceContentItem): string => {
+        if ('creator_username' in item && item.creator_username) return item.creator_username;
+        if ('username' in item && item.username) return item.username;
+        return 'Unknown';
+      };
+      
+      // Helper function to get the content type consistently
+      const getContentType = (item: LiveSession | SurveillanceContentItem): string => {
+        if ('content_type' in item && item.content_type) return item.content_type;
+        if ('type' in item) return item.type;
+        return 'unknown';
       };
       
       // Log the moderation action in admin audit logs
@@ -37,9 +46,9 @@ export function useModerationActions() {
         details: {
           timestamp: new Date().toISOString(),
           content_id: target.id,
-          content_type: 'content_type' in target ? target.content_type : target.type,
+          content_type: getContentType(target),
           target_user_id: getUserId(target),
-          target_username: getUsername(target) || 'Unknown'
+          target_username: getUsername(target)
         }
       });
 
@@ -55,7 +64,7 @@ export function useModerationActions() {
           
           toast({
             title: "User Banned",
-            description: `${getUsername(target) || 'User'} has been banned`,
+            description: `${getUsername(target)} has been banned`,
           });
           break;
           
@@ -114,7 +123,7 @@ export function useModerationActions() {
             reporter_id: userSession.user.id,
             reported_id: getUserId(target),
             content_id: target.id,
-            content_type: 'content_type' in target ? target.content_type : target.type,
+            content_type: getContentType(target),
             reason: 'Flagged by admin (ghost mode)',
             status: 'pending',
             is_emergency: true,

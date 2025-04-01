@@ -9,6 +9,7 @@ import { SurveillanceProvider, useSurveillance } from "./surveillance/Surveillan
 import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { ActiveSurveillanceCard } from "./surveillance/ActiveSurveillanceCard";
 import { LiveSession } from "./surveillance/types";
+import { LiveAlert } from "./surveillance/types";
 
 export const LiveSurveillance = () => {
   const { isSuperAdmin } = useSuperAdminCheck();
@@ -29,14 +30,18 @@ export const LiveSurveillance = () => {
   return (
     <div className="p-4 space-y-4">
       <SurveillanceProvider
-        liveAlerts={liveAlerts}
+        liveAlerts={liveAlerts as LiveAlert[]}
         refreshAlerts={refreshAlerts}
-        startSurveillance={startSurveillance}
+        startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
       >
         <SurveillanceContent
-          activeSurveillance={activeSurveillance}
+          activeSurveillance={activeSurveillance as {
+            session?: LiveSession;
+            isWatching: boolean;
+            startTime?: string;
+          }}
           stopSurveillance={stopSurveillance}
-          liveAlerts={liveAlerts}
+          liveAlerts={liveAlerts as LiveAlert[]}
         />
       </SurveillanceProvider>
     </div>
@@ -50,7 +55,7 @@ interface SurveillanceContentProps {
     startTime?: string;
   };
   stopSurveillance: () => Promise<boolean>;
-  liveAlerts: any[];
+  liveAlerts: LiveAlert[];
 }
 
 const SurveillanceContent = ({

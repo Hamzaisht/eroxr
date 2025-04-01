@@ -1,8 +1,7 @@
 
 import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { LiveSession } from "../../user-analytics/types";
-import { SurveillanceTab } from "../types";
+import { LiveSession, SurveillanceTab } from "../types";
 import { useStreamsSurveillance } from "./useStreamsSurveillance";
 import { useCallsSurveillance } from "./useCallsSurveillance";
 import { useChatsSurveillance } from "./useChatsSurveillance";
