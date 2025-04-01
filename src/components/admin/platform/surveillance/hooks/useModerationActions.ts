@@ -18,6 +18,18 @@ export function useModerationActions() {
     
     setActionInProgress(target.id);
     try {
+      // Helper function to get the user ID consistently
+      const getUserId = (item: LiveSession | SurveillanceContentItem): string => {
+        if ('creator_id' in item) return item.creator_id;
+        return item.user_id;
+      };
+      
+      // Helper function to get the username consistently
+      const getUsername = (item: LiveSession | SurveillanceContentItem): string | null => {
+        if ('creator_username' in item) return item.creator_username || null;
+        return item.username || null;
+      };
+      
       // Log the moderation action in admin audit logs
       await supabase.from('admin_audit_logs').insert({
         user_id: userSession.user.id,
@@ -25,9 +37,9 @@ export function useModerationActions() {
         details: {
           timestamp: new Date().toISOString(),
           content_id: target.id,
-          content_type: 'type' in target ? target.type : target.content_type,
-          target_user_id: target.creator_id || target.user_id,
-          target_username: target.creator_username || target.username
+          content_type: 'content_type' in target ? target.content_type : target.type,
+          target_user_id: getUserId(target),
+          target_username: getUsername(target) || 'Unknown'
         }
       });
 
@@ -39,11 +51,11 @@ export function useModerationActions() {
           await supabase.from('profiles').update({
             is_suspended: true,
             suspended_at: new Date().toISOString()
-          }).eq('id', target.creator_id || target.user_id);
+          }).eq('id', getUserId(target));
           
           toast({
             title: "User Banned",
-            description: `${target.creator_username || target.username || 'User'} has been banned`,
+            description: `${getUsername(target) || 'User'} has been banned`,
           });
           break;
           
@@ -100,7 +112,7 @@ export function useModerationActions() {
           // Flag the content for review
           await supabase.from('reports').insert({
             reporter_id: userSession.user.id,
-            reported_id: target.creator_id || target.user_id,
+            reported_id: getUserId(target),
             content_id: target.id,
             content_type: 'content_type' in target ? target.content_type : target.type,
             reason: 'Flagged by admin (ghost mode)',

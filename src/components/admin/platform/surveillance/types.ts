@@ -1,4 +1,14 @@
-import { LiveSession } from "../user-analytics/types";
+
+import { LiveAlert, LiveSession as AnalyticsLiveSession } from "../user-analytics/types";
+
+// Extend the existing LiveSession type with additional properties needed for surveillance
+export interface LiveSession extends AnalyticsLiveSession {
+  username: string | null;
+  type: string;
+  user_id: string;
+  creator_id?: string;
+  creator_username?: string;
+}
 
 export type ContentType = 'post' | 'story' | 'video' | 'ppv';
 
@@ -21,6 +31,21 @@ export type SurveillanceContentItem = {
   ip_address?: string;
   expires_at?: string;
 };
+
+// Add missing interface definitions
+export interface SessionItemProps {
+  session: LiveSession;
+  onMonitorSession: (session: LiveSession) => Promise<boolean>;
+  onShowMediaPreview: (session: LiveSession) => void;
+  onModerate: (session: LiveSession, action: string) => void;
+  actionInProgress: string | null;
+}
+
+export interface SessionModerationActionProps {
+  session: LiveSession;
+  onModerate: (session: LiveSession, action: string) => void;
+  actionInProgress: string | null;
+}
 
 // Types for earning analytics
 export type CreatorEarnings = {
@@ -53,39 +78,6 @@ export type PayoutRequest = {
   status: 'pending' | 'approved' | 'processed' | 'rejected';
   notes?: string;
 };
-
-// Extend the LiveAlert type
-export interface LiveAlert {
-  id: string;
-  type: string;
-  user_id: string;
-  username: string | null;
-  avatar_url: string | null;
-  created_at: string;
-  content_type: string;
-  reason: string;
-  severity: string;
-  content_id: string;
-  is_processed?: boolean;
-  processed_by?: string;
-  ip_address?: string;
-}
-
-// Extend LiveSession interface 
-export interface LiveSession {
-  id: string;
-  type: string;
-  user_id: string;
-  username: string | null;
-  avatar_url: string | null;
-  started_at: string;
-  duration?: number;
-  title?: string;
-  location?: string;
-  ip_address?: string;
-  participants?: number;
-  is_private?: boolean;
-}
 
 export interface SurveillanceContextType {
   activeTab: SurveillanceTab;

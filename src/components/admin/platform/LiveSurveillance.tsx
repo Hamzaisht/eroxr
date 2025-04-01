@@ -8,7 +8,7 @@ import { GhostModePrompt } from "./surveillance/GhostModePrompt";
 import { SurveillanceProvider, useSurveillance } from "./surveillance/SurveillanceContext";
 import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { ActiveSurveillanceCard } from "./surveillance/ActiveSurveillanceCard";
-import { LiveSession } from "./user-analytics/types";
+import { LiveSession } from "./surveillance/types";
 
 export const LiveSurveillance = () => {
   const { isSuperAdmin } = useSuperAdminCheck();

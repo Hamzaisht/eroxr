@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   AlertTriangle, 
@@ -243,7 +242,7 @@ export const CreatorEarningsSurveillance = () => {
                       <TableCell>{creator.subscription_count}</TableCell>
                       <TableCell>
                         {creator.stripe_connected ? (
-                          <Badge variant="success" className="bg-green-700 text-white">Connected</Badge>
+                          <Badge variant="default" className="bg-green-700 text-white">Connected</Badge>
                         ) : (
                           <Badge variant="outline" className="text-yellow-300 border-yellow-600">Missing</Badge>
                         )}
@@ -325,9 +324,9 @@ export const CreatorEarningsSurveillance = () => {
                           variant={
                             payout.status === 'pending' ? 'outline' :
                             payout.status === 'approved' ? 'default' :
-                            payout.status === 'processed' ? 'success' : 'destructive'
+                            payout.status === 'processed' ? 'default' : 'destructive'
                           }
-                          className={payout.status === 'pending' ? 'border-yellow-600 text-yellow-400' : ''}
+                          className={payout.status === 'processed' ? 'bg-green-700 text-white' : ''}
                         >
                           {payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
                         </Badge>
@@ -413,7 +412,7 @@ export const CreatorEarningsSurveillance = () => {
                       </TableCell>
                       <TableCell>
                         {creator.stripe_connected ? (
-                          <Badge variant="success" className="bg-green-700 text-white">Connected</Badge>
+                          <Badge variant="default" className="bg-green-700 text-white">Connected</Badge>
                         ) : (
                           <Badge variant="outline" className="text-yellow-300 border-yellow-600">Missing</Badge>
                         )}
@@ -477,7 +476,7 @@ export const CreatorEarningsSurveillance = () => {
                   <p className="text-sm text-gray-400">ID: {selectedCreator.id}</p>
                   <div className="flex items-center mt-1">
                     {selectedCreator.stripe_connected ? (
-                      <Badge variant="success" className="bg-green-700 text-white">Stripe Connected</Badge>
+                      <Badge variant="default" className="bg-green-700 text-white">Stripe Connected</Badge>
                     ) : (
                       <Badge variant="outline" className="text-yellow-300 border-yellow-600">Missing Stripe</Badge>
                     )}
@@ -586,9 +585,9 @@ export const CreatorEarningsSurveillance = () => {
                       variant={
                         selectedPayout.status === 'pending' ? 'outline' :
                         selectedPayout.status === 'approved' ? 'default' :
-                        selectedPayout.status === 'processed' ? 'success' : 'destructive'
+                        selectedPayout.status === 'processed' ? 'default' : 'destructive'
                       }
-                      className={selectedPayout.status === 'pending' ? 'border-yellow-600 text-yellow-400' : ''}
+                      className={payout.status === 'processed' ? 'bg-green-700 text-white' : ''}
                     >
                       {selectedPayout.status.charAt(0).toUpperCase() + selectedPayout.status.slice(1)}
                     </Badge>
