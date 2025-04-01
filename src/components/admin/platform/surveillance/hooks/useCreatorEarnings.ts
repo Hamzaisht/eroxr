@@ -74,8 +74,8 @@ export function useCreatorEarnings() {
       const formattedPayouts: PayoutRequest[] = payoutData.map(payout => ({
         id: payout.id,
         creator_id: payout.creator_id,
-        creator_username: payout.profiles ? payout.profiles.username || 'Unknown' : 'Unknown',
-        creator_avatar_url: payout.profiles ? payout.profiles.avatar_url || null : null,
+        creator_username: payout.profiles && payout.profiles.username ? payout.profiles.username : 'Unknown',
+        creator_avatar_url: payout.profiles && payout.profiles.avatar_url ? payout.profiles.avatar_url : null,
         amount: parseFloat(payout.amount) || 0,
         platform_fee: parseFloat(payout.platform_fee) || 0,
         final_amount: parseFloat(payout.final_amount) || 0,

@@ -48,9 +48,9 @@ export function useContentSurveillance() {
             id: post.id,
             content_type: 'post',
             creator_id: post.creator_id,
-            // Safely access profile data with null checks
-            creator_username: post.profiles ? post.profiles.username || 'Unknown' : 'Unknown',
-            creator_avatar_url: post.profiles ? post.profiles.avatar_url || null : null,
+            // Safe access the profiles data with proper type checking
+            creator_username: post.profiles && post.profiles.username ? post.profiles.username : 'Unknown',
+            creator_avatar_url: post.profiles && post.profiles.avatar_url ? post.profiles.avatar_url : null,
             content: post.content || '',
             media_urls: post.media_url || [],
             created_at: post.created_at,
@@ -88,9 +88,9 @@ export function useContentSurveillance() {
             id: story.id,
             content_type: 'story',
             creator_id: story.creator_id,
-            // Safely access profile data with null checks
-            creator_username: story.profiles ? story.profiles.username || 'Unknown' : 'Unknown',
-            creator_avatar_url: story.profiles ? story.profiles.avatar_url || null : null,
+            // Safe access the profiles data with proper type checking
+            creator_username: story.profiles && story.profiles.username ? story.profiles.username : 'Unknown',
+            creator_avatar_url: story.profiles && story.profiles.avatar_url ? story.profiles.avatar_url : null,
             content: '',
             media_urls: story.media_url ? [story.media_url] : [],
             created_at: story.created_at,
@@ -131,9 +131,9 @@ export function useContentSurveillance() {
             id: video.id,
             content_type: 'video',
             creator_id: video.creator_id,
-            // Safely access profile data with null checks
-            creator_username: video.profiles ? video.profiles.username || 'Unknown' : 'Unknown',
-            creator_avatar_url: video.profiles ? video.profiles.avatar_url || null : null,
+            // Safe access the profiles data with proper type checking
+            creator_username: video.profiles && video.profiles.username ? video.profiles.username : 'Unknown',
+            creator_avatar_url: video.profiles && video.profiles.avatar_url ? video.profiles.avatar_url : null,
             content: video.description || video.title || '',
             media_urls: video.thumbnail_url ? [video.thumbnail_url] : [],
             created_at: video.created_at,
@@ -173,9 +173,9 @@ export function useContentSurveillance() {
             id: post.id,
             content_type: 'post',
             creator_id: post.creator_id,
-            // Safely access profile data with null checks
-            creator_username: post.profiles ? post.profiles.username || 'Unknown' : 'Unknown',
-            creator_avatar_url: post.profiles ? post.profiles.avatar_url || null : null,
+            // Safe access the profiles data with proper type checking
+            creator_username: post.profiles && post.profiles.username ? post.profiles.username : 'Unknown',
+            creator_avatar_url: post.profiles && post.profiles.avatar_url ? post.profiles.avatar_url : null,
             content: post.content || '',
             media_urls: post.media_url || [],
             created_at: post.created_at,
