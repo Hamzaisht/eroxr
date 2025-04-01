@@ -1,5 +1,3 @@
-
-
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SessionList } from "./SessionList";
@@ -12,7 +10,7 @@ interface TabContentProps {
   isLoading: boolean;
   liveSessions: LiveSession[];
   liveAlerts: LiveAlert[];
-  onMonitorSession: (session: LiveSession) => Promise<void>;
+  onMonitorSession: (session: LiveSession) => Promise<boolean>;
 }
 
 export const TabContent = ({ 
@@ -120,4 +118,3 @@ export const TabContent = ({
     </Card>
   );
 };
-

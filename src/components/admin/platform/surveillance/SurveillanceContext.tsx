@@ -133,20 +133,15 @@ export const SurveillanceProvider = ({
           chats.forEach(chat => {
             const chatKey = `${chat.sender_id}:${chat.recipient_id}`;
             if (!uniqueChats.has(chatKey)) {
-              const senderUsername = chat.sender?.username || 'Unknown';
-              const senderAvatar = chat.sender?.avatar_url || '';
-              const recipientUsername = chat.recipient?.username || 'Unknown';
-              const recipientAvatar = chat.recipient?.avatar_url || '';
-              
               uniqueChats.set(chatKey, {
                 id: chatKey,
                 type: 'chat',
                 user_id: chat.sender_id,
-                username: senderUsername,
-                avatar_url: senderAvatar,
+                username: chat.sender?.username || 'Unknown',
+                avatar_url: chat.sender?.avatar_url || '',
                 recipient_id: chat.recipient_id,
-                recipient_username: recipientUsername,
-                recipient_avatar: recipientAvatar,
+                recipient_username: chat.recipient?.username || 'Unknown',
+                recipient_avatar: chat.recipient?.avatar_url || '',
                 started_at: chat.created_at,
                 status: 'active',
                 content: chat.content,
@@ -193,15 +188,12 @@ export const SurveillanceProvider = ({
           }
           
           data = ads.map(ad => {
-            const username = ad.profiles?.username || 'Unknown';
-            const userAvatar = ad.profiles?.avatar_url || ad.avatar_url || '';
-            
             return {
               id: ad.id,
               type: 'bodycontact',
               user_id: ad.user_id,
-              username: username,
-              avatar_url: userAvatar,
+              username: ad.profiles?.username || 'Unknown',
+              avatar_url: ad.profiles?.avatar_url || ad.avatar_url || '',
               started_at: ad.last_active || ad.created_at,
               status: ad.moderation_status === 'pending' ? 'active' : 'flagged',
               title: ad.title,
@@ -245,7 +237,7 @@ export const SurveillanceProvider = ({
     });
   };
   
-  const handleStartSurveillance = async (session: LiveSession) => {
+  const handleStartSurveillance = async (session: LiveSession): Promise<boolean> => {
     const success = await startSurveillance(session);
     
     if (success) {

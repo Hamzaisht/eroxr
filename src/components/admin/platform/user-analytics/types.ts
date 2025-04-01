@@ -1,4 +1,3 @@
-
 export interface LiveSession {
   id: string;
   type: 'stream' | 'call' | 'chat' | 'bodycontact';
@@ -8,9 +7,21 @@ export interface LiveSession {
   started_at: string;
   status: string;
   title?: string;
+  description?: string;
   content_type: string;
   participants?: number;
   created_at: string;
+  
+  recipient_id?: string;
+  recipient_username?: string;
+  recipient_avatar?: string;
+  location?: string;
+  tags?: string[];
+  viewer_count?: number;
+  content?: string;
+  media_url?: string[];
+  video_url?: string;
+  about_me?: string;
 }
 
 export interface LiveAlert {
