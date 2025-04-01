@@ -1,8 +1,7 @@
 
 import { createContext, useContext, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { LiveSession, LiveAlert } from "../user-analytics/types";
-import { SurveillanceContextType, SurveillanceTab } from "./types";
+import { LiveSession, LiveAlert, SurveillanceTab, SurveillanceContextType } from "./types";
 import { useSurveillanceData } from "./hooks/useSurveillanceData";
 
 const SurveillanceContext = createContext<SurveillanceContextType | undefined>(undefined);

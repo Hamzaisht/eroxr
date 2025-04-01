@@ -77,8 +77,8 @@ const SurveillanceContent = ({
     <>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold">Live Surveillance</h1>
-          <p className="text-gray-400">Monitor real-time platform activity</p>
+          <h1 className="text-2xl font-bold">Ghost Mode Surveillance</h1>
+          <p className="text-gray-400">Monitor real-time platform activity while invisible</p>
         </div>
         
         <Button onClick={handleRefresh} disabled={isRefreshing} variant="outline">

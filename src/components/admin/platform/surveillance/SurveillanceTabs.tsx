@@ -4,6 +4,8 @@ import { useSurveillance } from "./SurveillanceContext";
 import { TabContent } from "./TabContent";
 import { AlertsList } from "./AlertsList";
 import { LiveAlert } from "../user-analytics/types";
+import { ContentSurveillanceTabs } from "./ContentSurveillanceTabs";
+import { CreatorEarningsSurveillance } from "./CreatorEarningsSurveillance";
 
 interface SurveillanceTabsProps {
   liveAlerts: LiveAlert[];
@@ -34,6 +36,8 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
         <TabsTrigger value="calls">Active Calls</TabsTrigger>
         <TabsTrigger value="chats">Direct Messages</TabsTrigger>
         <TabsTrigger value="bodycontact">BodyContact</TabsTrigger>
+        <TabsTrigger value="content">Content</TabsTrigger>
+        <TabsTrigger value="earnings">Earnings</TabsTrigger>
         <TabsTrigger value="alerts" className="relative">
           Alerts
           {liveAlerts.length > 0 && (
@@ -44,7 +48,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
         </TabsTrigger>
       </TabsList>
       
-      {/* Add activeTab prop to each TabContent */}
+      {/* Live Session Tabs */}
       <TabsContent value="streams">
         <TabContent 
           sessions={liveSessions}
@@ -79,6 +83,16 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
           error={error}
           activeTab="bodycontact"
         />
+      </TabsContent>
+      
+      {/* Content Surveillance Tab */}
+      <TabsContent value="content">
+        <ContentSurveillanceTabs />
+      </TabsContent>
+      
+      {/* Earnings Surveillance Tab */}
+      <TabsContent value="earnings">
+        <CreatorEarningsSurveillance />
       </TabsContent>
       
       <TabsContent value="alerts">

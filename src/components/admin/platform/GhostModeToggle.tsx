@@ -1,12 +1,13 @@
 
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { Button } from "@/components/ui/button";
-import { Ghost, Eye } from "lucide-react";
+import { Ghost, Eye, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 export const GhostModeToggle = () => {
-  const { isGhostMode, toggleGhostMode, canUseGhostMode } = useGhostMode();
+  const { isGhostMode, toggleGhostMode, canUseGhostMode, liveAlerts } = useGhostMode();
   const [isToggling, setIsToggling] = useState(false);
 
   const handleToggle = async () => {
@@ -22,6 +23,8 @@ export const GhostModeToggle = () => {
 
   if (!canUseGhostMode) return null;
 
+  const pendingAlerts = (liveAlerts || []).length;
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -29,7 +32,11 @@ export const GhostModeToggle = () => {
           <Button
             variant={isGhostMode ? "destructive" : "outline"}
             size="sm"
-            className={`flex items-center gap-2 ${isGhostMode ? "bg-purple-900/30 text-purple-300 border-purple-700/50" : "bg-[#161B22]/80"}`}
+            className={`flex items-center gap-2 relative ${
+              isGhostMode 
+                ? "bg-purple-900/30 text-purple-300 border-purple-700/50 hover:bg-purple-800/40 hover:text-purple-200" 
+                : "bg-[#161B22]/80"
+            }`}
             onClick={handleToggle}
             disabled={isToggling}
           >
@@ -37,6 +44,11 @@ export const GhostModeToggle = () => {
               <>
                 <Ghost className="h-4 w-4" />
                 <span className="hidden sm:inline">Ghost Mode</span>
+                {pendingAlerts > 0 && (
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 p-0">
+                    {pendingAlerts}
+                  </Badge>
+                )}
               </>
             ) : (
               <>
@@ -47,7 +59,12 @@ export const GhostModeToggle = () => {
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{isGhostMode ? "Currently browsing invisibly" : "Browse invisibly"}</p>
+          <p>
+            {isGhostMode 
+              ? `Currently browsing invisibly${pendingAlerts > 0 ? ` (${pendingAlerts} alerts)` : ''}`
+              : "Browse invisibly to moderate content"
+            }
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
