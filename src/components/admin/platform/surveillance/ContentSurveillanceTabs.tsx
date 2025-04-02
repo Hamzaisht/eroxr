@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useContentSurveillance } from "./hooks/useContentSurveillance";
 import { useSurveillance } from "./SurveillanceContext";
 import { Badge } from "@/components/ui/badge";
 import { ContentDetailDialog } from "./components/ContentDetailDialog";
+import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
 
 export const ContentSurveillanceTabs = () => {
   const { isRefreshing, handleRefresh } = useSurveillance();
@@ -17,6 +18,7 @@ export const ContentSurveillanceTabs = () => {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedContent, setSelectedContent] = useState<SurveillanceContentItem | null>(null);
   const [visibility, setVisibility] = useState<string>("all");
+  const [filteredContent, setFilteredContent] = useState<SurveillanceContentItem[]>([]);
   
   const { 
     posts, 
@@ -72,6 +74,47 @@ export const ContentSurveillanceTabs = () => {
     }
   };
   
+  // Update filtered content when visibility or current items change
+  useEffect(() => {
+    setFilteredContent(getCurrentItems());
+  }, [visibility, posts, stories, videos, ppvContent, audioContent, activeTab]);
+  
+  // Handle search and filtering
+  const handleSearch = (filters: SearchFilter) => {
+    const items = getCurrentItems();
+    
+    const filtered = items.filter(item => {
+      // Filter by username/creator username
+      if (filters.username && 
+         !(item.creator_username?.toLowerCase().includes(filters.username.toLowerCase()) || 
+           item.username?.toLowerCase().includes(filters.username.toLowerCase()))) {
+        return false;
+      }
+      
+      // Filter by user ID/creator ID
+      if (filters.userId && 
+         !(item.creator_id === filters.userId || item.user_id === filters.userId)) {
+        return false;
+      }
+      
+      // Filter by status (draft, deleted, etc)
+      if (filters.status && filters.status !== 'all') {
+        if (filters.status === 'draft' && !item.is_draft) return false;
+        if (filters.status === 'deleted' && !item.is_deleted) return false;
+        if (filters.status === 'flagged' && !item.is_flagged) return false;
+      }
+      
+      // Filter by content type
+      if (filters.type && filters.type !== 'all' && item.content_type !== filters.type) {
+        return false;
+      }
+      
+      return true;
+    });
+    
+    setFilteredContent(filtered);
+  };
+  
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -105,6 +148,25 @@ export const ContentSurveillanceTabs = () => {
           </Button>
         </div>
       </div>
+      
+      <SearchFilterBar 
+        onSearch={handleSearch}
+        placeholder="Search content by username or creator ID..."
+        availableTypes={[
+          { value: 'all', label: 'All Types' },
+          { value: 'photo', label: 'Photo' },
+          { value: 'video', label: 'Video' },
+          { value: 'text', label: 'Text Only' },
+          { value: 'audio', label: 'Audio' }
+        ]}
+        availableStatuses={[
+          { value: 'all', label: 'All Status' },
+          { value: 'active', label: 'Active' },
+          { value: 'draft', label: 'Draft' },
+          { value: 'deleted', label: 'Deleted' },
+          { value: 'flagged', label: 'Flagged' }
+        ]}
+      />
       
       <Tabs 
         value={activeTab} 
@@ -146,7 +208,7 @@ export const ContentSurveillanceTabs = () => {
         
         <TabsContent value="post">
           <ContentSurveillanceList
-            items={getCurrentItems()}
+            items={filteredContent}
             isLoading={isLoading}
             error={error}
             type="post"
@@ -156,7 +218,7 @@ export const ContentSurveillanceTabs = () => {
         
         <TabsContent value="story">
           <ContentSurveillanceList
-            items={getCurrentItems()}
+            items={filteredContent}
             isLoading={isLoading}
             error={error}
             type="story"
@@ -166,7 +228,7 @@ export const ContentSurveillanceTabs = () => {
         
         <TabsContent value="video">
           <ContentSurveillanceList
-            items={getCurrentItems()}
+            items={filteredContent}
             isLoading={isLoading}
             error={error}
             type="video"
@@ -176,7 +238,7 @@ export const ContentSurveillanceTabs = () => {
         
         <TabsContent value="ppv">
           <ContentSurveillanceList
-            items={getCurrentItems()}
+            items={filteredContent}
             isLoading={isLoading}
             error={error}
             type="ppv"
@@ -186,7 +248,7 @@ export const ContentSurveillanceTabs = () => {
         
         <TabsContent value="audio">
           <ContentSurveillanceList
-            items={getCurrentItems()}
+            items={filteredContent}
             isLoading={isLoading}
             error={error}
             type="audio"
