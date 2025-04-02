@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useCreatorEarnings } from "./hooks/useCreatorEarnings";
 import { 
@@ -151,7 +150,7 @@ export const CreatorEarningsSurveillance = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(earning.created_at), 'MMM d, yyyy')}
+                    {earning.created_at && format(new Date(earning.created_at), 'MMM d, yyyy')}
                   </TableCell>
                   <TableCell>
                     <Badge 

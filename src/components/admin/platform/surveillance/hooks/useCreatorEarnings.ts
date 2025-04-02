@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,14 +19,11 @@ export function useCreatorEarnings() {
     fetchEarnings();
   }, []);
 
-  // Mock data for demo purposes
   const fetchEarnings = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // In a real application, you would fetch this from your database
-      // For now, we'll use mock data
       const mockEarnings: CreatorEarnings[] = [
         {
           id: '1',
@@ -47,7 +43,8 @@ export function useCreatorEarnings() {
           source: 'subscription',
           status: 'paid',
           amount: '2540.75',
-          description: 'Monthly subscriptions'
+          description: 'Monthly subscriptions',
+          created_at: '2023-11-15T00:00:00Z'
         },
         {
           id: '2',
@@ -67,7 +64,8 @@ export function useCreatorEarnings() {
           source: 'ppv',
           status: 'pending',
           amount: '1125.30',
-          description: 'Premium videos'
+          description: 'Premium videos',
+          created_at: '2023-11-10T00:00:00Z'
         },
         {
           id: '3',
@@ -87,7 +85,8 @@ export function useCreatorEarnings() {
           source: 'tips',
           status: 'paid',
           amount: '3450.90',
-          description: 'Fan tips and gifts'
+          description: 'Fan tips and gifts',
+          created_at: '2023-11-18T00:00:00Z'
         },
         {
           id: '4',
@@ -107,7 +106,8 @@ export function useCreatorEarnings() {
           source: 'direct',
           status: 'declined',
           amount: '875.50',
-          description: 'Direct content sales'
+          description: 'Direct content sales',
+          created_at: '2023-11-05T00:00:00Z'
         },
         {
           id: '5',
@@ -127,11 +127,11 @@ export function useCreatorEarnings() {
           source: 'subscription',
           status: 'pending',
           amount: '1890.25',
-          description: 'Monthly subscriptions'
+          description: 'Monthly subscriptions',
+          created_at: '2023-11-12T00:00:00Z'
         }
       ];
       
-      // Mock data for payout requests
       const mockPayoutRequests: PayoutRequest[] = [
         {
           id: 'payout-1',
@@ -173,7 +173,6 @@ export function useCreatorEarnings() {
       
       setCreatorEarnings(mockEarnings);
       
-      // Filter payout requests by status
       setPendingPayouts(mockPayoutRequests.filter(payout => payout.status === 'pending'));
       setProcessingPayouts(mockPayoutRequests.filter(payout => payout.status === 'approved'));
       setCompletedPayouts(mockPayoutRequests.filter(payout => payout.status === 'processed'));
@@ -187,22 +186,17 @@ export function useCreatorEarnings() {
 
   const handlePayoutAction = async (payoutId: string, action: 'approve' | 'reject' | 'process') => {
     try {
-      // In a real application, you would call your API to update the payout status
-      // For now, we'll just update our local state
-      
       let updatedPending = [...pendingPayouts];
       let updatedProcessing = [...processingPayouts];
       let updatedCompleted = [...completedPayouts];
       
       if (action === 'approve') {
-        // Find the payout in pending
         const payoutIndex = updatedPending.findIndex(p => p.id === payoutId);
         if (payoutIndex >= 0) {
           const payout = { ...updatedPending[payoutIndex] };
           payout.status = 'approved';
           payout.approved_at = new Date().toISOString();
           
-          // Remove from pending and add to processing
           updatedPending.splice(payoutIndex, 1);
           updatedProcessing.push(payout);
           
@@ -215,13 +209,11 @@ export function useCreatorEarnings() {
           });
         }
       } else if (action === 'reject') {
-        // Find the payout in pending
         const payoutIndex = updatedPending.findIndex(p => p.id === payoutId);
         if (payoutIndex >= 0) {
           const payout = { ...updatedPending[payoutIndex] };
           payout.status = 'rejected';
           
-          // Remove from pending
           updatedPending.splice(payoutIndex, 1);
           
           setPendingPayouts(updatedPending);
@@ -233,14 +225,12 @@ export function useCreatorEarnings() {
           });
         }
       } else if (action === 'process') {
-        // Find the payout in processing
         const payoutIndex = updatedProcessing.findIndex(p => p.id === payoutId);
         if (payoutIndex >= 0) {
           const payout = { ...updatedProcessing[payoutIndex] };
           payout.status = 'processed';
           payout.processed_at = new Date().toISOString();
           
-          // Remove from processing and add to completed
           updatedProcessing.splice(payoutIndex, 1);
           updatedCompleted.push(payout);
           

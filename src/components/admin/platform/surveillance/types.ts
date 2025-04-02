@@ -1,4 +1,3 @@
-
 // Creating this file if it doesn't exist or updating it if it does
 export type ContentType = 'post' | 'story' | 'video' | 'ppv' | 'audio';
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
@@ -155,6 +154,7 @@ export interface CreatorEarnings {
   status: string;     // Adding to ensure it's available
   amount: string;     // Adding to ensure it's available
   description: string; // Adding to ensure it's available
+  created_at: string; // Adding the missing property
 }
 
 export interface PayoutRequest {
