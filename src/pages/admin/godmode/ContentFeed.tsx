@@ -2,21 +2,12 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FlaggedContent } from "@/components/admin/platform/FlaggedContent";
 import { DeletedContent } from "@/components/admin/platform/DeletedContent";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
+import { AdminHeader } from "@/components/admin/godmode/AdminHeader";
 
 export default function ContentFeed() {
   return (
     <div className="space-y-4">
-      <Breadcrumb>
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/admin/platform">Admin</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink>Content Feed</BreadcrumbLink>
-        </BreadcrumbItem>
-      </Breadcrumb>
-      
-      <h1 className="text-2xl font-bold">Content Moderation Feed</h1>
+      <AdminHeader title="Content Moderation Feed" section="Content Feed" />
       
       <Tabs defaultValue="flagged">
         <TabsList>
