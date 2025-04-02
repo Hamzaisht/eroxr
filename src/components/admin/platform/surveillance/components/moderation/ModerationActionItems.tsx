@@ -11,22 +11,22 @@ import {
 import { LiveSession, SurveillanceContentItem, ModerationAction } from "../../types";
 
 interface ModerationActionItemsProps {
-  onActionClick: (action: ModerationAction) => void;
-  actionInProgress: string | null;
   session: LiveSession | SurveillanceContentItem;
+  onAction: (action: ModerationAction) => void;
+  actionInProgress: string | null;
 }
 
 export const ModerationActionItems = ({ 
-  onActionClick, 
-  actionInProgress,
-  session
+  session, 
+  onAction,
+  actionInProgress
 }: ModerationActionItemsProps) => {
   return (
     <>
       <DropdownMenuGroup>
         <DropdownMenuItem
           className="text-blue-400 flex items-center space-x-2"
-          onClick={() => onActionClick('view')}
+          onClick={() => onAction('view')}
           disabled={!!actionInProgress}
         >
           <Eye className="h-4 w-4 mr-2" />
@@ -36,7 +36,7 @@ export const ModerationActionItems = ({
         {session.content && (
           <DropdownMenuItem
             className="text-green-400 flex items-center space-x-2"
-            onClick={() => onActionClick('edit')}
+            onClick={() => onAction('edit')}
             disabled={!!actionInProgress}
           >
             <Edit className="h-4 w-4 mr-2" />
@@ -50,7 +50,7 @@ export const ModerationActionItems = ({
       <DropdownMenuGroup>
         <DropdownMenuItem
           className="text-yellow-400 flex items-center space-x-2"
-          onClick={() => onActionClick('flag')}
+          onClick={() => onAction('flag')}
           disabled={!!actionInProgress}
         >
           <Flag className="h-4 w-4 mr-2" />
@@ -59,7 +59,7 @@ export const ModerationActionItems = ({
         
         <DropdownMenuItem
           className="text-orange-400 flex items-center space-x-2"
-          onClick={() => onActionClick('warn')}
+          onClick={() => onAction('warn')}
           disabled={!!actionInProgress}
         >
           <MessageSquare className="h-4 w-4 mr-2" />
@@ -72,7 +72,7 @@ export const ModerationActionItems = ({
       <DropdownMenuGroup>
         <DropdownMenuItem
           className="text-purple-400 flex items-center space-x-2"
-          onClick={() => onActionClick('shadowban')}
+          onClick={() => onAction('shadowban')}
           disabled={!!actionInProgress}
         >
           <Shield className="h-4 w-4 mr-2" />
@@ -81,7 +81,7 @@ export const ModerationActionItems = ({
         
         <DropdownMenuItem
           className="text-rose-400 flex items-center space-x-2"
-          onClick={() => onActionClick('delete')}
+          onClick={() => onAction('delete')}
           disabled={!!actionInProgress}
         >
           <Trash2 className="h-4 w-4 mr-2" />
@@ -90,7 +90,7 @@ export const ModerationActionItems = ({
         
         <DropdownMenuItem
           className="text-red-400 flex items-center space-x-2"
-          onClick={() => onActionClick('ban')}
+          onClick={() => onAction('ban')}
           disabled={!!actionInProgress}
         >
           <Ban className="h-4 w-4 mr-2" />
@@ -107,7 +107,7 @@ export const ModerationActionItems = ({
         <DropdownMenuSubContent>
           <DropdownMenuItem
             className="text-green-400 flex items-center space-x-2"
-            onClick={() => onActionClick('restore')}
+            onClick={() => onAction('restore')}
             disabled={!!actionInProgress}
           >
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -116,7 +116,7 @@ export const ModerationActionItems = ({
           
           <DropdownMenuItem
             className="text-red-400 flex items-center space-x-2 font-bold"
-            onClick={() => onActionClick('force_delete')}
+            onClick={() => onAction('force_delete')}
             disabled={!!actionInProgress}
           >
             <Trash2 className="h-4 w-4 mr-2" />

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { LiveSession, ModerationAction, SessionModerationActionProps, SurveillanceContentItem } from "../../types";
@@ -19,11 +18,14 @@ export function ModerationActions({
 }: SessionModerationActionProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState<ModerationAction | null>(null);
-  const [content, setContent] = useState("");
+  const [editedContent, setEditedContent] = useState("");
   
   const handleAction = (action: ModerationAction) => {
     if (action === "edit") {
-      setContent((session as any).content || "");
+      setEditedContent((session as any).content || "");
+      setCurrentAction(action);
+      setIsDialogOpen(true);
+    } else if (action === "ban" || action === "force_delete") {
       setCurrentAction(action);
       setIsDialogOpen(true);
     } else {
@@ -38,7 +40,9 @@ export function ModerationActions({
   
   const handleDialogAction = () => {
     if (currentAction === "edit") {
-      onModerate(session, currentAction, content);
+      onModerate(session, currentAction, editedContent);
+    } else if (currentAction) {
+      onModerate(session, currentAction);
     }
     setIsDialogOpen(false);
     setCurrentAction(null);
@@ -71,17 +75,20 @@ export function ModerationActions({
           <ModerationActionItems 
             session={session}
             onAction={handleAction}
+            actionInProgress={actionInProgress}
           />
         </DropdownMenuContent>
       </DropdownMenu>
       
       <ModerationActionDialog
         open={isDialogOpen}
-        onClose={handleDialogClose}
+        onOpenChange={setIsDialogOpen}
         onConfirm={handleDialogAction}
-        action={currentAction}
-        content={content}
-        setContent={setContent}
+        currentAction={currentAction}
+        session={session}
+        editedContent={editedContent}
+        setEditedContent={setEditedContent}
+        actionInProgress={actionInProgress}
       />
     </div>
   );
