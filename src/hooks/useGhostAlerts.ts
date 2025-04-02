@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveAlert } from "@/components/admin/platform/user-analytics/types";
+import { LiveAlert } from "@/components/admin/platform/surveillance/types";
 
 export function useGhostAlerts(isGhostMode: boolean, isSuperAdmin: boolean) {
   const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
@@ -38,11 +38,18 @@ export function useGhostAlerts(isGhostMode: boolean, isSuperAdmin: boolean) {
             user_id: alert.user_id,
             username: alert.profiles?.[0]?.username || 'Unknown',
             avatar_url: alert.profiles?.[0]?.avatar_url || null,
+            timestamp: alert.created_at,
             created_at: alert.created_at,
-            content_type: alert.content_type,
-            reason: alert.reason,
-            severity: alert.severity,
-            content_id: alert.content_id
+            content_type: alert.content_type || 'unknown',
+            reason: alert.reason || '',
+            severity: alert.severity || 'medium',
+            content_id: alert.content_id || '',
+            priority: (alert.severity === 'high' ? 'high' : alert.severity === 'medium' ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+            message: alert.reason || 'Alert triggered',
+            source: 'system',
+            alert_type: alert.type,
+            status: 'new',
+            title: `${alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} Alert`,
           })));
         }
       } catch (error) {
@@ -85,11 +92,18 @@ export function useGhostAlerts(isGhostMode: boolean, isSuperAdmin: boolean) {
           user_id: alert.user_id,
           username: alert.profiles?.[0]?.username || 'Unknown',
           avatar_url: alert.profiles?.[0]?.avatar_url || null,
+          timestamp: alert.created_at,
           created_at: alert.created_at,
-          content_type: alert.content_type,
-          reason: alert.reason,
-          severity: alert.severity,
-          content_id: alert.content_id
+          content_type: alert.content_type || 'unknown',
+          reason: alert.reason || '',
+          severity: alert.severity || 'medium',
+          content_id: alert.content_id || '',
+          priority: (alert.severity === 'high' ? 'high' : alert.severity === 'medium' ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+          message: alert.reason || 'Alert triggered',
+          source: 'system',
+          alert_type: alert.type,
+          status: 'new',
+          title: `${alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} Alert`,
         })));
       }
     } catch (error) {

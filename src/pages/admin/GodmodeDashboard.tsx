@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { GodmodeSidebar } from "@/components/admin/godmode/GodmodeSidebar";
 import { SurveillanceProvider } from "@/components/admin/platform/surveillance/SurveillanceContext";
 import { useGhostMode } from "@/hooks/useGhostMode";
+import { LiveAlert, LiveSession } from "@/components/admin/platform/surveillance/types";
 
 export default function GodmodeDashboard() {
   const session = useSession();
@@ -44,11 +45,32 @@ export default function GodmodeDashboard() {
     return <Navigate to="/" replace />;
   }
 
+  // We need to convert the liveAlerts from the hook to the format expected by SurveillanceProvider
+  const formattedAlerts: LiveAlert[] = liveAlerts.map(alert => ({
+    id: alert.id,
+    type: alert.type,
+    user_id: alert.user_id,
+    username: alert.username || 'Unknown',
+    avatar_url: alert.avatar_url,
+    timestamp: alert.created_at,
+    created_at: alert.created_at,
+    content_type: alert.content_type || 'unknown',
+    reason: alert.reason || '',
+    severity: alert.severity || 'medium',
+    content_id: alert.content_id || '',
+    priority: (alert.severity === 'high' ? 'high' : alert.severity === 'medium' ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+    message: alert.reason || 'Alert triggered',
+    source: 'system',
+    alert_type: alert.type,
+    status: 'new',
+    title: `${alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} Alert`,
+  }));
+
   return (
     <SurveillanceProvider
-      liveAlerts={liveAlerts}
+      liveAlerts={formattedAlerts}
       refreshAlerts={refreshAlerts}
-      startSurveillance={startSurveillance}
+      startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
     >
       <div className="flex h-screen bg-[#0D1117]">
         <GodmodeSidebar />

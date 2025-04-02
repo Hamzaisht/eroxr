@@ -1,8 +1,11 @@
 
+import { useSurveillance } from "@/components/admin/platform/surveillance/SurveillanceContext";
 import { SurveillanceTabs } from "@/components/admin/platform/surveillance/SurveillanceTabs";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 
 export default function Surveillance() {
+  const { liveAlerts } = useSurveillance();
+  
   return (
     <div className="space-y-4">
       <Breadcrumb>
@@ -18,7 +21,7 @@ export default function Surveillance() {
       </Breadcrumb>
       
       <h1 className="text-2xl font-bold">Ghost Mode Surveillance</h1>
-      <SurveillanceTabs />
+      <SurveillanceTabs liveAlerts={liveAlerts} />
     </div>
   );
 }
