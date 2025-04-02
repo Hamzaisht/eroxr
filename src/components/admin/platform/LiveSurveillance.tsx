@@ -29,7 +29,7 @@ export const LiveSurveillance = () => {
   return (
     <div className="p-4 space-y-4">
       <SurveillanceProvider
-        liveAlerts={liveAlerts as unknown as LiveAlert[]} // Type conversion to match our interface
+        liveAlerts={liveAlerts as unknown as LiveAlert[]}
         refreshAlerts={refreshAlerts}
         startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
       >
@@ -40,7 +40,7 @@ export const LiveSurveillance = () => {
             startTime?: string;
           }}
           stopSurveillance={stopSurveillance}
-          liveAlerts={liveAlerts as unknown as LiveAlert[]} // Type conversion to match our interface
+          liveAlerts={liveAlerts as unknown as LiveAlert[]}
         />
       </SurveillanceProvider>
     </div>
@@ -93,7 +93,7 @@ const SurveillanceContent = ({
       
       {activeSurveillance.isWatching && activeSurveillance.session && (
         <ActiveSurveillanceCard
-          session={activeSurveillance.session} // Removed type assertion as types now match
+          session={activeSurveillance.session}
           onEndSurveillance={stopSurveillance}
         />
       )}

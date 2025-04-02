@@ -27,37 +27,37 @@ const godmodeTabs = [
   {
     label: "Surveillance",
     icon: Eye,
-    href: "/admin/godmode/surveillance",
+    href: "/admin/platform/surveillance",
   },
   {
     label: "Content Feed",
     icon: Layers,
-    href: "/admin/godmode/content",
+    href: "/admin/platform/content-feed",
   },
   {
     label: "Moderation",
     icon: Shield,
-    href: "/admin/godmode/moderation",
+    href: "/admin/platform/moderation",
   },
   {
     label: "Verification",
     icon: BadgeCheck,
-    href: "/admin/godmode/verification",
+    href: "/admin/platform/verification",
   },
   {
     label: "Payouts",
     icon: CreditCard,
-    href: "/admin/godmode/payouts",
+    href: "/admin/platform/payouts",
   },
   {
     label: "Platform Control",
     icon: Database,
-    href: "/admin/godmode/platform",
+    href: "/admin/platform/control",
   },
   {
     label: "Admin Logs",
     icon: ClipboardList,
-    href: "/admin/godmode/logs",
+    href: "/admin/platform/logs",
   },
 ];
 

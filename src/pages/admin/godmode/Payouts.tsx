@@ -9,10 +9,7 @@ export default function Payouts() {
     <div className="space-y-4">
       <Breadcrumb>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/admin/godmode">Admin</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/admin/godmode">Godmode</BreadcrumbLink>
+          <BreadcrumbLink href="/admin/platform">Admin</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink>Payouts</BreadcrumbLink>

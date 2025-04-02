@@ -17,7 +17,7 @@ import Eroboard from "@/pages/Eroboard";
 import Shorts from "@/pages/Shorts";
 import Eros from "@/pages/Eros";
 
-// Admin tab pages
+// Admin platform pages
 import { GodmodeDashboardHome } from "@/components/admin/godmode/GodmodeDashboardHome";
 import Surveillance from "@/pages/admin/godmode/Surveillance";
 import ContentFeed from "@/pages/admin/godmode/ContentFeed";
@@ -57,17 +57,27 @@ function App() {
           <Route path="/eros" element={!session ? <Navigate to="/login" replace /> : <Eros />} />
         </Route>
 
-        {/* Admin */}
+        {/* Admin Platform */}
         <Route path="/admin/godmode" element={<GodmodeLayout />}>
           <Route index element={<GodmodeDashboardHome />} />
+          <Route path="*" element={<Navigate to="/admin/platform/surveillance" replace />} />
+        </Route>
+
+        {/* Consolidated Platform Routes */}
+        <Route path="/admin/platform" element={<GodmodeLayout />}>
           <Route path="surveillance" element={<Surveillance />} />
           <Route path="content-feed" element={<ContentFeed />} />
           <Route path="moderation" element={<Moderation />} />
           <Route path="verification" element={<Verification />} />
           <Route path="payouts" element={<Payouts />} />
-          <Route path="platform-control" element={<PlatformControl />} />
+          <Route path="control" element={<PlatformControl />} />
           <Route path="logs" element={<AdminLogs />} />
+          <Route index element={<Navigate to="/admin/platform/surveillance" replace />} />
         </Route>
+
+        {/* Legacy admin routes - redirect to platform */}
+        <Route path="/admin" element={<Navigate to="/admin/platform/surveillance" replace />} />
+        <Route path="/admin/*" element={<Navigate to="/admin/platform/surveillance" replace />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
