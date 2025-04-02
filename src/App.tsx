@@ -24,10 +24,14 @@ import AdminLogs from "./pages/admin/godmode/AdminLogs";
 
 function App() {
   const session = useSession();
+  
+  // Add debug logging
+  console.log("App rendering, session:", session ? "exists" : "null");
 
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public routes */}
         <Route 
           path="/" 
           element={<Landing />} 
@@ -41,6 +45,7 @@ function App() {
           element={session ? <Navigate to="/home" replace /> : <Register />} 
         />
         
+        {/* Protected routes */}
         <Route element={<MainLayout />}>
           <Route 
             path="/home" 
@@ -68,7 +73,7 @@ function App() {
           />
         </Route>
 
-        {/* New Godmode Dashboard */}
+        {/* Admin routes */}
         <Route path="/admin/godmode" element={<GodmodeDashboard />}>
           <Route index element={<GodmodeDashboardHome />} />
           <Route path="surveillance" element={<Surveillance />} />

@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,9 +14,16 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Add debug logging
+  useEffect(() => {
+    console.log("EmailLogin component mounted");
+    return () => console.log("EmailLogin component unmounted");
+  }, []);
+
   const handleSubmit = async (values: { identifier: string; password: string; rememberMe: boolean }) => {
     try {
       setIsLoading(true);
+      console.log("Attempting login with:", values.identifier);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.identifier,
@@ -23,6 +31,8 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       });
 
       if (error) {
+        console.error("Login error:", error);
+        
         if (error instanceof AuthApiError) {
           switch (error.status) {
             case 400:
@@ -52,11 +62,13 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         return;
       }
 
+      console.log("Login successful, data:", data);
+      
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      navigate("/");
+      navigate("/home");
     } catch (error: any) {
       console.error("Login error:", error);
       
@@ -73,14 +85,22 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
   const handleSocialLogin = async (provider: Provider) => {
     try {
       setIsLoading(true);
+      console.log(`Attempting social login with provider: ${provider}`);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      if (error) throw error;
+      
+      if (error) {
+        console.error(`Social login error (${provider}):`, error);
+        throw error;
+      }
     } catch (error: any) {
+      console.error(`Social login error (${provider}):`, error);
+      
       toast({
         title: "Error",
         description: error.message,

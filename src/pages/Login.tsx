@@ -16,6 +16,11 @@ const Login = () => {
     }
   }, [session, navigate]);
 
+  // Add debug logging to help identify issues
+  useEffect(() => {
+    console.log("Login page rendering, session:", session);
+  }, [session]);
+
   return (
     <AuthLayout>
       <AnimatePresence>
