@@ -5,30 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveSession } from "../types";
 
-// Define a type for profile data
-type ProfileData = {
-  username: string; // Non-optional field
-  avatar_url: string | null; // Can be null but not undefined
-  id_verification_status?: string;
-};
-
-// Define the direct message type with proper typing
-type DirectMessage = {
-  id: string;
-  sender_id: string;
-  recipient_id: string;
-  message_type: string;
-  content: string;
-  created_at: string;
-  media_url?: string[] | null;
-  video_url?: string | null;
-  viewed_at?: string | null;
-  original_content?: string | null;
-  sender?: ProfileData;
-  receiver?: ProfileData;
-  message_source?: string;
-};
-
 export function useChatsSurveillance() {
   const session = useSession();
   const { toast } = useToast();
@@ -53,21 +29,11 @@ export function useChatsSurveillance() {
           video_url,
           message_source,
           viewed_at,
-          original_content,
-          sender:profiles!direct_messages_sender_id_fkey (
-            username, 
-            avatar_url,
-            id_verification_status
-          ),
-          receiver:profiles!direct_messages_recipient_id_fkey (
-            username, 
-            avatar_url,
-            id_verification_status
-          )
+          original_content
         `)
         .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
-        .limit(100) as unknown as { data: DirectMessage[]; error: any };
+        .limit(100);
       
       if (error) {
         console.error("Error fetching chat data:", error);
@@ -78,16 +44,43 @@ export function useChatsSurveillance() {
       
       if (!data || data.length === 0) return [];
       
+      // Get all user IDs from chat messages
+      const userIds = new Set<string>();
+      data.forEach(message => {
+        if (message.sender_id) userIds.add(message.sender_id);
+        if (message.recipient_id) userIds.add(message.recipient_id);
+      });
+      
+      // Fetch profiles for all users involved in chats
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, id_verification_status')
+        .in('id', Array.from(userIds));
+      
+      if (profilesError) {
+        console.warn("Could not fetch profiles for chat users:", profilesError);
+      }
+      
+      // Create a lookup map for profiles
+      const profilesMap = (profiles || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {});
+      
       // Transform data to match LiveSession format
       return data.map(message => {
         // Handle case where sender and receiver are the same user
         const isSelfMessage = message.sender_id === message.recipient_id;
         
-        // Safely access profile data with proper fallbacks
-        const senderUsername = message.sender?.username || "Unknown";
-        const senderAvatar = message.sender?.avatar_url || null;
-        const recipientUsername = message.receiver?.username || "Unknown";
-        const recipientAvatar = message.receiver?.avatar_url || null;
+        // Get profile data from the map
+        const senderProfile = message.sender_id ? profilesMap[message.sender_id] : null;
+        const recipientProfile = message.recipient_id ? profilesMap[message.recipient_id] : null;
+        
+        // Extract usernames with fallbacks
+        const senderUsername = senderProfile?.username || "Unknown";
+        const senderAvatar = senderProfile?.avatar_url || null;
+        const recipientUsername = recipientProfile?.username || "Unknown";
+        const recipientAvatar = recipientProfile?.avatar_url || null;
         
         // Ensure started_at is always present
         const startedAt = message.created_at || new Date().toISOString();
@@ -110,12 +103,12 @@ export function useChatsSurveillance() {
           media_url: mediaUrls,
           video_url: message.video_url,
           sender_profiles: {
-            username: senderUsername, // Non-optional
-            avatar_url: senderAvatar // Non-optional
+            username: senderUsername,
+            avatar_url: senderAvatar
           },
           receiver_profiles: {
-            username: recipientUsername, // Non-optional
-            avatar_url: recipientAvatar // Non-optional
+            username: recipientUsername,
+            avatar_url: recipientAvatar
           },
           about_me: isSelfMessage ? "Note to self" : undefined,
           title: isSelfMessage 
@@ -126,8 +119,8 @@ export function useChatsSurveillance() {
             message_source: message.message_source || 'regular',
             viewed_at: message.viewed_at,
             original_content: message.original_content,
-            sender_verification: message.sender?.id_verification_status || 'unknown',
-            recipient_verification: message.receiver?.id_verification_status || 'unknown'
+            sender_verification: senderProfile?.id_verification_status || 'unknown',
+            recipient_verification: recipientProfile?.id_verification_status || 'unknown'
           }
         };
       });

@@ -13,6 +13,7 @@ export function useBodyContactSurveillance() {
     if (!session?.user?.id) return [];
     
     try {
+      // First fetch the dating ads (without trying to join profiles directly)
       const { data: ads, error: adsError } = await supabase
         .from('dating_ads')
         .select(`
@@ -32,8 +33,7 @@ export function useBodyContactSurveillance() {
           longitude,
           view_count,
           click_count,
-          message_count,
-          profiles(username, avatar_url, id_verification_status)
+          message_count
         `)
         .order('last_active', { ascending: false })
         .limit(30);
@@ -42,13 +42,37 @@ export function useBodyContactSurveillance() {
         console.error("Error loading bodycontact sessions:", adsError);
         toast({
           title: "Error",
-          description: "Could not load live bodycontact",
+          description: "Could not load bodycontact ads",
           variant: "destructive"
         });
         return [];
       }
       
+      // Now fetch profiles for the user_ids in the ads
+      const userIds = ads.map(ad => ad.user_id).filter(Boolean);
+      
+      let userProfiles = {};
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url, id_verification_status')
+          .in('id', userIds);
+          
+        if (!profilesError && profiles) {
+          // Create a lookup object for profiles
+          userProfiles = profiles.reduce((acc, profile) => {
+            acc[profile.id] = profile;
+            return acc;
+          }, {});
+        } else {
+          console.warn("Could not fetch profiles for bodycontact ads:", profilesError);
+        }
+      }
+      
       return ads.map(ad => {
+        // Get profile data if available
+        const profile = userProfiles[ad.user_id] || {};
+        
         // Ensure started_at is always present and valid
         const startedAt = ad.last_active || ad.created_at || new Date().toISOString();
         
@@ -56,8 +80,8 @@ export function useBodyContactSurveillance() {
           id: ad.id,
           type: 'bodycontact' as const,
           user_id: ad.user_id,
-          username: ad.profiles && ad.profiles[0] ? ad.profiles[0].username || 'Unknown' : 'Unknown',
-          avatar_url: ad.profiles && ad.profiles[0] ? ad.profiles[0].avatar_url || ad.avatar_url || '' : ad.avatar_url || '',
+          username: profile.username || 'Unknown',
+          avatar_url: profile.avatar_url || ad.avatar_url || '',
           started_at: startedAt, // Ensure required field is present
           status: ad.moderation_status === 'pending' ? 'active' : 'flagged',
           title: ad.title,
@@ -75,7 +99,7 @@ export function useBodyContactSurveillance() {
             view_count: ad.view_count,
             click_count: ad.click_count,
             message_count: ad.message_count,
-            verification_status: ad.profiles && ad.profiles[0] ? ad.profiles[0].id_verification_status : 'unknown'
+            verification_status: profile.id_verification_status || 'unknown'
           }
         };
       });

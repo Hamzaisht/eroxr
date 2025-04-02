@@ -14,4 +14,5 @@ export type DirectMessage = {
   viewed_at: string | null;
   original_content: string | null;
   updated_at: string | null;
+  message_source?: string | null;
 };
