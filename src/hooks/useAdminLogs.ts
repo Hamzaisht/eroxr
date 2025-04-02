@@ -15,7 +15,7 @@ interface AdminLog {
   profiles?: {
     username: string;
     avatar_url?: string;
-  };
+  } | null;
 }
 
 export const useAdminLogs = (timeWindow = 30) => {
@@ -53,7 +53,16 @@ export const useAdminLogs = (timeWindow = 30) => {
         
         if (error) throw error;
         
-        setLogs(data || []);
+        // Transform the returned data to match our expected types
+        const transformedData = data?.map(item => ({
+          ...item,
+          // Convert profiles array to a single object if it exists
+          profiles: Array.isArray(item.profiles) && item.profiles.length > 0 
+            ? item.profiles[0] 
+            : null
+        })) || [];
+        
+        setLogs(transformedData);
       } catch (err) {
         console.error("Error fetching admin logs:", err);
         setError(err as Error);
