@@ -1,6 +1,4 @@
 
-// Create or update the useChatsSurveillance.ts file to fix the typing issue
-
 import { useCallback, useState } from "react";
 import { LiveSession } from "../types";
 
@@ -29,27 +27,30 @@ export function useChatsSurveillance() {
   const [error, setError] = useState<string | null>(null);
   const [sessions, setSessions] = useState<LiveSession[]>([]);
 
-  const fetchChatSessions = useCallback(async () => {
+  const fetchChatSessions = useCallback(async (): Promise<LiveSession[]> => {
     setIsLoading(true);
     setError(null);
 
     try {
       // Mock data - in a real app, this would be an API call
-      const response = await new Promise(resolve => setTimeout(() => {
+      const response = await new Promise<{status: number, data: LiveSession[]}>(resolve => setTimeout(() => {
         resolve({
           status: 200,
           data: generateMockChatData(),
         });
       }, 500));
 
-      if ((response as any).status === 200) {
-        setSessions((response as any).data);
+      if (response.status === 200) {
+        setSessions(response.data);
+        return response.data; // Return the data for external use
       } else {
         setError('Failed to fetch chat sessions');
+        return [];
       }
     } catch (err) {
       console.error("Error fetching chat sessions:", err);
       setError('An error occurred while fetching chat data');
+      return [];
     } finally {
       setIsLoading(false);
     }
