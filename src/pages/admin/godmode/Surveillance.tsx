@@ -1,5 +1,4 @@
 
-import { useSurveillance } from "@/components/admin/platform/surveillance/SurveillanceContext";
 import { SurveillanceTabs } from "@/components/admin/platform/surveillance/SurveillanceTabs";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { useGhostMode } from "@/hooks/useGhostMode";
