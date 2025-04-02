@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,8 +119,8 @@ export const ModerateContent = () => {
         content_id: report.content_id || '',
         content_type: report.content_type,
         user_id: report.reported_id || '',
-        username: report.profiles ? report.profiles.username : 'Unknown',
-        avatar_url: report.profiles ? report.profiles.avatar_url : '',
+        username: report.profiles && report.profiles[0] ? report.profiles[0].username : 'Unknown',
+        avatar_url: report.profiles && report.profiles[0] ? report.profiles[0].avatar_url : '',
         reason: report.reason,
         flagged_at: report.created_at,
         status: report.status === 'resolved' ? 'deleted' : 'flagged',
