@@ -32,7 +32,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const internalVideoRef = useRef<HTMLVideoElement>(null);
-  const videoRef = ref || internalVideoRef;
+  const videoRef = (ref as React.RefObject<HTMLVideoElement>) || internalVideoRef;
   const { toast } = useToast();
 
   useEffect(() => {
