@@ -12,13 +12,6 @@ export const useSuperAdminCheck = () => {
       if (!session?.user?.id) return false;
       
       try {
-        // Check if user is a super admin by email directly (failsafe method)
-        const superAdminEmails = ["hamzaishtiaq242@gmail.com"]; // This is the god mode account
-        if (session.user.email && superAdminEmails.includes(session.user.email.toLowerCase())) {
-          console.log("God mode detected via email");
-          return true;
-        }
-        
         // Check if the user has super_admin role
         const { data, error } = await supabase
           .from('user_roles')

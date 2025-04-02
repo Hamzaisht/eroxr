@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -10,18 +11,16 @@ import Messages from "@/pages/Messages";
 import Dating from "@/pages/Dating";
 import Eroboard from "@/pages/Eroboard";
 import Shorts from "@/pages/Shorts";
-import { AdminLayout } from "./components/admin/AdminLayout";
-import { Dashboard } from "./components/admin/Dashboard";
-import { ErosMode } from "./components/admin/ErosMode";
 import { useSession } from "@supabase/auth-helpers-react";
-import { UsersManagement } from "./components/admin/platform/UsersManagement";
-import { VerificationRequests } from "./components/admin/platform/VerificationRequests";
-import { FlaggedContent } from "./components/admin/platform/FlaggedContent";
-import { DeletedContent } from "./components/admin/platform/DeletedContent";
-import { UserAnalytics } from "./components/admin/platform/UserAnalytics";
-import { PlatformControl } from "./components/admin/platform/PlatformControl";
-import { PayoutsManagement } from "./components/admin/platform/PayoutsManagement";
-import { LiveSurveillance } from "./components/admin/platform/LiveSurveillance";
+import GodmodeDashboard from "./pages/admin/GodmodeDashboard";
+import { GodmodeDashboardHome } from "@/components/admin/godmode/GodmodeDashboardHome";
+import Surveillance from "./pages/admin/godmode/Surveillance";
+import ContentFeed from "./pages/admin/godmode/ContentFeed";
+import Moderation from "./pages/admin/godmode/Moderation";
+import Verification from "./pages/admin/godmode/Verification";
+import Payouts from "./pages/admin/godmode/Payouts";
+import PlatformControl from "./pages/admin/godmode/PlatformControl";
+import AdminLogs from "./pages/admin/godmode/AdminLogs";
 
 function App() {
   const session = useSession();
@@ -69,31 +68,21 @@ function App() {
           />
         </Route>
 
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="users" element={<div>Users Management</div>} />
-          <Route path="messages" element={<div>Messages Overview</div>} />
-          <Route path="photos" element={<div>Photos Moderation</div>} />
-          <Route path="videos" element={<div>Videos Moderation</div>} />
-          <Route path="saved" element={<div>Saved Content</div>} />
-          <Route path="dating" element={<div>Dating Ads</div>} />
-          <Route path="reports" element={<div>User Reports</div>} />
-          <Route path="violations" element={<div>Security Violations</div>} />
-          <Route path="features" element={<ErosMode />} />
-          <Route path="verifications" element={<div>User Verifications</div>} />
-          
-          <Route path="platform" element={<PlatformControl />}>
-            <Route index element={<UsersManagement />} />
-            <Route path="users" element={<UsersManagement />} />
-            <Route path="verifications" element={<VerificationRequests />} />
-            <Route path="flagged" element={<FlaggedContent />} />
-            <Route path="deleted" element={<DeletedContent />} />
-            <Route path="analytics" element={<UserAnalytics />} />
-            <Route path="analytics/:userId" element={<UserAnalytics />} />
-            <Route path="payouts" element={<PayoutsManagement />} />
-            <Route path="surveillance" element={<LiveSurveillance />} />
-          </Route>
+        {/* New Godmode Dashboard */}
+        <Route path="/admin/godmode" element={<GodmodeDashboard />}>
+          <Route index element={<GodmodeDashboardHome />} />
+          <Route path="surveillance" element={<Surveillance />} />
+          <Route path="content" element={<ContentFeed />} />
+          <Route path="moderation" element={<Moderation />} />
+          <Route path="verification" element={<Verification />} />
+          <Route path="payouts" element={<Payouts />} />
+          <Route path="platform" element={<PlatformControl />} />
+          <Route path="logs" element={<AdminLogs />} />
         </Route>
+
+        {/* Redirect old admin routes to new godmode dashboard */}
+        <Route path="/admin" element={<Navigate to="/admin/godmode" replace />} />
+        <Route path="/admin/*" element={<Navigate to="/admin/godmode" replace />} />
       </Routes>
       <Toaster />
     </BrowserRouter>
