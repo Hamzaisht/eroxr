@@ -51,7 +51,7 @@ export const SessionDetails = ({ session }: SessionDetailsProps) => {
             </span>
           </div>
           {session.content && (
-            <p className="mt-1 text-xs opacity-70 truncate">{session.content}</p>
+            <p className="mt-1 text-xs opacity-70 truncate max-w-[300px]">{session.content}</p>
           )}
         </div>
       )}
@@ -98,4 +98,4 @@ export const SessionDetails = ({ session }: SessionDetailsProps) => {
       </div>
     </div>
   );
-};
+}
