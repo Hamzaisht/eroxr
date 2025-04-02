@@ -1,5 +1,5 @@
 
-import { MoreHorizontal, TriangleAlert, Eye, Trash2, AlertCircle, Edit, Ban, Ghost, User } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -7,9 +7,10 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { LiveSession, ModerationAction, SessionModerationActionProps, SurveillanceContentItem } from "../../types";
-import { ModerationActionDialog } from "./ModerationActionDialog";
 import { useState } from "react";
+import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
+import { ModerationActionButton } from "./ModerationActionButton";
 
 export function ModerationActions({
   session,
@@ -50,15 +51,11 @@ export function ModerationActions({
 
   return (
     <div className="flex items-center space-x-2">
-      <Button
-        variant="outline"
-        size="icon"
-        className="h-7 w-7"
-        disabled={!!actionInProgress}
-        onClick={() => handleAction("view")}
-      >
-        <Eye className="h-3.5 w-3.5" />
-      </Button>
+      <ModerationActionButton 
+        session={session}
+        onAction={handleAction}
+        actionInProgress={actionInProgress}
+      />
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

@@ -1,21 +1,28 @@
 
-import { MoreVertical } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LiveSession, ModerationAction, SurveillanceContentItem } from "../../types";
 
 interface ModerationActionButtonProps {
-  className?: string;
+  session: LiveSession | SurveillanceContentItem;
+  onAction: (action: ModerationAction) => void;
+  actionInProgress: string | null;
 }
 
-export const ModerationActionButton = ({ className }: ModerationActionButtonProps) => {
+export function ModerationActionButton({
+  session,
+  onAction,
+  actionInProgress
+}: ModerationActionButtonProps) {
   return (
-    <Button 
-      size="sm"
-      variant="ghost"
-      className={className || "bg-red-900/20 hover:bg-red-800/30 text-red-300"}
+    <Button
+      variant="outline"
+      size="icon"
+      className="h-7 w-7"
+      disabled={!!actionInProgress}
+      onClick={() => onAction("view")}
     >
-      <span className="sr-only">Moderation menu</span>
-      <MoreVertical className="h-4 w-4" />
+      <Eye className="h-3.5 w-3.5" />
     </Button>
   );
-};
+}

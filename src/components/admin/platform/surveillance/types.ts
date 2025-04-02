@@ -1,4 +1,3 @@
-
 // Creating this file if it doesn't exist or updating it if it does
 export type ContentType = 'post' | 'story' | 'video' | 'ppv' | 'audio';
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
@@ -30,6 +29,14 @@ export interface SessionMetadata {
   recipient_verification?: string;
 }
 
+export interface Profile {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface LiveSession {
   id: string;
   type: 'stream' | 'call' | 'chat' | 'bodycontact';
@@ -56,7 +63,7 @@ export interface LiveSession {
   location?: string;
   tags?: string[];
   metadata?: SessionMetadata;
-  // User profiles for chats - make values non-optional to match
+  // User profiles for chats
   sender_profiles?: {
     username: string;
     avatar_url: string | null;
@@ -182,7 +189,6 @@ export interface SessionItemProps {
   actionInProgress: string | null;
 }
 
-// Add the SurveillanceContextType interface
 export interface SurveillanceContextType {
   activeTab: SurveillanceTab;
   setActiveTab: (tab: SurveillanceTab) => void;
@@ -196,7 +202,6 @@ export interface SurveillanceContextType {
   handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
 }
 
-// Add interfaces for content interaction data
 export interface ContentInteractionUser {
   user_id: string;
   created_at: string;

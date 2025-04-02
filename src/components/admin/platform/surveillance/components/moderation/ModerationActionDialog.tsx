@@ -11,7 +11,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { LiveSession, SurveillanceContentItem, ModerationAction } from "../../types";
 
-interface ModerationActionDialogProps {
+export interface ModerationActionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;

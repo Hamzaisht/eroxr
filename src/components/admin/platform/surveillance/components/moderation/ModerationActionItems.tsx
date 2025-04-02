@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LiveSession, SurveillanceContentItem, ModerationAction } from "../../types";
 
-interface ModerationActionItemsProps {
+export interface ModerationActionItemsProps {
   session: LiveSession | SurveillanceContentItem;
   onAction: (action: ModerationAction) => void;
   actionInProgress: string | null;
