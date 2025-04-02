@@ -64,7 +64,8 @@ export const SurveillanceProvider = ({
     <SurveillanceContext.Provider value={{
       ...surveillanceData,
       handleRefresh,
-      handleStartSurveillance
+      handleStartSurveillance,
+      liveAlerts
     }}>
       {children}
     </SurveillanceContext.Provider>

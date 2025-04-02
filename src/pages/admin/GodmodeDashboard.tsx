@@ -45,7 +45,7 @@ export default function GodmodeDashboard() {
     return <Navigate to="/" replace />;
   }
 
-  // We need to convert the liveAlerts from the hook to the format expected by SurveillanceProvider
+  // Convert liveAlerts to the format expected by SurveillanceProvider
   const formattedAlerts: LiveAlert[] = liveAlerts.map(alert => ({
     id: alert.id,
     type: alert.type,

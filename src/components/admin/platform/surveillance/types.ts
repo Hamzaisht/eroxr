@@ -211,6 +211,7 @@ export interface SurveillanceContextType {
   fetchLiveSessions: () => Promise<void>;
   handleRefresh: () => Promise<void>;
   handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
+  liveAlerts?: LiveAlert[];
 }
 
 export interface ContentInteractionUser {
