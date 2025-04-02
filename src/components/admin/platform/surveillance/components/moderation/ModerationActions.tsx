@@ -1,68 +1,88 @@
 
-import { useState } from "react";
-import { SessionModerationActionProps, ModerationAction } from "../../types";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ModerationActionButton } from "./ModerationActionButton";
-import { ModerationActionItems } from "./ModerationActionItems";
+import { MoreHorizontal, TriangleAlert, Eye, Trash2, AlertCircle, Edit, Ban, Ghost, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { LiveSession, ModerationAction, SessionModerationActionProps, SurveillanceContentItem } from "../../types";
 import { ModerationActionDialog } from "./ModerationActionDialog";
+import { useState } from "react";
+import { ModerationActionItems } from "./ModerationActionItems";
 
-export const ModerationActions = ({ 
-  session, 
-  onModerate, 
-  actionInProgress 
-}: SessionModerationActionProps) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+export function ModerationActions({
+  session,
+  onModerate,
+  actionInProgress
+}: SessionModerationActionProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState<ModerationAction | null>(null);
-  const [editedContent, setEditedContent] = useState("");
-
-  const handleActionClick = (action: ModerationAction) => {
-    if (action === 'edit') {
-      setEditedContent(session.content || '');
-      setCurrentAction('edit');
-      setDialogOpen(true);
-    } else if (action === 'ban' || action === 'force_delete') {
+  const [content, setContent] = useState("");
+  
+  const handleAction = (action: ModerationAction) => {
+    if (action === "edit") {
+      setContent((session as any).content || "");
       setCurrentAction(action);
-      setDialogOpen(true);
+      setIsDialogOpen(true);
     } else {
       onModerate(session, action);
     }
   };
-
-  const handleConfirmAction = () => {
-    if (currentAction === 'edit') {
-      onModerate(session, 'edit', editedContent);
-    } else if (currentAction) {
-      onModerate(session, currentAction);
+  
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setCurrentAction(null);
+  };
+  
+  const handleDialogAction = () => {
+    if (currentAction === "edit") {
+      onModerate(session, currentAction, content);
     }
-    setDialogOpen(false);
+    setIsDialogOpen(false);
+    setCurrentAction(null);
   };
 
   return (
-    <>
+    <div className="flex items-center space-x-2">
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-7 w-7"
+        disabled={!!actionInProgress}
+        onClick={() => handleAction("view")}
+      >
+        <Eye className="h-3.5 w-3.5" />
+      </Button>
+      
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <ModerationActionButton />
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7"
+            disabled={!!actionInProgress}
+          >
+            <MoreHorizontal className="h-3.5 w-3.5" />
+          </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Moderation Actions</DropdownMenuLabel>
+        <DropdownMenuContent align="end">
           <ModerationActionItems 
-            onActionClick={handleActionClick} 
-            actionInProgress={actionInProgress}
             session={session}
+            onAction={handleAction}
           />
         </DropdownMenuContent>
       </DropdownMenu>
-
+      
       <ModerationActionDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onConfirm={handleConfirmAction}
-        currentAction={currentAction}
-        session={session}
-        editedContent={editedContent}
-        setEditedContent={setEditedContent}
-        actionInProgress={actionInProgress}
+        open={isDialogOpen}
+        onClose={handleDialogClose}
+        onConfirm={handleDialogAction}
+        action={currentAction}
+        content={content}
+        setContent={setContent}
       />
-    </>
+    </div>
   );
-};
+}

@@ -4,6 +4,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveSession } from "../types";
+import { Profile } from "@/integrations/supabase/types/profile";
 
 export function useChatsSurveillance() {
   const session = useSession();
@@ -53,14 +54,18 @@ export function useChatsSurveillance() {
         const mediaUrls = Array.isArray(message.media_url) ? message.media_url : 
                           message.media_url ? [message.media_url] : [];
         
+        // Correctly type the sender and recipient
+        const sender = message.sender as Profile | null;
+        const recipient = message.recipient as Profile | null;
+        
         return {
           id: message.id,
           type: 'chat' as const,
           user_id: message.sender_id || '',
-          username: message.sender?.username || 'Unknown',
-          avatar_url: message.sender?.avatar_url || null,
-          sender_username: message.sender?.username || 'Unknown',
-          recipient_username: message.recipient?.username || 'Unknown',
+          username: sender?.username || 'Unknown',
+          avatar_url: sender?.avatar_url || null,
+          sender_username: sender?.username || 'Unknown',
+          recipient_username: recipient?.username || 'Unknown',
           recipient_id: message.recipient_id || '',
           started_at: message.created_at || new Date().toISOString(),
           created_at: message.created_at,
@@ -70,14 +75,14 @@ export function useChatsSurveillance() {
           video_url: message.video_url,
           status: 'active',
           sender_profiles: {
-            username: message.sender?.username || 'Unknown',
-            avatar_url: message.sender?.avatar_url || null
+            username: sender?.username || 'Unknown',
+            avatar_url: sender?.avatar_url || null
           },
           receiver_profiles: {
-            username: message.recipient?.username || 'Unknown',
-            avatar_url: message.recipient?.avatar_url || null
+            username: recipient?.username || 'Unknown',
+            avatar_url: recipient?.avatar_url || null
           },
-          title: `Message from @${message.sender?.username || 'Unknown'} to @${message.recipient?.username || 'Unknown'}`,
+          title: `Message from @${sender?.username || 'Unknown'} to @${recipient?.username || 'Unknown'}`,
           // Additional metadata for moderation
           metadata: {
             message_source: message.message_source || 'regular',
