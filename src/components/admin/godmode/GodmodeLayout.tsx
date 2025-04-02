@@ -1,9 +1,24 @@
 
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useSession } from "@supabase/auth-helpers-react";
 import { GodmodeSidebar } from "./GodmodeSidebar";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
 
 function GodmodeLayout() {
+  const session = useSession();
+  const location = useLocation();
+  const role = session?.user?.user_metadata?.role;
+  
+  // Add debug logging
+  console.log("GodmodeLayout rendering, session:", session ? "exists" : "null");
+  console.log("User role:", role || "not set");
+
+  // Role guard for super_admin
+  if (role !== "super_admin") {
+    console.log("Access denied: User is not a super_admin");
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-[#0D1117]">
       <GodmodeSidebar />
