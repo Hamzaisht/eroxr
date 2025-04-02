@@ -1,6 +1,8 @@
 
-import { UsersManagement } from "@/components/admin/platform/UsersManagement";
+import { ModerateContent } from "@/components/admin/platform/ModerateContent";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FlaggedContent } from "@/components/admin/platform/FlaggedContent";
 
 export default function Moderation() {
   return (
@@ -14,8 +16,20 @@ export default function Moderation() {
         </BreadcrumbItem>
       </Breadcrumb>
       
-      <h1 className="text-2xl font-bold">User Moderation</h1>
-      <UsersManagement />
+      <h1 className="text-2xl font-bold">Content Moderation</h1>
+      
+      <Tabs defaultValue="moderate">
+        <TabsList>
+          <TabsTrigger value="moderate">Moderation Panel</TabsTrigger>
+          <TabsTrigger value="flagged">Flagged Content</TabsTrigger>
+        </TabsList>
+        <TabsContent value="moderate">
+          <ModerateContent />
+        </TabsContent>
+        <TabsContent value="flagged">
+          <FlaggedContent />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
