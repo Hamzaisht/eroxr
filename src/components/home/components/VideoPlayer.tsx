@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ interface VideoPlayerProps {
   onError?: () => void;
 }
 
-export const VideoPlayer = ({
+export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
   url,
   index,
   poster,
@@ -27,11 +27,12 @@ export const VideoPlayer = ({
   onIndexChange,
   className,
   onError
-}: VideoPlayerProps) => {
+}, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = ref || internalVideoRef;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -78,7 +79,7 @@ export const VideoPlayer = ({
       video.removeEventListener("playing", handlePlaying);
       video.removeEventListener("error", handleError);
     };
-  }, [url, onError, isCurrentVideo]);
+  }, [url, onError, isCurrentVideo, videoRef]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -90,7 +91,7 @@ export const VideoPlayer = ({
       video.pause();
       video.currentTime = 0;
     }
-  }, [isCurrentVideo]);
+  }, [isCurrentVideo, videoRef]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -135,7 +136,7 @@ export const VideoPlayer = ({
       )}
       
       <video
-        ref={videoRef}
+        ref={videoRef as React.RefObject<HTMLVideoElement>}
         src={url}
         poster={poster}
         muted={isMuted}
@@ -178,4 +179,6 @@ export const VideoPlayer = ({
       </div>
     </div>
   );
-};
+});
+
+VideoPlayer.displayName = "VideoPlayer";

@@ -1,7 +1,7 @@
 
 import { useGhostMode as useGhostModeContext } from "@/context/GhostModeContext";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +20,7 @@ export const useGhostMode = () => {
   const { isSuperAdmin, isLoading: isAdminCheckLoading } = useSuperAdminCheck();
   const session = useSession();
   const { toast } = useToast();
+  const [hasFetchedLiveAlerts, setHasFetchedLiveAlerts] = useState(false);
   
   // Add debugging and verification
   useEffect(() => {
@@ -74,6 +75,24 @@ export const useGhostMode = () => {
     
     checkAndVerify();
   }, [session, isSuperAdmin, isGhostMode, liveAlerts, activeSurveillance, isAdminCheckLoading, toast]);
+  
+  // Try to fetch alerts if we're an admin and haven't fetched them yet
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      if (isSuperAdmin && !hasFetchedLiveAlerts) {
+        try {
+          console.log("Attempting to fetch live alerts...");
+          await refreshAlerts();
+          setHasFetchedLiveAlerts(true);
+        } catch (error) {
+          console.error("Error fetching alerts:", error);
+          // Don't show a toast here as this is handled by the context
+        }
+      }
+    };
+    
+    fetchAlerts();
+  }, [isSuperAdmin, hasFetchedLiveAlerts, refreshAlerts]);
   
   return {
     isGhostMode: isSuperAdmin ? isGhostMode : false,
