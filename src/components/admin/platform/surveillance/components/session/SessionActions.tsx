@@ -2,7 +2,7 @@
 import { ExternalLink, Ghost } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LiveSession, ModerationAction } from "../../types";
-import { ModerationActions } from "../ModerationActions";
+import { ModerationActions } from "../moderation/ModerationActions";
 
 interface SessionActionsProps {
   session: LiveSession;
