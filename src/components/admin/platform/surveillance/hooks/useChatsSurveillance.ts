@@ -29,7 +29,9 @@ export function useChatsSurveillance() {
           video_url,
           message_source,
           viewed_at,
-          original_content
+          original_content,
+          sender:sender_id(id, username, avatar_url),
+          recipient:recipient_id(id, username, avatar_url)
         `)
         .gte('created_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
@@ -41,46 +43,12 @@ export function useChatsSurveillance() {
       }
       
       console.log("Chat data fetched:", data?.length || 0, "messages");
+      console.log("Sample message:", data?.[0]);
       
       if (!data || data.length === 0) return [];
       
-      // Get all user IDs from chat messages
-      const userIds = new Set<string>();
-      data.forEach(message => {
-        if (message.sender_id) userIds.add(message.sender_id);
-        if (message.recipient_id) userIds.add(message.recipient_id);
-      });
-      
-      // Fetch profiles for all users involved in chats
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url, id_verification_status')
-        .in('id', Array.from(userIds));
-      
-      if (profilesError) {
-        console.warn("Could not fetch profiles for chat users:", profilesError);
-      }
-      
-      // Create a lookup map for profiles
-      const profilesMap: Record<string, any> = {};
-      if (profiles) {
-        profiles.forEach(profile => {
-          profilesMap[profile.id] = profile;
-        });
-      }
-      
       // Transform data to match LiveSession format
       return data.map(message => {
-        // Get profile data from the map
-        const senderProfile = message.sender_id ? profilesMap[message.sender_id] : null;
-        const recipientProfile = message.recipient_id ? profilesMap[message.recipient_id] : null;
-        
-        // Extract usernames with fallbacks
-        const senderUsername = senderProfile?.username || "Unknown";
-        const senderAvatar = senderProfile?.avatar_url || null;
-        const recipientUsername = recipientProfile?.username || "Unknown";
-        const recipientAvatar = recipientProfile?.avatar_url || null;
-        
         // Ensure media_url is always an array
         const mediaUrls = Array.isArray(message.media_url) ? message.media_url : 
                           message.media_url ? [message.media_url] : [];
@@ -89,10 +57,10 @@ export function useChatsSurveillance() {
           id: message.id,
           type: 'chat' as const,
           user_id: message.sender_id || '',
-          username: senderUsername,
-          avatar_url: senderAvatar,
-          sender_username: senderUsername,
-          recipient_username: recipientUsername,
+          username: message.sender?.username || 'Unknown',
+          avatar_url: message.sender?.avatar_url || null,
+          sender_username: message.sender?.username || 'Unknown',
+          recipient_username: message.recipient?.username || 'Unknown',
           recipient_id: message.recipient_id || '',
           started_at: message.created_at || new Date().toISOString(),
           created_at: message.created_at,
@@ -102,21 +70,19 @@ export function useChatsSurveillance() {
           video_url: message.video_url,
           status: 'active',
           sender_profiles: {
-            username: senderUsername,
-            avatar_url: senderAvatar
+            username: message.sender?.username || 'Unknown',
+            avatar_url: message.sender?.avatar_url || null
           },
           receiver_profiles: {
-            username: recipientUsername,
-            avatar_url: recipientAvatar
+            username: message.recipient?.username || 'Unknown',
+            avatar_url: message.recipient?.avatar_url || null
           },
-          title: `Message from @${senderUsername} to @${recipientUsername}`,
+          title: `Message from @${message.sender?.username || 'Unknown'} to @${message.recipient?.username || 'Unknown'}`,
           // Additional metadata for moderation
           metadata: {
             message_source: message.message_source || 'regular',
             viewed_at: message.viewed_at,
-            original_content: message.original_content,
-            sender_verification: senderProfile?.id_verification_status || 'unknown',
-            recipient_verification: recipientProfile?.id_verification_status || 'unknown'
+            original_content: message.original_content
           }
         };
       });

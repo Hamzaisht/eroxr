@@ -53,6 +53,11 @@ export const SessionDetails = ({ session }: SessionDetailsProps) => {
           {session.content && (
             <p className="mt-1 text-xs opacity-70 truncate max-w-[300px]">{session.content}</p>
           )}
+          {session.media_url && session.media_url.length > 0 && (
+            <div className="mt-1 text-xs italic">
+              {session.media_url.length} media attachment{session.media_url.length !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
       )}
       
