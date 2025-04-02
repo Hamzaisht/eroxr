@@ -8,12 +8,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import { LiveSession, ModerationAction } from "../../types";
+import { LiveSession, SurveillanceContentItem, ModerationAction } from "../../types";
 
 interface ModerationActionItemsProps {
   onActionClick: (action: ModerationAction) => void;
   actionInProgress: string | null;
-  session: LiveSession;
+  session: LiveSession | SurveillanceContentItem;
 }
 
 export const ModerationActionItems = ({ 

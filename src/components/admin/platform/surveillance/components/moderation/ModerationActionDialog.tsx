@@ -9,14 +9,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { LiveSession, ModerationAction } from "../../types";
+import { LiveSession, SurveillanceContentItem, ModerationAction } from "../../types";
 
 interface ModerationActionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   currentAction: ModerationAction | null;
-  session: LiveSession;
+  session: LiveSession | SurveillanceContentItem;
   editedContent: string;
   setEditedContent: (content: string) => void;
   actionInProgress: string | null;
@@ -32,6 +32,16 @@ export const ModerationActionDialog = ({
   setEditedContent,
   actionInProgress
 }: ModerationActionDialogProps) => {
+  const getUsername = () => {
+    if ('username' in session && session.username) {
+      return session.username;
+    }
+    if ('creator_username' in session && session.creator_username) {
+      return session.creator_username;
+    }
+    return 'this user';
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -44,7 +54,7 @@ export const ModerationActionDialog = ({
           </DialogTitle>
           <DialogDescription>
             {currentAction === 'edit' ? 'Edit the content below. This will keep a record of the original content.' : 
-              currentAction === 'ban' ? `Are you sure you want to ban ${session.username || 'this user'}? This will hide all their content.` : 
+              currentAction === 'ban' ? `Are you sure you want to ban ${getUsername()}? This will hide all their content.` : 
               currentAction === 'force_delete' ? 'This will permanently delete the content from the database and cannot be undone.' : 
               'Are you sure you want to continue?'}
           </DialogDescription>

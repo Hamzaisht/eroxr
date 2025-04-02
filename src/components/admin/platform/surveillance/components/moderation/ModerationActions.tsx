@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { SessionModerationActionProps, ModerationAction } from "../../types";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ModerationActionButton } from "./ModerationActionButton";
 import { ModerationActionItems } from "./ModerationActionItems";
 import { ModerationActionDialog } from "./ModerationActionDialog";
