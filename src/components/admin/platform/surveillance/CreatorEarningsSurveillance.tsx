@@ -21,11 +21,11 @@ import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
 
 export const CreatorEarningsSurveillance = () => {
   const { isRefreshing, handleRefresh } = useSurveillance();
-  const { earnings, isLoading, error } = useCreatorEarnings();
-  const [filteredEarnings, setFilteredEarnings] = useState(earnings);
+  const { creatorEarnings, isLoading, error } = useCreatorEarnings();
+  const [filteredEarnings, setFilteredEarnings] = useState(creatorEarnings);
   
   const handleSearch = (filters: SearchFilter) => {
-    const filtered = earnings.filter(earning => {
+    const filtered = creatorEarnings.filter(earning => {
       // Filter by username
       if (filters.username && !earning.username.toLowerCase().includes(filters.username.toLowerCase())) {
         return false;
@@ -53,8 +53,8 @@ export const CreatorEarningsSurveillance = () => {
   };
   
   // Update filtered earnings when original earnings change
-  if (earnings !== filteredEarnings && !filteredEarnings.length && earnings.length) {
-    setFilteredEarnings(earnings);
+  if (creatorEarnings !== filteredEarnings && !filteredEarnings.length && creatorEarnings.length) {
+    setFilteredEarnings(creatorEarnings);
   }
   
   if (isLoading) {

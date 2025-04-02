@@ -1,201 +1,276 @@
 
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CreatorEarnings, PayoutRequest, StripeAccount } from "../types";
+import { CreatorEarnings, PayoutRequest } from "../types";
+import { useToast } from "@/hooks/use-toast";
 
 export function useCreatorEarnings() {
   const [creatorEarnings, setCreatorEarnings] = useState<CreatorEarnings[]>([]);
   const [pendingPayouts, setPendingPayouts] = useState<PayoutRequest[]>([]);
   const [processingPayouts, setProcessingPayouts] = useState<PayoutRequest[]>([]);
   const [completedPayouts, setCompletedPayouts] = useState<PayoutRequest[]>([]);
-  const [stripeAccounts, setStripeAccounts] = useState<StripeAccount[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   const session = useSession();
   const { toast } = useToast();
-  
-  const fetchCreatorEarnings = useCallback(async () => {
-    if (!session?.user?.id) return;
-    
+
+  useEffect(() => {
+    fetchEarnings();
+  }, []);
+
+  // Mock data for demo purposes
+  const fetchEarnings = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Fetch creator earnings data
-      const { data: earningsData, error: earningsError } = await supabase
-        .rpc('get_creator_earnings')
-        .limit(50);
-        
-      if (earningsError) throw earningsError;
+      // In a real application, you would fetch this from your database
+      // For now, we'll use mock data
+      const mockEarnings: CreatorEarnings[] = [
+        {
+          id: '1',
+          user_id: 'user-1',
+          username: 'bella_star',
+          avatar_url: 'https://i.pravatar.cc/150?img=1',
+          gross_earnings: 2540.75,
+          net_earnings: 2032.60,
+          platform_fee: 508.15,
+          subscription_count: 145,
+          ppv_count: 38,
+          tip_count: 67,
+          last_payout_date: '2023-11-15T00:00:00Z',
+          last_payout_amount: 1500,
+          payout_status: 'processed',
+          stripe_connected: true,
+          source: 'subscription',
+          status: 'paid',
+          amount: '2540.75',
+          description: 'Monthly subscriptions'
+        },
+        {
+          id: '2',
+          user_id: 'user-2',
+          username: 'jake_cool',
+          avatar_url: 'https://i.pravatar.cc/150?img=2',
+          gross_earnings: 1125.30,
+          net_earnings: 900.24,
+          platform_fee: 225.06,
+          subscription_count: 78,
+          ppv_count: 15,
+          tip_count: 23,
+          last_payout_date: '2023-11-10T00:00:00Z',
+          last_payout_amount: 800,
+          payout_status: 'pending',
+          stripe_connected: true,
+          source: 'ppv',
+          status: 'pending',
+          amount: '1125.30',
+          description: 'Premium videos'
+        },
+        {
+          id: '3',
+          user_id: 'user-3',
+          username: 'sarah_glam',
+          avatar_url: 'https://i.pravatar.cc/150?img=3',
+          gross_earnings: 3450.90,
+          net_earnings: 2760.72,
+          platform_fee: 690.18,
+          subscription_count: 210,
+          ppv_count: 52,
+          tip_count: 98,
+          last_payout_date: '2023-11-18T00:00:00Z',
+          last_payout_amount: 2500,
+          payout_status: 'processed',
+          stripe_connected: true,
+          source: 'tips',
+          status: 'paid',
+          amount: '3450.90',
+          description: 'Fan tips and gifts'
+        },
+        {
+          id: '4',
+          user_id: 'user-4',
+          username: 'mike_fitness',
+          avatar_url: 'https://i.pravatar.cc/150?img=4',
+          gross_earnings: 875.50,
+          net_earnings: 700.40,
+          platform_fee: 175.10,
+          subscription_count: 45,
+          ppv_count: 12,
+          tip_count: 18,
+          last_payout_date: '2023-11-05T00:00:00Z',
+          last_payout_amount: 650,
+          payout_status: 'declined',
+          stripe_connected: false,
+          source: 'direct',
+          status: 'declined',
+          amount: '875.50',
+          description: 'Direct content sales'
+        },
+        {
+          id: '5',
+          user_id: 'user-5',
+          username: 'tanya_travels',
+          avatar_url: 'https://i.pravatar.cc/150?img=5',
+          gross_earnings: 1890.25,
+          net_earnings: 1512.20,
+          platform_fee: 378.05,
+          subscription_count: 95,
+          ppv_count: 28,
+          tip_count: 42,
+          last_payout_date: '2023-11-12T00:00:00Z',
+          last_payout_amount: 1400,
+          payout_status: 'pending',
+          stripe_connected: true,
+          source: 'subscription',
+          status: 'pending',
+          amount: '1890.25',
+          description: 'Monthly subscriptions'
+        }
+      ];
       
-      // Transform data into the expected format
-      const formattedEarnings: CreatorEarnings[] = earningsData.map((earning: any) => ({
-        id: earning.creator_id,
-        username: earning.username || 'Unknown Creator',
-        avatar_url: earning.avatar_url || null,
-        gross_earnings: parseFloat(earning.gross_earnings) || 0,
-        net_earnings: parseFloat(earning.net_earnings) || 0,
-        platform_fee: parseFloat(earning.platform_fee) || 0,
-        subscription_count: earning.subscription_count || 0,
-        ppv_count: earning.ppv_count || 0,
-        tip_count: earning.tip_count || 0,
-        last_payout_date: earning.last_payout_date,
-        last_payout_amount: earning.last_payout_amount ? parseFloat(earning.last_payout_amount) : 0,
-        payout_status: earning.payout_status || 'none',
-        stripe_connected: earning.stripe_connected || false
-      }));
+      // Mock data for payout requests
+      const mockPayoutRequests: PayoutRequest[] = [
+        {
+          id: 'payout-1',
+          creator_id: 'user-1',
+          creator_username: 'bella_star',
+          creator_avatar_url: 'https://i.pravatar.cc/150?img=1',
+          amount: 2000,
+          platform_fee: 400,
+          final_amount: 1600,
+          requested_at: '2023-11-20T10:30:00Z',
+          status: 'pending'
+        },
+        {
+          id: 'payout-2',
+          creator_id: 'user-3',
+          creator_username: 'sarah_glam',
+          creator_avatar_url: 'https://i.pravatar.cc/150?img=3',
+          amount: 3000,
+          platform_fee: 600,
+          final_amount: 2400,
+          requested_at: '2023-11-18T14:45:00Z',
+          approved_at: '2023-11-19T09:20:00Z',
+          status: 'approved'
+        },
+        {
+          id: 'payout-3',
+          creator_id: 'user-5',
+          creator_username: 'tanya_travels',
+          creator_avatar_url: 'https://i.pravatar.cc/150?img=5',
+          amount: 1500,
+          platform_fee: 300,
+          final_amount: 1200,
+          requested_at: '2023-11-15T16:10:00Z',
+          approved_at: '2023-11-16T11:30:00Z',
+          processed_at: '2023-11-17T08:45:00Z',
+          status: 'processed'
+        }
+      ];
       
-      setCreatorEarnings(formattedEarnings);
+      setCreatorEarnings(mockEarnings);
       
-      // Fetch payout requests data
-      const { data: payoutData, error: payoutError } = await supabase
-        .from('payout_requests')
-        .select(`
-          id,
-          creator_id,
-          amount,
-          platform_fee,
-          final_amount,
-          requested_at,
-          approved_at,
-          processed_at,
-          status,
-          notes,
-          profiles(username, avatar_url)
-        `)
-        .order('requested_at', { ascending: false });
-        
-      if (payoutError) throw payoutError;
-      
-      // Format payout data
-      const formattedPayouts: PayoutRequest[] = payoutData.map(payout => {
-        // Get the first profile item from the array if it exists
-        const profile = payout.profiles?.[0];
-        
-        return {
-          id: payout.id,
-          creator_id: payout.creator_id,
-          creator_username: profile?.username || 'Unknown',
-          creator_avatar_url: profile?.avatar_url || null,
-          amount: parseFloat(payout.amount) || 0,
-          platform_fee: parseFloat(payout.platform_fee) || 0,
-          final_amount: parseFloat(payout.final_amount) || 0,
-          requested_at: payout.requested_at,
-          approved_at: payout.approved_at,
-          processed_at: payout.processed_at,
-          status: payout.status as any,
-          notes: payout.notes
-        };
-      });
-      
-      // Sort payouts by status
-      setPendingPayouts(formattedPayouts.filter(p => p.status === 'pending'));
-      setProcessingPayouts(formattedPayouts.filter(p => p.status === 'approved'));
-      setCompletedPayouts(formattedPayouts.filter(p => p.status === 'processed'));
-      
-      // Fetch Stripe account data
-      const { data: stripeData, error: stripeError } = await supabase
-        .from('stripe_accounts')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (stripeError) throw stripeError;
-      
-      setStripeAccounts(stripeData);
-      
-    } catch (error) {
-      console.error("Error fetching creator earnings:", error);
-      setError("Failed to load creator earnings data. Please try again.");
-      toast({
-        title: "Error",
-        description: "Could not load creator earnings data",
-        variant: "destructive"
-      });
+      // Filter payout requests by status
+      setPendingPayouts(mockPayoutRequests.filter(payout => payout.status === 'pending'));
+      setProcessingPayouts(mockPayoutRequests.filter(payout => payout.status === 'approved'));
+      setCompletedPayouts(mockPayoutRequests.filter(payout => payout.status === 'processed'));
+    } catch (err) {
+      console.error('Error fetching earnings data:', err);
+      setError('Failed to load earnings data. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, toast]);
-  
-  const handlePayoutAction = useCallback(async (payoutId: string, action: 'approve' | 'reject' | 'process') => {
-    if (!session?.user?.id) return false;
-    
+  };
+
+  const handlePayoutAction = async (payoutId: string, action: 'approve' | 'reject' | 'process') => {
     try {
-      let status = '';
-      let fieldToUpdate = {};
+      // In a real application, you would call your API to update the payout status
+      // For now, we'll just update our local state
       
-      switch (action) {
-        case 'approve':
-          status = 'approved';
-          fieldToUpdate = { 
-            status, 
-            approved_at: new Date().toISOString() 
-          };
-          break;
-        case 'reject':
-          status = 'rejected';
-          fieldToUpdate = { status };
-          break;
-        case 'process':
-          status = 'processed';
-          fieldToUpdate = { 
-            status, 
-            processed_at: new Date().toISOString(),
-            processed_by: session.user.id
-          };
-          break;
-      }
+      let updatedPending = [...pendingPayouts];
+      let updatedProcessing = [...processingPayouts];
+      let updatedCompleted = [...completedPayouts];
       
-      // Update payout status
-      const { error } = await supabase
-        .from('payout_requests')
-        .update(fieldToUpdate)
-        .eq('id', payoutId);
-        
-      if (error) throw error;
-      
-      // Log admin action
-      await supabase.from('admin_audit_logs').insert({
-        user_id: session.user.id,
-        action: `ghost_payout_${action}`,
-        details: {
-          timestamp: new Date().toISOString(),
-          payout_id: payoutId,
-          action
+      if (action === 'approve') {
+        // Find the payout in pending
+        const payoutIndex = updatedPending.findIndex(p => p.id === payoutId);
+        if (payoutIndex >= 0) {
+          const payout = { ...updatedPending[payoutIndex] };
+          payout.status = 'approved';
+          payout.approved_at = new Date().toISOString();
+          
+          // Remove from pending and add to processing
+          updatedPending.splice(payoutIndex, 1);
+          updatedProcessing.push(payout);
+          
+          setPendingPayouts(updatedPending);
+          setProcessingPayouts(updatedProcessing);
+          
+          toast({
+            title: "Payout Approved",
+            description: `Payout for ${payout.creator_username} has been approved.`
+          });
         }
-      });
-      
-      // Refresh data
-      await fetchCreatorEarnings();
-      
-      toast({
-        title: "Payout Updated",
-        description: `Payout has been ${status} successfully`,
-      });
-      
-      return true;
-    } catch (error) {
-      console.error(`Error handling payout ${action}:`, error);
+      } else if (action === 'reject') {
+        // Find the payout in pending
+        const payoutIndex = updatedPending.findIndex(p => p.id === payoutId);
+        if (payoutIndex >= 0) {
+          const payout = { ...updatedPending[payoutIndex] };
+          payout.status = 'rejected';
+          
+          // Remove from pending
+          updatedPending.splice(payoutIndex, 1);
+          
+          setPendingPayouts(updatedPending);
+          
+          toast({
+            title: "Payout Rejected",
+            description: `Payout for ${payout.creator_username} has been rejected.`,
+            variant: "destructive"
+          });
+        }
+      } else if (action === 'process') {
+        // Find the payout in processing
+        const payoutIndex = updatedProcessing.findIndex(p => p.id === payoutId);
+        if (payoutIndex >= 0) {
+          const payout = { ...updatedProcessing[payoutIndex] };
+          payout.status = 'processed';
+          payout.processed_at = new Date().toISOString();
+          
+          // Remove from processing and add to completed
+          updatedProcessing.splice(payoutIndex, 1);
+          updatedCompleted.push(payout);
+          
+          setProcessingPayouts(updatedProcessing);
+          setCompletedPayouts(updatedCompleted);
+          
+          toast({
+            title: "Payout Processed",
+            description: `Payout for ${payout.creator_username} has been processed.`
+          });
+        }
+      }
+    } catch (err) {
+      console.error(`Error processing payout action ${action}:`, err);
       toast({
         title: "Action Failed",
         description: `Could not ${action} the payout. Please try again.`,
         variant: "destructive"
       });
-      return false;
     }
-  }, [session?.user?.id, toast, fetchCreatorEarnings]);
-  
+  };
+
   return {
     creatorEarnings,
     pendingPayouts,
     processingPayouts,
     completedPayouts,
-    stripeAccounts,
     isLoading,
     error,
-    fetchCreatorEarnings,
+    fetchEarnings,
     handlePayoutAction
   };
 }

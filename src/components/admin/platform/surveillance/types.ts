@@ -1,3 +1,4 @@
+
 // Creating this file if it doesn't exist or updating it if it does
 export type ContentType = 'post' | 'story' | 'video' | 'ppv' | 'audio';
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
@@ -100,10 +101,12 @@ export interface SurveillanceContentItem {
   is_draft?: boolean;
   is_deleted?: boolean;
   is_active?: boolean;
+  is_flagged?: boolean;
   expires_at?: string;
   tags?: string[];
   use_count?: number;
   duration?: number;
+  user_id?: string; // Adding missing property
 }
 
 export interface LiveAlert {
@@ -122,6 +125,9 @@ export interface LiveAlert {
   message: string;
   source: string;
   details?: any;
+  alert_type: string;  // Adding missing property
+  status: string;      // Adding missing property
+  title: string;       // Adding missing property
 }
 
 export interface SessionModerationActionProps {
@@ -144,6 +150,11 @@ export interface CreatorEarnings {
   last_payout_amount: number;
   payout_status: string;
   stripe_connected: boolean;
+  user_id: string;    // Adding to ensure it's available
+  source: string;     // Adding to ensure it's available
+  status: string;     // Adding to ensure it's available
+  amount: string;     // Adding to ensure it's available
+  description: string; // Adding to ensure it's available
 }
 
 export interface PayoutRequest {
