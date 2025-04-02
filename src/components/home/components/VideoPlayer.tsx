@@ -32,11 +32,27 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const internalVideoRef = useRef<HTMLVideoElement>(null);
-  const videoRef = (ref as React.RefObject<HTMLVideoElement>) || internalVideoRef;
+  
+  // Safely handle the forwarded ref, which could be a function ref or an object ref
+  const videoRef = ref || internalVideoRef;
+  
+  // Get actual video element, handling both function and object refs
+  const getVideoElement = () => {
+    if (!videoRef) return null;
+    
+    // For object refs (RefObject)
+    if ('current' in videoRef) {
+      return videoRef.current;
+    }
+    
+    // For internal ref as fallback
+    return internalVideoRef.current;
+  };
+  
   const { toast } = useToast();
 
   useEffect(() => {
-    const video = videoRef.current;
+    const video = getVideoElement();
     if (!video) return;
 
     const handleLoadedData = () => {
@@ -79,10 +95,10 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
       video.removeEventListener("playing", handlePlaying);
       video.removeEventListener("error", handleError);
     };
-  }, [url, onError, isCurrentVideo, videoRef]);
+  }, [url, onError, isCurrentVideo]);
 
   useEffect(() => {
-    const video = videoRef.current;
+    const video = getVideoElement();
     if (!video) return;
 
     if (isCurrentVideo) {
@@ -91,15 +107,16 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
       video.pause();
       video.currentTime = 0;
     }
-  }, [isCurrentVideo, videoRef]);
+  }, [isCurrentVideo]);
 
   const togglePlay = () => {
-    if (!videoRef.current) return;
+    const video = getVideoElement();
+    if (!video) return;
     
     if (isPlaying) {
-      videoRef.current.pause();
+      video.pause();
     } else {
-      videoRef.current.play().catch(error => {
+      video.play().catch(error => {
         console.error('Video playback error:', error);
         toast({
           title: "Playback Error",
@@ -115,7 +132,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
   };
 
   const toggleMute = () => {
-    if (!videoRef.current) return;
+    if (!getVideoElement()) return;
     onMuteChange(!isMuted);
   };
 
