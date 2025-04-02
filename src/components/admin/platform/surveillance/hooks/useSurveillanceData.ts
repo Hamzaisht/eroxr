@@ -17,7 +17,7 @@ export function useSurveillanceData() {
   const session = useSession();
   const { fetchStreams } = useStreamsSurveillance();
   const { fetchCalls } = useCallsSurveillance();
-  const { fetchChats } = useChatsSurveillance();
+  const { fetchChatSessions } = useChatsSurveillance();
   const { fetchBodyContact } = useBodyContactSurveillance();
   
   const fetchLiveSessions = useCallback(async () => {
@@ -39,7 +39,7 @@ export function useSurveillanceData() {
           break;
           
         case 'chats':
-          data = await fetchChats();
+          data = await fetchChatSessions();
           break;
           
         case 'bodycontact':
@@ -67,7 +67,7 @@ export function useSurveillanceData() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, session?.user?.id, fetchStreams, fetchCalls, fetchChats, fetchBodyContact]);
+  }, [activeTab, session?.user?.id, fetchStreams, fetchCalls, fetchChatSessions, fetchBodyContact]);
   
   return {
     activeTab,
