@@ -4,8 +4,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
-import { LiveAlert } from "@/components/admin/platform/surveillance/types";
+import { LiveSession, LiveAlert } from "@/components/admin/platform/surveillance/types";
 import { useGhostAlerts } from "@/hooks/useGhostAlerts";
 import { useGhostSurveillance } from "@/hooks/useGhostSurveillance";
 import { GhostModeIndicator } from "@/components/admin/platform/ghost/GhostModeIndicator";
@@ -118,10 +117,14 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       isGhostMode, 
       toggleGhostMode, 
       isLoading,
-      activeSurveillance,
-      startSurveillance,
+      activeSurveillance: activeSurveillance as {
+        session?: LiveSession;
+        isWatching: boolean;
+        startTime?: string;
+      },
+      startSurveillance: startSurveillance as (session: LiveSession) => Promise<boolean>,
       stopSurveillance,
-      liveAlerts,
+      liveAlerts: liveAlerts as LiveAlert[],
       refreshAlerts
     }}>
       {children}
@@ -129,7 +132,7 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       <GhostModeIndicator isVisible={isSuperAdmin && isGhostMode} />
       <SurveillanceIndicator 
         isVisible={isSuperAdmin && isGhostMode && activeSurveillance.isWatching}
-        session={activeSurveillance.session} 
+        session={activeSurveillance.session as LiveSession} 
       />
     </GhostModeContext.Provider>
   );

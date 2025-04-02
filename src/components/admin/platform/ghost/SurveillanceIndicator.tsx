@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LiveSession } from '../user-analytics/types';
+import { LiveSession } from '../surveillance/types';
 import { Ban, User, Shield, Eye, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSession } from '@supabase/auth-helpers-react';

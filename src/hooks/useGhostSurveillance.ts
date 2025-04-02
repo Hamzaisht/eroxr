@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { LiveSession } from "@/components/admin/platform/user-analytics/types";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
 
 export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean) {
   const [activeSurveillance, setActiveSurveillance] = useState<{
@@ -50,8 +50,14 @@ export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean
         }
       }
       
+      // Make sure targetSession has media_url (required by the LiveSession type)
+      const sessionWithMediaUrl = {
+        ...targetSession,
+        media_url: targetSession.media_url || []
+      };
+      
       setActiveSurveillance({
-        session: targetSession,
+        session: sessionWithMediaUrl,
         isWatching: true,
         startTime
       });
