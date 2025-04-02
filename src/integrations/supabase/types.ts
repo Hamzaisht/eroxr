@@ -33,6 +33,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_logs: {
+        Row: {
+          action: string
+          action_type: string
+          admin_id: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          action_type: string
+          admin_id: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          action_type?: string
+          admin_id?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       blacklisted_content: {
         Row: {
           added_by: string | null
@@ -816,6 +849,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      flagged_content: {
+        Row: {
+          content_id: string
+          content_type: string
+          flagged_at: string | null
+          flagged_by: string | null
+          id: string
+          notes: string | null
+          reason: string
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          flagged_at?: string | null
+          flagged_by?: string | null
+          id?: string
+          notes?: string | null
+          reason: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          flagged_at?: string | null
+          flagged_by?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       followers: {
         Row: {
