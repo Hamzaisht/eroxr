@@ -207,9 +207,12 @@ export const FlaggedContent = () => {
       }
       
       // Log admin action
-      await supabase.from('admin_audit_logs').insert({
-        user_id: (await supabase.auth.getSession()).data.session?.user.id,
+      await supabase.from('admin_logs').insert({
+        admin_id: (await supabase.auth.getSession()).data.session?.user.id,
         action: `report_${action}`,
+        action_type: `report_${action}`,
+        target_id: id,
+        target_type: 'report',
         details: {
           report_id: id,
           timestamp: new Date().toISOString(),
@@ -261,9 +264,10 @@ export const FlaggedContent = () => {
       }
 
       // Log admin action
-      await supabase.from('admin_audit_logs').insert({
-        user_id: (await supabase.auth.getSession()).data.session?.user.id,
+      await supabase.from('admin_logs').insert({
+        admin_id: (await supabase.auth.getSession()).data.session?.user.id,
         action: `bulk_report_${action}`,
+        action_type: `bulk_report_${action}`,
         details: {
           report_ids: items,
           timestamp: new Date().toISOString()

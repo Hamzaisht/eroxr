@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +63,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 interface FlaggedContent {
   id: string;
@@ -288,15 +290,16 @@ export const ModerateContent = () => {
       
       // Log admin action
       const { error: logError } = await supabase
-        .from('admin_audit_logs')
+        .from('admin_logs')
         .insert({
-          user_id: session.user.id,
+          admin_id: session.user.id,
           action: actionType,
+          action_type: actionType,
+          target_type: action === "ban" ? "user" : targetType,
+          target_id: action === "ban" ? userId : contentId,
           details: {
             timestamp: new Date().toISOString(),
             admin_username: session.user.email,
-            target_type: action === "ban" ? "user" : targetType,
-            target_id: action === "ban" ? userId : contentId,
             reason: reason,
             severity: severityLevel,
             notes: reason
@@ -469,25 +472,7 @@ export const ModerateContent = () => {
 
   // Loading skeleton
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-between">
-          <div className="w-1/3 h-10 bg-gray-800/50 animate-pulse rounded-md"></div>
-          <div className="flex space-x-2">
-            <div className="w-24 h-10 bg-gray-800/50 animate-pulse rounded-md"></div>
-            <div className="w-24 h-10 bg-gray-800/50 animate-pulse rounded-md"></div>
-          </div>
-        </div>
-        
-        <div className="border rounded-md border-gray-800">
-          <div className="p-4 space-y-4">
-            {[...Array(5)].map((_, index) => (
-              <div key={index} className="w-full h-16 bg-gray-800/50 animate-pulse rounded-md"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingState message="Loading flagged content..." />;
   }
 
   // Error state
