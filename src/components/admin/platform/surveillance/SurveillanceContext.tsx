@@ -1,8 +1,33 @@
 
-import { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
+import { useSurveillanceData } from "./useSurveillanceData";
+import { LiveAlert, SurveillanceTab, LiveSession } from "./types";
+import { useStreamsSurveillance } from "./hooks/useStreamsSurveillance";
+import { useCallsSurveillance } from "./hooks/useCallsSurveillance";
+import { useChatsSurveillance } from "./hooks/useChatsSurveillance";
+import { useBodyContactSurveillance } from "./hooks/useBodyContactSurveillance";
+import { useContentSurveillance } from "./hooks/useContentSurveillance";
 import { useToast } from "@/hooks/use-toast";
-import { LiveAlert, LiveSession, SurveillanceContextType, SurveillanceTab } from "./types";
-import { useSurveillanceData } from "./hooks/useSurveillanceData";
+import { supabase } from "@/integrations/supabase/client";
+
+interface SurveillanceContextType {
+  activeTab: SurveillanceTab;
+  setActiveTab: (tab: SurveillanceTab) => void;
+  liveSessions: LiveSession[];
+  isLoading: boolean;
+  isRefreshing: boolean;
+  error: string | null;
+  handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
+  handleRefresh: () => Promise<void>;
+  fetchLiveSessions: () => Promise<void>;
+}
+
+interface SurveillanceProviderProps {
+  children: React.ReactNode;
+  liveAlerts: LiveAlert[];
+  refreshAlerts: () => Promise<void>;
+  startSurveillance: (session: LiveSession) => Promise<boolean>;
+}
 
 const SurveillanceContext = createContext<SurveillanceContextType | undefined>(undefined);
 
@@ -11,62 +36,131 @@ export const SurveillanceProvider = ({
   liveAlerts,
   refreshAlerts,
   startSurveillance
-}: { 
-  children: ReactNode;
-  liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<void>;
-  startSurveillance: (session: LiveSession) => Promise<boolean>;
-}) => {
-  const { toast } = useToast();
+}: SurveillanceProviderProps) => {
   const surveillanceData = useSurveillanceData();
+  const { fetchStreams } = useStreamsSurveillance();
+  const { fetchCalls } = useCallsSurveillance();
+  const { fetchChatSessions } = useChatsSurveillance();
+  const { fetchBodyContact } = useBodyContactSurveillance();
+  const { fetchContent } = useContentSurveillance();
+  const { toast } = useToast();
   
-  const handleRefresh = async () => {
-    surveillanceData.setIsRefreshing(true);
-    await surveillanceData.fetchLiveSessions();
-    await refreshAlerts();
-    surveillanceData.setIsRefreshing(false);
-    
-    toast({
-      title: "Refreshed",
-      description: "Live data has been updated",
-    });
-  };
+  const {
+    activeTab,
+    setActiveTab,
+    liveSessions,
+    isLoading,
+    isRefreshing,
+    setIsRefreshing,
+    error,
+    fetchLiveSessions
+  } = surveillanceData;
   
-  const handleStartSurveillance = async (session: LiveSession): Promise<boolean> => {
-    const success = await startSurveillance(session);
+  // Handle refreshing the content
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
     
-    if (success) {
-      switch (session.type) {
-        case 'stream':
-          window.open(`/livestream/${session.id}`, '_blank');
-          break;
-        case 'call':
-          toast({
-            title: "Call Monitoring",
-            description: "This feature requires additional setup. Use the surveillance panel."
-          });
-          break;
-        case 'chat':
-          window.open(`/messages?userId=${session.user_id}`, '_blank');
-          break;
-        case 'bodycontact':
-          window.open(`/dating/ad/${session.id}`, '_blank');
-          break;
-        default:
-          break;
-      }
+    try {
+      // Refresh alerts
+      await refreshAlerts();
+      
+      // Refresh the live sessions for the current tab
+      await fetchLiveSessions();
+      
+      toast({
+        title: "Refreshed",
+        description: "Surveillance data has been refreshed",
+      });
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      toast({
+        title: "Refresh Failed",
+        description: "Could not refresh surveillance data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshAlerts, fetchLiveSessions, setIsRefreshing, toast]);
+  
+  // Set up surveillance session
+  const handleStartSurveillance = useCallback(async (session: LiveSession) => {
+    try {
+      // Log to admin_logs that admin started monitoring this session
+      await supabase.from('admin_logs').insert({
+        admin_id: supabase.auth.getUser().then(res => res.data.user?.id) || 'unknown',
+        action: 'start_surveillance',
+        action_type: 'monitoring',
+        target_type: session.type,
+        target_id: session.id,
+        details: {
+          session_type: session.type,
+          username: session.username,
+          started_at: new Date().toISOString()
+        }
+      });
+      
+      return await startSurveillance(session);
+    } catch (error) {
+      console.error("Error starting surveillance:", error);
+      toast({
+        title: "Error",
+        description: "Could not start surveillance session",
+        variant: "destructive"
+      });
+      return false;
+    }
+  }, [startSurveillance, toast]);
+  
+  // Subscribe to realtime updates for relevant tables based on active tab
+  React.useEffect(() => {
+    // Skip if not on a live content tab
+    if (!['streams', 'calls', 'chats', 'bodycontact'].includes(activeTab)) {
+      return;
     }
     
-    return success;
+    // Determine which table to subscribe to based on active tab
+    let table = '';
+    switch (activeTab) {
+      case 'streams': table = 'live_streams'; break;
+      case 'calls': table = 'calls'; break;
+      case 'chats': table = 'direct_messages'; break;
+      case 'bodycontact': table = 'dating_ads'; break;
+      default: return;
+    }
+    
+    const channel = supabase
+      .channel(`surveillance-${activeTab}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table
+      }, () => {
+        // Refresh data when changes occur
+        console.log(`Detected change in ${table}, refreshing data`);
+        fetchLiveSessions();
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeTab, fetchLiveSessions]);
+  
+  const value = {
+    activeTab,
+    setActiveTab,
+    liveSessions,
+    isLoading,
+    isRefreshing,
+    error,
+    handleStartSurveillance,
+    handleRefresh,
+    fetchLiveSessions
   };
-
+  
   return (
-    <SurveillanceContext.Provider value={{
-      ...surveillanceData,
-      handleRefresh,
-      handleStartSurveillance,
-      liveAlerts
-    }}>
+    <SurveillanceContext.Provider value={value}>
       {children}
     </SurveillanceContext.Provider>
   );
@@ -75,7 +169,7 @@ export const SurveillanceProvider = ({
 export const useSurveillance = () => {
   const context = useContext(SurveillanceContext);
   if (context === undefined) {
-    throw new Error('useSurveillance must be used within a SurveillanceProvider');
+    throw new Error("useSurveillance must be used within a SurveillanceProvider");
   }
   return context;
 };

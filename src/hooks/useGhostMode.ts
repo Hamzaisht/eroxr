@@ -94,10 +94,11 @@ export const useGhostMode = () => {
     fetchAlerts();
   }, [isSuperAdmin, hasFetchedLiveAlerts, refreshAlerts]);
   
-  // Set up real-time subscription for alerts
+  // Set up real-time subscription for alerts using Supabase realtime
   useEffect(() => {
     if (!isSuperAdmin || !session?.user?.id) return;
     
+    // Set up realtime subscription to admin_alerts
     const channel = supabase
       .channel('admin_alerts_changes')
       .on('postgres_changes', {
@@ -109,8 +110,34 @@ export const useGhostMode = () => {
       })
       .subscribe();
       
+    // Also listen for changes on flagged_content table
+    const flaggedChannel = supabase
+      .channel('flagged_content_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'flagged_content'
+      }, () => {
+        refreshAlerts();
+      })
+      .subscribe();
+      
+    // And security_violations table
+    const securityChannel = supabase
+      .channel('security_violations_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'security_violations'
+      }, () => {
+        refreshAlerts();
+      })
+      .subscribe();
+      
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(flaggedChannel);
+      supabase.removeChannel(securityChannel);
     };
   }, [isSuperAdmin, session?.user?.id, refreshAlerts]);
   

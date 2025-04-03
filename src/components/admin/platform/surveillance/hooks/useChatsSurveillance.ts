@@ -1,52 +1,90 @@
 
 import { useCallback, useState } from "react";
 import { LiveSession } from "../types";
-
-interface Profile {
-  id: string;
-  username: string;
-  avatar_url: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
-interface ChatSender {
-  id: string;
-  username: string;
-  avatar_url: string | null;
-}
-
-interface ChatRecipient {
-  id: string;
-  username: string;
-  avatar_url: string | null;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export function useChatsSurveillance() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessions, setSessions] = useState<LiveSession[]>([]);
+  const { toast } = useToast();
 
   const fetchChatSessions = useCallback(async (): Promise<LiveSession[]> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Mock data - in a real app, this would be an API call
-      const response = await new Promise<{status: number, data: LiveSession[]}>(resolve => setTimeout(() => {
-        resolve({
-          status: 200,
-          data: generateMockChatData(),
-        });
-      }, 500));
-
-      if (response.status === 200) {
-        setSessions(response.data);
-        return response.data; // Return the data for external use
-      } else {
+      // Fetch real direct messages from Supabase
+      const { data: chats, error: chatsError } = await supabase
+        .from('direct_messages')
+        .select(`
+          id,
+          sender_id,
+          recipient_id,
+          created_at,
+          message_type,
+          content,
+          media_url,
+          video_url,
+          sender:sender_id(username, avatar_url),
+          recipient:recipient_id(username, avatar_url)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      if (chatsError) {
+        console.error("Error fetching chat sessions:", chatsError);
         setError('Failed to fetch chat sessions');
+        toast({
+          title: "Error",
+          description: "Failed to fetch chat sessions",
+          variant: "destructive"
+        });
         return [];
       }
+
+      // Process chats into conversation groups
+      const uniqueChats = new Map();
+      
+      chats.forEach(chat => {
+        const chatKey = `${chat.sender_id}:${chat.recipient_id}`;
+        const reverseKey = `${chat.recipient_id}:${chat.sender_id}`;
+        
+        // Only add this conversation if we haven't seen it yet
+        if (!uniqueChats.has(chatKey) && !uniqueChats.has(reverseKey)) {
+          const sender = chat.sender?.[0] || {};
+          const recipient = chat.recipient?.[0] || {};
+          
+          uniqueChats.set(chatKey, {
+            id: chat.id,
+            type: 'chat',
+            user_id: chat.sender_id,
+            username: sender.username || 'Unknown',
+            avatar_url: sender.avatar_url || null,
+            started_at: chat.created_at,
+            status: 'active',
+            title: `Chat between ${sender.username || 'Unknown'} and ${recipient.username || 'Unknown'}`,
+            content: chat.content || "No content",
+            media_url: Array.isArray(chat.media_url) ? chat.media_url : chat.media_url ? [chat.media_url] : [],
+            recipient_id: chat.recipient_id,
+            recipient_username: recipient.username || 'Unknown',
+            sender_username: sender.username || 'Unknown',
+            sender_profiles: {
+              username: sender.username || 'Unknown',
+              avatar_url: sender.avatar_url || null
+            },
+            receiver_profiles: {
+              username: recipient.username || 'Unknown',
+              avatar_url: recipient.avatar_url || null
+            }
+          });
+        }
+      });
+
+      const chatSessions = Array.from(uniqueChats.values());
+      setSessions(chatSessions);
+      return chatSessions;
     } catch (err) {
       console.error("Error fetching chat sessions:", err);
       setError('An error occurred while fetching chat data');
@@ -54,7 +92,7 @@ export function useChatsSurveillance() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   return {
     isLoading,
@@ -62,50 +100,4 @@ export function useChatsSurveillance() {
     sessions,
     fetchChatSessions,
   };
-}
-
-// Mock data generator
-function generateMockChatData(): LiveSession[] {
-  const chatData = [];
-  
-  for (let i = 1; i <= 10; i++) {
-    // Create sender and recipient as individual objects, not arrays
-    const sender: ChatSender = {
-      id: `user-${i}`,
-      username: `user${i}`,
-      avatar_url: null
-    };
-    
-    const recipient: ChatRecipient = {
-      id: `user-${i + 10}`,
-      username: `user${i + 10}`,
-      avatar_url: null
-    };
-    
-    chatData.push({
-      id: `chat-${i}`,
-      type: 'chat',
-      user_id: sender.id,
-      username: sender.username,
-      avatar_url: sender.avatar_url,
-      started_at: new Date(Date.now() - Math.floor(Math.random() * 1000000)).toISOString(),
-      status: Math.random() > 0.3 ? 'active' : 'inactive',
-      title: `Chat between ${sender.username} and ${recipient.username}`,
-      content: `Message #${i}: Lorem ipsum dolor sit amet, consectetur adipiscing elit.`,
-      media_url: [],
-      recipient_id: recipient.id,
-      recipient_username: recipient.username,
-      sender_username: sender.username,
-      sender_profiles: {
-        username: sender.username,
-        avatar_url: sender.avatar_url
-      },
-      receiver_profiles: {
-        username: recipient.username,
-        avatar_url: recipient.avatar_url
-      }
-    });
-  }
-  
-  return chatData;
 }
