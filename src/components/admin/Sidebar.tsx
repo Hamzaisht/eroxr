@@ -1,94 +1,29 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   Users, 
-  MessageSquare, 
-  Image, 
-  Video, 
-  ShieldAlert, 
-  Settings, 
-  LayoutDashboard,
-  Heart,
-  Flag,
-  BookMarked,
-  BadgeAlert,
-  Ghost,
-  Database,
-  UserCheck,
-  AlertTriangle,
-  Trash2,
-  BarChart,
+  UserCheck, 
+  AlertTriangle, 
+  Trash2, 
+  BarChart, 
   CreditCard,
   Eye,
-  Webcam
+  Webcam,
+  Video,
+  MessageSquare,
+  Heart,
+  Ghost,
+  Database
 } from "lucide-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-
-const adminRoutes = [
-  {
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    href: "/admin",
-  },
-  {
-    label: "Users",
-    icon: Users,
-    href: "/admin/users",
-  },
-  {
-    label: "Messages",
-    icon: MessageSquare,
-    href: "/admin/messages",
-  },
-  {
-    label: "Photos",
-    icon: Image,
-    href: "/admin/photos",
-  },
-  {
-    label: "Videos",
-    icon: Video,
-    href: "/admin/videos",
-  },
-  {
-    label: "Saved Content",
-    icon: BookMarked,
-    href: "/admin/saved",
-  },
-  {
-    label: "Dating Ads",
-    icon: Heart,
-    href: "/admin/dating",
-  },
-  {
-    label: "Reports",
-    icon: Flag,
-    href: "/admin/reports",
-  },
-  {
-    label: "Violations",
-    icon: ShieldAlert,
-    href: "/admin/violations",
-  },
-  {
-    label: "Eros Mode",
-    icon: Settings,
-    href: "/admin/features",
-  },
-  {
-    label: "Verifications",
-    icon: BadgeAlert,
-    href: "/admin/verifications",
-  }
-];
 
 const platformRoutes = [
   {
@@ -272,37 +207,16 @@ export const Sidebar = () => {
           ))}
         </div>
 
-        <Separator className="my-4 bg-white/5" />
-
-        <div className="space-y-1">
-          <p className="text-xs uppercase text-muted-foreground mb-2">Admin Routes</p>
-          {adminRoutes.map((route) => (
-            <Link
-              key={route.href}
-              to={route.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                location.pathname === route.href
-                  ? "bg-luxury-primary/10 text-luxury-primary"
-                  : "text-muted-foreground hover:bg-luxury-primary/5 hover:text-luxury-primary"
-              )}
-            >
-              <route.icon className="h-4 w-4" />
-              {route.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Ghost Mode Indicator at Bottom */}
-      {isGhostMode && (
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="bg-black/70 backdrop-blur-sm px-3 py-2 rounded-lg text-sm text-white border border-purple-500/30 shadow-lg flex items-center gap-2">
-            <Ghost className="h-4 w-4 text-purple-400" />
-            <span className="text-purple-200">Ghost Mode Active</span>
+        {/* Ghost Mode Indicator at Bottom */}
+        {isGhostMode && (
+          <div className="absolute bottom-4 left-4 right-4">
+            <div className="bg-black/70 backdrop-blur-sm px-3 py-2 rounded-lg text-sm text-white border border-purple-500/30 shadow-lg flex items-center gap-2">
+              <Ghost className="h-4 w-4 text-purple-400" />
+              <span className="text-purple-200">Ghost Mode Active</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
