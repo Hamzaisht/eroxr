@@ -38,6 +38,7 @@ export const ContentSurveillanceList = ({
   items,
   isLoading,
   error,
+  emptyMessage,
   type = 'content',
   onViewContent
 }: ContentSurveillanceListProps) => {
@@ -77,7 +78,7 @@ export const ContentSurveillanceList = ({
       </div>
     );
   }
-
+  
   const handleActionClick = (item: SurveillanceContentItem, action: ModerationAction) => {
     setSelectedItem(item);
     

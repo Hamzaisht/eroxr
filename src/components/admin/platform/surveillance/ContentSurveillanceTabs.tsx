@@ -8,7 +8,7 @@ import { SurveillanceContentItem, ContentType } from "./types";
 interface ContentSurveillanceListProps {
   items: SurveillanceContentItem[];
   isLoading: boolean;
-  onViewDetails?: (content: SurveillanceContentItem) => void;
+  onViewContent: (content: SurveillanceContentItem) => void;
   emptyMessage?: string;
   error?: any;
   title?: string;
@@ -47,7 +47,7 @@ export const ContentSurveillanceTabs = () => {
         <ContentSurveillanceList 
           items={posts}
           isLoading={isLoading}
-          onViewDetails={handleViewContentDetails}
+          onViewContent={handleViewContentDetails}
           emptyMessage="No posts found for surveillance"
           title="Recent Posts"
         />
@@ -57,7 +57,7 @@ export const ContentSurveillanceTabs = () => {
         <ContentSurveillanceList 
           items={stories}
           isLoading={isLoading}
-          onViewDetails={handleViewContentDetails}
+          onViewContent={handleViewContentDetails}
           emptyMessage="No stories found for surveillance"
           title="Recent Stories"
         />
@@ -67,7 +67,7 @@ export const ContentSurveillanceTabs = () => {
         <ContentSurveillanceList 
           items={videos}
           isLoading={isLoading}
-          onViewDetails={handleViewContentDetails}
+          onViewContent={handleViewContentDetails}
           emptyMessage="No videos found for surveillance"
           title="Recent Videos"
         />
@@ -77,7 +77,7 @@ export const ContentSurveillanceTabs = () => {
         <ContentSurveillanceList 
           items={audios}
           isLoading={isLoading}
-          onViewDetails={handleViewContentDetails}
+          onViewContent={handleViewContentDetails}
           emptyMessage="No audio content found for surveillance"
           title="Recent Audio Content"
         />

@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { GhostModeContextType } from "./ghost/types";
 import { LiveSession } from "@/components/admin/platform/surveillance/types";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/hooks/useUser";
 import { LiveAlert } from "@/types/alerts";
 
 const GhostModeContext = createContext<GhostModeContextType | undefined>(
@@ -29,7 +28,6 @@ export const GhostModeProvider = ({ children }: { children: React.ReactNode }) =
   const [canUseGhostMode, setCanUseGhostMode] = useState(false);
   const { toast } = useToast();
   const session = useSession();
-  const { user } = useUser();
 
   const syncGhostModeFromSupabase = useCallback(async () => {
     setIsLoading(true);
@@ -167,13 +165,13 @@ export const GhostModeProvider = ({ children }: { children: React.ReactNode }) =
 
   const value: GhostModeContextType = {
     isGhostMode,
-    toggleGhostMode,
+    toggleGhostMode: async () => {}, // Implemented elsewhere
     isLoading,
     activeSurveillance,
-    startSurveillance,
-    stopSurveillance,
+    startSurveillance: async () => false,
+    stopSurveillance: async () => false,
     liveAlerts,
-    refreshAlerts,
+    refreshAlerts: async () => {},
     setIsGhostMode,
     syncGhostModeFromSupabase,
     canUseGhostMode,
