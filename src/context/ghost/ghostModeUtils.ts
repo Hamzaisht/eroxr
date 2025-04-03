@@ -64,6 +64,11 @@ export const toggleGhostModeState = async (
   try {
     setIsLoading(true);
     
+    // Debug logs as requested
+    console.log('Toggling ghost mode...');
+    console.log('Previous state:', currentGhostMode);
+    console.log('User ID:', session.user.id);
+    
     // If turning off ghost mode, stop any active surveillance
     if (currentGhostMode && activeSurveillance.isWatching) {
       console.log('Stopping active surveillance before toggling ghost mode');
@@ -71,7 +76,7 @@ export const toggleGhostModeState = async (
     }
 
     const newGhostModeState = !currentGhostMode;
-    console.log(`Toggling ghost mode from ${currentGhostMode} to ${newGhostModeState}`);
+    console.log('New ghost mode state will be:', newGhostModeState);
 
     // Update ghost mode state in Supabase
     const { error } = await supabase
@@ -108,6 +113,7 @@ export const toggleGhostModeState = async (
 
     // Update local state
     setIsGhostMode(newGhostModeState);
+    console.log('Local state updated to:', newGhostModeState);
   } catch (error) {
     console.error("Error toggling ghost mode:", error);
   } finally {
