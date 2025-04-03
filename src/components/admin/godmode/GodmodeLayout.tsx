@@ -3,18 +3,32 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { GodmodeSidebar } from "./GodmodeSidebar";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import { LoadingScreen } from "@/components/layout/LoadingScreen";
 
 function GodmodeLayout() {
   const session = useSession();
   const location = useLocation();
-  const role = session?.user?.user_metadata?.role;
+  const { isSuperAdmin, isLoading } = useSuperAdminCheck();
   
   // Add debug logging
   console.log("GodmodeLayout rendering, session:", session ? "exists" : "null");
-  console.log("User role:", role || "not set");
+  console.log("Is Super Admin:", isSuperAdmin);
+  console.log("User email:", session?.user?.email);
+
+  // Show loading while checking admin status
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  // If no session, redirect to login
+  if (!session) {
+    console.log("No session, redirecting to login");
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
   // Role guard for super_admin
-  if (role !== "super_admin") {
+  if (!isSuperAdmin) {
     console.log("Access denied: User is not a super_admin");
     return <Navigate to="/" state={{ from: location }} replace />;
   }
