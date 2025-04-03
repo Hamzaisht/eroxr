@@ -27,8 +27,6 @@ interface GhostModeContextType {
   syncGhostModeFromSupabase: () => Promise<void>;
 }
 
-const GHOST_MODE_KEY = 'eroxr_ghost_mode_active';
-
 const GhostModeContext = createContext<GhostModeContextType>({
   isGhostMode: false,
   toggleGhostMode: async () => {},
@@ -45,12 +43,8 @@ const GhostModeContext = createContext<GhostModeContextType>({
 });
 
 export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
-  // Try to get the initial ghost mode state from localStorage
-  const storedGhostMode = typeof window !== 'undefined' ? 
-    localStorage.getItem(GHOST_MODE_KEY) === 'true' : false;
-    
-  const [isGhostMode, setIsGhostMode] = useState(storedGhostMode);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isGhostMode, setIsGhostMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const session = useSession();
   const { isSuperAdmin } = useSuperAdminCheck();
@@ -80,12 +74,11 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         if (error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
           console.error("Error fetching ghost mode state:", error);
         }
-        // No existing session found, we'll use the localStorage value
+        // No existing session found, we'll create one with ghost mode disabled
+        setIsGhostMode(false);
       } else if (data) {
         // Update state based on database value
         setIsGhostMode(data.ghost_mode);
-        // Also update localStorage for consistency
-        localStorage.setItem(GHOST_MODE_KEY, data.ghost_mode.toString());
         
         if (data.ghost_mode) {
           console.log("Ghost mode active state loaded from database");
@@ -104,13 +97,6 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       syncGhostModeFromSupabase();
     }
   }, [session?.user?.id, isSuperAdmin, syncGhostModeFromSupabase]);
-
-  // Persist ghost mode state to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(GHOST_MODE_KEY, isGhostMode.toString());
-    }
-  }, [isGhostMode]);
 
   // Log ghost mode status for debugging
   useEffect(() => {
@@ -151,7 +137,22 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Log action to admin_audit_logs
+      // Log action to admin_logs
+      await supabase.from('admin_logs').insert({
+        admin_id: session.user.id,
+        action: newGhostModeState ? 'ghost_mode_enabled' : 'ghost_mode_disabled',
+        action_type: 'toggle_ghost_mode',
+        target_type: 'admin',
+        target_id: session.user.id,
+        details: {
+          timestamp: new Date().toISOString(),
+          user_email: session.user.email,
+          previous_state: isGhostMode,
+          new_state: newGhostModeState
+        }
+      });
+      
+      // Also log to admin_audit_logs for redundancy and compatibility
       await supabase.from('admin_audit_logs').insert({
         user_id: session.user.id,
         action: isGhostMode ? 'ghost_mode_disabled' : 'ghost_mode_enabled',

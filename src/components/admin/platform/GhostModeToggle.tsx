@@ -1,7 +1,7 @@
 
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { Button } from "@/components/ui/button";
-import { Ghost, Eye, AlertTriangle } from "lucide-react";
+import { Ghost, Eye } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,23 @@ export const GhostModeToggle = () => {
     setIsToggling(true);
     try {
       await toggleGhostMode();
+
+      // Log toggle to admin_logs (this is redundant as it's already done in the context, but adding for clarity)
+      if (session?.user?.id) {
+        await supabase.from('admin_logs').insert({
+          admin_id: session.user.id,
+          action: isGhostMode ? 'ghost_mode_disabled' : 'ghost_mode_enabled',
+          action_type: 'toggle_ghost_mode',
+          target_type: 'admin',
+          target_id: session.user.id,
+          details: {
+            timestamp: new Date().toISOString(),
+            previous_state: isGhostMode,
+            new_state: !isGhostMode,
+            component: 'GhostModeToggle'
+          }
+        });
+      }
     } finally {
       setIsToggling(false);
     }
