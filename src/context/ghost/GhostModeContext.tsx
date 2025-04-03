@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -9,7 +10,8 @@ import { GhostModeContextType } from "./types";
 import { syncGhostModeState, toggleGhostModeState } from "./ghostModeUtils";
 import { useGhostAlerts, useGhostSurveillance } from "./hooks";
 
-const GhostModeContext = createContext<GhostModeContextType>({
+// Make GhostModeContext a named export
+export const GhostModeContext = createContext<GhostModeContextType>({
   isGhostMode: false,
   toggleGhostMode: async () => {},
   isLoading: false,
@@ -114,4 +116,11 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useGhostMode = () => useContext(GhostModeContext);
+// Export the hook to use the context
+export const useGhostModeContext = () => {
+  const context = useContext(GhostModeContext);
+  if (!context) {
+    throw new Error("useGhostModeContext must be used within a GhostModeProvider");
+  }
+  return context;
+};

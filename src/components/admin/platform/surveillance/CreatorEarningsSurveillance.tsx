@@ -22,17 +22,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Search, Download, CreditCard, RefreshCw, Loader2, Check } from "lucide-react";
 
-const getVariantForStatus = (status?: string): "default" | "destructive" | "outline" | "secondary" => {
-  switch (status) {
-    case "pending":
-      return "outline";
-    case "approved":
-      return "secondary";
-    case "processed":
-      return "default";
+const getVariantForStatus = (status: string): "default" | "destructive" | "outline" | "secondary" => {
+  switch (status.toLowerCase()) {
     case "flagged":
-    case "rejected":
       return "destructive";
+    case "pending":
+      return "secondary";
+    case "warning":
+      return "outline";
     default:
       return "default";
   }
@@ -153,9 +150,7 @@ export function CreatorEarningsSurveillance() {
                         {earning.created_at && formatPayoutDate(earning.created_at)}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge 
-                          variant={getVariantForStatus(earning.status)}
-                        >
+                        <Badge variant={getVariantForStatus(earning.status)}>
                           {earning.status || "Active"}
                         </Badge>
                       </TableCell>
