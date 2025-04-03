@@ -6,13 +6,14 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { LiveSession, ModerationAction, LiveSessionType } from "../../types";
+import { LiveSession, LiveSessionType } from "../../types";
 import { SurveillanceContentItem, SessionModerationActionProps } from "@/types/surveillance";
 import { useState } from "react";
 import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
 import { ModerationActionButton } from "./ModerationActionButton";
 import { useModerationActions } from "@/hooks/useModerationActions";
+import { ModerationAction } from "@/types/moderation";
 
 export function ModerationActions({
   session,

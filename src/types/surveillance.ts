@@ -1,5 +1,6 @@
 
 import { LiveSessionType } from "@/components/admin/platform/surveillance/types";
+import { ModerationAction } from "@/types/moderation";
 
 export interface SurveillanceContentItem {
   id: string;
@@ -28,11 +29,12 @@ export interface SurveillanceContentItem {
   ppv_amount?: number;
   original_content?: any;
   content_id?: string;
+  is_paused?: boolean;
 }
 
 export interface SessionModerationActionProps {
   session: SurveillanceContentItem | any;
-  onModerate: (content: SurveillanceContentItem | any, action: string, editedContent?: string) => Promise<void>;
+  onModerate: (content: SurveillanceContentItem | any, action: ModerationAction, editedContent?: string) => Promise<void>;
   actionInProgress: string | null;
 }
 

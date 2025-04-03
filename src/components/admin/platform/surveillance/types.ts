@@ -2,6 +2,7 @@
 import { ReactNode } from "react";
 import { LiveAlert } from "@/types/alerts";
 import { SurveillanceContentItem, SessionModerationActionProps } from "@/types/surveillance";
+import { ModerationAction } from "@/types/moderation";
 
 // LiveSession types
 export type LiveSessionType = 'stream' | 'call' | 'chat' | 'content' | 'bodycontact';
@@ -35,21 +36,7 @@ export type ContentType = 'posts' | 'stories' | 'videos' | 'audios';
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
 
 // Re-export from centralized type
-export { SurveillanceContentItem };
-
-// Moderation action types
-export type ModerationAction = 
-  | 'delete' 
-  | 'flag' 
-  | 'ban' 
-  | 'warn' 
-  | 'shadowban' 
-  | 'edit'
-  | 'view'
-  | 'restore'
-  | 'force_delete'
-  | 'pause'
-  | 'unpause';
+export type { SurveillanceContentItem };
 
 // Define the shape of a content icon
 export interface ContentIcon {
@@ -106,4 +93,4 @@ export interface SearchFilterProps {
 }
 
 // Re-export for compatibility
-export { SessionModerationActionProps };
+export type { SessionModerationActionProps };

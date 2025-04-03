@@ -1,5 +1,5 @@
 
-import { LiveSession, ModerationAction, SurveillanceContentItem } from "../../types";
+import { LiveSession, SurveillanceContentItem } from "../../types";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dispatch, SetStateAction, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { ModerationAction } from "@/types/moderation";
 
 interface ModerationActionDialogProps {
   open: boolean;

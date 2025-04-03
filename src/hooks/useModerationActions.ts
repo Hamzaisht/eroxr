@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { LiveSession, SurveillanceContentItem, ModerationAction } from "@/components/admin/platform/surveillance/types";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { SurveillanceContentItem } from "@/types/surveillance";
+import { ModerationAction } from "@/types/moderation";
 
 export function useModerationActions() {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -13,7 +15,7 @@ export function useModerationActions() {
     content: LiveSession | SurveillanceContentItem,
     action: ModerationAction,
     editedContent?: string
-  ) => {
+  ): Promise<void> => {
     const contentId = content.id;
     setActionInProgress(contentId);
     

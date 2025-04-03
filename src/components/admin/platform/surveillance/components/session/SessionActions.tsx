@@ -1,14 +1,15 @@
 
 import { ExternalLink, Ghost } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LiveSession, ModerationAction } from "../../types";
+import { LiveSession } from "../../types";
+import { ModerationAction } from "@/types/moderation";
 import { ModerationActions } from "../moderation/ModerationActions";
 
 interface SessionActionsProps {
   session: LiveSession;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
   onShowMediaPreview: (session: LiveSession) => void;
-  onModerate: (session: LiveSession, action: ModerationAction, editedContent?: string) => void;
+  onModerate: (session: LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
   actionInProgress: string | null;
 }
 
