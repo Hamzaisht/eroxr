@@ -1,4 +1,3 @@
-
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
 
 export type LiveSessionType = 'stream' | 'call' | 'chat' | 'bodycontact' | 'content';
@@ -47,7 +46,7 @@ export interface LiveSession {
 }
 
 // Content-specific type for content surveillance
-export type ContentType = 'posts' | 'stories' | 'videos' | 'audios' | 'ppv';
+export type ContentType = 'posts' | 'stories' | 'videos' | 'audios' | 'ppv' | 'post' | 'story' | 'video' | 'audio';
 
 export interface SurveillanceContentItem {
   id: string;
@@ -74,6 +73,8 @@ export interface SurveillanceContentItem {
   comments?: number;
   type?: string; // Adding type property
   status?: string; // Adding status property
+  source?: string; // Adding source property
+  amount?: number; // Adding amount property for earnings entries
 }
 
 export interface SessionModerationActionProps {

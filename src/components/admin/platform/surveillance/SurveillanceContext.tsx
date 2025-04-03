@@ -1,165 +1,106 @@
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { LiveAlert } from "@/types/alerts";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import { useSession } from "@supabase/auth-helpers-react";
+import { toggleGhostModeState, syncGhostModeState } from "./ghostModeUtils";
+import { useGhostSurveillance, useGhostAlerts } from "./hooks";
+import { GhostModeContextType } from "./types";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { useSurveillanceData } from "./hooks/useSurveillanceData";
-import { LiveAlert, SurveillanceTab, LiveSession } from "./types";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+export const GhostModeContext = createContext<GhostModeContextType | undefined>(undefined);
 
-interface SurveillanceContextType {
-  activeTab: SurveillanceTab;
-  setActiveTab: (tab: SurveillanceTab) => void;
-  liveSessions: LiveSession[];
-  isLoading: boolean;
-  isRefreshing: boolean;
-  error: string | null;
-  handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
-  handleRefresh: () => Promise<void>;
-  fetchLiveSessions: () => Promise<void>;
+export function useGhostModeContext() {
+  const context = useContext(GhostModeContext);
+  if (!context) throw new Error("useGhostModeContext must be used within GhostModeProvider");
+  return context;
 }
 
-interface SurveillanceProviderProps {
-  children: React.ReactNode;
-  liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<void>;
-  startSurveillance: (session: LiveSession) => Promise<boolean>;
-}
-
-const SurveillanceContext = createContext<SurveillanceContextType | undefined>(undefined);
-
-export const SurveillanceProvider = ({ 
-  children,
-  liveAlerts,
-  refreshAlerts,
-  startSurveillance
-}: SurveillanceProviderProps) => {
-  const { 
-    activeTab,
-    setActiveTab,
-    liveSessions,
-    isLoading,
-    isRefreshing,
-    setIsRefreshing,
-    error,
-    setError,
-    fetchLiveSessions
-  } = useSurveillanceData();
+export function GhostModeProvider({ children }: { children: ReactNode }) {
+  const { isSuperAdmin } = useSuperAdminCheck();
+  const session = useSession();
   
-  const { toast } = useToast();
+  const [isGhostMode, setIsGhostMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [canUseGhostMode, setCanUseGhostMode] = useState(false);
   
-  // Handle refreshing the content
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
+  // Initialize ghost alerts
+  const { liveAlerts, refreshAlerts } = useGhostAlerts(isGhostMode);
+  
+  // Initialize ghost surveillance functionality
+  const { activeSurveillance, startSurveillance, stopSurveillance } = useGhostSurveillance(isGhostMode, isSuperAdmin);
+
+  // Sync ghost mode state with Supabase on component mount
+  useEffect(() => {
+    if (session?.user?.id) {
+      console.log('Initial sync of ghost mode state on provider mount');
+      syncGhostModeFromSupabase();
+    }
+  }, [session?.user?.id]);
+
+  // Update canUseGhostMode based on isSuperAdmin
+  useEffect(() => {
+    setCanUseGhostMode(isSuperAdmin);
     
-    try {
-      // Refresh alerts
-      await refreshAlerts();
-      
-      // Refresh the live sessions for the current tab
-      await fetchLiveSessions();
-      
-      toast({
-        title: "Refreshed",
-        description: "Surveillance data has been refreshed",
-      });
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-      toast({
-        title: "Refresh Failed",
-        description: "Could not refresh surveillance data",
-        variant: "destructive"
-      });
-    } finally {
-      setIsRefreshing(false);
+    // If user is not a super admin, ensure ghost mode is off
+    if (!isSuperAdmin && isGhostMode) {
+      console.log('User is not super admin, disabling ghost mode');
+      setIsGhostMode(false);
     }
-  }, [refreshAlerts, fetchLiveSessions, setIsRefreshing, toast]);
-  
-  // Set up surveillance session
-  const handleStartSurveillance = useCallback(async (session: LiveSession) => {
-    try {
-      // Log to admin_logs that admin started monitoring this session
-      await supabase.from('admin_logs').insert({
-        admin_id: supabase.auth.getUser().then(res => res.data.user?.id) || 'unknown',
-        action: 'start_surveillance',
-        action_type: 'monitoring',
-        target_type: session.type,
-        target_id: session.id,
-        details: {
-          session_type: session.type,
-          username: session.username,
-          started_at: new Date().toISOString()
-        }
-      });
-      
-      return await startSurveillance(session);
-    } catch (error) {
-      console.error("Error starting surveillance:", error);
-      toast({
-        title: "Error",
-        description: "Could not start surveillance session",
-        variant: "destructive"
-      });
-      return false;
-    }
-  }, [startSurveillance, toast]);
-  
-  // Subscribe to realtime updates for relevant tables based on active tab
-  React.useEffect(() => {
-    // Skip if not on a live content tab
-    if (!['streams', 'calls', 'chats', 'bodycontact'].includes(activeTab)) {
+  }, [isSuperAdmin, isGhostMode]);
+
+  // Toggle ghost mode
+  const toggleGhostMode = async (): Promise<void> => {
+    if (!session?.user?.id) {
+      console.error('Cannot toggle ghost mode: No user session available');
       return;
     }
     
-    // Determine which table to subscribe to based on active tab
-    let table = '';
-    switch (activeTab) {
-      case 'streams': table = 'live_streams'; break;
-      case 'calls': table = 'calls'; break;
-      case 'chats': table = 'direct_messages'; break;
-      case 'bodycontact': table = 'dating_ads'; break;
-      default: return;
+    if (!isSuperAdmin) {
+      console.error('Cannot toggle ghost mode: User is not a super admin');
+      return;
     }
     
-    const channel = supabase
-      .channel(`surveillance-${activeTab}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table
-      }, () => {
-        // Refresh data when changes occur
-        console.log(`Detected change in ${table}, refreshing data`);
-        fetchLiveSessions();
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [activeTab, fetchLiveSessions]);
-  
-  const value: SurveillanceContextType = {
-    activeTab,
-    setActiveTab,
-    liveSessions,
-    isLoading,
-    isRefreshing,
-    error,
-    handleStartSurveillance,
-    handleRefresh,
-    fetchLiveSessions
+    await toggleGhostModeState(
+      session,
+      isSuperAdmin,
+      isGhostMode,
+      setIsGhostMode,
+      setIsLoading,
+      stopSurveillance,
+      activeSurveillance
+    );
   };
-  
-  return (
-    <SurveillanceContext.Provider value={value}>
-      {children}
-    </SurveillanceContext.Provider>
-  );
-};
 
-export const useSurveillance = () => {
-  const context = useContext(SurveillanceContext);
-  if (context === undefined) {
-    throw new Error("useSurveillance must be used within a SurveillanceProvider");
-  }
-  return context;
-};
+  // Sync ghost mode state with Supabase
+  const syncGhostModeFromSupabase = async (): Promise<void> => {
+    if (!session?.user?.id) {
+      console.error('Cannot sync ghost mode: No user session available');
+      return;
+    }
+    
+    await syncGhostModeState(
+      session.user.id,
+      isSuperAdmin,
+      setIsGhostMode,
+      setIsLoading
+    );
+  };
+
+  return (
+    <GhostModeContext.Provider value={{ 
+      isGhostMode, 
+      setIsGhostMode,
+      toggleGhostMode,
+      canUseGhostMode,
+      isLoading,
+      activeSurveillance,
+      startSurveillance,
+      stopSurveillance,
+      liveAlerts,
+      refreshAlerts,
+      syncGhostModeFromSupabase
+    }}>
+      {children}
+    </GhostModeContext.Provider>
+  );
+}

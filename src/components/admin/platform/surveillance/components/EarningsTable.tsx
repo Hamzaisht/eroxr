@@ -1,97 +1,86 @@
+
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { CreatorEarnings } from "../types";
 import { formatCurrency, formatPayoutDate } from "../hooks/utils/payoutFormatters";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface EarningsTableProps {
   earnings: CreatorEarnings[];
   isLoading: boolean;
 }
 
-// Utility function to determine the badge variant based on status
-const getVariantForStatus = (status: string): "default" | "destructive" | "outline" | "secondary" => {
-  switch (status.toLowerCase()) {
-    case "flagged":
-      return "destructive";
-    case "pending":
-      return "secondary";
-    case "warning":
-      return "outline";
-    default:
-      return "default";
+export const EarningsTable = ({ earnings, isLoading }: EarningsTableProps) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </div>
+    );
   }
-};
 
-export function EarningsTable({ earnings, isLoading }: EarningsTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[200px]">Creator</TableHead>
-            <TableHead className="w-[120px]">Type</TableHead>
-            <TableHead className="w-[150px] text-right">Earnings</TableHead>
-            <TableHead className="text-right">Description</TableHead>
-            <TableHead className="w-[120px] text-center">Date</TableHead>
-            <TableHead className="w-[100px] text-center">Status</TableHead>
+            <TableHead>Creator</TableHead>
+            <TableHead>Total Earnings</TableHead>
+            <TableHead className="hidden md:table-cell">Subscription</TableHead>
+            <TableHead className="hidden md:table-cell">Tips</TableHead>
+            <TableHead className="hidden md:table-cell">PPV</TableHead>
+            <TableHead className="hidden md:table-cell">Last Payout</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
+          {earnings.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
-                Loading earnings data...
-              </TableCell>
-            </TableRow>
-          ) : earnings.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
-                No earnings data found
+              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                No earnings data available
               </TableCell>
             </TableRow>
           ) : (
             earnings.map((earning) => (
-              <TableRow key={earning.id + earning.user_id}>
-                <TableCell className="font-medium">
+              <TableRow key={earning.creator_id}>
+                <TableCell>
                   <div className="flex items-center space-x-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={earning.avatar_url} />
+                      <AvatarImage src={earning.avatar_url} alt={earning.username} />
                       <AvatarFallback>{earning.username.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-medium">{earning.username}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {earning.source || "Platform"}
-                      </div>
+                      <div className="text-xs text-muted-foreground">{earning.creator_id.substring(0, 8)}</div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="text-xs">
-                    {earning.description || "Earnings"}
-                  </div>
+                <TableCell>{formatCurrency(earning.total_earnings)}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {formatCurrency(earning.subscription_earnings)}
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="font-medium">{formatCurrency(earning.amount || 0)}</div>
+                <TableCell className="hidden md:table-cell">
+                  {formatCurrency(earning.tip_earnings)}
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="text-sm">{earning.description || "Platform earnings"}</div>
+                <TableCell className="hidden md:table-cell">
+                  {formatCurrency(earning.ppv_earnings)}
                 </TableCell>
-                <TableCell className="text-center text-xs">
-                  {earning.created_at && formatPayoutDate(earning.created_at)}
-                </TableCell>
-                <TableCell className="text-center">
-                  <Badge variant={getVariantForStatus(earning.status || "default")}>
-                    {earning.status || "Active"}
-                  </Badge>
+                <TableCell className="hidden md:table-cell">
+                  {earning.last_payout_date ? (
+                    <div className="flex flex-col">
+                      <span>{formatPayoutDate(earning.last_payout_date)}</span>
+                      {earning.last_payout_amount && (
+                        <span className="text-xs text-muted-foreground">
+                          {formatCurrency(earning.last_payout_amount)}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <Badge variant="outline">No Payouts</Badge>
+                  )}
                 </TableCell>
               </TableRow>
             ))
@@ -100,4 +89,4 @@ export function EarningsTable({ earnings, isLoading }: EarningsTableProps) {
       </Table>
     </div>
   );
-}
+};

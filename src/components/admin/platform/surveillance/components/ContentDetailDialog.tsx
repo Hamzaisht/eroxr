@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -16,6 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { SurveillanceContentItem } from "../types";
 import { useCallback, useEffect, useState } from "react";
 import { useModerationActions } from "@/hooks/useModerationActions";
+import { FileText, Video, Image, Clock, DollarSign, File } from "lucide-react";
 
 interface ContentDetailDialogProps {
   open: boolean;
@@ -40,7 +40,42 @@ export function ContentDetailDialog({
     buyers: []
   });
   
-  // Function to handle content interactions
+  const getContentTypeIcon = (contentItem: SurveillanceContentItem) => {
+    const contentType = contentItem.content_type || contentItem.type || 'unknown';
+    
+    switch (contentType.toLowerCase()) {
+      case 'post':
+        return <FileText className="h-4 w-4 mr-2" />;
+      case 'video':
+        return <Video className="h-4 w-4 mr-2" />;
+      case 'image':
+        return <Image className="h-4 w-4 mr-2" />;
+      case 'story':
+        return <Clock className="h-4 w-4 mr-2" />;
+      case 'ppv':
+        return <DollarSign className="h-4 w-4 mr-2" />;
+      default:
+        return <File className="h-4 w-4 mr-2" />;
+    }
+  };
+
+  const getStatusBadge = (contentItem: SurveillanceContentItem) => {
+    const status = contentItem.status || 'published';
+    
+    switch (status.toLowerCase()) {
+      case 'draft':
+        return <Badge variant="outline">Draft</Badge>;
+      case 'pending':
+        return <Badge variant="secondary">Pending</Badge>;
+      case 'published':
+        return <Badge variant="default">Published</Badge>;
+      case 'flagged':
+        return <Badge variant="destructive">Flagged</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
   const fetchContentInteractions = useCallback(async (contentId: string, contentType: string) => {
     try {
       // Mock implementation - would be replaced with real fetch

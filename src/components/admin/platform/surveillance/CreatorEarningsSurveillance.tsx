@@ -8,7 +8,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 
-// Import the newly created components
+// Import the necessary components
 import { SearchFilterBar } from "./components/SearchFilterBar";
 import { EarningsTable } from "./components/EarningsTable";
 import { PendingPayoutsTable } from "./components/PendingPayoutsTable";
@@ -27,10 +27,10 @@ export function CreatorEarningsSurveillance() {
     processPayouts 
   } = useCreatorEarnings();
   
-  // Filter data based on search query
+  // Filter data based on search query - adjust for CreatorEarnings structure
   const filteredEarnings = earnings.filter(earning => 
     earning.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (earning.user_id && earning.user_id.toLowerCase().includes(searchQuery.toLowerCase()))
+    earning.creator_id.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const filteredPendingPayouts = pendingPayouts.filter(payout => 

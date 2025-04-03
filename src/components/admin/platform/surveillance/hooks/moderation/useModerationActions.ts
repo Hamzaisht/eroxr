@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -30,8 +29,7 @@ export function useModerationActions() {
     try {
       // Determine content type and database table
       // Check if the content is a LiveSession or a SurveillanceContentItem
-      const contentType = 'type' in content ? content.type : 
-                          'content_type' in content ? content.content_type : 'unknown';
+      const contentType = getContentTypeForLog(content);
       
       let targetTable = '';
       let statusField = 'status';
@@ -200,3 +198,15 @@ export function useModerationActions() {
     handleModeration
   };
 }
+
+const getContentTypeForLog = (content: LiveSession | SurveillanceContentItem): string => {
+  if ('type' in content) {
+    return content.type;
+  }
+  
+  if ('content_type' in content && content.content_type) {
+    return content.content_type;
+  }
+  
+  return 'unknown';
+};

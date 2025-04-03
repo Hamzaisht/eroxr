@@ -109,13 +109,13 @@ export const AdminFlaggedContentView = () => {
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'high':
-        return <Badge variant="destructive">High Severity</Badge>;
+        return <Badge variant="destructive">{severity}</Badge>;
       case 'medium':
-        return <Badge variant="secondary" className="bg-orange-500 hover:bg-orange-600">Medium Severity</Badge>;
+        return <Badge variant="outline">{severity}</Badge>;
       case 'low':
-        return <Badge variant="outline" className="text-yellow-400 border-yellow-400">Low Severity</Badge>;
+        return <Badge variant="secondary">{severity}</Badge>;
       default:
-        return <Badge>Unknown Severity</Badge>;
+        return <Badge variant="outline">{severity}</Badge>;
     }
   };
   
