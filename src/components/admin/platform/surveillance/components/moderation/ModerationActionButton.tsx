@@ -1,79 +1,50 @@
 
-import { Ban, Flag, MessageSquare, Trash2, Eye, Edit, Shield, Pause, Play } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LiveSession, ModerationAction, SurveillanceContentItem } from "../../types";
+import { Ban, Eye, Flag, ShieldAlert } from "lucide-react";
+import { LiveSession, ModerationAction, SessionModerationActionProps } from "../../types";
 
-interface ModerationActionButtonProps {
-  session: LiveSession | SurveillanceContentItem;
+interface ModerationButtonProps {
+  session: LiveSession;
   onAction: (action: ModerationAction) => void;
   actionInProgress: string | null;
 }
 
-export function ModerationActionButton({
-  session,
-  onAction,
+export function ModerationActionButton({ 
+  session, 
+  onAction, 
   actionInProgress
-}: ModerationActionButtonProps) {
-  // Helper to check if user is paused
-  const isUserPaused = (): boolean => {
-    if ('is_paused' in session) {
-      return !!session.is_paused;
-    }
-    return false;
-  };
-
-  // Determine the default/primary action based on content type or status
-  const getPrimaryAction = (): { action: ModerationAction; icon: JSX.Element; label: string } => {
-    // If the user is paused, primary action should be unpause
-    if (isUserPaused()) {
+}: ModerationButtonProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Determine the most appropriate action based on session type
+  const getPrimaryAction = (): { action: ModerationAction; icon: JSX.Element; variant: string; label: string } => {
+    // Text-based content like messages prioritize view/edit
+    if (session.type === "chat" || session.content_type === "message") {
       return {
-        action: 'unpause',
-        icon: <Play className="h-4 w-4 mr-2" />,
-        label: 'Unpause'
+        action: "view",
+        icon: <Eye className="h-3.5 w-3.5 mr-1" />,
+        variant: "outline",
+        label: "View"
       };
     }
     
-    // If the content is a chat message, primary action is probably "view"
-    if (session.type === 'chat' || session.type === 'message') {
+    // User profiles prioritize ban
+    if (session.content_type === "user" || session.content_type === "profile") {
       return {
-        action: 'view',
-        icon: <Eye className="h-4 w-4 mr-2" />,
-        label: 'View'
+        action: "ban",
+        icon: <Ban className="h-3.5 w-3.5 mr-1" />,
+        variant: "destructive",
+        label: "Ban User"
       };
     }
     
-    // If it's a user or profile type content, primary action is probably "ban"
-    if (session.type === 'user' || session.type === 'profile') {
-      return {
-        action: 'ban',
-        icon: <Ban className="h-4 w-4 mr-2" />,
-        label: 'Ban User'
-      };
-    }
-    
-    // If it's suspicious content, suggest shadowban as the primary action
-    if (session.status === 'suspicious' || session.status === 'reported') {
-      return {
-        action: 'shadowban',
-        icon: <Shield className="h-4 w-4 mr-2" />,
-        label: 'Shadowban'
-      };
-    }
-    
-    // If it's inactive or problematic content, suggest pause as primary action
-    if (session.status === 'inactive' || session.status === 'problematic') {
-      return {
-        action: 'pause',
-        icon: <Pause className="h-4 w-4 mr-2" />,
-        label: 'Pause Account'
-      };
-    }
-    
-    // For most content, flagging is a good default action
+    // Default to flag for most content
     return {
-      action: 'flag',
-      icon: <Flag className="h-4 w-4 mr-2" />,
-      label: 'Flag'
+      action: "flag",
+      icon: <Flag className="h-3.5 w-3.5 mr-1" />,
+      variant: "warning",
+      label: "Flag" 
     };
   };
   
@@ -81,15 +52,11 @@ export function ModerationActionButton({
   
   return (
     <Button
-      variant="outline"
       size="sm"
-      className={`${
-        primaryAction.action === 'unpause' 
-          ? 'text-green-500 border-green-500/30 bg-green-900/10 hover:bg-green-800/20' 
-          : 'text-amber-500 border-amber-500/30 bg-amber-900/10 hover:bg-amber-800/20'
-      }`}
+      variant={primaryAction.variant as any}
+      className="h-7 text-xs"
       onClick={() => onAction(primaryAction.action)}
-      disabled={!!actionInProgress}
+      disabled={!!actionInProgress || isLoading}
     >
       {primaryAction.icon}
       {primaryAction.label}

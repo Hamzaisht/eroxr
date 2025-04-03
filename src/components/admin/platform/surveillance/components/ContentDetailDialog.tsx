@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -5,7 +6,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { SurveillanceContentItem } from "../../types";
+import { SurveillanceContentItem } from "../types";
 import { useCallback, useEffect, useState } from "react";
-import { useModerationActions } from "../../hooks/useModerationActions";
+import { useModerationActions } from "@/hooks/useModerationActions";
 
 interface ContentDetailDialogProps {
   open: boolean;
@@ -81,11 +81,11 @@ export function ContentDetailDialog({
               <div className="flex items-center space-x-3">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={session.avatar_url || undefined} alt={session.username} />
-                  <AvatarFallback>{session.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{session.username?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="text-sm font-medium">{session.username}</p>
-                  <p className="text-xs text-gray-500">ID: {session.creator_id}</p>
+                  <p className="text-xs text-gray-500">ID: {session.creator_id || session.user_id}</p>
                 </div>
               </div>
             </div>

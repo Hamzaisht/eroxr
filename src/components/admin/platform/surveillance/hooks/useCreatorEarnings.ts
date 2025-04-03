@@ -1,154 +1,184 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorEarnings, PayoutRequest } from "../types";
-import { useToast } from "@/hooks/use-toast";
 import { formatPayoutRequest, processEarningsData } from "./utils/payoutFormatters";
 
 export function useCreatorEarnings() {
-  const [creatorEarnings, setCreatorEarnings] = useState<CreatorEarnings[]>([]);
+  const [earnings, setEarnings] = useState<CreatorEarnings[]>([]);
   const [pendingPayouts, setPendingPayouts] = useState<PayoutRequest[]>([]);
-  const [processingPayouts, setProcessingPayouts] = useState<PayoutRequest[]>([]);
-  const [completedPayouts, setCompletedPayouts] = useState<PayoutRequest[]>([]);
+  const [approvedPayouts, setApprovedPayouts] = useState<PayoutRequest[]>([]);
+  const [processedPayouts, setProcessedPayouts] = useState<PayoutRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const session = useSession();
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchEarnings();
-
-    // Create subscription for real-time updates to payouts
-    const channel = supabase
-      .channel('creator-earnings-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'payout_requests' 
-      }, () => {
-        fetchEarnings();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const fetchEarnings = async () => {
+  const session = useSession();
+  
+  const fetchAll = useCallback(async () => {
+    if (!session?.user?.id) return;
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      // Fetch creator earnings data with profile information
-      const { data: earnings, error: earningsError } = await supabase
-        .from('payout_requests')
+      // Fetch creator earnings
+      const { data: earningsData, error: earningsError } = await supabase
+        .from('creator_metrics')
         .select(`
-          id,
-          creator_id,
-          amount,
-          platform_fee,
-          final_amount,
-          requested_at,
-          approved_at,
-          processed_at,
-          status,
-          notes,
-          profiles:creator_id(username, avatar_url)
+          *,
+          profiles:user_id(
+            username,
+            avatar_url
+          )
         `)
+        .order('earnings', { ascending: false })
+        .limit(100);
+        
+      if (earningsError) throw earningsError;
+      
+      // Fetch payouts by status
+      const { data: pendingData, error: pendingError } = await supabase
+        .from('payout_requests')
+        .select('*, profiles:creator_id(username)')
+        .eq('status', 'pending')
         .order('requested_at', { ascending: false });
+        
+      if (pendingError) throw pendingError;
+        
+      const { data: approvedData, error: approvedError } = await supabase
+        .from('payout_requests')
+        .select('*, profiles:creator_id(username)')
+        .eq('status', 'approved')
+        .order('approved_at', { ascending: false });
+        
+      if (approvedError) throw approvedError;
+        
+      const { data: processedData, error: processedError } = await supabase
+        .from('payout_requests')
+        .select('*, profiles:creator_id(username)')
+        .eq('status', 'processed')
+        .order('processed_at', { ascending: false })
+        .limit(50);
+        
+      if (processedError) throw processedError;
       
-      if (earningsError) {
-        console.error("Error fetching earnings:", earningsError);
-        setError("Could not fetch earnings data");
-        return;
-      }
-
-      // Process earnings data
-      const processedEarnings = processEarningsData(earnings);
-
-      // Group payouts by status
-      const pending = earnings.filter(p => p.status === 'pending').map(formatPayoutRequest);
-      const processing = earnings.filter(p => p.status === 'approved').map(formatPayoutRequest);
-      const completed = earnings.filter(p => p.status === 'processed').map(formatPayoutRequest);
+      // Transform the data
+      const processedEarnings = processEarningsData(earningsData || []);
+      setEarnings(processedEarnings);
       
-      setCreatorEarnings(processedEarnings);
-      setPendingPayouts(pending);
-      setProcessingPayouts(processing);
-      setCompletedPayouts(completed);
-    } catch (err) {
-      console.error('Error fetching earnings data:', err);
-      setError('Failed to load earnings data. Please try again.');
+      // Transform and set the payout data with proper typing
+      const typedPendingPayouts = (pendingData || []).map(item => formatPayoutRequest(item));
+      const typedApprovedPayouts = (approvedData || []).map(item => formatPayoutRequest(item));
+      const typedProcessedPayouts = (processedData || []).map(item => formatPayoutRequest(item));
+      
+      setPendingPayouts(typedPendingPayouts);
+      setApprovedPayouts(typedApprovedPayouts);
+      setProcessedPayouts(typedProcessedPayouts);
+      
+    } catch (err: any) {
+      console.error("Error fetching creator earnings:", err);
+      setError(err.message || "Failed to load creator earnings data");
+      toast({
+        title: "Error",
+        description: "Failed to load earnings data. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handlePayoutAction = async (payoutId: string, action: 'approve' | 'reject' | 'process') => {
+  }, [session?.user?.id, toast]);
+  
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+  
+  const processPayouts = async (payoutIds: string[], action: 'approve' | 'process' | 'reject') => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to process payouts",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
-      // Apply action to the payout request in Supabase
-      let updates = {};
+      const now = new Date().toISOString();
+      let updates: any = {};
       
-      if (action === 'approve') {
-        updates = {
-          status: 'approved',
-          approved_at: new Date().toISOString()
-        };
-      } else if (action === 'reject') {
-        updates = {
-          status: 'rejected'
-        };
-      } else if (action === 'process') {
-        updates = {
-          status: 'processed',
-          processed_at: new Date().toISOString(),
-          processed_by: session?.user?.id
-        };
+      switch (action) {
+        case 'approve':
+          updates = {
+            status: 'approved',
+            approved_at: now
+          };
+          break;
+          
+        case 'process':
+          updates = {
+            status: 'processed',
+            processed_at: now,
+            processed_by: session.user.id
+          };
+          break;
+          
+        case 'reject':
+          updates = {
+            status: 'rejected',
+            processed_at: now,
+            processed_by: session.user.id
+          };
+          break;
       }
       
       const { error } = await supabase
         .from('payout_requests')
         .update(updates)
-        .eq('id', payoutId);
+        .in('id', payoutIds);
         
-      if (error) {
-        console.error(`Error ${action}ing payout:`, error);
-        toast({
-          title: "Action Failed",
-          description: `Could not ${action} the payout. Please try again.`,
-          variant: "destructive"
-        });
-        return;
-      }
+      if (error) throw error;
       
-      // Refresh data after successful action
-      await fetchEarnings();
-      
-      toast({
-        title: `Payout ${action === 'approve' ? 'Approved' : action === 'process' ? 'Processed' : 'Rejected'}`,
-        description: `Payout has been ${action === 'approve' ? 'approved' : action === 'process' ? 'processed' : 'rejected'} successfully.`
+      // Log the action
+      await supabase.from('admin_logs').insert({
+        admin_id: session.user.id,
+        action: action,
+        action_type: 'payment',
+        details: {
+          payout_ids: payoutIds,
+          action: action,
+          timestamp: now
+        }
       });
       
-    } catch (err) {
-      console.error(`Error processing payout action ${action}:`, err);
+      toast({
+        title: "Action Successful",
+        description: `Successfully ${action}ed ${payoutIds.length} payout${payoutIds.length > 1 ? 's' : ''}`,
+      });
+      
+      // Refresh data
+      fetchAll();
+      
+    } catch (err: any) {
+      console.error(`Error ${action}ing payouts:`, err);
       toast({
         title: "Action Failed",
-        description: `Could not ${action} the payout. Please try again.`,
+        description: `Failed to ${action} payouts. ${err.message}`,
         variant: "destructive"
       });
     }
   };
-
+  
   return {
-    creatorEarnings,
+    earnings,
     pendingPayouts,
-    processingPayouts,
-    completedPayouts,
+    approvedPayouts,
+    processedPayouts,
     isLoading,
     error,
-    fetchEarnings,
-    handlePayoutAction
+    fetchAll,
+    processPayouts
   };
 }

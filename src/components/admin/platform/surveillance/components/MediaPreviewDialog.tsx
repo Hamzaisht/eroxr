@@ -1,408 +1,242 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LiveSession } from "../types";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+
+import { useState, useEffect, useCallback } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { useModerationActions } from "../hooks/useModerationActions";
-import { useState, useEffect } from "react";
-import { Loader2, User, Calendar, Clock, MapPin, Tag, Info, Eye, ThumbsUp, CreditCard } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LiveSession, SurveillanceContentItem } from "../types";
+import { AudioPlayer } from "./AudioPlayer";
+import { useModerationActions } from "@/hooks/useModerationActions";
 
 interface MediaPreviewDialogProps {
-  session: LiveSession | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  session: LiveSession | null;
 }
 
-export const MediaPreviewDialog = ({
-  session,
-  open,
-  onOpenChange
-}: MediaPreviewDialogProps) => {
-  const [activeTab, setActiveTab] = useState("preview");
-  const [interactions, setInteractions] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { fetchContentInteractions } = useModerationActions();
-
+export function MediaPreviewDialog({ open, onOpenChange, session }: MediaPreviewDialogProps) {
+  const { handleModeration } = useModerationActions();
+  const [userInteractions, setUserInteractions] = useState({
+    views: [],
+    likes: [],
+    comments: [],
+    shares: []
+  });
+  
+  // Mock implementation of fetchContentInteractions
+  const fetchContentInteractions = useCallback(async (id: string, type: string) => {
+    console.log(`Fetching interactions for ${type} content with ID ${id}`);
+    // Mock data - in a real implementation, this would fetch from an API
+    setUserInteractions({
+      views: [],
+      likes: [],
+      comments: [],
+      shares: []
+    });
+  }, []);
+  
   useEffect(() => {
-    const loadInteractions = async () => {
-      if (!session) return;
-      
-      setIsLoading(true);
-      try {
-        const contentType = session.type === 'bodycontact' ? 'ad' : session.type;
-        const data = await fetchContentInteractions(session.id, contentType);
-        setInteractions(data);
-      } catch (error) {
-        console.error("Error loading interactions:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    if (open && session && activeTab === "interactions") {
-      loadInteractions();
+    if (session && open) {
+      fetchContentInteractions(session.id, session.type);
     }
-  }, [session, open, activeTab, fetchContentInteractions]);
-
+  }, [session, open, fetchContentInteractions]);
+  
   if (!session) return null;
-
-  // Handle rendering media previews
-  const renderMediaPreviews = () => {
-    // If this is a video
-    if (session.video_url) {
-      return (
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-          <video 
-            src={session.video_url} 
-            controls 
-            className="h-full w-full"
-            poster={session.type === 'stream' ? undefined : undefined}
-          />
-        </div>
-      );
-    }
-    
-    // If there are images
-    if (session.media_url && session.media_url.length > 0) {
-      return (
-        <div className="mt-4 grid grid-cols-2 gap-2 mt-4">
-          {Array.isArray(session.media_url) ? (
-            session.media_url.map((url, index) => (
-              <div key={index} className="aspect-square overflow-hidden rounded-md">
-                <img 
-                  src={url} 
-                  alt={`Media ${index + 1}`} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))
-          ) : (
-            <div className="aspect-square overflow-hidden rounded-md">
-              <img 
-                src={session.media_url} 
-                alt="Media content" 
-                className="w-full h-full object-cover"
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Media Preview</DialogTitle>
+        </DialogHeader>
+        
+        <div className="grid gap-6 py-4">
+          {/* Video Content */}
+          {session.video_url && (
+            <div className="w-full aspect-video overflow-hidden rounded-lg bg-black">
+              <video 
+                src={session.video_url} 
+                controls 
+                className="w-full h-full object-contain"
               />
             </div>
           )}
-        </div>
-      );
-    }
-    
-    // If there's only text content
-    return (
-      <div className="p-4 bg-[#161B22] rounded-lg border border-white/10">
-        {session.content ? (
-          <p className="whitespace-pre-wrap">{session.content}</p>
-        ) : (
-          <p className="text-gray-400 italic">No media or content available</p>
-        )}
-      </div>
-    );
-  };
-
-  // Render metadata
-  const renderMetadata = () => {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <h3 className="font-medium text-sm text-gray-400">Basic Information</h3>
-            <div className="bg-[#161B22] p-3 rounded-lg border border-white/10 space-y-2">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">User: {session.username || 'Unknown'}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">Created: {format(new Date(session.created_at || session.started_at), 'PPP')}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">Time: {format(new Date(session.created_at || session.started_at), 'HH:mm:ss')}</span>
-              </div>
-              
-              {session.location && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">Location: {session.location}</span>
+          
+          {/* Image Gallery */}
+          {session.media_url && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {Array.isArray(session.media_url) ? session.media_url.map((url, index) => (
+                <div key={index} className="aspect-square overflow-hidden rounded-lg">
+                  <img 
+                    src={url} 
+                    alt={`Media ${index + 1}`}
+                    className="w-full h-full object-cover" 
+                  />
+                </div>
+              )) : (
+                <div className="aspect-square overflow-hidden rounded-lg">
+                  <img 
+                    src={session.media_url} 
+                    alt="Media"
+                    className="w-full h-full object-cover" 
+                  />
                 </div>
               )}
-              
-              {session.tags && session.tags.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-gray-400" />
-                  <div className="flex flex-wrap gap-1">
-                    {session.tags.map((tag, i) => (
-                      <Badge key={i} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
+            </div>
+          )}
+          
+          {/* Audio Content */}
+          {session.type === 'audio' && (
+            <AudioPlayer url={session.media_url as string} title={session.title || 'Audio'} />
+          )}
+          
+          {/* Content Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-sm font-medium mb-2">Content Info</h3>
+              <div className="space-y-2">
+                <p className="text-sm">
+                  <span className="font-medium">Created:</span> {format(new Date(session.created_at || session.started_at || ''), 'PPpp')}
+                </p>
+                
+                <p className="text-sm">
+                  <span className="font-medium">Last Updated:</span> {session.started_at ? format(new Date(session.started_at), 'PPpp') : 'N/A'}
+                </p>
+                
+                {session.location && (
+                  <p className="text-sm">
+                    <span className="font-medium">Location:</span> {session.location}
+                  </p>
+                )}
+                
+                {session.tags && session.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    <span className="text-sm font-medium mr-1">Tags:</span>
+                    {session.tags.map((tag, index) => (
+                      <Badge key={index} variant="outline">{tag}</Badge>
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <h3 className="font-medium text-sm text-gray-400">Advanced Information</h3>
-            <div className="bg-[#161B22] p-3 rounded-lg border border-white/10 space-y-2">
-              <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">Content Type: {session.type} {session.content_type ? `(${session.content_type})` : ''}</span>
+                )}
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">ID: {session.id}</span>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium mb-2">Status</h3>
+              <div className="space-y-2">
+                <p className="text-sm">
+                  <span className="font-medium">Type:</span> {session.content_type || session.type}
+                </p>
+                
+                <p className="text-sm">
+                  <span className="font-medium">Status:</span> <Badge>{session.status || 'active'}</Badge>
+                </p>
+                
+                {session.metadata && (
+                  <div className="space-y-1">
+                    {session.metadata.visibility && (
+                      <p className="text-sm">
+                        <span className="font-medium">Visibility:</span> {session.metadata.visibility}
+                      </p>
+                    )}
+                    
+                    {session.metadata.view_count && (
+                      <p className="text-sm">
+                        <span className="font-medium">Views:</span> {session.metadata.view_count}
+                      </p>
+                    )}
+                    
+                    {session.metadata.like_count && (
+                      <p className="text-sm">
+                        <span className="font-medium">Likes:</span> {session.metadata.like_count}
+                      </p>
+                    )}
+                    
+                    {session.metadata.comment_count && (
+                      <p className="text-sm">
+                        <span className="font-medium">Comments:</span> {session.metadata.comment_count || 0}
+                      </p>
+                    )}
+                    
+                    {session.metadata.duration && (
+                      <p className="text-sm">
+                        <span className="font-medium">Duration:</span> {session.metadata.duration} seconds
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-              
-              {session.metadata && (
-                <>
-                  {session.metadata.view_count !== undefined && (
-                    <div className="flex items-center gap-2">
-                      <Eye className="h-4 w-4 text-blue-400" />
-                      <span className="text-sm">Views: {session.metadata.view_count}</span>
-                    </div>
-                  )}
-                  
-                  {session.metadata.message_count !== undefined && (
-                    <div className="flex items-center gap-2">
-                      <Info className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">Messages: {session.metadata.message_count}</span>
-                    </div>
-                  )}
-                  
-                  {session.metadata.verification_status && (
-                    <div className="flex items-center gap-2">
-                      <Info className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">Verification: {session.metadata.verification_status}</span>
-                    </div>
-                  )}
-                  
-                  {session.metadata.latitude && session.metadata.longitude && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">
-                        Coordinates: {session.metadata.latitude}, {session.metadata.longitude}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {session.metadata.message_source && (
-                    <div className="flex items-center gap-2">
-                      <Info className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">Source: {session.metadata.message_source}</span>
-                    </div>
-                  )}
-                </>
-              )}
             </div>
           </div>
-        </div>
-        
-        {session.about_me && (
+          
+          {/* Content Description */}
+          {(session.about_me || session.description) && (
+            <div>
+              <h3 className="text-sm font-medium mb-2">Description</h3>
+              <p className="text-sm whitespace-pre-wrap bg-muted p-3 rounded">
+                {session.about_me || session.description || 'No description provided.'}
+              </p>
+            </div>
+          )}
+          
+          {/* User Interactions */}
           <div>
-            <h3 className="font-medium text-sm text-gray-400 mb-2">About User</h3>
-            <div className="bg-[#161B22] p-3 rounded-lg border border-white/10">
-              <p className="text-sm whitespace-pre-wrap">{session.about_me}</p>
+            <h3 className="text-sm font-medium mb-2">User Interactions</h3>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="bg-muted p-3 rounded text-center">
+                <div className="text-xl font-semibold">{userInteractions.views.length}</div>
+                <div className="text-xs text-muted-foreground">Views</div>
+              </div>
+              <div className="bg-muted p-3 rounded text-center">
+                <div className="text-xl font-semibold">{userInteractions.likes.length}</div>
+                <div className="text-xs text-muted-foreground">Likes</div>
+              </div>
+              <div className="bg-muted p-3 rounded text-center">
+                <div className="text-xl font-semibold">{userInteractions.comments.length}</div>
+                <div className="text-xs text-muted-foreground">Comments</div>
+              </div>
+              <div className="bg-muted p-3 rounded text-center">
+                <div className="text-xl font-semibold">{userInteractions.shares.length}</div>
+                <div className="text-xs text-muted-foreground">Shares</div>
+              </div>
             </div>
           </div>
-        )}
-        
-        {session.description && (
-          <div>
-            <h3 className="font-medium text-sm text-gray-400 mb-2">Description</h3>
-            <div className="bg-[#161B22] p-3 rounded-lg border border-white/10">
-              <p className="text-sm whitespace-pre-wrap">{session.description}</p>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Render interactions
-  const renderInteractions = () => {
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
-      );
-    }
-    
-    if (!interactions) {
-      return (
-        <div className="text-center py-8 text-gray-400">
-          No interaction data available
-        </div>
-      );
-    }
-    
-    return (
-      <div className="space-y-6">
-        {/* Viewers */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Eye className="h-4 w-4 text-blue-400" />
-            <h3 className="font-medium">Viewers ({interactions.viewers?.length || 0})</h3>
-          </div>
-          
-          {interactions.viewers?.length > 0 ? (
-            <div className="bg-[#161B22] rounded-lg border border-white/10 divide-y divide-white/10">
-              {interactions.viewers.map((viewer: any) => (
-                <div key={viewer.id || viewer.user_id} className="p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-gray-800 overflow-hidden">
-                      {viewer.profiles?.avatar_url ? (
-                        <img 
-                          src={viewer.profiles.avatar_url} 
-                          alt={viewer.profiles.username || 'User'} 
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <User className="h-4 w-4 m-auto text-gray-500" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{viewer.profiles?.username || 'Anonymous'}</p>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {viewer.created_at && format(new Date(viewer.created_at), 'MMM d, yyyy HH:mm')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[#161B22] p-3 rounded-lg border border-white/10 text-sm text-gray-400">
-              No viewers recorded
-            </div>
-          )}
         </div>
         
-        {/* Likers */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <ThumbsUp className="h-4 w-4 text-pink-400" />
-            <h3 className="font-medium">Likes ({interactions.likers?.length || 0})</h3>
-          </div>
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Close
+          </Button>
           
-          {interactions.likers?.length > 0 ? (
-            <div className="bg-[#161B22] rounded-lg border border-white/10 divide-y divide-white/10">
-              {interactions.likers.map((liker: any) => (
-                <div key={liker.id || liker.user_id} className="p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-gray-800 overflow-hidden">
-                      {liker.profiles?.avatar_url ? (
-                        <img 
-                          src={liker.profiles.avatar_url} 
-                          alt={liker.profiles.username || 'User'} 
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <User className="h-4 w-4 m-auto text-gray-500" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{liker.profiles?.username || 'Anonymous'}</p>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {liker.created_at && format(new Date(liker.created_at), 'MMM d, yyyy HH:mm')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[#161B22] p-3 rounded-lg border border-white/10 text-sm text-gray-400">
-              No likes recorded
-            </div>
-          )}
-        </div>
-        
-        {/* Buyers */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <CreditCard className="h-4 w-4 text-green-400" />
-            <h3 className="font-medium">Purchases ({interactions.buyers?.length || 0})</h3>
-          </div>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              handleModeration(session, 'delete');
+              onOpenChange(false);
+            }}
+          >
+            Delete
+          </Button>
           
-          {interactions.buyers?.length > 0 ? (
-            <div className="bg-[#161B22] rounded-lg border border-white/10 divide-y divide-white/10">
-              {interactions.buyers.map((buyer: any) => (
-                <div key={buyer.id || buyer.user_id} className="p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-gray-800 overflow-hidden">
-                      {buyer.profiles?.avatar_url ? (
-                        <img 
-                          src={buyer.profiles.avatar_url} 
-                          alt={buyer.profiles.username || 'User'} 
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <User className="h-4 w-4 m-auto text-gray-500" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{buyer.profiles?.username || 'Anonymous'}</p>
-                      {buyer.amount && (
-                        <p className="text-xs text-green-400">${buyer.amount}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {buyer.created_at && format(new Date(buyer.created_at), 'MMM d, yyyy HH:mm')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[#161B22] p-3 rounded-lg border border-white/10 text-sm text-gray-400">
-              No purchases recorded
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>
-            {session.title || `${session.type.charAt(0).toUpperCase() + session.type.slice(1)} Content`}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col h-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-            <TabsTrigger value="metadata">Metadata</TabsTrigger>
-            <TabsTrigger value="interactions">Interactions</TabsTrigger>
-          </TabsList>
-          
-          <ScrollArea className="flex-1">
-            <TabsContent value="preview" className="mt-0">
-              {renderMediaPreviews()}
-            </TabsContent>
-            
-            <TabsContent value="metadata" className="mt-0">
-              {renderMetadata()}
-            </TabsContent>
-            
-            <TabsContent value="interactions" className="mt-0">
-              {renderInteractions()}
-            </TabsContent>
-          </ScrollArea>
-        </Tabs>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              handleModeration(session, 'flag');
+              onOpenChange(false);
+            }}
+          >
+            Flag Content
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
+}

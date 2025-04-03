@@ -34,20 +34,27 @@ export function useChatsSurveillance() {
       }
       
       return (chats || []).map((chat: any) => {
-        // Safely access nested profile data
+        // Safely access nested profile data with proper type checking
         const senderProfile = chat.sender?.profiles?.[0] || {};
         const recipientProfile = chat.recipient?.profiles?.[0] || {};
+        
+        // Extract username and avatar with null checks
+        const senderUsername = senderProfile?.username || 'Unknown';
+        const senderAvatar = senderProfile?.avatar_url;
+        
+        const recipientUsername = recipientProfile?.username || 'Unknown';
+        const recipientAvatar = recipientProfile?.avatar_url;
         
         // Determine display data based on message direction
         let displayUsername, displayAvatar;
         
         // For special case where admin is viewing a message they sent
         if (chat.sender_id === session.user.id) {
-          displayUsername = `${senderProfile.username || 'Unknown'} → ${recipientProfile.username || 'Unknown'}`;
-          displayAvatar = senderProfile.avatar_url;
+          displayUsername = `${senderUsername} → ${recipientUsername}`;
+          displayAvatar = senderAvatar;
         } else {
-          displayUsername = senderProfile.username || 'Unknown';
-          displayAvatar = senderProfile.avatar_url;
+          displayUsername = senderUsername;
+          displayAvatar = senderAvatar;
         }
         
         return {
@@ -60,11 +67,11 @@ export function useChatsSurveillance() {
           content: chat.content,
           media_url: chat.media_url || [],
           recipient_id: chat.recipient_id,
-          recipient_username: recipientProfile.username || 'Unknown',
-          sender_username: senderProfile.username || 'Unknown',
+          recipient_username: recipientUsername,
+          sender_username: senderUsername,
           status: chat.viewed_at ? 'read' : 'unread',
           content_type: chat.message_type,
-          message_source: chat.message_source
+          message_type: chat.message_source
         };
       });
     } catch (error) {
