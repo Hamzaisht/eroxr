@@ -1,11 +1,9 @@
 
 import { useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
 import { Ghost } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useGhostMode } from "@/hooks/useGhostMode";
-import { supabase } from "@/integrations/supabase/client";
 
 interface GhostModeToggleProps {
   canUseGhostMode: boolean;
@@ -14,7 +12,6 @@ interface GhostModeToggleProps {
 export const GhostModeToggle = ({ canUseGhostMode }: GhostModeToggleProps) => {
   const { isGhostMode, toggleGhostMode, isLoading: isGhostModeLoading } = useGhostMode();
   const [isToggling, setIsToggling] = useState(false);
-  const session = useSession();
 
   const handleToggle = async () => {
     if (!canUseGhostMode || isToggling || isGhostModeLoading) return;
@@ -22,19 +19,6 @@ export const GhostModeToggle = ({ canUseGhostMode }: GhostModeToggleProps) => {
     setIsToggling(true);
     try {
       await toggleGhostMode();
-      
-      if (session?.user?.id) {
-        await supabase
-          .from('admin_sessions')
-          .upsert({
-            admin_id: session.user.id,
-            ghost_mode: !isGhostMode,
-            activated_at: !isGhostMode ? new Date() : null,
-            last_active_at: new Date()
-          }, {
-            onConflict: 'admin_id'
-          });
-      }
     } finally {
       setIsToggling(false);
     }

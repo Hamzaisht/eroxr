@@ -5,12 +5,10 @@ import { Ghost, Eye, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { useSession } from "@supabase/auth-helpers-react";
 
 export const GhostModeToggle = () => {
   const { isGhostMode, toggleGhostMode, canUseGhostMode, liveAlerts, isLoading: isGhostModeLoading } = useGhostMode();
   const [isToggling, setIsToggling] = useState(false);
-  const session = useSession();
 
   const handleToggle = async () => {
     if (!canUseGhostMode) return;

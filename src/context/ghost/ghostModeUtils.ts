@@ -78,17 +78,40 @@ export const toggleGhostModeState = async (
     const newGhostModeState = !currentGhostMode;
     console.log('New ghost mode state will be:', newGhostModeState);
 
-    // Update ghost mode state in Supabase
-    const { error } = await supabase
+    // First check if record exists
+    const { data: existingSession } = await supabase
       .from('admin_sessions')
-      .upsert({
-        admin_id: session.user.id,
-        ghost_mode: newGhostModeState,
-        activated_at: newGhostModeState ? new Date().toISOString() : null,
-        last_active_at: new Date().toISOString()
-      }, {
-        onConflict: 'admin_id'
-      });
+      .select('id')
+      .eq('admin_id', session.user.id)
+      .maybeSingle();
+
+    let error;
+    
+    if (existingSession) {
+      // Update existing record
+      const result = await supabase
+        .from('admin_sessions')
+        .update({
+          ghost_mode: newGhostModeState,
+          activated_at: newGhostModeState ? new Date().toISOString() : null,
+          last_active_at: new Date().toISOString()
+        })
+        .eq('admin_id', session.user.id);
+      
+      error = result.error;
+    } else {
+      // Insert new record
+      const result = await supabase
+        .from('admin_sessions')
+        .insert({
+          admin_id: session.user.id,
+          ghost_mode: newGhostModeState,
+          activated_at: newGhostModeState ? new Date().toISOString() : null,
+          last_active_at: new Date().toISOString()
+        });
+      
+      error = result.error;
+    }
 
     if (error) {
       console.error("Error toggling ghost mode in Supabase:", error);
