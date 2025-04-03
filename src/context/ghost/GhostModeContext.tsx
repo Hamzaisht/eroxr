@@ -1,126 +1,25 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
-import { useToast } from "@/hooks/use-toast";
-import { LiveSession, LiveAlert } from "@/components/admin/platform/surveillance/types";
-import { GhostModeIndicator } from "@/components/admin/platform/ghost/GhostModeIndicator";
-import { SurveillanceIndicator } from "@/components/admin/platform/ghost/SurveillanceIndicator";
-import { GhostModeContextType } from "./types";
-import { syncGhostModeState, toggleGhostModeState } from "./ghostModeUtils";
-import { useGhostAlerts, useGhostSurveillance } from "./hooks";
+import { createContext, useContext, useState, ReactNode } from "react"
 
-// Make GhostModeContext a named export
-export const GhostModeContext = createContext<GhostModeContextType>({
-  isGhostMode: false,
-  toggleGhostMode: async () => {},
-  isLoading: false,
-  activeSurveillance: {
-    isWatching: false
-  },
-  startSurveillance: async () => false,
-  stopSurveillance: async () => false,
-  liveAlerts: [],
-  refreshAlerts: async () => {},
-  setIsGhostMode: () => {},
-  syncGhostModeFromSupabase: async () => {},
-  canUseGhostMode: false
-});
+type GhostModeContextType = {
+  isGhostMode: boolean
+  setIsGhostMode: (value: boolean) => void
+}
 
-export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
-  const [isGhostMode, setIsGhostMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [alerts, setAlerts] = useState<LiveAlert[]>([]);
+export const GhostModeContext = createContext<GhostModeContextType | undefined>(undefined)
 
-  const session = useSession();
-  const { isSuperAdmin } = useSuperAdminCheck();
-  const { toast } = useToast();
-  
-  // Use our custom hooks
-  const { liveAlerts, refreshAlerts } = useGhostAlerts(isGhostMode, isSuperAdmin);
-  const { 
-    activeSurveillance, 
-    startSurveillance, 
-    stopSurveillance 
-  } = useGhostSurveillance(isGhostMode, isSuperAdmin);
+export function useGhostModeContext() {
+  const context = useContext(GhostModeContext)
+  if (!context) throw new Error("useGhostModeContext must be used within GhostModeProvider")
+  return context
+}
 
-  // Sync ghost mode state from Supabase
-  const syncGhostModeFromSupabase = useCallback(async () => {
-    if (!session?.user?.id || !isSuperAdmin) return;
-    await syncGhostModeState(
-      session.user.id,
-      isSuperAdmin,
-      setIsGhostMode,
-      setIsLoading
-    );
-  }, [session, isSuperAdmin]);
-
-  // Sync with Supabase on initial load
-  useEffect(() => {
-    if (session?.user?.id && isSuperAdmin) {
-      syncGhostModeFromSupabase();
-    } else {
-      // If not a super admin, ensure ghost mode is disabled and loading is complete
-      setIsGhostMode(false);
-      setIsLoading(false);
-    }
-  }, [session?.user?.id, isSuperAdmin, syncGhostModeFromSupabase]);
-
-  // Log ghost mode status for debugging
-  useEffect(() => {
-    if (session?.user?.email === "hamzaishtiaq242@gmail.com") {
-      console.log("Ghost mode state updated:", isGhostMode);
-      console.log("Is admin:", isSuperAdmin);
-      console.log("Active surveillance:", activeSurveillance);
-    }
-  }, [isGhostMode, isSuperAdmin, activeSurveillance, session?.user?.email]);
-
-  const toggleGhostMode = async () => {
-    await toggleGhostModeState(
-      session,
-      isSuperAdmin,
-      isGhostMode,
-      setIsGhostMode,
-      setIsLoading,
-      stopSurveillance,
-      activeSurveillance
-    );
-  };
+export function GhostModeProvider({ children }: { children: ReactNode }) {
+  const [isGhostMode, setIsGhostMode] = useState(false)
 
   return (
-    <GhostModeContext.Provider value={{ 
-      isGhostMode, 
-      toggleGhostMode, 
-      isLoading,
-      activeSurveillance: activeSurveillance as {
-        session?: LiveSession;
-        isWatching: boolean;
-        startTime?: string;
-      },
-      startSurveillance: startSurveillance as (session: LiveSession) => Promise<boolean>,
-      stopSurveillance,
-      liveAlerts: liveAlerts as LiveAlert[],
-      refreshAlerts,
-      setIsGhostMode,
-      syncGhostModeFromSupabase,
-      canUseGhostMode: isSuperAdmin
-    }}>
+    <GhostModeContext.Provider value={{ isGhostMode, setIsGhostMode }}>
       {children}
-      
-      <GhostModeIndicator isVisible={isSuperAdmin && isGhostMode} />
-      <SurveillanceIndicator 
-        isVisible={isSuperAdmin && isGhostMode && activeSurveillance.isWatching}
-        session={activeSurveillance.session as LiveSession} 
-      />
     </GhostModeContext.Provider>
-  );
-};
-
-// Export the hook to use the context
-export const useGhostModeContext = () => {
-  const context = useContext(GhostModeContext);
-  if (!context) {
-    throw new Error("useGhostModeContext must be used within a GhostModeProvider");
-  }
-  return context;
-};
+  )
+}
