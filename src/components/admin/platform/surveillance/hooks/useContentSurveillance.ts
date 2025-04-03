@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { SurveillanceContentItem, ContentType } from "../types";
-import { FileText, Clock, Video, Music, File } from "react-feather";
+import { FileText, Clock, Video, Music, File } from "lucide-react";
 
 export function useContentSurveillance() {
   const [posts, setPosts] = useState<SurveillanceContentItem[]>([]);
@@ -12,7 +13,7 @@ export function useContentSurveillance() {
   const [error, setError] = useState<Error | null>(null);
   const supabase = useSupabaseClient();
   
-  const getIconForContentType = (type: string): React.ReactNode => {
+  const getIconForContentType = (type: string) => {
     const normalizedType = type.toLowerCase();
     
     if (normalizedType === 'post' || normalizedType === 'posts') {
@@ -218,5 +219,6 @@ export function useContentSurveillance() {
     audios: filterContentByType(audios, 'audios'),
     isLoading,
     error,
+    getIconForContentType
   };
 }
