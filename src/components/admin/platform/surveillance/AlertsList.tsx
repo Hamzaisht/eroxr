@@ -31,6 +31,10 @@ export const AlertsList = ({ alerts, isLoading, onSelect, error }: AlertsListPro
     setFilters(searchFilters);
   };
 
+  const handleRefresh = () => {
+    refreshAlerts();
+  };
+
   const AlertIcon = ({ type }: { type: string }) => {
     switch (type) {
       case "flag":
@@ -49,7 +53,7 @@ export const AlertsList = ({ alerts, isLoading, onSelect, error }: AlertsListPro
         <SearchFilterBar
           onSearchChange={handleSearchChange}
           onSearch={handleSearch}
-          onRefresh={refreshAlerts}
+          onRefresh={handleRefresh}
           placeholder="Search alerts..."
         />
       </div>

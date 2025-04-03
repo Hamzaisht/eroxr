@@ -1,3 +1,4 @@
+
 import { MoreHorizontal, Flag, Ban, EyeOff, Trash2, Edit, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -6,7 +7,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { LiveSession, LiveSessionType } from "../../types";
-import { SurveillanceContentItem, SessionModerationActionProps } from "@/types/surveillance";
+import { SurveillanceContentItem } from "@/types/surveillance";
 import { useState } from "react";
 import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
@@ -14,11 +15,17 @@ import { ModerationActionButton } from "./ModerationActionButton";
 import { useModerationActions } from "@/hooks/useModerationActions";
 import { ModerationAction } from "@/types/moderation";
 
+interface ModerationActionsProps {
+  session: LiveSession | SurveillanceContentItem;
+  onModerate: (session: LiveSession | SurveillanceContentItem, action: ModerationAction, editedContent?: string) => Promise<void>;
+  actionInProgress: string | null;
+}
+
 export function ModerationActions({
   session,
   onModerate,
   actionInProgress
-}: SessionModerationActionProps) {
+}: ModerationActionsProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState<ModerationAction | null>(null);
   const [editedContent, setEditedContent] = useState("");

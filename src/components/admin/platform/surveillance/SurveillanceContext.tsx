@@ -81,6 +81,7 @@ export function SurveillanceProvider({
         content: stream.description || '',
         content_type: 'stream',
         started_at: stream.started_at,
+        media_url: [], // Added missing media_url property
       }));
       
       setLiveSessions(sessions);

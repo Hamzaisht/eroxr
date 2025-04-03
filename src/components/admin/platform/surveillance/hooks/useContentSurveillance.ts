@@ -1,7 +1,13 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { SurveillanceContentItem, ContentType, ContentIcon } from "../types";
+import { SurveillanceContentItem, ContentType } from "../types";
+import { FileText, Clock, Video, Music, File } from "lucide-react";
+import React from "react";
+
+export interface ContentIcon {
+  icon: React.ReactNode;
+  className: string;
+}
 
 export function useContentSurveillance() {
   const [posts, setPosts] = useState<SurveillanceContentItem[]>([]);
@@ -16,22 +22,22 @@ export function useContentSurveillance() {
     const normalizedType = type.toLowerCase();
     
     if (normalizedType === 'post' || normalizedType === 'posts') {
-      return { icon: "FileText", className: "h-4 w-4" };
+      return { icon: <FileText className="h-4 w-4" />, className: "h-4 w-4" };
     }
     
     if (normalizedType === 'story' || normalizedType === 'stories') {
-      return { icon: "Clock", className: "h-4 w-4" };
+      return { icon: <Clock className="h-4 w-4" />, className: "h-4 w-4" };
     }
     
     if (normalizedType === 'video' || normalizedType === 'videos') {
-      return { icon: "Video", className: "h-4 w-4" };
+      return { icon: <Video className="h-4 w-4" />, className: "h-4 w-4" };
     }
     
     if (normalizedType === 'audio' || normalizedType === 'audios') {
-      return { icon: "Music", className: "h-4 w-4" };
+      return { icon: <Music className="h-4 w-4" />, className: "h-4 w-4" };
     }
     
-    return { icon: "File", className: "h-4 w-4" };
+    return { icon: <File className="h-4 w-4" />, className: "h-4 w-4" };
   };
 
   // Fetch content items from Supabase
@@ -207,10 +213,10 @@ export function useContentSurveillance() {
   }, []);
 
   return {
-    posts: filterContentByType(posts, 'posts'),
-    stories: filterContentByType(stories, 'stories'),
-    videos: filterContentByType(videos, 'videos'),
-    audios: filterContentByType(audios, 'audios'),
+    posts,
+    stories,
+    videos,
+    audios,
     isLoading,
     error,
     getIconForContentType

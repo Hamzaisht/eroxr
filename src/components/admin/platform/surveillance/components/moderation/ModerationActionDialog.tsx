@@ -62,8 +62,13 @@ export function ModerationActionDialog({
   };
 
   const getActionDescription = () => {
-    const username = 'username' in session ? session.username : 
-                    'creator_username' in session ? session.creator_username : 'this user';
+    // Safely get username from session
+    let username = 'username' in session ? session.username : 'this user';
+    
+    // For SurveillanceContentItem, check if creator_username exists
+    if ('creator_username' in session && session.creator_username) {
+      username = session.creator_username;
+    }
     
     switch (currentAction) {
       case 'edit':

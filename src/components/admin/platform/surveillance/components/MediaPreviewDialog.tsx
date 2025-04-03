@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LiveSession } from "../types";
@@ -48,14 +49,16 @@ export const MediaPreviewDialog = ({
   const currentMedia = mediaUrls[currentIndex] || "";
 
   const renderMediaPreview = () => {
-    // Check if it's a video call or video message
-    if (session.type === "call" || session.video_url) {
+    // Check if it's a video call or has a video property (added as any type for compatibility)
+    const videoUrl = (session as any).video_url;
+    
+    if (session.type === "call" || videoUrl) {
       return (
         <video
           controls
           autoPlay
           className="w-full rounded-md max-h-[70vh] object-contain bg-black"
-          src={(session as any).video_url || ""}
+          src={videoUrl || ""}
         />
       );
     }
