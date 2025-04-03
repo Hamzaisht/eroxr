@@ -61,7 +61,7 @@ export function GhostModeProvider({ children }: { children: ReactNode }) {
 
   // Toggle ghost mode
   const toggleGhostMode = async (): Promise<void> => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     
     await toggleGhostModeState(
       session,
