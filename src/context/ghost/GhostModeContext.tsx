@@ -6,24 +6,7 @@ import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useSession } from "@supabase/auth-helpers-react";
 import { toggleGhostModeState, syncGhostModeState } from "./ghostModeUtils";
 import { useGhostSurveillance, useGhostAlerts } from "./hooks";
-
-export interface GhostModeContextType {
-  isGhostMode: boolean
-  setIsGhostMode: (value: boolean) => void
-  toggleGhostMode: () => Promise<void>
-  canUseGhostMode: boolean
-  isLoading: boolean
-  activeSurveillance: {
-    session?: LiveSession
-    isWatching: boolean
-    startTime?: string
-  }
-  startSurveillance: (session: LiveSession) => Promise<boolean>
-  stopSurveillance: () => Promise<boolean>
-  liveAlerts: LiveAlert[]
-  refreshAlerts: () => Promise<void>
-  syncGhostModeFromSupabase: () => Promise<void>
-}
+import { GhostModeContextType } from "./types";
 
 export const GhostModeContext = createContext<GhostModeContextType | undefined>(undefined);
 
