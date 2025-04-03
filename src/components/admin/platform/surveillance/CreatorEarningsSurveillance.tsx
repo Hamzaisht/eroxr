@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useCreatorEarnings } from "./hooks/useCreatorEarnings";
 import { CreatorEarnings, PayoutRequest } from "./types";
@@ -150,7 +151,7 @@ export function CreatorEarningsSurveillance() {
                         {earning.created_at && formatPayoutDate(earning.created_at)}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant={getVariantForStatus(earning.status)}>
+                        <Badge variant={getVariantForStatus(earning.status || "default")}>
                           {earning.status || "Active"}
                         </Badge>
                       </TableCell>
