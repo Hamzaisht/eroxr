@@ -42,29 +42,76 @@ export function GhostModeProvider({ children }: { children: ReactNode }) {
 
   // These are stubs that will be implemented in the actual context
   const toggleGhostMode = async (): Promise<void> => {
-    setIsGhostMode(!isGhostMode);
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setIsGhostMode(!isGhostMode);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const syncGhostModeFromSupabase = async (): Promise<void> => {
-    // This is a stub
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 300));
+      // This would typically fetch the ghost mode status from Supabase
+      console.log("Syncing ghost mode status from Supabase");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const startSurveillance = async (session: LiveSession): Promise<boolean> => {
-    setActiveSurveillance({
-      session,
-      isWatching: true,
-      startTime: new Date().toISOString()
-    });
-    return true;
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setActiveSurveillance({
+        session,
+        isWatching: true,
+        startTime: new Date().toISOString()
+      });
+      return true;
+    } catch (error) {
+      console.error("Error starting surveillance:", error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const stopSurveillance = async (): Promise<boolean> => {
-    setActiveSurveillance({ isWatching: false });
-    return true;
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setActiveSurveillance({ isWatching: false });
+      return true;
+    } catch (error) {
+      console.error("Error stopping surveillance:", error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const refreshAlerts = async (): Promise<void> => {
-    // This is a stub
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 300));
+      // This would typically fetch alerts from an API
+      console.log("Refreshing alerts");
+      // For now, we'll just mock some alerts
+      setLiveAlerts([
+        // Mock data would go here in a real implementation
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
