@@ -34,6 +34,15 @@ export function ModerationActionButton({
       };
     }
     
+    // If it's suspicious content, suggest shadowban as the primary action
+    if (session.status === 'suspicious' || session.status === 'reported') {
+      return {
+        action: 'shadowban',
+        icon: <Shield className="h-4 w-4 mr-2" />,
+        label: 'Shadowban'
+      };
+    }
+    
     // For most content, flagging is a good default action
     return {
       action: 'flag',
