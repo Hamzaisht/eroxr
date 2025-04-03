@@ -1,12 +1,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { useSurveillanceData } from "./useSurveillanceData";
+import { useSurveillanceData } from "./hooks/useSurveillanceData";
 import { LiveAlert, SurveillanceTab, LiveSession } from "./types";
-import { useStreamsSurveillance } from "./hooks/useStreamsSurveillance";
-import { useCallsSurveillance } from "./hooks/useCallsSurveillance";
-import { useChatsSurveillance } from "./hooks/useChatsSurveillance";
-import { useBodyContactSurveillance } from "./hooks/useBodyContactSurveillance";
-import { useContentSurveillance } from "./hooks/useContentSurveillance";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 

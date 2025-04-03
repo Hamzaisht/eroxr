@@ -106,7 +106,7 @@ export const MediaPreviewDialog = ({
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>
-            {session.type === "audio" ? "Audio Preview" : "Media Preview"}
+            {session.content_type === "audio" ? "Audio Preview" : "Media Preview"}
           </DialogTitle>
           <Button
             variant="ghost"

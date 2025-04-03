@@ -1,4 +1,3 @@
-
 export interface LiveSession {
   id: string;
   type: 'stream' | 'call' | 'chat' | 'bodycontact';
@@ -31,6 +30,7 @@ export interface LiveSession {
   media_url?: string[];
   video_url?: string;
   about_me?: string;
+  participants?: any[];
 }
 
 export interface LiveAlert {
@@ -46,13 +46,11 @@ export interface LiveAlert {
   content_id: string;
 }
 
-// Add the missing TabProps interface
 export interface TabProps {
   analytics: Analytics;
   timeRange: string;
 }
 
-// Add the missing ProfileData interface
 export interface ProfileData {
   id: string;
   username: string;
@@ -66,7 +64,6 @@ export interface ProfileData {
   is_suspended: boolean;
 }
 
-// Add the missing ViewedProfile interface
 export interface ViewedProfile {
   id: string;
   viewer_id: string;

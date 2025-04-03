@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Search, Download, CreditCard, RefreshCw } from "lucide-react";
+import { Search, Download, CreditCard, RefreshCw, Loader2, Check } from "lucide-react";
 
 export function CreatorEarningsSurveillance() {
   const [searchQuery, setSearchQuery] = useState('');

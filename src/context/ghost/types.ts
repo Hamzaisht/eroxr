@@ -1,5 +1,5 @@
-
-import { LiveSession, LiveAlert } from "@/components/admin/platform/surveillance/types";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { LiveAlert } from "@/types/alerts";
 
 export interface GhostModeContextType {
   isGhostMode: boolean;

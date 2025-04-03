@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { LiveAlert } from "./types";
+import { LiveAlert } from "@/types/alerts";
 import { AlertCircle, Search, Filter, Ban, Flag, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -20,12 +19,10 @@ interface AlertsListProps {
 export const AlertsList = ({ alerts, isLoading, onSelect }: AlertsListProps) => {
   const [filteredAlerts, setFilteredAlerts] = useState<LiveAlert[]>(alerts);
   
-  // Update filtered alerts when original alerts change
   useEffect(() => {
     setFilteredAlerts(alerts);
   }, [alerts]);
   
-  // Set up real-time subscription for alerts
   useEffect(() => {
     const channel = supabase
       .channel('admin_alerts_changes')
@@ -34,8 +31,6 @@ export const AlertsList = ({ alerts, isLoading, onSelect }: AlertsListProps) => 
         schema: 'public',
         table: 'admin_alerts'
       }, () => {
-        // When data changes, we'll get the updated alerts through props
-        // This is a fallback in case the parent component doesn't handle it
         console.log('Alert data changed, waiting for parent refresh');
       })
       .subscribe();
@@ -47,22 +42,18 @@ export const AlertsList = ({ alerts, isLoading, onSelect }: AlertsListProps) => 
   
   const handleSearch = (filters: SearchFilter) => {
     const filtered = alerts.filter(alert => {
-      // Filter by username
       if (filters.username && !alert.username.toLowerCase().includes(filters.username.toLowerCase())) {
         return false;
       }
       
-      // Filter by user ID
       if (filters.userId && alert.user_id !== filters.userId) {
         return false;
       }
       
-      // Filter by type
       if (filters.type && filters.type !== 'all' && alert.alert_type !== filters.type) {
         return false;
       }
       
-      // Filter by status
       if (filters.status && filters.status !== 'all' && alert.status !== filters.status) {
         return false;
       }
