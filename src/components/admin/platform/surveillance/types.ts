@@ -1,4 +1,3 @@
-
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
 
 export interface LiveSession {
@@ -55,4 +54,20 @@ export interface SurveillanceContextType {
   liveAlerts: LiveAlert[];
 }
 
-export type ModerationAction = 'delete' | 'shadowban' | 'ban' | 'restore' | 'flag' | 'approve';
+export type ModerationAction = 
+  | 'view' 
+  | 'edit' 
+  | 'flag' 
+  | 'warn' 
+  | 'delete' 
+  | 'ban' 
+  | 'shadowban' 
+  | 'restore' 
+  | 'pause'
+  | 'force_delete';
+
+export interface SessionModerationActionProps {
+  session: LiveSession | SurveillanceContentItem;
+  onModerate: (session: LiveSession | SurveillanceContentItem, action: ModerationAction, editedContent?: string) => void;
+  actionInProgress: string | null;
+}

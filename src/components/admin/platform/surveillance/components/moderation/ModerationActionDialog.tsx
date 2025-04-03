@@ -1,5 +1,5 @@
 
-import { Button } from "@/components/ui/button";
+import { LiveSession, ModerationAction, SurveillanceContentItem } from "../../types";
 import {
   Dialog,
   DialogContent,
@@ -8,21 +8,22 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { LiveSession, SurveillanceContentItem, ModerationAction } from "../../types";
+import { Dispatch, SetStateAction } from "react";
 
-export interface ModerationActionDialogProps {
+interface ModerationActionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   currentAction: ModerationAction | null;
   session: LiveSession | SurveillanceContentItem;
   editedContent: string;
-  setEditedContent: (content: string) => void;
+  setEditedContent: Dispatch<SetStateAction<string>>;
   actionInProgress: string | null;
 }
 
-export const ModerationActionDialog = ({
+export function ModerationActionDialog({
   open,
   onOpenChange,
   onConfirm,
@@ -31,37 +32,87 @@ export const ModerationActionDialog = ({
   editedContent,
   setEditedContent,
   actionInProgress
-}: ModerationActionDialogProps) => {
-  const getUsername = () => {
-    if ('username' in session && session.username) {
-      return session.username;
+}: ModerationActionDialogProps) {
+  const getActionTitle = () => {
+    switch (currentAction) {
+      case 'edit':
+        return 'Edit Content';
+      case 'ban':
+        return 'Ban User';
+      case 'shadowban': 
+        return 'Shadowban User';
+      case 'force_delete':
+        return 'Permanently Delete Content';
+      case 'delete':
+        return 'Delete Content';
+      case 'restore':
+        return 'Restore Content';
+      case 'pause':
+        return 'Pause Account';
+      default:
+        return 'Take Action';
     }
-    if ('creator_username' in session && session.creator_username) {
-      return session.creator_username;
+  };
+
+  const getActionDescription = () => {
+    const username = 'username' in session ? session.username : 
+                    'creator_username' in session ? session.creator_username : 'this user';
+    
+    switch (currentAction) {
+      case 'edit':
+        return 'Edit the content below. This will keep a record of the original content.';
+      case 'ban':
+        return `Are you sure you want to ban ${username}? This will hide all their content.`;
+      case 'shadowban':
+        return `Are you sure you want to shadowban ${username}? They will still be able to post but their content won't be visible to others.`;
+      case 'force_delete':
+        return 'This will permanently delete the content from the database and cannot be undone.';
+      case 'delete':
+        return 'This will hide the content from users but will remain in the database.';
+      case 'restore':
+        return `Are you sure you want to restore ${username}'s account? Their content will become visible again.`;
+      case 'pause':
+        return `This will temporarily suspend ${username}'s account for a fixed period.`;
+      default:
+        return 'Are you sure you want to continue?';
     }
-    return 'this user';
+  };
+
+  const getActionButtonText = () => {
+    switch (currentAction) {
+      case 'edit':
+        return 'Save Changes';
+      case 'ban':
+        return 'Ban User';
+      case 'shadowban':
+        return 'Shadowban User';
+      case 'force_delete':
+        return 'Permanently Delete';
+      case 'delete':
+        return 'Delete Content';
+      case 'restore':
+        return 'Restore User';
+      case 'pause':
+        return 'Pause Account';
+      default:
+        return 'Confirm';
+    }
+  };
+
+  const isActionDestructive = () => {
+    return ['ban', 'shadowban', 'force_delete', 'delete'].includes(currentAction || '');
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {currentAction === 'edit' ? 'Edit Content' : 
-              currentAction === 'ban' ? 'Ban User' : 
-              currentAction === 'force_delete' ? 'Permanently Delete Content' : 
-              'Take Action'}
-          </DialogTitle>
-          <DialogDescription>
-            {currentAction === 'edit' ? 'Edit the content below. This will keep a record of the original content.' : 
-              currentAction === 'ban' ? `Are you sure you want to ban ${getUsername()}? This will hide all their content.` : 
-              currentAction === 'force_delete' ? 'This will permanently delete the content from the database and cannot be undone.' : 
-              'Are you sure you want to continue?'}
-          </DialogDescription>
+          <DialogTitle>{getActionTitle()}</DialogTitle>
+          <DialogDescription>{getActionDescription()}</DialogDescription>
         </DialogHeader>
-        
+
         {currentAction === 'edit' && (
-          <div className="my-4">
+          <div className="mt-4 mb-4">
             <Textarea
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
@@ -71,28 +122,24 @@ export const ModerationActionDialog = ({
             />
           </div>
         )}
-        
-        <DialogFooter>
+
+        <DialogFooter className="sm:justify-end mt-4">
           <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-          >
+            type="button" 
+            variant="secondary" 
+            onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          
-          <Button 
-            variant={currentAction === 'edit' ? 'default' : 'destructive'} 
+          <Button
+            type="button"
+            variant={isActionDestructive() ? "destructive" : "default"}
             onClick={onConfirm}
-            disabled={actionInProgress === session.id}
+            disabled={!!actionInProgress}
           >
-            {actionInProgress === session.id ? 'Processing...' : 
-              currentAction === 'edit' ? 'Save Changes' : 
-              currentAction === 'ban' ? 'Ban User' : 
-              currentAction === 'force_delete' ? 'Permanently Delete' : 
-              'Confirm'}
+            {actionInProgress ? 'Processing...' : getActionButtonText()}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
+}
