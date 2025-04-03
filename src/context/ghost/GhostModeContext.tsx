@@ -22,7 +22,8 @@ const GhostModeContext = createContext<GhostModeContextType>({
   liveAlerts: [],
   refreshAlerts: async () => {},
   setIsGhostMode: () => {},
-  syncGhostModeFromSupabase: async () => {}
+  syncGhostModeFromSupabase: async () => {},
+  canUseGhostMode: false
 });
 
 export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
@@ -56,6 +57,10 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (session?.user?.id && isSuperAdmin) {
       syncGhostModeFromSupabase();
+    } else {
+      // If not a super admin, ensure ghost mode is disabled and loading is complete
+      setIsGhostMode(false);
+      setIsLoading(false);
     }
   }, [session?.user?.id, isSuperAdmin, syncGhostModeFromSupabase]);
 
@@ -95,7 +100,8 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       liveAlerts: liveAlerts as LiveAlert[],
       refreshAlerts,
       setIsGhostMode,
-      syncGhostModeFromSupabase
+      syncGhostModeFromSupabase,
+      canUseGhostMode: isSuperAdmin
     }}>
       {children}
       

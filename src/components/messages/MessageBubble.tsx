@@ -28,7 +28,7 @@ export const MessageBubble = ({
 }: MessageBubbleProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [localMessage, setLocalMessage] = useState(message);
-  const { isGhostMode } = useGhostMode();
+  const { isGhostMode = false } = useGhostMode();
   
   const { 
     isEditing, 
@@ -48,7 +48,7 @@ export const MessageBubble = ({
     cancelEditing();
     setSelectedMedia(null);
     setLocalMessage(message);
-  }, [message]);
+  }, [message, cancelEditing]);
 
   useEffect(() => {
     const channel = supabase
@@ -73,9 +73,9 @@ export const MessageBubble = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [message.id]);
+  }, [message.id, setEditedContent]);
 
-  const messageAge = new Date().getTime() - new Date(message.created_at).getTime();
+  const messageAge = new Date().getTime() - new Date(message.created_at || new Date()).getTime();
   const canEditDelete = messageAge < 24 * 60 * 60 * 1000;
 
   const handleSnapView = async () => {

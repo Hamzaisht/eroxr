@@ -32,7 +32,7 @@ const VideoCallDialog = ({
   isVideoEnabled,
 }: VideoCallProps) => {
   const session = useSession();
-  const { isGhostMode, activeSurveillance } = useGhostMode();
+  const { isGhostMode = false, activeSurveillance } = useGhostMode();
   const [hasLoggedView, setHasLoggedView] = useState(false);
   
   // Initialize with default values for frame rate and bitrate
@@ -93,7 +93,7 @@ const VideoCallDialog = ({
               recipient_id: recipientId,
               recipient_username: recipientProfile?.username,
               timestamp: new Date().toISOString(),
-              surveillance_active: !!activeSurveillance.isWatching
+              surveillance_active: !!activeSurveillance?.isWatching
             }
           });
           
@@ -153,7 +153,7 @@ const VideoCallDialog = ({
           recipient_id: recipientId,
           recipient_username: recipientProfile?.username,
           timestamp: new Date().toISOString(),
-          surveillance_active: !!activeSurveillance.isWatching
+          surveillance_active: !!activeSurveillance?.isWatching
         }
       });
       

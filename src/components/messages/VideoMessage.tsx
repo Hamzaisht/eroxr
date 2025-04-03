@@ -19,7 +19,7 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
   const [isLoading, setIsLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
-  const { isGhostMode } = useGhostMode();
+  const { isGhostMode = false } = useGhostMode();
   const session = useSession();
 
   useEffect(() => {

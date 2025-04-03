@@ -16,4 +16,5 @@ export interface GhostModeContextType {
   refreshAlerts: () => Promise<void>;
   setIsGhostMode: (state: boolean) => void;
   syncGhostModeFromSupabase: () => Promise<void>;
+  canUseGhostMode: boolean;
 }
