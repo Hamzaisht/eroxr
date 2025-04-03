@@ -37,12 +37,12 @@ export const GhostModeToggle = ({ canUseGhostMode }: GhostModeToggleProps) => {
           ) : (
             <Ghost className="h-5 w-5 text-gray-400" />
           )}
-          <span>Ghost Mode</span>
+          <span className="text-sm font-medium">Ghost Mode</span>
         </div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center">
+              <div className="flex items-center h-6">
                 {isLoading && (
                   <div className="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-dotted border-current" />
                 )}

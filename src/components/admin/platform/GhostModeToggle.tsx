@@ -11,7 +11,7 @@ export const GhostModeToggle = () => {
   const [isToggling, setIsToggling] = useState(false);
 
   const handleToggle = async () => {
-    if (!canUseGhostMode) return;
+    if (!canUseGhostMode || isToggling || isGhostModeLoading) return;
     
     setIsToggling(true);
     try {

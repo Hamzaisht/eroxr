@@ -29,6 +29,8 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
 
     setIsLoading(true);
     try {
+      console.log("Refreshing ghost mode alerts");
+      
       // Fetch alerts from different sources
       const [flaggedContentRes, reportsRes, dmcaRes] = await Promise.all([
         fetchFlaggedContent(),
@@ -53,7 +55,31 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
         ...dmcaAlerts
       ]);
 
+      console.log(`Loaded ${allAlerts.length} alerts`);
       setLiveAlerts(allAlerts);
+      
+      // Also fetch recent direct messages for monitoring
+      const { data: messages } = await supabase
+        .from('direct_messages')
+        .select('*, sender:sender_id(username), recipient:recipient_id(username)')
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      if (messages && messages.length > 0) {
+        console.log(`Found ${messages.length} recent messages for monitoring`);
+      }
+      
+      // Fetch recent posts
+      const { data: posts } = await supabase
+        .from('posts')
+        .select('*, creator:creator_id(username)')
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      if (posts && posts.length > 0) {
+        console.log(`Found ${posts.length} recent posts for monitoring`);
+      }
+      
     } catch (error) {
       console.error("Error fetching alerts:", error);
     } finally {
@@ -96,11 +122,33 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
           table: 'dmca_requests',
         }, () => refreshAlerts())
         .subscribe();
+        
+      // Also monitor direct messages
+      const messagesChannel = supabase
+        .channel('direct-messages-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'direct_messages',
+        }, () => refreshAlerts())
+        .subscribe();
+        
+      // Monitor posts
+      const postsChannel = supabase
+        .channel('posts-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'posts',
+        }, () => refreshAlerts())
+        .subscribe();
 
       return {
         flaggedChannel,
         reportsChannel,
-        dmcaChannel
+        dmcaChannel,
+        messagesChannel,
+        postsChannel
       };
     };
 
@@ -111,6 +159,8 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
       supabase.removeChannel(subscriptions.flaggedChannel);
       supabase.removeChannel(subscriptions.reportsChannel);
       supabase.removeChannel(subscriptions.dmcaChannel);
+      supabase.removeChannel(subscriptions.messagesChannel);
+      supabase.removeChannel(subscriptions.postsChannel);
     };
   }, [isGhostMode, session?.user?.id, refreshAlerts]);
 

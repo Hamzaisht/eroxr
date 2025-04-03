@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { SessionList } from "./surveillance/SessionList";
 import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
@@ -9,6 +9,7 @@ import { AlertsList } from "./surveillance/AlertsList";
 import { Button } from "@/components/ui/button";
 import { PowerOff, RefreshCw } from "lucide-react";
 import { LiveSession, LiveAlert } from "./surveillance/types";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
 export const LiveSurveillance = () => {
   const {
@@ -23,17 +24,99 @@ export const LiveSurveillance = () => {
   const [loadingRefresh, setLoadingRefresh] = useState<boolean>(false);
   const [sessions, setSessions] = useState<LiveSession[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const supabase = useSupabaseClient();
+  
+  // Function to fetch active chats/direct messages
+  const fetchActiveSessions = useCallback(async () => {
+    if (!isGhostMode) return;
+    
+    try {
+      setIsLoading(true);
+      console.log("Fetching active surveillance sessions...");
+      
+      // Fetch recent direct messages (chats)
+      const { data: messages, error: messagesError } = await supabase
+        .from('direct_messages')
+        .select('*, sender:sender_id(username, avatar_url), recipient:recipient_id(username, avatar_url)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+        
+      if (messagesError) {
+        console.error("Error fetching messages:", messagesError);
+      } else {
+        console.log("Fetched messages:", messages?.length || 0);
+      }
+      
+      // Fetch recent user posts
+      const { data: posts, error: postsError } = await supabase
+        .from('posts')
+        .select('*, creator:creator_id(username, avatar_url)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+        
+      if (postsError) {
+        console.error("Error fetching posts:", postsError);
+      } else {
+        console.log("Fetched posts:", posts?.length || 0);
+      }
+      
+      // Transform messages to LiveSession format
+      const messageSessions: LiveSession[] = (messages || []).map(msg => ({
+        id: msg.id,
+        type: "chat",
+        user_id: msg.sender_id,
+        created_at: msg.created_at,
+        media_url: msg.media_url || [],
+        username: msg.sender?.username || "Unknown",
+        avatar_url: msg.sender?.avatar_url,
+        content: msg.content || "",
+        content_type: msg.message_type || "text",
+        status: "active",
+        message_type: msg.message_type || "text",
+        recipient_id: msg.recipient_id,
+        recipient_username: msg.recipient?.username,
+        sender_username: msg.sender?.username,
+      }));
+      
+      // Transform posts to LiveSession format
+      const postSessions: LiveSession[] = (posts || []).map(post => ({
+        id: post.id,
+        type: "content",
+        user_id: post.creator_id,
+        created_at: post.created_at,
+        media_url: post.media_url || [],
+        username: post.creator?.username || "Unknown",
+        avatar_url: post.creator?.avatar_url,
+        content: post.content || "",
+        content_type: "post",
+        status: post.visibility || "public",
+        title: `Post by ${post.creator?.username || "Unknown"}`,
+        tags: post.tags,
+      }));
+      
+      // Combine all session types
+      const allSessions = [...messageSessions, ...postSessions];
+      
+      // Set sessions state
+      setSessions(allSessions);
+      console.log(`Total active sessions: ${allSessions.length}`);
+    } catch (error) {
+      console.error("Error in fetchActiveSessions:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isGhostMode, supabase]);
   
   useEffect(() => {
     if (isGhostMode) {
       refreshAlerts();
-      setIsLoading(false);
+      fetchActiveSessions();
     }
-  }, [isGhostMode, refreshAlerts]);
+  }, [isGhostMode, refreshAlerts, fetchActiveSessions]);
   
   const handleRefresh = async () => {
     setLoadingRefresh(true);
-    await refreshAlerts();
+    await Promise.all([refreshAlerts(), fetchActiveSessions()]);
     setLoadingRefresh(false);
   };
   
@@ -42,7 +125,7 @@ export const LiveSurveillance = () => {
       // Type safety: Create a properly typed session object 
       const validSession: LiveSession = {
         id: session.id,
-        type: session.type as "stream" | "call" | "chat" | "bodycontact",
+        type: session.type as "stream" | "call" | "chat" | "bodycontact" | "content",
         user_id: session.user_id || "",  // Ensure required field has a value
         created_at: session.created_at,
         media_url: session.media_url || [],
