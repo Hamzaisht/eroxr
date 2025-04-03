@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { SurveillanceContentItem, ContentType } from "../types";
+import { SurveillanceContentItem, ContentType, ContentIcon } from "../types";
 import { FileText, Clock, Video, Music, File } from "lucide-react";
 
 export function useContentSurveillance() {
@@ -12,7 +12,7 @@ export function useContentSurveillance() {
   const [error, setError] = useState<Error | null>(null);
   const supabase = useSupabaseClient();
   
-  const getIconForContentType = (type: string) => {
+  const getIconForContentType = (type: string): ContentIcon => {
     const normalizedType = type.toLowerCase();
     
     if (normalizedType === 'post' || normalizedType === 'posts') {
