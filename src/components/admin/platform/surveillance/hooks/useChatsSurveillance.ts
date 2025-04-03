@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { LiveSession } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -27,11 +27,11 @@ export function useChatsSurveillance() {
           content,
           media_url,
           video_url,
-          sender:sender_id(username, avatar_url),
-          recipient:recipient_id(username, avatar_url)
+          sender:profiles!direct_messages_sender_id_fkey(username, avatar_url),
+          recipient:profiles!direct_messages_recipient_id_fkey(username, avatar_url)
         `)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(30);
         
       if (chatsError) {
         console.error("Error fetching chat sessions:", chatsError);
@@ -44,19 +44,19 @@ export function useChatsSurveillance() {
         return [];
       }
 
-      // Process chats into conversation groups
+      // Process chats into conversation groups (unique sender-recipient pairs)
       const uniqueChats = new Map();
       
-      chats.forEach(chat => {
-        const chatKey = `${chat.sender_id}:${chat.recipient_id}`;
-        const reverseKey = `${chat.recipient_id}:${chat.sender_id}`;
+      chats?.forEach(chat => {
+        // Create a unique key for each conversation pair (sorted to handle both directions)
+        const participants = [chat.sender_id, chat.recipient_id].sort().join(':');
         
         // Only add this conversation if we haven't seen it yet
-        if (!uniqueChats.has(chatKey) && !uniqueChats.has(reverseKey)) {
-          const sender = chat.sender?.[0] || {};
-          const recipient = chat.recipient?.[0] || {};
+        if (!uniqueChats.has(participants)) {
+          const sender = chat.sender || {};
+          const recipient = chat.recipient || {};
           
-          uniqueChats.set(chatKey, {
+          uniqueChats.set(participants, {
             id: chat.id,
             type: 'chat',
             user_id: chat.sender_id,
@@ -77,7 +77,8 @@ export function useChatsSurveillance() {
             receiver_profiles: {
               username: recipient.username || 'Unknown',
               avatar_url: recipient.avatar_url || null
-            }
+            },
+            created_at: chat.created_at
           });
         }
       });
@@ -93,6 +94,28 @@ export function useChatsSurveillance() {
       setIsLoading(false);
     }
   }, [toast]);
+
+  // Set up realtime subscription for new messages
+  useEffect(() => {
+    const channel = supabase
+      .channel('chat-surveillance')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'direct_messages'
+      }, () => {
+        // Refresh data when new messages arrive
+        fetchChatSessions();
+      })
+      .subscribe();
+
+    // Initial fetch
+    fetchChatSessions();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchChatSessions]);
 
   return {
     isLoading,
