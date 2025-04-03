@@ -43,6 +43,7 @@ export interface LiveSession {
   about_me?: string;
   video_url?: string;
   metadata?: Record<string, any>;
+  participants?: number;
 }
 
 // Content-specific type for content surveillance
@@ -71,6 +72,8 @@ export interface SurveillanceContentItem {
   views?: number;
   likes?: number;
   comments?: number;
+  type?: string; // Adding type property
+  status?: string; // Adding status property
 }
 
 export interface SessionModerationActionProps {
@@ -83,4 +86,56 @@ export interface ContentModerationActionProps {
   content: SurveillanceContentItem;
   onModerate: (content: SurveillanceContentItem, action: ModerationAction, editedContent?: string) => void;
   actionInProgress: string | null;
+}
+
+// Add the LiveAlert interface
+export interface LiveAlert {
+  id: string;
+  type: string;
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  timestamp: string;
+  created_at: string;
+  content_type: string;
+  reason: string;
+  severity: "high" | "medium" | "low";
+  content_id: string;
+  title: string;
+  message?: string;
+  status?: string;
+  description: string;
+  is_viewed: boolean;
+  alert_type?: string;
+  session_id?: string;
+  session?: LiveSession;
+}
+
+// Add PayoutRequest interface
+export interface PayoutRequest {
+  id: string;
+  creator_id: string;
+  amount: number;
+  platform_fee: number;
+  final_amount: number;
+  requested_at: string;
+  approved_at?: string;
+  processed_at?: string;
+  processed_by?: string;
+  status: 'pending' | 'approved' | 'processed' | 'rejected';
+  notes?: string;
+  creator_username?: string;
+}
+
+// Add CreatorEarnings interface
+export interface CreatorEarnings {
+  creator_id: string;
+  username: string;
+  avatar_url?: string;
+  total_earnings: number;
+  subscription_earnings: number;
+  tip_earnings: number;
+  ppv_earnings: number;
+  last_payout_date?: string;
+  last_payout_amount?: number;
 }

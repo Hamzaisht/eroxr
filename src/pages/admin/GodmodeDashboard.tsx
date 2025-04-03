@@ -1,4 +1,3 @@
-
 import { Navigate, Outlet } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -8,7 +7,7 @@ import { useEffect } from "react";
 import { GodmodeSidebar } from "@/components/admin/godmode/GodmodeSidebar";
 import { SurveillanceProvider } from "@/components/admin/platform/surveillance/SurveillanceContext";
 import { useGhostMode } from "@/hooks/useGhostMode";
-import { LiveAlert, LiveSession } from "@/components/admin/platform/surveillance/types";
+import { LiveSession, LiveAlert } from "@/components/admin/platform/surveillance/types";
 
 export default function GodmodeDashboard() {
   const session = useSession();

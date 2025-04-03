@@ -21,7 +21,8 @@ export function useModerationActions() {
       // Log the moderation action
       await supabase.from("moderation_logs").insert({
         content_id: contentId,
-        content_type: 'content_type' in content ? content.content_type : content.type,
+        content_type: 'type' in content ? content.type : 
+                      'content_type' in content ? content.content_type : 'unknown',
         action,
         reason: "Admin moderation action",
         edited_content: editedContent,

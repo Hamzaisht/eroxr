@@ -1,4 +1,3 @@
-
 import { CreatorEarnings } from "../types";
 import { formatCurrency, formatPayoutDate } from "../hooks/utils/payoutFormatters";
 import {

@@ -57,7 +57,7 @@ export function ContentDetailDialog({
   
   useEffect(() => {
     if (session && open && contentId) {
-      fetchContentInteractions(contentId, session.type);
+      fetchContentInteractions(contentId, session.content_type);
     }
   }, [session, open, contentId, fetchContentInteractions]);
   

@@ -29,7 +29,10 @@ export function useModerationActions() {
     
     try {
       // Determine content type and database table
-      const contentType = content.type || 'unknown';
+      // Check if the content is a LiveSession or a SurveillanceContentItem
+      const contentType = 'type' in content ? content.type : 
+                          'content_type' in content ? content.content_type : 'unknown';
+      
       let targetTable = '';
       let statusField = 'status';
       let updates = {};
@@ -49,9 +52,11 @@ export function useModerationActions() {
           statusField = 'moderation_status';
           break;
         case 'post':
+        case 'posts':
           targetTable = 'posts';
           break;
         case 'video':
+        case 'videos':
           targetTable = 'videos';
           break;
         default:

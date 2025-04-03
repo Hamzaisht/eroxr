@@ -1,10 +1,6 @@
-
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useSession } from "@supabase/auth-helpers-react";
-import { SurveillanceContentItem } from "../types";
-import { ContentType } from "../types";
+import { useState, useEffect, useCallback } from "react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { SurveillanceContentItem, ContentType } from "../types";
 
 export function useContentSurveillance() {
   const [posts, setPosts] = useState<SurveillanceContentItem[]>([]);
@@ -12,323 +8,192 @@ export function useContentSurveillance() {
   const [videos, setVideos] = useState<SurveillanceContentItem[]>([]);
   const [audios, setAudios] = useState<SurveillanceContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const session = useSession();
+  const [error, setError] = useState<Error | null>(null);
+  const supabase = useSupabaseClient();
   
-  // Fetch posts
-  const fetchPosts = useCallback(async (): Promise<SurveillanceContentItem[]> => {
-    if (!session?.user?.id) return [];
+  // Fetch content items from Supabase
+  const fetchContentItems = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     
     try {
-      const { data, error } = await supabase
+      // Fetch posts
+      const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select(`
-          *,
-          profiles:creator_id(username, avatar_url)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(20);
+        .select('*, creator:creator_id(username, avatar_url)')
+        .limit(50);
+        
+      if (postsError) {
+        throw postsError;
+      }
       
-      if (error) throw error;
+      // Fetch stories
+      const { data: storiesData, error: storiesError } = await supabase
+        .from('stories')
+        .select('*, creator:creator_id(username, avatar_url)')
+        .limit(50);
+        
+      if (storiesError) {
+        throw storiesError;
+      }
       
-      return data.map(post => ({
+      // Fetch videos
+      const { data: videosData, error: videosError } = await supabase
+        .from('videos')
+        .select('*, creator:creator_id(username, avatar_url)')
+        .limit(50);
+        
+      if (videosError) {
+        throw videosError;
+      }
+      
+      // Fetch audios
+      const { data: audiosData, error: audiosError } = await supabase
+        .from('audios')
+        .select('*, creator:creator_id(username, avatar_url)')
+        .limit(50);
+        
+      if (audiosError) {
+        throw audiosError;
+      }
+      
+      // Transform posts to SurveillanceContentItem format
+      const transformedPosts: SurveillanceContentItem[] = (postsData || []).map(post => ({
         id: post.id,
         content_type: "post",
-        type: "bodycontact" as const, // Set a valid type for LiveSession compatibility
         creator_id: post.creator_id,
-        username: post.profiles?.[0]?.username || "Unknown",
-        avatar_url: post.profiles?.[0]?.avatar_url || null,
         created_at: post.created_at,
+        media_url: post.media_url || [],
+        username: post.creator?.username || "Unknown",
+        creator_username: post.creator?.username || "Unknown",
+        avatar_url: post.creator?.avatar_url,
+        creator_avatar_url: post.creator?.avatar_url,
+        content: post.content || "",
         title: post.title || "",
         description: post.description || "",
-        media_url: post.media_url || [],
-        visibility: post.visibility,
-        is_ppv: post.is_ppv,
-        ppv_amount: post.ppv_amount,
-        likes_count: post.likes_count,
-        comments_count: post.comments_count,
-        view_count: post.view_count,
-        is_draft: false,
-        is_deleted: false,
-        tags: post.tags || []
+        visibility: post.visibility || "public",
+        is_draft: post.is_draft || false,
+        location: post.location || "",
+        tags: post.tags || [],
+        views: post.views || 0,
+        likes: post.likes || 0,
+        comments: post.comments || 0,
       }));
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-      return [];
-    }
-  }, [session?.user?.id]);
-  
-  // Fetch stories
-  const fetchStories = useCallback(async (): Promise<SurveillanceContentItem[]> => {
-    if (!session?.user?.id) return [];
-    
-    try {
-      const { data, error } = await supabase
-        .from('stories')
-        .select(`
-          *,
-          profiles:creator_id(username, avatar_url)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(20);
       
-      if (error) throw error;
-      
-      return data.map(story => ({
+      // Transform stories to SurveillanceContentItem format
+      const transformedStories: SurveillanceContentItem[] = (storiesData || []).map(story => ({
         id: story.id,
         content_type: "story",
-        type: "bodycontact" as const, // Set a valid type for LiveSession compatibility
         creator_id: story.creator_id,
-        username: story.profiles?.[0]?.username || "Unknown",
-        avatar_url: story.profiles?.[0]?.avatar_url || null,
         created_at: story.created_at,
-        title: "Story",
-        description: "User story content",
-        media_url: [story.media_url || ""],
-        video_url: story.video_url,
+        media_url: story.media_url || [],
+        username: story.creator?.username || "Unknown",
+        creator_username: story.creator?.username || "Unknown",
+        avatar_url: story.creator?.avatar_url,
+        creator_avatar_url: story.creator?.avatar_url,
+        content: story.content || "",
+        title: story.title || "",
+        description: story.description || "",
         visibility: "public",
-        is_ppv: false,
-        is_active: story.is_active,
-        duration: story.duration,
-        status: story.is_active ? "active" : "expired",
-        expires_at: story.expires_at
+        location: story.location || "",
+        tags: story.tags || [],
+        views: story.views || 0,
+        likes: story.likes || 0,
+        comments: story.comments || 0,
       }));
-    } catch (error) {
-      console.error("Error fetching stories:", error);
-      return [];
-    }
-  }, [session?.user?.id]);
-  
-  // Fetch videos
-  const fetchVideos = useCallback(async (): Promise<SurveillanceContentItem[]> => {
-    if (!session?.user?.id) return [];
-    
-    try {
-      const { data, error } = await supabase
-        .from('videos')
-        .select(`
-          *,
-          profiles:creator_id(username, avatar_url)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(20);
       
-      if (error) throw error;
-      
-      return data.map(video => ({
+      // Transform videos to SurveillanceContentItem format
+      const transformedVideos: SurveillanceContentItem[] = (videosData || []).map(video => ({
         id: video.id,
         content_type: "video",
-        type: "bodycontact" as const, // Set a valid type for LiveSession compatibility
         creator_id: video.creator_id,
-        username: video.profiles?.[0]?.username || "Unknown",
-        avatar_url: video.profiles?.[0]?.avatar_url || null,
         created_at: video.created_at,
-        title: video.title,
-        description: video.description,
-        media_url: [video.thumbnail_url || ""],
-        video_url: video.video_url,
-        visibility: video.visibility,
-        is_ppv: Boolean(video.ppv_amount),
-        ppv_amount: video.ppv_amount,
-        likes_count: video.like_count,
-        comments_count: video.comment_count,
-        view_count: video.view_count,
-        duration: video.duration,
-        is_active: video.is_processed,
-        tags: video.tags
-      }));
-    } catch (error) {
-      console.error("Error fetching videos:", error);
-      return [];
-    }
-  }, [session?.user?.id]);
-  
-  // Fetch PPV content 
-  const fetchPPVContent = useCallback(async (): Promise<SurveillanceContentItem[]> => {
-    if (!session?.user?.id) return [];
-    
-    try {
-      // First get PPV posts
-      const { data: ppvPosts, error: postsError } = await supabase
-        .from('posts')
-        .select(`
-          *,
-          profiles:creator_id(username, avatar_url)
-        `)
-        .eq('is_ppv', true)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      if (postsError) throw postsError;
-      
-      // Then get PPV videos
-      const { data: ppvVideos, error: videosError } = await supabase
-        .from('videos')
-        .select(`
-          *,
-          profiles:creator_id(username, avatar_url)
-        `)
-        .not('ppv_amount', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      if (videosError) throw videosError;
-      
-      // Map and combine the results
-      const ppvPostItems = (ppvPosts || []).map(post => ({
-        id: post.id,
-        content_type: "post",
-        type: "bodycontact" as const, // Set a valid type for LiveSession compatibility
-        creator_id: post.creator_id,
-        username: post.profiles?.[0]?.username || "Unknown",
-        avatar_url: post.profiles?.[0]?.avatar_url || null,
-        created_at: post.created_at,
-        title: post.title || "Paid Content",
-        description: post.content,
-        media_url: post.media_url || [],
-        video_urls: post.video_urls,
-        visibility: post.visibility,
-        is_ppv: true,
-        ppv_amount: post.ppv_amount,
-        likes_count: post.likes_count,
-        comments_count: post.comments_count,
-        view_count: post.view_count,
-        status: 'active',
-        tags: post.tags
+        media_url: video.media_url || [],
+        username: video.creator?.username || "Unknown",
+        creator_username: video.creator?.username || "Unknown",
+        avatar_url: video.creator?.avatar_url,
+        creator_avatar_url: video.creator?.avatar_url,
+        content: video.content || "",
+        title: video.title || "",
+        description: video.description || "",
+        visibility: video.visibility || "public",
+        location: video.location || "",
+        tags: video.tags || [],
+        views: video.views || 0,
+        likes: video.likes || 0,
+        comments: video.comments || 0,
       }));
       
-      const ppvVideoItems = (ppvVideos || []).map(video => ({
-        id: video.id,
-        content_type: "video",
-        type: "bodycontact" as const, // Set a valid type for LiveSession compatibility
-        creator_id: video.creator_id,
-        username: video.profiles?.[0]?.username || "Unknown",
-        avatar_url: video.profiles?.[0]?.avatar_url || null,
-        created_at: video.created_at,
-        title: video.title,
-        description: video.description,
-        media_url: [video.thumbnail_url || ""],
-        video_url: video.video_url,
-        visibility: video.visibility,
-        is_ppv: true,
-        ppv_amount: video.ppv_amount,
-        likes_count: video.like_count,
-        comments_count: video.comment_count,
-        view_count: video.view_count,
-        duration: video.duration,
-        tags: video.tags
-      }));
-      
-      return [...ppvPostItems, ...ppvVideoItems];
-    } catch (error) {
-      console.error("Error fetching PPV content:", error);
-      return [];
-    }
-  }, [session?.user?.id]);
-  
-  // Fetch audio content
-  const fetchAudio = useCallback(async (): Promise<SurveillanceContentItem[]> => {
-    if (!session?.user?.id) return [];
-    
-    try {
-      const { data, error } = await supabase
-        .from('sounds')
-        .select(`
-          *,
-          profiles:creator_id(username, avatar_url)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (error) throw error;
-      
-      return data.map(sound => ({
-        id: sound.id,
+      // Transform audios to SurveillanceContentItem format
+      const transformedAudios: SurveillanceContentItem[] = (audiosData || []).map(audio => ({
+        id: audio.id,
         content_type: "audio",
-        type: "chat" as const, // Set a valid type for LiveSession compatibility
-        creator_id: sound.creator_id,
-        username: sound.profiles?.[0]?.username || "Unknown",
-        avatar_url: sound.profiles?.[0]?.avatar_url || null,
-        created_at: sound.created_at,
-        title: sound.title,
-        description: "Audio content",
-        media_url: [],
-        audio_url: sound.audio_url,
-        duration: sound.duration,
+        creator_id: audio.creator_id,
+        created_at: audio.created_at,
+        media_url: audio.media_url || [],
+        username: audio.creator?.username || "Unknown",
+        creator_username: audio.creator?.username || "Unknown",
+        avatar_url: audio.creator?.avatar_url,
+        creator_avatar_url: audio.creator?.avatar_url,
+        content: audio.content || "",
+        title: audio.title || "",
+        description: audio.description || "",
         visibility: "public",
-        is_ppv: false,
-        use_count: sound.use_count,
-        is_draft: false,
-        is_deleted: false
+        location: audio.location || "",
+        tags: audio.tags || [],
+        views: audio.views || 0,
+        likes: audio.likes || 0,
+        comments: audio.comments || 0,
       }));
-    } catch (error) {
-      console.error("Error fetching audio:", error);
-      return [];
-    }
-  }, [session?.user?.id]);
-  
-  // Fetch all content types
-  const fetchAllContent = useCallback(async () => {
-    setIsLoading(true);
-    
-    try {
-      const [postsData, storiesData, videosData, audioData] = await Promise.all([
-        fetchPosts(),
-        fetchStories(),
-        fetchVideos(),
-        fetchAudio()
-      ]);
       
-      setPosts(postsData);
-      setStories(storiesData);
-      setVideos(videosData);
-      setAudios(audioData);
-      
-    } catch (error) {
+      setPosts(transformedPosts);
+      setStories(transformedStories);
+      setVideos(transformedVideos);
+      setAudios(transformedAudios);
+    } catch (error: any) {
+      setError(error);
       console.error("Error fetching content:", error);
-      toast({
-        title: "Error",
-        description: "Could not load content surveillance data",
-        variant: "destructive"
-      });
     } finally {
       setIsLoading(false);
     }
-  }, [fetchPosts, fetchStories, fetchVideos, fetchAudio, toast]);
+  }, [supabase]);
   
-  // Fetch content by specific type
-  const fetchContentByType = useCallback(async (contentType: ContentType): Promise<SurveillanceContentItem[]> => {
-    setIsLoading(true);
-    try {
-      switch (contentType) {
-        case 'post':
-          return await fetchPosts();
-        case 'story':
-          return await fetchStories();
-        case 'video':
-          return await fetchVideos();
-        case 'ppv':
-          return await fetchPPVContent();
-        case 'audio':
-          return await fetchAudio();
-        default:
-          return [];
+  useEffect(() => {
+    fetchContentItems();
+  }, [fetchContentItems]);
+
+  // Filter content items based on type
+  const filterContentByType = useCallback((items: SurveillanceContentItem[], type: ContentType) => {
+    return items.filter(item => {
+      // Normalize content_type to match our ContentType enum
+      const normalizedType = item.content_type.toLowerCase();
+      
+      if (type === 'posts' && normalizedType === 'post') {
+        return true;
       }
-    } catch (error) {
-      console.error(`Error fetching ${contentType} content:`, error);
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchPosts, fetchStories, fetchVideos, fetchPPVContent, fetchAudio]);
-  
+      
+      if (type === 'stories' && normalizedType === 'story') {
+        return true;
+      }
+      
+      if (type === 'videos' && (normalizedType === 'video' || normalizedType === 'media')) {
+        return true;
+      }
+      
+      if (type === 'audios' && normalizedType === 'audio') {
+        return true;
+      }
+      
+      return false;
+    });
+  }, []);
+
   return {
-    posts,
-    stories,
-    videos,
-    audios,
+    posts: filterContentByType(posts, 'posts'),
+    stories: filterContentByType(stories, 'stories'),
+    videos: filterContentByType(videos, 'videos'),
+    audios: filterContentByType(audios, 'audios'),
     isLoading,
-    fetchAllContent,
-    fetchContentByType
+    error,
   };
 }

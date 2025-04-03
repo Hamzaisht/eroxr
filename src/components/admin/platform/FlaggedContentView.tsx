@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +22,6 @@ export const AdminFlaggedContentView = () => {
     const fetchFlaggedContent = async () => {
       setIsLoading(true);
       try {
-        // Query flagged_content table with related data
         const { data, error } = await supabase
           .from('flagged_content')
           .select(`
@@ -35,12 +33,10 @@ export const AdminFlaggedContentView = () => {
         
         if (error) throw error;
         
-        // Fetch additional content details based on content_type
         if (data && data.length > 0) {
           const enrichedData = await Promise.all(data.map(async (item) => {
             let contentDetails = null;
             
-            // Fetch specific content based on type
             if (item.content_type === 'post') {
               const { data: postData } = await supabase
                 .from('posts')
@@ -84,7 +80,6 @@ export const AdminFlaggedContentView = () => {
     
     fetchFlaggedContent();
     
-    // Set up real-time subscription for new flagged content
     const channel = supabase
       .channel('flagged-content-changes')
       .on('postgres_changes', {
@@ -116,16 +111,15 @@ export const AdminFlaggedContentView = () => {
       case 'high':
         return <Badge variant="destructive">High Severity</Badge>;
       case 'medium':
-        return <Badge variant="orange">Medium Severity</Badge>;
+        return <Badge variant="secondary" className="bg-orange-500 hover:bg-orange-600">Medium Severity</Badge>;
       case 'low':
-        return <Badge variant="yellow">Low Severity</Badge>;
+        return <Badge variant="outline" className="text-yellow-400 border-yellow-400">Low Severity</Badge>;
       default:
         return <Badge>Unknown Severity</Badge>;
     }
   };
   
   const handleAction = (item: any, action: ModerationAction) => {
-    // Convert to SurveillanceContentItem format for moderation
     const contentItem: SurveillanceContentItem = {
       id: item.content_id,
       content_type: item.content_type,
