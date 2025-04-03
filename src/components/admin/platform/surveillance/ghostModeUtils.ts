@@ -1,8 +1,11 @@
 
-import { Session } from "@supabase/auth-helpers-react";
+import { Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { LiveSession } from "./types";
 
-// Toggle ghost mode state
+/**
+ * Toggle ghost mode state in Supabase and update local state
+ */
 export const toggleGhostModeState = async (
   session: Session,
   isSuperAdmin: boolean,
@@ -10,101 +13,123 @@ export const toggleGhostModeState = async (
   setIsGhostMode: (state: boolean) => void,
   setIsLoading: (state: boolean) => void,
   stopSurveillance: () => Promise<boolean>,
-  activeSurveillance: { isWatching: boolean }
+  activeSurveillance: {
+    isWatching: boolean;
+    session: LiveSession | null;
+    startTime: string | null;
+  }
 ) => {
-  if (!isSuperAdmin) {
-    console.error('Only super admins can toggle ghost mode');
+  if (!session?.user?.id) {
+    console.error('Cannot toggle ghost mode: No user session available');
     return;
   }
 
+  if (!isSuperAdmin) {
+    console.error('Cannot toggle ghost mode: User is not a super admin');
+    return;
+  }
+
+  setIsLoading(true);
+
   try {
-    setIsLoading(true);
-    
-    // If currently watching a session, stop it first
+    // If surveillance is active, stop it first
     if (isGhostMode && activeSurveillance.isWatching) {
       await stopSurveillance();
     }
-    
-    // Toggle ghost mode in database
-    const supabase = await import('@/integrations/supabase/client').then(mod => mod.supabase);
-    const { error } = await supabase
+
+    // Toggle ghost mode in admin_sessions table
+    const newGhostModeState = !isGhostMode;
+    const { data, error } = await supabase
       .from('admin_sessions')
       .upsert({
         admin_id: session.user.id,
-        ghost_mode: !isGhostMode,
-        activated_at: !isGhostMode ? new Date().toISOString() : null,
+        ghost_mode: newGhostModeState,
+        activated_at: newGhostModeState ? new Date().toISOString() : null,
         last_active_at: new Date().toISOString()
-      }, { onConflict: 'admin_id' });
-    
+      })
+      .select();
+
     if (error) {
-      console.error('Error updating ghost mode state:', error);
+      console.error('Error toggling ghost mode:', error);
       throw error;
     }
-    
+
     // Log the admin action
     await supabase.from('admin_logs').insert({
       admin_id: session.user.id,
-      action: !isGhostMode ? 'enable_ghost_mode' : 'disable_ghost_mode',
-      action_type: 'system',
-      details: { 
-        previous_state: isGhostMode,
-        new_state: !isGhostMode
-      }
+      action: newGhostModeState ? 'enabled_ghost_mode' : 'disabled_ghost_mode',
+      action_type: 'security',
+      details: { timestamp: new Date().toISOString() }
     });
-    
-    setIsGhostMode(!isGhostMode);
-    console.log(`Ghost mode ${!isGhostMode ? 'enabled' : 'disabled'}`);
+
+    console.log(`Ghost mode ${newGhostModeState ? 'enabled' : 'disabled'}`);
+    setIsGhostMode(newGhostModeState);
   } catch (error) {
-    console.error('Error toggling ghost mode:', error);
+    console.error('Error in toggleGhostModeState:', error);
   } finally {
     setIsLoading(false);
   }
 };
 
-// Sync ghost mode state with Supabase
+/**
+ * Sync ghost mode state from Supabase
+ */
 export const syncGhostModeState = async (
   userId: string,
   isSuperAdmin: boolean,
   setIsGhostMode: (state: boolean) => void,
   setIsLoading: (state: boolean) => void
 ) => {
+  if (!userId) {
+    console.error('Cannot sync ghost mode: No user ID available');
+    return;
+  }
+
   if (!isSuperAdmin) {
+    console.error('Cannot sync ghost mode: User is not a super admin');
     setIsGhostMode(false);
     setIsLoading(false);
     return;
   }
-  
+
+  setIsLoading(true);
+
   try {
-    setIsLoading(true);
-    
-    const supabase = await import('@/integrations/supabase/client').then(mod => mod.supabase);
+    // Get the latest admin session record
     const { data, error } = await supabase
       .from('admin_sessions')
-      .select('ghost_mode')
+      .select('*')
       .eq('admin_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
-    
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
-      console.error('Error fetching ghost mode state:', error);
-      throw error;
-    }
-    
-    // If there's data, update the ghost mode state
-    if (data) {
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      console.error('Error syncing ghost mode:', error);
+      setIsGhostMode(false);
+    } else if (data) {
+      // Update last active timestamp
+      await supabase
+        .from('admin_sessions')
+        .update({ last_active_at: new Date().toISOString() })
+        .eq('id', data.id);
+      
+      console.log(`Ghost mode state synced: ${data.ghost_mode}`);
       setIsGhostMode(data.ghost_mode || false);
     } else {
-      // If no data, initialize a new admin session record
-      await supabase.from('admin_sessions').insert({
-        admin_id: userId,
-        ghost_mode: false,
-        last_active_at: new Date().toISOString()
-      });
+      // No existing session, create one with ghost mode disabled
+      await supabase
+        .from('admin_sessions')
+        .insert({
+          admin_id: userId,
+          ghost_mode: false,
+          last_active_at: new Date().toISOString()
+        });
+      
       setIsGhostMode(false);
     }
-    
-    console.log(`Ghost mode state synced: ${data?.ghost_mode || false}`);
   } catch (error) {
-    console.error('Error synchronizing ghost mode state:', error);
+    console.error('Error in syncGhostModeState:', error);
     setIsGhostMode(false);
   } finally {
     setIsLoading(false);

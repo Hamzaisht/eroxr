@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
-import { LiveAlert, LiveSession } from "./types";
+import { LiveAlert } from "@/types/alerts";
+import { LiveSession } from "./types";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
 // Define the surveillance context type

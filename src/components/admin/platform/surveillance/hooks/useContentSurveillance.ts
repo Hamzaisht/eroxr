@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { SurveillanceContentItem, ContentType, ContentIcon } from "../types";
-import { FileText, Clock, Video, Music, File } from "lucide-react";
 
 export function useContentSurveillance() {
   const [posts, setPosts] = useState<SurveillanceContentItem[]>([]);
@@ -16,22 +15,22 @@ export function useContentSurveillance() {
     const normalizedType = type.toLowerCase();
     
     if (normalizedType === 'post' || normalizedType === 'posts') {
-      return { icon: FileText, className: "h-4 w-4" };
+      return { icon: 'FileText', className: "h-4 w-4" };
     }
     
     if (normalizedType === 'story' || normalizedType === 'stories') {
-      return { icon: Clock, className: "h-4 w-4" };
+      return { icon: 'Clock', className: "h-4 w-4" };
     }
     
     if (normalizedType === 'video' || normalizedType === 'videos') {
-      return { icon: Video, className: "h-4 w-4" };
+      return { icon: 'Video', className: "h-4 w-4" };
     }
     
     if (normalizedType === 'audio' || normalizedType === 'audios') {
-      return { icon: Music, className: "h-4 w-4" };
+      return { icon: 'Music', className: "h-4 w-4" };
     }
     
-    return { icon: File, className: "h-4 w-4" };
+    return { icon: 'File', className: "h-4 w-4" };
   };
 
   const fetchContentItems = useCallback(async () => {
@@ -95,6 +94,10 @@ export function useContentSurveillance() {
         views: post.views || 0,
         likes: post.likes || 0,
         comments: post.comments || 0,
+        user_id: post.creator_id,
+        is_ppv: post.is_ppv || false,
+        ppv_amount: post.ppv_amount,
+        status: post.status || "active"
       }));
       
       const transformedStories: SurveillanceContentItem[] = (storiesData || []).map(story => ({

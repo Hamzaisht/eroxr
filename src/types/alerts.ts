@@ -2,6 +2,7 @@
 export interface LiveAlert {
   id: string;
   type: "violation" | "risk" | "information";
+  alert_type: string;
   user_id: string;
   username: string;
   avatar_url: string | null;
@@ -16,7 +17,6 @@ export interface LiveAlert {
   status?: string;
   description: string;
   is_viewed: boolean;
-  alert_type?: string;
   session_id?: string;
   session?: any;
 }
