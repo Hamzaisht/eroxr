@@ -3,7 +3,7 @@ import { useGhostMode } from "@/hooks/useGhostMode";
 import { Button } from "@/components/ui/button";
 import { Ghost, Eye } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -12,22 +12,6 @@ export const GhostModeToggle = () => {
   const { isGhostMode, toggleGhostMode, canUseGhostMode, liveAlerts, isLoading: isGhostModeLoading } = useGhostMode();
   const [isToggling, setIsToggling] = useState(false);
   const session = useSession();
-
-  // Check Supabase for current ghost mode status on component mount
-  useEffect(() => {
-    const syncToggleState = async () => {
-      if (!session?.user?.id || !canUseGhostMode) return;
-      
-      try {
-        // We don't need to do anything here as useGhostMode already syncs with Supabase
-        // This effect is just to ensure the component re-renders when the session is available
-      } catch (error) {
-        console.error("Error syncing ghost mode toggle state:", error);
-      }
-    };
-
-    syncToggleState();
-  }, [session?.user?.id, canUseGhostMode]);
 
   const handleToggle = async () => {
     if (!canUseGhostMode) return;
