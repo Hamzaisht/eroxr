@@ -17,7 +17,3 @@ export interface GhostModeContextType {
   setIsGhostMode: (state: boolean) => void;
   syncGhostModeFromSupabase: () => Promise<void>;
 }
-
-export interface GhostModeProviderProps {
-  children: ReactNode;
-}
