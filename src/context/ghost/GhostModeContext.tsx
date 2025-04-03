@@ -1,7 +1,11 @@
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { LiveAlert } from "@/types/alerts";
 import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import { useSession } from "@supabase/auth-helpers-react";
+import { toggleGhostModeState, syncGhostModeState } from "./ghostModeUtils";
+import { useGhostSurveillance, useGhostAlerts } from "./hooks";
 
 export interface GhostModeContextType {
   isGhostMode: boolean
@@ -30,88 +34,56 @@ export function useGhostModeContext() {
 }
 
 export function GhostModeProvider({ children }: { children: ReactNode }) {
+  const { isSuperAdmin } = useSuperAdminCheck();
+  const session = useSession();
+  
   const [isGhostMode, setIsGhostMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [canUseGhostMode, setCanUseGhostMode] = useState(false);
-  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
-  const [activeSurveillance, setActiveSurveillance] = useState<{
-    session?: LiveSession
-    isWatching: boolean
-    startTime?: string
-  }>({ isWatching: false });
+  
+  // Initialize ghost alerts
+  const { liveAlerts, refreshAlerts } = useGhostAlerts(isGhostMode);
+  
+  // Initialize ghost surveillance functionality
+  const { activeSurveillance, startSurveillance, stopSurveillance } = useGhostSurveillance(isGhostMode, isSuperAdmin);
 
-  // These are stubs that will be implemented in the actual context
+  // Sync ghost mode state with Supabase on component mount
+  useEffect(() => {
+    if (session?.user?.id) {
+      syncGhostModeFromSupabase();
+    }
+  }, [session?.user?.id]);
+
+  // Update canUseGhostMode based on isSuperAdmin
+  useEffect(() => {
+    setCanUseGhostMode(isSuperAdmin);
+  }, [isSuperAdmin]);
+
+  // Toggle ghost mode
   const toggleGhostMode = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setIsGhostMode(!isGhostMode);
-    } finally {
-      setIsLoading(false);
-    }
+    if (!session) return;
+    
+    await toggleGhostModeState(
+      session,
+      isSuperAdmin,
+      isGhostMode,
+      setIsGhostMode,
+      setIsLoading,
+      stopSurveillance,
+      activeSurveillance
+    );
   };
 
+  // Sync ghost mode state with Supabase
   const syncGhostModeFromSupabase = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      // This would typically fetch the ghost mode status from Supabase
-      console.log("Syncing ghost mode status from Supabase");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const startSurveillance = async (session: LiveSession): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setActiveSurveillance({
-        session,
-        isWatching: true,
-        startTime: new Date().toISOString()
-      });
-      return true;
-    } catch (error) {
-      console.error("Error starting surveillance:", error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const stopSurveillance = async (): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setActiveSurveillance({ isWatching: false });
-      return true;
-    } catch (error) {
-      console.error("Error stopping surveillance:", error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const refreshAlerts = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      // This would typically fetch alerts from an API
-      console.log("Refreshing alerts");
-      // For now, we'll just mock some alerts
-      setLiveAlerts([
-        // Mock data would go here in a real implementation
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
+    if (!session?.user?.id) return;
+    
+    await syncGhostModeState(
+      session.user.id,
+      isSuperAdmin,
+      setIsGhostMode,
+      setIsLoading
+    );
   };
 
   return (

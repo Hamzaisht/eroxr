@@ -1,11 +1,10 @@
 
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { Button } from "@/components/ui/button";
-import { Ghost, Eye } from "lucide-react";
+import { Ghost, Eye, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 
 export const GhostModeToggle = () => {
@@ -19,29 +18,33 @@ export const GhostModeToggle = () => {
     setIsToggling(true);
     try {
       await toggleGhostMode();
-
-      // Log toggle to admin_logs (this is redundant as it's already done in the context, but adding for clarity)
-      if (session?.user?.id) {
-        await supabase.from('admin_logs').insert({
-          admin_id: session.user.id,
-          action: isGhostMode ? 'ghost_mode_disabled' : 'ghost_mode_enabled',
-          action_type: 'toggle_ghost_mode',
-          target_type: 'admin',
-          target_id: session.user.id,
-          details: {
-            timestamp: new Date().toISOString(),
-            previous_state: isGhostMode,
-            new_state: !isGhostMode,
-            component: 'GhostModeToggle'
-          }
-        });
-      }
     } finally {
       setIsToggling(false);
     }
   };
 
-  if (!canUseGhostMode) return null;
+  if (!canUseGhostMode) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-[#161B22]/80 flex items-center gap-2 relative opacity-50"
+              disabled={true}
+            >
+              <AlertTriangle className="h-4 w-4 text-yellow-400" />
+              <span className="hidden sm:inline">Restricted Mode</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>You don't have permission to use Ghost Mode. Super Admin role required.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
 
   const pendingAlerts = (liveAlerts || []).length;
   const isLoading = isToggling || isGhostModeLoading;

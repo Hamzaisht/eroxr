@@ -1,46 +1,56 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-/**
- * Migrate any existing ghost mode data from localStorage to Supabase
- * This function should be called once on application startup
- */
-export const migrateGhostModeData = async (userId: string) => {
+export const migrateGhostModeData = async (userId: string): Promise<void> => {
   try {
-    // Check if we have local ghost mode data to migrate
-    const ghostModeStr = localStorage.getItem('ghost_mode_status');
-    
-    if (ghostModeStr) {
-      // Parse local data
-      const ghostMode = JSON.parse(ghostModeStr);
+    // Check if we already have an admin_sessions entry
+    const { data, error } = await supabase
+      .from('admin_sessions')
+      .select('*')
+      .eq('admin_id', userId)
+      .maybeSingle();
       
-      if (typeof ghostMode === 'boolean') {
-        // Check if the user already has a session record
-        const { data, error } = await supabase
-          .from('admin_sessions')
-          .select('id')
-          .eq('admin_id', userId)
-          .maybeSingle();
-          
-        if (error && error.code !== 'PGRST116') {
-          console.error("Error checking for existing admin session:", error);
-          return;
-        }
+    if (error && error.code !== 'PGRST116') {
+      console.error("Error checking admin sessions:", error);
+      return;
+    }
+    
+    // If we already have data in Supabase, no need to migrate
+    if (data) return;
+    
+    // Check if we have localStorage data to migrate
+    const localGhostModeState = localStorage.getItem('ghostMode');
+    if (localGhostModeState) {
+      try {
+        const parsedState = JSON.parse(localGhostModeState);
+        const isGhostMode = !!parsedState?.enabled;
         
-        // If no record exists, create one with the local data
-        if (!data) {
-          await supabase.from('admin_sessions').insert({
-            admin_id: userId,
-            ghost_mode: ghostMode,
-            activated_at: ghostMode ? new Date() : null,
-            last_active_at: new Date()
-          });
-          
-          console.log("Migrated ghost mode data to database");
-          
-          // Clear local storage data after migration
-          localStorage.removeItem('ghost_mode_status');
-        }
+        // Create admin session in Supabase
+        await supabase.from('admin_sessions').insert({
+          admin_id: userId,
+          ghost_mode: isGhostMode,
+          activated_at: isGhostMode ? new Date().toISOString() : null
+        });
+        
+        // Log the migration
+        await supabase.from('admin_logs').insert({
+          admin_id: userId,
+          action: 'migrate_ghost_mode',
+          action_type: 'migration',
+          target_type: 'admin_session',
+          target_id: userId,
+          details: {
+            migrated_from: 'localStorage',
+            original_state: parsedState,
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        // Clear localStorage since we've migrated the data
+        localStorage.removeItem('ghostMode');
+        console.log("Successfully migrated ghost mode data to Supabase");
+      } catch (parseError) {
+        console.error("Error parsing localStorage ghost mode data:", parseError);
       }
     }
   } catch (error) {
