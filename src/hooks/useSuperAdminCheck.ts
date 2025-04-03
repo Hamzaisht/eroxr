@@ -35,27 +35,26 @@ export function useSuperAdminCheck() {
           return;
         }
         
-        // Check user_roles table
+        // Check user_roles table, but get ALL roles this time, not just one
         const { data: rolesData, error: rolesError } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', session.user.id)
-          .single();
+          .eq('user_id', session.user.id);
         
-        console.log("Roles query result:", { rolesData, rolesError });
+        console.log("Roles query results:", { rolesData, rolesError });
         
         if (rolesError) {
-          console.warn("Error checking admin role:", rolesError);
+          console.warn("Error checking admin roles:", rolesError);
           // Fallback to user metadata
           const metadataRole = session.user.user_metadata?.role;
           console.log("Fallback - Metadata role:", metadataRole);
           
           setIsSuperAdmin(metadataRole === "super_admin");
         } else {
-          // Check if the user has the super_admin role
-          const isAdmin = rolesData?.role === 'super_admin';
-          console.log(`🕵️ Admin role check result: ${isAdmin ? '✅ ADMIN' : '❌ NOT ADMIN'}`, rolesData);
-          setIsSuperAdmin(isAdmin);
+          // Check if any of the user's roles is super_admin
+          const hasSuperAdminRole = rolesData?.some(role => role.role === 'super_admin');
+          console.log(`🕵️ Admin role check result: ${hasSuperAdminRole ? '✅ ADMIN' : '❌ NOT ADMIN'}`, rolesData);
+          setIsSuperAdmin(hasSuperAdminRole);
         }
       } catch (error) {
         console.error("Unexpected error checking admin role:", error);

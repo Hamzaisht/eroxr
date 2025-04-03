@@ -11,18 +11,35 @@ export const useUserRole = () => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
 
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .maybeSingle(); // Use maybeSingle instead of single to handle no results
+      try {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id);
 
-      if (error && error.code !== 'PGRST116') {
-        console.error("Error fetching user role:", error);
-        throw error;
+        if (error) {
+          console.error("Error fetching user roles:", error);
+          throw error;
+        }
+
+        // If no roles found, default to 'user'
+        if (!data || data.length === 0) {
+          return 'user';
+        }
+
+        // Check for the highest privilege role
+        // Priority: super_admin > admin > moderator > user
+        const roles = data.map(r => r.role);
+        
+        if (roles.includes('super_admin')) return 'super_admin';
+        if (roles.includes('admin')) return 'admin';
+        if (roles.includes('moderator')) return 'moderator';
+        
+        return 'user';
+      } catch (error) {
+        console.error("Error in useUserRole:", error);
+        return 'user'; // Default to 'user' on error
       }
-
-      return data?.role || 'user'; // Default to 'user' if no role found
     },
     enabled: !!session?.user?.id,
   });
