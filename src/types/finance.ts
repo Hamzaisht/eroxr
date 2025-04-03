@@ -1,35 +1,46 @@
 
+// Define creator earnings type
 export interface CreatorEarnings {
   id: string;
-  user_id: string;
-  creator_id: string; // Ensure compatibility
-  username: string;
-  avatar_url?: string;
-  total_earnings: number;
+  creator_id: string;
   current_balance: number;
-  last_payout_date?: string;
-  last_payout_amount: number;
-  subscriber_count: number;
-  tip_count: number;
-  ppv_count: number;
-  subscription_earnings: number;
-  tip_earnings: number;
-  ppv_earnings: number;
+  total_earnings?: number;
+  created_at: string;
+  updated_at?: string;
+  username?: string;
+  avatar_url?: string;
+  earnings_percentile?: number;
 }
 
+// Define payout request type
 export interface PayoutRequest {
   id: string;
   creator_id: string;
   amount: number;
   platform_fee?: number;
   final_amount?: number;
+  status: 'pending' | 'approved' | 'rejected' | 'processed';
   requested_at: string;
   approved_at?: string;
   processed_at?: string;
   processed_by?: string;
-  status: 'pending' | 'approved' | 'rejected' | 'processed' | 'paid' | 'failed';
   notes?: string;
   username?: string;
-  creator_username?: string; // Ensure compatibility
   avatar_url?: string;
+}
+
+// Define earnings data point for charts
+export interface EarningsDataPoint {
+  date: string;
+  amount: number;
+  source?: string;
+}
+
+// Define earnings summary
+export interface EarningsSummary {
+  total: number;
+  pending: number;
+  processed: number;
+  last_period: number;
+  growth_percentage: number;
 }
