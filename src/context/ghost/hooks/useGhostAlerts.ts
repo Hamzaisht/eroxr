@@ -85,8 +85,8 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
         created_at: item.flagged_at,
         status: item.status,
         user_id: item.user_id,
-        username: item.profiles?.username || 'Unknown User',
-        avatar_url: item.profiles?.avatar_url || '',
+        username: item.profiles ? item.profiles.username || 'Unknown User' : 'Unknown User',
+        avatar_url: item.profiles ? item.profiles.avatar_url || '' : '',
         title: `Flagged ${item.content_type}`,
         description: item.reason || '',
         is_viewed: false
@@ -103,8 +103,8 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
         created_at: item.created_at,
         status: item.status,
         user_id: item.reporter_id,
-        username: item.profiles?.username || 'Unknown User',
-        avatar_url: item.profiles?.avatar_url || '',
+        username: item.profiles ? item.profiles.username || 'Unknown User' : 'Unknown User',
+        avatar_url: item.profiles ? item.profiles.avatar_url || '' : '',
         title: `${item.is_emergency ? 'URGENT: ' : ''}Report on ${item.content_type}`,
         description: item.description || item.reason || '',
         is_viewed: false
@@ -121,8 +121,8 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
         created_at: item.created_at,
         status: item.status,
         user_id: item.reporter_id,
-        username: item.profiles?.username || 'Unknown User',
-        avatar_url: item.profiles?.avatar_url || '',
+        username: item.profiles ? item.profiles.username || 'Unknown User' : 'Unknown User',
+        avatar_url: item.profiles ? item.profiles.avatar_url || '' : '',
         title: `DMCA Takedown Request`,
         description: `Copyright claim on ${item.content_type}`,
         is_viewed: false
