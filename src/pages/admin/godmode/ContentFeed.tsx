@@ -1,6 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FlaggedContent } from "@/components/admin/platform/FlaggedContent";
+import { AdminFlaggedContentView } from "@/components/admin/platform/FlaggedContentView";
 import { DeletedContent } from "@/components/admin/platform/DeletedContent";
 import { AdminHeader } from "@/components/admin/godmode/AdminHeader";
 
@@ -15,7 +15,7 @@ export default function ContentFeed() {
           <TabsTrigger value="deleted">Deleted Content</TabsTrigger>
         </TabsList>
         <TabsContent value="flagged">
-          <FlaggedContent />
+          <AdminFlaggedContentView />
         </TabsContent>
         <TabsContent value="deleted">
           <DeletedContent />

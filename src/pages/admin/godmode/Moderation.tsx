@@ -1,7 +1,7 @@
 
 import { ModerateContent } from "@/components/admin/platform/ModerateContent";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FlaggedContent } from "@/components/admin/platform/FlaggedContent";
+import { AdminFlaggedContentView } from "@/components/admin/platform/FlaggedContentView";
 import { AdminHeader } from "@/components/admin/godmode/AdminHeader";
 
 export default function Moderation() {
@@ -18,7 +18,7 @@ export default function Moderation() {
           <ModerateContent />
         </TabsContent>
         <TabsContent value="flagged">
-          <FlaggedContent />
+          <AdminFlaggedContentView />
         </TabsContent>
       </Tabs>
     </div>

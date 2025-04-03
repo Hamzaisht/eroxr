@@ -48,7 +48,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { LoadingState } from "@/components/ui/LoadingState";
 
-export const FlaggedContentList = () => {
+export const AdminFlaggedContentView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [contentTypeFilter, setContentTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
