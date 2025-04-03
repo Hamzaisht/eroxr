@@ -42,6 +42,7 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
           .select(`
             id,
             content_type,
+            content_id,
             reason,
             description,
             status,
@@ -75,11 +76,11 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
       // Process and combine alerts
       const flaggedAlerts: LiveAlert[] = (flaggedContentRes.data || []).map(item => ({
         id: item.id,
-        type: 'flagged_content',
+        type: "violation", // Changed from "flagged_content" to match LiveAlert type
         content_type: item.content_type,
         content_id: item.content_id,
         reason: item.reason,
-        severity: item.severity,
+        severity: item.severity as "high" | "medium" | "low",
         timestamp: item.flagged_at,
         created_at: item.flagged_at,
         status: item.status,
@@ -93,8 +94,9 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
 
       const reportAlerts: LiveAlert[] = (reportsRes.data || []).map(item => ({
         id: item.id,
-        type: 'report',
+        type: "risk", // Changed from "report" to match LiveAlert type
         content_type: item.content_type,
+        content_id: item.content_id || '', // Ensure content_id is provided
         reason: item.reason,
         severity: item.is_emergency ? 'high' : 'medium',
         timestamp: item.created_at,
@@ -110,7 +112,7 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
 
       const dmcaAlerts: LiveAlert[] = (dmcaRes.data || []).map(item => ({
         id: item.id,
-        type: 'dmca',
+        type: "information", // Changed from "dmca" to match LiveAlert type
         content_type: item.content_type,
         content_id: item.content_id,
         reason: 'Copyright Violation',
