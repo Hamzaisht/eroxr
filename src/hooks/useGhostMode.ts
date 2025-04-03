@@ -1,5 +1,5 @@
 
-import { useGhostMode as useGhostModeContext } from "@/context/GhostModeContext";
+import { useGhostMode as useGhostModeContext } from "@/context/ghost/GhostModeContext";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
