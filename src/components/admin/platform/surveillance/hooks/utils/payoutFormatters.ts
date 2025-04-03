@@ -1,71 +1,93 @@
 
+import { useCallback } from "react";
 import { CreatorEarnings, PayoutRequest } from "../../types";
-import { WithProfile } from "@/integrations/supabase/types/profile";
+import { supabase } from "@/integrations/supabase/client";
 
-// Helper function to determine earning source based on data
-export const determineEarningSource = (earning: any): string => {
-  const description = earning.notes?.toLowerCase() || '';
-  if (description.includes('subscription')) return 'subscription';
-  if (description.includes('ppv') || description.includes('premium')) return 'ppv';
-  if (description.includes('tip') || description.includes('gift')) return 'tips';
-  if (description.includes('direct') || description.includes('sale')) return 'direct';
-  return 'subscription'; // Default
+export const useMockPayoutRequests = () => {
+  const fetchMockPayoutRequests = useCallback(async (): Promise<PayoutRequest[]> => {
+    try {
+      // For now, this uses mock data, but we could replace with real API calls later
+      const { data, error } = await supabase
+        .from('payout_requests')
+        .select(`
+          *,
+          profiles:creator_id(
+            username,
+            avatar_url
+          )
+        `)
+        .order('requested_at', { ascending: false })
+        .limit(20);
+        
+      if (error) throw error;
+      
+      // Format the data to match our interface
+      return (data || []).map((request: any) => ({
+        id: request.id,
+        creator_id: request.creator_id,
+        amount: request.amount,
+        platform_fee: request.platform_fee,
+        final_amount: request.final_amount,
+        requested_at: request.requested_at,
+        approved_at: request.approved_at,
+        processed_at: request.processed_at,
+        status: request.status,
+        notes: request.notes,
+        // Extra fields not in the type but useful for display
+        creator_username: request.profiles?.[0]?.username || 'Unknown'
+      }));
+    } catch (error) {
+      console.error("Error fetching payout requests:", error);
+      return [];
+    }
+  }, []);
+  
+  return { fetchMockPayoutRequests };
 };
 
-// Helper function to determine description if not provided
-export const determineEarningDescription = (earning: any): string => {
-  const source = determineEarningSource(earning);
-  switch (source) {
-    case 'subscription': return 'Monthly subscriptions';
-    case 'ppv': return 'Premium content sales';
-    case 'tips': return 'Fan tips and gifts';
-    case 'direct': return 'Direct content sales';
-    default: return 'Platform earnings';
-  }
-};
-
-// Helper function to format payout requests
-export const formatPayoutRequest = (payout: WithProfile<any>): PayoutRequest => {
-  const profile = payout.profiles || {};
-  return {
-    id: payout.id,
-    creator_id: payout.creator_id,
-    creator_username: profile.username || 'Unknown User',
-    creator_avatar_url: profile.avatar_url || null,
-    amount: parseFloat(payout.amount) || 0,
-    platform_fee: parseFloat(payout.platform_fee) || 0,
-    final_amount: parseFloat(payout.final_amount) || 0,
-    requested_at: payout.requested_at,
-    approved_at: payout.approved_at || null,
-    processed_at: payout.processed_at || null,
-    status: payout.status
-  };
-};
-
-// Function to process earnings data into CreatorEarnings format
-export const processEarningsData = (earnings: WithProfile<any>[]): CreatorEarnings[] => {
-  return earnings.map(earning => {
-    const profile = earning.profiles || {};
-    return {
-      id: earning.id,
-      user_id: earning.creator_id,
-      username: profile.username || 'Unknown User',
-      avatar_url: profile.avatar_url || null,
-      gross_earnings: parseFloat(earning.amount) || 0,
-      net_earnings: parseFloat(earning.final_amount) || 0,
-      platform_fee: parseFloat(earning.platform_fee) || 0,
-      subscription_count: 0, // These fields would need additional queries
-      ppv_count: 0,
-      tip_count: 0,
-      last_payout_date: earning.processed_at || null,
-      last_payout_amount: parseFloat(earning.final_amount) || 0,
-      payout_status: earning.status,
-      stripe_connected: true, // Default assumption
-      source: determineEarningSource(earning),
-      status: earning.status,
-      amount: earning.amount.toString(),
-      description: earning.notes || determineEarningDescription(earning),
-      created_at: earning.requested_at
-    };
-  });
+export const useMockCreatorEarnings = () => {
+  const fetchMockCreatorEarnings = useCallback(async (): Promise<CreatorEarnings[]> => {
+    try {
+      // Fetch real creator metrics from database
+      const { data, error } = await supabase
+        .from('creator_metrics')
+        .select(`
+          *,
+          profiles:user_id(
+            username,
+            avatar_url
+          )
+        `)
+        .order('earnings', { ascending: false })
+        .limit(20);
+        
+      if (error) throw error;
+      
+      // Map the data to our CreatorEarnings interface
+      return (data || []).map((earnings: any) => ({
+        id: earnings.id,
+        creator_id: earnings.user_id,
+        user_id: earnings.user_id,
+        username: earnings.profiles?.[0]?.username || 'Unknown',
+        avatar_url: earnings.profiles?.[0]?.avatar_url,
+        total_earnings: earnings.earnings || 0,
+        this_month: Math.floor(earnings.earnings * 0.3) || 0, // Mock calculation
+        pending_earnings: Math.floor(earnings.earnings * 0.1) || 0, // Mock calculation
+        fan_count: earnings.followers || 0,
+        // Additional fields for display
+        amount: earnings.earnings,
+        source: 'subscription',
+        status: 'active',
+        description: 'Monthly subscription earnings',
+        created_at: earnings.created_at,
+        payout_status: 'available',
+        last_payout_date: null
+      }));
+    } catch (error) {
+      console.error("Error fetching creator earnings:", error);
+      return [];
+    }
+  }, []);
+  
+  return { fetchMockCreatorEarnings };
 };

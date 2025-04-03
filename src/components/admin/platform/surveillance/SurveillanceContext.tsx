@@ -42,7 +42,7 @@ export const SurveillanceProvider = ({
   const { fetchCalls } = useCallsSurveillance();
   const { fetchChatSessions } = useChatsSurveillance();
   const { fetchBodyContact } = useBodyContactSurveillance();
-  const { fetchContent } = useContentSurveillance();
+  const contentSurveillance = useContentSurveillance();
   const { toast } = useToast();
   
   const {
@@ -53,6 +53,7 @@ export const SurveillanceProvider = ({
     isRefreshing,
     setIsRefreshing,
     error,
+    setError,
     fetchLiveSessions
   } = surveillanceData;
   
@@ -147,7 +148,7 @@ export const SurveillanceProvider = ({
     };
   }, [activeTab, fetchLiveSessions]);
   
-  const value = {
+  const value: SurveillanceContextType = {
     activeTab,
     setActiveTab,
     liveSessions,

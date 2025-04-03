@@ -1,6 +1,7 @@
 
-import { AdminLogsTable } from "@/components/admin/godmode/logs/AdminLogsTable";
+import React from 'react';
 import { AdminHeader } from "@/components/admin/godmode/AdminHeader";
+import { AdminLogsTable } from "@/components/admin/godmode/logs/AdminLogsTable";
 
 export default function AdminLogs() {
   return (

@@ -55,7 +55,9 @@ export function useSurveillanceData() {
         ...item,
         media_url: Array.isArray(item.media_url) ? item.media_url : 
                    item.media_url ? [item.media_url] : [],
-        started_at: item.started_at || item.created_at || new Date().toISOString()
+        created_at: item.created_at || item.started_at || new Date().toISOString(),
+        // Ensure type is a valid enum value
+        type: (item.type as "stream" | "call" | "chat" | "bodycontact")
       }));
       
       console.log(`Fetched ${validatedData.length} ${activeTab} for surveillance`);

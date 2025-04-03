@@ -29,7 +29,7 @@ export const LiveSurveillance = () => {
   return (
     <div className="p-4 space-y-4">
       <SurveillanceProvider
-        liveAlerts={liveAlerts as unknown as LiveAlert[]}
+        liveAlerts={liveAlerts as LiveAlert[]}
         refreshAlerts={refreshAlerts}
         startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
       >
@@ -40,7 +40,7 @@ export const LiveSurveillance = () => {
             startTime?: string;
           }}
           stopSurveillance={stopSurveillance}
-          liveAlerts={liveAlerts as unknown as LiveAlert[]}
+          liveAlerts={liveAlerts as LiveAlert[]}
         />
       </SurveillanceProvider>
     </div>
@@ -95,8 +95,10 @@ const SurveillanceContent = ({
         <ActiveSurveillanceCard
           session={{
             ...activeSurveillance.session,
-            // Ensure started_at is present for backward compatibility
-            started_at: activeSurveillance.session.started_at || activeSurveillance.session.created_at
+            // Ensure type is a valid enum value (force cast if needed)
+            type: (activeSurveillance.session.type as "stream" | "call" | "chat" | "bodycontact"),
+            // Ensure created_at exists (required field)
+            created_at: activeSurveillance.session.created_at || activeSurveillance.session.started_at || new Date().toISOString()
           }}
           onEndSurveillance={stopSurveillance}
         />

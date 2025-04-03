@@ -146,9 +146,17 @@ export const ContentSurveillanceList = ({
                   </p>
                 )}
                 
-                {item.media_urls && item.media_urls.length > 0 && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {item.media_urls.length} media item{item.media_urls.length > 1 ? 's' : ''}
+                {item.media_url && Array.isArray(item.media_url) && item.media_url.length > 0 && (
+                  <div className="flex items-center gap-1 mt-2">
+                    {item.media_url.slice(0, 3).map((url, idx) => (
+                      <img key={idx} src={url} alt={`Media ${idx + 1}`} className="h-10 w-10 rounded-lg" />
+                    ))}
+                    {item.media_url.length > 3 && (
+                      <div className="flex items-center gap-1">
+                        <img src={item.media_url[3]} alt={`Media 4`} className="h-10 w-10 rounded-lg" />
+                        <span className="text-xs text-gray-500">+{item.media_url.length - 3}</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 

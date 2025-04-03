@@ -6,7 +6,7 @@ export interface LiveSession {
   user_id?: string;
   username?: string;
   creator_username?: string;
-  type: string;
+  type: "stream" | "call" | "chat" | "bodycontact";
   content?: string;
   content_type?: string;
   created_at: string;
@@ -106,6 +106,13 @@ export interface CreatorEarnings {
   last_payout_date?: string;
   fan_count: number;
   payout_status?: string;
+  // Additional fields needed by components
+  user_id?: string;
+  amount?: number;
+  source?: string;
+  status?: string;
+  description?: string;
+  created_at?: string;
 }
 
 export interface PayoutRequest {
@@ -119,4 +126,5 @@ export interface PayoutRequest {
   processed_at?: string;
   status: 'pending' | 'approved' | 'processed' | 'rejected';
   notes?: string;
+  creator_username?: string;
 }

@@ -118,8 +118,8 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         .upsert({
           admin_id: session.user.id,
           ghost_mode: newGhostModeState,
-          activated_at: newGhostModeState ? new Date() : null,
-          last_active_at: new Date()
+          activated_at: newGhostModeState ? new Date().toISOString() : null,
+          last_active_at: new Date().toISOString()
         }, {
           onConflict: 'admin_id' 
         });
@@ -191,7 +191,8 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       liveAlerts: liveAlerts as LiveAlert[],
       refreshAlerts,
       setIsGhostMode,
-      syncGhostModeFromSupabase
+      syncGhostModeFromSupabase,
+      canUseGhostMode: isSuperAdmin
     }}>
       {children}
       

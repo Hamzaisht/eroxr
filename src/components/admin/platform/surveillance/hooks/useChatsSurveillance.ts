@@ -1,126 +1,82 @@
 
-import { useCallback, useState, useEffect } from "react";
-import { LiveSession } from "../types";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { LiveSession } from "../types";
 
 export function useChatsSurveillance() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<LiveSession[]>([]);
   const { toast } = useToast();
+  const session = useSession();
 
-  const fetchChatSessions = useCallback(async (): Promise<LiveSession[]> => {
-    setIsLoading(true);
-    setError(null);
-
+  const fetchChatSessions = useCallback(async () => {
+    if (!session?.user?.id) return [];
+    
     try {
-      // Fetch real direct messages from Supabase
       const { data: chats, error: chatsError } = await supabase
         .from('direct_messages')
         .select(`
-          id,
-          sender_id,
-          recipient_id,
-          created_at,
-          message_type,
-          content,
-          media_url,
-          video_url,
-          sender:profiles!direct_messages_sender_id_fkey(username, avatar_url),
-          recipient:profiles!direct_messages_recipient_id_fkey(username, avatar_url)
+          *,
+          sender:sender_id(
+            profiles:id(username, avatar_url)
+          ),
+          recipient:recipient_id(
+            profiles:id(username, avatar_url)
+          )
         `)
+        .eq('is_expired', false)
         .order('created_at', { ascending: false })
-        .limit(30);
+        .limit(50);
         
       if (chatsError) {
         console.error("Error fetching chat sessions:", chatsError);
-        setError('Failed to fetch chat sessions');
-        toast({
-          title: "Error",
-          description: "Failed to fetch chat sessions",
-          variant: "destructive"
-        });
         return [];
       }
-
-      // Process chats into conversation groups (unique sender-recipient pairs)
-      const uniqueChats = new Map();
       
-      chats?.forEach(chat => {
-        // Create a unique key for each conversation pair (sorted to handle both directions)
-        const participants = [chat.sender_id, chat.recipient_id].sort().join(':');
+      return (chats || []).map((chat: any) => {
+        // Safely access nested profile data
+        const senderProfile = chat.sender?.profiles?.[0] || {};
+        const recipientProfile = chat.recipient?.profiles?.[0] || {};
         
-        // Only add this conversation if we haven't seen it yet
-        if (!uniqueChats.has(participants)) {
-          const sender = chat.sender || {};
-          const recipient = chat.recipient || {};
-          
-          uniqueChats.set(participants, {
-            id: chat.id,
-            type: 'chat',
-            user_id: chat.sender_id,
-            username: sender.username || 'Unknown',
-            avatar_url: sender.avatar_url || null,
-            started_at: chat.created_at,
-            status: 'active',
-            title: `Chat between ${sender.username || 'Unknown'} and ${recipient.username || 'Unknown'}`,
-            content: chat.content || "No content",
-            media_url: Array.isArray(chat.media_url) ? chat.media_url : chat.media_url ? [chat.media_url] : [],
-            recipient_id: chat.recipient_id,
-            recipient_username: recipient.username || 'Unknown',
-            sender_username: sender.username || 'Unknown',
-            sender_profiles: {
-              username: sender.username || 'Unknown',
-              avatar_url: sender.avatar_url || null
-            },
-            receiver_profiles: {
-              username: recipient.username || 'Unknown',
-              avatar_url: recipient.avatar_url || null
-            },
-            created_at: chat.created_at
-          });
+        // Determine display data based on message direction
+        let displayUsername, displayAvatar;
+        
+        // For special case where admin is viewing a message they sent
+        if (chat.sender_id === session.user.id) {
+          displayUsername = `${senderProfile.username || 'Unknown'} → ${recipientProfile.username || 'Unknown'}`;
+          displayAvatar = senderProfile.avatar_url;
+        } else {
+          displayUsername = senderProfile.username || 'Unknown';
+          displayAvatar = senderProfile.avatar_url;
         }
+        
+        return {
+          id: chat.id,
+          type: 'chat' as const,
+          user_id: chat.sender_id,
+          username: displayUsername,
+          avatar_url: displayAvatar,
+          created_at: chat.created_at,
+          content: chat.content,
+          media_url: chat.media_url || [],
+          recipient_id: chat.recipient_id,
+          recipient_username: recipientProfile.username || 'Unknown',
+          sender_username: senderProfile.username || 'Unknown',
+          status: chat.viewed_at ? 'read' : 'unread',
+          content_type: chat.message_type,
+          message_source: chat.message_source
+        };
       });
-
-      const chatSessions = Array.from(uniqueChats.values());
-      setSessions(chatSessions);
-      return chatSessions;
-    } catch (err) {
-      console.error("Error fetching chat sessions:", err);
-      setError('An error occurred while fetching chat data');
+    } catch (error) {
+      console.error("Error fetching chat sessions:", error);
+      toast({
+        title: "Error",
+        description: "Could not load active chats",
+        variant: "destructive"
+      });
       return [];
-    } finally {
-      setIsLoading(false);
     }
-  }, [toast]);
+  }, [session?.user?.id, toast]);
 
-  // Set up realtime subscription for new messages
-  useEffect(() => {
-    const channel = supabase
-      .channel('chat-surveillance')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'direct_messages'
-      }, () => {
-        // Refresh data when new messages arrive
-        fetchChatSessions();
-      })
-      .subscribe();
-
-    // Initial fetch
-    fetchChatSessions();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchChatSessions]);
-
-  return {
-    isLoading,
-    error,
-    sessions,
-    fetchChatSessions,
-  };
+  return { fetchChatSessions };
 }
