@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -92,7 +93,11 @@ const SurveillanceContent = ({
       
       {activeSurveillance.isWatching && activeSurveillance.session && (
         <ActiveSurveillanceCard
-          session={activeSurveillance.session}
+          session={{
+            ...activeSurveillance.session,
+            // Ensure started_at is present for backward compatibility
+            started_at: activeSurveillance.session.started_at || activeSurveillance.session.created_at
+          }}
           onEndSurveillance={stopSurveillance}
         />
       )}

@@ -1,128 +1,66 @@
-
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { LiveSession } from "@/components/admin/platform/surveillance/types";
 
-export function useGhostSurveillance(isGhostMode: boolean, isSuperAdmin: boolean) {
+export const useGhostSurveillance = (isGhostMode: boolean, isSuperAdmin: boolean) => {
   const [activeSurveillance, setActiveSurveillance] = useState<{
     session?: LiveSession;
     isWatching: boolean;
     startTime?: string;
-  }>({
-    isWatching: false
-  });
+  }>({ isWatching: false });
   
   const session = useSession();
-  const { toast } = useToast();
 
-  const startSurveillance = async (targetSession: LiveSession): Promise<boolean> => {
-    if (!isGhostMode || !isSuperAdmin) {
-      toast({
-        title: "Ghost Mode Required",
-        description: "You must be in Ghost Mode to monitor user sessions",
-        variant: "destructive"
-      });
-      return false;
-    }
+  const startSurveillance = useCallback(async (sessionToWatch: LiveSession) => {
+    if (!isGhostMode || !isSuperAdmin || !session?.user?.id) return false;
     
     try {
-      const startTime = new Date().toISOString();
+      // Open a new window for surveillance
+      const surveillanceWindow = window.open(
+        `/admin/platform/surveillance/session?type=${sessionToWatch.type}&id=${sessionToWatch.id}`,
+        '_blank',
+        'noopener,noreferrer,width=800,height=600'
+      );
       
-      if (session?.user?.id) {
-        await supabase.from('admin_audit_logs').insert({
-          user_id: session.user.id,
-          action: 'ghost_surveillance_started',
-          details: {
-            timestamp: startTime,
-            session_id: targetSession.id,
-            session_type: targetSession.type,
-            target_user_id: targetSession.user_id,
-            target_username: targetSession.username || 'Unknown'
-          }
-        });
-        
-        // Check if we're already monitoring something
-        if (activeSurveillance.isWatching && activeSurveillance.session) {
-          // End the previous surveillance session
-          await stopSurveillance();
-        }
+      if (!surveillanceWindow) {
+        console.error("Failed to open surveillance window");
+        return false;
       }
       
-      // Make sure targetSession has media_url (required by the LiveSession type)
-      const sessionWithMediaUrl = {
-        ...targetSession,
-        media_url: targetSession.media_url || []
-      };
-      
+      // Add logs for debugging the surveillance session
+      console.log(`Starting surveillance on ${sessionToWatch.type} by ${sessionToWatch.username || 'unknown user'} - ${sessionToWatch.title || 'No title'}`);
+
       setActiveSurveillance({
-        session: sessionWithMediaUrl,
+        session: sessionToWatch,
         isWatching: true,
-        startTime
+        startTime: new Date().toISOString()
       });
       
-      toast({
-        title: "Surveillance Active",
-        description: `Monitoring ${targetSession.type}: ${targetSession.title || targetSession.username || 'Unknown'}`,
-      });
-      
-      console.log("Ghost surveillance started:", targetSession);
       return true;
     } catch (error) {
       console.error("Error starting surveillance:", error);
-      toast({
-        title: "Surveillance Failed",
-        description: "Could not start monitoring session",
-        variant: "destructive"
-      });
       return false;
     }
-  };
+  }, [isGhostMode, isSuperAdmin, session?.user?.id]);
 
-  const stopSurveillance = async (): Promise<boolean> => {
-    if (!activeSurveillance.isWatching) return false;
-    
+  const stopSurveillance = useCallback(async () => {
+    if (!isGhostMode || !isSuperAdmin) return false;
+
     try {
-      if (session?.user?.id && activeSurveillance.session) {
-        const durationMinutes = activeSurveillance.startTime ? 
-          Math.round((new Date().getTime() - new Date(activeSurveillance.startTime).getTime()) / 60000) : 0;
-          
-        await supabase.from('admin_audit_logs').insert({
-          user_id: session.user.id,
-          action: 'ghost_surveillance_ended',
-          details: {
-            timestamp: new Date().toISOString(),
-            session_id: activeSurveillance.session.id,
-            session_type: activeSurveillance.session.type,
-            target_user_id: activeSurveillance.session.user_id,
-            target_username: activeSurveillance.session.username || 'Unknown',
-            duration_minutes: durationMinutes
-          }
-        });
+      // Close the surveillance window if it exists
+      const windows = window.open('', '_blank');
+      if (windows) {
+        windows.close();
       }
-      
-      console.log("Ghost surveillance ended");
-      
-      setActiveSurveillance({
-        isWatching: false
-      });
-      
-      toast({
-        title: "Surveillance Ended",
-        description: "You are no longer monitoring the session",
-      });
-      
+
+      setActiveSurveillance({ isWatching: false });
       return true;
     } catch (error) {
       console.error("Error stopping surveillance:", error);
       return false;
     }
-  };
+  }, [isGhostMode, isSuperAdmin]);
 
-  return {
-    activeSurveillance,
-    startSurveillance,
-    stopSurveillance
-  };
-}
+  return { activeSurveillance, startSurveillance, stopSurveillance };
+};

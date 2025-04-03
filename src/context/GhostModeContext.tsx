@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -24,9 +25,11 @@ interface GhostModeContextType {
   refreshAlerts: () => Promise<void>;
   setIsGhostMode: (state: boolean) => void;
   syncGhostModeFromSupabase: () => Promise<void>;
+  canUseGhostMode: boolean;
 }
 
-const GhostModeContext = createContext<GhostModeContextType>({
+// Export the context so it can be imported directly
+export const GhostModeContext = createContext<GhostModeContextType>({
   isGhostMode: false,
   toggleGhostMode: async () => {},
   isLoading: false,
@@ -38,7 +41,8 @@ const GhostModeContext = createContext<GhostModeContextType>({
   liveAlerts: [],
   refreshAlerts: async () => {},
   setIsGhostMode: () => {},
-  syncGhostModeFromSupabase: async () => {}
+  syncGhostModeFromSupabase: async () => {},
+  canUseGhostMode: false
 });
 
 export const GhostModeProvider = ({ children }: { children: ReactNode }) => {

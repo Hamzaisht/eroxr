@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LiveSession } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -68,16 +67,27 @@ export const MediaPreviewDialog = ({
     // If there are images
     if (session.media_url && session.media_url.length > 0) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {session.media_url.map((url, index) => (
-            <div key={index} className="overflow-hidden rounded-lg">
-              <img 
-                src={url} 
-                alt={`Media ${index + 1}`} 
-                className="h-auto w-full object-contain"
-              />
-            </div>
-          ))}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.isArray(session.media_url) 
+            ? session.media_url.map((url, idx) => (
+                <div key={idx} className="relative aspect-video bg-black/20 rounded overflow-hidden">
+                  <img 
+                    src={url} 
+                    alt={`Media preview ${idx + 1}`}
+                    className="object-contain w-full h-full"
+                  />
+                </div>
+              ))
+            : (
+              <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
+                <img 
+                  src={session.media_url} 
+                  alt="Media preview"
+                  className="object-contain w-full h-full"
+                />
+              </div>
+            )
+          }
         </div>
       );
     }
@@ -156,7 +166,7 @@ export const MediaPreviewDialog = ({
                 <>
                   {session.metadata.view_count !== undefined && (
                     <div className="flex items-center gap-2">
-                      <Eye className="h-4 w-4 text-gray-400" />
+                      <Eye className="h-4 w-4 text-blue-400" />
                       <span className="text-sm">Views: {session.metadata.view_count}</span>
                     </div>
                   )}

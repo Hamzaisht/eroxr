@@ -85,7 +85,7 @@ export const SurveillanceIndicator: React.FC<SurveillanceIndicatorProps> = ({
         </div>
         <div className="text-xs text-red-200 flex items-center mt-1">
           <Clock className="h-3 w-3 mr-1" />
-          Started: {format(new Date(session.started_at), 'HH:mm:ss')}
+          Started: {session.started_at ? format(new Date(session.started_at), 'HH:mm:ss') : 'Unknown'}
         </div>
       </div>
       <button 
