@@ -2547,6 +2547,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_top_trending_hashtags: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          tag: string
+          count: number
+          percentageincrease: number
+        }[]
+      }
       increment_counter: {
         Args: {
           row_id: string

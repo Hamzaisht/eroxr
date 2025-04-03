@@ -3,18 +3,8 @@ import { motion } from "framer-motion";
 import { TrendingUp, MoreHorizontal, Video, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface TrendingData {
-  trendingTags: {
-    tag: string;
-    count: number;
-    percentageIncrease: number;
-  }[];
-  posts: any[];
-}
+import { useTrendingTopics, TrendingData } from "@/hooks/useTrendingTopics";
 
 interface TrendingTopicsProps {
   trendingData?: TrendingData;
@@ -22,50 +12,11 @@ interface TrendingTopicsProps {
 
 export const TrendingTopics = ({ trendingData: propsTrendingData }: TrendingTopicsProps) => {
   const navigate = useNavigate();
-
-  // Fetch trending tags from posts if not provided via props
-  const { data: fetchedTrendingData, isLoading } = useQuery({
-    queryKey: ["trending-tags"],
-    queryFn: async () => {
-      if (propsTrendingData) return propsTrendingData;
-
-      const { data: posts, error } = await supabase
-        .from("posts")
-        .select("tags, created_at")
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (error) {
-        console.error("Error fetching posts for trending tags:", error);
-        return { trendingTags: [], posts: [] };
-      }
-
-      // Process tags to find most common
-      const tagCounts: Record<string, number> = {};
-      posts.forEach(post => {
-        if (post.tags && Array.isArray(post.tags)) {
-          post.tags.forEach((tag: string) => {
-            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-          });
-        }
-      });
-
-      // Convert to array and sort by count
-      const tagsArray = Object.entries(tagCounts)
-        .map(([tag, count]) => ({
-          tag: tag.startsWith('#') ? tag : `#${tag}`,
-          count,
-          percentageIncrease: Math.floor(Math.random() * 100) + 1 // Mock percentage increase
-        }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
-
-      return { trendingTags: tagsArray, posts };
-    },
-    enabled: !propsTrendingData,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  });
-
+  
+  // Use the hook only if no data was provided via props
+  const { data: fetchedTrendingData, isLoading } = useTrendingTopics();
+  
+  // Use provided data or fetched data
   const trendingData = propsTrendingData || fetchedTrendingData;
 
   return (
