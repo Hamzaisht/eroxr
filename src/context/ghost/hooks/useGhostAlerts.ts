@@ -3,6 +3,17 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveAlert } from "@/types/alerts";
+import { 
+  formatFlaggedContentAlert, 
+  formatReportAlert, 
+  formatDmcaAlert,
+  sortAlertsBySeverityAndTime 
+} from "../utils/alertFormatters";
+import { 
+  fetchFlaggedContent, 
+  fetchReports, 
+  fetchDmcaRequests 
+} from "../utils/alertDataFetchers";
 
 export const useGhostAlerts = (isGhostMode: boolean) => {
   const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
@@ -20,164 +31,27 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
     try {
       // Fetch alerts from different sources
       const [flaggedContentRes, reportsRes, dmcaRes] = await Promise.all([
-        supabase
-          .from('flagged_content')
-          .select(`
-            id, 
-            content_id,
-            content_type,
-            reason,
-            status,
-            severity,
-            flagged_at,
-            user_id,
-            profiles:user_id(username, avatar_url)
-          `)
-          .eq('status', 'flagged')
-          .order('flagged_at', { ascending: false })
-          .limit(50),
-          
-        supabase
-          .from('reports')
-          .select(`
-            id,
-            content_type,
-            content_id,
-            reason,
-            description,
-            status,
-            created_at,
-            is_emergency,
-            reporter_id,
-            reported_id,
-            profiles:reporter_id(username, avatar_url)
-          `)
-          .eq('status', 'pending')
-          .order('is_emergency', { ascending: false })
-          .order('created_at', { ascending: false })
-          .limit(50),
-          
-        supabase
-          .from('dmca_requests')
-          .select(`
-            id,
-            content_type,
-            status,
-            created_at,
-            reporter_id,
-            content_id,
-            profiles:reporter_id(username, avatar_url)
-          `)
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false })
-          .limit(20)
+        fetchFlaggedContent(),
+        fetchReports(),
+        fetchDmcaRequests()
       ]);
 
       // Process and combine alerts
-      const flaggedAlerts: LiveAlert[] = (flaggedContentRes.data || []).map(item => {
-        // Extract username and avatar_url from profiles or use fallbacks
-        const username = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-          ? (item.profiles as any).username || 'Unknown User'
-          : 'Unknown User';
-        
-        const avatarUrl = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-          ? (item.profiles as any).avatar_url || ''
-          : '';
+      const flaggedAlerts: LiveAlert[] = (flaggedContentRes.data || [])
+        .map(formatFlaggedContentAlert);
 
-        return {
-          id: item.id,
-          type: "violation", // Changed from "flagged_content" to match LiveAlert type
-          content_type: item.content_type,
-          content_id: item.content_id,
-          reason: item.reason,
-          severity: item.severity as "high" | "medium" | "low",
-          timestamp: item.flagged_at,
-          created_at: item.flagged_at,
-          status: item.status,
-          user_id: item.user_id,
-          username: username,
-          avatar_url: avatarUrl,
-          title: `Flagged ${item.content_type}`,
-          description: item.reason || '',
-          is_viewed: false,
-          message: item.reason || ''
-        };
-      });
+      const reportAlerts: LiveAlert[] = (reportsRes.data || [])
+        .map(formatReportAlert);
 
-      const reportAlerts: LiveAlert[] = (reportsRes.data || []).map(item => {
-        // Extract username and avatar_url from profiles or use fallbacks
-        const username = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-          ? (item.profiles as any).username || 'Unknown User'
-          : 'Unknown User';
-        
-        const avatarUrl = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-          ? (item.profiles as any).avatar_url || ''
-          : '';
-
-        return {
-          id: item.id,
-          type: "risk", // Changed from "report" to match LiveAlert type
-          content_type: item.content_type,
-          content_id: item.content_id || '', // Ensure content_id is provided
-          reason: item.reason,
-          severity: item.is_emergency ? 'high' : 'medium',
-          timestamp: item.created_at,
-          created_at: item.created_at,
-          status: item.status,
-          user_id: item.reporter_id,
-          username: username,
-          avatar_url: avatarUrl,
-          title: `${item.is_emergency ? 'URGENT: ' : ''}Report on ${item.content_type}`,
-          description: item.description || item.reason || '',
-          is_viewed: false,
-          message: item.description || item.reason || ''
-        };
-      });
-
-      const dmcaAlerts: LiveAlert[] = (dmcaRes.data || []).map(item => {
-        // Extract username and avatar_url from profiles or use fallbacks
-        const username = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-          ? (item.profiles as any).username || 'Unknown User'
-          : 'Unknown User';
-        
-        const avatarUrl = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-          ? (item.profiles as any).avatar_url || ''
-          : '';
-
-        return {
-          id: item.id,
-          type: "information", // Changed from "dmca" to match LiveAlert type
-          content_type: item.content_type,
-          content_id: item.content_id,
-          reason: 'Copyright Violation',
-          severity: 'high',
-          timestamp: item.created_at,
-          created_at: item.created_at,
-          status: item.status,
-          user_id: item.reporter_id,
-          username: username,
-          avatar_url: avatarUrl,
-          title: `DMCA Takedown Request`,
-          description: `Copyright claim on ${item.content_type}`,
-          is_viewed: false,
-          message: `Copyright claim on ${item.content_type}`
-        };
-      });
+      const dmcaAlerts: LiveAlert[] = (dmcaRes.data || [])
+        .map(formatDmcaAlert);
 
       // Combine all alerts and sort by severity and timestamp
-      const allAlerts: LiveAlert[] = [...flaggedAlerts, ...reportAlerts, ...dmcaAlerts]
-        .sort((a, b) => {
-          // First sort by severity
-          const severityOrder = { high: 0, medium: 1, low: 2 };
-          const severityDiff = severityOrder[a.severity as keyof typeof severityOrder] - 
-                              severityOrder[b.severity as keyof typeof severityOrder];
-          
-          if (severityDiff !== 0) return severityDiff;
-          
-          // Then sort by timestamp (most recent first)
-          return new Date(b.timestamp || b.created_at).getTime() - 
-                new Date(a.timestamp || a.created_at).getTime();
-        });
+      const allAlerts: LiveAlert[] = sortAlertsBySeverityAndTime([
+        ...flaggedAlerts, 
+        ...reportAlerts, 
+        ...dmcaAlerts
+      ]);
 
       setLiveAlerts(allAlerts);
     } catch (error) {
@@ -195,38 +69,48 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
     refreshAlerts();
 
     // Set up real-time subscriptions for new alerts
-    const flaggedChannel = supabase
-      .channel('flagged-content-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'flagged_content',
-      }, () => refreshAlerts())
-      .subscribe();
+    const setupRealtimeSubscriptions = () => {
+      const flaggedChannel = supabase
+        .channel('flagged-content-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'flagged_content',
+        }, () => refreshAlerts())
+        .subscribe();
 
-    const reportsChannel = supabase
-      .channel('reports-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'reports',
-      }, () => refreshAlerts())
-      .subscribe();
+      const reportsChannel = supabase
+        .channel('reports-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'reports',
+        }, () => refreshAlerts())
+        .subscribe();
 
-    const dmcaChannel = supabase
-      .channel('dmca-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'dmca_requests',
-      }, () => refreshAlerts())
-      .subscribe();
+      const dmcaChannel = supabase
+        .channel('dmca-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'dmca_requests',
+        }, () => refreshAlerts())
+        .subscribe();
+
+      return {
+        flaggedChannel,
+        reportsChannel,
+        dmcaChannel
+      };
+    };
+
+    const subscriptions = setupRealtimeSubscriptions();
 
     // Clean up subscriptions
     return () => {
-      supabase.removeChannel(flaggedChannel);
-      supabase.removeChannel(reportsChannel);
-      supabase.removeChannel(dmcaChannel);
+      supabase.removeChannel(subscriptions.flaggedChannel);
+      supabase.removeChannel(subscriptions.reportsChannel);
+      supabase.removeChannel(subscriptions.dmcaChannel);
     };
   }, [isGhostMode, session?.user?.id, refreshAlerts]);
 
