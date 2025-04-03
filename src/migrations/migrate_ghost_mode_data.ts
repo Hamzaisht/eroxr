@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const migrateGhostModeData = async (userId: string): Promise<void> => {
   try {
+    console.log('Checking for ghost mode data migration needs for user:', userId);
     // Check if we already have an admin_sessions entry
     const { data, error } = await supabase
       .from('admin_sessions')
@@ -16,21 +17,30 @@ export const migrateGhostModeData = async (userId: string): Promise<void> => {
     }
     
     // If we already have data in Supabase, no need to migrate
-    if (data) return;
+    if (data) {
+      console.log('Admin session already exists in Supabase, no migration needed');
+      return;
+    }
     
     // Check if we have localStorage data to migrate
     const localGhostModeState = localStorage.getItem('ghostMode');
     if (localGhostModeState) {
       try {
+        console.log('Found localStorage ghost mode data, migrating to Supabase');
         const parsedState = JSON.parse(localGhostModeState);
         const isGhostMode = !!parsedState?.enabled;
         
         // Create admin session in Supabase
-        await supabase.from('admin_sessions').insert({
+        const { error: insertError } = await supabase.from('admin_sessions').insert({
           admin_id: userId,
           ghost_mode: isGhostMode,
           activated_at: isGhostMode ? new Date().toISOString() : null
         });
+        
+        if (insertError) {
+          console.error("Error creating admin session in Supabase:", insertError);
+          return;
+        }
         
         // Log the migration
         await supabase.from('admin_logs').insert({
@@ -52,6 +62,14 @@ export const migrateGhostModeData = async (userId: string): Promise<void> => {
       } catch (parseError) {
         console.error("Error parsing localStorage ghost mode data:", parseError);
       }
+    } else {
+      console.log('No localStorage ghost mode data found, creating default state in Supabase');
+      // Create default state in Supabase
+      await supabase.from('admin_sessions').insert({
+        admin_id: userId,
+        ghost_mode: false,
+        activated_at: null
+      });
     }
   } catch (error) {
     console.error("Error migrating ghost mode data:", error);

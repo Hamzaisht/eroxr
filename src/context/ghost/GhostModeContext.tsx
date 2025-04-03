@@ -50,6 +50,7 @@ export function GhostModeProvider({ children }: { children: ReactNode }) {
   // Sync ghost mode state with Supabase on component mount
   useEffect(() => {
     if (session?.user?.id) {
+      console.log('Initial sync of ghost mode state on provider mount');
       syncGhostModeFromSupabase();
     }
   }, [session?.user?.id]);
@@ -57,11 +58,25 @@ export function GhostModeProvider({ children }: { children: ReactNode }) {
   // Update canUseGhostMode based on isSuperAdmin
   useEffect(() => {
     setCanUseGhostMode(isSuperAdmin);
-  }, [isSuperAdmin]);
+    
+    // If user is not a super admin, ensure ghost mode is off
+    if (!isSuperAdmin && isGhostMode) {
+      console.log('User is not super admin, disabling ghost mode');
+      setIsGhostMode(false);
+    }
+  }, [isSuperAdmin, isGhostMode]);
 
   // Toggle ghost mode
   const toggleGhostMode = async (): Promise<void> => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      console.error('Cannot toggle ghost mode: No user session available');
+      return;
+    }
+    
+    if (!isSuperAdmin) {
+      console.error('Cannot toggle ghost mode: User is not a super admin');
+      return;
+    }
     
     await toggleGhostModeState(
       session,
@@ -76,7 +91,10 @@ export function GhostModeProvider({ children }: { children: ReactNode }) {
 
   // Sync ghost mode state with Supabase
   const syncGhostModeFromSupabase = async (): Promise<void> => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      console.error('Cannot sync ghost mode: No user session available');
+      return;
+    }
     
     await syncGhostModeState(
       session.user.id,
