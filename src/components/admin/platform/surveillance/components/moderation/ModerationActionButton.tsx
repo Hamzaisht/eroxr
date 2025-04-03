@@ -1,5 +1,5 @@
 
-import { Ban, Flag, MessageSquare, Trash2, Eye, Edit, Shield, Pause } from "lucide-react";
+import { Ban, Flag, MessageSquare, Trash2, Eye, Edit, Shield, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LiveSession, ModerationAction, SurveillanceContentItem } from "../../types";
 
@@ -14,8 +14,25 @@ export function ModerationActionButton({
   onAction,
   actionInProgress
 }: ModerationActionButtonProps) {
+  // Helper to check if user is paused
+  const isUserPaused = (): boolean => {
+    if ('is_paused' in session) {
+      return !!session.is_paused;
+    }
+    return false;
+  };
+
   // Determine the default/primary action based on content type or status
   const getPrimaryAction = (): { action: ModerationAction; icon: JSX.Element; label: string } => {
+    // If the user is paused, primary action should be unpause
+    if (isUserPaused()) {
+      return {
+        action: 'unpause',
+        icon: <Play className="h-4 w-4 mr-2" />,
+        label: 'Unpause'
+      };
+    }
+    
     // If the content is a chat message, primary action is probably "view"
     if (session.type === 'chat' || session.type === 'message') {
       return {
@@ -66,7 +83,11 @@ export function ModerationActionButton({
     <Button
       variant="outline"
       size="sm"
-      className="text-amber-500 border-amber-500/30 bg-amber-900/10 hover:bg-amber-800/20"
+      className={`${
+        primaryAction.action === 'unpause' 
+          ? 'text-green-500 border-green-500/30 bg-green-900/10 hover:bg-green-800/20' 
+          : 'text-amber-500 border-amber-500/30 bg-amber-900/10 hover:bg-amber-800/20'
+      }`}
       onClick={() => onAction(primaryAction.action)}
       disabled={!!actionInProgress}
     >

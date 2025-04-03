@@ -1,7 +1,7 @@
 
 import { 
   Ban, Flag, MessageSquare, Trash2, 
-  Eye, Edit, Shield, RefreshCw, Pause 
+  Eye, Edit, Shield, RefreshCw, Pause, Play 
 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LiveSession, ModerationAction, SurveillanceContentItem } from "../../types";
@@ -17,6 +17,14 @@ export function ModerationActionItems({
   onAction,
   actionInProgress
 }: ModerationActionItemsProps) {
+  // Helper to check if user is paused
+  const isUserPaused = (): boolean => {
+    if ('is_paused' in session) {
+      return !!session.is_paused;
+    }
+    return false;
+  };
+
   return (
     <>
       <DropdownMenuItem
@@ -58,14 +66,25 @@ export function ModerationActionItems({
         <span>Send Warning</span>
       </DropdownMenuItem>
       
-      <DropdownMenuItem
-        className="text-amber-400 flex items-center space-x-2"
-        onClick={() => onAction('pause')}
-        disabled={!!actionInProgress}
-      >
-        <Pause className="h-4 w-4 mr-2" />
-        <span>Pause Account</span>
-      </DropdownMenuItem>
+      {!isUserPaused() ? (
+        <DropdownMenuItem
+          className="text-amber-400 flex items-center space-x-2"
+          onClick={() => onAction('pause')}
+          disabled={!!actionInProgress}
+        >
+          <Pause className="h-4 w-4 mr-2" />
+          <span>Pause Account</span>
+        </DropdownMenuItem>
+      ) : (
+        <DropdownMenuItem
+          className="text-green-400 flex items-center space-x-2"
+          onClick={() => onAction('unpause')}
+          disabled={!!actionInProgress}
+        >
+          <Play className="h-4 w-4 mr-2" />
+          <span>Unpause Account</span>
+        </DropdownMenuItem>
+      )}
       
       <DropdownMenuItem
         className="text-purple-400 flex items-center space-x-2"

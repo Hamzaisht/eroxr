@@ -206,10 +206,15 @@ export function useUserModeration() {
       
       if (error) throw error;
       
-      // Also update visibility of content during pause period
+      // Update visibility of content during pause period
       await supabase.from('posts').update({
         visibility: 'paused'
       }).eq('creator_id', getUserId(target));
+      
+      // Also update dating ads if exists
+      await supabase.from('dating_ads').update({
+        is_active: false
+      }).eq('user_id', getUserId(target));
       
       // Log the admin action with more detailed information
       await supabase.from('admin_logs').insert({
@@ -240,6 +245,66 @@ export function useUserModeration() {
       toast({
         title: "Pause Failed",
         description: "Could not pause account. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const unpauseAccount = async (target: LiveSession | SurveillanceContentItem) => {
+    if (!userSession?.user?.id) return false;
+    
+    try {
+      setActionInProgress(getUserId(target));
+      
+      // Unpause the account
+      const { error } = await supabase.from('profiles').update({
+        is_paused: false,
+        pause_end_at: null,
+        pause_reason: null
+      }).eq('id', getUserId(target));
+      
+      if (error) throw error;
+      
+      // Restore visibility of content 
+      await supabase.from('posts').update({
+        visibility: 'public'
+      }).eq('creator_id', getUserId(target))
+      .eq('visibility', 'paused');
+      
+      // Also update dating ads if applicable
+      await supabase.from('dating_ads').update({
+        is_active: true
+      }).eq('user_id', getUserId(target))
+      .eq('is_active', false);
+      
+      // Log the admin action
+      await supabase.from('admin_logs').insert({
+        admin_id: userSession.user.id,
+        action: 'unpause_account',
+        action_type: 'user_moderation',
+        target_id: getUserId(target),
+        target_type: 'user',
+        details: {
+          user_id: getUserId(target),
+          username: getUsername(target),
+          timestamp: new Date().toISOString(),
+          action_taken: 'unpause'
+        }
+      });
+      
+      toast({
+        title: "Account Unpaused",
+        description: `${getUsername(target)}'s account has been manually unpaused.`,
+      });
+      return true;
+    } catch (error) {
+      console.error("Error unpausing account:", error);
+      toast({
+        title: "Unpause Failed",
+        description: "Could not unpause account. Please try again.",
         variant: "destructive"
       });
       return false;
@@ -380,6 +445,7 @@ export function useUserModeration() {
     shadowbanUser,
     restoreUser,
     pauseAccount,
+    unpauseAccount,
     deleteUser,
     sendWarning
   };

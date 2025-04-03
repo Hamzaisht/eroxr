@@ -53,6 +53,8 @@ export function ModerationActionDialog({
         return 'Restore Content';
       case 'pause':
         return 'Pause Account';
+      case 'unpause':
+        return 'Unpause Account';
       default:
         return 'Take Action';
     }
@@ -77,6 +79,8 @@ export function ModerationActionDialog({
         return `Are you sure you want to restore ${username}'s account? Their content will become visible again.`;
       case 'pause':
         return `This will temporarily suspend ${username}'s account for a fixed period. They will not be able to log in or interact with the platform during this time.`;
+      case 'unpause':
+        return `This will remove the temporary suspension on ${username}'s account. They will be able to log in and interact with the platform again.`;
       default:
         return 'Are you sure you want to continue?';
     }
@@ -98,6 +102,8 @@ export function ModerationActionDialog({
         return 'Restore User';
       case 'pause':
         return `Pause Account for ${pauseDuration} Days`;
+      case 'unpause':
+        return 'Unpause Account';
       default:
         return 'Confirm';
     }
