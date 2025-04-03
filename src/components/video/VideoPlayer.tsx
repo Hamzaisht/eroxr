@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Maximize, X } from "lucide-react";
+import { Maximize, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { VideoLoadingState } from "./VideoLoadingState";
@@ -10,6 +10,8 @@ import { PremiumErosOverlay } from "@/components/home/PremiumErosOverlay";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoControls } from "./VideoControls";
+import { VideoPremiumCheck } from "./VideoPremiumCheck";
+import { VideoFullscreenButton } from "./VideoFullscreenButton";
 
 interface VideoPlayerProps {
   url: string;
@@ -42,69 +44,18 @@ export const VideoPlayer = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [canPlayFull, setCanPlayFull] = useState(false);
-  const [previewDuration, setPreviewDuration] = useState(5);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const session = useSession();
 
-  useEffect(() => {
-    const checkPremiumStatus = async () => {
-      if (!session?.user?.id || !isPremium) {
-        setCanPlayFull(!isPremium);
-        return;
-      }
-
-      try {
-        // Check if user is admin
-        const { data: userRole } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (userRole?.role === 'admin') {
-          setCanPlayFull(true);
-          return;
-        }
-
-        // Check if user is premium
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_paying_customer, id_verification_status')
-          .eq('id', session.user.id)
-          .single();
-
-        const hasAccess = 
-          profile?.is_paying_customer === true || 
-          profile?.id_verification_status === 'verified' ||
-          session.user.id === videoId; // Owner can always see full content
-
-        setCanPlayFull(hasAccess);
-        
-        // Set longer preview for non-premium users
-        if (!hasAccess) {
-          setPreviewDuration(10); // 10 seconds preview for non-premium
-        }
-      } catch (error) {
-        console.error('Error checking premium status:', error);
-        setCanPlayFull(false);
-      }
-    };
-
-    checkPremiumStatus();
-  }, [session, isPremium, videoId]);
-
-  const handleTimeUpdate = () => {
-    if (!canPlayFull && videoRef.current) {
-      if (videoRef.current.currentTime > previewDuration) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      }
-    }
-  };
+  // Use the premium check hook
+  const { canPlayFull, previewDuration, handleTimeUpdate } = VideoPremiumCheck({
+    isPremium,
+    videoId,
+    session
+  });
 
   useEffect(() => {
     const video = videoRef.current;
@@ -164,24 +115,6 @@ export const VideoPlayer = ({
     setIsMuted(!isMuted);
   };
 
-  const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-    
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(err => {
-        toast({
-          title: "Fullscreen Error",
-          description: `Error attempting to enable fullscreen: ${err.message}`,
-          variant: "destructive",
-        });
-      });
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
-
   const handleRetry = () => {
     if (!videoRef.current) return;
     
@@ -194,6 +127,13 @@ export const VideoPlayer = ({
       setIsRetrying(false);
     }, 3000);
   };
+
+  // Setup fullscreen handling
+  const { toggleFullscreen } = VideoFullscreenButton({
+    containerRef,
+    setIsFullscreen,
+    toast
+  });
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -308,31 +248,12 @@ export const VideoPlayer = ({
       
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <div className="absolute bottom-4 left-4 flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-            onClick={togglePlay}
-          >
-            {isPlaying ? (
-              <Pause className="h-4 w-4 text-white" />
-            ) : (
-              <Play className="h-4 w-4 text-white" />
-            )}
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-            onClick={toggleMute}
-          >
-            {isMuted ? (
-              <VolumeX className="h-4 w-4 text-white" />
-            ) : (
-              <Volume2 className="h-4 w-4 text-white" />
-            )}
-          </Button>
+          <VideoControls 
+            isPlaying={isPlaying}
+            isMuted={isMuted}
+            onPlayPause={togglePlay}
+            onMuteToggle={toggleMute}
+          />
           
           <Button
             variant="ghost"
