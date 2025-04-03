@@ -16,7 +16,6 @@ export const useGhostMode = () => {
     stopSurveillance,
     liveAlerts,
     refreshAlerts,
-    setIsGhostMode,
     syncGhostModeFromSupabase
   } = useGhostModeContext();
   const { isSuperAdmin, isLoading: isAdminCheckLoading } = useSuperAdminCheck();

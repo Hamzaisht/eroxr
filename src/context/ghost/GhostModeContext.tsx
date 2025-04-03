@@ -4,12 +4,11 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useToast } from "@/hooks/use-toast";
 import { LiveSession, LiveAlert } from "@/components/admin/platform/surveillance/types";
-import { useGhostAlerts } from "@/hooks/useGhostAlerts";
-import { useGhostSurveillance } from "@/hooks/useGhostSurveillance";
 import { GhostModeIndicator } from "@/components/admin/platform/ghost/GhostModeIndicator";
 import { SurveillanceIndicator } from "@/components/admin/platform/ghost/SurveillanceIndicator";
 import { GhostModeContextType } from "./types";
 import { syncGhostModeState, toggleGhostModeState } from "./ghostModeUtils";
+import { useGhostAlerts, useGhostSurveillance } from "./hooks";
 
 const GhostModeContext = createContext<GhostModeContextType>({
   isGhostMode: false,
