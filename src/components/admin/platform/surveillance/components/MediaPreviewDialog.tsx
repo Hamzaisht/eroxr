@@ -1,242 +1,183 @@
-
-import { useState, useEffect, useCallback } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LiveSession } from "../types";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { LiveSession, SurveillanceContentItem } from "../types";
-import { AudioPlayer } from "./AudioPlayer";
-import { useModerationActions } from "@/hooks/useModerationActions";
 
 interface MediaPreviewDialogProps {
+  session: LiveSession | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  session: LiveSession | null;
 }
 
-export function MediaPreviewDialog({ open, onOpenChange, session }: MediaPreviewDialogProps) {
-  const { handleModeration } = useModerationActions();
-  const [userInteractions, setUserInteractions] = useState({
-    views: [],
-    likes: [],
-    comments: [],
-    shares: []
-  });
-  
-  // Mock implementation of fetchContentInteractions
-  const fetchContentInteractions = useCallback(async (id: string, type: string) => {
-    console.log(`Fetching interactions for ${type} content with ID ${id}`);
-    // Mock data - in a real implementation, this would fetch from an API
-    setUserInteractions({
-      views: [],
-      likes: [],
-      comments: [],
-      shares: []
-    });
-  }, []);
-  
-  useEffect(() => {
-    if (session && open) {
-      fetchContentInteractions(session.id, session.type);
-    }
-  }, [session, open, fetchContentInteractions]);
-  
+export const MediaPreviewDialog = ({
+  session,
+  open,
+  onOpenChange,
+}: MediaPreviewDialogProps) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   if (!session) return null;
-  
+
+  const mediaUrls = Array.isArray(session.media_url)
+    ? session.media_url
+    : session.media_url
+    ? [session.media_url]
+    : [];
+
+  const hasMultipleMedia = mediaUrls.length > 1;
+
+  const handleNext = () => {
+    if (currentIndex < mediaUrls.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  // Determine if media is image or video
+  const isVideo = (url: string) => {
+    return url.match(/\.(mp4|webm|ogg|mov)($|\?)/i);
+  };
+
+  // Get current media URL
+  const currentMedia = mediaUrls[currentIndex] || "";
+
+  const renderMediaPreview = () => {
+    // Check if it's a video call or video message
+    if (session.type === "call" || session.video_url) {
+      return (
+        <video
+          controls
+          autoPlay
+          className="w-full rounded-md max-h-[70vh] object-contain bg-black"
+          src={session.video_url || ""}
+        />
+      );
+    }
+
+    // Check if it's a bodycontact ad with video
+    if (session.type === "bodycontact" && session.video_url) {
+      return (
+        <video
+          controls
+          autoPlay
+          className="w-full rounded-md max-h-[70vh] object-contain bg-black"
+          src={session.video_url}
+        />
+      );
+    }
+
+    // Otherwise handle regular media
+    if (currentMedia) {
+      if (isVideo(currentMedia)) {
+        return (
+          <video
+            controls
+            autoPlay
+            className="w-full rounded-md max-h-[70vh] object-contain bg-black"
+            src={currentMedia}
+          />
+        );
+      } else {
+        return (
+          <img
+            src={currentMedia}
+            alt="Media content"
+            className="w-full rounded-md max-h-[70vh] object-contain"
+          />
+        );
+      }
+    }
+
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-900 rounded-md">
+        <p className="text-gray-400">No media available</p>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Media Preview</DialogTitle>
-        </DialogHeader>
-        
-        <div className="grid gap-6 py-4">
-          {/* Video Content */}
-          {session.video_url && (
-            <div className="w-full aspect-video overflow-hidden rounded-lg bg-black">
-              <video 
-                src={session.video_url} 
-                controls 
-                className="w-full h-full object-contain"
-              />
-            </div>
-          )}
-          
-          {/* Image Gallery */}
-          {session.media_url && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {Array.isArray(session.media_url) ? session.media_url.map((url, index) => (
-                <div key={index} className="aspect-square overflow-hidden rounded-lg">
-                  <img 
-                    src={url} 
-                    alt={`Media ${index + 1}`}
-                    className="w-full h-full object-cover" 
-                  />
-                </div>
-              )) : (
-                <div className="aspect-square overflow-hidden rounded-lg">
-                  <img 
-                    src={session.media_url} 
-                    alt="Media"
-                    className="w-full h-full object-cover" 
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Audio Content */}
-          {session.type === 'audio' && (
-            <AudioPlayer url={session.media_url as string} title={session.title || 'Audio'} />
-          )}
-          
-          {/* Content Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-sm font-medium mb-2">Content Info</h3>
-              <div className="space-y-2">
-                <p className="text-sm">
-                  <span className="font-medium">Created:</span> {format(new Date(session.created_at || session.started_at || ''), 'PPpp')}
-                </p>
-                
-                <p className="text-sm">
-                  <span className="font-medium">Last Updated:</span> {session.started_at ? format(new Date(session.started_at), 'PPpp') : 'N/A'}
-                </p>
-                
-                {session.location && (
-                  <p className="text-sm">
-                    <span className="font-medium">Location:</span> {session.location}
-                  </p>
-                )}
-                
-                {session.tags && session.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    <span className="text-sm font-medium mr-1">Tags:</span>
-                    {session.tags.map((tag, index) => (
-                      <Badge key={index} variant="outline">{tag}</Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium mb-2">Status</h3>
-              <div className="space-y-2">
-                <p className="text-sm">
-                  <span className="font-medium">Type:</span> {session.content_type || session.type}
-                </p>
-                
-                <p className="text-sm">
-                  <span className="font-medium">Status:</span> <Badge>{session.status || 'active'}</Badge>
-                </p>
-                
-                {session.metadata && (
-                  <div className="space-y-1">
-                    {session.metadata.visibility && (
-                      <p className="text-sm">
-                        <span className="font-medium">Visibility:</span> {session.metadata.visibility}
-                      </p>
-                    )}
-                    
-                    {session.metadata.view_count && (
-                      <p className="text-sm">
-                        <span className="font-medium">Views:</span> {session.metadata.view_count}
-                      </p>
-                    )}
-                    
-                    {session.metadata.like_count && (
-                      <p className="text-sm">
-                        <span className="font-medium">Likes:</span> {session.metadata.like_count}
-                      </p>
-                    )}
-                    
-                    {session.metadata.comment_count && (
-                      <p className="text-sm">
-                        <span className="font-medium">Comments:</span> {session.metadata.comment_count || 0}
-                      </p>
-                    )}
-                    
-                    {session.metadata.duration && (
-                      <p className="text-sm">
-                        <span className="font-medium">Duration:</span> {session.metadata.duration} seconds
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* Content Description */}
-          {(session.about_me || session.description) && (
-            <div>
-              <h3 className="text-sm font-medium mb-2">Description</h3>
-              <p className="text-sm whitespace-pre-wrap bg-muted p-3 rounded">
-                {session.about_me || session.description || 'No description provided.'}
-              </p>
-            </div>
-          )}
-          
-          {/* User Interactions */}
-          <div>
-            <h3 className="text-sm font-medium mb-2">User Interactions</h3>
-            <div className="grid grid-cols-4 gap-4">
-              <div className="bg-muted p-3 rounded text-center">
-                <div className="text-xl font-semibold">{userInteractions.views.length}</div>
-                <div className="text-xs text-muted-foreground">Views</div>
-              </div>
-              <div className="bg-muted p-3 rounded text-center">
-                <div className="text-xl font-semibold">{userInteractions.likes.length}</div>
-                <div className="text-xs text-muted-foreground">Likes</div>
-              </div>
-              <div className="bg-muted p-3 rounded text-center">
-                <div className="text-xl font-semibold">{userInteractions.comments.length}</div>
-                <div className="text-xs text-muted-foreground">Comments</div>
-              </div>
-              <div className="bg-muted p-3 rounded text-center">
-                <div className="text-xl font-semibold">{userInteractions.shares.length}</div>
-                <div className="text-xs text-muted-foreground">Shares</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <DialogFooter className="gap-2">
+      <DialogContent className="sm:max-w-4xl">
+        <DialogHeader className="flex flex-row items-center justify-between">
+          <DialogTitle>
+            {session.type === "audio" ? "Audio Preview" : "Media Preview"}
+          </DialogTitle>
           <Button
-            variant="outline"
+            variant="ghost"
+            size="icon"
             onClick={() => onOpenChange(false)}
+            className="h-8 w-8"
           >
-            Close
+            <X className="h-4 w-4" />
           </Button>
-          
-          <Button
-            variant="destructive"
-            onClick={() => {
-              handleModeration(session, 'delete');
-              onOpenChange(false);
-            }}
-          >
-            Delete
-          </Button>
-          
-          <Button
-            variant="secondary"
-            onClick={() => {
-              handleModeration(session, 'flag');
-              onOpenChange(false);
-            }}
-          >
-            Flag Content
-          </Button>
-        </DialogFooter>
+        </DialogHeader>
+
+        <div className="relative">
+          {renderMediaPreview()}
+
+          {hasMultipleMedia && (
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
+              {mediaUrls.map((_, index) => (
+                <button
+                  key={index}
+                  className={`h-2 w-2 rounded-full ${
+                    index === currentIndex
+                      ? "bg-white"
+                      : "bg-white/50"
+                  }`}
+                  onClick={() => setCurrentIndex(index)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {hasMultipleMedia && (
+          <div className="flex justify-between mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
+            >
+              Previous
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleNext}
+              disabled={currentIndex === mediaUrls.length - 1}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+
+        <div className="text-sm text-gray-400 mt-2">
+          {session.username && (
+            <p>
+              <span className="font-medium text-gray-300">Username:</span>{" "}
+              {session.username}
+            </p>
+          )}
+          {session.content && (
+            <p>
+              <span className="font-medium text-gray-300">Content:</span>{" "}
+              {session.content}
+            </p>
+          )}
+          <p>
+            <span className="font-medium text-gray-300">Type:</span>{" "}
+            {session.content_type || session.type}
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );
-}
+};

@@ -3,15 +3,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSurveillance } from "./SurveillanceContext";
 import { TabContent } from "./TabContent";
 import { AlertsList } from "./AlertsList";
-import { LiveAlert } from "./types";
+import { LiveAlert, LiveSession } from "./types";
 import { ContentSurveillanceTabs } from "./ContentSurveillanceTabs";
 import { CreatorEarningsSurveillance } from "./CreatorEarningsSurveillance";
 
 interface SurveillanceTabsProps {
   liveAlerts: LiveAlert[];
+  onSelectAlert?: (alert: LiveAlert) => void;
 }
 
-export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
+export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabsProps) => {
   const { 
     activeTab, 
     setActiveTab, 
@@ -99,6 +100,7 @@ export const SurveillanceTabs = ({ liveAlerts }: SurveillanceTabsProps) => {
         <AlertsList 
           alerts={liveAlerts} 
           isLoading={isLoading} 
+          onSelect={onSelectAlert}
         />
       </TabsContent>
     </Tabs>

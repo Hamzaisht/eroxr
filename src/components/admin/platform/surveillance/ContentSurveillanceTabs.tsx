@@ -7,6 +7,36 @@ import { ContentDetailDialog } from "./components/ContentDetailDialog";
 import { SurveillanceContentItem, ContentType } from "./types";
 import { Badge } from "@/components/ui/badge";
 
+// Create a wrapper component that contains our props
+interface ContentSurveillanceListWrapperProps {
+  items: SurveillanceContentItem[];
+  isLoading: boolean;
+  title: string;
+  onViewDetails: (content: SurveillanceContentItem) => void;
+  emptyMessage: string;
+  error: any;
+}
+
+const ContentSurveillanceListWrapper = ({
+  items,
+  isLoading,
+  title,
+  onViewDetails,
+  emptyMessage,
+  error
+}: ContentSurveillanceListWrapperProps) => {
+  return (
+    <ContentSurveillanceList 
+      items={items}
+      isLoading={isLoading}
+      title={title}
+      onViewDetails={onViewDetails}
+      emptyMessage={emptyMessage}
+      error={error}
+    />
+  );
+};
+
 export function ContentSurveillanceTabs() {
   const [activeTab, setActiveTab] = useState<ContentType>('posts');
   const [selectedContent, setSelectedContent] = useState<SurveillanceContentItem | null>(null);
@@ -100,7 +130,7 @@ export function ContentSurveillanceTabs() {
         </TabsList>
         
         <TabsContent value="posts">
-          <ContentSurveillanceList 
+          <ContentSurveillanceListWrapper 
             items={posts}
             isLoading={isLoading}
             title="Recent Posts"
@@ -111,7 +141,7 @@ export function ContentSurveillanceTabs() {
         </TabsContent>
         
         <TabsContent value="stories">
-          <ContentSurveillanceList 
+          <ContentSurveillanceListWrapper 
             items={stories}
             isLoading={isLoading}
             title="Active Stories"
@@ -122,7 +152,7 @@ export function ContentSurveillanceTabs() {
         </TabsContent>
         
         <TabsContent value="videos">
-          <ContentSurveillanceList 
+          <ContentSurveillanceListWrapper
             items={videos}
             isLoading={isLoading}
             title="Recent Videos"
@@ -133,7 +163,7 @@ export function ContentSurveillanceTabs() {
         </TabsContent>
         
         <TabsContent value="audios">
-          <ContentSurveillanceList 
+          <ContentSurveillanceListWrapper
             items={audios}
             isLoading={isLoading}
             title="Audio Content"
@@ -144,7 +174,7 @@ export function ContentSurveillanceTabs() {
         </TabsContent>
         
         <TabsContent value="ppv">
-          <ContentSurveillanceList 
+          <ContentSurveillanceListWrapper
             items={allPpvContent}
             isLoading={isLoading}
             title="Pay-Per-View Content"
@@ -155,7 +185,7 @@ export function ContentSurveillanceTabs() {
         </TabsContent>
         
         <TabsContent value="hidden">
-          <ContentSurveillanceList 
+          <ContentSurveillanceListWrapper
             items={allHiddenContent}
             isLoading={isLoading}
             title="Hidden Content"

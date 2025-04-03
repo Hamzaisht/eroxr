@@ -21,10 +21,13 @@ export const LiveSurveillance = () => {
   } = useGhostMode();
 
   const [loadingRefresh, setLoadingRefresh] = useState<boolean>(false);
+  const [sessions, setSessions] = useState<LiveSession[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   
   useEffect(() => {
     if (isGhostMode) {
       refreshAlerts();
+      setIsLoading(false);
     }
   }, [isGhostMode, refreshAlerts]);
   
@@ -83,6 +86,12 @@ export const LiveSurveillance = () => {
     }
   };
 
+  const handleSelectAlert = (alert: LiveAlert) => {
+    if (alert.session) {
+      handleStartWatching(alert.session);
+    }
+  };
+
   // If ghost mode is not active, show prompt
   if (!isGhostMode) {
     return <GhostModePrompt />;
@@ -105,11 +114,11 @@ export const LiveSurveillance = () => {
           </Button>
         </div>
         
-        <AlertsList alerts={liveAlerts} onSelect={(alert: LiveAlert) => {
-          if (alert.session) {
-            handleStartWatching(alert.session);
-          }
-        }} />
+        <AlertsList 
+          alerts={liveAlerts} 
+          isLoading={loadingRefresh}
+          onSelect={handleSelectAlert} 
+        />
         
         {activeSurveillance.isWatching && (
           <div className="mt-4 p-4 bg-red-950/20 border border-red-800/30 rounded-md">
@@ -138,10 +147,20 @@ export const LiveSurveillance = () => {
       
       {/* Main surveillance content */}
       <div className="lg:col-span-3 space-y-4">
-        <SurveillanceProvider>
-          <SurveillanceTabs />
+        <SurveillanceProvider
+          liveAlerts={liveAlerts}
+          refreshAlerts={refreshAlerts}
+          startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
+        >
+          <SurveillanceTabs 
+            liveAlerts={liveAlerts} 
+            onSelectAlert={handleSelectAlert}
+          />
           <SessionList 
+            sessions={sessions}
+            isLoading={isLoading}
             onMonitorSession={handleStartWatching}
+            error={null}
           />
         </SurveillanceProvider>
       </div>

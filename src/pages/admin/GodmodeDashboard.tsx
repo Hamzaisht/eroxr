@@ -51,19 +51,19 @@ export default function GodmodeDashboard() {
     type: alert.type,
     user_id: alert.user_id,
     username: alert.username || 'Unknown',
-    avatar_url: alert.avatar_url,
-    timestamp: alert.created_at,
+    avatar_url: alert.avatar_url || '',
+    timestamp: alert.timestamp || alert.created_at,
     created_at: alert.created_at,
     content_type: alert.content_type || 'unknown',
     reason: alert.reason || '',
     severity: alert.severity || 'medium',
     content_id: alert.content_id || '',
-    priority: (alert.severity === 'high' ? 'high' : alert.severity === 'medium' ? 'medium' : 'low') as 'high' | 'medium' | 'low',
     message: alert.reason || 'Alert triggered',
-    source: 'system',
+    status: alert.status || 'new',
     alert_type: alert.type,
-    status: 'new',
-    title: `${alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} Alert`,
+    title: alert.title || `${alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} Alert`,
+    description: alert.description || alert.reason || '',
+    is_viewed: alert.is_viewed || false
   }));
 
   return (

@@ -14,9 +14,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface AlertsListProps {
   alerts: LiveAlert[];
   isLoading: boolean;
+  onSelect?: (alert: LiveAlert) => void;
 }
 
-export const AlertsList = ({ alerts, isLoading }: AlertsListProps) => {
+export const AlertsList = ({ alerts, isLoading, onSelect }: AlertsListProps) => {
   const [filteredAlerts, setFilteredAlerts] = useState<LiveAlert[]>(alerts);
   
   // Update filtered alerts when original alerts change
@@ -137,28 +138,30 @@ export const AlertsList = ({ alerts, isLoading }: AlertsListProps) => {
                   ? 'bg-yellow-900/20 border-yellow-800 text-yellow-300'
                   : 'bg-blue-900/20 border-blue-800 text-blue-300'
               }
+              onClick={() => onSelect && onSelect(alert)}
+              style={{ cursor: onSelect ? 'pointer' : 'default' }}
             >
               <div className="flex flex-col md:flex-row justify-between w-full gap-4">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 mt-0.5" />
                   <div>
                     <div className="font-medium mb-1">{alert.title}</div>
-                    <div className="text-sm opacity-90 mb-2">{alert.message}</div>
+                    <div className="text-sm opacity-90 mb-2">{alert.message || alert.description}</div>
                     
                     <div className="flex flex-wrap gap-3 items-center text-xs opacity-75">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={alert.avatar_url || undefined} alt={alert.username} />
-                          <AvatarFallback>{alert.username.charAt(0).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback>{alert.username?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
                         </Avatar>
                         <span>{alert.username}</span>
                       </div>
                       
                       <Badge variant="outline" className="font-normal text-xs">
-                        {alert.alert_type}
+                        {alert.alert_type || alert.type}
                       </Badge>
                       
-                      <span>{format(new Date(alert.created_at), 'MMM d, yyyy HH:mm')}</span>
+                      <span>{format(new Date(alert.created_at || alert.timestamp), 'MMM d, yyyy HH:mm')}</span>
                     </div>
                   </div>
                 </div>

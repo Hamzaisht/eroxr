@@ -37,15 +37,7 @@ export const SurveillanceProvider = ({
   refreshAlerts,
   startSurveillance
 }: SurveillanceProviderProps) => {
-  const surveillanceData = useSurveillanceData();
-  const { fetchStreams } = useStreamsSurveillance();
-  const { fetchCalls } = useCallsSurveillance();
-  const { fetchChatSessions } = useChatsSurveillance();
-  const { fetchBodyContact } = useBodyContactSurveillance();
-  const contentSurveillance = useContentSurveillance();
-  const { toast } = useToast();
-  
-  const {
+  const { 
     activeTab,
     setActiveTab,
     liveSessions,
@@ -55,7 +47,9 @@ export const SurveillanceProvider = ({
     error,
     setError,
     fetchLiveSessions
-  } = surveillanceData;
+  } = useSurveillanceData();
+  
+  const { toast } = useToast();
   
   // Handle refreshing the content
   const handleRefresh = useCallback(async () => {

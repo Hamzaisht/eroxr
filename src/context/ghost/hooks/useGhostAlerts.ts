@@ -32,25 +32,27 @@ export function useGhostAlerts(isGhostMode: boolean, isSuperAdmin: boolean) {
         if (error) throw error;
         
         if (data) {
-          setLiveAlerts(data.map(alert => ({
+          const alertsWithType: LiveAlert[] = data.map(alert => ({
             id: alert.id,
-            type: alert.type,
+            type: alert.type || "information",
             user_id: alert.user_id,
-            username: alert.profiles?.[0]?.username || 'Unknown',
-            avatar_url: alert.profiles?.[0]?.avatar_url || null,
+            username: alert.profiles?.username || 'Unknown',
+            avatar_url: alert.profiles?.avatar_url || '',
             timestamp: alert.created_at,
             created_at: alert.created_at,
             content_type: alert.content_type || 'unknown',
             reason: alert.reason || '',
             severity: alert.severity || 'medium',
             content_id: alert.content_id || '',
-            priority: (alert.severity === 'high' ? 'high' : alert.severity === 'medium' ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+            title: `${alert.type?.charAt(0).toUpperCase() || 'I'}${alert.type?.slice(1) || 'nformation'} Alert`,
             message: alert.reason || 'Alert triggered',
-            source: 'system',
-            alert_type: alert.type,
             status: 'new',
-            title: `${alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} Alert`,
-          })));
+            alert_type: alert.type,
+            description: alert.reason || '',
+            is_viewed: false
+          }));
+          
+          setLiveAlerts(alertsWithType);
         }
       } catch (error) {
         console.error("Error fetching alerts:", error);
@@ -86,25 +88,27 @@ export function useGhostAlerts(isGhostMode: boolean, isSuperAdmin: boolean) {
       if (error) throw error;
       
       if (data) {
-        setLiveAlerts(data.map(alert => ({
+        const alertsWithType: LiveAlert[] = data.map(alert => ({
           id: alert.id,
-          type: alert.type,
+          type: alert.type || "information",
           user_id: alert.user_id,
-          username: alert.profiles?.[0]?.username || 'Unknown',
-          avatar_url: alert.profiles?.[0]?.avatar_url || null,
+          username: alert.profiles?.username || 'Unknown',
+          avatar_url: alert.profiles?.avatar_url || '',
           timestamp: alert.created_at,
           created_at: alert.created_at,
           content_type: alert.content_type || 'unknown',
           reason: alert.reason || '',
           severity: alert.severity || 'medium',
           content_id: alert.content_id || '',
-          priority: (alert.severity === 'high' ? 'high' : alert.severity === 'medium' ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+          title: `${alert.type?.charAt(0).toUpperCase() || 'I'}${alert.type?.slice(1) || 'nformation'} Alert`,
           message: alert.reason || 'Alert triggered',
-          source: 'system',
-          alert_type: alert.type,
           status: 'new',
-          title: `${alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} Alert`,
-        })));
+          alert_type: alert.type,
+          description: alert.reason || '',
+          is_viewed: false
+        }));
+        
+        setLiveAlerts(alertsWithType);
       }
     } catch (error) {
       console.error("Error refreshing alerts:", error);
