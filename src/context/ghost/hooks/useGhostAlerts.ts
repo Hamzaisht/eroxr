@@ -50,7 +50,7 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
             is_emergency,
             reporter_id,
             reported_id,
-            profiles!reporter_id(username, avatar_url)
+            profiles:reporter_id(username, avatar_url)
           `)
           .eq('status', 'pending')
           .order('is_emergency', { ascending: false })
@@ -66,7 +66,7 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
             created_at,
             reporter_id,
             content_id,
-            profiles!reporter_id(username, avatar_url)
+            profiles:reporter_id(username, avatar_url)
           `)
           .eq('status', 'pending')
           .order('created_at', { ascending: false })
@@ -85,8 +85,12 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
         created_at: item.flagged_at,
         status: item.status,
         user_id: item.user_id,
-        username: item.profiles ? item.profiles.username || 'Unknown User' : 'Unknown User',
-        avatar_url: item.profiles ? item.profiles.avatar_url || '' : '',
+        username: Array.isArray(item.profiles) && item.profiles.length > 0 
+          ? item.profiles[0].username || 'Unknown User' 
+          : 'Unknown User',
+        avatar_url: Array.isArray(item.profiles) && item.profiles.length > 0 
+          ? item.profiles[0].avatar_url || '' 
+          : '',
         title: `Flagged ${item.content_type}`,
         description: item.reason || '',
         is_viewed: false
@@ -103,8 +107,12 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
         created_at: item.created_at,
         status: item.status,
         user_id: item.reporter_id,
-        username: item.profiles ? item.profiles.username || 'Unknown User' : 'Unknown User',
-        avatar_url: item.profiles ? item.profiles.avatar_url || '' : '',
+        username: Array.isArray(item.profiles) && item.profiles.length > 0 
+          ? item.profiles[0].username || 'Unknown User' 
+          : 'Unknown User',
+        avatar_url: Array.isArray(item.profiles) && item.profiles.length > 0 
+          ? item.profiles[0].avatar_url || '' 
+          : '',
         title: `${item.is_emergency ? 'URGENT: ' : ''}Report on ${item.content_type}`,
         description: item.description || item.reason || '',
         is_viewed: false
@@ -121,8 +129,12 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
         created_at: item.created_at,
         status: item.status,
         user_id: item.reporter_id,
-        username: item.profiles ? item.profiles.username || 'Unknown User' : 'Unknown User',
-        avatar_url: item.profiles ? item.profiles.avatar_url || '' : '',
+        username: Array.isArray(item.profiles) && item.profiles.length > 0 
+          ? item.profiles[0].username || 'Unknown User' 
+          : 'Unknown User',
+        avatar_url: Array.isArray(item.profiles) && item.profiles.length > 0 
+          ? item.profiles[0].avatar_url || '' 
+          : '',
         title: `DMCA Takedown Request`,
         description: `Copyright claim on ${item.content_type}`,
         is_viewed: false
