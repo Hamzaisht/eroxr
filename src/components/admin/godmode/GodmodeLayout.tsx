@@ -5,11 +5,15 @@ import { GodmodeSidebar } from "./GodmodeSidebar";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
+import { useGhostMode } from "@/hooks/useGhostMode";
+import { SurveillanceProvider } from "@/components/admin/platform/surveillance/SurveillanceContext";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
 
 function GodmodeLayout() {
   const session = useSession();
   const location = useLocation();
   const { isSuperAdmin, isLoading } = useSuperAdminCheck();
+  const { liveAlerts, refreshAlerts, startSurveillance } = useGhostMode();
   
   // Add debug logging
   console.log("GodmodeLayout rendering, session:", session ? "exists" : "null");
@@ -34,21 +38,27 @@ function GodmodeLayout() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-[#0D1117]">
-      <GodmodeSidebar />
-      
-      <div className="flex-1 ml-[60px] md:ml-[250px] min-h-screen">
-        {/* Background */}
-        <div className="fixed inset-0 pointer-events-none">
-          <BackgroundEffects />
-        </div>
+    <SurveillanceProvider
+      liveAlerts={liveAlerts}
+      refreshAlerts={refreshAlerts}
+      startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
+    >
+      <div className="flex min-h-screen w-full bg-[#0D1117]">
+        <GodmodeSidebar />
         
-        {/* Main content wrapper */}
-        <div className="relative z-10 p-4 md:p-6 h-full">
-          <Outlet />
+        <div className="flex-1 ml-[60px] md:ml-[250px] min-h-screen">
+          {/* Background */}
+          <div className="fixed inset-0 pointer-events-none">
+            <BackgroundEffects />
+          </div>
+          
+          {/* Main content wrapper */}
+          <div className="relative z-10 p-4 md:p-6 h-full">
+            <Outlet />
+          </div>
         </div>
       </div>
-    </div>
+    </SurveillanceProvider>
   );
 }
 
