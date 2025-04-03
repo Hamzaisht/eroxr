@@ -1613,11 +1613,14 @@ export type Database = {
           id_verification_status: string | null
           interests: string[] | null
           is_age_verified: boolean | null
+          is_paused: boolean | null
           is_paying_customer: boolean | null
           is_suspended: boolean | null
           last_name: string | null
           last_username_change: string | null
           location: string | null
+          pause_end_at: string | null
+          pause_reason: string | null
           profile_visibility: boolean | null
           social_links: Json | null
           status: string | null
@@ -1636,11 +1639,14 @@ export type Database = {
           id_verification_status?: string | null
           interests?: string[] | null
           is_age_verified?: boolean | null
+          is_paused?: boolean | null
           is_paying_customer?: boolean | null
           is_suspended?: boolean | null
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null
+          pause_end_at?: string | null
+          pause_reason?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null
           status?: string | null
@@ -1659,11 +1665,14 @@ export type Database = {
           id_verification_status?: string | null
           interests?: string[] | null
           is_age_verified?: boolean | null
+          is_paused?: boolean | null
           is_paying_customer?: boolean | null
           is_suspended?: boolean | null
           last_name?: string | null
           last_username_change?: string | null
           location?: string | null
+          pause_end_at?: string | null
+          pause_reason?: string | null
           profile_visibility?: boolean | null
           social_links?: Json | null
           status?: string | null
