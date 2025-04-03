@@ -3,7 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSurveillance } from "./SurveillanceContext";
 import { TabContent } from "./TabContent";
 import { AlertsList } from "./AlertsList";
-import { LiveAlert, LiveSession } from "./types";
+import { LiveSession } from "./types";
+import { LiveAlert } from "@/types/alerts";
 import { ContentSurveillanceTabs } from "./ContentSurveillanceTabs";
 import { CreatorEarningsSurveillance } from "./CreatorEarningsSurveillance";
 

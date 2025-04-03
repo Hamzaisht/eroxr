@@ -9,7 +9,7 @@ export interface LiveSession {
   title?: string;
   description?: string;
   viewer_count?: number;
-  participants?: number;
+  participants?: any[];
   recipient_username?: string;
   sender_username?: string;
   content?: string;
@@ -30,7 +30,6 @@ export interface LiveSession {
   media_url?: string[];
   video_url?: string;
   about_me?: string;
-  participants?: any[];
 }
 
 export interface LiveAlert {
