@@ -1,5 +1,6 @@
 
 import { CreatorEarnings, PayoutRequest } from "../../types";
+import { WithProfile } from "@/integrations/supabase/types/profile";
 
 // Helper function to determine earning source based on data
 export const determineEarningSource = (earning: any): string => {
@@ -24,7 +25,7 @@ export const determineEarningDescription = (earning: any): string => {
 };
 
 // Helper function to format payout requests
-export const formatPayoutRequest = (payout: any): PayoutRequest => {
+export const formatPayoutRequest = (payout: WithProfile<any>): PayoutRequest => {
   const profile = payout.profiles || {};
   return {
     id: payout.id,
@@ -42,7 +43,7 @@ export const formatPayoutRequest = (payout: any): PayoutRequest => {
 };
 
 // Function to process earnings data into CreatorEarnings format
-export const processEarningsData = (earnings: any[]): CreatorEarnings[] => {
+export const processEarningsData = (earnings: WithProfile<any>[]): CreatorEarnings[] => {
   return earnings.map(earning => {
     const profile = earning.profiles || {};
     return {

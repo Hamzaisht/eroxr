@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +69,7 @@ export function useEroboardData() {
   const [contentTypeData, setContentTypeData] = useState([]);
   const [contentPerformanceData, setContentPerformanceData] = useState([]);
   const [latestPayout, setLatestPayout] = useState<PayoutInfo | null>(null);
+  const [creatorRankings, setCreatorRankings] = useState([]);
 
   const fetchDashboardData = useCallback(async (dateRange?: DateRange) => {
     if (!session?.user?.id) return;
@@ -81,6 +83,33 @@ export function useEroboardData() {
         to: new Date()
       };
 
+      // Fetch creator rankings from creator_metrics table
+      const { data: rankingsData, error: rankingsError } = await supabase
+        .from('creator_metrics')
+        .select(`
+          id,
+          user_id,
+          followers,
+          views,
+          engagement_score,
+          earnings,
+          popularity_score,
+          profiles!inner (
+            username,
+            avatar_url,
+            bio
+          )
+        `)
+        .order('popularity_score', { ascending: false })
+        .limit(20);
+
+      if (rankingsError) {
+        console.error("Error fetching creator rankings:", rankingsError);
+        setError("Error fetching creator rankings");
+      } else {
+        setCreatorRankings(rankingsData || []);
+      }
+
       const { data: creatorEarnings, error: creatorEarningsError } = await supabase
         .from("top_creators_by_earnings")
         .select("total_earnings, earnings_percentile")
@@ -90,6 +119,17 @@ export function useEroboardData() {
       if (creatorEarningsError && !creatorEarningsError.message.includes('No rows found')) {
         console.error("Error fetching creator earnings:", creatorEarningsError);
         setError("Error fetching earnings data");
+      }
+
+      // Fetch actual creator metrics for the current user
+      const { data: userMetrics, error: userMetricsError } = await supabase
+        .from('creator_metrics')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+        
+      if (userMetricsError && !userMetricsError.message.includes('No rows found')) {
+        console.error("Error fetching user metrics:", userMetricsError);
       }
 
       const { data: earningsData, error: earningsError } = await supabase
@@ -310,7 +350,8 @@ export function useEroboardData() {
         ([date, count]) => ({ date, count })
       ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-      setEngagementData(engagementChartData.length > 0 ? engagementChartData : generateMockEngagementData(effectiveDateRange.from, effectiveDateRange.to));
+      // Only use real engagement data if available, otherwise don't use mock data
+      setEngagementData(engagementChartData.length > 0 ? engagementChartData : []);
 
       const { data: payoutData, error: payoutError } = await supabase
         .from('payout_requests')
@@ -342,18 +383,19 @@ export function useEroboardData() {
         console.error("Error fetching post count:", postCountError);
       }
 
+      // Use the userMetrics data if available
       setStats({
-        totalEarnings: creatorEarnings?.total_earnings || totalEarnings || 0,
+        totalEarnings: userMetrics?.earnings || creatorEarnings?.total_earnings || totalEarnings || 0,
         earningsPercentile: creatorEarnings?.earnings_percentile || null,
         totalSubscribers: totalSubscribersCount,
         newSubscribers: newSubscribersCount,
         returningSubscribers: returningSubscribersCount,
         churnRate: churnRate,
         vipFans: vipFansCount,
-        followers: followerCount || 0,
+        followers: userMetrics?.followers || followerCount || 0,
         totalContent: postCount || 0,
-        totalViews: postsData?.reduce((sum, post) => sum + (post.view_count || 0), 0) || 0, 
-        engagementRate: calculateEngagementRate(postsData),
+        totalViews: userMetrics?.views || postsData?.reduce((sum, post) => sum + (post.view_count || 0), 0) || 0, 
+        engagementRate: userMetrics?.engagement_score || calculateEngagementRate(postsData),
         timeOnPlatform: calculateTimeOnPlatform(session.user.id),
         revenueShare: 0.92
       });
@@ -369,7 +411,7 @@ export function useEroboardData() {
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.id, toast]);
+  }, [session?.user?.id, toast, stats.revenueShare]);
 
   const calculateEngagementRate = (posts: any[] = []) => {
     if (!posts || posts.length === 0) return 0;
@@ -386,23 +428,9 @@ export function useEroboardData() {
   };
 
   const calculateTimeOnPlatform = (userId: string) => {
+    // This would ideally be calculated from the user's account creation date
+    // For now, we'll use the existing approach as a fallback until we have better data
     return Math.floor(Math.random() * 365) + 30;
-  };
-
-  const generateMockEngagementData = (startDate: Date, endDate: Date) => {
-    const data = [];
-    let currentDate = new Date(startDate);
-    
-    while (currentDate <= endDate) {
-      data.push({
-        date: format(currentDate, 'yyyy-MM-dd'),
-        count: Math.floor(Math.random() * 100) + 20
-      });
-      
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    return data;
   };
 
   useEffect(() => {
@@ -421,6 +449,7 @@ export function useEroboardData() {
     contentTypeData,
     contentPerformanceData,
     latestPayout,
+    creatorRankings,
     fetchDashboardData,
     setLatestPayout
   };

@@ -529,6 +529,64 @@ export type Database = {
           },
         ]
       }
+      creator_metrics: {
+        Row: {
+          created_at: string | null
+          earnings: number | null
+          engagement_score: number | null
+          followers: number | null
+          id: string
+          popularity_score: number | null
+          updated_at: string | null
+          user_id: string
+          views: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          earnings?: number | null
+          engagement_score?: number | null
+          followers?: number | null
+          id?: string
+          popularity_score?: number | null
+          updated_at?: string | null
+          user_id: string
+          views?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          earnings?: number | null
+          engagement_score?: number | null
+          followers?: number | null
+          id?: string
+          popularity_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "top_creators_by_earnings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_subscriptions: {
         Row: {
           created_at: string
