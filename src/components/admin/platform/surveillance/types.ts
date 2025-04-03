@@ -1,7 +1,7 @@
 
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact';
 
-export type ContentType = 'posts' | 'stories' | 'videos' | 'audios';
+export type ContentType = 'posts' | 'stories' | 'videos' | 'audios' | 'post' | 'story' | 'video' | 'ppv' | 'audio';
 
 export interface LiveSession {
   id: string;
@@ -30,6 +30,7 @@ export interface LiveSession {
   creator_username?: string;
   about_me?: string;
   video_url?: string;
+  participants?: any[];
 }
 
 export interface SurveillanceContentItem {
@@ -117,6 +118,15 @@ export interface LiveAlert {
   user_id?: string;
   is_viewed: boolean;
   session?: LiveSession;
+  username?: string;
+  avatar_url?: string;
+  created_at?: string;
+  content_type?: string;
+  reason?: string;
+  content_id?: string;
+  message?: string;
+  status?: string;
+  alert_type?: string;
 }
 
 export interface SessionModerationActionProps {
@@ -134,4 +144,6 @@ export type ModerationAction =
   | "delete"
   | "ban"
   | "restore"
-  | "force_delete";
+  | "force_delete"
+  | "pause"
+  | "unpause";
