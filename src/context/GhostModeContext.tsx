@@ -1,208 +1,193 @@
-
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  useContext,
+} from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
+import { GhostModeContextType } from "./ghost/types";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
 import { useToast } from "@/hooks/use-toast";
-import { LiveSession, LiveAlert } from "@/components/admin/platform/surveillance/types";
-import { useGhostAlerts } from "@/context/ghost/hooks/useGhostAlerts";
-import { useGhostSurveillance } from "@/context/ghost/hooks/useGhostSurveillance";
-import { GhostModeIndicator } from "@/components/admin/platform/ghost/GhostModeIndicator";
-import { SurveillanceIndicator } from "@/components/admin/platform/ghost/SurveillanceIndicator";
+import { useUser } from "@/hooks/useUser";
+import { LiveAlert } from "@/types/alerts";
 
-interface GhostModeContextType {
-  isGhostMode: boolean;
-  toggleGhostMode: () => Promise<void>;
-  isLoading: boolean;
-  activeSurveillance: {
+const GhostModeContext = createContext<GhostModeContextType | undefined>(
+  undefined
+);
+
+export const GhostModeProvider = ({ children }: { children: React.ReactNode }) => {
+  const [isGhostMode, setIsGhostMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeSurveillance, setActiveSurveillance] = useState<{
     session?: LiveSession;
     isWatching: boolean;
     startTime?: string;
-  };
-  startSurveillance: (session: LiveSession) => Promise<boolean>;
-  stopSurveillance: () => Promise<boolean>;
-  liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<void>;
-  setIsGhostMode: (state: boolean) => void;
-  syncGhostModeFromSupabase: () => Promise<void>;
-  canUseGhostMode: boolean;
-}
-
-// Export the context so it can be imported directly
-export const GhostModeContext = createContext<GhostModeContextType>({
-  isGhostMode: false,
-  toggleGhostMode: async () => {},
-  isLoading: false,
-  activeSurveillance: {
-    isWatching: false
-  },
-  startSurveillance: async () => false,
-  stopSurveillance: async () => false,
-  liveAlerts: [],
-  refreshAlerts: async () => {},
-  setIsGhostMode: () => {},
-  syncGhostModeFromSupabase: async () => {},
-  canUseGhostMode: false
-});
-
-export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
-  const [isGhostMode, setIsGhostMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const session = useSession();
-  const { isSuperAdmin } = useSuperAdminCheck();
+  }>({ isWatching: false });
+  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
+  const [canUseGhostMode, setCanUseGhostMode] = useState(false);
   const { toast } = useToast();
-  
-  const { liveAlerts, refreshAlerts } = useGhostAlerts(isGhostMode, isSuperAdmin);
-  const { 
-    activeSurveillance, 
-    startSurveillance, 
-    stopSurveillance 
-  } = useGhostSurveillance(isGhostMode, isSuperAdmin);
+  const session = useSession();
+  const { user } = useUser();
 
   const syncGhostModeFromSupabase = useCallback(async () => {
-    if (!session?.user?.id || !isSuperAdmin) return;
-
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('admin_sessions')
-        .select('ghost_mode')
-        .eq('admin_id', session.user.id)
-        .single();
-      
-      if (error) {
-        if (error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
-          console.error("Error fetching ghost mode state:", error);
-        }
-        setIsGhostMode(false);
-      } else if (data) {
-        setIsGhostMode(data.ghost_mode);
-        
-        if (data.ghost_mode) {
-          console.log("Ghost mode active state loaded from database");
+      if (session?.user?.id) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("is_ghost_mode, user_roles")
+          .eq("id", session.user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching ghost mode status:", error);
+          toast({
+            title: "Error",
+            description: "Failed to sync ghost mode status.",
+            variant: "destructive",
+          });
+        } else {
+          setIsGhostMode(data?.is_ghost_mode || false);
+          const isAdmin = data?.user_roles?.role === "admin";
+          setCanUseGhostMode(isAdmin);
         }
       }
-    } catch (error) {
-      console.error("Error syncing ghost mode from Supabase:", error);
-      setIsGhostMode(false);
     } finally {
       setIsLoading(false);
     }
-  }, [session, isSuperAdmin]);
+  }, [session?.user?.id, toast]);
 
   useEffect(() => {
-    if (session?.user?.id && isSuperAdmin) {
-      syncGhostModeFromSupabase();
-    }
-  }, [session?.user?.id, isSuperAdmin, syncGhostModeFromSupabase]);
-
-  useEffect(() => {
-    if (session?.user?.email === "hamzaishtiaq242@gmail.com") {
-      console.log("Ghost mode state updated:", isGhostMode);
-      console.log("Is admin:", isSuperAdmin);
-      console.log("Active surveillance:", activeSurveillance);
-    }
-  }, [isGhostMode, isSuperAdmin, activeSurveillance, session?.user?.email]);
+    syncGhostModeFromSupabase();
+  }, [syncGhostModeFromSupabase]);
 
   const toggleGhostMode = async () => {
-    if (!isSuperAdmin || !session?.user?.id) return;
-    
     setIsLoading(true);
-    
     try {
-      const newGhostModeState = !isGhostMode;
-      
-      const { error } = await supabase
-        .from('admin_sessions')
-        .upsert({
-          admin_id: session.user.id,
-          ghost_mode: newGhostModeState,
-          activated_at: newGhostModeState ? new Date().toISOString() : null,
-          last_active_at: new Date().toISOString()
-        }, {
-          onConflict: 'admin_id' 
-        });
-        
-      if (error) {
-        console.error("Error updating ghost mode in database:", error);
-        toast({
-          title: "Error",
-          description: "Failed to update ghost mode status",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      await supabase.from('admin_logs').insert({
-        admin_id: session.user.id,
-        action: newGhostModeState ? 'ghost_mode_enabled' : 'ghost_mode_disabled',
-        action_type: 'toggle_ghost_mode',
-        target_type: 'admin',
-        target_id: session.user.id,
-        details: {
-          timestamp: new Date().toISOString(),
-          user_email: session.user.email,
-          previous_state: isGhostMode,
-          new_state: newGhostModeState
+      if (session?.user?.id) {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ is_ghost_mode: !isGhostMode })
+          .eq("id", session.user.id);
+
+        if (error) {
+          console.error("Error toggling ghost mode:", error);
+          toast({
+            title: "Error",
+            description: "Failed to toggle ghost mode.",
+            variant: "destructive",
+          });
+        } else {
+          setIsGhostMode(!isGhostMode);
+          toast({
+            title: "Success",
+            description: `Ghost mode ${
+              !isGhostMode ? "enabled" : "disabled"
+            }.`,
+          });
         }
-      });
-      
-      await supabase.from('admin_audit_logs').insert({
-        user_id: session.user.id,
-        action: isGhostMode ? 'ghost_mode_disabled' : 'ghost_mode_enabled',
-        details: {
-          timestamp: new Date().toISOString(),
-          user_email: session.user.email,
-        }
-      });
-      
-      if (isGhostMode && activeSurveillance.isWatching) {
-        await stopSurveillance();
       }
-      
-      setIsGhostMode(newGhostModeState);
-      
-      toast({
-        title: isGhostMode ? "Ghost Mode Deactivated" : "Ghost Mode Activated",
-        description: isGhostMode 
-          ? "Your actions are now visible to users" 
-          : "You are now browsing invisibly",
-      });
-    } catch (error) {
-      console.error("Error toggling ghost mode:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const startSurveillance = async (session: LiveSession) => {
+    setIsLoading(true);
+    try {
+      setActiveSurveillance({
+        session,
+        isWatching: true,
+        startTime: new Date().toISOString(),
+      });
+      return true;
+    } catch (error) {
+      console.error("Error starting surveillance:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start surveillance.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const stopSurveillance = async () => {
+    setIsLoading(true);
+    try {
+      setActiveSurveillance({ isWatching: false });
+      return true;
+    } catch (error) {
+      console.error("Error stopping surveillance:", error);
+      toast({
+        title: "Error",
+        description: "Failed to stop surveillance.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshAlerts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      if (session?.user) {
+        const { data, error } = await supabase
+          .from("alerts")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching alerts:", error);
+          toast({
+            title: "Error",
+            description: "Failed to refresh alerts.",
+            variant: "destructive",
+          });
+        } else {
+          setLiveAlerts(data);
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session?.user, toast]);
+
+  useEffect(() => {
+    if (isGhostMode) {
+      refreshAlerts();
+    }
+  }, [isGhostMode, refreshAlerts]);
+
+  const value: GhostModeContextType = {
+    isGhostMode,
+    toggleGhostMode,
+    isLoading,
+    activeSurveillance,
+    startSurveillance,
+    stopSurveillance,
+    liveAlerts,
+    refreshAlerts,
+    setIsGhostMode,
+    syncGhostModeFromSupabase,
+    canUseGhostMode,
   };
 
   return (
-    <GhostModeContext.Provider value={{ 
-      isGhostMode, 
-      toggleGhostMode, 
-      isLoading,
-      activeSurveillance: activeSurveillance as {
-        session?: LiveSession;
-        isWatching: boolean;
-        startTime?: string;
-      },
-      startSurveillance: startSurveillance as (session: LiveSession) => Promise<boolean>,
-      stopSurveillance,
-      liveAlerts: liveAlerts as LiveAlert[],
-      refreshAlerts,
-      setIsGhostMode,
-      syncGhostModeFromSupabase,
-      canUseGhostMode: isSuperAdmin
-    }}>
-      {children}
-      
-      <GhostModeIndicator isVisible={isSuperAdmin && isGhostMode} />
-      <SurveillanceIndicator 
-        isVisible={isSuperAdmin && isGhostMode && activeSurveillance.isWatching}
-        session={activeSurveillance.session as LiveSession} 
-      />
-    </GhostModeContext.Provider>
+    <GhostModeContext.Provider value={value}>{children}</GhostModeContext.Provider>
   );
 };
 
-export const useGhostMode = () => useContext(GhostModeContext);
+export const useGhostMode = () => {
+  const context = useContext(GhostModeContext);
+  if (context === undefined) {
+    throw new Error("useGhostMode must be used within a GhostModeProvider");
+  }
+  return context;
+};

@@ -22,6 +22,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Search, Download, CreditCard, RefreshCw, Loader2, Check } from "lucide-react";
 
+const getVariantForStatus = (status?: string): "default" | "destructive" | "outline" | "secondary" => {
+  switch (status) {
+    case "pending":
+      return "outline";
+    case "approved":
+      return "secondary";
+    case "processed":
+      return "default";
+    case "flagged":
+    case "rejected":
+      return "destructive";
+    default:
+      return "default";
+  }
+};
+
 export function CreatorEarningsSurveillance() {
   const [searchQuery, setSearchQuery] = useState('');
   const { earnings, pendingPayouts, approvedPayouts, processedPayouts, isLoading, fetchAll, processPayouts } = useCreatorEarnings();
@@ -138,8 +154,7 @@ export function CreatorEarningsSurveillance() {
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge 
-                          variant={earning.status === "pending" ? "outline" : 
-                                 earning.status === "approved" ? "secondary" : "default"}
+                          variant={getVariantForStatus(earning.status)}
                         >
                           {earning.status || "Active"}
                         </Badge>

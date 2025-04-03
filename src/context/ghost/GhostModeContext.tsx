@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -29,7 +28,8 @@ const GhostModeContext = createContext<GhostModeContextType>({
 export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   const [isGhostMode, setIsGhostMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [alerts, setAlerts] = useState<LiveAlert[]>([]);
+
   const session = useSession();
   const { isSuperAdmin } = useSuperAdminCheck();
   const { toast } = useToast();

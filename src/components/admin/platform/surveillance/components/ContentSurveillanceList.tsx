@@ -24,19 +24,21 @@ import {
 } from "@/components/ui/dialog";
 import { useModerationActions } from "../hooks/useModerationActions";
 
-interface ContentSurveillanceListProps {
-  items: SurveillanceContentItem[];
-  isLoading: boolean;
-  error?: string | null;
-  type: string;
-  onViewContent: (content: SurveillanceContentItem) => void;
+export interface ContentSurveillanceListProps {
+  items: SurveillanceContentItem[]
+  isLoading: boolean
+  error?: any
+  emptyMessage: string
+  type?: string
+  title?: string
+  onViewContent: (item: SurveillanceContentItem) => void
 }
 
 export const ContentSurveillanceList = ({
   items,
   isLoading,
   error,
-  type,
+  type = 'content',
   onViewContent
 }: ContentSurveillanceListProps) => {
   const [selectedItem, setSelectedItem] = useState<SurveillanceContentItem | null>(null);
@@ -66,7 +68,7 @@ export const ContentSurveillanceList = ({
         <div className="flex justify-center mb-4">
           <MessageSquare className="h-12 w-12 opacity-50" />
         </div>
-        <p className="text-lg font-medium">No content found</p>
+        <p className="text-lg font-medium">{emptyMessage}</p>
         <p className="mt-2 text-sm text-gray-500">
           {type === 'ppv' 
             ? 'No premium content has been posted yet'
