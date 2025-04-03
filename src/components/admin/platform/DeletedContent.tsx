@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -166,21 +165,33 @@ export const DeletedContent = () => {
     }
   };
   
-  const handleAction = (item: any, action: ModerationAction) => {
-    // Convert to SurveillanceContentItem format for moderation
-    const contentItem: SurveillanceContentItem = {
-      id: item.content_id,
+  const transformToSurveillanceItem = (item: any): SurveillanceContentItem => {
+    return {
+      id: item.id,
       content_type: item.content_type,
       created_at: item.created_at,
       user_id: item.user_id,
-      creator_id: item.user_id,
+      creator_id: item.creator_id || item.user_id,
       username: item.username,
+      creator_username: item.username || 'Unknown',
       avatar_url: item.avatar_url,
+      creator_avatar_url: item.avatar_url,
       content: item.content,
-      title: item.title,
-      media_url: item.media_url,
-      visibility: 'deleted'
+      title: item.title || '',
+      description: item.description || '',
+      media_url: item.media_url || [],
+      visibility: item.visibility || 'deleted',
+      location: item.location || '',
+      tags: item.tags || [],
+      views: item.views || 0,
+      likes: item.likes || 0,
+      comments: item.comments || 0
     };
+  };
+  
+  const handleAction = (item: any, action: ModerationAction) => {
+    // Convert to SurveillanceContentItem format for moderation
+    const contentItem: SurveillanceContentItem = transformToSurveillanceItem(item);
     
     handleModeration(contentItem, action);
   };

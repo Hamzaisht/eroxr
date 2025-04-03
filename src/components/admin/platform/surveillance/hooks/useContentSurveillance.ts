@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { SurveillanceContentItem, ContentType, ContentIcon } from "../types";
@@ -15,24 +16,25 @@ export function useContentSurveillance() {
     const normalizedType = type.toLowerCase();
     
     if (normalizedType === 'post' || normalizedType === 'posts') {
-      return { icon: 'FileText', className: "h-4 w-4" };
+      return { icon: "FileText", className: "h-4 w-4" };
     }
     
     if (normalizedType === 'story' || normalizedType === 'stories') {
-      return { icon: 'Clock', className: "h-4 w-4" };
+      return { icon: "Clock", className: "h-4 w-4" };
     }
     
     if (normalizedType === 'video' || normalizedType === 'videos') {
-      return { icon: 'Video', className: "h-4 w-4" };
+      return { icon: "Video", className: "h-4 w-4" };
     }
     
     if (normalizedType === 'audio' || normalizedType === 'audios') {
-      return { icon: 'Music', className: "h-4 w-4" };
+      return { icon: "Music", className: "h-4 w-4" };
     }
     
-    return { icon: 'File', className: "h-4 w-4" };
+    return { icon: "File", className: "h-4 w-4" };
   };
 
+  // Fetch content items from Supabase
   const fetchContentItems = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -179,6 +181,7 @@ export function useContentSurveillance() {
     fetchContentItems();
   }, [fetchContentItems]);
 
+  // Filter content items based on type
   const filterContentByType = useCallback((items: SurveillanceContentItem[], type: ContentType) => {
     return items.filter(item => {
       const normalizedType = item.content_type.toLowerCase();

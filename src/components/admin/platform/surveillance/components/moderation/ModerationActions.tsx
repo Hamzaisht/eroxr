@@ -1,4 +1,3 @@
-
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -11,6 +10,7 @@ import { useState } from "react";
 import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
 import { ModerationActionButton } from "./ModerationActionButton";
+import { useModerationActions } from "@/hooks/useModerationActions";
 
 export function ModerationActions({
   session,
@@ -90,3 +90,36 @@ export function ModerationActions({
     </div>
   );
 }
+
+export const SessionModerationActions: React.FC<{ session: LiveSession | SurveillanceContentItem }> = ({ session }) => {
+  const { handleModeration, actionInProgress } = useModerationActions();
+  
+  const getCompatibleSession = (): LiveSession => {
+    if ('type' in session && typeof session.type === 'string') {
+      return session as LiveSession;
+    } else {
+      const contentItem = session as SurveillanceContentItem;
+      return {
+        id: contentItem.id,
+        type: 'content' as LiveSessionType,
+        user_id: contentItem.creator_id || contentItem.user_id || '',
+        created_at: contentItem.created_at,
+        content: contentItem.content,
+        media_url: contentItem.media_url,
+        username: contentItem.creator_username || contentItem.username,
+        avatar_url: contentItem.creator_avatar_url || contentItem.avatar_url,
+        content_type: contentItem.content_type,
+        title: contentItem.title,
+        status: contentItem.visibility
+      };
+    }
+  };
+  
+  return (
+    <ModerationActionItems 
+      session={getCompatibleSession()} 
+      onModerate={handleModeration} 
+      actionInProgress={actionInProgress} 
+    />
+  );
+};

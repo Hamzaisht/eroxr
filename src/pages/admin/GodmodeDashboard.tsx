@@ -7,7 +7,8 @@ import { useEffect } from "react";
 import { GodmodeSidebar } from "@/components/admin/godmode/GodmodeSidebar";
 import { SurveillanceProvider } from "@/components/admin/platform/surveillance/SurveillanceContext";
 import { useGhostMode } from "@/hooks/useGhostMode";
-import { LiveSession, LiveAlert } from "@/components/admin/platform/surveillance/types";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { LiveAlert } from "@/types/alerts";
 
 export default function GodmodeDashboard() {
   const session = useSession();

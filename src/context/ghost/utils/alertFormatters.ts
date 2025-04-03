@@ -17,7 +17,8 @@ export const formatFlaggedContentAlert = (item: WithProfile<any>): LiveAlert => 
 
   return {
     id: item.id,
-    type: "violation", // Changed from "flagged_content" to match LiveAlert type
+    type: "violation",
+    alert_type: "flagged_content", // Add alert_type
     content_type: item.content_type,
     content_id: item.content_id,
     reason: item.reason,
@@ -50,9 +51,10 @@ export const formatReportAlert = (item: WithProfile<any>): LiveAlert => {
 
   return {
     id: item.id,
-    type: "risk", // Changed from "report" to match LiveAlert type
+    type: "risk",
+    alert_type: "report", // Add alert_type
     content_type: item.content_type,
-    content_id: item.content_id || '', // Ensure content_id is provided
+    content_id: item.content_id || '',
     reason: item.reason,
     severity: item.is_emergency ? 'high' : 'medium',
     timestamp: item.created_at,
@@ -83,7 +85,8 @@ export const formatDmcaAlert = (item: WithProfile<any>): LiveAlert => {
 
   return {
     id: item.id,
-    type: "information", // Changed from "dmca" to match LiveAlert type
+    type: "information",
+    alert_type: "dmca", // Add alert_type
     content_type: item.content_type,
     content_id: item.content_id,
     reason: 'Copyright Violation',

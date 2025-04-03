@@ -8,7 +8,8 @@ import { SurveillanceProvider } from "./surveillance/SurveillanceContext";
 import { AlertsList } from "./surveillance/AlertsList";
 import { Button } from "@/components/ui/button";
 import { PowerOff, RefreshCw } from "lucide-react";
-import { LiveSession, LiveAlert, LiveSessionType } from "./surveillance/types";
+import { LiveSession } from "./surveillance/types";
+import { LiveAlert } from "@/types/alerts";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
 export const LiveSurveillance = () => {

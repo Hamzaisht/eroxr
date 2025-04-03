@@ -1,9 +1,12 @@
-
-import React, { useState } from "react";
+import { useState } from "react";
 import { Search, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 export interface SearchFilter {
   username?: string;
@@ -18,166 +21,198 @@ export interface SearchFilter {
 
 export interface SearchFilterBarProps {
   placeholder?: string;
-  availableTypes?: { value: string; label: string }[];
-  availableStatuses?: { value: string; label: string }[];
-  onSearch?: (filters: SearchFilter) => void;
-  searchQuery?: string;
-  onSearchChange?: (value: string) => void;
-  onRefresh?: () => Promise<void>;
+  availableTypes?: Array<{ value: string; label: string }>;
+  availableStatuses?: Array<{ value: string; label: string }>;
+  onSearch: (filters: SearchFilter) => void;
 }
 
 export const SearchFilterBar = ({
-  placeholder = "Search...",
+  placeholder = "Search by username...",
   availableTypes = [],
   availableStatuses = [],
-  onSearch,
-  searchQuery,
-  onSearchChange,
-  onRefresh
+  onSearch
 }: SearchFilterBarProps) => {
-  const [showFilters, setShowFilters] = useState(false);
-  const [username, setUsername] = useState("");
-  const [userId, setUserId] = useState("");
-  const [type, setType] = useState("all");
-  const [status, setStatus] = useState("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<
+    { from: Date | undefined; to: Date | undefined } | undefined
+  >(undefined);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
   
-  const handleSearch = () => {
-    if (onSearch) {
-      onSearch({
-        username: username.trim() || undefined,
-        userId: userId.trim() || undefined,
-        type: type !== "all" ? type : undefined,
-        status: status !== "all" ? status : undefined
-      });
-    }
+  const applyFilters = () => {
+    const filters: SearchFilter = {
+      username: searchQuery,
+      type: selectedType,
+      status: selectedStatus,
+      dateRange: dateRange
+    };
+    onSearch(filters);
+    setIsFilterOpen(false);
   };
   
-  const handleClearFilters = () => {
-    setUsername("");
-    setUserId("");
-    setType("all");
-    setStatus("all");
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedType("all");
+    setSelectedStatus("all");
+    setDateRange(undefined);
     
-    if (onSearch) {
-      onSearch({});
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (onSearchChange) {
-      onSearchChange(e.target.value);
-    } else {
-      // If using the filter-based approach
-      const value = e.target.value;
-      setUsername(value);
-      if (!showFilters && onSearch) {
-        onSearch({ username: value || undefined });
-      }
-    }
+    const emptyFilters: SearchFilter = {};
+    onSearch(emptyFilters);
+    setIsFilterOpen(false);
   };
   
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-grow">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            type="text"
-            placeholder={placeholder}
-            className="pl-9 pr-4"
-            value={searchQuery !== undefined ? searchQuery : username}
-            onChange={handleInputChange}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          />
-        </div>
-        
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleFilters}
-          className={showFilters ? "bg-gray-700" : ""}
-        >
-          <Filter className="h-4 w-4" />
-        </Button>
-        
-        {onRefresh && (
-          <Button variant="outline" size="sm" onClick={onRefresh}>
-            Refresh
+    <div className="flex items-center space-x-2">
+      <div className="relative flex-1">
+        <Input
+          type="text"
+          placeholder={placeholder}
+          value={searchQuery}
+          onChange={handleSearchInputChange}
+          className="pr-10"
+        />
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchQuery("");
+              onSearch({});
+            }}
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
+          >
+            <X className="h-4 w-4" />
           </Button>
+        )}
+        {!searchQuery && (
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         )}
       </div>
       
-      {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 border rounded-md bg-gray-900/50">
-          <div className="space-y-1">
-            <label className="text-xs text-gray-500">Username</label>
-            <Input 
-              value={username} 
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Filter by username" 
-            />
-          </div>
-          
-          <div className="space-y-1">
-            <label className="text-xs text-gray-500">User ID</label>
-            <Input 
-              value={userId} 
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="Filter by ID" 
-            />
-          </div>
-          
-          {availableTypes.length > 0 && (
-            <div className="space-y-1">
-              <label className="text-xs text-gray-500">Type</label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+      <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Filter className="mr-2 h-4 w-4" />
+            Filters
+            {isFilterOpen ? (
+              <></>
+            ) : (
+              <Badge
+                variant="secondary"
+                className="ml-2 rounded-sm px-1.5 py-0.5 text-xs font-medium ring-offset-0"
+              >
+                {Object.keys({
+                  username: searchQuery,
+                  type: selectedType,
+                  status: selectedStatus,
+                  dateRange: dateRange
+                }).filter(key => {
+                  const keyValue = {
+                    username: searchQuery,
+                    type: selectedType,
+                    status: selectedStatus,
+                    dateRange: dateRange
+                  }[key as keyof SearchFilter];
+                  
+                  if (key === 'username' && searchQuery) return true;
+                  if (key === 'type' && selectedType !== 'all') return true;
+                  if (key === 'status' && selectedStatus !== 'all') return true;
+                  if (key === 'dateRange' && dateRange) return true;
+                  
+                  return false;
+                }).length}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-4" align="end">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium leading-none">Type</h4>
+              <Select value={selectedType} onValueChange={(value) => setSelectedType(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTypes.map((typeOption) => (
-                    <SelectItem key={typeOption.value} value={typeOption.value}>
-                      {typeOption.label}
+                  {availableTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
-          
-          {availableStatuses.length > 0 && (
-            <div className="space-y-1">
-              <label className="text-xs text-gray-500">Status</label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
+            
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium leading-none">Status</h4>
+              <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableStatuses.map((statusOption) => (
-                    <SelectItem key={statusOption.value} value={statusOption.value}>
-                      {statusOption.label}
+                  {availableStatuses.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
+            
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium leading-none">Date Range</h4>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={
+                      "w-full justify-start text-left font-normal" +
+                      (dateRange?.from
+                        ? " pl-3.5"
+                        : " text-muted-foreground")
+                    }
+                  >
+                    {dateRange?.from ? (
+                      format(dateRange.from, "MMM d, yyyy") +
+                      " - " +
+                      format(dateRange.to || dateRange.from, "MMM d, yyyy")
+                    ) : (
+                      <span>Pick a date range</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="start"
+                  side="bottom"
+                >
+                  <Calendar
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
           
-          <div className="flex items-end gap-2 col-span-1 md:col-span-4">
-            <Button variant="default" onClick={handleSearch}>
-              Apply Filters
-            </Button>
-            <Button variant="outline" onClick={handleClearFilters}>
-              <X className="h-4 w-4 mr-2" />
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
               Clear
             </Button>
+            <Button size="sm" onClick={applyFilters}>
+              Apply
+            </Button>
           </div>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

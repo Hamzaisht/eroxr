@@ -1,7 +1,6 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
-import { LiveAlert } from '../types';
+import { LiveAlert } from '@/types/alerts';
 
 export function useGhostAlerts(isGhostMode: boolean) {
   const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);

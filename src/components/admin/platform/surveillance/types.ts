@@ -75,35 +75,9 @@ export type ModerationAction =
   | 'pause'
   | 'unpause';
 
-// Ghost Mode Context Type
-export interface GhostModeContextType {
-  isGhostMode: boolean;
-  setIsGhostMode: (state: boolean) => void;
-  toggleGhostMode: () => Promise<void>;
-  canUseGhostMode: boolean;
-  isLoading: boolean;
-  activeSurveillance: {
-    isWatching: boolean;
-    session: LiveSession | null;
-    startTime: string | null;
-  };
-  startSurveillance: (session: LiveSession) => Promise<boolean>;
-  stopSurveillance: () => Promise<boolean>;
-  liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<void>;
-  syncGhostModeFromSupabase: () => Promise<void>;
-}
-
-// Surveillance and moderation props interfaces
-export interface SessionModerationActionProps {
-  session: LiveSession | SurveillanceContentItem;
-  onModerate: (session: LiveSession | SurveillanceContentItem, action: ModerationAction, editedContent?: string) => void;
-  actionInProgress: string | null;
-}
-
 // Define the shape of a content icon
 export interface ContentIcon {
-  icon: React.ComponentType<any>;
+  icon: string;
   className: string;
 }
 
@@ -111,6 +85,7 @@ export interface ContentIcon {
 export interface CreatorEarnings {
   id: string;
   user_id: string;
+  creator_id: string; // Added for compatibility
   username: string;
   avatar_url?: string;
   total_earnings: number;
@@ -120,6 +95,9 @@ export interface CreatorEarnings {
   subscriber_count: number;
   tip_count: number;
   ppv_count: number;
+  subscription_earnings?: number; // Added for compatibility
+  tip_earnings?: number; // Added for compatibility
+  ppv_earnings?: number; // Added for compatibility
 }
 
 // Payout request types
@@ -136,6 +114,7 @@ export interface PayoutRequest {
   status: 'pending' | 'approved' | 'processed' | 'rejected';
   notes?: string;
   username?: string;
+  creator_username?: string; // Added for compatibility
   avatar_url?: string;
 }
 
