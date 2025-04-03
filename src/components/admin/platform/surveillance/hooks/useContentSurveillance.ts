@@ -15,7 +15,7 @@ export function useContentSurveillance() {
   const [stories, setStories] = useState<SurveillanceContentItem[]>([]);
   const [videos, setVideos] = useState<SurveillanceContentItem[]>([]);
   const [audios, setAudios] = useState<SurveillanceContentItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const supabase = useSupabaseClient();
   
