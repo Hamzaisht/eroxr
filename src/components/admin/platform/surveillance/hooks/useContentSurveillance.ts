@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { SurveillanceContentItem, ContentType } from "../types";
@@ -17,31 +16,29 @@ export function useContentSurveillance() {
     const normalizedType = type.toLowerCase();
     
     if (normalizedType === 'post' || normalizedType === 'posts') {
-      return <FileText className="h-4 w-4" />;
+      return { icon: FileText, className: "h-4 w-4" };
     }
     
     if (normalizedType === 'story' || normalizedType === 'stories') {
-      return <Clock className="h-4 w-4" />;
+      return { icon: Clock, className: "h-4 w-4" };
     }
     
     if (normalizedType === 'video' || normalizedType === 'videos') {
-      return <Video className="h-4 w-4" />;
+      return { icon: Video, className: "h-4 w-4" };
     }
     
     if (normalizedType === 'audio' || normalizedType === 'audios') {
-      return <Music className="h-4 w-4" />;
+      return { icon: Music, className: "h-4 w-4" };
     }
     
-    return <File className="h-4 w-4" />;
+    return { icon: File, className: "h-4 w-4" };
   };
 
-  // Fetch content items from Supabase
   const fetchContentItems = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Fetch posts
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select('*, creator:creator_id(username, avatar_url)')
@@ -51,7 +48,6 @@ export function useContentSurveillance() {
         throw postsError;
       }
       
-      // Fetch stories
       const { data: storiesData, error: storiesError } = await supabase
         .from('stories')
         .select('*, creator:creator_id(username, avatar_url)')
@@ -61,7 +57,6 @@ export function useContentSurveillance() {
         throw storiesError;
       }
       
-      // Fetch videos
       const { data: videosData, error: videosError } = await supabase
         .from('videos')
         .select('*, creator:creator_id(username, avatar_url)')
@@ -71,7 +66,6 @@ export function useContentSurveillance() {
         throw videosError;
       }
       
-      // Fetch audios
       const { data: audiosData, error: audiosError } = await supabase
         .from('audios')
         .select('*, creator:creator_id(username, avatar_url)')
@@ -81,7 +75,6 @@ export function useContentSurveillance() {
         throw audiosError;
       }
       
-      // Transform posts to SurveillanceContentItem format
       const transformedPosts: SurveillanceContentItem[] = (postsData || []).map(post => ({
         id: post.id,
         content_type: "post",
@@ -104,7 +97,6 @@ export function useContentSurveillance() {
         comments: post.comments || 0,
       }));
       
-      // Transform stories to SurveillanceContentItem format
       const transformedStories: SurveillanceContentItem[] = (storiesData || []).map(story => ({
         id: story.id,
         content_type: "story",
@@ -126,7 +118,6 @@ export function useContentSurveillance() {
         comments: story.comments || 0,
       }));
       
-      // Transform videos to SurveillanceContentItem format
       const transformedVideos: SurveillanceContentItem[] = (videosData || []).map(video => ({
         id: video.id,
         content_type: "video",
@@ -148,7 +139,6 @@ export function useContentSurveillance() {
         comments: video.comments || 0,
       }));
       
-      // Transform audios to SurveillanceContentItem format
       const transformedAudios: SurveillanceContentItem[] = (audiosData || []).map(audio => ({
         id: audio.id,
         content_type: "audio",
@@ -186,10 +176,8 @@ export function useContentSurveillance() {
     fetchContentItems();
   }, [fetchContentItems]);
 
-  // Filter content items based on type
   const filterContentByType = useCallback((items: SurveillanceContentItem[], type: ContentType) => {
     return items.filter(item => {
-      // Normalize content_type to match our ContentType enum
       const normalizedType = item.content_type.toLowerCase();
       
       if (type === 'posts' && normalizedType === 'post') {
