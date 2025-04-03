@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,8 @@ interface GhostModeContextType {
   stopSurveillance: () => Promise<boolean>;
   liveAlerts: LiveAlert[];
   refreshAlerts: () => Promise<void>;
+  setIsGhostMode: (state: boolean) => void;
+  syncGhostModeFromSupabase: () => Promise<void>;
 }
 
 const GHOST_MODE_KEY = 'eroxr_ghost_mode_active';
@@ -36,7 +39,9 @@ const GhostModeContext = createContext<GhostModeContextType>({
   startSurveillance: async () => false,
   stopSurveillance: async () => false,
   liveAlerts: [],
-  refreshAlerts: async () => {}
+  refreshAlerts: async () => {},
+  setIsGhostMode: () => {},
+  syncGhostModeFromSupabase: async () => {}
 });
 
 export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
@@ -59,6 +64,47 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
     stopSurveillance 
   } = useGhostSurveillance(isGhostMode, isSuperAdmin);
 
+  // Sync ghost mode state from Supabase
+  const syncGhostModeFromSupabase = useCallback(async () => {
+    if (!session?.user?.id || !isSuperAdmin) return;
+
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('admin_sessions')
+        .select('ghost_mode')
+        .eq('admin_id', session.user.id)
+        .single();
+      
+      if (error) {
+        if (error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+          console.error("Error fetching ghost mode state:", error);
+        }
+        // No existing session found, we'll use the localStorage value
+      } else if (data) {
+        // Update state based on database value
+        setIsGhostMode(data.ghost_mode);
+        // Also update localStorage for consistency
+        localStorage.setItem(GHOST_MODE_KEY, data.ghost_mode.toString());
+        
+        if (data.ghost_mode) {
+          console.log("Ghost mode active state loaded from database");
+        }
+      }
+    } catch (error) {
+      console.error("Error syncing ghost mode from Supabase:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session, isSuperAdmin]);
+
+  // Sync with Supabase on initial load
+  useEffect(() => {
+    if (session?.user?.id && isSuperAdmin) {
+      syncGhostModeFromSupabase();
+    }
+  }, [session?.user?.id, isSuperAdmin, syncGhostModeFromSupabase]);
+
   // Persist ghost mode state to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -76,27 +122,50 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   }, [isGhostMode, isSuperAdmin, activeSurveillance, session?.user?.email]);
 
   const toggleGhostMode = async () => {
-    if (!isSuperAdmin) return;
+    if (!isSuperAdmin || !session?.user?.id) return;
     
     setIsLoading(true);
     
     try {
-      if (session?.user?.id) {
-        await supabase.from('admin_audit_logs').insert({
-          user_id: session.user.id,
-          action: isGhostMode ? 'ghost_mode_disabled' : 'ghost_mode_enabled',
-          details: {
-            timestamp: new Date().toISOString(),
-            user_email: session.user.email,
-          }
+      const newGhostModeState = !isGhostMode;
+      
+      // Update database
+      const { error } = await supabase
+        .from('admin_sessions')
+        .upsert({
+          admin_id: session.user.id,
+          ghost_mode: newGhostModeState,
+          activated_at: newGhostModeState ? new Date() : null,
+          last_active_at: new Date()
+        }, {
+          onConflict: 'admin_id' 
         });
+        
+      if (error) {
+        console.error("Error updating ghost mode in database:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update ghost mode status",
+          variant: "destructive"
+        });
+        return;
       }
+      
+      // Log action to admin_audit_logs
+      await supabase.from('admin_audit_logs').insert({
+        user_id: session.user.id,
+        action: isGhostMode ? 'ghost_mode_disabled' : 'ghost_mode_enabled',
+        details: {
+          timestamp: new Date().toISOString(),
+          user_email: session.user.email,
+        }
+      });
       
       if (isGhostMode && activeSurveillance.isWatching) {
         await stopSurveillance();
       }
       
-      setIsGhostMode(!isGhostMode);
+      setIsGhostMode(newGhostModeState);
       
       toast({
         title: isGhostMode ? "Ghost Mode Deactivated" : "Ghost Mode Activated",
@@ -124,7 +193,9 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       startSurveillance: startSurveillance as (session: LiveSession) => Promise<boolean>,
       stopSurveillance,
       liveAlerts: liveAlerts as LiveAlert[],
-      refreshAlerts
+      refreshAlerts,
+      setIsGhostMode,
+      syncGhostModeFromSupabase
     }}>
       {children}
       

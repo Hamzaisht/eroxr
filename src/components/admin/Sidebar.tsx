@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
@@ -29,6 +28,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const adminRoutes = [
   {
@@ -152,9 +154,37 @@ const ghostModeRoutes = [
 export const Sidebar = () => {
   const location = useLocation();
   const { isSuperAdmin } = useSuperAdminCheck();
-  const { isGhostMode, toggleGhostMode, canUseGhostMode } = useGhostMode();
+  const { isGhostMode, toggleGhostMode, canUseGhostMode, isLoading: isGhostModeLoading } = useGhostMode();
+  const [isToggling, setIsToggling] = useState(false);
+  const session = useSession();
+
+  const handleToggle = async () => {
+    if (!canUseGhostMode || isToggling || isGhostModeLoading) return;
+    
+    setIsToggling(true);
+    try {
+      await toggleGhostMode();
+      
+      if (session?.user?.id) {
+        await supabase
+          .from('admin_sessions')
+          .upsert({
+            admin_id: session.user.id,
+            ghost_mode: !isGhostMode,
+            activated_at: !isGhostMode ? new Date() : null,
+            last_active_at: new Date()
+          }, {
+            onConflict: 'admin_id'
+          });
+      }
+    } finally {
+      setIsToggling(false);
+    }
+  };
 
   if (!isSuperAdmin) return null;
+
+  const isLoading = isToggling || isGhostModeLoading;
 
   return (
     <div className="w-64 border-r border-luxury-primary/10 bg-gradient-to-b from-[#0D1117] to-[#161B22] h-screen overflow-y-auto">
@@ -180,14 +210,20 @@ export const Sidebar = () => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Switch 
-                      checked={isGhostMode} 
-                      onCheckedChange={toggleGhostMode}
-                      className={isGhostMode ? "bg-purple-600" : ""}
-                    />
+                    <div className="flex items-center">
+                      {isLoading && (
+                        <div className="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-dotted border-current" />
+                      )}
+                      <Switch 
+                        checked={isGhostMode} 
+                        onCheckedChange={handleToggle}
+                        disabled={isLoading}
+                        className={isGhostMode ? "bg-purple-600" : ""}
+                      />
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent side="right">
-                    <p>{isGhostMode ? "Invisible browsing active" : "Browse invisibly"}</p>
+                    <p>{isLoading ? "Updating ghost mode..." : isGhostMode ? "Invisible browsing active" : "Browse invisibly"}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

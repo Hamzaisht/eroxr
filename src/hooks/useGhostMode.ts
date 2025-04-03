@@ -15,12 +15,21 @@ export const useGhostMode = () => {
     startSurveillance,
     stopSurveillance,
     liveAlerts,
-    refreshAlerts
+    refreshAlerts,
+    setIsGhostMode,
+    syncGhostModeFromSupabase
   } = useGhostModeContext();
   const { isSuperAdmin, isLoading: isAdminCheckLoading } = useSuperAdminCheck();
   const session = useSession();
   const { toast } = useToast();
   const [hasFetchedLiveAlerts, setHasFetchedLiveAlerts] = useState(false);
+  
+  // Sync ghost mode status from Supabase on initial load
+  useEffect(() => {
+    if (session?.user?.id && isSuperAdmin && !isLoading) {
+      syncGhostModeFromSupabase();
+    }
+  }, [session?.user?.id, isSuperAdmin, isLoading, syncGhostModeFromSupabase]);
   
   // Add real-time debugging and verification
   useEffect(() => {

@@ -66,6 +66,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_sessions: {
+        Row: {
+          activated_at: string | null
+          admin_id: string
+          created_at: string | null
+          ghost_mode: boolean
+          id: string
+          last_active_at: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          admin_id: string
+          created_at?: string | null
+          ghost_mode?: boolean
+          id?: string
+          last_active_at?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          admin_id?: string
+          created_at?: string | null
+          ghost_mode?: boolean
+          id?: string
+          last_active_at?: string | null
+        }
+        Relationships: []
+      }
       blacklisted_content: {
         Row: {
           added_by: string | null
