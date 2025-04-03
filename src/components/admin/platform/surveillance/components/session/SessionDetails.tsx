@@ -53,9 +53,11 @@ export const SessionDetails = ({ session }: SessionDetailsProps) => {
           {session.content && (
             <p className="mt-1 text-xs opacity-70 truncate max-w-[300px]">{session.content}</p>
           )}
-          {session.media_url && session.media_url.length > 0 && (
+          {session.media_url && (Array.isArray(session.media_url) ? session.media_url.length > 0 : session.media_url) && (
             <div className="mt-1 text-xs italic">
-              {session.media_url.length} media attachment{session.media_url.length !== 1 ? 's' : ''}
+              {Array.isArray(session.media_url) 
+                ? `${session.media_url.length} media attachment${session.media_url.length !== 1 ? 's' : ''}`
+                : "1 media attachment"}
             </div>
           )}
         </div>

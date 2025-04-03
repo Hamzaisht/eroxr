@@ -1,3 +1,4 @@
+
 import { useGhostAlerts } from "./hooks/useGhostAlerts";
 import { LiveAlert } from "@/types/alerts";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +11,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
 
 interface AlertsListProps {
-  onViewContent: (alert: LiveAlert) => void;
+  alerts: LiveAlert[];
+  isLoading: boolean;
+  onSelect?: (alert: LiveAlert) => void;
+  error?: Error | null;
 }
 
-export const AlertsList = ({ onViewContent }: AlertsListProps) => {
+export const AlertsList = ({ alerts, isLoading, onSelect, error }: AlertsListProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<SearchFilter>({ query: "" });
-  const { alerts, isLoading, error, refreshAlerts } = useGhostAlerts(filters);
+  const { refreshAlerts } = useGhostAlerts();
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
@@ -82,13 +86,15 @@ export const AlertsList = ({ onViewContent }: AlertsListProps) => {
                     {alert.severity && (
                       <Badge variant="secondary">{alert.severity}</Badge>
                     )}
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => onViewContent(alert)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    {onSelect && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onSelect(alert)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))

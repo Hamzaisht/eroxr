@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,68 +14,50 @@ import { LiveSession } from "./types";
 import { ModerationAction } from "@/types/moderation";
 
 interface SessionListProps {
+  sessions?: LiveSession[];
+  isLoading: boolean;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
-  onShowMediaPreview: (session: LiveSession) => void;
-  onModerate: (session: LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
-  actionInProgress: string | null;
+  error: string | null;
+  onShowMediaPreview?: (session: LiveSession) => void;
+  onModerate?: (session: LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
+  actionInProgress?: string | null;
 }
 
 export const SessionList = ({ 
+  sessions = [],
+  isLoading,
   onMonitorSession,
+  error,
   onShowMediaPreview,
   onModerate,
   actionInProgress
 }: SessionListProps) => {
-  const [sessions, setSessions] = useState<LiveSession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<LiveSession | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [searchFilter, setSearchFilter] = useState<SearchFilter>({ query: '' });
-  const supabase = useSupabaseClient();
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchSessions();
-  }, [supabase, searchFilter]);
-
-  const fetchSessions = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      let query = supabase
-        .from('live_sessions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (searchFilter.query) {
-        query = query.ilike('title', `%${searchFilter.query}%`);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setSessions(data || []);
-      }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSearch = (filters: SearchFilter) => {
     setSearchFilter(filters);
   };
 
   const handleRefresh = () => {
-    fetchSessions();
     toast({
       title: "Sessions Refreshed!",
       description: "The session list has been updated.",
     });
+  };
+
+  const handleModerateAction = async (session: LiveSession, action: ModerationAction, editedContent?: string) => {
+    if (onModerate) {
+      await onModerate(session, action, editedContent);
+    }
+  };
+
+  const handleShowMedia = (session: LiveSession) => {
+    if (onShowMediaPreview) {
+      onShowMediaPreview(session);
+    }
   };
 
   return (
@@ -123,26 +106,37 @@ export const SessionList = ({
             {sessions.map((session) => (
               <TableRow key={session.id}>
                 <TableCell>
-                  <div className="font-medium">{session.title}</div>
-                  <div className="text-sm text-muted-foreground">{session.description}</div>
+                  <div className="font-medium">{session.title || 'Untitled'}</div>
+                  <div className="text-sm text-muted-foreground">{session.description || session.content?.substring(0, 50)}</div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <Tv className="h-4 w-4 text-muted-foreground" />
-                    <span>{session.creator_id}</span>
+                    <span>{session.creator_id || session.user_id}</span>
                   </div>
                 </TableCell>
                 <TableCell>
                   {new Date(session.created_at).toLocaleTimeString()}
                 </TableCell>
                 <TableCell className="text-right">
-                  <SessionActions 
-                    session={session}
-                    onMonitorSession={onMonitorSession}
-                    onShowMediaPreview={onShowMediaPreview}
-                    onModerate={onModerate}
-                    actionInProgress={actionInProgress}
-                  />
+                  {onModerate && onShowMediaPreview && (
+                    <SessionActions 
+                      session={session}
+                      onMonitorSession={onMonitorSession}
+                      onShowMediaPreview={handleShowMedia}
+                      onModerate={handleModerateAction}
+                      actionInProgress={actionInProgress || null}
+                    />
+                  )}
+                  {!onModerate && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onMonitorSession(session)}
+                    >
+                      Monitor
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

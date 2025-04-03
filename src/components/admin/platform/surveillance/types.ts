@@ -1,6 +1,36 @@
 
-import { LiveSessionType } from "@/components/admin/platform/surveillance/types";
 import { ModerationAction } from "@/types/moderation";
+
+export type LiveSessionType = 'stream' | 'call' | 'chat' | 'content' | 'bodycontact';
+
+export type ContentType = 'posts' | 'stories' | 'videos' | 'audios';
+
+export interface LiveSession {
+  id: string;
+  type: LiveSessionType;
+  user_id: string;
+  created_at: string;
+  started_at?: string;
+  content?: string;
+  media_url: string[] | string;
+  username: string;
+  sender_username?: string;
+  recipient_username?: string;
+  avatar_url?: string;
+  content_type: string;
+  message_type?: string;
+  title?: string;
+  description?: string;
+  status?: string;
+  location?: string;
+  tags?: string[];
+  viewer_count?: number;
+  participants?: number;
+  recipient_id?: string;
+  creator_id?: string;
+  is_paused?: boolean;
+  visibility?: string;
+}
 
 export interface SurveillanceContentItem {
   id: string;
@@ -33,8 +63,8 @@ export interface SurveillanceContentItem {
 }
 
 export interface SessionModerationActionProps {
-  session: SurveillanceContentItem | any;
-  onModerate: (content: SurveillanceContentItem | any, action: ModerationAction, editedContent?: string) => Promise<void>;
+  session: SurveillanceContentItem | LiveSession;
+  onModerate: (content: SurveillanceContentItem | LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
   actionInProgress: string | null;
 }
 
@@ -50,3 +80,11 @@ export interface FlaggedContent {
   notes?: string;
   flagged_at: string;
 }
+
+// Export any other types needed throughout the surveillance component tree
+export interface ContentIcon {
+  name: string;
+  icon: JSX.Element;
+}
+
+export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';

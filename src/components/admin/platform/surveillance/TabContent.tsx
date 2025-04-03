@@ -1,13 +1,18 @@
 
 import React, { ReactNode } from 'react';
-import { SearchFilterBar, SearchFilterBarProps } from './components/SearchFilterBar';
+import { SearchFilterBar } from './components/SearchFilterBar';
+import { LiveSession } from './types';
 
 export interface TabContentProps {
   isActive: boolean;
   children?: ReactNode;
+  sessions?: LiveSession[];
+  isLoading?: boolean;
+  error?: string | null;
+  activeTab?: string;
 }
 
-export const TabContent = ({ isActive, children }: TabContentProps) => {
+export const TabContent = ({ isActive, children, sessions, isLoading, error, activeTab }: TabContentProps) => {
   if (!isActive) {
     return null;
   }

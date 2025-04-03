@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSurveillance } from "./SurveillanceContext";
 import { TabContent } from "./TabContent";
 import { AlertsList } from "./AlertsList";
-import { LiveSession } from "./types";
+import { LiveSession, SurveillanceTab } from "./types";
 import { LiveAlert } from "@/types/alerts";
 import { ContentSurveillanceTabs } from "./ContentSurveillanceTabs";
 import { CreatorEarningsSurveillance } from "./CreatorEarningsSurveillance";
@@ -24,7 +24,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
   
   // Handle tab change
   const handleTabChange = (value: string) => {
-    setActiveTab(value as any);
+    setActiveTab(value as SurveillanceTab);
   };
   
   return (
@@ -53,38 +53,46 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       {/* Live Session Tabs */}
       <TabsContent value="streams">
         <TabContent 
-          sessions={liveSessions}
-          isLoading={isLoading}
-          error={error}
-          activeTab="streams"
-        />
+          isActive={activeTab === "streams"}
+        >
+          <div className="content-wrapper">
+            {/* Add your streams content here */}
+            <p>Streams content will go here</p>
+          </div>
+        </TabContent>
       </TabsContent>
       
       <TabsContent value="calls">
         <TabContent 
-          sessions={liveSessions}
-          isLoading={isLoading}
-          error={error}
-          activeTab="calls"
-        />
+          isActive={activeTab === "calls"}
+        >
+          <div className="content-wrapper">
+            {/* Add your calls content here */}
+            <p>Calls content will go here</p>
+          </div>
+        </TabContent>
       </TabsContent>
       
       <TabsContent value="chats">
         <TabContent 
-          sessions={liveSessions}
-          isLoading={isLoading}
-          error={error}
-          activeTab="chats"
-        />
+          isActive={activeTab === "chats"}
+        >
+          <div className="content-wrapper">
+            {/* Add your chats content here */}
+            <p>Chats content will go here</p>
+          </div>
+        </TabContent>
       </TabsContent>
       
       <TabsContent value="bodycontact">
         <TabContent 
-          sessions={liveSessions}
-          isLoading={isLoading}
-          error={error}
-          activeTab="bodycontact"
-        />
+          isActive={activeTab === "bodycontact"}
+        >
+          <div className="content-wrapper">
+            {/* Add your bodycontact content here */}
+            <p>Bodycontact content will go here</p>
+          </div>
+        </TabContent>
       </TabsContent>
       
       {/* Content Surveillance Tab */}

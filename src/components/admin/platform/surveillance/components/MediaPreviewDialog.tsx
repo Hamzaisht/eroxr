@@ -55,19 +55,19 @@ export const MediaPreviewDialog = ({
           controls
           autoPlay
           className="w-full rounded-md max-h-[70vh] object-contain bg-black"
-          src={session.video_url || ""}
+          src={(session as any).video_url || ""}
         />
       );
     }
 
     // Check if it's a bodycontact ad with video
-    if (session.type === "bodycontact" && session.video_url) {
+    if (session.type === "bodycontact" && (session as any).video_url) {
       return (
         <video
           controls
           autoPlay
           className="w-full rounded-md max-h-[70vh] object-contain bg-black"
-          src={session.video_url}
+          src={(session as any).video_url}
         />
       );
     }
