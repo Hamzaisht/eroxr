@@ -8,7 +8,7 @@ import { SurveillanceProvider } from "./surveillance/SurveillanceContext";
 import { AlertsList } from "./surveillance/AlertsList";
 import { Button } from "@/components/ui/button";
 import { PowerOff, RefreshCw } from "lucide-react";
-import { LiveSession, LiveAlert } from "./surveillance/types";
+import { LiveSession, LiveAlert, LiveSessionType } from "./surveillance/types";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
 export const LiveSurveillance = () => {
@@ -63,7 +63,7 @@ export const LiveSurveillance = () => {
       // Transform messages to LiveSession format
       const messageSessions: LiveSession[] = (messages || []).map(msg => ({
         id: msg.id,
-        type: "chat",
+        type: "chat" as LiveSessionType,
         user_id: msg.sender_id,
         created_at: msg.created_at,
         media_url: msg.media_url || [],
@@ -81,7 +81,7 @@ export const LiveSurveillance = () => {
       // Transform posts to LiveSession format
       const postSessions: LiveSession[] = (posts || []).map(post => ({
         id: post.id,
-        type: "content",
+        type: "content" as LiveSessionType,
         user_id: post.creator_id,
         created_at: post.created_at,
         media_url: post.media_url || [],
@@ -114,6 +114,42 @@ export const LiveSurveillance = () => {
     }
   }, [isGhostMode, refreshAlerts, fetchActiveSessions]);
   
+  // Set up realtime subscriptions
+  useEffect(() => {
+    if (!isGhostMode) return;
+    
+    console.log("Setting up realtime subscriptions for surveillance data");
+    
+    const messagesChannel = supabase
+      .channel('surveillance-messages')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'direct_messages',
+      }, () => {
+        console.log('Message activity detected, refreshing data');
+        fetchActiveSessions();
+      })
+      .subscribe();
+      
+    const postsChannel = supabase
+      .channel('surveillance-posts')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'posts',
+      }, () => {
+        console.log('Post activity detected, refreshing data');
+        fetchActiveSessions();
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(postsChannel);
+    };
+  }, [isGhostMode, supabase, fetchActiveSessions]);
+  
   const handleRefresh = async () => {
     setLoadingRefresh(true);
     await Promise.all([refreshAlerts(), fetchActiveSessions()]);
@@ -122,37 +158,8 @@ export const LiveSurveillance = () => {
   
   const handleStartWatching = async (session: LiveSession) => {
     try {
-      // Type safety: Create a properly typed session object 
-      const validSession: LiveSession = {
-        id: session.id,
-        type: session.type as "stream" | "call" | "chat" | "bodycontact" | "content",
-        user_id: session.user_id || "",  // Ensure required field has a value
-        created_at: session.created_at,
-        media_url: session.media_url || [],
-        username: session.username,
-        avatar_url: session.avatar_url,
-        content: session.content,
-        content_type: session.content_type,
-        status: session.status,
-        message_type: session.message_type,
-        recipient_id: session.recipient_id,
-        recipient_username: session.recipient_username,
-        sender_username: session.sender_username,
-        title: session.title,
-        description: session.description,
-        location: session.location,
-        tags: session.tags,
-        viewer_count: session.viewer_count,
-        duration: session.duration,
-        started_at: session.started_at || session.created_at,  // Fallback to created_at
-        creator_id: session.creator_id,
-        creator_username: session.creator_username,
-        about_me: session.about_me,
-        video_url: session.video_url,
-      };
-      
-      await startSurveillance(validSession);
-      return true;
+      console.log("Starting surveillance for session:", session);
+      return await startSurveillance(session);
     } catch (error) {
       console.error("Error starting surveillance:", error);
       return false;
@@ -161,8 +168,7 @@ export const LiveSurveillance = () => {
   
   const handleStopWatching = async () => {
     try {
-      await stopSurveillance();
-      return true;
+      return await stopSurveillance();
     } catch (error) {
       console.error("Error stopping surveillance:", error);
       return false;
