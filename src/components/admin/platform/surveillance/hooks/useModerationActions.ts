@@ -1,21 +1,21 @@
-
 import { useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { LiveSession, SurveillanceContentItem, ModerationAction } from "../types";
 import { supabase } from "@/integrations/supabase/client";
+import { ModerationAction } from "@/types/moderation";
+import { LiveSession, SurveillanceContentItem } from "../types";
 
 export function useModerationActions() {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const { toast } = useToast();
-  const session = useSession();
+  const session = useSupabaseClient().auth.user;
   
   const handleModeration = async (
     content: LiveSession | SurveillanceContentItem, 
     action: ModerationAction,
     editedContent?: string
   ) => {
-    if (!session?.user?.id) {
+    if (!session?.id) {
       toast({
         title: "Authentication Required",
         description: "You must be logged in to perform this action",
@@ -70,7 +70,7 @@ export function useModerationActions() {
           await supabase.from('flagged_content').insert({
             content_id: contentId,
             content_type: contentType,
-            flagged_by: session.user.id,
+            flagged_by: session.id,
             reason: 'Admin ban action',
             status: 'banned',
             severity: 'high'
@@ -93,7 +93,7 @@ export function useModerationActions() {
           await supabase.from('flagged_content').insert({
             content_id: contentId,
             content_type: contentType,
-            flagged_by: session.user.id,
+            flagged_by: session.id,
             reason: 'Admin flag action',
             status: 'flagged',
             severity: 'medium'
@@ -113,7 +113,7 @@ export function useModerationActions() {
           await supabase.from('flagged_content').insert({
             content_id: contentId,
             content_type: contentType,
-            flagged_by: session.user.id,
+            flagged_by: session.id,
             reason: 'Admin shadowban action',
             status: 'shadowbanned',
             severity: 'medium'
@@ -158,7 +158,7 @@ export function useModerationActions() {
       
       // Log the admin action
       await supabase.from('admin_logs').insert({
-        admin_id: session.user.id,
+        admin_id: session.id,
         target_id: contentId,
         action: action,
         action_type: 'moderation',

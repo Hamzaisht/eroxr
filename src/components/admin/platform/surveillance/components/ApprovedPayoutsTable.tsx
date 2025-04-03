@@ -1,6 +1,6 @@
 
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { PayoutRequest } from "../types";
+import { PayoutRequest } from "@/types/finance";
 import { formatCurrency, formatPayoutDate, getPayoutStatusBadge } from "../hooks/utils/payoutFormatters";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,15 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 
-interface ApprovedPayoutsTableProps {
+export interface ApprovedPayoutsTableProps {
   payouts: PayoutRequest[];
   isLoading: boolean;
-  onProcessPayout: (payoutIds: string[]) => Promise<void>;
+  error?: Error | null;
+  onProcessPayout?: (payoutIds: string[]) => Promise<void>;
 }
 
 export const ApprovedPayoutsTable = ({ 
   payouts, 
   isLoading,
+  error,
   onProcessPayout
 }: ApprovedPayoutsTableProps) => {
   const [selectedPayouts, setSelectedPayouts] = useState<string[]>([]);

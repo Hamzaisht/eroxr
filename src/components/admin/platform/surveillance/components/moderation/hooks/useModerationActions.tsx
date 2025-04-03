@@ -1,53 +1,40 @@
-
 import { useState } from "react";
-import { LiveSession, ModerationAction, SurveillanceContentItem } from "../../../types";
+import { useToast } from "@/hooks/use-toast";
+import { ModerationAction } from "@/types/moderation";
 
 interface UseModerationActionsProps {
-  session: LiveSession | SurveillanceContentItem;
-  onModerate: (session: LiveSession | SurveillanceContentItem, action: ModerationAction, editedContent?: string) => void;
+  onActionComplete?: (action: ModerationAction) => void;
+  onError?: (error: string) => void;
 }
 
-export function useModerationActions({ session, onModerate }: UseModerationActionsProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentAction, setCurrentAction] = useState<ModerationAction | null>(null);
-  const [editedContent, setEditedContent] = useState("");
-  
-  const handleAction = (action: ModerationAction) => {
-    if (action === "edit") {
-      setEditedContent((session as any).content || "");
-      setCurrentAction(action);
-      setIsDialogOpen(true);
-    } else if (action === "ban" || action === "force_delete") {
-      setCurrentAction(action);
-      setIsDialogOpen(true);
-    } else {
-      onModerate(session, action);
+export const useModerationActions = ({ onActionComplete, onError }: UseModerationActionsProps = {}) => {
+  const [actionInProgress, setActionInProgress] = useState<ModerationAction | null>(null);
+  const { toast } = useToast();
+
+  const executeAction = async (
+    action: ModerationAction,
+    actionFn: () => Promise<void>
+  ) => {
+    setActionInProgress(action);
+    try {
+      await actionFn();
+      toast({
+        title: `Content ${action}d`,
+        description: `Content has been successfully ${action}d.`,
+      });
+      onActionComplete?.(action);
+    } catch (error: any) {
+      console.error(`Failed to ${action} content:`, error);
+      toast({
+        title: "Failed to moderate content",
+        description: error.message || `Failed to ${action} content. Please try again.`,
+        variant: "destructive",
+      });
+      onError?.(error.message || `Failed to ${action} content.`);
+    } finally {
+      setActionInProgress(null);
     }
-  };
-  
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setCurrentAction(null);
-  };
-  
-  const handleDialogAction = () => {
-    if (currentAction === "edit") {
-      onModerate(session, currentAction, editedContent);
-    } else if (currentAction) {
-      onModerate(session, currentAction);
-    }
-    setIsDialogOpen(false);
-    setCurrentAction(null);
   };
 
-  return {
-    isDialogOpen,
-    setIsDialogOpen,
-    currentAction,
-    editedContent,
-    setEditedContent,
-    handleAction,
-    handleDialogClose,
-    handleDialogAction
-  };
-}
+  return { actionInProgress, executeAction, setActionInProgress };
+};

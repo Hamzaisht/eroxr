@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
-import { CreatorEarnings, PayoutRequest } from '../types';
+import { CreatorEarnings, PayoutRequest } from '@/types/finance';
 
 export function useCreatorEarnings() {
   const [earnings, setEarnings] = useState<CreatorEarnings[]>([]);

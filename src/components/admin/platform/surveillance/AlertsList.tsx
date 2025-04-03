@@ -1,195 +1,101 @@
-import { useState, useEffect } from "react";
+import { useGhostAlerts } from "./hooks/useGhostAlerts";
 import { LiveAlert } from "@/types/alerts";
-import { AlertCircle, Search, Filter, Ban, Flag, Eye } from "lucide-react";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Eye, Flag, AlertTriangle, Info } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
-import { supabase } from "@/integrations/supabase/client";
 
 interface AlertsListProps {
-  alerts: LiveAlert[];
-  isLoading: boolean;
-  onSelect?: (alert: LiveAlert) => void;
+  onViewContent: (alert: LiveAlert) => void;
 }
 
-export const AlertsList = ({ alerts, isLoading, onSelect }: AlertsListProps) => {
-  const [filteredAlerts, setFilteredAlerts] = useState<LiveAlert[]>(alerts);
-  
-  useEffect(() => {
-    setFilteredAlerts(alerts);
-  }, [alerts]);
-  
-  useEffect(() => {
-    const channel = supabase
-      .channel('admin_alerts_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'admin_alerts'
-      }, () => {
-        console.log('Alert data changed, waiting for parent refresh');
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-  
-  const handleSearch = (filters: SearchFilter) => {
-    const filtered = alerts.filter(alert => {
-      if (filters.username && !alert.username.toLowerCase().includes(filters.username.toLowerCase())) {
-        return false;
-      }
-      
-      if (filters.userId && alert.user_id !== filters.userId) {
-        return false;
-      }
-      
-      if (filters.type && filters.type !== 'all' && alert.alert_type !== filters.type) {
-        return false;
-      }
-      
-      if (filters.status && filters.status !== 'all' && alert.status !== filters.status) {
-        return false;
-      }
-      
-      return true;
-    });
-    
-    setFilteredAlerts(filtered);
+export const AlertsList = ({ onViewContent }: AlertsListProps) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<SearchFilter>({ query: "" });
+  const { alerts, isLoading, error, refreshAlerts } = useGhostAlerts(filters);
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setFilters(prev => ({ ...prev, query: query }));
   };
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <div className="h-8 w-8 animate-spin text-purple-400 border-2 border-current border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-  
-  if (alerts.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-400 bg-[#161B22] rounded-lg">
-        <div className="flex justify-center mb-4">
-          <AlertCircle className="h-12 w-12 opacity-50" />
-        </div>
-        <p className="text-lg font-medium">No alerts detected</p>
-        <p className="mt-2 text-sm text-gray-500">
-          Platform alerts will appear here when triggered
-        </p>
-      </div>
-    );
-  }
-  
+
+  const handleSearch = (searchFilters: SearchFilter) => {
+    setFilters(searchFilters);
+  };
+
+  const AlertIcon = ({ type }: { type: string }) => {
+    switch (type) {
+      case "flag":
+        return <Flag className="h-4 w-4 mr-2 text-red-500" />;
+      case "alert":
+        return <AlertTriangle className="h-4 w-4 mr-2 text-yellow-500" />;
+      default:
+        return <Info className="h-4 w-4 mr-2 text-blue-500" />;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">System Alerts</h2>
-        <Badge variant="destructive" className="font-normal">
-          {alerts.length} Alert{alerts.length !== 1 ? 's' : ''}
-        </Badge>
+        <h2 className="text-xl font-semibold text-white">Live Alerts</h2>
+        <SearchFilterBar
+          onSearchChange={handleSearchChange}
+          onSearch={handleSearch}
+          onRefresh={refreshAlerts}
+          placeholder="Search alerts..."
+        />
       </div>
       
-      <SearchFilterBar
-        onSearch={handleSearch}
-        placeholder="Search alerts by username or ID..."
-        availableTypes={[
-          { value: 'all', label: 'All Types' },
-          { value: 'content', label: 'Content' },
-          { value: 'user', label: 'User' },
-          { value: 'system', label: 'System' },
-          { value: 'security', label: 'Security' }
-        ]}
-        availableStatuses={[
-          { value: 'all', label: 'All Status' },
-          { value: 'new', label: 'New' },
-          { value: 'acknowledged', label: 'Acknowledged' },
-          { value: 'resolved', label: 'Resolved' }
-        ]}
-      />
-      
-      <div className="space-y-4">
-        {filteredAlerts.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 bg-[#161B22] rounded-lg">
-            <p className="text-sm">No alerts match your search criteria</p>
-          </div>
-        ) : (
-          filteredAlerts.map((alert) => (
-            <Alert 
-              key={alert.id} 
-              className={
-                alert.severity === 'high' 
-                  ? 'bg-red-900/20 border-red-800 text-red-300'
-                  : alert.severity === 'medium'
-                  ? 'bg-yellow-900/20 border-yellow-800 text-yellow-300'
-                  : 'bg-blue-900/20 border-blue-800 text-blue-300'
-              }
-              onClick={() => onSelect && onSelect(alert)}
-              style={{ cursor: onSelect ? 'pointer' : 'default' }}
-            >
-              <div className="flex flex-col md:flex-row justify-between w-full gap-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 mt-0.5" />
-                  <div>
-                    <div className="font-medium mb-1">{alert.title}</div>
-                    <div className="text-sm opacity-90 mb-2">{alert.message || alert.description}</div>
-                    
-                    <div className="flex flex-wrap gap-3 items-center text-xs opacity-75">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={alert.avatar_url || undefined} alt={alert.username} />
-                          <AvatarFallback>{alert.username?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
-                        </Avatar>
-                        <span>{alert.username}</span>
-                      </div>
-                      
-                      <Badge variant="outline" className="font-normal text-xs">
-                        {alert.alert_type || alert.type}
-                      </Badge>
-                      
-                      <span>{format(new Date(alert.created_at || alert.timestamp), 'MMM d, yyyy HH:mm')}</span>
+      <Card className="bg-black/20 border-white/10">
+        <ScrollArea className="h-[400px] rounded-md">
+          <div className="p-4 space-y-4">
+            {isLoading ? (
+              <>
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </>
+            ) : error ? (
+              <div className="text-red-500">Error: {error.message}</div>
+            ) : alerts.length === 0 ? (
+              <div className="text-muted-foreground">No alerts found.</div>
+            ) : (
+              alerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex items-center justify-between p-3 rounded-md hover:bg-secondary/50"
+                >
+                  <div className="flex items-center">
+                    <AlertIcon type={alert.type} />
+                    <div>
+                      <h3 className="text-sm font-medium">{alert.message}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Content ID: {alert.content_id}
+                      </p>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    {alert.severity && (
+                      <Badge variant="secondary">{alert.severity}</Badge>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => onViewContent(alert)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                
-                <div className="flex gap-2 self-end md:self-start">
-                  <Button size="sm" variant="ghost" className="h-8">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View
-                  </Button>
-                  
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className={
-                      alert.severity === 'high' 
-                        ? 'text-red-400 hover:text-red-300 hover:bg-red-900/30' 
-                        : 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30'
-                    }
-                  >
-                    <Flag className="h-4 w-4 mr-2" />
-                    Flag
-                  </Button>
-                  
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
-                  >
-                    <Ban className="h-4 w-4 mr-2" />
-                    Block
-                  </Button>
-                </div>
-              </div>
-            </Alert>
-          ))
-        )}
-      </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </Card>
     </div>
   );
 };

@@ -1,5 +1,5 @@
-
-import { LiveSession, ModerationAction } from "../types";
+import { LiveSession } from "../types";
+import { ModerationAction } from "@/types/moderation";
 import { SessionAvatar } from "./session/SessionAvatar";
 import { SessionDetails } from "./session/SessionDetails";
 import { SessionActions } from "./session/SessionActions";
@@ -8,13 +8,13 @@ interface SessionItemProps {
   session: LiveSession;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
   onShowMediaPreview: (session: LiveSession) => void;
-  onModerate: (session: LiveSession, action: ModerationAction, editedContent?: string) => void;
+  onModerate: (session: LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
   actionInProgress: string | null;
 }
 
-export const SessionItem = ({ 
-  session, 
-  onMonitorSession, 
+export const SessionItem = ({
+  session,
+  onMonitorSession,
   onShowMediaPreview,
   onModerate,
   actionInProgress

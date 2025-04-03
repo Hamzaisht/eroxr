@@ -7,7 +7,7 @@ import { ApprovedPayoutsTable } from "./components/ApprovedPayoutsTable";
 import { ProcessedPayoutsTable } from "./components/ProcessedPayoutsTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SearchFilterBar } from "./components/SearchFilterBar";
-import { CreatorEarnings, PayoutRequest } from "./types";
+import { CreatorEarnings, PayoutRequest } from "@/types/finance";
 import { useCreatorEarnings } from "./hooks/useCreatorEarnings";
 
 export const CreatorEarningsSurveillance = () => {
@@ -82,7 +82,7 @@ export const CreatorEarningsSurveillance = () => {
               payouts={filteredPendingPayouts} 
               isLoading={isLoading} 
               error={error} 
-              onProcessPayouts={processPayouts}
+              onProcessPayout={processPayouts}
             />
           </TabsContent>
           

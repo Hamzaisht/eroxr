@@ -1,110 +1,167 @@
-
-import { useState } from "react";
-import { AlertCircle, MessageCircle, UserIcon } from "lucide-react";
-import { LiveSession, ModerationAction } from "./types";
-import { SessionItem } from "./components/SessionItem";
-import { MediaPreviewDialog } from "./components/MediaPreviewDialog";
-import { useModerationActions } from "./hooks/useModerationActions";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState, useEffect } from "react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Eye, Tv, UserCog, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
+import { SessionActions } from "./components/session/SessionActions";
+import { LiveSession } from "./types";
+import { ModerationAction } from "@/types/moderation";
 
 interface SessionListProps {
-  sessions: LiveSession[];
-  isLoading: boolean;
-  error?: string | null;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
-  activeTab?: string;
+  onShowMediaPreview: (session: LiveSession) => void;
+  onModerate: (session: LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
+  actionInProgress: string | null;
 }
 
 export const SessionList = ({ 
-  sessions, 
-  isLoading, 
-  error, 
   onMonitorSession,
-  activeTab = 'streams'
-}: SessionListProps) => {  
-  const [showMediaPreview, setShowMediaPreview] = useState<LiveSession | null>(null);
-  const { actionInProgress, handleModeration } = useModerationActions();
+  onShowMediaPreview,
+  onModerate,
+  actionInProgress
+}: SessionListProps) => {
+  const [sessions, setSessions] = useState<LiveSession[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<LiveSession | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [searchFilter, setSearchFilter] = useState<SearchFilter>({ query: '' });
+  const supabase = useSupabaseClient();
+  const { toast } = useToast();
 
-  const processedSessions = sessions.map(session => ({
-    ...session,
-    media_url: Array.isArray(session.media_url) ? session.media_url : 
-               session.media_url ? [session.media_url] : []
-  }));
+  useEffect(() => {
+    fetchSessions();
+  }, [supabase, searchFilter]);
 
-  const handleShowMediaPreview = (session: LiveSession) => {
-    const sessionForPreview = {
-      ...session,
-      media_url: Array.isArray(session.media_url) ? session.media_url : 
-                 session.media_url ? [session.media_url] : []
-    };
-    setShowMediaPreview(sessionForPreview);
+  const fetchSessions = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      let query = supabase
+        .from('live_sessions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (searchFilter.query) {
+        query = query.ilike('title', `%${searchFilter.query}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setSessions(data || []);
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleModerateContent = (session: LiveSession, action: ModerationAction, editedContent?: string) => {
-    handleModeration(session, action, editedContent);
+  const handleSearch = (filters: SearchFilter) => {
+    setSearchFilter(filters);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <div className="h-8 w-8 animate-spin text-purple-400 border-2 border-current border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <Alert className="bg-red-900/20 border-red-800 text-red-300">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
-  
-  if (processedSessions.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-400 bg-[#161B22] rounded-lg">
-        <div className="flex justify-center mb-4">
-          {activeTab === 'bodycontact' ? (
-            <UserIcon className="h-12 w-12 opacity-50" />
-          ) : activeTab === 'chats' ? (
-            <MessageCircle className="h-12 w-12 opacity-50" />
-          ) : (
-            <MessageCircle className="h-12 w-12 opacity-50" />
-          )}
-        </div>
-        <p className="text-lg font-medium">
-          {activeTab === 'bodycontact'
-            ? "No active BodyContact ads at the moment"
-            : activeTab === 'chats'
-            ? "No active chats at the moment"
-            : "No active sessions at the moment"}
-        </p>
-        <p className="mt-2 text-sm text-gray-500">
-          Users' activities will appear here when they become active
-        </p>
-      </div>
-    );
-  }
-  
+  const handleRefresh = () => {
+    fetchSessions();
+    toast({
+      title: "Sessions Refreshed!",
+      description: "The session list has been updated.",
+    });
+  };
+
   return (
     <div className="space-y-4">
-      {processedSessions.map((sessionItem) => (
-        <SessionItem
-          key={sessionItem.id}
-          session={sessionItem}
-          onMonitorSession={onMonitorSession}
-          onShowMediaPreview={handleShowMediaPreview}
-          onModerate={handleModerateContent}
-          actionInProgress={actionInProgress}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Live Sessions</h2>
+        <SearchFilterBar 
+          onSearch={handleSearch} 
+          onRefresh={handleRefresh}
+          placeholder="Search sessions..."
         />
-      ))}
+      </div>
+      
+      <ScrollArea className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Creator</TableHead>
+              <TableHead>Started At</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-4 italic text-muted-foreground">
+                  Loading sessions...
+                </TableCell>
+              </TableRow>
+            )}
+            {error && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-4 text-red-500">
+                  Error: {error}
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoading && sessions.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-4">
+                  No live sessions found.
+                </TableCell>
+              </TableRow>
+            )}
+            {sessions.map((session) => (
+              <TableRow key={session.id}>
+                <TableCell>
+                  <div className="font-medium">{session.title}</div>
+                  <div className="text-sm text-muted-foreground">{session.description}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <Tv className="h-4 w-4 text-muted-foreground" />
+                    <span>{session.creator_id}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {new Date(session.created_at).toLocaleTimeString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  <SessionActions 
+                    session={session}
+                    onMonitorSession={onMonitorSession}
+                    onShowMediaPreview={onShowMediaPreview}
+                    onModerate={onModerate}
+                    actionInProgress={actionInProgress}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ScrollArea>
 
-      <MediaPreviewDialog 
-        session={showMediaPreview}
-        open={!!showMediaPreview}
-        onOpenChange={(open) => !open && setShowMediaPreview(null)}
-      />
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Session Details</DialogTitle>
+            <DialogDescription>
+              {selectedSession?.title} - {selectedSession?.description}
+            </DialogDescription>
+          </DialogHeader>
+          {/* Add session details here */}
+          <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

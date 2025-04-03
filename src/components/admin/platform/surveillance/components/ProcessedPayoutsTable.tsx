@@ -1,19 +1,21 @@
 
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { PayoutRequest } from "../types";
+import { PayoutRequest } from "@/types/finance";
 import { formatCurrency, formatPayoutDate, getPayoutStatusBadge } from "../hooks/utils/payoutFormatters";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
-interface ProcessedPayoutsTableProps {
+export interface ProcessedPayoutsTableProps {
   payouts: PayoutRequest[];
   isLoading: boolean;
+  error?: Error | null;
 }
 
 export const ProcessedPayoutsTable = ({ 
   payouts, 
-  isLoading
+  isLoading,
+  error
 }: ProcessedPayoutsTableProps) => {
   if (isLoading) {
     return (

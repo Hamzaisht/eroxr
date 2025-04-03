@@ -1,5 +1,4 @@
-
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Flag, Ban, EyeOff, Trash2, Edit, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,

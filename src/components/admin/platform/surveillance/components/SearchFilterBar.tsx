@@ -1,57 +1,44 @@
 
-import { useState } from "react";
-import { Search, Filter, Calendar, X, RefreshCw } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Search, Filter, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
+import { Input } from "@/components/ui/input";
+import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
-export interface SearchFilterBarProps {
-  onSearchChange?: (value: string) => void;
-  onFilterChange?: (filters: any) => void;
-  onRefresh?: () => void;
-  showRefresh?: boolean;
-  placeholder?: string;
-}
-
-interface Filter {
+export interface SearchFilter {
+  query: string;
   type?: string;
   status?: string;
-  dateRange?: {
-    from?: Date;
-    to?: Date;
-  };
 }
 
-export function SearchFilterBar({
-  onSearchChange,
-  onFilterChange,
-  onRefresh,
-  showRefresh = true,
-  placeholder = "Search by name, ID or content..."
-}: SearchFilterBarProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<Filter>({});
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({ from: undefined, to: undefined });
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+export interface SearchFilterBarProps {
+  onSearchChange?: (searchQuery: string) => void;
+  onRefresh?: () => void;
+  onSearch?: (filters: SearchFilter) => void;
+  placeholder?: string;
+  availableTypes?: Array<{value: string, label: string}>;
+  availableStatuses?: Array<{value: string, label: string}>;
+}
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+export const SearchFilterBar = ({ 
+  onSearchChange, 
+  onRefresh,
+  onSearch,
+  placeholder = "Search...",
+  availableTypes = [],
+  availableStatuses = []
+}: SearchFilterBarProps) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
     if (onSearchChange) {
@@ -59,197 +46,82 @@ export function SearchFilterBar({
     }
   };
 
-  const handleFilterChange = (key: string, value: string | null) => {
-    if (!value || value === "all") {
-      const newFilters = { ...filters };
-      delete newFilters[key as keyof Filter];
-      setFilters(newFilters);
-      if (onFilterChange) {
-        onFilterChange(newFilters);
-      }
-    } else {
-      const newFilters = { ...filters, [key]: value };
-      setFilters(newFilters);
-      if (onFilterChange) {
-        onFilterChange(newFilters);
-      }
+  const handleSearch = () => {
+    if (onSearch) {
+      onSearch({
+        query: searchQuery,
+        type: filterType || undefined,
+        status: filterStatus || undefined
+      });
     }
   };
-
-  const handleDateChange = (range: { from?: Date; to?: Date }) => {
-    setDateRange(range as { from: Date | undefined; to: Date | undefined });
-    setFilters({ ...filters, dateRange: range });
-    if (onFilterChange) {
-      onFilterChange({ ...filters, dateRange: range });
-    }
-  };
-
-  const handleClearFilters = () => {
-    setFilters({});
-    setDateRange({ from: undefined, to: undefined });
-    if (onFilterChange) {
-      onFilterChange({});
-    }
-  };
-
-  const hasActiveFilters = Object.keys(filters).length > 0;
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder={placeholder}
-            className="pl-8"
-            value={searchQuery}
-            onChange={handleSearch}
-          />
-        </div>
-
-        <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className={hasActiveFilters ? "text-primary" : ""}
-            >
-              <Filter className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80">
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <h4 className="font-medium leading-none">Filters</h4>
-                <p className="text-sm text-muted-foreground">
-                  Filter surveillance content by type and status
-                </p>
-              </div>
-              <div className="grid gap-2">
-                <div className="grid gap-1">
-                  <Label htmlFor="type">Content Type</Label>
-                  <Select
-                    value={filters.type || "all"}
-                    onValueChange={(value) => handleFilterChange("type", value)}
-                  >
-                    <SelectTrigger id="type">
-                      <SelectValue placeholder="All Types" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="post">Posts</SelectItem>
-                      <SelectItem value="stream">Streams</SelectItem>
-                      <SelectItem value="chat">Chats</SelectItem>
-                      <SelectItem value="story">Stories</SelectItem>
-                      <SelectItem value="dating">Dating</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-1">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={filters.status || "all"}
-                    onValueChange={(value) =>
-                      handleFilterChange("status", value)
-                    }
-                  >
-                    <SelectTrigger id="status">
-                      <SelectValue placeholder="All Statuses" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="flagged">Flagged</SelectItem>
-                      <SelectItem value="deleted">Deleted</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-1">
-                  <Label>Date Range</Label>
-                  <div className="grid gap-2">
-                    <CalendarComponent
-                      mode="range"
-                      selected={{
-                        from: dateRange.from,
-                        to: dateRange.to
-                      }}
-                      onSelect={(range) => {
-                        if (range) {
-                          handleDateChange(range);
-                        }
-                      }}
-                      className="border rounded-md p-3"
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={handleClearFilters}
-                >
-                  Clear All Filters
-                </Button>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        {showRefresh && onRefresh && (
-          <Button variant="outline" size="icon" onClick={onRefresh}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        )}
+    <div className="flex flex-wrap gap-2">
+      <div className="relative flex-1 min-w-[200px]">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder={placeholder}
+          className="pl-9 bg-background/50"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+        />
       </div>
-
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
-          {filters.type && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              Type: {filters.type}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => handleFilterChange("type", null)}
-              />
-            </Badge>
-          )}
-          {filters.status && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              Status: {filters.status}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => handleFilterChange("status", null)}
-              />
-            </Badge>
-          )}
-          {filters.dateRange?.from && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              Date: {filters.dateRange.from.toLocaleDateString()} 
-              {filters.dateRange.to && ` - ${filters.dateRange.to.toLocaleDateString()}`}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => {
-                  setDateRange({ from: undefined, to: undefined });
-                  handleFilterChange("dateRange", null);
-                }}
-              />
-            </Badge>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            onClick={handleClearFilters}
-          >
-            Clear All
-          </Button>
-        </div>
+      
+      {availableTypes.length > 0 && (
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="w-[160px] bg-background/50">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Types</SelectItem>
+            {availableTypes.map((type) => (
+              <SelectItem key={type.value} value={type.value}>
+                {type.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      
+      {availableStatuses.length > 0 && (
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[160px] bg-background/50">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Statuses</SelectItem>
+            {availableStatuses.map((status) => (
+              <SelectItem key={status.value} value={status.value}>
+                {status.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      
+      {onSearch && (availableTypes.length > 0 || availableStatuses.length > 0) && (
+        <Button 
+          variant="secondary" 
+          size="icon"
+          onClick={handleSearch}
+        >
+          <Filter className="h-4 w-4" />
+        </Button>
+      )}
+      
+      {onRefresh && (
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={onRefresh}
+          className="bg-white/5"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
       )}
     </div>
   );
-}
+};

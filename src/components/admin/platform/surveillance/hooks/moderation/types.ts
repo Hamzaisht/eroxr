@@ -1,5 +1,5 @@
-
-import { LiveSession, SurveillanceContentItem, ModerationAction } from "../../types";
+import { SurveillanceContentItem } from "@/types/surveillance";
+import { ModerationAction } from "@/types/moderation";
 
 export interface ModerationActionResult {
   success: boolean;

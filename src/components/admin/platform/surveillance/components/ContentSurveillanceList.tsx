@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ModerationAction } from "@/types/moderation";
 import { AlertCircle, Clock, ExternalLink, MoreHorizontal, User, MessageSquare, Eye, Ban, Flag } from "lucide-react";
 import { SurveillanceContentItem, ModerationAction } from "../types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

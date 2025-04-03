@@ -1,17 +1,17 @@
-
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { CreatorEarnings } from "../types";
+import { CreatorEarnings } from "@/types/finance";
 import { formatCurrency, formatPayoutDate } from "../hooks/utils/payoutFormatters";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
-interface EarningsTableProps {
+export interface EarningsTableProps {
   earnings: CreatorEarnings[];
   isLoading: boolean;
+  error?: Error | null;
 }
 
-export const EarningsTable = ({ earnings, isLoading }: EarningsTableProps) => {
+export const EarningsTable = ({ earnings, isLoading, error }: EarningsTableProps) => {
   if (isLoading) {
     return (
       <div className="space-y-3">
