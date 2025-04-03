@@ -74,71 +74,95 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
       ]);
 
       // Process and combine alerts
-      const flaggedAlerts: LiveAlert[] = (flaggedContentRes.data || []).map(item => ({
-        id: item.id,
-        type: "violation", // Changed from "flagged_content" to match LiveAlert type
-        content_type: item.content_type,
-        content_id: item.content_id,
-        reason: item.reason,
-        severity: item.severity as "high" | "medium" | "low",
-        timestamp: item.flagged_at,
-        created_at: item.flagged_at,
-        status: item.status,
-        user_id: item.user_id,
-        username: item.profiles && Array.isArray(item.profiles) && item.profiles.length > 0 
-          ? item.profiles[0].username || 'Unknown User' 
-          : 'Unknown User',
-        avatar_url: item.profiles && Array.isArray(item.profiles) && item.profiles.length > 0 
-          ? item.profiles[0].avatar_url || '' 
-          : '',
-        title: `Flagged ${item.content_type}`,
-        description: item.reason || '',
-        is_viewed: false
-      }));
+      const flaggedAlerts: LiveAlert[] = (flaggedContentRes.data || []).map(item => {
+        // Extract username and avatar_url from profiles or use fallbacks
+        const username = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
+          ? (item.profiles as any).username || 'Unknown User'
+          : 'Unknown User';
+        
+        const avatarUrl = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
+          ? (item.profiles as any).avatar_url || ''
+          : '';
 
-      const reportAlerts: LiveAlert[] = (reportsRes.data || []).map(item => ({
-        id: item.id,
-        type: "risk", // Changed from "report" to match LiveAlert type
-        content_type: item.content_type,
-        content_id: item.content_id || '', // Ensure content_id is provided
-        reason: item.reason,
-        severity: item.is_emergency ? 'high' : 'medium',
-        timestamp: item.created_at,
-        created_at: item.created_at,
-        status: item.status,
-        user_id: item.reporter_id,
-        username: item.profiles && Array.isArray(item.profiles) && item.profiles.length > 0 
-          ? item.profiles[0].username || 'Unknown User' 
-          : 'Unknown User',
-        avatar_url: item.profiles && Array.isArray(item.profiles) && item.profiles.length > 0 
-          ? item.profiles[0].avatar_url || '' 
-          : '',
-        title: `${item.is_emergency ? 'URGENT: ' : ''}Report on ${item.content_type}`,
-        description: item.description || item.reason || '',
-        is_viewed: false
-      }));
+        return {
+          id: item.id,
+          type: "violation", // Changed from "flagged_content" to match LiveAlert type
+          content_type: item.content_type,
+          content_id: item.content_id,
+          reason: item.reason,
+          severity: item.severity as "high" | "medium" | "low",
+          timestamp: item.flagged_at,
+          created_at: item.flagged_at,
+          status: item.status,
+          user_id: item.user_id,
+          username: username,
+          avatar_url: avatarUrl,
+          title: `Flagged ${item.content_type}`,
+          description: item.reason || '',
+          is_viewed: false,
+          message: item.reason || ''
+        };
+      });
 
-      const dmcaAlerts: LiveAlert[] = (dmcaRes.data || []).map(item => ({
-        id: item.id,
-        type: "information", // Changed from "dmca" to match LiveAlert type
-        content_type: item.content_type,
-        content_id: item.content_id,
-        reason: 'Copyright Violation',
-        severity: 'high',
-        timestamp: item.created_at,
-        created_at: item.created_at,
-        status: item.status,
-        user_id: item.reporter_id,
-        username: item.profiles && Array.isArray(item.profiles) && item.profiles.length > 0 
-          ? item.profiles[0].username || 'Unknown User' 
-          : 'Unknown User',
-        avatar_url: item.profiles && Array.isArray(item.profiles) && item.profiles.length > 0 
-          ? item.profiles[0].avatar_url || '' 
-          : '',
-        title: `DMCA Takedown Request`,
-        description: `Copyright claim on ${item.content_type}`,
-        is_viewed: false
-      }));
+      const reportAlerts: LiveAlert[] = (reportsRes.data || []).map(item => {
+        // Extract username and avatar_url from profiles or use fallbacks
+        const username = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
+          ? (item.profiles as any).username || 'Unknown User'
+          : 'Unknown User';
+        
+        const avatarUrl = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
+          ? (item.profiles as any).avatar_url || ''
+          : '';
+
+        return {
+          id: item.id,
+          type: "risk", // Changed from "report" to match LiveAlert type
+          content_type: item.content_type,
+          content_id: item.content_id || '', // Ensure content_id is provided
+          reason: item.reason,
+          severity: item.is_emergency ? 'high' : 'medium',
+          timestamp: item.created_at,
+          created_at: item.created_at,
+          status: item.status,
+          user_id: item.reporter_id,
+          username: username,
+          avatar_url: avatarUrl,
+          title: `${item.is_emergency ? 'URGENT: ' : ''}Report on ${item.content_type}`,
+          description: item.description || item.reason || '',
+          is_viewed: false,
+          message: item.description || item.reason || ''
+        };
+      });
+
+      const dmcaAlerts: LiveAlert[] = (dmcaRes.data || []).map(item => {
+        // Extract username and avatar_url from profiles or use fallbacks
+        const username = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
+          ? (item.profiles as any).username || 'Unknown User'
+          : 'Unknown User';
+        
+        const avatarUrl = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
+          ? (item.profiles as any).avatar_url || ''
+          : '';
+
+        return {
+          id: item.id,
+          type: "information", // Changed from "dmca" to match LiveAlert type
+          content_type: item.content_type,
+          content_id: item.content_id,
+          reason: 'Copyright Violation',
+          severity: 'high',
+          timestamp: item.created_at,
+          created_at: item.created_at,
+          status: item.status,
+          user_id: item.reporter_id,
+          username: username,
+          avatar_url: avatarUrl,
+          title: `DMCA Takedown Request`,
+          description: `Copyright claim on ${item.content_type}`,
+          is_viewed: false,
+          message: `Copyright claim on ${item.content_type}`
+        };
+      });
 
       // Combine all alerts and sort by severity and timestamp
       const allAlerts: LiveAlert[] = [...flaggedAlerts, ...reportAlerts, ...dmcaAlerts]
