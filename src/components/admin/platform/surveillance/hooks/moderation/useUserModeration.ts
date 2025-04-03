@@ -201,13 +201,20 @@ export function useUserModeration() {
       // Pause the account temporarily
       const { error } = await supabase.from('profiles').update({
         is_suspended: true,
+        is_paused: true, // Add this field to track paused state specifically
         suspended_at: new Date().toISOString(),
-        suspension_end: pauseEndDate.toISOString() // This would need to be added to the profiles table
+        suspension_end: pauseEndDate.toISOString(),
+        pause_reason: 'Administrative action' // Optional reason field
       }).eq('id', getUserId(target));
       
       if (error) throw error;
       
-      // Log the admin action
+      // Also update visibility of content during pause period
+      await supabase.from('posts').update({
+        visibility: 'paused'
+      }).eq('creator_id', getUserId(target));
+      
+      // Log the admin action with more detailed information
       await supabase.from('admin_logs').insert({
         admin_id: userSession.user.id,
         action: 'pause_account',
@@ -219,6 +226,21 @@ export function useUserModeration() {
           username: getUsername(target),
           timestamp: new Date().toISOString(),
           action_taken: 'pause',
+          duration_days: duration,
+          pause_end_date: pauseEndDate.toISOString(),
+          admin_email: userSession.user.email,
+          reason: 'Administrative action'
+        }
+      });
+      
+      // Also log to admin_audit_logs for compatibility and redundancy
+      await supabase.from('admin_audit_logs').insert({
+        user_id: userSession.user.id,
+        action: 'account_paused',
+        details: {
+          target_user_id: getUserId(target),
+          username: getUsername(target),
+          timestamp: new Date().toISOString(),
           duration_days: duration,
           pause_end_date: pauseEndDate.toISOString()
         }

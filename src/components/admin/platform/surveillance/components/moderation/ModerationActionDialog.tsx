@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface ModerationActionDialogProps {
   open: boolean;
@@ -33,6 +35,8 @@ export function ModerationActionDialog({
   setEditedContent,
   actionInProgress
 }: ModerationActionDialogProps) {
+  const [pauseDuration, setPauseDuration] = useState('7');
+  
   const getActionTitle = () => {
     switch (currentAction) {
       case 'edit':
@@ -72,7 +76,7 @@ export function ModerationActionDialog({
       case 'restore':
         return `Are you sure you want to restore ${username}'s account? Their content will become visible again.`;
       case 'pause':
-        return `This will temporarily suspend ${username}'s account for a fixed period.`;
+        return `This will temporarily suspend ${username}'s account for a fixed period. They will not be able to log in or interact with the platform during this time.`;
       default:
         return 'Are you sure you want to continue?';
     }
@@ -93,7 +97,7 @@ export function ModerationActionDialog({
       case 'restore':
         return 'Restore User';
       case 'pause':
-        return 'Pause Account';
+        return `Pause Account for ${pauseDuration} Days`;
       default:
         return 'Confirm';
     }
@@ -120,6 +124,24 @@ export function ModerationActionDialog({
               className="w-full"
               placeholder="Edit content here..."
             />
+          </div>
+        )}
+        
+        {currentAction === 'pause' && (
+          <div className="mt-4 mb-4 space-y-3">
+            <Label htmlFor="pause-duration">Select pause duration (days)</Label>
+            <Select value={pauseDuration} onValueChange={setPauseDuration}>
+              <SelectTrigger id="pause-duration" className="w-full">
+                <SelectValue placeholder="Select duration" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 day</SelectItem>
+                <SelectItem value="3">3 days</SelectItem>
+                <SelectItem value="7">7 days</SelectItem>
+                <SelectItem value="14">14 days</SelectItem>
+                <SelectItem value="30">30 days</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         )}
 

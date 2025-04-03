@@ -1,5 +1,5 @@
 
-import { Ban, Flag, MessageSquare, Trash2, Eye, Edit, Shield } from "lucide-react";
+import { Ban, Flag, MessageSquare, Trash2, Eye, Edit, Shield, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LiveSession, ModerationAction, SurveillanceContentItem } from "../../types";
 
@@ -40,6 +40,15 @@ export function ModerationActionButton({
         action: 'shadowban',
         icon: <Shield className="h-4 w-4 mr-2" />,
         label: 'Shadowban'
+      };
+    }
+    
+    // If it's inactive or problematic content, suggest pause as primary action
+    if (session.status === 'inactive' || session.status === 'problematic') {
+      return {
+        action: 'pause',
+        icon: <Pause className="h-4 w-4 mr-2" />,
+        label: 'Pause Account'
       };
     }
     
