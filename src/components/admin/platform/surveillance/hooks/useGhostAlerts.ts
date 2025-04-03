@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { LiveAlert } from '@/types/alerts';
@@ -42,19 +43,19 @@ export function useGhostAlerts(isGhostMode: boolean) {
       // Transform reports to LiveAlert format
       const reportAlerts: LiveAlert[] = (reportsData || []).map(report => ({
         id: report.id,
-        type: 'report',
-        alert_type: 'report',
+        type: "violation", // Changed from "report" to match LiveAlert type
+        alert_type: "report",
         user_id: report.reported_id,
         username: report.reported?.username || 'Unknown',
-        avatar_url: report.reported?.avatar_url,
+        avatar_url: report.reported?.avatar_url || '',
         timestamp: report.created_at,
         created_at: report.created_at,
-        content_type: report.content_type,
-        reason: report.reason,
+        content_type: report.content_type || '',
+        reason: report.reason || '',
         severity: report.is_emergency ? 'high' : 'medium',
-        content_id: report.content_id,
+        content_id: report.content_id || '',
         message: `${report.reason}: ${report.description || ''}`,
-        status: report.status,
+        status: report.status || '',
         title: `Content Report`,
         description: report.description || 'No description provided',
         is_viewed: false
@@ -63,21 +64,21 @@ export function useGhostAlerts(isGhostMode: boolean) {
       // Transform flagged content to LiveAlert format
       const flaggedAlerts: LiveAlert[] = (flaggedData || []).map(flagged => ({
         id: flagged.id,
-        type: 'flagged',
-        alert_type: 'content',
-        user_id: flagged.user_id,
+        type: "risk", // Changed from "flagged" to match LiveAlert type
+        alert_type: "content",
+        user_id: flagged.user_id || '',
         username: flagged.user?.username || 'Unknown',
-        avatar_url: flagged.user?.avatar_url,
+        avatar_url: flagged.user?.avatar_url || '',
         timestamp: flagged.flagged_at,
         created_at: flagged.flagged_at,
-        content_type: flagged.content_type,
-        reason: flagged.reason,
-        severity: flagged.severity,
-        content_id: flagged.content_id,
-        message: flagged.reason,
-        status: flagged.status,
+        content_type: flagged.content_type || '',
+        reason: flagged.reason || '',
+        severity: flagged.severity as 'high' | 'medium' | 'low',
+        content_id: flagged.content_id || '',
+        message: flagged.reason || '',
+        status: flagged.status || '',
         title: `Flagged ${flagged.content_type}`,
-        description: flagged.notes || flagged.reason,
+        description: flagged.notes || flagged.reason || '',
         is_viewed: false
       }));
       

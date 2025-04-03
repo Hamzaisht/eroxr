@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Pagination } from "./components/Pagination";
 import { SearchFilterBar } from "./components/SearchFilterBar";
-import { FlaggedContent, SurveillanceContentItem } from "./surveillance/types";
+import { SurveillanceContentItem } from "@/types/surveillance";
 import { SessionModerationActions } from "./surveillance/components/moderation/ModerationActions";
 
 const PAGE_SIZE = 10;
@@ -169,3 +170,6 @@ export const FlaggedContentView = () => {
     </div>
   );
 };
+
+// Add this line for backwards compatibility
+export const AdminFlaggedContentView = FlaggedContentView;

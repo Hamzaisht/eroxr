@@ -1,26 +1,17 @@
 
-import { ModerateContent } from "@/components/admin/platform/ModerateContent";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdminFlaggedContentView } from "@/components/admin/platform/FlaggedContentView";
 import { AdminHeader } from "@/components/admin/godmode/AdminHeader";
+import { ModerateContent } from "@/components/admin/platform/ModerateContent";
+import { DeletedContent } from "@/components/admin/platform/DeletedContent";
+import { FlaggedContentView } from "@/components/admin/platform/FlaggedContentView";
 
 export default function Moderation() {
   return (
-    <div className="space-y-4">
-      <AdminHeader title="Content Moderation" section="Moderation" />
-      
-      <Tabs defaultValue="moderate">
-        <TabsList>
-          <TabsTrigger value="moderate">Moderation Panel</TabsTrigger>
-          <TabsTrigger value="flagged">Flagged Content</TabsTrigger>
-        </TabsList>
-        <TabsContent value="moderate">
-          <ModerateContent />
-        </TabsContent>
-        <TabsContent value="flagged">
-          <AdminFlaggedContentView />
-        </TabsContent>
-      </Tabs>
+    <div className="space-y-6">
+      <AdminHeader 
+        title="Content Moderation" 
+        section="Platform Management" 
+      />
+      <ModerateContent />
     </div>
   );
 }

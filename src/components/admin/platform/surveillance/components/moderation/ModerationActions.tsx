@@ -1,3 +1,4 @@
+
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -5,7 +6,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { LiveSession, ModerationAction, SessionModerationActionProps, SurveillanceContentItem } from "../../types";
+import { LiveSession, ModerationAction, LiveSessionType } from "../../types";
+import { SurveillanceContentItem, SessionModerationActionProps } from "@/types/surveillance";
 import { useState } from "react";
 import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
@@ -115,9 +117,11 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
     }
   };
   
+  const session2 = getCompatibleSession();
+  
   return (
-    <ModerationActionItems 
-      session={getCompatibleSession()} 
+    <ModerationActions 
+      session={session2} 
       onModerate={handleModeration} 
       actionInProgress={actionInProgress} 
     />

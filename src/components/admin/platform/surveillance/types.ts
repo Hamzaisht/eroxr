@@ -1,6 +1,7 @@
 
 import { ReactNode } from "react";
 import { LiveAlert } from "@/types/alerts";
+import { SurveillanceContentItem, SessionModerationActionProps } from "@/types/surveillance";
 
 // LiveSession types
 export type LiveSessionType = 'stream' | 'call' | 'chat' | 'content' | 'bodycontact';
@@ -33,33 +34,8 @@ export interface LiveSession {
 export type ContentType = 'posts' | 'stories' | 'videos' | 'audios';
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
 
-export interface SurveillanceContentItem {
-  id: string;
-  content_type: string;
-  creator_id: string;
-  created_at: string;
-  media_url: string[];
-  username: string;
-  creator_username: string;
-  avatar_url?: string;
-  creator_avatar_url?: string;
-  content: string;
-  title: string;
-  description: string;
-  visibility: string;
-  is_draft?: boolean;
-  location: string;
-  tags: string[];
-  views: number;
-  likes: number;
-  comments: number;
-  user_id?: string; // Added for compatibility
-  type?: string; // Added for compatibility
-  status?: string; // Added for compatibility
-  is_ppv?: boolean; // Added for compatibility
-  ppv_amount?: number; // Added for compatibility
-  original_content?: string; // Added for compatibility
-}
+// Re-export from centralized type
+export { SurveillanceContentItem };
 
 // Moderation action types
 export type ModerationAction = 
@@ -128,3 +104,6 @@ export interface SearchFilterProps {
     to: Date | undefined;
   };
 }
+
+// Re-export for compatibility
+export { SessionModerationActionProps };

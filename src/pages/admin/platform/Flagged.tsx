@@ -1,12 +1,15 @@
 
-import { AdminFlaggedContentView } from "@/components/admin/platform/FlaggedContentView";
-import { AdminHeader } from "@/components/admin/sidebar/AdminHeader";
+import { AdminHeader } from "@/components/admin/godmode/AdminHeader";
+import { FlaggedContentView } from "@/components/admin/platform/FlaggedContentView";
 
-export default function FlaggedContentAdminPage() {
+export default function FlaggedContent() {
   return (
-    <div className="space-y-4">
-      <AdminHeader title="Flagged Content" section="Moderation" />
-      <AdminFlaggedContentView />
+    <div>
+      <AdminHeader 
+        title="Flagged Content" 
+        section="Content Moderation" 
+      />
+      <FlaggedContentView />
     </div>
-  );
+  )
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { SessionList } from "./surveillance/SessionList";
@@ -8,7 +7,7 @@ import { SurveillanceProvider } from "./surveillance/SurveillanceContext";
 import { AlertsList } from "./surveillance/AlertsList";
 import { Button } from "@/components/ui/button";
 import { PowerOff, RefreshCw } from "lucide-react";
-import { LiveSession } from "./surveillance/types";
+import { LiveSession, LiveSessionType } from "./surveillance/types";
 import { LiveAlert } from "@/types/alerts";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
@@ -27,7 +26,6 @@ export const LiveSurveillance = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const supabase = useSupabaseClient();
   
-  // Function to fetch active chats/direct messages
   const fetchActiveSessions = useCallback(async () => {
     if (!isGhostMode) return;
     
@@ -35,7 +33,6 @@ export const LiveSurveillance = () => {
       setIsLoading(true);
       console.log("Fetching active surveillance sessions...");
       
-      // Fetch recent direct messages (chats)
       const { data: messages, error: messagesError } = await supabase
         .from('direct_messages')
         .select('*, sender:sender_id(username, avatar_url), recipient:recipient_id(username, avatar_url)')
@@ -48,7 +45,6 @@ export const LiveSurveillance = () => {
         console.log("Fetched messages:", messages?.length || 0);
       }
       
-      // Fetch recent user posts
       const { data: posts, error: postsError } = await supabase
         .from('posts')
         .select('*, creator:creator_id(username, avatar_url)')
@@ -61,7 +57,6 @@ export const LiveSurveillance = () => {
         console.log("Fetched posts:", posts?.length || 0);
       }
       
-      // Transform messages to LiveSession format
       const messageSessions: LiveSession[] = (messages || []).map(msg => ({
         id: msg.id,
         type: "chat" as LiveSessionType,
@@ -79,7 +74,6 @@ export const LiveSurveillance = () => {
         sender_username: msg.sender?.username,
       }));
       
-      // Transform posts to LiveSession format
       const postSessions: LiveSession[] = (posts || []).map(post => ({
         id: post.id,
         type: "content" as LiveSessionType,
@@ -95,10 +89,8 @@ export const LiveSurveillance = () => {
         tags: post.tags,
       }));
       
-      // Combine all session types
       const allSessions = [...messageSessions, ...postSessions];
       
-      // Set sessions state
       setSessions(allSessions);
       console.log(`Total active sessions: ${allSessions.length}`);
     } catch (error) {
@@ -115,7 +107,6 @@ export const LiveSurveillance = () => {
     }
   }, [isGhostMode, refreshAlerts, fetchActiveSessions]);
   
-  // Set up realtime subscriptions
   useEffect(() => {
     if (!isGhostMode) return;
     
@@ -182,14 +173,12 @@ export const LiveSurveillance = () => {
     }
   };
 
-  // If ghost mode is not active, show prompt
   if (!isGhostMode) {
     return <GhostModePrompt />;
   }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4">
-      {/* Alerts sidebar */}
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">AI Alerts</h2>
@@ -235,7 +224,6 @@ export const LiveSurveillance = () => {
         )}
       </div>
       
-      {/* Main surveillance content */}
       <div className="lg:col-span-3 space-y-4">
         <SurveillanceProvider
           liveAlerts={liveAlerts}
