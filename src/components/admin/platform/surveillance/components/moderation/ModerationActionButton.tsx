@@ -18,7 +18,7 @@ export function ModerationActionButton({
   const [isLoading, setIsLoading] = useState(false);
   
   // Determine the most appropriate action based on session type
-  const getPrimaryAction = (): { action: ModerationAction; icon: JSX.Element; variant: string; label: string } => {
+  const getPrimaryAction = (): { action: ModerationAction; icon: JSX.Element; variant: "outline" | "destructive" | "default" | "link" | "ghost" | "secondary"; label: string } => {
     // Text-based content like messages prioritize view/edit
     if (session.type === "chat" || session.content_type === "message") {
       return {
@@ -43,7 +43,7 @@ export function ModerationActionButton({
     return {
       action: "flag",
       icon: <Flag className="h-3.5 w-3.5 mr-1" />,
-      variant: "warning",
+      variant: "ghost",
       label: "Flag" 
     };
   };
@@ -53,7 +53,7 @@ export function ModerationActionButton({
   return (
     <Button
       size="sm"
-      variant={primaryAction.variant as any}
+      variant={primaryAction.variant}
       className="h-7 text-xs"
       onClick={() => onAction(primaryAction.action)}
       disabled={!!actionInProgress || isLoading}
