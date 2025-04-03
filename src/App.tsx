@@ -26,6 +26,7 @@ import Verification from "@/pages/admin/godmode/Verification";
 import Payouts from "@/pages/admin/godmode/Payouts";
 import PlatformControl from "@/pages/admin/godmode/PlatformControl";
 import AdminLogs from "@/pages/admin/godmode/AdminLogs";
+import FlaggedContent from "@/pages/admin/platform/Flagged";
 
 function App() {
   const session = useSession();
@@ -72,6 +73,7 @@ function App() {
           <Route path="payouts" element={<Payouts />} />
           <Route path="control" element={<PlatformControl />} />
           <Route path="logs" element={<AdminLogs />} />
+          <Route path="flagged" element={<FlaggedContent />} />
           <Route index element={<Navigate to="/admin/platform/surveillance" replace />} />
         </Route>
 
