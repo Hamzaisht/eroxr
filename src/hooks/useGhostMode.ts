@@ -22,7 +22,7 @@ export const useGhostMode = () => {
   const { toast } = useToast();
   const [hasFetchedLiveAlerts, setHasFetchedLiveAlerts] = useState(false);
   
-  // Add debugging and verification
+  // Add real-time debugging and verification
   useEffect(() => {
     const checkAndVerify = async () => {
       if (!session?.user?.id) return;
@@ -93,6 +93,26 @@ export const useGhostMode = () => {
     
     fetchAlerts();
   }, [isSuperAdmin, hasFetchedLiveAlerts, refreshAlerts]);
+  
+  // Set up real-time subscription for alerts
+  useEffect(() => {
+    if (!isSuperAdmin || !session?.user?.id) return;
+    
+    const channel = supabase
+      .channel('admin_alerts_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'admin_alerts'
+      }, () => {
+        refreshAlerts();
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isSuperAdmin, session?.user?.id, refreshAlerts]);
   
   return {
     isGhostMode: isSuperAdmin ? isGhostMode : false,

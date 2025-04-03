@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LiveAlert } from "./types";
 import { AlertCircle, Search, Filter, Ban, Flag, Eye } from "lucide-react";
 import { format } from "date-fns";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AlertsListProps {
   alerts: LiveAlert[];
@@ -17,6 +18,31 @@ interface AlertsListProps {
 
 export const AlertsList = ({ alerts, isLoading }: AlertsListProps) => {
   const [filteredAlerts, setFilteredAlerts] = useState<LiveAlert[]>(alerts);
+  
+  // Update filtered alerts when original alerts change
+  useEffect(() => {
+    setFilteredAlerts(alerts);
+  }, [alerts]);
+  
+  // Set up real-time subscription for alerts
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin_alerts_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'admin_alerts'
+      }, () => {
+        // When data changes, we'll get the updated alerts through props
+        // This is a fallback in case the parent component doesn't handle it
+        console.log('Alert data changed, waiting for parent refresh');
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
   
   const handleSearch = (filters: SearchFilter) => {
     const filtered = alerts.filter(alert => {
@@ -45,11 +71,6 @@ export const AlertsList = ({ alerts, isLoading }: AlertsListProps) => {
     
     setFilteredAlerts(filtered);
   };
-  
-  // Update filtered alerts when original alerts change
-  if (alerts !== filteredAlerts && filteredAlerts.length === 0 && alerts.length > 0) {
-    setFilteredAlerts(alerts);
-  }
   
   if (isLoading) {
     return (

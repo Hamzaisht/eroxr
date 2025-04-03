@@ -1,60 +1,58 @@
 
-import { useCallback } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveSession } from "../types"; // Updated import path
+import { LiveSession } from "../types";
 
 export function useStreamsSurveillance() {
-  const { toast } = useToast();
-  const session = useSession();
-
-  const fetchStreams = useCallback(async () => {
-    if (!session?.user?.id) return [];
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const fetchStreams = async (): Promise<LiveSession[]> => {
+    setIsLoading(true);
     
     try {
-      const { data: streams, error: streamsError } = await supabase
+      // Get all active streams with creator profiles
+      const { data, error } = await supabase
         .from('live_streams')
         .select(`
-          id,
+          id, 
           creator_id,
           title,
           description,
           status,
           started_at,
           viewer_count,
-          profiles(username, avatar_url)
+          is_private,
+          profiles:creator_id(username, avatar_url)
         `)
         .eq('status', 'live')
-        .order('started_at', { ascending: false });
-        
-      if (streamsError) throw streamsError;
+        .order('viewer_count', { ascending: false });
       
-      return streams.map(stream => ({
+      if (error) throw error;
+      
+      // Transform to LiveSession format
+      return data.map(stream => ({
         id: stream.id,
-        type: 'stream' as const,
         user_id: stream.creator_id,
-        username: stream.profiles && stream.profiles[0] ? stream.profiles[0].username || 'Unknown' : 'Unknown',
-        avatar_url: stream.profiles && stream.profiles[0] ? stream.profiles[0].avatar_url || null : null,
-        started_at: stream.started_at,
-        status: 'active',
+        username: stream.profiles?.[0]?.username || 'Unknown streamer',
+        avatar_url: stream.profiles?.[0]?.avatar_url || null,
         title: stream.title,
-        description: stream.description,
+        description: stream.description || '',
+        type: 'stream',
+        status: stream.status,
+        is_private: stream.is_private,
         viewer_count: stream.viewer_count,
-        content_type: 'video',
+        started_at: stream.started_at,
         created_at: stream.started_at,
-        media_url: [], // Add empty media_url array to match the LiveSession type
+        media_url: [],
+        content_type: 'stream'
       }));
     } catch (error) {
-      console.error("Error fetching streams:", error);
-      toast({
-        title: "Error",
-        description: "Could not load live streams",
-        variant: "destructive"
-      });
+      console.error("Error fetching live streams:", error);
       return [];
+    } finally {
+      setIsLoading(false);
     }
-  }, [session?.user?.id, toast]);
-
-  return { fetchStreams };
+  };
+  
+  return { fetchStreams, isLoading };
 }
