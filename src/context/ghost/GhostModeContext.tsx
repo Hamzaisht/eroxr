@@ -1,7 +1,7 @@
 
-import { createContext, useContext, useState, ReactNode } from "react"
-import { LiveAlert } from "@/types/alerts"
-import { LiveSession } from "@/components/admin/platform/surveillance/types"
+import { createContext, useContext, useState, ReactNode } from "react";
+import { LiveAlert } from "@/types/alerts";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
 
 export interface GhostModeContextType {
   isGhostMode: boolean
@@ -21,51 +21,51 @@ export interface GhostModeContextType {
   syncGhostModeFromSupabase: () => Promise<void>
 }
 
-export const GhostModeContext = createContext<GhostModeContextType | undefined>(undefined)
+export const GhostModeContext = createContext<GhostModeContextType | undefined>(undefined);
 
 export function useGhostModeContext() {
-  const context = useContext(GhostModeContext)
-  if (!context) throw new Error("useGhostModeContext must be used within GhostModeProvider")
-  return context
+  const context = useContext(GhostModeContext);
+  if (!context) throw new Error("useGhostModeContext must be used within GhostModeProvider");
+  return context;
 }
 
 export function GhostModeProvider({ children }: { children: ReactNode }) {
-  const [isGhostMode, setIsGhostMode] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [canUseGhostMode, setCanUseGhostMode] = useState(false)
-  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([])
+  const [isGhostMode, setIsGhostMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [canUseGhostMode, setCanUseGhostMode] = useState(false);
+  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
   const [activeSurveillance, setActiveSurveillance] = useState<{
     session?: LiveSession
     isWatching: boolean
     startTime?: string
-  }>({ isWatching: false })
+  }>({ isWatching: false });
 
   // These are stubs that will be implemented in the actual context
   const toggleGhostMode = async (): Promise<void> => {
-    setIsGhostMode(!isGhostMode)
-  }
+    setIsGhostMode(!isGhostMode);
+  };
 
   const syncGhostModeFromSupabase = async (): Promise<void> => {
     // This is a stub
-  }
+  };
 
   const startSurveillance = async (session: LiveSession): Promise<boolean> => {
     setActiveSurveillance({
       session,
       isWatching: true,
       startTime: new Date().toISOString()
-    })
-    return true
-  }
+    });
+    return true;
+  };
 
   const stopSurveillance = async (): Promise<boolean> => {
-    setActiveSurveillance({ isWatching: false })
-    return true
-  }
+    setActiveSurveillance({ isWatching: false });
+    return true;
+  };
 
   const refreshAlerts = async (): Promise<void> => {
     // This is a stub
-  }
+  };
 
   return (
     <GhostModeContext.Provider value={{ 
@@ -83,5 +83,5 @@ export function GhostModeProvider({ children }: { children: ReactNode }) {
     }}>
       {children}
     </GhostModeContext.Provider>
-  )
+  );
 }
