@@ -165,9 +165,9 @@ export function useContentSurveillance() {
         visibility: "public",
         location: audio.location || "",
         tags: audio.tags || [],
-        views: audio.views || 0,
-        likes: audio.likes || 0,
-        comments: audio.comments || 0,
+        views: video.views || 0,
+        likes: video.likes || 0,
+        comments: video.comments || 0,
       }));
       
       setPosts(transformedPosts);
