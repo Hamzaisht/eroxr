@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MoreHorizontal, Flag, Ban, EyeOff, Trash2, Edit, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export function ModerationActions({
   return (
     <div className="flex items-center space-x-2">
       <ModerationActionButton 
-        session={session}
+        session={session as LiveSession}
         onAction={handleAction}
         actionInProgress={actionInProgress}
       />
@@ -77,7 +78,7 @@ export function ModerationActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <ModerationActionItems 
-            session={session}
+            session={session as LiveSession}
             onAction={handleAction}
             actionInProgress={actionInProgress}
           />
@@ -89,7 +90,7 @@ export function ModerationActions({
         onOpenChange={setIsDialogOpen}
         onConfirm={handleDialogAction}
         currentAction={currentAction}
-        session={session}
+        session={session as LiveSession}
         editedContent={editedContent}
         setEditedContent={setEditedContent}
         actionInProgress={actionInProgress}
@@ -101,9 +102,9 @@ export function ModerationActions({
 export const SessionModerationActions: React.FC<{ session: LiveSession | SurveillanceContentItem }> = ({ session }) => {
   const { handleModeration, actionInProgress } = useModerationActions();
   
-  const getCompatibleSession = () => {
+  const getCompatibleSession = (): LiveSession => {
     if ('type' in session && typeof session.type === 'string') {
-      return session;
+      return session as LiveSession;
     } else {
       const contentItem = session as SurveillanceContentItem;
       
@@ -120,7 +121,7 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
         title: contentItem.title || '',
         description: contentItem.description || '',
         status: contentItem.visibility || contentItem.status
-      };
+      } as LiveSession;
     }
   };
   
