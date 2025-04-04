@@ -4,7 +4,7 @@ import { LiveSession } from "@/components/admin/platform/surveillance/types";
 export interface LiveAlert {
   id: string;
   type: string;
-  alert_type: "violation" | "risk" | "information";
+  alert_type: "violation" | "risk" | "information" | "report" | "content" | "dmca" | "flagged_content";
   user_id: string;
   username: string;
   avatar_url?: string;

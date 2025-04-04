@@ -43,8 +43,8 @@ export function useGhostAlerts(isGhostMode: boolean) {
       // Transform reports to LiveAlert format
       const reportAlerts: LiveAlert[] = (reportsData || []).map(report => ({
         id: report.id,
-        type: "violation", // Changed from "report" to match LiveAlert type
-        alert_type: "report",
+        type: "violation", 
+        alert_type: "violation", // Changed from "report" to "violation"
         user_id: report.reported_id,
         username: report.reported?.username || 'Unknown',
         avatar_url: report.reported?.avatar_url || '',
@@ -65,8 +65,8 @@ export function useGhostAlerts(isGhostMode: boolean) {
       // Transform flagged content to LiveAlert format
       const flaggedAlerts: LiveAlert[] = (flaggedData || []).map(flagged => ({
         id: flagged.id,
-        type: "risk", // Changed from "flagged" to match LiveAlert type
-        alert_type: "content",
+        type: "risk", 
+        alert_type: "risk", // Changed from "content" to "risk"
         user_id: flagged.user_id || '',
         username: flagged.user?.username || 'Unknown',
         avatar_url: flagged.user?.avatar_url || '',

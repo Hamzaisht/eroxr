@@ -1,123 +1,122 @@
-
 import { LiveAlert } from "@/types/alerts";
-import { WithProfile } from "@/integrations/supabase/types/profile";
 
-/**
- * Formats flagged content into LiveAlert format
- */
-export const formatFlaggedContentAlert = (item: WithProfile<any>): LiveAlert => {
-  // Extract username and avatar_url from profiles or use fallbacks
-  const username = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-    ? (item.profiles as any).username || 'Unknown User'
-    : 'Unknown User';
-  
-  const avatarUrl = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-    ? (item.profiles as any).avatar_url || ''
-    : '';
+export interface FlaggedContentData {
+  id: string;
+  content_id: string;
+  user_id?: string;
+  flagged_by?: string;
+  content_type: string;
+  status: string;
+  reason: string;
+  severity: string;
+  notes?: string;
+  flagged_at: string;
+  username?: string;
+  avatar_url?: string;
+}
 
+export interface ReportData {
+  id: string;
+  content_type: string;
+  reason: string;
+  status: string;
+  created_at: string;
+  is_emergency: boolean;
+  reporter_id: string;
+  reported_id: string;
+  description?: string;
+  content_id?: string;
+  reporter_username?: string;
+  reporter_avatar_url?: string;
+  reported_username?: string;
+  reported_avatar_url?: string;
+  avatar_url?: string;
+}
+
+export interface DMCAData {
+  id: string;
+  content_type: string;
+  status: string;
+  created_at: string;
+  reporter_id: string;
+  content_id?: string;
+  reporter_username?: string;
+  reporter_avatar_url?: string;
+  avatar_url?: string;
+}
+
+export function formatFlaggedContentAsAlert(
+  flaggedContent: FlaggedContentData,
+  username?: string
+): LiveAlert {
   return {
-    id: item.id,
-    type: "violation",
-    alert_type: "flagged_content", // Add alert_type
-    content_type: item.content_type,
-    content_id: item.content_id,
-    reason: item.reason,
-    severity: item.severity as "high" | "medium" | "low",
-    timestamp: item.flagged_at,
-    created_at: item.flagged_at,
-    status: item.status,
-    user_id: item.user_id,
-    username: username,
-    avatar_url: avatarUrl,
-    title: `Flagged ${item.content_type}`,
-    description: item.reason || '',
+    id: flaggedContent.id,
+    type: "flagged_content",
+    alert_type: "risk", // Changed from "flagged_content" to "risk"
+    user_id: flaggedContent.user_id,
+    username: username || "Unknown User",
+    avatar_url: flaggedContent.avatar_url || "",
+    timestamp: flaggedContent.flagged_at,
+    created_at: flaggedContent.flagged_at,
+    content_type: flaggedContent.content_type,
+    reason: flaggedContent.reason,
+    severity: flaggedContent.severity as "high" | "medium" | "low",
+    content_id: flaggedContent.content_id,
+    message: flaggedContent.reason,
+    status: flaggedContent.status,
+    title: `${flaggedContent.content_type} Flagged`,
     is_viewed: false,
-    message: item.reason || ''
+    urgent: flaggedContent.severity === "high",
   };
-};
+}
 
-/**
- * Formats report alerts into LiveAlert format
- */
-export const formatReportAlert = (item: WithProfile<any>): LiveAlert => {
-  // Extract username and avatar_url from profiles or use fallbacks
-  const username = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-    ? (item.profiles as any).username || 'Unknown User'
-    : 'Unknown User';
-  
-  const avatarUrl = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-    ? (item.profiles as any).avatar_url || ''
-    : '';
-
+export function formatReportAsAlert(
+  report: ReportData,
+  username?: string
+): LiveAlert {
   return {
-    id: item.id,
-    type: "risk",
-    alert_type: "report", // Add alert_type
-    content_type: item.content_type,
-    content_id: item.content_id || '',
-    reason: item.reason,
-    severity: item.is_emergency ? 'high' : 'medium',
-    timestamp: item.created_at,
-    created_at: item.created_at,
-    status: item.status,
-    user_id: item.reporter_id,
-    username: username,
-    avatar_url: avatarUrl,
-    title: `${item.is_emergency ? 'URGENT: ' : ''}Report on ${item.content_type}`,
-    description: item.description || item.reason || '',
+    id: report.id,
+    type: "report",
+    alert_type: "violation", // Changed from "report" to "violation"
+    user_id: report.reported_id,
+    username: username || "Unknown User",
+    avatar_url: report.avatar_url || "",
+    timestamp: report.created_at,
+    created_at: report.created_at,
+    content_type: report.content_type,
+    reason: report.reason,
+    severity: report.is_emergency ? "high" : "medium",
+    content_id: report.content_id,
+    message: report.reason,
+    status: report.status,
+    title: `Content Report`,
+    description: report.description,
     is_viewed: false,
-    message: item.description || item.reason || ''
+    urgent: report.is_emergency,
   };
-};
+}
 
-/**
- * Formats DMCA alerts into LiveAlert format
- */
-export const formatDmcaAlert = (item: WithProfile<any>): LiveAlert => {
-  // Extract username and avatar_url from profiles or use fallbacks
-  const username = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-    ? (item.profiles as any).username || 'Unknown User'
-    : 'Unknown User';
-  
-  const avatarUrl = item.profiles && typeof item.profiles === 'object' && item.profiles !== null
-    ? (item.profiles as any).avatar_url || ''
-    : '';
-
+export function formatDMCAAsAlert(
+  dmca: DMCAData,
+  username?: string
+): LiveAlert {
   return {
-    id: item.id,
-    type: "information",
-    alert_type: "dmca", // Add alert_type
-    content_type: item.content_type,
-    content_id: item.content_id,
-    reason: 'Copyright Violation',
-    severity: 'high',
-    timestamp: item.created_at,
-    created_at: item.created_at,
-    status: item.status,
-    user_id: item.reporter_id,
-    username: username,
-    avatar_url: avatarUrl,
-    title: `DMCA Takedown Request`,
-    description: `Copyright claim on ${item.content_type}`,
+    id: dmca.id,
+    type: "dmca",
+    alert_type: "information", // Changed from "dmca" to "information"
+    user_id: dmca.reporter_id,
+    username: username || "Unknown User",
+    avatar_url: dmca.avatar_url || "",
+    timestamp: dmca.created_at,
+    created_at: dmca.created_at,
+    content_type: dmca.content_type,
+    reason: "DMCA Takedown Request",
+    severity: "medium",
+    content_id: dmca.content_id,
+    message: `DMCA Request for ${dmca.content_type}`,
+    status: dmca.status,
+    title: `DMCA Takedown`,
     is_viewed: false,
-    message: `Copyright claim on ${item.content_type}`
+    urgent: false,
   };
-};
-
-/**
- * Sorts alerts by severity and timestamp
- */
-export const sortAlertsBySeverityAndTime = (alerts: LiveAlert[]): LiveAlert[] => {
-  return alerts.sort((a, b) => {
-    // First sort by severity
-    const severityOrder = { high: 0, medium: 1, low: 2 };
-    const severityDiff = severityOrder[a.severity as keyof typeof severityOrder] - 
-                         severityOrder[b.severity as keyof typeof severityOrder];
-    
-    if (severityDiff !== 0) return severityDiff;
-    
-    // Then sort by timestamp (most recent first)
-    return new Date(b.timestamp || b.created_at).getTime() - 
-          new Date(a.timestamp || a.created_at).getTime();
-  });
-};
+}

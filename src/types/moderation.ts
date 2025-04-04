@@ -9,4 +9,5 @@ export type ModerationAction =
   | "view" 
   | "pause" 
   | "unpause" 
-  | "ban";
+  | "ban"
+  | "edit";
