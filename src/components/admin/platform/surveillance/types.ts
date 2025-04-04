@@ -1,5 +1,6 @@
 
 import { ModerationAction } from "@/types/moderation";
+import { LiveAlert } from "@/types/alerts";
 
 export type LiveSessionType = 'stream' | 'call' | 'chat' | 'content' | 'bodycontact';
 

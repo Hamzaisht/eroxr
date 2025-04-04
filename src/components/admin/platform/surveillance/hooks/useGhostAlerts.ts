@@ -58,7 +58,8 @@ export function useGhostAlerts(isGhostMode: boolean) {
         status: report.status || '',
         title: `Content Report`,
         description: report.description || 'No description provided',
-        is_viewed: false
+        is_viewed: false,
+        urgent: report.is_emergency || false
       }));
       
       // Transform flagged content to LiveAlert format
@@ -79,7 +80,8 @@ export function useGhostAlerts(isGhostMode: boolean) {
         status: flagged.status || '',
         title: `Flagged ${flagged.content_type}`,
         description: flagged.notes || flagged.reason || '',
-        is_viewed: false
+        is_viewed: false,
+        urgent: flagged.severity === 'high'
       }));
       
       // Combine all alerts

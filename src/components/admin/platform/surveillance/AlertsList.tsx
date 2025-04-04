@@ -49,7 +49,7 @@ export const AlertsList = ({ alerts, isLoading, onSelect }: AlertsListProps) => 
             </TableRow>
           ) : (
             alerts.map((alert) => (
-              <TableRow key={alert.id}>
+              <TableRow key={alert.id} className={alert.urgent ? "bg-red-500/10" : undefined}>
                 <TableCell>
                   <Badge variant={alert.severity === "high" ? "destructive" : "secondary"}>
                     {alert.type}
