@@ -4,9 +4,9 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveAlert } from "@/types/alerts";
 import { 
-  formatFlaggedContentAlert, 
-  formatReportAlert, 
-  formatDmcaAlert,
+  formatFlaggedContentAsAlert, 
+  formatReportAsAlert, 
+  formatDMCAAsAlert,
   sortAlertsBySeverityAndTime 
 } from "../utils/alertFormatters";
 import { 
@@ -40,13 +40,13 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
 
       // Process and combine alerts
       const flaggedAlerts: LiveAlert[] = (flaggedContentRes.data || [])
-        .map(formatFlaggedContentAlert);
+        .map(formatFlaggedContentAsAlert);
 
       const reportAlerts: LiveAlert[] = (reportsRes.data || [])
-        .map(formatReportAlert);
+        .map(formatReportAsAlert);
 
       const dmcaAlerts: LiveAlert[] = (dmcaRes.data || [])
-        .map(formatDmcaAlert);
+        .map(formatDMCAAsAlert);
 
       // Combine all alerts and sort by severity and timestamp
       const allAlerts: LiveAlert[] = sortAlertsBySeverityAndTime([
