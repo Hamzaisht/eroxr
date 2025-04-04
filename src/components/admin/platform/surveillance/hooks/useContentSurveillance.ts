@@ -40,7 +40,6 @@ export function useContentSurveillance() {
     return { icon: <File className="h-4 w-4" />, className: "h-4 w-4" };
   };
 
-  // Fetch content items from Supabase
   const fetchContentItems = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -187,7 +186,6 @@ export function useContentSurveillance() {
     fetchContentItems();
   }, [fetchContentItems]);
 
-  // Filter content items based on type
   const filterContentByType = useCallback((items: SurveillanceContentItem[], type: ContentType) => {
     return items.filter(item => {
       const normalizedType = item.content_type.toLowerCase();
