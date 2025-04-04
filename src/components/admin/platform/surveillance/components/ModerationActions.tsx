@@ -1,6 +1,8 @@
+
 import { Ban, Flag, MessageSquare, Trash2, Eye, Edit, MoreVertical, Shield, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SessionModerationActionProps, ModerationAction } from "../types";
+import { SessionModerationActionProps } from "../types";
+import { ModerationAction } from "@/types/moderation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,7 +78,7 @@ export const ModerationActions = ({
           <DropdownMenuGroup>
             <DropdownMenuItem
               className="text-blue-400 flex items-center space-x-2"
-              onClick={() => handleActionClick('view')}
+              onClick={() => handleActionClick('view' as ModerationAction)}
               disabled={!!actionInProgress}
             >
               <Eye className="h-4 w-4 mr-2" />
@@ -109,7 +111,7 @@ export const ModerationActions = ({
             
             <DropdownMenuItem
               className="text-orange-400 flex items-center space-x-2"
-              onClick={() => handleActionClick('warn')}
+              onClick={() => handleActionClick('warn' as ModerationAction)}
               disabled={!!actionInProgress}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
@@ -157,7 +159,7 @@ export const ModerationActions = ({
             <DropdownMenuSubContent>
               <DropdownMenuItem
                 className="text-green-400 flex items-center space-x-2"
-                onClick={() => handleActionClick('restore')}
+                onClick={() => handleActionClick('restore' as ModerationAction)}
                 disabled={!!actionInProgress}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />

@@ -10,7 +10,9 @@ export type ModerationAction =
   | 'restore'
   | 'force_delete'
   | 'pause'
-  | 'unpause';
+  | 'unpause'
+  | 'review'
+  | 'dismiss';
 
 export interface ModerationActionResult {
   success: boolean;

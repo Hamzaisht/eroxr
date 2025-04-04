@@ -19,4 +19,5 @@ export interface LiveAlert {
   is_viewed: boolean;
   session_id?: string;
   session?: any;
+  urgent?: boolean;
 }
