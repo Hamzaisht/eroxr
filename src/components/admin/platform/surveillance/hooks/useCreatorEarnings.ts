@@ -34,6 +34,7 @@ export function useCreatorEarnings() {
           avatar_url: item.profiles?.avatar_url,
           total_earnings: item.earnings || 0,
           current_balance: item.earnings - (item.payout_total || 0),
+          created_at: item.created_at || new Date().toISOString(),
           last_payout_date: item.last_payout_date,
           last_payout_amount: item.last_payout_amount || 0,
           subscriber_count: item.subscriber_count || 0,

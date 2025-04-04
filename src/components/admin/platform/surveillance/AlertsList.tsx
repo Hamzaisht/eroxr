@@ -1,111 +1,85 @@
 
-import { useGhostAlerts } from "./hooks/useGhostAlerts";
-import { LiveAlert } from "@/types/alerts";
-import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Eye, Flag, AlertTriangle, Info } from "lucide-react";
+import { LiveAlert } from "@/types/alerts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
+import { formatDistanceToNow } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface AlertsListProps {
   alerts: LiveAlert[];
   isLoading: boolean;
   onSelect?: (alert: LiveAlert) => void;
-  error?: Error | null;
 }
 
-export const AlertsList = ({ alerts, isLoading, onSelect, error }: AlertsListProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<SearchFilter>({ query: "" });
-  const { refreshAlerts } = useGhostAlerts();
-
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-    setFilters(prev => ({ ...prev, query: query }));
-  };
-
-  const handleSearch = (searchFilters: SearchFilter) => {
-    setFilters(searchFilters);
-  };
-
-  const handleRefresh = () => {
-    refreshAlerts();
-  };
-
-  const AlertIcon = ({ type }: { type: string }) => {
-    switch (type) {
-      case "flag":
-        return <Flag className="h-4 w-4 mr-2 text-red-500" />;
-      case "alert":
-        return <AlertTriangle className="h-4 w-4 mr-2 text-yellow-500" />;
-      default:
-        return <Info className="h-4 w-4 mr-2 text-blue-500" />;
+export const AlertsList = ({ alerts, isLoading, onSelect }: AlertsListProps) => {
+  const handleSelect = (alert: LiveAlert) => {
+    if (onSelect) {
+      onSelect(alert);
     }
   };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-white">Live Alerts</h2>
-        <SearchFilterBar
-          onSearchChange={handleSearchChange}
-          onSearch={handleSearch}
-          onRefresh={handleRefresh}
-          placeholder="Search alerts..."
-        />
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
       </div>
-      
-      <Card className="bg-black/20 border-white/10">
-        <ScrollArea className="h-[400px] rounded-md">
-          <div className="p-4 space-y-4">
-            {isLoading ? (
-              <>
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </>
-            ) : error ? (
-              <div className="text-red-500">Error: {error.message}</div>
-            ) : alerts.length === 0 ? (
-              <div className="text-muted-foreground">No alerts found.</div>
-            ) : (
-              alerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="flex items-center justify-between p-3 rounded-md hover:bg-secondary/50"
-                >
-                  <div className="flex items-center">
-                    <AlertIcon type={alert.type} />
-                    <div>
-                      <h3 className="text-sm font-medium">{alert.message}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Content ID: {alert.content_id}
-                      </p>
-                    </div>
+    );
+  }
+  
+  return (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Type</TableHead>
+            <TableHead>Alert</TableHead>
+            <TableHead>Time</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {alerts.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                No alerts at this time
+              </TableCell>
+            </TableRow>
+          ) : (
+            alerts.map((alert) => (
+              <TableRow key={alert.id}>
+                <TableCell>
+                  <Badge variant={alert.urgent ? "destructive" : "secondary"}>
+                    {alert.type}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="font-medium">
+                    {alert.title}
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {alert.severity && (
-                      <Badge variant="secondary">{alert.severity}</Badge>
-                    )}
-                    {onSelect && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onSelect(alert)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    )}
+                  <div className="text-sm text-muted-foreground">
+                    {alert.message}
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
-      </Card>
+                </TableCell>
+                <TableCell>
+                  {formatDistanceToNow(new Date(alert.timestamp), { addSuffix: true })}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleSelect(alert)}
+                  >
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };

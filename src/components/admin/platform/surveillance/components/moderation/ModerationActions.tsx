@@ -1,4 +1,3 @@
-
 import { MoreHorizontal, Flag, Ban, EyeOff, Trash2, Edit, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -103,9 +102,9 @@ export function ModerationActions({
 export const SessionModerationActions: React.FC<{ session: LiveSession | SurveillanceContentItem }> = ({ session }) => {
   const { handleModeration, actionInProgress } = useModerationActions();
   
-  const getCompatibleSession = (): LiveSession => {
+  const getCompatibleSession = () => {
     if ('type' in session && typeof session.type === 'string') {
-      return session as LiveSession;
+      return session;
     } else {
       const contentItem = session as SurveillanceContentItem;
       return {
@@ -120,15 +119,15 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
         content_type: contentItem.content_type,
         title: contentItem.title,
         status: contentItem.visibility
-      };
+      } as LiveSession;
     }
   };
   
-  const session2 = getCompatibleSession();
+  const compatibleSession = getCompatibleSession();
   
   return (
     <ModerationActions 
-      session={session2} 
+      session={compatibleSession} 
       onModerate={handleModeration} 
       actionInProgress={actionInProgress} 
     />

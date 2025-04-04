@@ -1,4 +1,3 @@
-
 import { ModerationAction } from "@/types/moderation";
 
 export type LiveSessionType = 'stream' | 'call' | 'chat' | 'content' | 'bodycontact';
@@ -88,3 +87,5 @@ export interface ContentIcon {
 }
 
 export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
+
+export type ModerationAction = 'ban' | 'flag' | 'delete' | 'edit' | 'shadowban' | 'force_delete' | 'review' | 'dismiss';
