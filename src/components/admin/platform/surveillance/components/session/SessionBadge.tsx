@@ -7,52 +7,49 @@ interface SessionBadgeProps {
 }
 
 export const SessionBadge = ({ session }: SessionBadgeProps) => {
-  if (session.type === 'stream') {
-    return (
-      <Badge 
-        variant="outline" 
-        className="font-normal text-xs bg-green-900/30 text-green-300 border-green-800"
-      >
-        Live
-      </Badge>
-    );
-  }
+  // Determine badge color based on session type and status
+  const getBadgeVariant = () => {
+    if (session.is_paused) return "destructive";
+    
+    switch (session.type) {
+      case 'stream':
+        return "default";
+      case 'call':
+        return "secondary";
+      case 'chat':
+        return "outline";
+      case 'bodycontact':
+        return session.status === 'flagged' ? "destructive" : "secondary";
+      case 'content':
+        return "outline";
+      default:
+        return "secondary";
+    }
+  };
   
-  if (session.type === 'call') {
-    return (
-      <Badge 
-        variant="outline" 
-        className="font-normal text-xs bg-green-900/30 text-green-300 border-green-800"
-      >
-        In Call
-      </Badge>
-    );
-  }
+  // Get badge text
+  const getBadgeText = () => {
+    if (session.is_paused) return "PAUSED";
+    
+    switch (session.type) {
+      case 'stream':
+        return "LIVE";
+      case 'call':
+        return "ACTIVE";
+      case 'chat':
+        return session.message_type?.toUpperCase() || "MESSAGE";
+      case 'bodycontact':
+        return session.status?.toUpperCase() || "ACTIVE";
+      case 'content':
+        return session.content_type?.toUpperCase() || "CONTENT";
+      default:
+        return session.type?.toUpperCase() || "ACTIVE";
+    }
+  };
   
-  if (session.type === 'chat') {
-    return (
-      <Badge 
-        variant="outline" 
-        className="font-normal text-xs bg-blue-900/30 text-blue-300 border-blue-800"
-      >
-        {session.content_type === 'snap' ? 'Snap' : 'Message'}
-      </Badge>
-    );
-  }
-  
-  if (session.type === 'bodycontact') {
-    return (
-      <Badge 
-        variant="outline" 
-        className={session.status === 'active' 
-          ? "font-normal text-xs bg-orange-900/30 text-orange-300 border-orange-800"
-          : "font-normal text-xs bg-red-900/30 text-red-300 border-red-800"
-        }
-      >
-        {session.status === 'active' ? 'Active Ad' : 'Flagged'}
-      </Badge>
-    );
-  }
-  
-  return null;
+  return (
+    <Badge variant={getBadgeVariant()}>
+      {getBadgeText()}
+    </Badge>
+  );
 };

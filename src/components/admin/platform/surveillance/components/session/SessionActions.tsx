@@ -1,55 +1,104 @@
 
-import { ExternalLink, Ghost } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Eye, Flag, Ban, MoreHorizontal, AlertTriangle, Pause, Play } from "lucide-react";
 import { LiveSession } from "../../types";
 import { ModerationAction } from "@/types/moderation";
-import { ModerationActions } from "../moderation/ModerationActions";
 
 interface SessionActionsProps {
   session: LiveSession;
   onMonitorSession: (session: LiveSession) => Promise<boolean>;
-  onShowMediaPreview: (session: LiveSession) => void;
-  onModerate: (session: LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
+  onShowMediaPreview?: (session: LiveSession) => void;
+  onModerate?: (session: LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
   actionInProgress: string | null;
 }
 
-export const SessionActions = ({ 
-  session, 
-  onMonitorSession, 
+export const SessionActions = ({
+  session,
+  onMonitorSession,
   onShowMediaPreview,
   onModerate,
   actionInProgress
 }: SessionActionsProps) => {
+  const isLoading = actionInProgress === session.id;
+  
+  const handleMonitor = async () => {
+    await onMonitorSession(session);
+  };
+  
+  const handleShowMedia = () => {
+    if (onShowMediaPreview) {
+      onShowMediaPreview(session);
+    }
+  };
+  
+  const handleModerate = async (action: ModerationAction) => {
+    if (onModerate) {
+      await onModerate(session, action);
+    }
+  };
+  
   return (
-    <div className="flex gap-2 items-start">
-      {/* Preview content button */}
-      <Button 
-        size="sm" 
-        variant="ghost"
-        className="bg-blue-900/20 hover:bg-blue-800/30 text-blue-300"
-        onClick={() => onShowMediaPreview(session)}
+    <div className="flex space-x-2">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={handleMonitor}
+        disabled={isLoading}
       >
-        <ExternalLink className="h-4 w-4 mr-2" />
-        Preview
-      </Button>
-      
-      {/* Monitor button */}
-      <Button 
-        size="sm" 
-        variant="ghost" 
-        className="bg-purple-900/20 hover:bg-purple-800/30 text-purple-300 border-purple-800/50"
-        onClick={() => onMonitorSession(session)}
-      >
-        <Ghost className="h-4 w-4 mr-2" />
+        <Eye className="h-4 w-4 mr-1" />
         Monitor
       </Button>
       
-      {/* Moderation actions dropdown */}
-      <ModerationActions 
-        session={session} 
-        onModerate={onModerate} 
-        actionInProgress={actionInProgress} 
-      />
+      {onShowMediaPreview && session.media_url && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleShowMedia}
+          disabled={isLoading}
+        >
+          View Media
+        </Button>
+      )}
+      
+      {onModerate && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isLoading}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => handleModerate('flag')}>
+              <Flag className="h-4 w-4 mr-2 text-amber-500" />
+              Flag Content
+            </DropdownMenuItem>
+            {session.is_paused ? (
+              <DropdownMenuItem onClick={() => handleModerate('unpause')}>
+                <Play className="h-4 w-4 mr-2 text-green-500" />
+                Unpause
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={() => handleModerate('pause')}>
+                <Pause className="h-4 w-4 mr-2 text-amber-500" />
+                Pause
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => handleModerate('warn')}>
+              <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />
+              Warn User
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleModerate('ban')}>
+              <Ban className="h-4 w-4 mr-2 text-red-500" />
+              Ban User
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 };

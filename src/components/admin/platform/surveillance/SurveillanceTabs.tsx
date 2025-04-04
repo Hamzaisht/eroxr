@@ -7,6 +7,9 @@ import { LiveSession, SurveillanceTab } from "./types";
 import { LiveAlert } from "@/types/alerts";
 import { ContentSurveillanceTabs } from "./ContentSurveillanceTabs";
 import { CreatorEarningsSurveillance } from "./CreatorEarningsSurveillance";
+import { SessionList } from "./SessionList";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface SurveillanceTabsProps {
   liveAlerts: LiveAlert[];
@@ -19,12 +22,40 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
     setActiveTab, 
     liveSessions, 
     isLoading,
-    error
+    error,
+    fetchLiveSessions
   } = useSurveillance();
+
+  const { toast } = useToast();
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   
   // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value as SurveillanceTab);
+  };
+
+  // Fetch data when tab changes
+  useEffect(() => {
+    fetchLiveSessions();
+  }, [activeTab, fetchLiveSessions]);
+  
+  // Handle monitoring a session
+  const handleMonitorSession = async (session: LiveSession) => {
+    try {
+      toast({
+        title: "Monitoring Session",
+        description: `Now monitoring ${session.username || 'User'}'s activity`,
+      });
+      return true;
+    } catch (error) {
+      console.error("Error monitoring session:", error);
+      toast({
+        title: "Error",
+        description: "Could not start monitoring session",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
   
   return (
@@ -55,10 +86,13 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
         <TabContent 
           isActive={activeTab === "streams"}
         >
-          <div className="content-wrapper">
-            {/* Add your streams content here */}
-            <p>Streams content will go here</p>
-          </div>
+          <SessionList
+            sessions={liveSessions.filter(session => session.type === 'stream')}
+            isLoading={isLoading}
+            error={error}
+            onMonitorSession={handleMonitorSession}
+            actionInProgress={actionInProgress}
+          />
         </TabContent>
       </TabsContent>
       
@@ -66,10 +100,13 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
         <TabContent 
           isActive={activeTab === "calls"}
         >
-          <div className="content-wrapper">
-            {/* Add your calls content here */}
-            <p>Calls content will go here</p>
-          </div>
+          <SessionList
+            sessions={liveSessions.filter(session => session.type === 'call')}
+            isLoading={isLoading}
+            error={error}
+            onMonitorSession={handleMonitorSession}
+            actionInProgress={actionInProgress}
+          />
         </TabContent>
       </TabsContent>
       
@@ -77,10 +114,13 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
         <TabContent 
           isActive={activeTab === "chats"}
         >
-          <div className="content-wrapper">
-            {/* Add your chats content here */}
-            <p>Chats content will go here</p>
-          </div>
+          <SessionList
+            sessions={liveSessions.filter(session => session.type === 'chat')}
+            isLoading={isLoading}
+            error={error}
+            onMonitorSession={handleMonitorSession}
+            actionInProgress={actionInProgress}
+          />
         </TabContent>
       </TabsContent>
       
@@ -88,10 +128,13 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
         <TabContent 
           isActive={activeTab === "bodycontact"}
         >
-          <div className="content-wrapper">
-            {/* Add your bodycontact content here */}
-            <p>Bodycontact content will go here</p>
-          </div>
+          <SessionList
+            sessions={liveSessions.filter(session => session.type === 'bodycontact')}
+            isLoading={isLoading}
+            error={error}
+            onMonitorSession={handleMonitorSession}
+            actionInProgress={actionInProgress}
+          />
         </TabContent>
       </TabsContent>
       

@@ -1,8 +1,12 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { LiveAlert } from "@/types/alerts";
-import { LiveSession } from "./types";
+import { LiveSession, SurveillanceTab } from "./types";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useStreamsSurveillance } from "./hooks/useStreamsSurveillance";
+import { useCallsSurveillance } from "./hooks/useCallsSurveillance";
+import { useChatsSurveillance } from "./hooks/useChatsSurveillance";
+import { useBodyContactSurveillance } from "./hooks/useBodyContactSurveillance";
 
 // Define the surveillance context type
 interface SurveillanceContextType {
@@ -15,6 +19,7 @@ interface SurveillanceContextType {
   refreshSessions: () => Promise<void>;
   refreshAlerts: () => Promise<void>;
   handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
+  fetchLiveSessions: () => Promise<void>;
 }
 
 // Create the context
@@ -50,53 +55,70 @@ export function SurveillanceProvider({
   const [activeTab, setActiveTab] = useState<string>("streams");
   const supabase = useSupabaseClient();
   
-  // Fetch sessions from Supabase
-  const refreshSessions = useCallback(async () => {
+  const { fetchStreams } = useStreamsSurveillance();
+  const { fetchCalls } = useCallsSurveillance();
+  const { fetchChatSessions } = useChatsSurveillance();
+  const { fetchBodyContact } = useBodyContactSurveillance();
+  
+  // Fetch sessions from Supabase based on active tab
+  const fetchLiveSessions = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Fetch live streams
-      const { data: streams, error: streamsError } = await supabase
-        .from('live_streams')
-        .select('*, creator:creator_id(username, avatar_url)')
-        .eq('status', 'live')
-        .order('started_at', { ascending: false })
-        .limit(20);
-        
-      if (streamsError) {
-        throw streamsError;
+      let data: LiveSession[] = [];
+      
+      switch (activeTab) {
+        case 'streams':
+          data = await fetchStreams();
+          break;
+          
+        case 'calls':
+          data = await fetchCalls();
+          break;
+          
+        case 'chats':
+          data = await fetchChatSessions();
+          break;
+          
+        case 'bodycontact':
+          data = await fetchBodyContact();
+          break;
+          
+        default:
+          break;
       }
       
-      // Transform data to LiveSession format
-      const sessions: LiveSession[] = (streams || []).map(stream => ({
-        id: stream.id,
-        type: 'stream',
-        user_id: stream.creator_id,
-        created_at: stream.started_at,
-        username: stream.creator?.username || 'Unknown',
-        avatar_url: stream.creator?.avatar_url,
-        title: stream.title,
-        status: stream.is_private ? 'private' : 'public',
-        content: stream.description || '',
-        content_type: 'stream',
-        started_at: stream.started_at,
-        media_url: [], // Added missing media_url property
+      // Ensure all items comply with the LiveSession interface
+      const validatedData = data.map(item => ({
+        ...item,
+        media_url: Array.isArray(item.media_url) ? item.media_url : 
+                   item.media_url ? [item.media_url] : [],
+        created_at: item.created_at || item.started_at || new Date().toISOString(),
+        // Ensure type is a valid enum value
+        type: (item.type as "stream" | "call" | "chat" | "bodycontact" | "content")
       }));
       
-      setLiveSessions(sessions);
-    } catch (error: any) {
-      console.error('Error fetching surveillance data:', error);
-      setError('Failed to load surveillance data');
+      console.log(`Fetched ${validatedData.length} ${activeTab} for surveillance`);
+      setLiveSessions(validatedData);
+    } catch (error) {
+      console.error(`Error fetching ${activeTab}:`, error);
+      setError(`Could not load ${activeTab} data. Please try again.`);
+      setLiveSessions([]);
     } finally {
       setIsLoading(false);
     }
-  }, [supabase]);
+  }, [activeTab, fetchStreams, fetchCalls, fetchChatSessions, fetchBodyContact]);
+  
+  // Refresh all sessions
+  const refreshSessions = useCallback(async () => {
+    await fetchLiveSessions();
+  }, [fetchLiveSessions]);
 
-  // Fetch data on mount
+  // Fetch data on mount and when tab changes
   useEffect(() => {
-    refreshSessions();
-  }, [refreshSessions]);
+    fetchLiveSessions();
+  }, [activeTab, fetchLiveSessions]);
   
   // Start surveillance handler
   const handleStartSurveillance = async (session: LiveSession) => {
@@ -113,7 +135,8 @@ export function SurveillanceProvider({
     setActiveTab,
     refreshSessions,
     refreshAlerts,
-    handleStartSurveillance
+    handleStartSurveillance,
+    fetchLiveSessions
   };
   
   return (

@@ -1,24 +1,14 @@
 
-import React, { ReactNode } from 'react';
-import { SearchFilterBar } from './components/SearchFilterBar';
-import { LiveSession } from './types';
+import React from "react";
 
-export interface TabContentProps {
+interface TabContentProps {
+  children: React.ReactNode;
   isActive: boolean;
-  children?: ReactNode;
-  sessions?: LiveSession[];
-  isLoading?: boolean;
-  error?: string | null;
-  activeTab?: string;
 }
 
-export const TabContent = ({ isActive, children, sessions, isLoading, error, activeTab }: TabContentProps) => {
-  if (!isActive) {
-    return null;
-  }
-
+export const TabContent = ({ children, isActive }: TabContentProps) => {
   return (
-    <div className="p-4 bg-black/20 rounded-md border border-white/10 space-y-6">
+    <div className={`transition-opacity ${isActive ? 'opacity-100' : 'opacity-0'}`}>
       {children}
     </div>
   );

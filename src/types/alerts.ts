@@ -1,23 +1,24 @@
 
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
+
 export interface LiveAlert {
   id: string;
-  type: "violation" | "risk" | "information";
-  alert_type: string;
+  type: string;
+  alert_type: "violation" | "risk" | "information";
   user_id: string;
   username: string;
-  avatar_url: string | null;
+  avatar_url?: string;
   timestamp: string;
   created_at: string;
   content_type: string;
   reason: string;
   severity: "high" | "medium" | "low";
   content_id: string;
+  message: string;
+  status: string;
   title: string;
-  message?: string;
-  status?: string;
-  description: string;
+  description?: string;
   is_viewed: boolean;
-  session_id?: string;
-  session?: any;
   urgent?: boolean;
+  session?: LiveSession;
 }
