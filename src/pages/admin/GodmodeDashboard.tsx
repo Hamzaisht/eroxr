@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { AdminDashboardTabs } from "@/components/admin/godmode/dashboard/AdminDashboardTabs";
 import { useAlertProcessor } from "@/components/admin/godmode/dashboard/AlertProcessor";
+import { TabsContent } from "@/components/ui/tabs";
 
 export default function GodmodeDashboard() {
   const session = useSession();
@@ -57,44 +58,6 @@ export default function GodmodeDashboard() {
     return <div>Loading admin dashboard...</div>;
   }
 
-  // Render different tab content based on activeTab
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "overview":
-        return (
-          <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-            <h2 className="text-xl mb-4">Admin Overview</h2>
-            <p>This is the admin dashboard overview.</p>
-          </div>
-        );
-      case "surveillance":
-        return null; // This tab content is handled in AdminDashboardTabs
-      case "users":
-        return (
-          <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-            <h2 className="text-xl mb-4">User Management</h2>
-            <p>Manage users here.</p>
-          </div>
-        );
-      case "content":
-        return (
-          <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-            <h2 className="text-xl mb-4">Content Moderation</h2>
-            <p>Moderate content here.</p>
-          </div>
-        );
-      case "settings":
-        return (
-          <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-            <h2 className="text-xl mb-4">Admin Settings</h2>
-            <p>Configure admin settings here.</p>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <AdminLayout>
       <div className="container mx-auto py-6 space-y-6">
@@ -103,9 +66,36 @@ export default function GodmodeDashboard() {
         <AdminDashboardTabs 
           activeTab={activeTab} 
           onTabChange={handleTabChange}
-        />
-        
-        {renderTabContent()}
+        >
+          {/* Tabs content */}
+          <TabsContent value="overview">
+            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+              <h2 className="text-xl mb-4">Admin Overview</h2>
+              <p>This is the admin dashboard overview.</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="users">
+            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+              <h2 className="text-xl mb-4">User Management</h2>
+              <p>Manage users here.</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="content">
+            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+              <h2 className="text-xl mb-4">Content Moderation</h2>
+              <p>Moderate content here.</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="settings">
+            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+              <h2 className="text-xl mb-4">Admin Settings</h2>
+              <p>Configure admin settings here.</p>
+            </div>
+          </TabsContent>
+        </AdminDashboardTabs>
       </div>
     </AdminLayout>
   );
