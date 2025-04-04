@@ -6,7 +6,7 @@ import { LiveSurveillance } from "@/components/admin/platform/LiveSurveillance";
 interface AdminDashboardTabsProps {
   activeTab: string;
   onTabChange: (value: string) => void;
-  children?: React.ReactNode; // Already added children prop
+  children?: React.ReactNode; // Added children prop
 }
 
 export const AdminDashboardTabs = ({ activeTab, onTabChange, children }: AdminDashboardTabsProps) => {
