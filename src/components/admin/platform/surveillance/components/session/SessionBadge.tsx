@@ -37,13 +37,13 @@ export const SessionBadge = ({ session }: SessionBadgeProps) => {
       case 'call':
         return "ACTIVE";
       case 'chat':
-        return session.message_type ? session.message_type.toUpperCase() : "MESSAGE";
+        return session.message_type ? String(session.message_type).toUpperCase() : "MESSAGE";
       case 'bodycontact':
-        return session.status ? session.status.toUpperCase() : "ACTIVE";
+        return session.status ? String(session.status).toUpperCase() : "ACTIVE";
       case 'content':
-        return session.content_type ? session.content_type.toUpperCase() : "CONTENT";
+        return session.content_type ? String(session.content_type).toUpperCase() : "CONTENT";
       default:
-        return session.type ? session.type.toUpperCase() : "ACTIVE";
+        return session.type ? String(session.type).toUpperCase() : "ACTIVE";
     }
   };
   
