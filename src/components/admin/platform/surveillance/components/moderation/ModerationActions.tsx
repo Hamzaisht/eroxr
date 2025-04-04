@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { MoreHorizontal, Flag, Ban, EyeOff, Trash2, Edit, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -7,7 +7,6 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { LiveSession, LiveSessionType, SurveillanceContentItem } from "../../types";
-import { useState } from "react";
 import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
 import { ModerationActionButton } from "./ModerationActionButton";
@@ -103,14 +102,12 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
   const { handleModeration, actionInProgress } = useModerationActions();
   
   const getCompatibleSession = () => {
-    // Create a session object that matches the expected LiveSession type
-    // We will only copy over the properties needed by the component
     if ('type' in session && typeof session.type === 'string') {
-      return session as LiveSession;
+      return session;
     } else {
       const contentItem = session as SurveillanceContentItem;
-      // Type assertion is used here to safely convert the type
-      const result: any = {
+      
+      return {
         id: contentItem.id,
         type: 'content' as LiveSessionType,
         user_id: contentItem.creator_id || contentItem.user_id || '',
@@ -120,10 +117,10 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
         username: contentItem.creator_username || contentItem.username,
         avatar_url: contentItem.creator_avatar_url || contentItem.avatar_url,
         content_type: contentItem.content_type,
-        title: contentItem.title,
-        status: contentItem.visibility
+        title: contentItem.title || '',
+        description: contentItem.description || '',
+        status: contentItem.visibility || contentItem.status
       };
-      return result;
     }
   };
   
