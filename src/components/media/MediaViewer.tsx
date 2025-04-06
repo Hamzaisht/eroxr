@@ -16,7 +16,12 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
   return (
     <Dialog open={!!media} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-transparent border-none">
-        <MediaContent url={media} isVideo={!!isVideo} creatorId={creatorId} />
+        <MediaContent 
+          url={media} 
+          isVideo={!!isVideo} 
+          creatorId={creatorId}
+          onClose={onClose}
+        />
       </DialogContent>
     </Dialog>
   );
