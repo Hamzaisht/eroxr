@@ -1,4 +1,3 @@
-
 export const validateVideoFormat = async (file: File): Promise<boolean> => {
   return new Promise((resolve) => {
     const video = document.createElement('video');
@@ -122,4 +121,113 @@ export const generateVideoThumbnails = async (videoFile: File, numThumbnails = 3
     
     video.src = URL.createObjectURL(videoFile);
   });
+};
+
+// New function to apply watermark on video during processing
+export const applyWatermarkToVideo = async (
+  videoElement: HTMLVideoElement,
+  username: string
+): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Could not get canvas context'));
+        return;
+      }
+      
+      // Set canvas size to match video
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      
+      // Draw video frame to canvas
+      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      
+      // Add watermark
+      const watermarkText = `www.eroxr.com/@${username}`;
+      const fontSize = Math.max(16, Math.min(canvas.width * 0.025, 24));
+      
+      ctx.font = `600 ${fontSize}px sans-serif`;
+      ctx.fillStyle = 'white';
+      
+      // Measure text for positioning
+      const metrics = ctx.measureText(watermarkText);
+      const textWidth = metrics.width;
+      
+      // Position at bottom right with padding
+      const padding = fontSize / 2;
+      const x = canvas.width - textWidth - padding;
+      const y = canvas.height - padding;
+      
+      // Add background for better visibility
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(
+        x - padding / 2,
+        y - fontSize - padding / 2,
+        textWidth + padding,
+        fontSize + padding
+      );
+      
+      // Draw text
+      ctx.fillStyle = 'white';
+      ctx.fillText(watermarkText, x, y - padding / 2);
+      
+      // Convert canvas to blob
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to convert canvas to blob'));
+          }
+        },
+        'image/jpeg',
+        0.95
+      );
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+// Function to watermark an individual frame (for livestreams)
+export const watermarkVideoFrame = (
+  videoElement: HTMLVideoElement,
+  username: string,
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement
+): void => {
+  // Draw current video frame
+  ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+  
+  // Add watermark
+  const watermarkText = `www.eroxr.com/@${username}`;
+  const fontSize = Math.max(16, Math.min(canvas.width * 0.025, 24));
+  
+  ctx.font = `600 ${fontSize}px sans-serif`;
+  ctx.fillStyle = 'white';
+  
+  // Measure text for positioning
+  const metrics = ctx.measureText(watermarkText);
+  const textWidth = metrics.width;
+  
+  // Position at bottom right with padding
+  const padding = fontSize / 2;
+  const x = canvas.width - textWidth - padding;
+  const y = canvas.height - padding;
+  
+  // Add background for better visibility
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.fillRect(
+    x - padding / 2,
+    y - fontSize - padding / 2,
+    textWidth + padding,
+    fontSize + padding
+  );
+  
+  // Draw text
+  ctx.fillStyle = 'white';
+  ctx.fillText(watermarkText, x, y - padding / 2);
 };

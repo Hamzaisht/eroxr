@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { v4 as uuidv4 } from 'uuid';
+import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 
 interface ShortPostSubmitParams {
   title: string;
@@ -16,8 +17,20 @@ export const useShortPostSubmit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [username, setUsername] = useState<string>('eroxr');
   const { toast } = useToast();
   const session = useSession();
+
+  // Fetch username when the component mounts
+  useEffect(() => {
+    if (session?.user?.id) {
+      getUsernameForWatermark(session.user.id).then(name => {
+        setUsername(name);
+      }).catch(error => {
+        console.error("Error fetching watermark username:", error);
+      });
+    }
+  }, [session?.user?.id]);
 
   const submitShortPost = async ({
     title, 
@@ -43,6 +56,9 @@ export const useShortPostSubmit = () => {
       const fileName = `${session.user.id}/${uuidv4()}.${fileExt}`;
       const filePath = fileName;
 
+      // For video files, we'll use a CSS overlay watermark approach
+      // because re-encoding videos on the client is resource intensive
+      
       // Upload video to storage
       const { error: uploadError } = await supabase.storage
         .from('shorts')
@@ -64,6 +80,12 @@ export const useShortPostSubmit = () => {
         tags.push('premium');
       }
 
+      // Store the username for watermarking
+      const metadata = {
+        watermarkUsername: username,
+        creator: session.user.id
+      };
+
       // Insert post record
       const { data: postData, error: postError } = await supabase
         .from('posts')
@@ -75,7 +97,8 @@ export const useShortPostSubmit = () => {
           video_thumbnail_url: data.publicUrl, 
           visibility: isPremium ? 'subscribers_only' : 'public',
           video_processing_status: 'completed',
-          tags: tags
+          tags: tags,
+          metadata: metadata
         })
         .select('id')
         .single();

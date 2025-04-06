@@ -1,6 +1,6 @@
 
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { AlertCircle } from "lucide-react";
@@ -95,6 +95,7 @@ export const PostContent = ({
                               poster={mediaUrls?.[0] ? getPublicUrl(mediaUrls[0]) : undefined}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
+                              creatorId={creatorId}
                             />
                           </motion.div>
                         );
@@ -116,15 +117,22 @@ export const PostContent = ({
                             className="relative aspect-[4/3] cursor-pointer group"
                             onClick={() => onMediaClick(publicUrl)}
                           >
-                            <img
-                              src={publicUrl}
-                              alt={`Post media ${index + 1}`}
-                              className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                              loading="eager"
-                              crossOrigin="anonymous"
-                              onError={() => handleMediaError(url)}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                            <div className="relative w-full h-full">
+                              <img
+                                src={publicUrl}
+                                alt={`Post media ${index + 1}`}
+                                className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                                loading="eager"
+                                crossOrigin="anonymous"
+                                onError={() => handleMediaError(url)}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                              
+                              {/* Watermark overlay */}
+                              <div className="watermark-overlay">
+                                www.eroxr.com/@{creatorId}
+                              </div>
+                            </div>
                           </motion.div>
                         );
                       })}
@@ -134,6 +142,30 @@ export const PostContent = ({
               </div>
             </AnimatePresence>
           </div>
+          
+          <style jsx>{`
+            .watermark-overlay {
+              position: absolute;
+              bottom: 8px;
+              right: 8px;
+              padding: 4px 6px;
+              background-color: rgba(0, 0, 0, 0.6);
+              color: white;
+              font-size: 14px;
+              font-weight: 600;
+              font-family: sans-serif;
+              border-radius: 2px;
+              pointer-events: none;
+              z-index: 10;
+            }
+            
+            @media screen and (min-width: 768px) {
+              .watermark-overlay {
+                font-size: 18px;
+                padding: 6px 8px;
+              }
+            }
+          `}</style>
         </ProtectedMedia>
       )}
     </motion.div>

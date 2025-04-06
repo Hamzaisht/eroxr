@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { VideoControls } from "./VideoControls";
 import { VideoPremiumCheck } from "./VideoPremiumCheck";
 import { VideoFullscreenButton } from "./VideoFullscreenButton";
+import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 
 interface VideoPlayerProps {
   url: string;
@@ -24,6 +25,7 @@ interface VideoPlayerProps {
   showCloseButton?: boolean;
   isPremium?: boolean;
   videoId?: string;
+  creatorId?: string;
 }
 
 export const VideoPlayer = ({ 
@@ -36,7 +38,8 @@ export const VideoPlayer = ({
   onClose,
   showCloseButton = false,
   isPremium = false,
-  videoId
+  videoId,
+  creatorId
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
@@ -44,6 +47,7 @@ export const VideoPlayer = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [username, setUsername] = useState<string>('eroxr');
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,6 +60,17 @@ export const VideoPlayer = ({
     videoId,
     session
   });
+  
+  // Fetch username for watermark if creator ID is provided
+  useEffect(() => {
+    if (creatorId) {
+      getUsernameForWatermark(creatorId).then(name => {
+        setUsername(name);
+      }).catch(error => {
+        console.error("Error fetching watermark username:", error);
+      });
+    }
+  }, [creatorId]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -221,6 +236,13 @@ export const VideoPlayer = ({
         />
       </div>
       
+      {/* Watermark overlay */}
+      {isLoaded && !hasError && creatorId && (
+        <div className="watermark-overlay">
+          www.eroxr.com/@{username}
+        </div>
+      )}
+
       {/* Premium overlay for non-premium users */}
       {isPremium && !canPlayFull && isLoaded && (
         <PremiumErosOverlay 
@@ -265,6 +287,30 @@ export const VideoPlayer = ({
           </Button>
         </div>
       </div>
+      
+      <style jsx>{`
+        .watermark-overlay {
+          position: absolute;
+          bottom: 8px;
+          right: 8px;
+          padding: 4px 6px;
+          background-color: rgba(0, 0, 0, 0.6);
+          color: white;
+          font-size: 14px;
+          font-weight: 600;
+          font-family: sans-serif;
+          border-radius: 2px;
+          pointer-events: none;
+          z-index: 20;
+        }
+        
+        @media screen and (min-width: 768px) {
+          .watermark-overlay {
+            font-size: 18px;
+            padding: 6px 8px;
+          }
+        }
+      `}</style>
     </div>
   );
 };
