@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 
@@ -8,20 +7,27 @@ interface WatermarkOverlayProps {
 }
 
 export const WatermarkOverlay = ({ username, creatorId }: WatermarkOverlayProps) => {
-  const [displayName, setDisplayName] = useState(username);
+  const [displayName, setDisplayName] = useState<string>("eroxr-user");
 
   useEffect(() => {
     const fetchUsername = async () => {
-      if (creatorId) {
-        try {
-          const name = await getUsernameForWatermark(creatorId);
-          setDisplayName(name);
-        } catch (error) {
-          console.error('Error fetching username for watermark:', error);
+      try {
+        // If username is already provided and looks like a username (not a UUID), use it directly
+        if (username && username.length < 20 && !username.includes('-')) {
+          console.log('Using provided username directly:', username);
           setDisplayName(username);
+          return;
         }
-      } else {
-        setDisplayName(username);
+        
+        // Otherwise try to get username from creatorId or fall back to provided username
+        const sourceId = creatorId || username;
+        console.log('Fetching username for ID:', sourceId);
+        
+        const name = await getUsernameForWatermark(sourceId);
+        setDisplayName(name);
+      } catch (error) {
+        console.error('Error in WatermarkOverlay:', error);
+        setDisplayName(username || "eroxr-user");
       }
     };
 

@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import { WatermarkOverlay } from "./WatermarkOverlay";
 
 interface MediaContentProps {
@@ -18,32 +17,20 @@ export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => 
   const [username, setUsername] = useState<string>('');
   
   useEffect(() => {
-    const getUsername = async () => {
-      if (creatorId) {
-        try {
-          const name = await getUsernameForWatermark(creatorId);
-          setUsername(name);
-        } catch (error) {
-          console.error('Error getting username for watermark:', error);
-          setUsername(creatorId.slice(0, 8));
-        }
-      } else {
-        const urlParts = url.split('/');
-        const possibleCreatorId = urlParts[urlParts.length - 2];
-        
-        if (possibleCreatorId && possibleCreatorId.length > 20) {
-          try {
-            const name = await getUsernameForWatermark(possibleCreatorId);
-            setUsername(name);
-          } catch (error) {
-            console.error('Error getting username for watermark:', error);
-            setUsername(possibleCreatorId.slice(0, 8));
-          }
-        }
-      }
-    };
+    let possibleUsername = '';
     
-    getUsername();
+    // Try to extract username from URL if creatorId not provided
+    if (!creatorId && url) {
+      const urlParts = url.split('/');
+      possibleUsername = urlParts[urlParts.length - 2] || '';
+      
+      // Check if this part looks like a username rather than a UUID
+      if (possibleUsername && (possibleUsername.length > 20 || possibleUsername.includes('-'))) {
+        possibleUsername = ''; // Not a username, clear it
+      }
+    }
+    
+    setUsername(possibleUsername || (creatorId || ''));
   }, [url, creatorId]);
 
   return (
