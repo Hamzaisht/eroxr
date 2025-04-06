@@ -31,7 +31,7 @@ export const applyCanvasWatermark = (
     position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   } = {}
 ): HTMLCanvasElement => {
-  const { fontSize = 16, position = 'bottom-right' } = options;
+  const { fontSize = 14, position = 'bottom-right' } = options;
   
   // Create canvas element
   const canvas = document.createElement('canvas');
@@ -71,24 +71,22 @@ export const applyCanvasWatermark = (
   
   // Adjust font size based on canvas dimensions for responsive scaling
   const actualFontSize = Math.min(
-    Math.max(fontSize, canvas.width * 0.016), // Min 16px, or 1.6% of width
-    canvas.width * 0.025 // Max 2.5% of width
+    Math.max(fontSize, canvas.width * 0.014), // Min fontSize, or 1.4% of width
+    canvas.width * 0.02 // Max 2% of width
   );
   
-  ctx.font = `semibold ${actualFontSize}px sans-serif`;
-  ctx.fillStyle = 'white';
+  ctx.font = `500 ${actualFontSize}px sans-serif`;
   ctx.textBaseline = 'bottom';
   
   // Measure text for positioning
   const textMetrics = ctx.measureText(watermarkText);
   const textWidth = textMetrics.width;
-  const textHeight = actualFontSize;
   
   // Position the watermark based on the requested position
   let x = 0;
   let y = 0;
   
-  const padding = actualFontSize / 2; // Padding around text
+  const padding = 12; // 12px from edge
   
   if (position === 'bottom-right') {
     x = canvas.width - textWidth - padding;
@@ -98,24 +96,19 @@ export const applyCanvasWatermark = (
     y = canvas.height - padding;
   } else if (position === 'top-right') {
     x = canvas.width - textWidth - padding;
-    y = textHeight + padding;
+    y = actualFontSize + padding;
   } else if (position === 'top-left') {
     x = padding;
-    y = textHeight + padding;
+    y = actualFontSize + padding;
   }
   
-  // Draw shadow/background for better visibility
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  ctx.fillRect(
-    x - padding / 2, 
-    y - textHeight - padding / 2, 
-    textWidth + padding, 
-    textHeight + padding
-  );
-  
-  // Draw text
-  ctx.fillStyle = 'white';
-  ctx.fillText(watermarkText, x, y - padding / 2);
+  // Draw text with shadow for better visibility
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+  ctx.shadowBlur = 2;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 1;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.fillText(watermarkText, x, y);
   
   return canvas;
 };
@@ -135,7 +128,7 @@ export const createWatermarkedImage = async (
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         const canvas = applyCanvasWatermark(img, username, {
-          fontSize: 16,
+          fontSize: 14,
           position: 'bottom-right'
         });
         
@@ -161,23 +154,21 @@ export const generateWatermarkCSS = (username: string): string => {
   return `
     .watermark-overlay {
       position: absolute;
-      bottom: 8px;
-      right: 8px;
-      padding: 4px 6px;
-      background-color: rgba(0, 0, 0, 0.6);
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: sans-serif;
-      border-radius: 2px;
-      pointer-events: none;
+      bottom: 12px;
+      right: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       z-index: 10;
+      pointer-events: none;
+      text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.8), 
+                   0px 1px 2px rgba(0, 0, 0, 0.5);
     }
     
     @media screen and (min-width: 768px) {
       .watermark-overlay {
-        font-size: 18px;
-        padding: 6px 8px;
+        font-size: 14px;
       }
     }
   `;
