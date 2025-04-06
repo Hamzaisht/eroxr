@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -5,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { AdminDashboardTabs } from "@/components/admin/godmode/dashboard/AdminDashboardTabs";
 import { useAlertProcessor } from "@/components/admin/godmode/dashboard/AlertProcessor";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 export default function GodmodeDashboard() {
   const session = useSession();
@@ -57,38 +58,40 @@ export default function GodmodeDashboard() {
       <div className="container mx-auto py-6 space-y-6">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
         
-        <AdminDashboardTabs 
-          activeTab={activeTab} 
-          onTabChange={handleTabChange}
-        />
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <AdminDashboardTabs 
+            activeTab={activeTab} 
+            onTabChange={handleTabChange}
+          />
 
-        <TabsContent value="overview">
-          <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-            <h2 className="text-xl mb-4">Admin Overview</h2>
-            <p>This is the admin dashboard overview.</p>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="users">
-          <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-            <h2 className="text-xl mb-4">User Management</h2>
-            <p>Manage users here.</p>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="content">
-          <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-            <h2 className="text-xl mb-4">Content Moderation</h2>
-            <p>Moderate content here.</p>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="settings">
-          <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-            <h2 className="text-xl mb-4">Admin Settings</h2>
-            <p>Configure admin settings here.</p>
-          </div>
-        </TabsContent>
+          <TabsContent value="overview">
+            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+              <h2 className="text-xl mb-4">Admin Overview</h2>
+              <p>This is the admin dashboard overview.</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="users">
+            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+              <h2 className="text-xl mb-4">User Management</h2>
+              <p>Manage users here.</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="content">
+            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+              <h2 className="text-xl mb-4">Content Moderation</h2>
+              <p>Moderate content here.</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="settings">
+            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+              <h2 className="text-xl mb-4">Admin Settings</h2>
+              <p>Configure admin settings here.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
