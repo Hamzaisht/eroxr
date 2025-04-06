@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
+import '../../../styles/watermark.css';
 
 interface StoryImageProps {
   mediaUrl: string;
@@ -42,30 +43,6 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId }: StoryIma
       <div className="watermark-overlay">
         www.eroxr.com/@{watermarkUsername}
       </div>
-      
-      <style jsx>{`
-        .watermark-overlay {
-          position: absolute;
-          bottom: 8px;
-          right: 8px;
-          padding: 4px 6px;
-          background-color: rgba(0, 0, 0, 0.6);
-          color: white;
-          font-size: 14px;
-          font-weight: 600;
-          font-family: sans-serif;
-          border-radius: 2px;
-          pointer-events: none;
-          z-index: 10;
-        }
-        
-        @media screen and (min-width: 768px) {
-          .watermark-overlay {
-            font-size: 18px;
-            padding: 6px 8px;
-          }
-        }
-      `}</style>
     </motion.div>
   );
 };

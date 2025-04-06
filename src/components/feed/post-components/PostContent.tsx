@@ -6,6 +6,7 @@ import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import '../../../styles/watermark.css';
 
 interface PostContentProps {
   content: string;
@@ -142,30 +143,6 @@ export const PostContent = ({
               </div>
             </AnimatePresence>
           </div>
-          
-          <style jsx>{`
-            .watermark-overlay {
-              position: absolute;
-              bottom: 8px;
-              right: 8px;
-              padding: 4px 6px;
-              background-color: rgba(0, 0, 0, 0.6);
-              color: white;
-              font-size: 14px;
-              font-weight: 600;
-              font-family: sans-serif;
-              border-radius: 2px;
-              pointer-events: none;
-              z-index: 10;
-            }
-            
-            @media screen and (min-width: 768px) {
-              .watermark-overlay {
-                font-size: 18px;
-                padding: 6px 8px;
-              }
-            }
-          `}</style>
         </ProtectedMedia>
       )}
     </motion.div>

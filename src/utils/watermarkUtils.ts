@@ -42,9 +42,26 @@ export const applyCanvasWatermark = (
     return canvas;
   }
   
-  // Set canvas dimensions to match source element
-  canvas.width = element.naturalWidth || element.videoWidth || element.clientWidth;
-  canvas.height = element.naturalHeight || element.videoHeight || element.clientHeight;
+  // Set canvas dimensions based on element type
+  let width = 0;
+  let height = 0;
+  
+  if ('videoWidth' in element) {
+    // It's a video element
+    width = element.videoWidth || element.clientWidth;
+    height = element.videoHeight || element.clientHeight;
+  } else if ('naturalWidth' in element) {
+    // It's an image element
+    width = element.naturalWidth || element.clientWidth;
+    height = element.naturalHeight || element.clientHeight;
+  } else {
+    // Fallback
+    width = element.clientWidth;
+    height = element.clientHeight;
+  }
+  
+  canvas.width = width;
+  canvas.height = height;
   
   // Draw the original content to the canvas
   ctx.drawImage(element, 0, 0, canvas.width, canvas.height);

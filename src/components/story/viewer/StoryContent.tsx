@@ -30,12 +30,14 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
             videoUrl={story.video_url!}
             onEnded={onNext}
             isPaused={isPaused}
+            creatorId={story.creator.id}
           />
         ) : (
           <StoryImage
             mediaUrl={story.media_url || ''}
             username={story.creator.username}
             isPaused={isPaused}
+            creatorId={story.creator.id}
           />
         )}
       </div>
