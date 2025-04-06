@@ -3,11 +3,10 @@ import { ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LiveSurveillance } from "@/components/admin/platform/LiveSurveillance";
 
-interface AdminDashboardTabsProps {
+type AdminDashboardTabsProps = React.JSX.IntrinsicAttributes & React.PropsWithChildren<{
   activeTab: string;
   onTabChange: (value: string) => void;
-  children?: ReactNode;  // Changed from React.ReactNode to ReactNode
-}
+}>;
 
 export const AdminDashboardTabs = ({ 
   activeTab, 
