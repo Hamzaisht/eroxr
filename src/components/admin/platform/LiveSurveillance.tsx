@@ -1,16 +1,15 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { SessionList } from "./surveillance/SessionList";
 import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { GhostModePrompt } from "./surveillance/GhostModePrompt";
 import { SurveillanceProvider } from "./surveillance/SurveillanceContext";
-import { AlertsList } from "./surveillance/AlertsList";
-import { Button } from "@/components/ui/button";
-import { PowerOff, RefreshCw } from "lucide-react";
-import { LiveSession, LiveSessionType } from "./surveillance/types";
+import { LiveSession } from "./surveillance/types";
 import { LiveAlert } from "@/types/alerts";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useLiveSurveillanceData } from "./surveillance/hooks/useLiveSurveillanceData";
+import { SurveillanceAlerts } from "./surveillance/components/SurveillanceAlerts";
+import { ActiveSessionMonitor } from "./surveillance/components/ActiveSessionMonitor";
 
 export const LiveSurveillance = () => {
   const {
@@ -23,171 +22,7 @@ export const LiveSurveillance = () => {
   } = useGhostMode();
 
   const [loadingRefresh, setLoadingRefresh] = useState<boolean>(false);
-  const [sessions, setSessions] = useState<LiveSession[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const supabase = useSupabaseClient();
-  
-  const fetchActiveSessions = useCallback(async () => {
-    if (!isGhostMode) return;
-    
-    try {
-      setIsLoading(true);
-      console.log("Fetching active surveillance sessions...");
-      
-      // Fetch direct messages with user profiles
-      const { data: messages, error: messagesError } = await supabase
-        .from('direct_messages')
-        .select('*, sender:sender_id(username, avatar_url), recipient:recipient_id(username, avatar_url)')
-        .order('created_at', { ascending: false })
-        .limit(50);
-        
-      if (messagesError) {
-        console.error("Error fetching messages:", messagesError);
-      } else {
-        console.log("Fetched messages:", messages?.length || 0);
-      }
-      
-      // Fetch posts with creator profiles
-      const { data: posts, error: postsError } = await supabase
-        .from('posts')
-        .select('*, creator:creator_id(username, avatar_url)')
-        .order('created_at', { ascending: false })
-        .limit(50);
-        
-      if (postsError) {
-        console.error("Error fetching posts:", postsError);
-      } else {
-        console.log("Fetched posts:", posts?.length || 0);
-      }
-      
-      // Fetch active streams
-      const { data: streams, error: streamsError } = await supabase
-        .from('live_streams')
-        .select('*, creator:creator_id(username, avatar_url)')
-        .eq('status', 'live')
-        .order('started_at', { ascending: false })
-        .limit(10);
-        
-      if (streamsError) {
-        console.error("Error fetching streams:", streamsError);
-      }
-      
-      // Transform messages into LiveSession format
-      const messageSessions: LiveSession[] = (messages || []).map(msg => ({
-        id: msg.id,
-        type: "chat" as LiveSessionType,
-        user_id: msg.sender_id,
-        created_at: msg.created_at,
-        media_url: msg.media_url || [],
-        username: msg.sender?.username || "Unknown",
-        avatar_url: msg.sender?.avatar_url,
-        content: msg.content || "",
-        content_type: msg.message_type || "text",
-        status: "active",
-        message_type: msg.message_type || "text",
-        recipient_id: msg.recipient_id,
-        recipient_username: msg.recipient?.username,
-        sender_username: msg.sender?.username,
-      }));
-      
-      // Transform posts into LiveSession format
-      const postSessions: LiveSession[] = (posts || []).map(post => ({
-        id: post.id,
-        type: "content" as LiveSessionType,
-        user_id: post.creator_id,
-        created_at: post.created_at,
-        media_url: post.media_url || [],
-        username: post.creator?.username || "Unknown",
-        avatar_url: post.creator?.avatar_url,
-        content: post.content || "",
-        content_type: "post",
-        status: post.visibility || "public",
-        title: `Post by ${post.creator?.username || "Unknown"}`,
-        tags: post.tags,
-      }));
-      
-      // Transform streams into LiveSession format
-      const streamSessions: LiveSession[] = (streams || []).map(stream => ({
-        id: stream.id,
-        type: "stream" as LiveSessionType,
-        user_id: stream.creator_id,
-        created_at: stream.started_at || stream.created_at,
-        started_at: stream.started_at,
-        media_url: stream.playback_url ? [stream.playback_url] : [],
-        username: stream.creator?.username || "Unknown",
-        avatar_url: stream.creator?.avatar_url,
-        content_type: "stream",
-        status: stream.status,
-        title: stream.title,
-        description: stream.description,
-        viewer_count: stream.viewer_count,
-      }));
-      
-      const allSessions = [...messageSessions, ...postSessions, ...streamSessions];
-      
-      setSessions(allSessions);
-      console.log(`Total active sessions: ${allSessions.length}`);
-    } catch (error) {
-      console.error("Error in fetchActiveSessions:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isGhostMode, supabase]);
-  
-  useEffect(() => {
-    if (isGhostMode) {
-      refreshAlerts();
-      fetchActiveSessions();
-    }
-  }, [isGhostMode, refreshAlerts, fetchActiveSessions]);
-  
-  useEffect(() => {
-    if (!isGhostMode) return;
-    
-    console.log("Setting up realtime subscriptions for surveillance data");
-    
-    const messagesChannel = supabase
-      .channel('surveillance-messages')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'direct_messages',
-      }, () => {
-        console.log('Message activity detected, refreshing data');
-        fetchActiveSessions();
-      })
-      .subscribe();
-      
-    const postsChannel = supabase
-      .channel('surveillance-posts')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'posts',
-      }, () => {
-        console.log('Post activity detected, refreshing data');
-        fetchActiveSessions();
-      })
-      .subscribe();
-      
-    const streamsChannel = supabase
-      .channel('surveillance-streams')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'live_streams',
-      }, () => {
-        console.log('Stream activity detected, refreshing data');
-        fetchActiveSessions();
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(messagesChannel);
-      supabase.removeChannel(postsChannel);
-      supabase.removeChannel(streamsChannel);
-    };
-  }, [isGhostMode, supabase, fetchActiveSessions]);
+  const { sessions, isLoading, fetchActiveSessions } = useLiveSurveillanceData();
   
   const handleRefresh = async () => {
     setLoadingRefresh(true);
@@ -227,48 +62,19 @@ export const LiveSurveillance = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4">
       <div className="space-y-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">AI Alerts</h2>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleRefresh}
-            disabled={loadingRefresh}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loadingRefresh ? 'animate-spin' : ''}`} />
-            {loadingRefresh ? 'Refreshing...' : 'Refresh'}
-          </Button>
-        </div>
-        
-        <AlertsList 
-          alerts={liveAlerts} 
-          isLoading={loadingRefresh}
-          onSelect={handleSelectAlert} 
+        <SurveillanceAlerts
+          liveAlerts={liveAlerts}
+          loadingRefresh={loadingRefresh}
+          onRefresh={handleRefresh}
+          onSelectAlert={handleSelectAlert}
         />
         
-        {activeSurveillance.isWatching && (
-          <div className="mt-4 p-4 bg-red-950/20 border border-red-800/30 rounded-md">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-red-400 font-medium">Active Surveillance</h3>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                onClick={handleStopWatching}
-              >
-                <PowerOff className="h-3.5 w-3.5 mr-1.5" />
-                Stop
-              </Button>
-            </div>
-            
-            <p className="text-sm text-gray-400 mb-1">
-              Watching: <span className="text-white">{activeSurveillance.session?.username || 'User'}</span>
-            </p>
-            <p className="text-sm text-gray-400">
-              Since: <span className="text-white">{activeSurveillance.startTime && 
-                new Date(activeSurveillance.startTime).toLocaleTimeString()}</span>
-            </p>
-          </div>
-        )}
+        <ActiveSessionMonitor
+          isWatching={activeSurveillance.isWatching}
+          session={activeSurveillance.session}
+          startTime={activeSurveillance.startTime}
+          onStopWatching={handleStopWatching}
+        />
       </div>
       
       <div className="lg:col-span-3 space-y-4">
