@@ -1,5 +1,5 @@
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LiveSurveillance } from "@/components/admin/platform/LiveSurveillance";
 
 type AdminDashboardTabsProps = {
