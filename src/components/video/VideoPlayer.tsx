@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Maximize, X } from "lucide-react";
@@ -287,30 +286,6 @@ export const VideoPlayer = ({
           </Button>
         </div>
       </div>
-      
-      <style jsx>{`
-        .watermark-overlay {
-          position: absolute;
-          bottom: 8px;
-          right: 8px;
-          padding: 4px 6px;
-          background-color: rgba(0, 0, 0, 0.6);
-          color: white;
-          font-size: 14px;
-          font-weight: 600;
-          font-family: sans-serif;
-          border-radius: 2px;
-          pointer-events: none;
-          z-index: 20;
-        }
-        
-        @media screen and (min-width: 768px) {
-          .watermark-overlay {
-            font-size: 18px;
-            padding: 6px 8px;
-          }
-        }
-      `}</style>
     </div>
   );
 };
