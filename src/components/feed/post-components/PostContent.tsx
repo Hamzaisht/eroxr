@@ -1,12 +1,11 @@
 
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import '../../../styles/watermark.css';
+import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 
 interface PostContentProps {
   content: string;
@@ -27,27 +26,6 @@ export const PostContent = ({
   const { toast } = useToast();
   // Safely check if either array has content
   const hasMedia = (mediaUrls?.length ?? 0) > 0 || (videoUrls?.length ?? 0) > 0;
-
-  const getPublicUrl = (url: string) => {
-    if (!url) return '';
-    
-    // If it's already a public URL, return it
-    if (url.startsWith('http')) {
-      return url;
-    }
-
-    // Get the bucket name and file path
-    const [bucketName, ...pathParts] = url.split('/');
-    const filePath = pathParts.join('/');
-
-    // Get public URL using Supabase storage
-    const { data } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(filePath);
-
-    console.log('Generated public URL:', data.publicUrl);
-    return data.publicUrl;
-  };
 
   const handleMediaError = (url: string) => {
     console.error('Media load error for URL:', url);
@@ -82,7 +60,6 @@ export const PostContent = ({
                   {videoUrls && videoUrls.length > 0 && (
                     <div className="space-y-4">
                       {videoUrls.map((url, index) => {
-                        const publicUrl = getPublicUrl(url);
                         return !loadError[url] && (
                           <motion.div
                             key={`video-${index}`}
@@ -90,11 +67,11 @@ export const PostContent = ({
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="relative aspect-video w-full cursor-pointer"
-                            onClick={() => onMediaClick(publicUrl)}
+                            onClick={() => onMediaClick(url)}
                           >
                             <VideoPlayer
-                              url={publicUrl}
-                              poster={mediaUrls?.[0] ? getPublicUrl(mediaUrls[0]) : undefined}
+                              url={url}
+                              poster={mediaUrls?.[0]}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
                               creatorId={creatorId}
@@ -109,7 +86,6 @@ export const PostContent = ({
                   {mediaUrls && mediaUrls.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {mediaUrls.map((url, index) => {
-                        const publicUrl = getPublicUrl(url);
                         return !loadError[url] && (
                           <motion.div
                             key={`image-${index}`}
@@ -117,11 +93,11 @@ export const PostContent = ({
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="relative aspect-[4/3] cursor-pointer group"
-                            onClick={() => onMediaClick(publicUrl)}
+                            onClick={() => onMediaClick(url)}
                           >
                             <div className="relative w-full h-full">
                               <img
-                                src={publicUrl}
+                                src={url}
                                 alt={`Post media ${index + 1}`}
                                 className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                                 loading="eager"
@@ -130,10 +106,7 @@ export const PostContent = ({
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                               
-                              {/* Watermark overlay */}
-                              <div className="watermark-overlay">
-                                www.eroxr.com/@{creatorId}
-                              </div>
+                              <WatermarkOverlay username={creatorId} />
                             </div>
                           </motion.div>
                         );

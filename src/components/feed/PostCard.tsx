@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -126,6 +125,7 @@ export const PostCard = ({
       <MediaViewer 
         media={selectedMedia} 
         onClose={() => setSelectedMedia(null)} 
+        creatorId={post.creator_id}
       />
 
       <ShareDialog 

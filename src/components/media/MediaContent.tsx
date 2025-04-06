@@ -1,23 +1,33 @@
-
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
+import { WatermarkOverlay } from "./WatermarkOverlay";
 
 interface MediaContentProps {
   url: string;
   isVideo: boolean;
+  creatorId?: string;
 }
 
-export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
+export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState<string>('eroxr');
   
-  // Extract creator ID from URL path if available
   useEffect(() => {
     const getUsername = async () => {
+      if (creatorId) {
+        try {
+          const name = await getUsernameForWatermark(creatorId);
+          setUsername(name);
+        } catch (error) {
+          console.error('Error getting username for watermark:', error);
+        }
+        return;
+      }
+      
       const urlParts = url.split('/');
       const possibleCreatorId = urlParts[urlParts.length - 2];
       
@@ -32,7 +42,7 @@ export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
     };
     
     getUsername();
-  }, [url]);
+  }, [url, creatorId]);
 
   return (
     <motion.div
@@ -62,9 +72,7 @@ export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
             onLoadedMetadata={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
           />
-          <div className="watermark-overlay">
-            www.eroxr.com/@{username}
-          </div>
+          <WatermarkOverlay username={username} />
         </div>
       ) : (
         <div className="relative max-w-[95vw] max-h-[95vh]">
@@ -83,9 +91,7 @@ export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
           />
-          <div className="watermark-overlay">
-            www.eroxr.com/@{username}
-          </div>
+          <WatermarkOverlay username={username} />
         </div>
       )}
     </motion.div>
