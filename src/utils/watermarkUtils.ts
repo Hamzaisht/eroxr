@@ -46,18 +46,18 @@ export const applyCanvasWatermark = (
   let width = 0;
   let height = 0;
   
-  if ('videoWidth' in element) {
+  if (element instanceof HTMLVideoElement) {
     // It's a video element
-    width = element.videoWidth || element.clientWidth;
-    height = element.videoHeight || element.clientHeight;
-  } else if ('naturalWidth' in element) {
+    width = element.videoWidth || element.clientWidth || 300;
+    height = element.videoHeight || element.clientHeight || 150;
+  } else if (element instanceof HTMLImageElement) {
     // It's an image element
-    width = element.naturalWidth || element.clientWidth;
-    height = element.naturalHeight || element.clientHeight;
+    width = element.naturalWidth || element.clientWidth || 300;
+    height = element.naturalHeight || element.clientHeight || 150;
   } else {
-    // Fallback
-    width = element.clientWidth;
-    height = element.clientHeight;
+    // This code should not be reached, but providing fallback
+    width = 300;
+    height = 150;
   }
   
   canvas.width = width;
