@@ -62,35 +62,35 @@ export default function GodmodeDashboard() {
           <AdminDashboardTabs 
             activeTab={activeTab} 
             onTabChange={handleTabChange}
-          />
-          
-          <TabsContent value="overview">
-            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-              <h2 className="text-xl mb-4">Admin Overview</h2>
-              <p>This is the admin dashboard overview.</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="users">
-            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-              <h2 className="text-xl mb-4">User Management</h2>
-              <p>Manage users here.</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="content">
-            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-              <h2 className="text-xl mb-4">Content Moderation</h2>
-              <p>Moderate content here.</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="settings">
-            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-              <h2 className="text-xl mb-4">Admin Settings</h2>
-              <p>Configure admin settings here.</p>
-            </div>
-          </TabsContent>
+          >
+            <TabsContent value="overview">
+              <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+                <h2 className="text-xl mb-4">Admin Overview</h2>
+                <p>This is the admin dashboard overview.</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="users">
+              <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+                <h2 className="text-xl mb-4">User Management</h2>
+                <p>Manage users here.</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="content">
+              <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+                <h2 className="text-xl mb-4">Content Moderation</h2>
+                <p>Moderate content here.</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="settings">
+              <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
+                <h2 className="text-xl mb-4">Admin Settings</h2>
+                <p>Configure admin settings here.</p>
+              </div>
+            </TabsContent>
+          </AdminDashboardTabs>
         </Tabs>
       </div>
     </AdminLayout>

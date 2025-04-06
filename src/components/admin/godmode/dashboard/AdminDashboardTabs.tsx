@@ -1,18 +1,21 @@
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveSurveillance } from "@/components/admin/platform/LiveSurveillance";
+import React from "react";
 
-type AdminDashboardTabsProps = {
+interface AdminDashboardTabsProps {
   activeTab: string;
   onTabChange: (value: string) => void;
-};
+  children?: React.ReactNode;
+}
 
-export const AdminDashboardTabs = ({ 
+export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({ 
   activeTab, 
-  onTabChange 
-}: AdminDashboardTabsProps) => {
+  onTabChange,
+  children
+}) => {
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange}>
+    <>
       <TabsList className="bg-[#0F141A]">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="surveillance">Surveillance</TabsTrigger>
@@ -24,6 +27,8 @@ export const AdminDashboardTabs = ({
       <TabsContent value="surveillance">
         <LiveSurveillance />
       </TabsContent>
-    </Tabs>
+      
+      {children}
+    </>
   );
 };
