@@ -6,10 +6,14 @@ import { LiveSurveillance } from "@/components/admin/platform/LiveSurveillance";
 interface AdminDashboardTabsProps {
   activeTab: string;
   onTabChange: (value: string) => void;
-  children?: ReactNode;
+  children?: ReactNode;  // Changed from React.ReactNode to ReactNode
 }
 
-export const AdminDashboardTabs = ({ activeTab, onTabChange, children }: AdminDashboardTabsProps) => {
+export const AdminDashboardTabs = ({ 
+  activeTab, 
+  onTabChange, 
+  children 
+}: AdminDashboardTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
       <TabsList className="bg-[#0F141A]">
