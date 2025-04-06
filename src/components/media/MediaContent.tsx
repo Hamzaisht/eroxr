@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 
 interface MediaContentProps {
   url: string;
@@ -12,6 +13,26 @@ interface MediaContentProps {
 
 export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [username, setUsername] = useState<string>('eroxr');
+  
+  // Extract creator ID from URL path if available
+  useEffect(() => {
+    const getUsername = async () => {
+      const urlParts = url.split('/');
+      const possibleCreatorId = urlParts[urlParts.length - 2];
+      
+      if (possibleCreatorId && possibleCreatorId.length > 20) {
+        try {
+          const name = await getUsernameForWatermark(possibleCreatorId);
+          setUsername(name);
+        } catch (error) {
+          console.error('Error getting username for watermark:', error);
+        }
+      }
+    };
+    
+    getUsername();
+  }, [url]);
 
   return (
     <motion.div
@@ -27,41 +48,45 @@ export const MediaContent = ({ url, isVideo }: MediaContentProps) => {
       )}
       
       {isVideo ? (
-        <video
-          src={url}
-          className={cn(
-            "max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain",
-            "rounded-lg shadow-xl"
-          )}
-          controls
-          autoPlay
-          playsInline
-          preload="auto"
-          onLoadedMetadata={(e) => {
-            setIsLoading(false);
-            const video = e.currentTarget;
-            video.play().catch(error => {
-              console.error("Error playing video:", error);
-            });
-          }}
-          onError={() => setIsLoading(false)}
-        />
+        <div className="relative max-w-[95vw] max-h-[95vh]">
+          <video
+            src={url}
+            className={cn(
+              "max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain",
+              "rounded-lg shadow-xl"
+            )}
+            controls
+            autoPlay
+            playsInline
+            preload="auto"
+            onLoadedMetadata={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
+          />
+          <div className="watermark-overlay">
+            www.eroxr.com/@{username}
+          </div>
+        </div>
       ) : (
-        <img
-          src={url}
-          alt="Enlarged media"
-          className={cn(
-            "max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain",
-            "rounded-lg shadow-xl"
-          )}
-          style={getEnlargedImageStyles()}
-          srcSet={generateSrcSet(url)}
-          sizes={getResponsiveSizes()}
-          loading="eager"
-          decoding="sync"
-          onLoad={() => setIsLoading(false)}
-          onError={() => setIsLoading(false)}
-        />
+        <div className="relative max-w-[95vw] max-h-[95vh]">
+          <img
+            src={url}
+            alt="Enlarged media"
+            className={cn(
+              "max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain",
+              "rounded-lg shadow-xl"
+            )}
+            style={getEnlargedImageStyles()}
+            srcSet={generateSrcSet(url)}
+            sizes={getResponsiveSizes()}
+            loading="eager"
+            decoding="sync"
+            onLoad={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
+          />
+          <div className="watermark-overlay">
+            www.eroxr.com/@{username}
+          </div>
+        </div>
       )}
     </motion.div>
   );

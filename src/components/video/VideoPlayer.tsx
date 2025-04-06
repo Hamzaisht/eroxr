@@ -53,14 +53,12 @@ export const VideoPlayer = ({
   const { toast } = useToast();
   const session = useSession();
 
-  // Use the premium check hook
   const { canPlayFull, previewDuration, handleTimeUpdate } = VideoPremiumCheck({
     isPremium,
     videoId,
     session
   });
   
-  // Fetch username for watermark if creator ID is provided
   useEffect(() => {
     if (creatorId) {
       getUsernameForWatermark(creatorId).then(name => {
@@ -142,7 +140,6 @@ export const VideoPlayer = ({
     }, 3000);
   };
 
-  // Setup fullscreen handling
   const { toggleFullscreen } = VideoFullscreenButton({
     containerRef,
     setIsFullscreen,
@@ -235,14 +232,12 @@ export const VideoPlayer = ({
         />
       </div>
       
-      {/* Watermark overlay */}
       {isLoaded && !hasError && creatorId && (
         <div className="watermark-overlay">
           www.eroxr.com/@{username}
         </div>
       )}
 
-      {/* Premium overlay for non-premium users */}
       {isPremium && !canPlayFull && isLoaded && (
         <PremiumErosOverlay 
           thumbnailUrl={poster}
@@ -250,10 +245,8 @@ export const VideoPlayer = ({
         />
       )}
       
-      {/* Top gradient overlay to help buttons stand out */}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/60 to-transparent z-10"></div>
       
-      {/* Bottom gradient overlay to help buttons stand out */}
       <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
       
       {showCloseButton && onClose && (

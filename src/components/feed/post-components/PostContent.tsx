@@ -89,7 +89,8 @@ export const PostContent = ({
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="relative aspect-video w-full"
+                            className="relative aspect-video w-full cursor-pointer"
+                            onClick={() => onMediaClick(publicUrl)}
                           >
                             <VideoPlayer
                               url={publicUrl}

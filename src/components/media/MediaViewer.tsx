@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MediaContent } from "./MediaContent";
 
 export interface MediaViewerProps {
-  media: string;
+  media: string | null;
   onClose: () => void;
 }
 
