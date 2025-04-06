@@ -165,12 +165,3 @@ export const generateWatermarkCSS = (username: string): string => {
     }
   `;
 };
-
-// React component for watermark
-export const WatermarkOverlay: React.FC<{ username: string }> = ({ username }) => {
-  return (
-    <div className="watermark-overlay">
-      www.eroxr.com/@{username}
-    </div>
-  );
-};
