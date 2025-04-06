@@ -1,98 +1,59 @@
 
-import { useState, useEffect } from "react";
-import { AdminLayout } from "../../components/admin/AdminLayout";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useGhostMode } from "@/hooks/useGhostMode";
-import { AdminDashboardTabs } from "@/components/admin/godmode/dashboard/AdminDashboardTabs";
-import { useAlertProcessor } from "@/components/admin/godmode/dashboard/AlertProcessor";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { useEffect } from "react";
+import { Routes, Route } from "react-router-dom";
+import { GodmodeLayout } from "@/components/admin/godmode/GodmodeLayout";
+import { GodmodeDashboardHome } from "@/components/admin/godmode/GodmodeDashboardHome";
+import { AdminLogs } from "@/components/admin/godmode/AdminLogs";
+import { ContentFeed } from "@/pages/admin/godmode/ContentFeed";
+import { Surveillance } from "@/pages/admin/godmode/Surveillance";
+import { Moderation } from "@/pages/admin/godmode/Moderation";
+import { Payouts } from "@/pages/admin/godmode/Payouts";
+import { PlatformControl } from "@/pages/admin/godmode/PlatformControl";
+import { Verification } from "@/pages/admin/godmode/Verification";
+import { useToast } from "@/hooks/use-toast";
+import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import { NotAuthorized } from "@/components/admin/NotAuthorized";
 
-export default function GodmodeDashboard() {
-  const session = useSession();
-  const { isGhostMode, setIsGhostMode } = useGhostMode();
-  const [activeTab, setActiveTab] = useState("overview");
-  const [isAdminLoaded, setIsAdminLoaded] = useState(false);
-  const { alerts } = useAlertProcessor();
+const GodmodeDashboard = () => {
+  const { toast } = useToast();
+  const { isAdmin, loading } = useSuperAdminCheck();
 
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!loading && !isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access this area.",
+        variant: "destructive",
+      });
+    }
+  }, [isAdmin, loading, toast]);
 
-    const checkAdminStatus = async () => {
-      const { data: adminCheck } = await supabase
-        .from("admin_users")
-        .select("is_admin")
-        .eq("user_id", session.user.id)
-        .single();
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-luxury-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-luxury-primary"></div>
+      </div>
+    );
+  }
 
-      const isAdmin = !!adminCheck?.is_admin;
-      
-      if (isAdmin) {
-        setIsAdminLoaded(true);
-        
-        if (import.meta.env.MODE === 'development') {
-          console.log("Development mode: Auto-enabling ghost mode for testing");
-          setIsGhostMode(true);
-        }
-      }
-    };
-
-    checkAdminStatus();
-  }, [session, setIsGhostMode]);
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-
-  const handleAlertClick = (alert: any) => {
-    const username = alert.username || 'Unknown';
-    console.log(`Viewing alert for ${username}: ${alert.reason}`);
-  };
-
-  if (!session || !isAdminLoaded) {
-    return <div>Loading admin dashboard...</div>;
+  if (!isAdmin) {
+    return <NotAuthorized />;
   }
 
   return (
-    <AdminLayout>
-      <div className="container mx-auto py-6 space-y-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <AdminDashboardTabs 
-            activeTab={activeTab} 
-            onTabChange={handleTabChange}
-          />
-          
-          <TabsContent value="overview">
-            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-              <h2 className="text-xl mb-4">Admin Overview</h2>
-              <p>This is the admin dashboard overview.</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="users">
-            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-              <h2 className="text-xl mb-4">User Management</h2>
-              <p>Manage users here.</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="content">
-            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-              <h2 className="text-xl mb-4">Content Moderation</h2>
-              <p>Moderate content here.</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="settings">
-            <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
-              <h2 className="text-xl mb-4">Admin Settings</h2>
-              <p>Configure admin settings here.</p>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </AdminLayout>
+    <Routes>
+      <Route element={<GodmodeLayout />}>
+        <Route index element={<GodmodeDashboardHome />} />
+        <Route path="logs" element={<AdminLogs />} />
+        <Route path="content-feed" element={<ContentFeed />} />
+        <Route path="surveillance" element={<Surveillance />} />
+        <Route path="moderation" element={<Moderation />} />
+        <Route path="payouts" element={<Payouts />} />
+        <Route path="platform" element={<PlatformControl />} />
+        <Route path="verification" element={<Verification />} />
+      </Route>
+    </Routes>
   );
-}
+};
+
+export default GodmodeDashboard;
