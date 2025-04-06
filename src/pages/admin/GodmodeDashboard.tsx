@@ -1,34 +1,34 @@
 
 import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
-import { GodmodeLayout } from "@/components/admin/godmode/GodmodeLayout";
+import GodmodeLayout from "@/components/admin/godmode/GodmodeLayout";
 import { GodmodeDashboardHome } from "@/components/admin/godmode/GodmodeDashboardHome";
 import { AdminLogs } from "@/components/admin/godmode/AdminLogs";
-import { ContentFeed } from "@/pages/admin/godmode/ContentFeed";
-import { Surveillance } from "@/pages/admin/godmode/Surveillance";
-import { Moderation } from "@/pages/admin/godmode/Moderation";
-import { Payouts } from "@/pages/admin/godmode/Payouts";
-import { PlatformControl } from "@/pages/admin/godmode/PlatformControl";
-import { Verification } from "@/pages/admin/godmode/Verification";
+import ContentFeed from "@/pages/admin/godmode/ContentFeed";
+import Surveillance from "@/pages/admin/godmode/Surveillance";
+import Moderation from "@/pages/admin/godmode/Moderation";
+import Payouts from "@/pages/admin/godmode/Payouts";
+import PlatformControl from "@/pages/admin/godmode/PlatformControl";
+import Verification from "@/pages/admin/godmode/Verification";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { NotAuthorized } from "@/components/admin/NotAuthorized";
 
 const GodmodeDashboard = () => {
   const { toast } = useToast();
-  const { isAdmin, loading } = useSuperAdminCheck();
+  const { isSuperAdmin, isLoading } = useSuperAdminCheck();
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
+    if (!isLoading && !isSuperAdmin) {
       toast({
         title: "Access Denied",
         description: "You don't have permission to access this area.",
         variant: "destructive",
       });
     }
-  }, [isAdmin, loading, toast]);
+  }, [isSuperAdmin, isLoading, toast]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-full h-screen flex items-center justify-center bg-luxury-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-luxury-primary"></div>
@@ -36,7 +36,7 @@ const GodmodeDashboard = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!isSuperAdmin) {
     return <NotAuthorized />;
   }
 
