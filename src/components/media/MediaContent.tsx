@@ -61,7 +61,7 @@ export const MediaContent = ({ url, isVideo, creatorId, onClose }: MediaContentP
             <img
               src={url}
               alt="Media content"
-              className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg"
+              className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg cursor-pointer"
               style={getEnlargedImageStyles()}
               srcSet={generateSrcSet(url)}
               sizes={getResponsiveSizes()}
