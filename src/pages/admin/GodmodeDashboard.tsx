@@ -67,7 +67,6 @@ export default function GodmodeDashboard() {
           activeTab={activeTab} 
           onTabChange={handleTabChange}
         >
-          {/* Tabs content */}
           <TabsContent value="overview">
             <div className="rounded-md border border-[#2A2A3D] p-4 bg-[#131520]">
               <h2 className="text-xl mb-4">Admin Overview</h2>
