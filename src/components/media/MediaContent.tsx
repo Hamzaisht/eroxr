@@ -15,7 +15,7 @@ interface MediaContentProps {
 
 export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [username, setUsername] = useState<string>('eroxr');
+  const [username, setUsername] = useState<string>('');
   
   useEffect(() => {
     const getUsername = async () => {
@@ -25,19 +25,20 @@ export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => 
           setUsername(name);
         } catch (error) {
           console.error('Error getting username for watermark:', error);
+          setUsername(creatorId.slice(0, 8));
         }
-        return;
-      }
-      
-      const urlParts = url.split('/');
-      const possibleCreatorId = urlParts[urlParts.length - 2];
-      
-      if (possibleCreatorId && possibleCreatorId.length > 20) {
-        try {
-          const name = await getUsernameForWatermark(possibleCreatorId);
-          setUsername(name);
-        } catch (error) {
-          console.error('Error getting username for watermark:', error);
+      } else {
+        const urlParts = url.split('/');
+        const possibleCreatorId = urlParts[urlParts.length - 2];
+        
+        if (possibleCreatorId && possibleCreatorId.length > 20) {
+          try {
+            const name = await getUsernameForWatermark(possibleCreatorId);
+            setUsername(name);
+          } catch (error) {
+            console.error('Error getting username for watermark:', error);
+            setUsername(possibleCreatorId.slice(0, 8));
+          }
         }
       }
     };
@@ -73,7 +74,7 @@ export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => 
             onLoadedMetadata={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
           />
-          <WatermarkOverlay username={username} />
+          <WatermarkOverlay username={username} creatorId={creatorId} />
         </div>
       ) : (
         <div className="relative max-w-[95vw] max-h-[95vh]">
@@ -92,7 +93,7 @@ export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => 
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
           />
-          <WatermarkOverlay username={username} />
+          <WatermarkOverlay username={username} creatorId={creatorId} />
         </div>
       )}
     </motion.div>
