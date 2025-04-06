@@ -1,6 +1,7 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MediaContent } from "./MediaContent";
+import { useState } from "react"; // Import useState
 
 export interface MediaViewerProps {
   media: string | null;
@@ -9,9 +10,16 @@ export interface MediaViewerProps {
 }
 
 export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => {
+  const [isZoomed, setIsZoomed] = useState(false);
+
   if (!media) return null;
 
   const isVideo = media.match(/\.(mp4|webm|ogg)$/i);
+
+  const handleMediaClick = () => {
+    // Optional: Add zoom functionality if needed in the future
+    setIsZoomed(!isZoomed);
+  };
 
   return (
     <Dialog open={!!media} onOpenChange={() => onClose()}>
@@ -21,6 +29,7 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
           isVideo={!!isVideo} 
           creatorId={creatorId}
           onClose={onClose}
+          onMediaClick={handleMediaClick}
         />
       </DialogContent>
     </Dialog>

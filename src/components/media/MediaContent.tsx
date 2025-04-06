@@ -11,9 +11,16 @@ interface MediaContentProps {
   isVideo: boolean;
   creatorId?: string;
   onClose?: () => void;
+  onMediaClick?: () => void; // Add this prop
 }
 
-export const MediaContent = ({ url, isVideo, creatorId, onClose }: MediaContentProps) => {
+export const MediaContent = ({ 
+  url, 
+  isVideo, 
+  creatorId, 
+  onClose, 
+  onMediaClick 
+}: MediaContentProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   return (
@@ -67,6 +74,7 @@ export const MediaContent = ({ url, isVideo, creatorId, onClose }: MediaContentP
               sizes={getResponsiveSizes()}
               loading="eager"
               decoding="sync"
+              onClick={onMediaClick} // Add click handler
               onLoad={() => setIsLoading(false)}
               onError={() => setIsLoading(false)}
             />
