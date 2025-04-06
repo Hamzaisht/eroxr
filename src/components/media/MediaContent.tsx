@@ -2,8 +2,8 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
-import { Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Loader2, ZoomIn, ZoomOut } from "lucide-react";
+import { useState, useRef } from "react";
 import { WatermarkOverlay } from "./WatermarkOverlay";
 
 interface MediaContentProps {
@@ -14,24 +14,13 @@ interface MediaContentProps {
 
 export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [username, setUsername] = useState<string>('');
-  
-  useEffect(() => {
-    let possibleUsername = '';
-    
-    // Try to extract username from URL if creatorId not provided
-    if (!creatorId && url) {
-      const urlParts = url.split('/');
-      possibleUsername = urlParts[urlParts.length - 2] || '';
-      
-      // Check if this part looks like a username rather than a UUID
-      if (possibleUsername && (possibleUsername.length > 20 || possibleUsername.includes('-'))) {
-        possibleUsername = ''; // Not a username, clear it
-      }
-    }
-    
-    setUsername(possibleUsername || (creatorId || ''));
-  }, [url, creatorId]);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const toggleZoom = () => {
+    setIsZoomed(!isZoomed);
+  };
 
   return (
     <motion.div
@@ -49,10 +38,12 @@ export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => 
       {isVideo ? (
         <div className="relative max-w-[95vw] max-h-[95vh]">
           <video
+            ref={videoRef}
             src={url}
             className={cn(
               "max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain",
-              "rounded-lg shadow-xl"
+              "rounded-lg shadow-xl",
+              isZoomed ? "scale-150 cursor-zoom-out" : "cursor-zoom-in"
             )}
             controls
             autoPlay
@@ -61,16 +52,24 @@ export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => 
             onLoadedMetadata={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
           />
-          <WatermarkOverlay username={username} creatorId={creatorId} />
+          <button 
+            onClick={toggleZoom} 
+            className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full z-20 hover:bg-black/70 transition-colors"
+          >
+            {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
+          </button>
+          <WatermarkOverlay username={creatorId} creatorId={creatorId} />
         </div>
       ) : (
         <div className="relative max-w-[95vw] max-h-[95vh]">
           <img
+            ref={imageRef}
             src={url}
             alt="Enlarged media"
             className={cn(
               "max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain",
-              "rounded-lg shadow-xl"
+              "rounded-lg shadow-xl",
+              isZoomed ? "scale-150 cursor-zoom-out" : "cursor-zoom-in"
             )}
             style={getEnlargedImageStyles()}
             srcSet={generateSrcSet(url)}
@@ -79,8 +78,15 @@ export const MediaContent = ({ url, isVideo, creatorId }: MediaContentProps) => 
             decoding="sync"
             onLoad={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
+            onClick={toggleZoom}
           />
-          <WatermarkOverlay username={username} creatorId={creatorId} />
+          <button 
+            onClick={toggleZoom} 
+            className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full z-20 hover:bg-black/70 transition-colors"
+          >
+            {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
+          </button>
+          <WatermarkOverlay username={creatorId} creatorId={creatorId} />
         </div>
       )}
     </motion.div>
