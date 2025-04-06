@@ -1,17 +1,15 @@
 
-import { ReactNode } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveSurveillance } from "@/components/admin/platform/LiveSurveillance";
 
-type AdminDashboardTabsProps = React.JSX.IntrinsicAttributes & React.PropsWithChildren<{
+type AdminDashboardTabsProps = {
   activeTab: string;
   onTabChange: (value: string) => void;
-}>;
+};
 
 export const AdminDashboardTabs = ({ 
   activeTab, 
-  onTabChange, 
-  children 
+  onTabChange 
 }: AdminDashboardTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
@@ -26,9 +24,6 @@ export const AdminDashboardTabs = ({
       <TabsContent value="surveillance">
         <LiveSurveillance />
       </TabsContent>
-      
-      {/* Render optional children */}
-      {children}
     </Tabs>
   );
 };
