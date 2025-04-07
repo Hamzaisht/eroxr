@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useMessageAudit } from './useMessageAudit';
-import { useTypingIndicator } from './useTypingIndicator';
 
 /**
  * Hook to subscribe to realtime message updates and sync with query cache
@@ -67,31 +66,5 @@ export const useRealtimeMessages = (recipientId?: string) => {
     };
   }, [userId, recipientId, queryClient, logMessageActivity]);
 
-  // Send typing status to other users
-  const sendTypingStatus = useCallback((isTyping: boolean, targetRecipientId?: string) => {
-    if (!userId || !targetRecipientId) return;
-    
-    supabase.channel('typing-status')
-      .send({
-        type: 'broadcast',
-        event: 'typing',
-        payload: {
-          user_id: userId,
-          recipient_id: targetRecipientId,
-          is_typing: isTyping,
-          timestamp: new Date().toISOString()
-        }
-      })
-      .catch(error => {
-        console.error('Error sending typing status:', error);
-      });
-  }, [userId]);
-
-  return { sendTypingStatus };
+  return {};
 };
-
-// Add exports for the hooks
-export { useTypingIndicator };
-export { useMessageAudit };
-
-// Export other hooks individually instead of re-exporting them here
