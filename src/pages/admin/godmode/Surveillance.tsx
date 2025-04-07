@@ -1,4 +1,3 @@
-
 import { SurveillanceTabs } from "@/components/admin/platform/surveillance/SurveillanceTabs";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { GhostModeToggle } from "@/components/admin/platform/GhostModeToggle";
@@ -8,23 +7,20 @@ import { LiveSession } from "@/types/surveillance";
 import { GhostModePrompt } from "@/components/admin/platform/surveillance/GhostModePrompt";
 import { useEffect } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useSurveillanceData } from "@/components/admin/platform/surveillance/useSurveillanceData";
+import { useSurveillanceData } from "@/components/admin/platform/surveillance/hooks/useSurveillanceData";
 
 export default function Surveillance() {
   const { isGhostMode, liveAlerts, refreshAlerts, startSurveillance, canUseGhostMode } = useGhostMode();
   const supabase = useSupabaseClient();
   const { liveSessions, isLoading, error } = useSurveillanceData();
   
-  // Fetch alerts and surveillance data when component mounts or ghost mode changes
   useEffect(() => {
     if (isGhostMode) {
       refreshAlerts();
       
-      // Set up realtime subscriptions for new messages and content
       const setupRealtimeChannels = () => {
         console.log("Setting up realtime channels for surveillance data");
         
-        // Messages channel
         const messagesChannel = supabase
           .channel('direct-messages-changes')
           .on('postgres_changes', {
@@ -37,7 +33,6 @@ export default function Surveillance() {
           })
           .subscribe();
           
-        // Posts channel  
         const postsChannel = supabase
           .channel('posts-changes')
           .on('postgres_changes', {
@@ -55,7 +50,6 @@ export default function Surveillance() {
       
       const channels = setupRealtimeChannels();
       
-      // Clean up subscriptions
       return () => {
         supabase.removeChannel(channels.messagesChannel);
         supabase.removeChannel(channels.postsChannel);
@@ -63,7 +57,6 @@ export default function Surveillance() {
     }
   }, [isGhostMode, refreshAlerts, supabase]);
   
-  // If ghost mode is not enabled, show the prompt
   if (!isGhostMode && canUseGhostMode) {
     return (
       <div className="space-y-4">
