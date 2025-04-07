@@ -12,7 +12,7 @@ import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
 import { ModerationActionButton } from "./ModerationActionButton";
 import { useModerationActions } from "@/hooks/useModerationActions";
-import { ModerationAction } from "@/types/surveillance";
+import { ModerationAction, LiveSessionType } from "@/types/surveillance";
 
 interface ModerationActionsProps {
   session: LiveSession | SurveillanceContentItem;
@@ -60,7 +60,7 @@ export function ModerationActions({
   return (
     <div className="flex items-center space-x-2">
       <ModerationActionButton 
-        session={session as LiveSession}
+        session={session}
         onAction={handleAction}
         actionInProgress={actionInProgress}
       />
@@ -78,7 +78,7 @@ export function ModerationActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <ModerationActionItems 
-            session={session as LiveSession}
+            session={session}
             onAction={handleAction}
             actionInProgress={actionInProgress}
           />
@@ -90,7 +90,7 @@ export function ModerationActions({
         onOpenChange={setIsDialogOpen}
         onConfirm={handleDialogAction}
         currentAction={currentAction}
-        session={session as LiveSession}
+        session={session}
         editedContent={editedContent}
         setEditedContent={setEditedContent}
         actionInProgress={actionInProgress}

@@ -22,8 +22,8 @@ export function ModerationActionButton({
   const getPrimaryAction = (): { action: ModerationAction; icon: JSX.Element; variant: "outline" | "destructive" | "default" | "link" | "ghost" | "secondary"; label: string } => {
     const contentType = (session as any).content_type || '';
     
-    // Text-based content like messages prioritize view/edit
-    if (session.type === "chat" || contentType === "message") {
+    // For LiveSession objects that have a type property
+    if ('type' in session && session.type === "chat" || contentType === "message") {
       return {
         action: "view",
         icon: <Eye className="h-3.5 w-3.5 mr-1" />,

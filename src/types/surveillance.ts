@@ -5,7 +5,7 @@ export type LiveSessionType = 'stream' | 'call' | 'chat' | 'content';
 
 export type LiveSession = {
   id: string;
-  type: LiveSessionType;
+  type?: LiveSessionType;
   user_id?: string;
   creator_id?: string;
   username?: string;
@@ -67,4 +67,5 @@ export type ModerationAction =
   | 'force_delete'
   | 'pause'
   | 'unpause'
+  | 'ban' 
   | 'edit';
