@@ -1,137 +1,123 @@
 
-import { useState, useCallback } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { LiveAlert } from "@/types/alerts";
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
-import { formatFlaggedContentAsAlert, formatReportAsAlert } from "../utils/alertFormatters";
+import { useState, useEffect, useCallback } from 'react';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { LiveAlert } from '@/types/alerts';
+import { LiveSession } from '@/types/surveillance';
 
-export const useGhostAlerts = (isGhostMode: boolean) => {
+export function useGhostAlerts(isGhostMode: boolean) {
   const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const session = useSession();
-
+  const supabase = useSupabaseClient();
+  
   const refreshAlerts = useCallback(async () => {
-    if (!isGhostMode || !session?.user?.id) {
+    if (!isGhostMode) {
       setLiveAlerts([]);
       return;
     }
-
+    
     try {
-      setIsLoading(true);
+      console.log('Refreshing alerts data for ghost mode');
+      
+      // Fetch reports
+      const { data: reportsData, error: reportsError } = await supabase
+        .from('reports')
+        .select('*, reporter:reporter_id(username, avatar_url), reported:reported_id(username, avatar_url)')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      if (reportsError) {
+        console.error('Error fetching reports:', reportsError);
+      }
       
       // Fetch flagged content
-      const { data: flaggedContent, error: flaggedError } = await supabase
+      const { data: flaggedData, error: flaggedError } = await supabase
         .from('flagged_content')
-        .select(`
-          *,
-          user:user_id(username, avatar_url),
-          flagger:flagged_by(username, avatar_url)
-        `)
+        .select('*, user:user_id(username, avatar_url)')
+        .eq('status', 'flagged')
         .order('flagged_at', { ascending: false })
-        .limit(10);
-      
+        .limit(20);
+        
       if (flaggedError) {
-        console.error("Error fetching flagged content:", flaggedError);
+        console.error('Error fetching flagged content:', flaggedError);
       }
-
-      // Fetch reports
-      const { data: reports, error: reportsError } = await supabase
-        .from('reports')
-        .select(`
-          *,
-          reporter:reporter_id(username, avatar_url),
-          reported:reported_id(username, avatar_url)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10);
       
-      if (reportsError) {
-        console.error("Error fetching reports:", reportsError);
-      }
-
-      // Fetch live streams with high viewer counts (potential alerts)
-      const { data: activeStreams, error: streamsError } = await supabase
-        .from('live_streams')
-        .select(`
-          *,
-          profiles:creator_id(username, avatar_url)
-        `)
-        .eq('status', 'live')
-        .order('viewer_count', { ascending: false })
-        .limit(5);
+      // Transform reports to LiveAlert format
+      const reportAlerts: LiveAlert[] = (reportsData || []).map(report => ({
+        id: report.id,
+        type: "violation", 
+        alert_type: "violation",
+        user_id: report.reported_id,
+        username: report.reported?.username || 'Unknown',
+        avatar_url: report.reported?.avatar_url || '',
+        timestamp: report.created_at,
+        created_at: report.created_at,
+        content_type: report.content_type || '',
+        reason: report.reason || '',
+        severity: report.is_emergency ? 'high' as const : 'medium' as const,
+        content_id: report.content_id || '',
+        message: `${report.reason}: ${report.description || ''}`,
+        status: report.status || '',
+        title: `Content Report`,
+        description: report.description || 'No description provided',
+        is_viewed: false,
+        urgent: report.is_emergency || false,
+        reporter: {
+          id: report.reporter_id,
+          username: report.reporter?.username,
+          avatar_url: report.reporter?.avatar_url
+        }
+      }));
       
-      if (streamsError) {
-        console.error("Error fetching active streams:", streamsError);
-      }
-
-      // Format all alerts
-      const formattedAlerts: LiveAlert[] = [
-        ...(flaggedContent || []).map(content => ({
-          ...formatFlaggedContentAsAlert(content),
-          alert_type: 'violation' as const
-        })),
-        ...(reports || []).map(report => ({
-          ...formatReportAsAlert(report),
-          alert_type: 'risk' as const
-        })),
-        ...(activeStreams || []).filter(stream => stream.viewer_count > 10).map(stream => ({
-          id: stream.id,
-          type: 'information',
-          alert_type: 'information' as const,
-          user_id: stream.creator_id,
-          username: stream.profiles?.username || 'Unknown',
-          avatar_url: stream.profiles?.avatar_url,
-          timestamp: stream.created_at,
-          created_at: stream.created_at,
-          title: `Active Stream: ${stream.title || 'Untitled'}`,
-          description: `Live stream with ${stream.viewer_count} viewers`,
-          content_type: 'stream',
-          content_id: stream.id,
-          reason: 'High activity stream',
-          severity: 'low',
-          message: `Live stream by ${stream.profiles?.username || 'Unknown'} has ${stream.viewer_count} viewers`,
-          status: 'active',
+      // Transform flagged content to LiveAlert format
+      const flaggedAlerts: LiveAlert[] = (flaggedData || []).map(flagged => {
+        // Ensure severity is always one of the allowed values
+        let severityValue: 'high' | 'medium' | 'low' = 'medium';
+        if (flagged.severity === 'high') {
+          severityValue = 'high';
+        } else if (flagged.severity === 'low') {
+          severityValue = 'low';
+        }
+        
+        return {
+          id: flagged.id,
+          type: "risk", 
+          alert_type: "risk",
+          user_id: flagged.user_id || '',
+          username: flagged.user?.username || 'Unknown',
+          avatar_url: flagged.user?.avatar_url || '',
+          timestamp: flagged.flagged_at,
+          created_at: flagged.flagged_at,
+          content_type: flagged.content_type || '',
+          reason: flagged.reason || '',
+          severity: severityValue,
+          content_id: flagged.content_id || '',
+          message: flagged.reason || '',
+          status: flagged.status || '',
+          title: `Flagged ${flagged.content_type}`,
+          description: flagged.notes || flagged.reason || '',
           is_viewed: false,
-          urgent: false,
-          session: {
-            id: stream.id,
-            type: 'stream' as const,
-            user_id: stream.creator_id,
-            username: stream.profiles?.username || 'Unknown',
-            avatar_url: stream.profiles?.avatar_url,
-            title: stream.title,
-            media_url: stream.playback_url ? [stream.playback_url] : [],
-            created_at: stream.started_at || stream.created_at,
-            status: 'live',
-            viewer_count: stream.viewer_count
-          } as LiveSession
-        }))
-      ];
-
-      // Sort alerts by severity and timestamp
-      formattedAlerts.sort((a, b) => {
-        const severityRank = { high: 0, medium: 1, low: 2 };
-        const severityDiff = severityRank[a.severity as 'high' | 'medium' | 'low'] - 
-                           severityRank[b.severity as 'high' | 'medium' | 'low'];
-        
-        if (severityDiff !== 0) return severityDiff;
-        
-        // If same severity, sort by timestamp (newest first)
-        return new Date(b.timestamp || b.created_at).getTime() - 
-               new Date(a.timestamp || a.created_at).getTime();
+          urgent: flagged.severity === 'high'
+        };
       });
-
-      console.log(`Fetched ${formattedAlerts.length} live alerts for ghost mode`);
-      setLiveAlerts(formattedAlerts);
+      
+      // Combine all alerts
+      const allAlerts = [...reportAlerts, ...flaggedAlerts];
+      
+      // Sort by timestamp, newest first
+      allAlerts.sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      setLiveAlerts(allAlerts);
+      console.log(`Loaded ${allAlerts.length} alerts for ghost mode`);
+      
     } catch (error) {
-      console.error("Error refreshing ghost alerts:", error);
-    } finally {
-      setIsLoading(false);
+      console.error('Error refreshing alerts:', error);
     }
-  }, [isGhostMode, session?.user?.id]);
-
-  // Refresh alerts when ghost mode changes
+  }, [isGhostMode, supabase]);
+  
   useEffect(() => {
     if (isGhostMode) {
       refreshAlerts();
@@ -140,54 +126,5 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
     }
   }, [isGhostMode, refreshAlerts]);
   
-  // Set up realtime subscriptions for alerts
-  useEffect(() => {
-    if (!isGhostMode) return;
-    
-    const flaggedChannel = supabase
-      .channel('ghost-flagged-content')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'flagged_content'
-      }, () => {
-        console.log('Flagged content changes, refreshing alerts');
-        refreshAlerts();
-      })
-      .subscribe();
-      
-    const reportsChannel = supabase
-      .channel('ghost-reports')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'reports'
-      }, () => {
-        console.log('Reports changes, refreshing alerts');
-        refreshAlerts();
-      })
-      .subscribe();
-      
-    const streamsChannel = supabase
-      .channel('ghost-live-streams')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'live_streams'
-      }, () => {
-        console.log('Streams changes, refreshing alerts');
-        refreshAlerts();
-      })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(flaggedChannel);
-      supabase.removeChannel(reportsChannel);
-      supabase.removeChannel(streamsChannel);
-    };
-  }, [isGhostMode, refreshAlerts]);
-
-  return { liveAlerts, isLoading, refreshAlerts };
-};
-
-import { useEffect } from 'react';
+  return { liveAlerts, refreshAlerts };
+}

@@ -4,8 +4,7 @@ import {
   Eye, Edit, Shield, RefreshCw, Pause, Play 
 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import type { LiveSession, SurveillanceContentItem } from "@/types/surveillance";
-import { ModerationAction } from "@/types/moderation";
+import { LiveSession, SurveillanceContentItem, ModerationAction } from "@/types/surveillance";
 
 interface ModerationActionItemsProps {
   session: LiveSession | SurveillanceContentItem;
@@ -70,7 +69,7 @@ export function ModerationActionItems({
       {!isUserPaused() ? (
         <DropdownMenuItem
           className="text-amber-400 flex items-center space-x-2"
-          onClick={() => onAction('pause' as ModerationAction)}
+          onClick={() => onAction('pause')}
           disabled={!!actionInProgress}
         >
           <Pause className="h-4 w-4 mr-2" />
@@ -79,7 +78,7 @@ export function ModerationActionItems({
       ) : (
         <DropdownMenuItem
           className="text-green-400 flex items-center space-x-2"
-          onClick={() => onAction('unpause' as ModerationAction)}
+          onClick={() => onAction('unpause')}
           disabled={!!actionInProgress}
         >
           <Play className="h-4 w-4 mr-2" />

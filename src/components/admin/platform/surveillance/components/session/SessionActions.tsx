@@ -2,8 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Eye, Flag, Ban, MoreHorizontal, AlertTriangle, Pause, Play } from "lucide-react";
-import { LiveSession } from "@/types/surveillance";
-import { ModerationAction } from "@/types/moderation";
+import { LiveSession, ModerationAction } from "@/types/surveillance";
 
 interface SessionActionsProps {
   session: LiveSession;
@@ -78,12 +77,12 @@ export const SessionActions = ({
               Flag Content
             </DropdownMenuItem>
             {session.is_paused ? (
-              <DropdownMenuItem onClick={() => handleModerate('unpause' as ModerationAction)}>
+              <DropdownMenuItem onClick={() => handleModerate('unpause')}>
                 <Play className="h-4 w-4 mr-2 text-green-500" />
                 Unpause
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={() => handleModerate('pause' as ModerationAction)}>
+              <DropdownMenuItem onClick={() => handleModerate('pause')}>
                 <Pause className="h-4 w-4 mr-2 text-amber-500" />
                 Pause
               </DropdownMenuItem>

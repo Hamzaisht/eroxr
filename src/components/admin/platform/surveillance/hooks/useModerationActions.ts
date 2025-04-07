@@ -4,7 +4,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ModerationAction } from "@/types/moderation";
-import { LiveSession, SurveillanceContentItem } from "../types";
+import { LiveSession, SurveillanceContentItem } from "@/types/surveillance";
 import { useSession } from "@supabase/auth-helpers-react";
 
 export function useModerationActions() {

@@ -7,12 +7,16 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import type { LiveSession, SurveillanceContentItem } from "@/types/surveillance";
+import { 
+  LiveSession, 
+  SurveillanceContentItem, 
+  ModerationAction,
+  LiveSessionType
+} from "@/types/surveillance";
 import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
 import { ModerationActionButton } from "./ModerationActionButton";
 import { useModerationActions } from "@/hooks/useModerationActions";
-import { ModerationAction, LiveSessionType } from "@/types/surveillance";
 
 interface ModerationActionsProps {
   session: LiveSession | SurveillanceContentItem;

@@ -22,6 +22,6 @@ export type {
 // Local interfaces that are specific to components - these use the imported types
 export interface SessionModerationActionProps {
   session: LiveSession | SurveillanceContentItem;
-  onModerate: (content: LiveSession | SurveillanceContentItem, action: string, editedContent?: string) => Promise<void>;
+  onModerate: (content: LiveSession | SurveillanceContentItem, action: ModerationAction, editedContent?: string) => Promise<void>;
   actionInProgress: string | null;
 }

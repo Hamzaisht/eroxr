@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import type { LiveSession, SurveillanceContentItem } from "@/types/surveillance";
-import { ModerationAction } from "@/types/moderation";
+import { LiveSession, SurveillanceContentItem, ModerationAction } from "@/types/surveillance";
 
 interface ModerationActionDialogProps {
   open: boolean;
@@ -109,7 +108,7 @@ export function ModerationActionDialog({
   };
 
   const isActionDestructive = () => {
-    return ['ban', 'shadowban', 'force_delete', 'delete'].includes(currentAction || '');
+    return ['ban', 'shadowban', 'force_delete', 'delete'].includes(currentAction as string);
   };
 
   return (
@@ -142,28 +141,25 @@ export function ModerationActionDialog({
               <SelectContent>
                 <SelectItem value="1">1 day</SelectItem>
                 <SelectItem value="3">3 days</SelectItem>
-                <SelectItem value="7">7 days</SelectItem>
-                <SelectItem value="14">14 days</SelectItem>
-                <SelectItem value="30">30 days</SelectItem>
+                <SelectItem value="7">1 week</SelectItem>
+                <SelectItem value="14">2 weeks</SelectItem>
+                <SelectItem value="30">1 month</SelectItem>
               </SelectContent>
             </Select>
           </div>
         )}
 
-        <DialogFooter className="sm:justify-end mt-4">
-          <Button 
-            type="button" 
-            variant="secondary" 
-            onClick={() => onOpenChange(false)}>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={!!actionInProgress}>
             Cancel
           </Button>
-          <Button
-            type="button"
-            variant={isActionDestructive() ? "destructive" : "default"}
+          <Button 
+            type="button" 
+            variant={isActionDestructive() ? "destructive" : "default"} 
             onClick={onConfirm}
             disabled={!!actionInProgress}
           >
-            {actionInProgress ? 'Processing...' : getActionButtonText()}
+            {getActionButtonText()}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Ban, Eye, Flag, ShieldAlert } from "lucide-react";
-import type { LiveSession, SurveillanceContentItem } from "@/types/surveillance";
-import { ModerationAction } from "@/types/surveillance";
+import { LiveSession, SurveillanceContentItem, ModerationAction } from "@/types/surveillance";
 
 interface ModerationButtonProps {
   session: LiveSession | SurveillanceContentItem;

@@ -1,5 +1,5 @@
 
-import { LiveSession } from "./surveillance";
+import { LiveSession } from "@/types/surveillance";
 
 export interface LiveAlert {
   id: string;
