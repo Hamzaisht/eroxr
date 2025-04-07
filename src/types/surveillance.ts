@@ -1,5 +1,5 @@
 
-export type ContentType = 'story' | 'post' | 'video' | 'audio';
+export type ContentType = 'post' | 'story' | 'video' | 'audio';
 
 export type LiveSessionType = 'stream' | 'call' | 'chat' | 'bodycontact' | 'content';
 

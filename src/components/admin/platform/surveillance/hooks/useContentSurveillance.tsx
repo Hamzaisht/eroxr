@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { SurveillanceContentItem, ContentType } from "../types";
+import { SurveillanceContentItem, ContentType } from "@/types/surveillance";
 import { FileText, Clock, Video, Music, File } from "lucide-react";
 import React from "react";
 
@@ -186,23 +186,23 @@ export function useContentSurveillance() {
     fetchContentItems();
   }, [fetchContentItems]);
 
-  const filterContentByType = useCallback((items: SurveillanceContentItem[], type: ContentType) => {
+  const filterContentByType = useCallback((items: SurveillanceContentItem[], type: string) => {
     return items.filter(item => {
-      const normalizedType = item.content_type.toLowerCase();
+      const normalizedType = item.content_type?.toLowerCase();
       
-      if (type === 'posts' && normalizedType === 'post') {
+      if (type === 'post' && normalizedType === 'post') {
         return true;
       }
       
-      if (type === 'stories' && normalizedType === 'story') {
+      if (type === 'story' && normalizedType === 'story') {
         return true;
       }
       
-      if (type === 'videos' && (normalizedType === 'video' || normalizedType === 'media')) {
+      if (type === 'video' && (normalizedType === 'video' || normalizedType === 'media')) {
         return true;
       }
       
-      if (type === 'audios' && normalizedType === 'audio') {
+      if (type === 'audio' && normalizedType === 'audio') {
         return true;
       }
       

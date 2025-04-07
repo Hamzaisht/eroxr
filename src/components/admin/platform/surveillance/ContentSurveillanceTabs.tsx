@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContentSurveillance } from "./hooks/useContentSurveillance";
 import { ContentSurveillanceList } from "./components/ContentSurveillanceList";
-import { SurveillanceContentItem, ContentType } from "./types";
+import { SurveillanceContentItem, ContentType } from "@/types/surveillance";
 
 interface ContentSurveillanceListProps {
   items: SurveillanceContentItem[];
@@ -15,7 +15,7 @@ interface ContentSurveillanceListProps {
 }
 
 export const ContentSurveillanceTabs = () => {
-  const [activeTab, setActiveTab] = useState<ContentType>('posts');
+  const [activeTab, setActiveTab] = useState<string>('post');
   const { 
     posts, 
     stories, 
@@ -32,18 +32,18 @@ export const ContentSurveillanceTabs = () => {
   
   return (
     <Tabs 
-      defaultValue="posts" 
-      onValueChange={(value) => setActiveTab(value as ContentType)}
+      defaultValue="post" 
+      onValueChange={(value) => setActiveTab(value)}
       className="w-full"
     >
       <TabsList className="mb-4 bg-slate-800/80 backdrop-blur-lg">
-        <TabsTrigger value="posts">Posts</TabsTrigger>
-        <TabsTrigger value="stories">Stories</TabsTrigger>
-        <TabsTrigger value="videos">Videos</TabsTrigger>
-        <TabsTrigger value="audios">Audio</TabsTrigger>
+        <TabsTrigger value="post">Posts</TabsTrigger>
+        <TabsTrigger value="story">Stories</TabsTrigger>
+        <TabsTrigger value="video">Videos</TabsTrigger>
+        <TabsTrigger value="audio">Audio</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="posts">
+      <TabsContent value="post">
         <ContentSurveillanceList 
           items={posts}
           isLoading={isLoading}
@@ -53,7 +53,7 @@ export const ContentSurveillanceTabs = () => {
         />
       </TabsContent>
       
-      <TabsContent value="stories">
+      <TabsContent value="story">
         <ContentSurveillanceList 
           items={stories}
           isLoading={isLoading}
@@ -63,7 +63,7 @@ export const ContentSurveillanceTabs = () => {
         />
       </TabsContent>
       
-      <TabsContent value="videos">
+      <TabsContent value="video">
         <ContentSurveillanceList 
           items={videos}
           isLoading={isLoading}
@@ -73,7 +73,7 @@ export const ContentSurveillanceTabs = () => {
         />
       </TabsContent>
       
-      <TabsContent value="audios">
+      <TabsContent value="audio">
         <ContentSurveillanceList 
           items={audios}
           isLoading={isLoading}
