@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { LiveAlert } from "@/types/alerts";
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { LiveSession } from "@/types/surveillance";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useSession } from "@supabase/auth-helpers-react";
 import { toggleGhostModeState, syncGhostModeState } from "./ghostModeUtils";

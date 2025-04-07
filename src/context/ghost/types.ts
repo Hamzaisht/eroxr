@@ -1,6 +1,6 @@
 
+import { LiveSession } from "@/types/surveillance";
 import { LiveAlert } from "@/types/alerts";
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
 
 export interface GhostModeContextType {
   isGhostMode: boolean;
@@ -9,13 +9,13 @@ export interface GhostModeContextType {
   canUseGhostMode: boolean;
   isLoading: boolean;
   activeSurveillance: {
-    session?: LiveSession;
     isWatching: boolean;
-    startTime?: string;
+    session: LiveSession | null;
+    startTime: string | null;
   };
   startSurveillance: (session: LiveSession) => Promise<boolean>;
   stopSurveillance: () => Promise<boolean>;
-  liveAlerts: LiveAlert[];
+  liveAlerts: LiveAlert[] | null;
   refreshAlerts: () => Promise<void>;
   syncGhostModeFromSupabase: () => Promise<void>;
 }

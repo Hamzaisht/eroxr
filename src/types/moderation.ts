@@ -1,19 +1,22 @@
 
-export type ModerationAction =
-  | 'view'
-  | 'edit'
-  | 'flag'
-  | 'warn'
+export type ModerationAction = 
+  | 'approve' 
+  | 'reject' 
+  | 'flag' 
+  | 'ban' 
+  | 'warning'
   | 'delete'
-  | 'ban'
-  | 'shadowban'
-  | 'force_delete'
-  | 'restore'
-  | 'pause'
-  | 'unpause';
+  | 'edit'
+  | 'hide'
+  | 'restrict';
 
-export interface ModerationResult {
-  success: boolean;
-  message: string;
-  details?: any;
+export interface ModerationDecision {
+  id: string;
+  content_id: string;
+  content_type: string;
+  moderator_id: string;
+  action: ModerationAction;
+  reason: string;
+  notes?: string;
+  created_at: string;
 }

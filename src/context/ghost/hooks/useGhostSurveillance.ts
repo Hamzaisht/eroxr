@@ -1,7 +1,8 @@
+
 import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { LiveSession } from "@/types/surveillance";
 
 export const useGhostSurveillance = (isGhostMode: boolean, isSuperAdmin: boolean) => {
   const [activeSurveillance, setActiveSurveillance] = useState<{
