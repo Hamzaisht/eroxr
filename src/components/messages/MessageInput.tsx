@@ -1,10 +1,9 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send } from "lucide-react";
 import { SnapButton } from "./SnapButton";
-import { useTypingIndicator, useMessageAudit } from "@/hooks/useRealtimeMessages";
+import { useTypingIndicator, useMessageAudit } from "@/hooks";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
