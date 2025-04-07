@@ -1,7 +1,7 @@
 
 export type ContentType = 'story' | 'post' | 'video' | 'audio';
 
-export type LiveSessionType = 'stream' | 'call' | 'chat' | 'content';
+export type LiveSessionType = 'stream' | 'call' | 'chat' | 'bodycontact' | 'content';
 
 export type LiveSession = {
   id: string;
