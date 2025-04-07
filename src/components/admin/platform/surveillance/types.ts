@@ -71,4 +71,4 @@ export interface SessionModerationActionProps {
 }
 
 // Re-export types from moderation.ts to avoid direct imports
-export { ModerationAction } from "@/types/moderation";
+export type { ModerationAction } from "@/types/moderation";

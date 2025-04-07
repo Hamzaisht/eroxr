@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MoreHorizontal, Flag, Ban, EyeOff, Trash2, Edit, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { LiveSession, SurveillanceContentItem } from "../../types";
+import { LiveSession, SurveillanceContentItem, LiveSessionType } from "../../types";
 import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
 import { ModerationActionButton } from "./ModerationActionButton";

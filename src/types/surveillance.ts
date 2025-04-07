@@ -3,8 +3,8 @@ import { LiveSessionType, SurveillanceContentItem as BaseSurveillanceContentItem
 import { ModerationAction } from "@/types/moderation";
 
 export interface SessionModerationActionProps {
-  session: SurveillanceContentItem | any;
-  onModerate: (content: SurveillanceContentItem | any, action: ModerationAction, editedContent?: string) => Promise<void>;
+  session: BaseSurveillanceContentItem | any;
+  onModerate: (content: BaseSurveillanceContentItem | any, action: ModerationAction, editedContent?: string) => Promise<void>;
   actionInProgress: string | null;
 }
 
