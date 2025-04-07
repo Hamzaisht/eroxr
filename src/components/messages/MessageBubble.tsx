@@ -64,7 +64,9 @@ export const MessageBubble = ({
         (payload: any) => {
           if (payload.new) {
             setLocalMessage(payload.new);
-            setEditedContent(payload.new.content);
+            if (payload.new.content) {
+              setEditedContent(payload.new.content);
+            }
           }
         }
       )
@@ -78,20 +80,19 @@ export const MessageBubble = ({
   const messageAge = new Date().getTime() - new Date(message.created_at || new Date()).getTime();
   const canEditDelete = messageAge < 24 * 60 * 60 * 1000;
 
-  const handleSnapView = async () => {
-    if (!message.media_url?.[0]) return;
-    setSelectedMedia(message.media_url[0]);
-
-    // In ghost mode, we view the snap but don't mark it as viewed or delete it
+  const handleMediaView = async (url: string) => {
+    if (!url) return;
+    setSelectedMedia(url);
+    
+    // In ghost mode, we view media but don't mark it as viewed
     if (isGhostMode) {
-      // Log this action for audit purposes
       if (currentUserId) {
         await supabase.from('admin_audit_logs').insert({
           user_id: currentUserId,
-          action: 'ghost_view_snap',
+          action: 'ghost_view_media',
           details: {
             message_id: message.id,
-            media_url: message.media_url[0],
+            media_url: url,
             timestamp: new Date().toISOString()
           }
         });
@@ -99,20 +100,27 @@ export const MessageBubble = ({
       return;
     }
 
-    // Normal behavior for non-ghost mode
-    if (message.message_type === 'snap' && !message.viewed_at) {
-      supabase
+    // For regular messages (not snaps), we just view normally
+    if (message.message_type !== 'snap') {
+      return;
+    }
+    
+    // Special handling for snap messages
+    if (!message.viewed_at) {
+      await supabase
         .from('direct_messages')
         .update({ viewed_at: new Date().toISOString() })
-        .eq('id', message.id)
-        .then(() => {
-          setTimeout(() => {
-            supabase
-              .from('direct_messages')
-              .delete()
-              .eq('id', message.id);
-          }, 2000);
-        });
+        .eq('id', message.id);
+
+      // Auto-delete snap after viewing (with a delay to allow viewing)
+      if (message.expires_at) {
+        setTimeout(() => {
+          supabase
+            .from('direct_messages')
+            .delete()
+            .eq('id', message.id);
+        }, 5000); // 5 second delay before deletion
+      }
     }
   };
 
@@ -166,8 +174,8 @@ export const MessageBubble = ({
             setEditedContent={setEditedContent}
             handleEdit={handleEdit}
             cancelEditing={cancelEditing}
-            onMediaSelect={setSelectedMedia}
-            onSnapView={handleSnapView}
+            onMediaSelect={handleMediaView}
+            onSnapView={() => handleMediaView(message.media_url?.[0] || '')}
           />
           
           <MessageTimestamp
@@ -178,14 +186,25 @@ export const MessageBubble = ({
             canEditDelete={canEditDelete}
             messageType={message.message_type}
             viewedAt={message.viewed_at}
+            deliveryStatus={message.delivery_status || (message.viewed_at ? 'seen' : 'sent')}
             onEdit={startEditing}
             onDelete={handleDelete}
           />
         </div>
+
+        {isOwnMessage && message.delivery_status === 'seen' && (
+          <div className="text-xs text-blue-400 absolute -bottom-4 right-2">
+            Seen
+          </div>
+        )}
       </motion.div>
 
       {selectedMedia && !isEditing && (
-        <MediaViewer media={selectedMedia} onClose={() => setSelectedMedia(null)} />
+        <MediaViewer 
+          media={selectedMedia} 
+          onClose={() => setSelectedMedia(null)}
+          creatorId={message.sender_id || undefined}
+        />
       )}
     </AnimatePresence>
   );

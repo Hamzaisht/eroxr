@@ -14,17 +14,20 @@ export const WatermarkOverlay = ({ username, creatorId }: WatermarkOverlayProps)
       try {
         // If username is already provided and looks like a username (not a UUID), use it directly
         if (username && username.length < 20 && !username.includes('-')) {
-          console.log('Using provided username directly:', username);
           setDisplayName(username);
           return;
         }
         
         // Otherwise try to get username from creatorId or fall back to provided username
         const sourceId = creatorId || username;
-        console.log('Fetching username for ID:', sourceId);
+        
+        if (!sourceId) {
+          setDisplayName("eroxr-user");
+          return;
+        }
         
         const name = await getUsernameForWatermark(sourceId);
-        setDisplayName(name);
+        setDisplayName(name || "eroxr-user");
       } catch (error) {
         console.error('Error in WatermarkOverlay:', error);
         setDisplayName(username || "eroxr-user");
@@ -35,7 +38,7 @@ export const WatermarkOverlay = ({ username, creatorId }: WatermarkOverlayProps)
   }, [username, creatorId]);
 
   return (
-    <div className="absolute bottom-2 right-2 text-white/60 text-xs sm:text-sm font-medium z-20 pointer-events-none select-none drop-shadow-md">
+    <div className="absolute bottom-2 right-2 text-white/60 text-xs sm:text-sm font-medium z-20 pointer-events-none select-none drop-shadow-md bg-black/20 px-2 py-1 backdrop-blur-sm rounded">
       www.eroxr.com/@{displayName}
     </div>
   );

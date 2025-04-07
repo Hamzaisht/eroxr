@@ -11,6 +11,7 @@ interface MessageTimestampProps {
   canEditDelete: boolean;
   messageType: string | null;
   viewedAt: string | null;
+  deliveryStatus?: 'sent' | 'delivered' | 'seen' | null;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -23,6 +24,7 @@ export const MessageTimestamp = ({
   canEditDelete,
   messageType,
   viewedAt,
+  deliveryStatus = 'sent',
   onEdit,
   onDelete
 }: MessageTimestampProps) => {
@@ -36,7 +38,7 @@ export const MessageTimestamp = ({
         )}
       </span>
       
-      {isOwnMessage && canEditDelete && messageType !== 'snap' && (
+      {isOwnMessage && canEditDelete && messageType !== 'snap' && messageType !== 'call' && (
         <MessageActions
           onEdit={onEdit}
           onDelete={onDelete}
@@ -45,8 +47,10 @@ export const MessageTimestamp = ({
       )}
       
       {isOwnMessage && (
-        viewedAt ? (
+        deliveryStatus === 'seen' ? (
           <CheckCheck className="w-3 h-3 text-luxury-primary" />
+        ) : deliveryStatus === 'delivered' ? (
+          <CheckCheck className="w-3 h-3" />
         ) : (
           <Check className="w-3 h-3" />
         )

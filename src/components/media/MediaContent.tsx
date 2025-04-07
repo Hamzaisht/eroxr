@@ -10,14 +10,16 @@ interface MediaContentProps {
   url: string;
   isVideo: boolean;
   creatorId?: string;
+  username?: string;
   onClose?: () => void;
-  onMediaClick?: () => void; // Add this prop
+  onMediaClick?: () => void;
 }
 
 export const MediaContent = ({ 
   url, 
   isVideo, 
-  creatorId, 
+  creatorId,
+  username,
   onClose, 
   onMediaClick 
 }: MediaContentProps) => {
@@ -29,6 +31,7 @@ export const MediaContent = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
       className="w-full h-full flex flex-col bg-black/95 rounded-lg overflow-hidden"
+      onContextMenu={(e) => e.preventDefault()}
     >
       {/* Header with close button */}
       <div className="flex items-center justify-end p-2 bg-black/80">
@@ -44,7 +47,15 @@ export const MediaContent = ({
       </div>
       
       {/* Media content container */}
-      <div className="flex-1 flex items-center justify-center relative bg-black/75">
+      <div 
+        className="flex-1 flex items-center justify-center relative bg-black/75"
+        style={{ 
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
+          userSelect: 'none',
+        }}
+      >
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
             <Loader2 className="w-8 h-8 animate-spin text-white" />
@@ -63,6 +74,7 @@ export const MediaContent = ({
               preload="auto"
               onLoadedMetadata={() => setIsLoading(false)}
               onError={() => setIsLoading(false)}
+              controlsList="nodownload"
             />
           ) : (
             <img
@@ -74,14 +86,15 @@ export const MediaContent = ({
               sizes={getResponsiveSizes()}
               loading="eager"
               decoding="sync"
-              onClick={onMediaClick} // Add click handler
+              onClick={onMediaClick}
               onLoad={() => setIsLoading(false)}
               onError={() => setIsLoading(false)}
+              draggable="false"
             />
           )}
           
           {/* Watermark overlay */}
-          <WatermarkOverlay username={creatorId} creatorId={creatorId} />
+          <WatermarkOverlay username={username || ''} creatorId={creatorId} />
         </div>
       </div>
     </motion.div>

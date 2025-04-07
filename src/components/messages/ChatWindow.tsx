@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +7,7 @@ import { MessageInput } from "./MessageInput";
 import { ChatHeader } from "./chat/ChatHeader";
 import { MessageList } from "./chat/MessageList";
 import { SnapCamera } from "./chat/SnapCamera";
-import { VideoCallDialog } from "./call/VideoCallDialog"; // Corrected import
+import { VideoCallDialog } from "./call/VideoCallDialog";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useChatActions } from "./chat/ChatActions";
 import { PenSquare } from "lucide-react";
@@ -24,6 +23,7 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   const [showCall, setShowCall] = useState(false);
   const [isVideoCall, setIsVideoCall] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [deliveryStatus, setDeliveryStatus] = useState<Record<string, 'sent' | 'delivered' | 'seen'>>({});
   const session = useSession();
   const { toast } = useToast();
   const { isGhostMode } = useGhostMode();
@@ -45,6 +45,17 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         .order('created_at', { ascending: true });
 
       if (error) throw error;
+      
+      const receivedMessages = (data || []).filter(
+        msg => msg.recipient_id === session.user.id && !msg.viewed_at
+      );
+      
+      if (receivedMessages.length > 0) {
+        await supabase.from('direct_messages')
+          .update({ delivery_status: 'delivered' })
+          .in('id', receivedMessages.map(msg => msg.id));
+      }
+      
       return data || [];
     },
     enabled: !!session?.user?.id && !!recipientId,
@@ -68,7 +79,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   });
 
   useEffect(() => {
-    // Skip presence updates and typing indicators if in ghost mode
     if (isGhostMode) return;
     
     const channel = supabase.channel('typing-status')
@@ -93,6 +103,36 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     setIsVideoCall(true);
     setShowCall(true);
   };
+
+  const handleVisibilityChange = async () => {
+    if (document.visibilityState === 'visible' && session?.user?.id) {
+      const unviewedMessages = messages.filter(
+        msg => msg.recipient_id === session.user.id && 
+        (msg.delivery_status === 'delivered' || !msg.viewed_at)
+      );
+      
+      if (unviewedMessages.length > 0) {
+        await supabase.from('direct_messages')
+          .update({ 
+            delivery_status: 'seen',
+            viewed_at: new Date().toISOString()
+          })
+          .in('id', unviewedMessages.map(msg => msg.id));
+      }
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    if (messages.length > 0 && session?.user?.id) {
+      handleVisibilityChange();
+    }
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [messages, session?.user?.id]);
 
   return (
     <div className="flex flex-col h-full bg-luxury-dark">

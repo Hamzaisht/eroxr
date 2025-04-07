@@ -1,6 +1,8 @@
+
 import { useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { initializeScreenshotProtection, preventMediaSelection } from "@/lib/security";
+import { supabase } from "@/integrations/supabase/client";
+import { useGhostMode } from "@/hooks/useGhostMode";
 
 interface ProtectedMediaProps {
   children: React.ReactNode;
@@ -10,10 +12,34 @@ interface ProtectedMediaProps {
 
 export const ProtectedMedia = ({ children, contentOwnerId, className = "" }: ProtectedMediaProps) => {
   const session = useSession();
+  const { isGhostMode } = useGhostMode();
 
   useEffect(() => {
-    initializeScreenshotProtection(session?.user?.id, contentOwnerId);
-  }, [session?.user?.id, contentOwnerId]);
+    // Don't log ghost mode views
+    if (isGhostMode) return;
+    
+    // Add screenshot protection
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Potential screenshot detected
+        if (session?.user?.id && contentOwnerId) {
+          supabase.from('security_violations').insert({
+            violator_id: session.user.id,
+            content_owner_id: contentOwnerId,
+            violation_type: 'screenshot'
+          }).then(() => {
+            console.log('Screenshot attempt logged');
+          });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [session?.user?.id, contentOwnerId, isGhostMode]);
 
   return (
     <div 

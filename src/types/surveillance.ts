@@ -1,4 +1,3 @@
-
 export type ContentType = 'post' | 'story' | 'video' | 'audio';
 
 export type LiveSessionType = 'stream' | 'call' | 'chat' | 'bodycontact' | 'content';
@@ -67,6 +66,9 @@ export type BaseSurveillanceContentItem = {
 };
 
 export type SurveillanceContentItem = BaseSurveillanceContentItem;
+
+// Message types supported in the chat system
+export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'snap' | 'call' | 'file';
 
 // Re-export ModerationAction type from moderation.ts for convenience
 export type { ModerationAction } from "./moderation";
