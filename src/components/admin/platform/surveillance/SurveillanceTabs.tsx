@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSurveillanceData } from "./hooks/useSurveillanceData";
 import { SurveillanceTabsList } from "./components/SurveillanceTabsList";
 import { SessionTabContent } from "./components/SessionTabContent";
-import { LiveSession } from "./types";
+import { LiveSession, SurveillanceTab } from "./types";
 
 interface SurveillanceTabsProps {
   liveAlerts: LiveAlert[];
@@ -36,7 +36,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
   
   // Handle tab change
   const handleTabChange = (value: string) => {
-    setActiveTab(value as any);
+    setActiveTab(value as SurveillanceTab);
   };
   
   // Handle monitoring a session
@@ -103,7 +103,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       
       {/* Live Session Tabs */}
       <SessionTabContent 
-        value="streams"
+        value={'streams' as SurveillanceTab}
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -114,7 +114,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       <SessionTabContent 
-        value="calls"
+        value={'calls' as SurveillanceTab}
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -125,7 +125,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       <SessionTabContent 
-        value="chats"
+        value={'chats' as SurveillanceTab}
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -136,7 +136,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       <SessionTabContent 
-        value="bodycontact"
+        value={'bodycontact' as SurveillanceTab}
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
