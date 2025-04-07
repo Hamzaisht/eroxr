@@ -7,6 +7,7 @@ import { useState, useRef } from "react";
 import { WatermarkOverlay } from "./WatermarkOverlay";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { MediaControls } from "./MediaControls";
+import { MediaViewer } from "./MediaViewer";
 
 interface MediaContentProps {
   url: string;
@@ -34,6 +35,7 @@ export const MediaContent = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [showEnlargedMedia, setShowEnlargedMedia] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleFullscreen = () => {
@@ -53,7 +55,11 @@ export const MediaContent = ({
   const handleMediaClick = () => {
     if (onMediaClick) {
       onMediaClick();
+    } else if (isVideo) {
+      // For videos, we show them in the MediaViewer
+      setShowEnlargedMedia(true);
     } else {
+      // For images, we toggle zoom if not using MediaViewer
       setIsZoomed(!isZoomed);
     }
   };
@@ -139,6 +145,7 @@ export const MediaContent = ({
               creatorId={creatorId}
               onClose={() => {}}
               autoPlay={true}
+              onClick={handleMediaClick}
             />
           ) : (
             <img
@@ -161,6 +168,15 @@ export const MediaContent = ({
           <WatermarkOverlay username={username || ''} creatorId={creatorId} />
         </div>
       </div>
+
+      {/* Media Viewer for enlarged display */}
+      {showEnlargedMedia && (
+        <MediaViewer
+          media={url}
+          onClose={() => setShowEnlargedMedia(false)}
+          creatorId={creatorId}
+        />
+      )}
     </motion.div>
   );
 };
