@@ -6,10 +6,14 @@ import { LiveSession } from "@/types/surveillance";
 
 export const useGhostSurveillance = (isGhostMode: boolean, isSuperAdmin: boolean) => {
   const [activeSurveillance, setActiveSurveillance] = useState<{
-    session?: LiveSession;
     isWatching: boolean;
-    startTime?: string;
-  }>({ isWatching: false });
+    session: LiveSession | null;
+    startTime: string | null;
+  }>({ 
+    isWatching: false,
+    session: null,
+    startTime: null
+  });
   
   const session = useSession();
 
@@ -55,7 +59,12 @@ export const useGhostSurveillance = (isGhostMode: boolean, isSuperAdmin: boolean
         windows.close();
       }
 
-      setActiveSurveillance({ isWatching: false });
+      setActiveSurveillance({ 
+        isWatching: false,
+        session: null,
+        startTime: null
+      });
+      
       return true;
     } catch (error) {
       console.error("Error stopping surveillance:", error);

@@ -8,7 +8,14 @@ export type ModerationAction =
   | 'delete'
   | 'edit'
   | 'hide'
-  | 'restrict';
+  | 'restrict'
+  | 'view'
+  | 'warn'
+  | 'shadowban'
+  | 'force_delete'
+  | 'restore'
+  | 'pause'
+  | 'unpause';
 
 export interface ModerationDecision {
   id: string;

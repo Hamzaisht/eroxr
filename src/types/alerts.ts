@@ -21,4 +21,9 @@ export interface LiveAlert {
   is_viewed: boolean;
   urgent: boolean;
   session?: LiveSession;
+  reporter?: {
+    id: string;
+    username?: string;
+    avatar_url?: string | null;
+  };
 }
