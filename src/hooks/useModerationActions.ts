@@ -1,8 +1,8 @@
+
 import { useState } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useToast } from "./use-toast";
-import { SurveillanceContentItem } from "@/components/admin/platform/surveillance/types";
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { SurveillanceContentItem, LiveSession } from "@/types/surveillance";
 import { ModerationAction } from "@/types/moderation";
 
 export const useModerationActions = () => {

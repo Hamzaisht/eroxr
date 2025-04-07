@@ -2,10 +2,10 @@
 import { TabsContent } from "@/components/ui/tabs";
 import { TabContentWrapper } from "./TabContentWrapper";
 import { SessionList } from "../SessionList";
-import { LiveSession, SurveillanceTab } from "../types";
+import { LiveSession, SurveillanceTab } from "@/types/surveillance";
 
 interface SessionTabContentProps {
-  value: SurveillanceTab;
+  value: string;
   activeTab: SurveillanceTab;
   sessions: LiveSession[];
   isLoading: boolean;
@@ -27,7 +27,7 @@ export const SessionTabContent = ({
 }: SessionTabContentProps) => {
   return (
     <TabsContent value={value}>
-      <TabContentWrapper isActive={activeTab === value}>
+      <TabContentWrapper isActive={activeTab === value as SurveillanceTab}>
         <SessionList
           sessions={sessions}
           isLoading={isLoading}

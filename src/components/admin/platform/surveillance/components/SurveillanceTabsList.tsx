@@ -1,6 +1,6 @@
 
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SurveillanceTab } from "../types";
+import { SurveillanceTab } from "@/types/surveillance";
 import { LiveAlert } from "@/types/alerts";
 
 interface SurveillanceTabsListProps {

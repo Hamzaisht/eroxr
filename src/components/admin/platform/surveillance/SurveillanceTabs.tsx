@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSurveillanceData } from "./hooks/useSurveillanceData";
 import { SurveillanceTabsList } from "./components/SurveillanceTabsList";
 import { SessionTabContent } from "./components/SessionTabContent";
-import { LiveSession, SurveillanceTab } from "./types";
+import { LiveSession, SurveillanceTab } from "@/types/surveillance";
 
 interface SurveillanceTabsProps {
   liveAlerts: LiveAlert[];
@@ -103,7 +103,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       
       {/* Live Session Tabs */}
       <SessionTabContent 
-        value={'streams' as SurveillanceTab}
+        value="streams"
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -114,7 +114,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       <SessionTabContent 
-        value={'calls' as SurveillanceTab}
+        value="calls"
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -125,7 +125,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       <SessionTabContent 
-        value={'chats' as SurveillanceTab}
+        value="chats"
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}
@@ -136,7 +136,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       />
       
       <SessionTabContent 
-        value={'bodycontact' as SurveillanceTab}
+        value="bodycontact"
         activeTab={activeTab}
         sessions={filteredSessions}
         isLoading={isLoading}

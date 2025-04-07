@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { LiveSession } from "./types";
+import { LiveSession } from "@/types/surveillance";
 import { ModerationAction } from "@/types/moderation";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

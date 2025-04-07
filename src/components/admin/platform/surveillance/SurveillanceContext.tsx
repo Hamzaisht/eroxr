@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { LiveAlert } from "@/types/alerts";
-import { LiveSession, SurveillanceTab, LiveSessionType } from "./types";
+import { LiveSession, SurveillanceTab, LiveSessionType } from "@/types/surveillance";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useStreamsSurveillance } from "./hooks/useStreamsSurveillance";
 import { useCallsSurveillance } from "./hooks/useCallsSurveillance";
@@ -14,8 +14,8 @@ interface SurveillanceContextType {
   liveAlerts: LiveAlert[];
   isLoading: boolean;
   error: string | null;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: SurveillanceTab;
+  setActiveTab: (tab: SurveillanceTab) => void;
   refreshSessions: () => Promise<void>;
   refreshAlerts: () => Promise<void>;
   handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
@@ -52,7 +52,7 @@ export function SurveillanceProvider({
   const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("streams");
+  const [activeTab, setActiveTab] = useState<SurveillanceTab>("streams");
   const supabase = useSupabaseClient();
   
   const { fetchStreams } = useStreamsSurveillance();

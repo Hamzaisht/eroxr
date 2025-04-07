@@ -1,5 +1,5 @@
 
-import { LiveSession } from "../types";
+import { LiveSession } from "@/types/surveillance";
 
 export function useFallbackData() {
   const generateFallbackData = (): LiveSession[] => {

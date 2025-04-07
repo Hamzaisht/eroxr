@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { SessionList } from "./surveillance/SessionList";
 import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { GhostModePrompt } from "./surveillance/GhostModePrompt";
 import { SurveillanceProvider } from "./surveillance/SurveillanceContext";
-import { LiveSession } from "./surveillance/types";
+import { LiveSession } from "@/types/surveillance";
 import { LiveAlert } from "@/types/alerts";
 import { useLiveSurveillanceData } from "./surveillance/hooks/useLiveSurveillanceData";
 import { SurveillanceAlerts } from "./surveillance/components/SurveillanceAlerts";

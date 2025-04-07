@@ -3,13 +3,15 @@ export type ContentType = 'story' | 'post' | 'video' | 'audio';
 
 export type LiveSessionType = 'stream' | 'call' | 'chat' | 'bodycontact' | 'content';
 
+export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'content' | 'earnings' | 'alerts';
+
 export type LiveSession = {
   id: string;
-  type?: LiveSessionType;
-  user_id?: string;
+  type: LiveSessionType;
+  user_id: string;
   creator_id?: string;
-  username?: string;
-  avatar_url?: string;
+  username: string;
+  avatar_url?: string | null;
   viewer_count?: number;
   created_at: string;
   started_at?: string;
@@ -20,14 +22,18 @@ export type LiveSession = {
   location?: string;
   video_url?: string;
   content?: string;
-  media_url?: string[] | string;
+  media_url: string[] | string;
   content_type?: string;
   message_type?: string;
   recipient_id?: string;
   recipient_username?: string;
+  recipient_avatar?: string | null;
   is_paused?: boolean;
   visibility?: string;
   thumbnail_url?: string;
+  participants?: number;
+  tags?: string[];
+  is_private?: boolean;
 };
 
 export type BaseSurveillanceContentItem = {
@@ -53,19 +59,14 @@ export type BaseSurveillanceContentItem = {
   comments?: number;
   tags?: string[];
   location?: string;
+  is_draft?: boolean;
+  original_content?: any;
+  content_id?: string;
+  is_paused?: boolean;
+  type?: string;
 };
 
 export type SurveillanceContentItem = BaseSurveillanceContentItem;
 
-export type ModerationAction =
-  | 'delete'
-  | 'flag'
-  | 'warn'
-  | 'shadowban'
-  | 'view'
-  | 'restore'
-  | 'force_delete'
-  | 'pause'
-  | 'unpause'
-  | 'ban' 
-  | 'edit';
+// Re-export ModerationAction type from moderation.ts for convenience
+export type { ModerationAction } from "./moderation";
