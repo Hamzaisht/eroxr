@@ -88,13 +88,13 @@ export default function Surveillance() {
       <SurveillanceProvider
         liveAlerts={liveAlerts || []}
         refreshAlerts={refreshAlerts}
-        startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
+        startSurveillance={startSurveillance}
       >
         <SurveillanceTabs 
           liveAlerts={liveAlerts || []} 
           onSelectAlert={(alert) => {
             if (alert?.session) {
-              startSurveillance(alert.session as LiveSession);
+              startSurveillance(alert.session);
             }
           }}
         />
