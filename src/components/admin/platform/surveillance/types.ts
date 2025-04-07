@@ -1,6 +1,6 @@
 
-// Re-export all surveillance types from central location
-export type { 
+// First import all types from central location
+import type { 
   SurveillanceTab,
   LiveSessionType,
   LiveSession,
@@ -9,7 +9,17 @@ export type {
   ModerationAction
 } from "@/types/surveillance";
 
-// Local interfaces that are specific to components
+// Re-export all surveillance types for convenience
+export type { 
+  SurveillanceTab,
+  LiveSessionType,
+  LiveSession,
+  ContentType,
+  SurveillanceContentItem,
+  ModerationAction
+};
+
+// Local interfaces that are specific to components - these use the imported types
 export interface SessionModerationActionProps {
   session: LiveSession | SurveillanceContentItem;
   onModerate: (content: LiveSession | SurveillanceContentItem, action: string, editedContent?: string) => Promise<void>;
