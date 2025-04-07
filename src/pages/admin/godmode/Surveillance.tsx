@@ -4,14 +4,16 @@ import { useGhostMode } from "@/hooks/useGhostMode";
 import { GhostModeToggle } from "@/components/admin/platform/GhostModeToggle";
 import { AdminHeader } from "@/components/admin/godmode/AdminHeader";
 import { SurveillanceProvider } from "@/components/admin/platform/surveillance/SurveillanceContext";
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { LiveSession } from "@/types/surveillance";
 import { GhostModePrompt } from "@/components/admin/platform/surveillance/GhostModePrompt";
 import { useEffect } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSurveillanceData } from "@/components/admin/platform/surveillance/useSurveillanceData";
 
 export default function Surveillance() {
   const { isGhostMode, liveAlerts, refreshAlerts, startSurveillance, canUseGhostMode } = useGhostMode();
   const supabase = useSupabaseClient();
+  const { liveSessions, isLoading, error } = useSurveillanceData();
   
   // Fetch alerts and surveillance data when component mounts or ghost mode changes
   useEffect(() => {
@@ -84,11 +86,18 @@ export default function Surveillance() {
       />
       
       <SurveillanceProvider
-        liveAlerts={liveAlerts}
+        liveAlerts={liveAlerts || []}
         refreshAlerts={refreshAlerts}
         startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
       >
-        <SurveillanceTabs liveAlerts={liveAlerts} />
+        <SurveillanceTabs 
+          liveAlerts={liveAlerts || []} 
+          onSelectAlert={(alert) => {
+            if (alert?.session) {
+              startSurveillance(alert.session as LiveSession);
+            }
+          }}
+        />
       </SurveillanceProvider>
     </div>
   );

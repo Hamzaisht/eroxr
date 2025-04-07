@@ -2,8 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { useSurveillance } from "./SurveillanceContext";
-import { LiveSession } from "./types";
-import { LiveAlert } from "@/types/alerts";
+import { LiveSession } from "@/types/surveillance";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
 export function useSurveillanceData() {
@@ -60,6 +59,17 @@ export function useSurveillanceData() {
         console.error("Error fetching messages:", messagesError);
       }
       
+      // Fetch posts for content tab
+      const { data: posts, error: postsError } = await supabase
+        .from('posts')
+        .select('*, creator:creator_id(username, avatar_url)')
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      if (postsError) {
+        console.error("Error fetching posts:", postsError);
+      }
+      
       // Transform data into LiveSession format
       const streamSessions: LiveSession[] = (streams || []).map(stream => ({
         id: stream.id,
@@ -113,10 +123,27 @@ export function useSurveillanceData() {
         content_type: 'message'
       }));
       
+      // Transform posts into LiveSession format for content
+      const postSessions: LiveSession[] = (posts || []).map(post => ({
+        id: post.id,
+        type: 'content',
+        user_id: post.creator_id,
+        username: post.creator?.username || 'Unknown',
+        avatar_url: post.creator?.avatar_url,
+        created_at: post.created_at,
+        title: post.content.substring(0, 30) + (post.content.length > 30 ? '...' : ''),
+        content: post.content,
+        status: post.visibility || 'public',
+        is_paused: false,
+        media_url: Array.isArray(post.media_url) ? post.media_url : post.media_url ? [post.media_url] : [],
+        content_type: 'post'
+      }));
+      
       const allSessions = [
         ...streamSessions,
         ...callSessions,
-        ...messageSessions
+        ...messageSessions,
+        ...postSessions
       ];
       
       console.log(`Loaded ${allSessions.length} surveillance sessions`);
@@ -158,14 +185,14 @@ export function useSurveillanceData() {
       })
       .subscribe();
       
-    const callsChannel = supabase
-      .channel('ghost-calls-changes')
+    const postsChannel = supabase
+      .channel('ghost-posts-changes')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'calls',
+        table: 'posts',
       }, () => {
-        console.log('Calls updated, refreshing data');
+        console.log('Posts updated, refreshing data');
         fetchSurveillanceData();
       })
       .subscribe();
@@ -184,7 +211,7 @@ export function useSurveillanceData() {
       
     return () => {
       supabase.removeChannel(streamsChannel);
-      supabase.removeChannel(callsChannel);
+      supabase.removeChannel(postsChannel);
       supabase.removeChannel(messagesChannel);
     };
   }, [isGhostMode, supabase, fetchSurveillanceData]);

@@ -10,6 +10,7 @@ import { CreatorEarningsSurveillance } from "./CreatorEarningsSurveillance";
 import { SessionList } from "./SessionList";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useSurveillanceData } from "./useSurveillanceData";
 
 interface SurveillanceTabsProps {
   liveAlerts: LiveAlert[];
@@ -20,11 +21,10 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
   const { 
     activeTab, 
     setActiveTab, 
-    liveSessions, 
-    isLoading,
-    error,
-    fetchLiveSessions
+    error: contextError,
   } = useSurveillance();
+  
+  const { liveSessions, isLoading, error: dataError, refreshData } = useSurveillanceData();
 
   const { toast } = useToast();
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -36,8 +36,8 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
 
   // Fetch data when tab changes
   useEffect(() => {
-    fetchLiveSessions();
-  }, [activeTab, fetchLiveSessions]);
+    refreshData();
+  }, [activeTab, refreshData]);
   
   // Handle monitoring a session
   const handleMonitorSession = async (session: LiveSession) => {
@@ -57,6 +57,29 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       return false;
     }
   };
+  
+  // Filter sessions based on the active tab
+  const getFilteredSessions = () => {
+    if (!liveSessions || liveSessions.length === 0) return [];
+    
+    switch (activeTab) {
+      case 'streams':
+        return liveSessions.filter(session => session.type === 'stream');
+      case 'calls':
+        return liveSessions.filter(session => session.type === 'call');
+      case 'chats':
+        return liveSessions.filter(session => session.type === 'chat');
+      case 'bodycontact':
+        return liveSessions.filter(session => session.type === 'bodycontact');
+      case 'content':
+        return liveSessions.filter(session => session.type === 'content');
+      default:
+        return [];
+    }
+  };
+  
+  const filteredSessions = getFilteredSessions();
+  const error = contextError || dataError;
   
   return (
     <Tabs 
@@ -83,11 +106,9 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       
       {/* Live Session Tabs */}
       <TabsContent value="streams">
-        <TabContent 
-          isActive={activeTab === "streams"}
-        >
+        <TabContent isActive={activeTab === "streams"}>
           <SessionList
-            sessions={liveSessions.filter(session => session.type === 'stream')}
+            sessions={filteredSessions}
             isLoading={isLoading}
             error={error}
             onMonitorSession={handleMonitorSession}
@@ -97,11 +118,9 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       </TabsContent>
       
       <TabsContent value="calls">
-        <TabContent 
-          isActive={activeTab === "calls"}
-        >
+        <TabContent isActive={activeTab === "calls"}>
           <SessionList
-            sessions={liveSessions.filter(session => session.type === 'call')}
+            sessions={filteredSessions}
             isLoading={isLoading}
             error={error}
             onMonitorSession={handleMonitorSession}
@@ -111,11 +130,9 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       </TabsContent>
       
       <TabsContent value="chats">
-        <TabContent 
-          isActive={activeTab === "chats"}
-        >
+        <TabContent isActive={activeTab === "chats"}>
           <SessionList
-            sessions={liveSessions.filter(session => session.type === 'chat')}
+            sessions={filteredSessions}
             isLoading={isLoading}
             error={error}
             onMonitorSession={handleMonitorSession}
@@ -125,11 +142,9 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       </TabsContent>
       
       <TabsContent value="bodycontact">
-        <TabContent 
-          isActive={activeTab === "bodycontact"}
-        >
+        <TabContent isActive={activeTab === "bodycontact"}>
           <SessionList
-            sessions={liveSessions.filter(session => session.type === 'bodycontact')}
+            sessions={filteredSessions}
             isLoading={isLoading}
             error={error}
             onMonitorSession={handleMonitorSession}

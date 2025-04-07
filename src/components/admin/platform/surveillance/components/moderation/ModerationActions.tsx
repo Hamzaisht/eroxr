@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import type { LiveSession, SurveillanceContentItem, LiveSessionType } from "@/types/surveillance";
+import type { LiveSession, SurveillanceContentItem } from "@/types/surveillance";
 import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
 import { ModerationActionButton } from "./ModerationActionButton";
@@ -110,18 +110,18 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
       
       return {
         id: contentItem.id,
-        type: 'content' as LiveSessionType,
+        type: 'content' as LiveSession['type'],
         user_id: contentItem.creator_id || contentItem.user_id || '',
         created_at: contentItem.created_at,
         content: contentItem.content,
-        media_url: contentItem.media_url,
-        username: contentItem.creator_username || contentItem.username,
+        media_url: contentItem.media_url || [],
+        username: contentItem.creator_username || contentItem.username || 'Unknown',
         avatar_url: contentItem.creator_avatar_url || contentItem.avatar_url,
         content_type: contentItem.content_type,
         title: contentItem.title || '',
         description: contentItem.description || '',
         status: contentItem.visibility || contentItem.status
-      } as LiveSession;
+      };
     }
   };
   

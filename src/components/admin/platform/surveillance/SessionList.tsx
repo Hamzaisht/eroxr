@@ -1,12 +1,10 @@
 
-import { useState, useEffect } from "react";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Tv, UserCog, RefreshCw } from "lucide-react";
+import { Eye, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
 import { SessionActions } from "./components/session/SessionActions";
@@ -64,14 +62,25 @@ export const SessionList = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Live Sessions</h2>
-        <SearchFilterBar 
-          onSearch={handleSearch} 
-          onRefresh={handleRefresh}
-          placeholder="Search sessions..."
-        />
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="h-9"
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Refresh
+          </Button>
+          <SearchFilterBar 
+            onSearch={handleSearch} 
+            onRefresh={handleRefresh}
+            placeholder="Search sessions..."
+          />
+        </div>
       </div>
       
-      <ScrollArea className="rounded-md border">
+      <ScrollArea className="rounded-md border h-[400px]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -98,8 +107,15 @@ export const SessionList = ({
             )}
             {!isLoading && sessions.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-4">
-                  No live sessions found.
+                <TableCell colSpan={4} className="text-center py-8">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <Eye className="h-12 w-12 text-muted-foreground/30" />
+                    <p className="text-muted-foreground">No sessions found</p>
+                    <Button size="sm" onClick={handleRefresh} variant="outline">
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      Refresh
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -111,15 +127,14 @@ export const SessionList = ({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <Tv className="h-4 w-4 text-muted-foreground" />
-                    <span>{session.creator_id || session.user_id}</span>
+                    {session.username || session.user_id}
                   </div>
                 </TableCell>
                 <TableCell>
                   {new Date(session.created_at).toLocaleTimeString()}
                 </TableCell>
                 <TableCell className="text-right">
-                  {onModerate && onShowMediaPreview && (
+                  {onModerate && onShowMediaPreview ? (
                     <SessionActions 
                       session={session}
                       onMonitorSession={onMonitorSession}
@@ -127,8 +142,7 @@ export const SessionList = ({
                       onModerate={handleModerateAction}
                       actionInProgress={actionInProgress || null}
                     />
-                  )}
-                  {!onModerate && (
+                  ) : (
                     <Button
                       size="sm"
                       variant="outline"
@@ -148,11 +162,33 @@ export const SessionList = ({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Session Details</DialogTitle>
-            <DialogDescription>
-              {selectedSession?.title} - {selectedSession?.description}
-            </DialogDescription>
           </DialogHeader>
-          {/* Add session details here */}
+          <div className="space-y-3">
+            {selectedSession && (
+              <>
+                <div>
+                  <h3 className="font-medium">Title</h3>
+                  <p>{selectedSession.title || 'Untitled'}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium">Creator</h3>
+                  <p>{selectedSession.username || selectedSession.user_id}</p>
+                </div>
+                {selectedSession.content && (
+                  <div>
+                    <h3 className="font-medium">Content</h3>
+                    <p>{selectedSession.content}</p>
+                  </div>
+                )}
+                {selectedSession.created_at && (
+                  <div>
+                    <h3 className="font-medium">Created At</h3>
+                    <p>{new Date(selectedSession.created_at).toLocaleString()}</p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
           <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
         </DialogContent>
       </Dialog>

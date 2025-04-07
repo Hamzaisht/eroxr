@@ -1,5 +1,4 @@
 
-
 import { LiveSessionType, SurveillanceContentItem as BaseSurveillanceContentItem } from "@/components/admin/platform/surveillance/types";
 import { ModerationAction } from "@/types/moderation";
 
@@ -25,9 +24,9 @@ export interface FlaggedContent {
 // Export the LiveSession type
 export interface LiveSession {
   id: string;
-  type: LiveSessionType;
+  type: LiveSessionType | 'content';
   user_id: string;
-  username: string;
+  username?: string;
   avatar_url?: string | null;
   created_at: string;
   started_at?: string;
@@ -61,3 +60,25 @@ export type { LiveSessionType } from "@/components/admin/platform/surveillance/t
 // Extend ModerationAction to include pause/unpause
 export type ExtendedModerationAction = ModerationAction | "pause" | "unpause";
 
+// Define new types for proper typing
+export type BaseSurveillanceContentItem = {
+  id: string;
+  user_id: string;
+  title: string;
+  status: string;
+  content_type: string;
+  created_at: string;
+  is_ppv?: boolean;
+  ppv_amount?: number;
+  creator_id?: string;
+  creator_username?: string;
+  username?: string;
+  creator_avatar_url?: string;
+  avatar_url?: string;
+  content?: string;
+  description?: string;
+  visibility?: string;
+  media_url: string[];
+};
+
+export type ContentType = 'story' | 'post' | 'video' | 'audio' | 'all';
