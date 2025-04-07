@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send } from "lucide-react";
 import { SnapButton } from "./SnapButton";
-import { useTypingIndicator } from "@/hooks/useRealtimeMessages";
+import { useTypingIndicator, useMessageAudit } from "@/hooks/useRealtimeMessages";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -28,11 +28,20 @@ export const MessageInput = ({
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { sendTypingStatus } = useTypingIndicator(recipientId);
+  const { logMessageActivity } = useMessageAudit();
 
   const handleSend = () => {
     if (message.trim() && !isLoading) {
+      // Log message send attempt
+      logMessageActivity('send_attempt', { 
+        content: message.trim(),
+        recipient_id: recipientId,
+        message_type: 'text'
+      });
+      
       onSendMessage(message.trim());
       setMessage("");
+      
       // Clear typing status when message is sent
       sendTypingStatus(false);
     }
@@ -72,7 +81,15 @@ export const MessageInput = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      // Log media upload attempt
+      logMessageActivity('media_upload', {
+        recipient_id: recipientId,
+        file_count: e.target.files.length,
+        file_types: Array.from(e.target.files).map(file => file.type)
+      });
+      
       onMediaSelect(e.target.files);
+      
       // Reset the input so the same file can be selected again if needed
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -117,6 +134,7 @@ export const MessageInput = ({
         type="button"
         className="h-9 w-9 rounded-full"
         onClick={() => fileInputRef.current?.click()}
+        aria-label="Attach file"
       >
         <Paperclip className="h-5 w-5 text-luxury-neutral" />
       </Button>
@@ -133,6 +151,7 @@ export const MessageInput = ({
           ref={inputRef}
           className="bg-luxury-neutral/5 border-luxury-neutral/20 text-luxury-text"
           disabled={isLoading}
+          aria-label="Message input"
         />
       </div>
       
@@ -142,6 +161,7 @@ export const MessageInput = ({
         variant={message.trim() ? "default" : "ghost"}
         size="icon"
         className="h-9 w-9 rounded-full"
+        aria-label="Send message"
       >
         <Send className="h-5 w-5" />
       </Button>

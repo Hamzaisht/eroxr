@@ -1,67 +1,65 @@
 
-import { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@supabase/auth-helpers-react';
-
-export const useRealtimeMessages = (recipientId?: string) => {
-  const queryClient = useQueryClient();
-  const session = useSession();
-
-  useEffect(() => {
-    if (!session?.user?.id) return;
-
-    // Set up real-time subscription to direct messages
-    const messageChannel = supabase
-      .channel('messages-subscription')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'direct_messages',
-          filter: recipientId 
-            ? `recipient_id=eq.${recipientId} OR sender_id=eq.${recipientId}`
-            : undefined
-        },
-        (payload) => {
-          // Immediately update the messages in the cache
-          queryClient.invalidateQueries({ queryKey: ['chat'] });
-        }
-      )
-      .subscribe();
-
-    // Set up real-time subscription to typing status
-    const typingChannel = supabase.channel('typing-status')
-      .on('broadcast', { event: 'typing' }, () => {
-        // This will be handled in the ChatWindow component
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(messageChannel);
-      supabase.removeChannel(typingChannel);
-    };
-  }, [recipientId, queryClient, session?.user?.id]);
-};
 
 export const useTypingIndicator = (recipientId: string) => {
-  const session = useSession();
-  
-  const sendTypingStatus = (isTyping: boolean) => {
-    if (!session?.user?.id || !recipientId) return;
+  const sendTypingStatus = useCallback((isTyping: boolean) => {
+    if (!recipientId) return;
     
-    const channel = supabase.channel('typing-status');
-    channel.send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: { 
-        user_id: session.user.id, 
-        recipient_id: recipientId,
-        is_typing: isTyping 
-      }
-    });
-  };
-  
+    const message = {
+      type: 'typing_indicator',
+      sender_id: supabase.auth.getUser()?.data?.user?.id,
+      recipient_id: recipientId,
+      is_typing: isTyping
+    };
+
+    // Send typing status through realtime channel
+    supabase
+      .channel('typing-indicator')
+      .send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: message
+      })
+      .catch(error => {
+        console.error('Error sending typing status:', error);
+      });
+  }, [recipientId]);
+
   return { sendTypingStatus };
+};
+
+export const useMessageAudit = () => {
+  const logMessageActivity = useCallback(async (action: string, messageData: any) => {
+    try {
+      const session = await supabase.auth.getSession();
+      const userId = session?.data?.session?.user?.id;
+      
+      if (!userId) return;
+      
+      const clientInfo = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      };
+      
+      await supabase.from('admin_audit_logs').insert({
+        user_id: userId,
+        action: `message_${action}`,
+        details: {
+          message_id: messageData.id,
+          timestamp: new Date().toISOString(),
+          client_info: clientInfo,
+          content_type: messageData.message_type,
+          recipient_id: messageData.recipient_id,
+          has_media: !!messageData.media_url?.length
+        }
+      });
+    } catch (error) {
+      console.error('Failed to log message audit:', error);
+    }
+  }, []);
+
+  return { logMessageActivity };
 };

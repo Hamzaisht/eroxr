@@ -4,14 +4,25 @@ import { MediaContent } from "./MediaContent";
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
+import { initializeScreenshotProtection, reportSecurityViolation } from "@/lib/security";
 
 export interface MediaViewerProps {
   media: string | null;
   onClose: () => void;
   creatorId?: string;
+  onNext?: () => void;
+  onPrevious?: () => void;
+  hasMultipleItems?: boolean;
 }
 
-export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => {
+export const MediaViewer = ({ 
+  media, 
+  onClose, 
+  creatorId,
+  onNext,
+  onPrevious,
+  hasMultipleItems = false
+}: MediaViewerProps) => {
   const [isZoomed, setIsZoomed] = useState(false);
   const [username, setUsername] = useState<string>("");
   const session = useSession();
@@ -33,6 +44,11 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
   }, [creatorId]);
 
   useEffect(() => {
+    // Apply all security protections
+    if (session?.user?.id && creatorId) {
+      initializeScreenshotProtection(session.user.id, creatorId);
+    }
+
     // Disable right-click
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
@@ -45,11 +61,7 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
         console.log('Possible screenshot taken');
         // Log the screenshot attempt
         if (session?.user?.id && creatorId) {
-          supabase.from('security_violations').insert({
-            violator_id: session.user.id,
-            content_owner_id: creatorId,
-            violation_type: 'screenshot'
-          });
+          reportSecurityViolation(session.user.id, creatorId, 'screenshot_attempt');
         }
       }
     };
@@ -81,6 +93,9 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
           username={username}
           onClose={onClose}
           onMediaClick={handleMediaClick}
+          onNext={onNext}
+          onPrevious={onPrevious}
+          showControls={hasMultipleItems}
         />
       </DialogContent>
     </Dialog>

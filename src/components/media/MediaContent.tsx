@@ -2,9 +2,11 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
-import { Loader2, X } from "lucide-react";
-import { useState } from "react";
+import { Loader2, X, Maximize2, Minimize2 } from "lucide-react";
+import { useState, useRef } from "react";
 import { WatermarkOverlay } from "./WatermarkOverlay";
+import { VideoPlayer } from "@/components/video/VideoPlayer";
+import { MediaControls } from "./MediaControls";
 
 interface MediaContentProps {
   url: string;
@@ -13,6 +15,9 @@ interface MediaContentProps {
   username?: string;
   onClose?: () => void;
   onMediaClick?: () => void;
+  onNext?: () => void;
+  onPrevious?: () => void;
+  showControls?: boolean;
 }
 
 export const MediaContent = ({ 
@@ -21,20 +26,60 @@ export const MediaContent = ({
   creatorId,
   username,
   onClose, 
-  onMediaClick 
+  onMediaClick,
+  onNext,
+  onPrevious,
+  showControls = false
 }: MediaContentProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
 
   return (
     <motion.div
+      ref={containerRef}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
       className="w-full h-full flex flex-col bg-black/95 rounded-lg overflow-hidden"
       onContextMenu={(e) => e.preventDefault()}
     >
-      {/* Header with close button */}
-      <div className="flex items-center justify-end p-2 bg-black/80">
+      {/* Header with close button and fullscreen controls */}
+      <div className="flex items-center justify-end p-2 bg-black/80 z-10">
+        {!isFullscreen && (
+          <button 
+            onClick={toggleFullscreen}
+            className="p-1 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors mr-2"
+            aria-label="Toggle fullscreen"
+          >
+            <Maximize2 className="w-5 h-5" />
+          </button>
+        )}
+        
+        {isFullscreen && (
+          <button 
+            onClick={toggleFullscreen}
+            className="p-1 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors mr-2"
+            aria-label="Exit fullscreen"
+          >
+            <Minimize2 className="w-5 h-5" />
+          </button>
+        )}
+        
         {onClose && (
           <button 
             onClick={onClose}
@@ -45,6 +90,13 @@ export const MediaContent = ({
           </button>
         )}
       </div>
+      
+      {/* Media navigation controls */}
+      <MediaControls 
+        showControls={!!showControls && !!onNext && !!onPrevious} 
+        onNext={onNext || (() => {})} 
+        onPrevious={onPrevious || (() => {})} 
+      />
       
       {/* Media content container */}
       <div 
@@ -65,16 +117,13 @@ export const MediaContent = ({
         {/* Video or Image content */}
         <div className="relative max-w-full max-h-[80vh] flex items-center justify-center">
           {isVideo ? (
-            <video
-              src={url}
-              className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg"
-              controls
-              autoPlay
-              playsInline
-              preload="auto"
-              onLoadedMetadata={() => setIsLoading(false)}
-              onError={() => setIsLoading(false)}
-              controlsList="nodownload"
+            <VideoPlayer
+              url={url}
+              className="max-w-full max-h-[80vh]"
+              showCloseButton={false}
+              creatorId={creatorId}
+              onClose={() => {}}
+              autoPlay={true}
             />
           ) : (
             <img
