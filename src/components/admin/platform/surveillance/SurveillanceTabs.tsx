@@ -37,15 +37,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
 
   // Fetch data when tab changes
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await refreshData();
-      } catch (err) {
-        console.error("Error refreshing surveillance data:", err);
-      }
-    };
-    
-    fetchData();
+    refreshData();
   }, [activeTab, refreshData]);
   
   // Handle monitoring a session
