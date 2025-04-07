@@ -9,7 +9,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
 import { SessionActions } from "./components/session/SessionActions";
 import { LiveSession } from "./types";
-import { ModerationAction } from "@/types/moderation";
+import { ModerationAction } from "@/types/surveillance";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 interface SessionListProps {
   sessions?: LiveSession[];
@@ -58,6 +59,18 @@ export const SessionList = ({
     }
   };
 
+  // Filter sessions based on search query
+  const filteredSessions = sessions.filter(session => {
+    const searchQuery = searchFilter.query.toLowerCase();
+    if (!searchQuery) return true;
+    
+    const titleMatch = session.title?.toLowerCase().includes(searchQuery);
+    const usernameMatch = session.username?.toLowerCase().includes(searchQuery);
+    const contentMatch = session.content?.toLowerCase().includes(searchQuery);
+    
+    return titleMatch || usernameMatch || contentMatch;
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -93,8 +106,8 @@ export const SessionList = ({
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-4 italic text-muted-foreground">
-                  Loading sessions...
+                <TableCell colSpan={4} className="text-center py-6">
+                  <LoadingState message="Loading sessions..." />
                 </TableCell>
               </TableRow>
             )}
@@ -105,7 +118,7 @@ export const SessionList = ({
                 </TableCell>
               </TableRow>
             )}
-            {!isLoading && sessions.length === 0 && (
+            {!isLoading && filteredSessions.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8">
                   <div className="flex flex-col items-center justify-center space-y-3">
@@ -119,7 +132,7 @@ export const SessionList = ({
                 </TableCell>
               </TableRow>
             )}
-            {sessions.map((session) => (
+            {!isLoading && filteredSessions.map((session) => (
               <TableRow key={session.id}>
                 <TableCell>
                   <div className="font-medium">{session.title || 'Untitled'}</div>
@@ -131,7 +144,7 @@ export const SessionList = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  {new Date(session.created_at).toLocaleTimeString()}
+                  {session.created_at ? new Date(session.created_at).toLocaleTimeString() : 'Unknown'}
                 </TableCell>
                 <TableCell className="text-right">
                   {onModerate && onShowMediaPreview ? (

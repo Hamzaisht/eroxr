@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { LiveAlert } from "@/types/alerts";
-import { LiveSession, SurveillanceTab } from "./types";
+import { LiveSession, SurveillanceTab, LiveSessionType } from "./types";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useStreamsSurveillance } from "./hooks/useStreamsSurveillance";
 import { useCallsSurveillance } from "./hooks/useCallsSurveillance";
@@ -96,7 +96,7 @@ export function SurveillanceProvider({
                    item.media_url ? [item.media_url] : [],
         created_at: item.created_at || item.started_at || new Date().toISOString(),
         // Ensure type is a valid enum value
-        type: (item.type as "stream" | "call" | "chat" | "bodycontact" | "content")
+        type: (item.type as LiveSessionType)
       }));
       
       console.log(`Fetched ${validatedData.length} ${activeTab} for surveillance`);
