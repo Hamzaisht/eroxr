@@ -3,7 +3,9 @@ import { useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@supabase/auth-helpers-react';
-import { useMessageAudit } from './useMessageSubscription';
+import { useMessageAudit } from './useMessageAudit';
+import { useMessageSubscription } from './useMessageSubscription';
+import { useTypingIndicator } from './useTypingIndicator';
 
 /**
  * Hook to subscribe to realtime message updates and sync with query cache
@@ -89,11 +91,7 @@ export const useRealtimeMessages = (recipientId?: string) => {
   return { sendTypingStatus };
 };
 
-// Re-export the existing typing indicator for backward compatibility
-export { useTypingIndicator } from './useRealtimeMessages';
-
-// Re-export the message audit functionality for backward compatibility
-export { useMessageAudit } from './useRealtimeMessages';
-
-// Add convenience hook for message subscription
-export const useMessageSubscription = useMessageSubscription;
+// Export the utility hooks
+export { useTypingIndicator } from './useTypingIndicator';
+export { useMessageAudit } from './useMessageAudit';
+export { useMessageSubscription } from './useMessageSubscription';
