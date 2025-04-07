@@ -113,7 +113,8 @@ export const FlaggedContentView = () => {
       tags: item.tags || [],
       views: item.views || 0,
       likes: item.likes || 0,
-      comments: item.comments || 0
+      comments: item.comments || 0,
+      status: 'flagged'
     };
   };
   

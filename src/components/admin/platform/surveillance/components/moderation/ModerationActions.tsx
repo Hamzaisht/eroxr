@@ -12,7 +12,7 @@ import { ModerationActionDialog } from "./ModerationActionDialog";
 import { ModerationActionItems } from "./ModerationActionItems";
 import { ModerationActionButton } from "./ModerationActionButton";
 import { useModerationActions } from "@/hooks/useModerationActions";
-import { ModerationAction } from "@/types/moderation";
+import { ModerationAction } from "@/types/surveillance";
 
 interface ModerationActionsProps {
   session: LiveSession | SurveillanceContentItem;
@@ -110,8 +110,9 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
       
       return {
         id: contentItem.id,
-        type: 'content' as LiveSession['type'],
-        user_id: contentItem.creator_id || contentItem.user_id || '',
+        type: 'content' as LiveSessionType,
+        user_id: contentItem.user_id || '',
+        creator_id: contentItem.creator_id || contentItem.user_id || '',
         created_at: contentItem.created_at,
         content: contentItem.content,
         media_url: contentItem.media_url || [],

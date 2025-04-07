@@ -2,11 +2,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Ban, Eye, Flag, ShieldAlert } from "lucide-react";
-import type { LiveSession } from "@/types/surveillance";
-import { ModerationAction } from "@/types/moderation";
+import type { LiveSession, SurveillanceContentItem } from "@/types/surveillance";
+import { ModerationAction } from "@/types/surveillance";
 
 interface ModerationButtonProps {
-  session: LiveSession;
+  session: LiveSession | SurveillanceContentItem;
   onAction: (action: ModerationAction) => void;
   actionInProgress: string | null;
 }
@@ -20,8 +20,10 @@ export function ModerationActionButton({
   
   // Determine the most appropriate action based on session type
   const getPrimaryAction = (): { action: ModerationAction; icon: JSX.Element; variant: "outline" | "destructive" | "default" | "link" | "ghost" | "secondary"; label: string } => {
+    const contentType = (session as any).content_type || '';
+    
     // Text-based content like messages prioritize view/edit
-    if (session.type === "chat" || session.content_type === "message") {
+    if (session.type === "chat" || contentType === "message") {
       return {
         action: "view",
         icon: <Eye className="h-3.5 w-3.5 mr-1" />,
@@ -31,7 +33,7 @@ export function ModerationActionButton({
     }
     
     // User profiles prioritize ban
-    if (session.content_type === "user" || session.content_type === "profile") {
+    if (contentType === "user" || contentType === "profile") {
       return {
         action: "ban",
         icon: <Ban className="h-3.5 w-3.5 mr-1" />,
