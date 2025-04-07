@@ -1,11 +1,10 @@
 
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
-import { Phone, Video, Info, Calendar } from "lucide-react";
-import { BookingDialog } from "../booking/BookingDialog";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Phone, Video, Info, PenSquare } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ChatHeaderProps {
   recipientProfile: any;
@@ -13,92 +12,94 @@ interface ChatHeaderProps {
   onVoiceCall: () => void;
   onVideoCall: () => void;
   onToggleDetails: () => void;
+  isTyping?: boolean;
 }
 
-export const ChatHeader = ({
-  recipientProfile,
+export const ChatHeader = ({ 
+  recipientProfile, 
   recipientId,
   onVoiceCall,
   onVideoCall,
-  onToggleDetails
+  onToggleDetails,
+  isTyping = false
 }: ChatHeaderProps) => {
-  const [showBooking, setShowBooking] = useState(false);
-  const [bookingType, setBookingType] = useState<'chat' | 'video' | 'voice'>('chat');
-
-  // Check if recipient is a creator who accepts bookings
-  const { data: hasBookingEnabled } = useQuery({
-    queryKey: ['creator_booking_enabled', recipientId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('booking_slots')
-        .select('id')
-        .eq('creator_id', recipientId)
-        .eq('is_active', true)
-        .limit(1);
-
-      if (error) throw error;
-      return data && data.length > 0;
-    },
-    enabled: !!recipientId,
-  });
-
-  const handleBookingClick = () => {
-    setBookingType('chat');
-    setShowBooking(true);
-  };
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  
+  if (!recipientProfile) {
+    return (
+      <div className="flex items-center justify-between p-4 border-b border-white/5 bg-luxury-dark-secondary">
+        <div className="flex items-center space-x-3">
+          <div className="h-10 w-10 rounded-full bg-luxury-neutral/20 animate-pulse" />
+          <div className="h-5 w-32 rounded-md bg-luxury-neutral/20 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="flex items-center justify-between p-4 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={recipientProfile?.avatar_url} />
-            <AvatarFallback>{recipientProfile?.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+    <div className="flex items-center justify-between p-4 border-b border-luxury-neutral/10 bg-luxury-dark-secondary">
+      <div className="flex items-center space-x-3">
+        <div className="relative">
+          <Avatar className="h-10 w-10 border border-luxury-neutral/10">
+            <AvatarImage src={recipientProfile.avatar_url} />
+            <AvatarFallback>{recipientProfile.username?.[0]?.toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div>
-            <h2 className="text-lg font-semibold text-white">
-              {recipientProfile?.username || 'Loading...'}
-            </h2>
-            <p className="text-sm text-white/60">{recipientProfile?.status || 'offline'}</p>
+          <div className="absolute -bottom-0.5 -right-0.5">
+            <AvailabilityIndicator 
+              status={recipientProfile.status || "offline"} 
+              size={12} 
+            />
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          {hasBookingEnabled && (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={handleBookingClick}
-            >
-              <Calendar className="h-5 w-5" />
-            </Button>
-          )}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onVoiceCall}
-          >
-            <Phone className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onVideoCall}
-          >
-            <Video className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onToggleDetails}>
-            <Info className="h-5 w-5" />
-          </Button>
+        <div>
+          <div className="font-medium text-luxury-text">
+            {recipientProfile.username}
+          </div>
+          <div className="text-xs text-luxury-neutral/70">
+            {isTyping ? (
+              <div className="flex items-center text-luxury-primary">
+                <PenSquare className="h-3 w-3 mr-1 animate-pulse" />
+                <span>typing...</span>
+              </div>
+            ) : (
+              <span>{recipientProfile.status || "offline"}</span>
+            )}
+          </div>
         </div>
       </div>
-
-      <BookingDialog
-        creatorId={recipientId}
-        isOpen={showBooking}
-        onClose={() => setShowBooking(false)}
-        bookingType={bookingType}
-      />
-    </>
+      
+      <div className="flex items-center space-x-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full"
+          onClick={onVoiceCall}
+        >
+          <Phone className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="icon" 
+          className="rounded-full"
+          onClick={onVideoCall}
+        >
+          <Video className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn("rounded-full", isOptionsOpen && "bg-luxury-neutral/10")}
+          onClick={() => {
+            setIsOptionsOpen(!isOptionsOpen);
+            onToggleDetails();
+          }}
+        >
+          <Info className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +11,6 @@ import { SnapCamera } from "./chat/SnapCamera";
 import { VideoCallDialog } from "./call/VideoCallDialog";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useChatActions } from "./chat/ChatActions";
-import { PenSquare } from "lucide-react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 
 interface ChatWindowProps {
@@ -52,7 +52,10 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
       
       if (receivedMessages.length > 0) {
         await supabase.from('direct_messages')
-          .update({ delivery_status: 'delivered' })
+          .update({ 
+            delivery_status: 'delivered',
+            viewed_at: document.visibilityState === 'visible' ? new Date().toISOString() : null 
+          })
           .in('id', receivedMessages.map(msg => msg.id));
       }
       
@@ -85,6 +88,11 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if (payload.user_id === recipientId && payload.recipient_id === session?.user?.id) {
           setIsTyping(payload.is_typing);
+          
+          // Auto-clear typing indicator after 5 seconds in case the event is missed
+          if (payload.is_typing) {
+            setTimeout(() => setIsTyping(false), 5000);
+          }
         }
       })
       .subscribe();
@@ -134,6 +142,40 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     };
   }, [messages, session?.user?.id]);
 
+  // Track online presence via channels
+  useEffect(() => {
+    if (!session?.user?.id || isGhostMode) return;
+    
+    const presenceChannel = supabase.channel('online-presence');
+    
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const presenceState = presenceChannel.presenceState();
+        console.log('Online users:', presenceState);
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('User joined:', key, newPresences);
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('User left:', key, leftPresences);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({
+            user_id: session.user.id,
+            online_at: new Date().toISOString(),
+            status: 'online'
+          });
+        }
+      });
+      
+    return () => {
+      presenceChannel.untrack().then(() => {
+        supabase.removeChannel(presenceChannel);
+      });
+    };
+  }, [session?.user?.id, isGhostMode]);
+
   return (
     <div className="flex flex-col h-full bg-luxury-dark">
       <ChatHeader
@@ -142,21 +184,15 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         onVoiceCall={handleVoiceCall}
         onVideoCall={handleVideoCall}
         onToggleDetails={onToggleDetails}
+        isTyping={isTyping}
       />
       
-      <div className="flex-1 overflow-y-auto">
-        <MessageList
-          messages={messages}
-          currentUserId={session?.user?.id}
-          recipientProfile={recipientProfile}
-        />
-        {isTyping && (
-          <div className="flex items-center gap-2 px-4 py-2 text-sm text-luxury-neutral/60">
-            <PenSquare className="h-4 w-4 animate-pulse" />
-            <span>{recipientProfile?.username} is typing...</span>
-          </div>
-        )}
-      </div>
+      <MessageList
+        messages={messages}
+        currentUserId={session?.user?.id}
+        recipientProfile={recipientProfile}
+        isTyping={isTyping}
+      />
 
       <MessageInput
         onSendMessage={handleSendMessage}

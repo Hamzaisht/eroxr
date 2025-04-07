@@ -19,4 +19,5 @@ export type DirectMessage = {
   call_status?: 'missed' | 'answered' | 'declined' | null;
   delivery_status?: 'sent' | 'delivered' | 'seen' | null;
   call_type?: 'audio' | 'video' | null;
+  is_typing?: boolean | null;
 };
