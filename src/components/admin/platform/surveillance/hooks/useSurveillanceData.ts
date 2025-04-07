@@ -73,7 +73,7 @@ export function useSurveillanceData() {
       // Transform data into LiveSession format
       const streamSessions: LiveSession[] = (streams || []).map(stream => ({
         id: stream.id,
-        type: 'stream' as LiveSessionType,
+        type: 'stream',
         user_id: stream.creator_id,
         creator_id: stream.creator_id,
         username: stream.creator?.username || 'Unknown',
@@ -92,7 +92,7 @@ export function useSurveillanceData() {
       
       const callSessions: LiveSession[] = (calls || []).map(call => ({
         id: call.id,
-        type: 'call' as LiveSessionType,
+        type: 'call',
         user_id: call.caller_id,
         creator_id: call.caller_id,
         username: call.caller?.username || 'Unknown',
@@ -110,7 +110,7 @@ export function useSurveillanceData() {
       
       const messageSessions: LiveSession[] = (messages || []).map(msg => ({
         id: msg.id,
-        type: 'chat' as LiveSessionType,
+        type: 'chat',
         user_id: msg.sender_id,
         creator_id: msg.sender_id,
         username: msg.sender?.username || 'Unknown',
@@ -129,7 +129,7 @@ export function useSurveillanceData() {
       // Transform posts into LiveSession format for content
       const postSessions: LiveSession[] = (posts || []).map(post => ({
         id: post.id,
-        type: 'content' as LiveSessionType,
+        type: 'content',
         user_id: post.creator_id,
         creator_id: post.creator_id,
         username: post.creator?.username || 'Unknown',
