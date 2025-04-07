@@ -1,168 +1,192 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveAlert } from "@/types/alerts";
-import { 
-  formatFlaggedContentAsAlert, 
-  formatReportAsAlert, 
-  formatDMCAAsAlert,
-  sortAlertsBySeverityAndTime 
-} from "../utils/alertFormatters";
-import { 
-  fetchFlaggedContent, 
-  fetchReports, 
-  fetchDmcaRequests 
-} from "../utils/alertDataFetchers";
+import { formatFlaggedContentAsAlert, formatReportAsAlert } from "../utils/alertFormatters";
 
 export const useGhostAlerts = (isGhostMode: boolean) => {
   const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const session = useSession();
 
-  // Function to fetch live alerts
-  const refreshAlerts = useCallback(async (): Promise<void> => {
+  const refreshAlerts = useCallback(async () => {
     if (!isGhostMode || !session?.user?.id) {
       setLiveAlerts([]);
       return;
     }
 
-    setIsLoading(true);
     try {
-      console.log("Refreshing ghost mode alerts");
+      setIsLoading(true);
       
-      // Fetch alerts from different sources
-      const [flaggedContentRes, reportsRes, dmcaRes] = await Promise.all([
-        fetchFlaggedContent(),
-        fetchReports(),
-        fetchDmcaRequests()
-      ]);
-
-      // Process and combine alerts
-      const flaggedAlerts: LiveAlert[] = (flaggedContentRes.data || [])
-        .map(formatFlaggedContentAsAlert);
-
-      const reportAlerts: LiveAlert[] = (reportsRes.data || [])
-        .map(formatReportAsAlert);
-
-      const dmcaAlerts: LiveAlert[] = (dmcaRes.data || [])
-        .map(formatDMCAAsAlert);
-
-      // Combine all alerts and sort by severity and timestamp
-      const allAlerts: LiveAlert[] = sortAlertsBySeverityAndTime([
-        ...flaggedAlerts, 
-        ...reportAlerts, 
-        ...dmcaAlerts
-      ]);
-
-      console.log(`Loaded ${allAlerts.length} alerts`);
-      setLiveAlerts(allAlerts);
+      // Fetch flagged content
+      const { data: flaggedContent, error: flaggedError } = await supabase
+        .from('flagged_content')
+        .select(`
+          *,
+          user:user_id(username, avatar_url),
+          flagger:flagged_by(username, avatar_url)
+        `)
+        .order('flagged_at', { ascending: false })
+        .limit(10);
       
-      // Also fetch recent direct messages for monitoring
-      const { data: messages } = await supabase
-        .from('direct_messages')
-        .select('*, sender:sender_id(username), recipient:recipient_id(username)')
-        .order('created_at', { ascending: false })
-        .limit(20);
-        
-      if (messages && messages.length > 0) {
-        console.log(`Found ${messages.length} recent messages for monitoring`);
+      if (flaggedError) {
+        console.error("Error fetching flagged content:", flaggedError);
       }
-      
-      // Fetch recent posts
-      const { data: posts } = await supabase
-        .from('posts')
-        .select('*, creator:creator_id(username)')
+
+      // Fetch reports
+      const { data: reports, error: reportsError } = await supabase
+        .from('reports')
+        .select(`
+          *,
+          reporter:reporter_id(username, avatar_url),
+          reported:reported_id(username, avatar_url)
+        `)
         .order('created_at', { ascending: false })
-        .limit(20);
-        
-      if (posts && posts.length > 0) {
-        console.log(`Found ${posts.length} recent posts for monitoring`);
-      }
+        .limit(10);
       
+      if (reportsError) {
+        console.error("Error fetching reports:", reportsError);
+      }
+
+      // Fetch live streams with high viewer counts (potential alerts)
+      const { data: activeStreams, error: streamsError } = await supabase
+        .from('live_streams')
+        .select(`
+          *,
+          profiles:creator_id(username, avatar_url)
+        `)
+        .eq('status', 'live')
+        .order('viewer_count', { ascending: false })
+        .limit(5);
+      
+      if (streamsError) {
+        console.error("Error fetching active streams:", streamsError);
+      }
+
+      // Format all alerts
+      const formattedAlerts: LiveAlert[] = [
+        ...(flaggedContent || []).map(content => ({
+          ...formatFlaggedContentAsAlert(content),
+          alert_type: 'violation' as const
+        })),
+        ...(reports || []).map(report => ({
+          ...formatReportAsAlert(report),
+          alert_type: 'risk' as const
+        })),
+        ...(activeStreams || []).filter(stream => stream.viewer_count > 10).map(stream => ({
+          id: stream.id,
+          type: 'information',
+          alert_type: 'information' as const,
+          user_id: stream.creator_id,
+          username: stream.profiles?.username || 'Unknown',
+          avatar_url: stream.profiles?.avatar_url,
+          timestamp: stream.created_at,
+          created_at: stream.created_at,
+          title: `Active Stream: ${stream.title || 'Untitled'}`,
+          description: `Live stream with ${stream.viewer_count} viewers`,
+          content_type: 'stream',
+          content_id: stream.id,
+          reason: 'High activity stream',
+          severity: 'low',
+          message: `Live stream by ${stream.profiles?.username || 'Unknown'} has ${stream.viewer_count} viewers`,
+          status: 'active',
+          is_viewed: false,
+          urgent: false,
+          session: {
+            id: stream.id,
+            type: 'stream',
+            user_id: stream.creator_id,
+            username: stream.profiles?.username || 'Unknown',
+            avatar_url: stream.profiles?.avatar_url,
+            title: stream.title,
+            media_url: stream.playback_url ? [stream.playback_url] : [],
+            created_at: stream.started_at || stream.created_at,
+            status: 'live',
+            viewer_count: stream.viewer_count
+          }
+        }))
+      ];
+
+      // Sort alerts by severity and timestamp
+      formattedAlerts.sort((a, b) => {
+        const severityRank = { high: 0, medium: 1, low: 2 };
+        const severityDiff = severityRank[a.severity as 'high' | 'medium' | 'low'] - 
+                           severityRank[b.severity as 'high' | 'medium' | 'low'];
+        
+        if (severityDiff !== 0) return severityDiff;
+        
+        // If same severity, sort by timestamp (newest first)
+        return new Date(b.timestamp || b.created_at).getTime() - 
+               new Date(a.timestamp || a.created_at).getTime();
+      });
+
+      console.log(`Fetched ${formattedAlerts.length} live alerts for ghost mode`);
+      setLiveAlerts(formattedAlerts);
     } catch (error) {
-      console.error("Error fetching alerts:", error);
+      console.error("Error refreshing ghost alerts:", error);
     } finally {
       setIsLoading(false);
     }
   }, [isGhostMode, session?.user?.id]);
 
-  // Set up subscription to real-time updates
+  // Refresh alerts when ghost mode changes
   useEffect(() => {
-    if (!isGhostMode || !session?.user?.id) return;
-
-    // Initial fetch
-    refreshAlerts();
-
-    // Set up real-time subscriptions for new alerts
-    const setupRealtimeSubscriptions = () => {
-      const flaggedChannel = supabase
-        .channel('flagged-content-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'flagged_content',
-        }, () => refreshAlerts())
-        .subscribe();
-
-      const reportsChannel = supabase
-        .channel('reports-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'reports',
-        }, () => refreshAlerts())
-        .subscribe();
-
-      const dmcaChannel = supabase
-        .channel('dmca-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'dmca_requests',
-        }, () => refreshAlerts())
-        .subscribe();
-        
-      // Also monitor direct messages
-      const messagesChannel = supabase
-        .channel('direct-messages-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'direct_messages',
-        }, () => refreshAlerts())
-        .subscribe();
-        
-      // Monitor posts
-      const postsChannel = supabase
-        .channel('posts-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'posts',
-        }, () => refreshAlerts())
-        .subscribe();
-
-      return {
-        flaggedChannel,
-        reportsChannel,
-        dmcaChannel,
-        messagesChannel,
-        postsChannel
-      };
-    };
-
-    const subscriptions = setupRealtimeSubscriptions();
-
-    // Clean up subscriptions
+    if (isGhostMode) {
+      refreshAlerts();
+    } else {
+      setLiveAlerts([]);
+    }
+  }, [isGhostMode, refreshAlerts]);
+  
+  // Set up realtime subscriptions for alerts
+  useEffect(() => {
+    if (!isGhostMode) return;
+    
+    const flaggedChannel = supabase
+      .channel('ghost-flagged-content')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'flagged_content'
+      }, () => {
+        console.log('Flagged content changes, refreshing alerts');
+        refreshAlerts();
+      })
+      .subscribe();
+      
+    const reportsChannel = supabase
+      .channel('ghost-reports')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'reports'
+      }, () => {
+        console.log('Reports changes, refreshing alerts');
+        refreshAlerts();
+      })
+      .subscribe();
+      
+    const streamsChannel = supabase
+      .channel('ghost-live-streams')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'live_streams'
+      }, () => {
+        console.log('Streams changes, refreshing alerts');
+        refreshAlerts();
+      })
+      .subscribe();
+    
     return () => {
-      supabase.removeChannel(subscriptions.flaggedChannel);
-      supabase.removeChannel(subscriptions.reportsChannel);
-      supabase.removeChannel(subscriptions.dmcaChannel);
-      supabase.removeChannel(subscriptions.messagesChannel);
-      supabase.removeChannel(subscriptions.postsChannel);
+      supabase.removeChannel(flaggedChannel);
+      supabase.removeChannel(reportsChannel);
+      supabase.removeChannel(streamsChannel);
     };
-  }, [isGhostMode, session?.user?.id, refreshAlerts]);
+  }, [isGhostMode, refreshAlerts]);
 
-  return { liveAlerts, refreshAlerts, isLoading };
+  return { liveAlerts, isLoading, refreshAlerts };
 };
+
+import { useEffect } from 'react';

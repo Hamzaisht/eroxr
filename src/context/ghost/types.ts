@@ -1,10 +1,12 @@
 
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
 import { LiveAlert } from "@/types/alerts";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
 
 export interface GhostModeContextType {
   isGhostMode: boolean;
+  setIsGhostMode: (state: boolean) => void;
   toggleGhostMode: () => Promise<void>;
+  canUseGhostMode: boolean;
   isLoading: boolean;
   activeSurveillance: {
     session?: LiveSession;
@@ -15,7 +17,5 @@ export interface GhostModeContextType {
   stopSurveillance: () => Promise<boolean>;
   liveAlerts: LiveAlert[];
   refreshAlerts: () => Promise<void>;
-  setIsGhostMode: (state: boolean) => void;
   syncGhostModeFromSupabase: () => Promise<void>;
-  canUseGhostMode: boolean;
 }
