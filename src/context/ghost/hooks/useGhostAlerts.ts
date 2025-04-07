@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveAlert } from "@/types/alerts";
+import { LiveSession } from "@/components/admin/platform/surveillance/types";
 import { formatFlaggedContentAsAlert, formatReportAsAlert } from "../utils/alertFormatters";
 
 export const useGhostAlerts = (isGhostMode: boolean) => {
@@ -95,7 +96,7 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
           urgent: false,
           session: {
             id: stream.id,
-            type: 'stream',
+            type: 'stream' as const,
             user_id: stream.creator_id,
             username: stream.profiles?.username || 'Unknown',
             avatar_url: stream.profiles?.avatar_url,
@@ -104,7 +105,7 @@ export const useGhostAlerts = (isGhostMode: boolean) => {
             created_at: stream.started_at || stream.created_at,
             status: 'live',
             viewer_count: stream.viewer_count
-          }
+          } as LiveSession
         }))
       ];
 

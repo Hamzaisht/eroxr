@@ -1,31 +1,7 @@
-
 import { Ban, Flag, MessageSquare, Trash2, Eye, Edit, MoreVertical, Shield, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SessionModerationActionProps } from "../types";
 import { ModerationAction } from "@/types/moderation";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuGroup,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
 
 export const ModerationActions = ({ 
   session, 

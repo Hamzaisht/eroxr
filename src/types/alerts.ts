@@ -1,5 +1,5 @@
 
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
+import { LiveSession, LiveSessionType } from "@/components/admin/platform/surveillance/types";
 
 export interface LiveAlert {
   id: string;
