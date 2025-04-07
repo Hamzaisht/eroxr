@@ -4,6 +4,8 @@ import { Camera, FileText, Mic, Phone, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DirectMessage } from "@/integrations/supabase/types/message";
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
+import { useState } from "react";
+import { MediaViewer } from "@/components/media/MediaViewer";
 
 interface MessageContentProps {
   message: DirectMessage;
@@ -20,6 +22,8 @@ export const MessageContent = ({
   onMediaSelect,
   onSnapView 
 }: MessageContentProps) => {
+  const [enlargedMedia, setEnlargedMedia] = useState<string | null>(null);
+
   // Helper function to render media with protection
   const renderMedia = (url: string, type: 'image' | 'video') => (
     <ProtectedMedia
@@ -31,34 +35,63 @@ export const MessageContent = ({
           src={url}
           alt="Image message"
           className="max-w-[200px] rounded-lg cursor-pointer"
-          onClick={() => !isEditing && onMediaSelect(url)}
+          onClick={() => !isEditing && handleMediaClick(url)}
         />
       ) : (
         <video
           src={url}
           className="max-w-[200px] rounded-lg cursor-pointer"
-          onClick={() => !isEditing && onMediaSelect(url)}
+          onClick={() => !isEditing && handleMediaClick(url)}
         />
       )}
     </ProtectedMedia>
   );
 
+  // Handle media click to either call the parent's handler or handle internally
+  const handleMediaClick = (url: string) => {
+    if (onMediaSelect) {
+      onMediaSelect(url);
+    } else {
+      setEnlargedMedia(url);
+    }
+  };
+
   switch (message.message_type) {
     case 'video':
       return (
-        <VideoMessage
-          messageId={message.id || ''}
-          videoUrl={message.video_url || message.media_url?.[0] || ''}
-          isViewed={!!message.viewed_at}
-          onView={() => {}}
-        />
+        <>
+          <VideoMessage
+            messageId={message.id || ''}
+            videoUrl={message.video_url || message.media_url?.[0] || ''}
+            isViewed={!!message.viewed_at}
+            onView={() => {}}
+          />
+          {enlargedMedia && (
+            <MediaViewer
+              media={enlargedMedia}
+              onClose={() => setEnlargedMedia(null)}
+              creatorId={message.sender_id}
+            />
+          )}
+        </>
       );
     case 'image':
-      return message.media_url?.map((url: string, index: number) => (
-        <div key={index} className="media-container">
-          {renderMedia(url, 'image')}
-        </div>
-      ));
+      return (
+        <>
+          {message.media_url?.map((url: string, index: number) => (
+            <div key={index} className="media-container">
+              {renderMedia(url, 'image')}
+            </div>
+          ))}
+          {enlargedMedia && (
+            <MediaViewer
+              media={enlargedMedia}
+              onClose={() => setEnlargedMedia(null)}
+              creatorId={message.sender_id}
+            />
+          )}
+        </>
+      );
     case 'audio':
       return (
         <div className="flex items-center p-2 bg-luxury-primary/10 rounded-lg">
@@ -74,7 +107,7 @@ export const MessageContent = ({
       return (
         <div 
           className="flex items-center p-3 bg-luxury-primary/5 rounded-lg cursor-pointer"
-          onClick={() => !isEditing && message.media_url?.[0] && onMediaSelect(message.media_url[0])}
+          onClick={() => !isEditing && message.media_url?.[0] && handleMediaClick(message.media_url[0])}
         >
           <FileText className="h-6 w-6 text-luxury-primary mr-2" />
           <div>

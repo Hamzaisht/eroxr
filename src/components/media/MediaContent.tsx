@@ -33,6 +33,7 @@ export const MediaContent = ({
 }: MediaContentProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleFullscreen = () => {
@@ -46,6 +47,14 @@ export const MediaContent = ({
     } else {
       document.exitFullscreen();
       setIsFullscreen(false);
+    }
+  };
+
+  const handleMediaClick = () => {
+    if (onMediaClick) {
+      onMediaClick();
+    } else {
+      setIsZoomed(!isZoomed);
     }
   };
 
@@ -100,7 +109,10 @@ export const MediaContent = ({
       
       {/* Media content container */}
       <div 
-        className="flex-1 flex items-center justify-center relative bg-black/75"
+        className={cn(
+          "flex-1 flex items-center justify-center relative bg-black/75",
+          isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
+        )}
         style={{ 
           WebkitUserSelect: 'none',
           MozUserSelect: 'none',
@@ -115,7 +127,10 @@ export const MediaContent = ({
         )}
         
         {/* Video or Image content */}
-        <div className="relative max-w-full max-h-[80vh] flex items-center justify-center">
+        <div className={cn(
+          "relative max-w-full max-h-[80vh] flex items-center justify-center",
+          isZoomed ? "scale-150 transition-transform duration-300" : "transition-transform duration-300"
+        )}>
           {isVideo ? (
             <VideoPlayer
               url={url}
@@ -129,13 +144,13 @@ export const MediaContent = ({
             <img
               src={url}
               alt="Media content"
-              className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg cursor-pointer"
+              className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg"
               style={getEnlargedImageStyles()}
               srcSet={generateSrcSet(url)}
               sizes={getResponsiveSizes()}
               loading="eager"
               decoding="sync"
-              onClick={onMediaClick}
+              onClick={handleMediaClick}
               onLoad={() => setIsLoading(false)}
               onError={() => setIsLoading(false)}
               draggable="false"

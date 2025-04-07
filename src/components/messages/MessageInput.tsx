@@ -1,9 +1,11 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send } from "lucide-react";
 import { SnapButton } from "./SnapButton";
 import { useTypingIndicator, useMessageAudit } from "@/hooks";
+import { MediaViewer } from "@/components/media/MediaViewer";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -22,6 +24,7 @@ export const MessageInput = ({
 }: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [isComposing, setIsComposing] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -96,6 +99,10 @@ export const MessageInput = ({
     }
   };
 
+  const handleMediaClick = (url: string) => {
+    setSelectedMedia(url);
+  };
+
   const handleCompositionStart = () => {
     setIsComposing(true);
   };
@@ -115,55 +122,63 @@ export const MessageInput = ({
   }, [recipientId]);
 
   return (
-    <div className="flex items-center gap-2 p-2 border-t border-luxury-neutral/10 bg-luxury-dark-secondary">
-      <SnapButton onCaptureStart={onSnapStart} />
-      
-      <input 
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        onChange={handleFileChange}
-        accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
-        multiple
-      />
-      
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        type="button"
-        className="h-9 w-9 rounded-full"
-        onClick={() => fileInputRef.current?.click()}
-        aria-label="Attach file"
-      >
-        <Paperclip className="h-5 w-5 text-luxury-neutral" />
-      </Button>
-      
-      <div className="flex-1 relative">
-        <Input
-          type="text"
-          placeholder="Type a message..."
-          value={message}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyPress}
-          onCompositionStart={handleCompositionStart}
-          onCompositionEnd={handleCompositionEnd}
-          ref={inputRef}
-          className="bg-luxury-neutral/5 border-luxury-neutral/20 text-luxury-text"
-          disabled={isLoading}
-          aria-label="Message input"
+    <>
+      <div className="flex items-center gap-2 p-2 border-t border-luxury-neutral/10 bg-luxury-dark-secondary">
+        <SnapButton onCaptureStart={onSnapStart} />
+        
+        <input 
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileChange}
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+          multiple
         />
+        
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          type="button"
+          className="h-9 w-9 rounded-full"
+          onClick={() => fileInputRef.current?.click()}
+          aria-label="Attach file"
+        >
+          <Paperclip className="h-5 w-5 text-luxury-neutral" />
+        </Button>
+        
+        <div className="flex-1 relative">
+          <Input
+            type="text"
+            placeholder="Type a message..."
+            value={message}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyPress}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
+            ref={inputRef}
+            className="bg-luxury-neutral/5 border-luxury-neutral/20 text-luxury-text"
+            disabled={isLoading}
+            aria-label="Message input"
+          />
+        </div>
+        
+        <Button 
+          onClick={handleSend}
+          disabled={!message.trim() || isLoading}
+          variant={message.trim() ? "default" : "ghost"}
+          size="icon"
+          className="h-9 w-9 rounded-full"
+          aria-label="Send message"
+        >
+          <Send className="h-5 w-5" />
+        </Button>
       </div>
-      
-      <Button 
-        onClick={handleSend}
-        disabled={!message.trim() || isLoading}
-        variant={message.trim() ? "default" : "ghost"}
-        size="icon"
-        className="h-9 w-9 rounded-full"
-        aria-label="Send message"
-      >
-        <Send className="h-5 w-5" />
-      </Button>
-    </div>
+
+      {/* Media Viewer for enlarged media */}
+      <MediaViewer 
+        media={selectedMedia} 
+        onClose={() => setSelectedMedia(null)}
+      />
+    </>
   );
 };
