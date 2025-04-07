@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Ban, Eye, Flag, ShieldAlert } from "lucide-react";
-import { LiveSession } from "../../types";
+import type { LiveSession } from "@/types/surveillance";
 import { ModerationAction } from "@/types/moderation";
 
 interface ModerationButtonProps {

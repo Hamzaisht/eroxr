@@ -4,7 +4,7 @@ import {
   Eye, Edit, Shield, RefreshCw, Pause, Play 
 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { LiveSession, SurveillanceContentItem } from "../../types";
+import type { LiveSession, SurveillanceContentItem } from "@/types/surveillance";
 import { ModerationAction } from "@/types/moderation";
 
 interface ModerationActionItemsProps {

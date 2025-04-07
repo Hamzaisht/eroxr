@@ -1,18 +1,11 @@
 
-import { LiveSession, SurveillanceContentItem } from "../../types";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Dispatch, SetStateAction, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import type { LiveSession, SurveillanceContentItem } from "@/types/surveillance";
 import { ModerationAction } from "@/types/moderation";
 
 interface ModerationActionDialogProps {
@@ -22,7 +15,7 @@ interface ModerationActionDialogProps {
   currentAction: ModerationAction | null;
   session: LiveSession | SurveillanceContentItem;
   editedContent: string;
-  setEditedContent: Dispatch<SetStateAction<string>>;
+  setEditedContent: React.Dispatch<React.SetStateAction<string>>;
   actionInProgress: string | null;
 }
 
