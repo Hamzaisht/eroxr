@@ -10,7 +10,8 @@ import { CreatorEarningsSurveillance } from "./CreatorEarningsSurveillance";
 import { SessionList } from "./SessionList";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useSurveillanceData } from "./useSurveillanceData";
+import { useSurveillanceData } from "./hooks/useSurveillanceData";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 interface SurveillanceTabsProps {
   liveAlerts: LiveAlert[];
@@ -36,7 +37,15 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
 
   // Fetch data when tab changes
   useEffect(() => {
-    refreshData();
+    const fetchData = async () => {
+      try {
+        await refreshData();
+      } catch (err) {
+        console.error("Error refreshing surveillance data:", err);
+      }
+    };
+    
+    fetchData();
   }, [activeTab, refreshData]);
   
   // Handle monitoring a session
@@ -80,6 +89,11 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
   
   const filteredSessions = getFilteredSessions();
   const error = contextError || dataError;
+  
+  // Handle manual refresh
+  const handleManualRefresh = () => {
+    refreshData();
+  };
   
   return (
     <Tabs 
