@@ -100,7 +100,7 @@ export const MessageInput = ({
 
   return (
     <div className="flex items-center gap-2 p-2 border-t border-luxury-neutral/10 bg-luxury-dark-secondary">
-      <SnapButton onClick={onSnapStart} />
+      <SnapButton onCaptureStart={onSnapStart} />
       
       <input 
         type="file"
@@ -139,7 +139,7 @@ export const MessageInput = ({
       <Button 
         onClick={handleSend}
         disabled={!message.trim() || isLoading}
-        variant={message.trim() ? "primary" : "ghost"}
+        variant={message.trim() ? "default" : "ghost"}
         size="icon"
         className="h-9 w-9 rounded-full"
       >
