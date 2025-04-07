@@ -1,5 +1,5 @@
 
-import { SurveillanceContentItem } from "@/types/surveillance";
+import { SurveillanceContentItem } from "../../types";
 import { ModerationAction } from "@/types/moderation";
 
 export interface ModerationActionResult {

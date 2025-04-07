@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { SurveillanceContentItem } from "@/types/surveillance";
+import { SurveillanceContentItem } from "../../types";
 import { ModerationAction } from "@/types/moderation";
 
 interface UseModerationActionsProps {

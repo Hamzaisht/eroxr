@@ -78,12 +78,12 @@ export const SessionActions = ({
               Flag Content
             </DropdownMenuItem>
             {session.is_paused ? (
-              <DropdownMenuItem onClick={() => handleModerate('unpause')}>
+              <DropdownMenuItem onClick={() => handleModerate('unpause' as ModerationAction)}>
                 <Play className="h-4 w-4 mr-2 text-green-500" />
                 Unpause
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={() => handleModerate('pause')}>
+              <DropdownMenuItem onClick={() => handleModerate('pause' as ModerationAction)}>
                 <Pause className="h-4 w-4 mr-2 text-amber-500" />
                 Pause
               </DropdownMenuItem>

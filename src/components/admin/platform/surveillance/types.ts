@@ -69,3 +69,6 @@ export interface SessionModerationActionProps {
   onModerate: (content: LiveSession | SurveillanceContentItem, action: string, editedContent?: string) => Promise<void>;
   actionInProgress: string | null;
 }
+
+// Re-export types from moderation.ts to avoid direct imports
+export { ModerationAction } from "@/types/moderation";

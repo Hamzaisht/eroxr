@@ -1,5 +1,5 @@
 
-import { LiveSessionType, SurveillanceContentItem } from "@/components/admin/platform/surveillance/types";
+import { LiveSessionType, SurveillanceContentItem as BaseSurveillanceContentItem } from "@/components/admin/platform/surveillance/types";
 import { ModerationAction } from "@/types/moderation";
 
 export interface SessionModerationActionProps {
@@ -20,3 +20,9 @@ export interface FlaggedContent {
   notes?: string;
   flagged_at: string;
 }
+
+// Export the SurveillanceContentItem type from the platform/surveillance folder
+export type { SurveillanceContentItem } from "@/components/admin/platform/surveillance/types";
+
+// Extend ModerationAction to include pause/unpause
+export type ExtendedModerationAction = ModerationAction | "pause" | "unpause";

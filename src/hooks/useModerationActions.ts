@@ -1,12 +1,11 @@
-
 import { useState } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "./use-toast";
+import { SurveillanceContentItem } from "@/components/admin/platform/surveillance/types";
 import { LiveSession } from "@/components/admin/platform/surveillance/types";
-import { SurveillanceContentItem } from "@/types/surveillance";
 import { ModerationAction } from "@/types/moderation";
 
-export function useModerationActions() {
+export const useModerationActions = () => {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const supabase = useSupabaseClient();
   const { toast } = useToast();
@@ -15,66 +14,50 @@ export function useModerationActions() {
     content: LiveSession | SurveillanceContentItem,
     action: ModerationAction,
     editedContent?: string
-  ): Promise<void> => {
-    const contentId = content.id;
-    setActionInProgress(contentId);
-    
+  ) => {
+    setActionInProgress(content.id);
     try {
-      // Log the moderation action
-      await supabase.from("moderation_logs").insert({
-        content_id: contentId,
-        content_type: 'type' in content ? content.type : 
-                      'content_type' in content ? content.content_type : 'unknown',
-        action,
-        reason: "Admin moderation action",
-        edited_content: editedContent,
-        user_id: 'user_id' in content ? content.user_id : 
-                ('creator_id' in content ? content.creator_id : undefined)
-      });
-      
-      // Update content status based on the action
-      if (action === "delete" || action === "ban" || action === "flag" || action === "shadowban") {
-        // Logic for content moderation actions would go here
-        // Implementation varies based on content type
+      const { content_type, id } = content;
+      let update: any = {
+        moderation_status: action,
+      };
+
+      if (action === 'edit' && editedContent) {
+        update.content = editedContent;
       }
-      
+
+      const { error: moderationError } = await supabase
+        .from(content_type)
+        .update(update)
+        .eq('id', id);
+
+      if (moderationError) {
+        toast({
+          title: "Moderation Failed",
+          description: `Could not ${action} content. Please try again.`,
+          variant: "destructive",
+        });
+        throw moderationError;
+      }
+
       toast({
-        title: "Moderation Action Applied",
-        description: `The ${action} action was successfully applied.`
+        title: "Content Moderated",
+        description: `Successfully ${action} content.`,
       });
-      
-    } catch (error) {
-      console.error("Moderation action failed:", error);
+    } catch (err: any) {
+      console.error("Moderation Error:", err);
       toast({
-        title: "Action Failed",
-        description: "There was a problem applying the moderation action.",
-        variant: "destructive"
+        title: "Moderation Failed",
+        description: `Failed to ${action} content.`,
+        variant: "destructive",
       });
     } finally {
       setActionInProgress(null);
     }
   };
 
-  // Mock implementation for fetchContentInteractions
-  const fetchContentInteractions = async (contentId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('content_interactions')
-        .select('*')
-        .eq('content_id', contentId);
-        
-      if (error) throw error;
-      
-      return data || [];
-    } catch (error) {
-      console.error("Error fetching content interactions:", error);
-      return [];
-    }
-  };
-
   return {
-    actionInProgress,
     handleModeration,
-    fetchContentInteractions
+    actionInProgress,
   };
-}
+};

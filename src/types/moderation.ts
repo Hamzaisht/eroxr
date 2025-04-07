@@ -8,7 +8,9 @@ export type ModerationAction =
   | 'ban'
   | 'shadowban'
   | 'force_delete'
-  | 'restore';
+  | 'restore'
+  | 'pause'
+  | 'unpause';
 
 export interface ModerationResult {
   success: boolean;
