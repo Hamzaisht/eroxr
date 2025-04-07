@@ -20,6 +20,7 @@ interface SessionListProps {
   onShowMediaPreview?: (session: LiveSession) => void;
   onModerate?: (session: LiveSession, action: ModerationAction, editedContent?: string) => Promise<void>;
   actionInProgress?: string | null;
+  onRefresh?: () => void;
 }
 
 export const SessionList = ({ 
@@ -29,7 +30,8 @@ export const SessionList = ({
   error,
   onShowMediaPreview,
   onModerate,
-  actionInProgress
+  actionInProgress,
+  onRefresh
 }: SessionListProps) => {
   const [selectedSession, setSelectedSession] = useState<LiveSession | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -41,10 +43,14 @@ export const SessionList = ({
   };
 
   const handleRefresh = () => {
-    toast({
-      title: "Sessions Refreshed!",
-      description: "The session list has been updated.",
-    });
+    if (onRefresh) {
+      onRefresh();
+    } else {
+      toast({
+        title: "Sessions Refreshed!",
+        description: "The session list has been updated.",
+      });
+    }
   };
 
   const handleModerateAction = async (session: LiveSession, action: ModerationAction, editedContent?: string) => {
@@ -70,6 +76,36 @@ export const SessionList = ({
     
     return titleMatch || usernameMatch || contentMatch;
   });
+
+  // Get content for empty state
+  const getEmptyStateContent = () => {
+    if (error) {
+      return (
+        <div className="text-center py-6 text-red-500">
+          <p className="mb-2">{error}</p>
+          <Button size="sm" onClick={handleRefresh} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Try Again
+          </Button>
+        </div>
+      );
+    }
+    
+    if (isLoading) {
+      return <LoadingState message="Loading sessions..." />;
+    }
+    
+    return (
+      <div className="flex flex-col items-center justify-center space-y-3 py-8">
+        <Eye className="h-12 w-12 text-muted-foreground/30" />
+        <p className="text-muted-foreground">No sessions found</p>
+        <Button size="sm" onClick={handleRefresh} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-1" />
+          Refresh
+        </Button>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -104,69 +140,49 @@ export const SessionList = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && (
+            {filteredSessions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-6">
-                  <LoadingState message="Loading sessions..." />
+                <TableCell colSpan={4} className="text-center">
+                  {getEmptyStateContent()}
                 </TableCell>
               </TableRow>
+            ) : (
+              filteredSessions.map((session) => (
+                <TableRow key={session.id}>
+                  <TableCell>
+                    <div className="font-medium">{session.title || 'Untitled'}</div>
+                    <div className="text-sm text-muted-foreground">{session.description || session.content?.substring(0, 50)}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      {session.username || session.user_id || 'Unknown User'}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {session.created_at ? new Date(session.created_at).toLocaleTimeString() : 'Unknown'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {onModerate && onShowMediaPreview ? (
+                      <SessionActions 
+                        session={session}
+                        onMonitorSession={onMonitorSession}
+                        onShowMediaPreview={handleShowMedia}
+                        onModerate={handleModerateAction}
+                        actionInProgress={actionInProgress || null}
+                      />
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onMonitorSession(session)}
+                      >
+                        Monitor
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
             )}
-            {error && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-4 text-red-500">
-                  Error: {error}
-                </TableCell>
-              </TableRow>
-            )}
-            {!isLoading && filteredSessions.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
-                  <div className="flex flex-col items-center justify-center space-y-3">
-                    <Eye className="h-12 w-12 text-muted-foreground/30" />
-                    <p className="text-muted-foreground">No sessions found</p>
-                    <Button size="sm" onClick={handleRefresh} variant="outline">
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      Refresh
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-            {!isLoading && filteredSessions.map((session) => (
-              <TableRow key={session.id}>
-                <TableCell>
-                  <div className="font-medium">{session.title || 'Untitled'}</div>
-                  <div className="text-sm text-muted-foreground">{session.description || session.content?.substring(0, 50)}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    {session.username || session.user_id}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {session.created_at ? new Date(session.created_at).toLocaleTimeString() : 'Unknown'}
-                </TableCell>
-                <TableCell className="text-right">
-                  {onModerate && onShowMediaPreview ? (
-                    <SessionActions 
-                      session={session}
-                      onMonitorSession={onMonitorSession}
-                      onShowMediaPreview={handleShowMedia}
-                      onModerate={handleModerateAction}
-                      actionInProgress={actionInProgress || null}
-                    />
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onMonitorSession(session)}
-                    >
-                      Monitor
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
           </TableBody>
         </Table>
       </ScrollArea>
@@ -185,7 +201,7 @@ export const SessionList = ({
                 </div>
                 <div>
                   <h3 className="font-medium">Creator</h3>
-                  <p>{selectedSession.username || selectedSession.user_id}</p>
+                  <p>{selectedSession.username || selectedSession.user_id || 'Unknown'}</p>
                 </div>
                 {selectedSession.content && (
                   <div>

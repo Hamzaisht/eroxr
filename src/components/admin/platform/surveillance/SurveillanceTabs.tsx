@@ -25,7 +25,12 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
     error: contextError,
   } = useSurveillance();
   
-  const { liveSessions, isLoading, error: dataError, refreshData } = useSurveillanceData();
+  const { 
+    liveSessions, 
+    isLoading, 
+    error: dataError, 
+    refreshData 
+  } = useSurveillanceData();
 
   const { toast } = useToast();
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -75,7 +80,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       case 'content':
         return liveSessions.filter(session => session.type === 'content');
       default:
-        return [];
+        return liveSessions;
     }
   };
   
@@ -85,6 +90,10 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
   // Handle manual refresh
   const handleManualRefresh = () => {
     refreshData();
+    toast({
+      title: "Refreshed",
+      description: "Surveillance data has been updated"
+    });
   };
   
   return (
@@ -119,6 +128,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
             error={error}
             onMonitorSession={handleMonitorSession}
             actionInProgress={actionInProgress}
+            onRefresh={handleManualRefresh}
           />
         </TabContent>
       </TabsContent>
@@ -131,6 +141,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
             error={error}
             onMonitorSession={handleMonitorSession}
             actionInProgress={actionInProgress}
+            onRefresh={handleManualRefresh}
           />
         </TabContent>
       </TabsContent>
@@ -143,6 +154,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
             error={error}
             onMonitorSession={handleMonitorSession}
             actionInProgress={actionInProgress}
+            onRefresh={handleManualRefresh}
           />
         </TabContent>
       </TabsContent>
@@ -155,6 +167,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
             error={error}
             onMonitorSession={handleMonitorSession}
             actionInProgress={actionInProgress}
+            onRefresh={handleManualRefresh}
           />
         </TabContent>
       </TabsContent>
