@@ -1,9 +1,8 @@
-
 import { useEffect, useRef } from "react";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { MessageBubble } from "../MessageBubble";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
+import { useRealtimeMessages } from "@/hooks";
 
 interface MessageListProps {
   messages: DirectMessage[];

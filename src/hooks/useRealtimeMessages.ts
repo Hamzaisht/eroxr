@@ -4,8 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useMessageAudit } from './useMessageAudit';
-import { useMessageSubscription } from './useMessageSubscription';
-import { useTypingIndicator } from './useTypingIndicator';
 
 /**
  * Hook to subscribe to realtime message updates and sync with query cache
@@ -91,7 +89,4 @@ export const useRealtimeMessages = (recipientId?: string) => {
   return { sendTypingStatus };
 };
 
-// Export the utility hooks
-export { useTypingIndicator } from './useTypingIndicator';
-export { useMessageAudit } from './useMessageAudit';
-export { useMessageSubscription } from './useMessageSubscription';
+// Export other hooks individually instead of re-exporting them here

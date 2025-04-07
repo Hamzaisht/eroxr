@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MessagePreview } from "./MessagePreview";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
+import { useRealtimeMessages } from "@/hooks"; // Updated import
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 

@@ -9,7 +9,7 @@ import { ChatHeader } from "./chat/ChatHeader";
 import { MessageList } from "./chat/MessageList";
 import { SnapCamera } from "./chat/SnapCamera";
 import { VideoCallDialog } from "./call/VideoCallDialog";
-import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
+import { useRealtimeMessages } from "@/hooks"; // Updated import
 import { useChatActions } from "./chat/ChatActions";
 import { useGhostMode } from "@/hooks/useGhostMode";
 
