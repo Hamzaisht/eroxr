@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Eye, Flag, Ban, MoreHorizontal, AlertTriangle, Pause, Play } from "lucide-react";
-import { LiveSession } from "../../types";
+import { LiveSession } from "@/types/surveillance";
 import { ModerationAction } from "@/types/moderation";
 
 interface SessionActionsProps {

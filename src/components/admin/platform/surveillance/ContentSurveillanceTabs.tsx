@@ -15,7 +15,7 @@ interface ContentSurveillanceListProps {
 }
 
 export const ContentSurveillanceTabs = () => {
-  const [activeTab, setActiveTab] = useState<string>('post');
+  const [activeTab, setActiveTab] = useState<ContentType>('post');
   const { 
     posts, 
     stories, 
@@ -33,7 +33,7 @@ export const ContentSurveillanceTabs = () => {
   return (
     <Tabs 
       defaultValue="post" 
-      onValueChange={(value) => setActiveTab(value)}
+      onValueChange={(value) => setActiveTab(value as ContentType)}
       className="w-full"
     >
       <TabsList className="mb-4 bg-slate-800/80 backdrop-blur-lg">

@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { LiveSession } from "../../types";
+import { LiveSession } from "@/types/surveillance";
 import { SessionActions } from "./SessionActions";
 import { ModerationAction } from "@/types/surveillance";
 

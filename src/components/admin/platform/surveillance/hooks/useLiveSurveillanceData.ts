@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { LiveSession } from "../types";
+import { LiveSession } from "@/types/surveillance";
 import { useGhostMode } from "@/hooks/useGhostMode";
 
 export function useLiveSurveillanceData() {

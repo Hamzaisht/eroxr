@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { LiveSession } from "@/types/surveillance";
 import { ModerationAction } from "@/types/moderation";

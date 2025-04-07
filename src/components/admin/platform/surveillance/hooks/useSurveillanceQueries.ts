@@ -1,6 +1,6 @@
 
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { LiveSession } from "../types";
+import { LiveSession } from "@/types/surveillance";
 
 export function useSurveillanceQueries() {
   const supabase = useSupabaseClient();

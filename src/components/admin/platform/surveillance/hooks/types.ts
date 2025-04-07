@@ -1,5 +1,5 @@
 
-import { LiveSession, SurveillanceTab } from "../types";
+import { LiveSession, SurveillanceTab } from "@/types/surveillance";
 
 export interface SurveillanceData {
   liveSessions: LiveSession[];
@@ -24,4 +24,3 @@ export interface SessionData {
   recipient_username?: string;
   message_type?: string;
 }
-

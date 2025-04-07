@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSurveillance } from "./SurveillanceContext";
 import { AlertsList } from "./AlertsList";

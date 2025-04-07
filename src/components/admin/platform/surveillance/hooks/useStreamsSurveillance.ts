@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveSession } from "../types";
+import { LiveSession } from "@/types/surveillance";
 
 export function useStreamsSurveillance() {
   const [isLoading, setIsLoading] = useState(false);

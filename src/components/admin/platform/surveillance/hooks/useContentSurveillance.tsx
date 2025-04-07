@@ -186,7 +186,7 @@ export function useContentSurveillance() {
     fetchContentItems();
   }, [fetchContentItems]);
 
-  const filterContentByType = useCallback((items: SurveillanceContentItem[], type: string) => {
+  const filterContentByType = useCallback((items: SurveillanceContentItem[], type: ContentType | string) => {
     return items.filter(item => {
       const normalizedType = item.content_type?.toLowerCase();
       
