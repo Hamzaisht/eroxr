@@ -1,16 +1,14 @@
 
 import { useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Eye, RefreshCw } from "lucide-react";
+import { LiveSession } from "./types";
+import { ModerationAction } from "@/types/moderation";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SearchFilterBar, SearchFilter } from "./components/SearchFilterBar";
-import { SessionActions } from "./components/session/SessionActions";
-import { LiveSession } from "./types";
-import { ModerationAction } from "@/types/surveillance";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Button } from "@/components/ui/button";
+import { SearchFilter } from "./components/SearchFilterBar";
+import { SessionHeader } from "./components/SessionHeader";
+import { SessionTable } from "./components/SessionTable";
 
 interface SessionListProps {
   sessions?: LiveSession[];
@@ -53,18 +51,6 @@ export const SessionList = ({
     }
   };
 
-  const handleModerateAction = async (session: LiveSession, action: ModerationAction, editedContent?: string) => {
-    if (onModerate) {
-      await onModerate(session, action, editedContent);
-    }
-  };
-
-  const handleShowMedia = (session: LiveSession) => {
-    if (onShowMediaPreview) {
-      onShowMediaPreview(session);
-    }
-  };
-
   // Filter sessions based on search query
   const filteredSessions = sessions.filter(session => {
     const searchQuery = searchFilter.query.toLowerCase();
@@ -77,114 +63,24 @@ export const SessionList = ({
     return titleMatch || usernameMatch || contentMatch;
   });
 
-  // Get content for empty state
-  const getEmptyStateContent = () => {
-    if (error) {
-      return (
-        <div className="text-center py-6 text-red-500">
-          <p className="mb-2">{error}</p>
-          <Button size="sm" onClick={handleRefresh} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Try Again
-          </Button>
-        </div>
-      );
-    }
-    
-    if (isLoading) {
-      return <LoadingState message="Loading sessions..." />;
-    }
-    
-    return (
-      <div className="flex flex-col items-center justify-center space-y-3 py-8">
-        <Eye className="h-12 w-12 text-muted-foreground/30" />
-        <p className="text-muted-foreground">No sessions found</p>
-        <Button size="sm" onClick={handleRefresh} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-1" />
-          Refresh
-        </Button>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Live Sessions</h2>
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            className="h-9"
-          >
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Refresh
-          </Button>
-          <SearchFilterBar 
-            onSearch={handleSearch} 
-            onRefresh={handleRefresh}
-            placeholder="Search sessions..."
-          />
-        </div>
-      </div>
+      <SessionHeader 
+        onRefresh={handleRefresh} 
+        onSearch={handleSearch}
+      />
       
       <ScrollArea className="rounded-md border h-[400px]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Creator</TableHead>
-              <TableHead>Started At</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredSessions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center">
-                  {getEmptyStateContent()}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredSessions.map((session) => (
-                <TableRow key={session.id}>
-                  <TableCell>
-                    <div className="font-medium">{session.title || 'Untitled'}</div>
-                    <div className="text-sm text-muted-foreground">{session.description || session.content?.substring(0, 50)}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      {session.username || session.user_id || 'Unknown User'}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {session.created_at ? new Date(session.created_at).toLocaleTimeString() : 'Unknown'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {onModerate && onShowMediaPreview ? (
-                      <SessionActions 
-                        session={session}
-                        onMonitorSession={onMonitorSession}
-                        onShowMediaPreview={handleShowMedia}
-                        onModerate={handleModerateAction}
-                        actionInProgress={actionInProgress || null}
-                      />
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onMonitorSession(session)}
-                      >
-                        Monitor
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <SessionTable
+          sessions={filteredSessions}
+          isLoading={isLoading}
+          error={error}
+          onMonitorSession={onMonitorSession}
+          onRefresh={handleRefresh}
+          onShowMediaPreview={onShowMediaPreview}
+          onModerate={onModerate}
+          actionInProgress={actionInProgress}
+        />
       </ScrollArea>
 
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>

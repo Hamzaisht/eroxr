@@ -4,6 +4,8 @@ import { useGhostMode } from "@/hooks/useGhostMode";
 import { LiveSession, SurveillanceTab } from "../types";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useSurveillance } from "../SurveillanceContext";
+import { useFallbackData } from "./useFallbackData";
+import { useSurveillanceQueries } from "./useSurveillanceQueries";
 
 export function useSurveillanceData() {
   const { isGhostMode, liveAlerts, refreshAlerts } = useGhostMode();
@@ -13,33 +15,8 @@ export function useSurveillanceData() {
   const { activeTab } = useSurveillance();
 
   const supabase = useSupabaseClient();
-
-  // Generate fallback data to ensure we always have something to display
-  const generateFallbackData = useCallback((): LiveSession[] => {
-    console.log("Generating fallback data");
-    return [
-      {
-        id: "fallback-1",
-        type: "stream",
-        user_id: "system",
-        username: "Demo User",
-        created_at: new Date().toISOString(),
-        title: "Sample Live Stream",
-        status: "live",
-        media_url: []
-      },
-      {
-        id: "fallback-2",
-        type: "chat",
-        user_id: "system",
-        username: "Chat User",
-        created_at: new Date().toISOString(),
-        content: "Sample Message",
-        status: "active",
-        media_url: []
-      }
-    ];
-  }, []);
+  const { generateFallbackData } = useFallbackData();
+  const { fetchStreams, fetchMessages } = useSurveillanceQueries();
 
   const refreshData = useCallback(async () => {
     if (!isGhostMode) {
@@ -58,50 +35,6 @@ export function useSurveillanceData() {
 
     try {
       console.log("Fetching surveillance data...");
-      
-      // Attempt to fetch live sessions from various tables
-      const fetchStreams = async () => {
-        const { data, error } = await supabase
-          .from("live_streams")
-          .select("*, creator:creator_id(username, avatar_url)")
-          .eq("status", "live")
-          .limit(10);
-          
-        if (error) throw error;
-        console.log(`Fetched ${data?.length || 0} streams for surveillance`);
-        return data?.map(stream => ({
-          id: stream.id,
-          type: "stream",
-          user_id: stream.creator_id,
-          username: stream.creator?.username || "Unknown",
-          created_at: stream.created_at,
-          title: stream.title,
-          description: stream.description,
-          status: stream.status,
-          media_url: stream.playback_url ? [stream.playback_url] : []
-        })) || [];
-      };
-      
-      const fetchMessages = async () => {
-        const { data, error } = await supabase
-          .from("direct_messages")
-          .select("*, sender:sender_id(username, avatar_url), recipient:recipient_id(username, avatar_url)")
-          .order("created_at", { ascending: false })
-          .limit(10);
-          
-        if (error) throw error;
-        console.log(`Fetched ${data?.length || 0} chats for surveillance`);
-        return data?.map(msg => ({
-          id: msg.id,
-          type: "chat",
-          user_id: msg.sender_id,
-          username: msg.sender?.username || "Unknown",
-          recipient_username: msg.recipient?.username,
-          created_at: msg.created_at,
-          content: msg.content,
-          media_url: msg.media_url ? (Array.isArray(msg.media_url) ? msg.media_url : [msg.media_url]) : []
-        })) || [];
-      };
       
       // Execute the appropriate fetch based on active tab
       let data: LiveSession[] = [];
@@ -132,7 +65,7 @@ export function useSurveillanceData() {
     } finally {
       setIsLoading(false);
     }
-  }, [isGhostMode, supabase, activeTab, generateFallbackData, liveSessions.length]);
+  }, [isGhostMode, supabase, activeTab, fetchStreams, fetchMessages, generateFallbackData, liveSessions.length]);
 
   // Initial data fetch
   useEffect(() => {
