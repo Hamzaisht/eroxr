@@ -25,7 +25,7 @@ interface VideoPlayerProps {
   isPremium?: boolean;
   videoId?: string;
   creatorId?: string;
-  onClick?: () => void; // Added onClick prop
+  onClick?: () => void;
 }
 
 export const VideoPlayer = ({ 
@@ -48,6 +48,7 @@ export const VideoPlayer = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [username, setUsername] = useState<string>('eroxr');
   
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -78,6 +79,7 @@ export const VideoPlayer = ({
     const handleLoadedData = () => {
       setIsLoaded(true);
       setHasError(false);
+      setRetryCount(0);
       console.log("Video loaded successfully:", url);
       if (autoPlay) {
         video.play().catch(e => console.error("Autoplay failed:", e));
@@ -85,7 +87,7 @@ export const VideoPlayer = ({
     };
 
     const handleError = (e: Event) => {
-      console.error("Video loading error:", e);
+      console.error("Video loading error:", e, video.error?.code, video.error?.message);
       setHasError(true);
       setIsLoaded(false);
       if (onError) onError();
@@ -97,6 +99,7 @@ export const VideoPlayer = ({
     setIsPlaying(autoPlay);
     setIsLoaded(false);
     setHasError(false);
+    
     video.load();
 
     return () => {
@@ -134,6 +137,18 @@ export const VideoPlayer = ({
     
     setIsRetrying(true);
     setHasError(false);
+    setRetryCount(prev => prev + 1);
+    
+    if (retryCount > 0) {
+      const cacheBuster = `?cacheBuster=${Date.now()}`;
+      const urlWithCacheBuster = url.includes('?') 
+        ? `${url}&cacheBuster=${Date.now()}`
+        : `${url}${cacheBuster}`;
+      
+      if (videoRef.current.src !== urlWithCacheBuster) {
+        videoRef.current.src = urlWithCacheBuster;
+      }
+    }
     
     videoRef.current.load();
     
@@ -196,7 +211,7 @@ export const VideoPlayer = ({
         "relative group overflow-hidden bg-black w-full h-full",
         className
       )}
-      onClick={onClick} // Use onClick prop here if provided
+      onClick={onClick}
     >
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
         {!isLoaded && !hasError && !isRetrying && <VideoLoadingState />}
@@ -232,12 +247,10 @@ export const VideoPlayer = ({
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onClick={(e) => {
-            // If we have a custom onClick handler, use that
             if (onClick) {
               e.stopPropagation();
               onClick();
             } else {
-              // Otherwise use the default toggle play behavior
               e.stopPropagation();
               togglePlay();
             }

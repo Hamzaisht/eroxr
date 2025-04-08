@@ -12,6 +12,7 @@ import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { Short } from "../types/short";
 import { useShortActions } from "../hooks/actions";
 import { useToast } from "@/hooks/use-toast";
+import { VideoLoadingState } from "@/components/video/VideoLoadingState";
 
 interface ShortItemProps {
   short: Short;
@@ -31,6 +32,8 @@ export const ShortItem = ({
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [viewTracked, setViewTracked] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const [loadRetries, setLoadRetries] = useState(0);
   
   // Hooks
   const { handleLike, handleSave, handleDelete, handleShare, handleShareTracking, handleView } = useShortActions();
@@ -38,6 +41,12 @@ export const ShortItem = ({
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { playCommentSound } = useSoundEffects();
   const { toast } = useToast();
+
+  // Reset video error state when short changes
+  useEffect(() => {
+    setVideoError(false);
+    setLoadRetries(0);
+  }, [short.id]);
 
   // Track view when this becomes the current video
   useEffect(() => {
@@ -132,6 +141,25 @@ export const ShortItem = ({
     }
   };
 
+  const handleVideoError = () => {
+    setVideoError(true);
+    setLoadRetries(prev => prev + 1);
+    
+    if (loadRetries < 2) {
+      // Try to reload the video after a short delay
+      setTimeout(() => {
+        setVideoError(false);
+      }, 2000);
+    } else {
+      // After multiple retries, show a toast
+      toast({
+        title: "Video loading error",
+        description: "Unable to load this video. You may want to try again later.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <motion.div
       key={short.id}
@@ -151,7 +179,8 @@ export const ShortItem = ({
         poster={`${short.video_urls?.[0]?.split('.').slice(0, -1).join('.')}.jpg`}
         className="h-full w-full object-cover"
         autoPlay={index === currentVideoIndex}
-        onError={() => console.error(`Failed to load video: ${short.id}`)}
+        onError={handleVideoError}
+        creatorId={short.creator_id}
       />
       
       <ShortContent

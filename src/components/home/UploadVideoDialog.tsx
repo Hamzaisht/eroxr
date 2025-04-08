@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Loader2, Upload, Video, CheckCircle2, AlertCircle, X } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
 import { useShortPostSubmit } from "./hooks/useShortPostSubmit";
 import { Switch } from "@/components/ui/switch";
+import { UploadProgress } from "@/components/ui/UploadProgress";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface UploadVideoDialogProps {
   open: boolean;
@@ -34,7 +36,15 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
   const { toast } = useToast();
   const session = useSession();
   const navigate = useNavigate();
-  const { submitShortPost, isSubmitting, uploadProgress, isUploading } = useShortPostSubmit();
+  const { 
+    submitShortPost, 
+    isSubmitting, 
+    uploadProgress, 
+    isUploading, 
+    isError, 
+    errorMessage,
+    resetUploadState
+  } = useShortPostSubmit();
 
   // Constants
   const maxFileSize = 100 * 1024 * 1024; // 100MB
@@ -49,8 +59,9 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
       setDescription("");
       setUploadComplete(false);
       setValidationError(null);
+      resetUploadState();
     }
-  }, [open]);
+  }, [open, resetUploadState]);
 
   // Clean up preview URL when component unmounts
   useEffect(() => {
@@ -104,7 +115,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
       if (success) {
         setUploadComplete(true);
         
-        // Navigate to shorts feed after successful upload
+        // Navigate to shorts feed after successful upload with a slight delay
         setTimeout(() => {
           onOpenChange(false);
           navigate('/shorts');
@@ -138,26 +149,37 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
             
             {previewUrl ? (
               <div className="relative bg-luxury-darker rounded-lg overflow-hidden aspect-[9/16] max-h-[300px]">
-                <video 
-                  src={previewUrl} 
-                  className="w-full h-full object-contain"
-                  controls
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 rounded-full p-1.5"
-                  onClick={() => {
-                    URL.revokeObjectURL(previewUrl);
-                    setPreviewUrl(null);
-                    setSelectedFile(null);
-                  }}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
+                  <video 
+                    src={previewUrl} 
+                    className="w-full h-full object-contain"
+                    controls
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 rounded-full p-1.5"
+                    onClick={() => {
+                      URL.revokeObjectURL(previewUrl);
+                      setPreviewUrl(null);
+                      setSelectedFile(null);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </motion.div>
               </div>
             ) : (
-              <div className="flex flex-col items-center">
+              <motion.div 
+                className="flex flex-col items-center"
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
                 <input
                   ref={fileInputRef}
                   id="video"
@@ -180,15 +202,22 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
                     </span>
                   </div>
                 </Button>
-              </div>
+              </motion.div>
             )}
             
-            {validationError && (
-              <div className="text-red-500 text-sm flex items-center gap-1 mt-1">
-                <AlertCircle className="h-4 w-4" />
-                {validationError}
-              </div>
-            )}
+            <AnimatePresence>
+              {validationError && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-red-500 text-sm flex items-center gap-1 mt-1"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  {validationError}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="grid gap-4">
@@ -236,21 +265,24 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
             </div>
           </div>
 
-          {isUploading && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Uploading...</span>
-                <span className="text-sm">{uploadProgress}%</span>
-              </div>
-              <Progress value={uploadProgress} className="h-2" />
-            </div>
-          )}
+          <UploadProgress 
+            isUploading={isUploading}
+            progress={uploadProgress}
+            isComplete={uploadComplete}
+            isError={isError}
+            errorMessage={errorMessage}
+            onRetry={handleUpload}
+          />
 
           {uploadComplete && (
-            <div className="bg-green-950/30 text-green-400 p-3 rounded-md flex items-center gap-2">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-green-950/30 text-green-400 p-3 rounded-md flex items-center gap-2"
+            >
               <CheckCircle2 className="h-5 w-5" />
               <span>Upload complete! Your video will be available soon.</span>
-            </div>
+            </motion.div>
           )}
         </div>
 
