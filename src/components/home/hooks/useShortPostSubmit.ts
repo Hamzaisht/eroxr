@@ -90,11 +90,8 @@ export const useShortPostSubmit = () => {
       if (isPremium) {
         tags.push('premium');
       }
-
-      // Create watermark and creator info without using a metadata column
-      const creatorInfo = username || 'eroxr';
       
-      console.log("Preparing post data with creator info:", creatorInfo);
+      console.log("Preparing post data with creator info:", username);
       setUploadProgress(90);
 
       const postObject: any = {
@@ -107,39 +104,28 @@ export const useShortPostSubmit = () => {
         tags: tags
       };
 
-      // Try to store metadata if the column exists, but don't fail if it doesn't
+      // Add description if provided
+      if (description && description.trim() !== '') {
+        postObject.content_extended = description.trim();
+        console.log("Added description to content_extended:", description.trim());
+      }
+
+      // Try to store metadata if the column exists
       try {
-        // First check if posts table has a metadata column
-        const { data: tableInfo, error: tableError } = await supabase
-          .from('posts')
-          .select('*')
-          .limit(1);
-          
-        // If we got data back, check if the column exists
-        if (!tableError && tableInfo) {
-          console.log("Checking for metadata column in schema");
-          const hasMetadataColumn = await checkColumnExists('posts', 'metadata');
-          
-          if (hasMetadataColumn) {
-            console.log("Metadata column exists, adding to post object");
-            postObject.metadata = {
-              watermarkUsername: username,
-              creator: session.user.id
-            };
-          } else {
-            console.log("Metadata column doesn't exist, skipping");
-          }
+        const hasMetadataColumn = await checkColumnExists('posts', 'metadata');
+        
+        if (hasMetadataColumn) {
+          console.log("Metadata column exists, adding to post object");
+          postObject.metadata = {
+            watermarkUsername: username,
+            creator: session.user.id
+          };
+        } else {
+          console.log("Metadata column doesn't exist, skipping");
         }
       } catch (metadataError) {
         // Just log this but don't fail the upload
         console.warn("Couldn't check for metadata column:", metadataError);
-      }
-
-      if (description && description.trim() !== '') {
-        postObject.content_extended = description.trim();
-        console.log("Added description to content_extended:", description.trim());
-      } else {
-        console.log("No description provided, skipping content_extended field");
       }
 
       console.log("Inserting post record:", postObject);

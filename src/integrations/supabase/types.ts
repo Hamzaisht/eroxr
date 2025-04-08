@@ -1514,6 +1514,7 @@ export type Database = {
           last_modified_by: string | null
           likes_count: number | null
           media_url: string[] | null
+          metadata: Json | null
           ppv_amount: number | null
           screenshots_count: number | null
           share_count: number | null
@@ -1541,6 +1542,7 @@ export type Database = {
           last_modified_by?: string | null
           likes_count?: number | null
           media_url?: string[] | null
+          metadata?: Json | null
           ppv_amount?: number | null
           screenshots_count?: number | null
           share_count?: number | null
@@ -1568,6 +1570,7 @@ export type Database = {
           last_modified_by?: string | null
           likes_count?: number | null
           media_url?: string[] | null
+          metadata?: Json | null
           ppv_amount?: number | null
           screenshots_count?: number | null
           share_count?: number | null
@@ -2613,6 +2616,10 @@ export type Database = {
       }
     }
     Functions: {
+      check_column_exists: {
+        Args: { p_table_name: string; p_column_name: string }
+        Returns: boolean
+      }
       cleanup_expired_demo_content: {
         Args: Record<PropertyKey, never>
         Returns: undefined
