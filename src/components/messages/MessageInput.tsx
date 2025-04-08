@@ -29,8 +29,8 @@ export const MessageInput = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { sendTypingStatus } = useTypingIndicator(recipientId);
-  const { logMessageActivity } = useMessageAudit();
+  const { sendTypingStatus } = useTypingIndicator(recipientId, undefined);
+  const { logMessageActivity } = useMessageAudit(undefined, undefined);
 
   const handleSend = () => {
     if (message.trim() && !isLoading) {
@@ -45,7 +45,7 @@ export const MessageInput = ({
       setMessage("");
       
       // Clear typing status when message is sent
-      sendTypingStatus(false);
+      sendTypingStatus(false, recipientId);
     }
   };
 
@@ -62,7 +62,7 @@ export const MessageInput = ({
     
     // Send typing indicator
     if (value.length > 0) {
-      sendTypingStatus(true);
+      sendTypingStatus(true, recipientId);
       
       // Clear any existing timeout
       if (typingTimeoutRef.current) {
@@ -71,10 +71,10 @@ export const MessageInput = ({
       
       // Set timeout to stop the typing indicator after 3 seconds of inactivity
       typingTimeoutRef.current = setTimeout(() => {
-        sendTypingStatus(false);
+        sendTypingStatus(false, recipientId);
       }, 3000);
     } else {
-      sendTypingStatus(false);
+      sendTypingStatus(false, recipientId);
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
@@ -116,7 +116,7 @@ export const MessageInput = ({
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
-        sendTypingStatus(false);
+        sendTypingStatus(false, recipientId);
       }
     };
   }, [recipientId]);

@@ -6,19 +6,20 @@ export const useTypingIndicator = (chatId: string, userId: string | undefined) =
   const [isTyping, setIsTyping] = useState(false);
   
   // Send typing indicator to other users
-  const sendTypingStatus = (isTyping: boolean) => {
+  const sendTypingStatus = (isTyping: boolean, recipientId?: string) => {
     setIsTyping(isTyping);
     
-    if (!chatId || !userId) return;
+    const targetId = recipientId || chatId;
+    if (!targetId || !userId) return;
     
     // Send typing event via Supabase realtime
-    supabase.channel(`chat:${chatId}`)
+    supabase.channel(`chat:${targetId}`)
       .send({
         type: 'broadcast',
         event: 'typing',
         payload: { 
           userId: userId,
-          recipient_id: chatId,
+          recipient_id: targetId,
           is_typing: isTyping 
         }
       })
