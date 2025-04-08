@@ -56,11 +56,12 @@ export const UploadProgress = ({
             </div>
             <span className="text-sm font-medium">{Math.round(progress)}%</span>
           </div>
-          <Progress 
-            value={progress} 
-            className="h-2 bg-gray-800"
-            indicatorClassName="bg-gradient-to-r from-luxury-primary to-luxury-accent transition-all duration-500"
-          />
+          <div className="relative w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+            <div 
+              className="absolute top-0 left-0 h-full bg-gradient-to-r from-luxury-primary to-luxury-accent transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </motion.div>
       )}
       
