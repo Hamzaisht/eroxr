@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 
 interface VideoPreviewProps {
   videoUrl: string;
@@ -46,8 +47,9 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
     video.addEventListener('pause', () => setIsPlaying(false));
     video.addEventListener('play', () => setIsPlaying(true));
 
-    // Force video reload with new URL
-    video.load();
+    // Add cache buster to prevent stale cache issues
+    const cacheBuster = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}cb=${Date.now()}`;
+    video.src = cacheBuster;
 
     return () => {
       video.removeEventListener('loadeddata', handleLoad);
@@ -57,6 +59,17 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
       video.src = ''; // Clear source on cleanup
     };
   }, [videoUrl]);
+
+  const handleRetry = () => {
+    if (videoRef.current) {
+      setIsLoading(true);
+      setHasError(false);
+      // Add cache buster to force reload
+      const cacheBuster = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}cb=${Date.now()}`;
+      videoRef.current.src = cacheBuster;
+      videoRef.current.load();
+    }
+  };
 
   if (hasError) {
     return (
@@ -70,6 +83,12 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
       >
         <AlertCircle className="w-6 h-6 text-red-500" />
         <span className="text-xs text-red-500">Failed to load video</span>
+        <button 
+          onClick={handleRetry}
+          className="flex items-center text-xs gap-1 px-2 py-1 mt-1 bg-luxury-dark/50 hover:bg-luxury-dark rounded text-luxury-neutral/80"
+        >
+          <RefreshCw className="w-3 h-3" /> Retry
+        </button>
       </motion.div>
     );
   }
@@ -90,7 +109,6 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
       )}
       <motion.video
         ref={videoRef}
-        src={videoUrl}
         className={cn(
           className,
           isLoading ? "hidden" : "block",
@@ -102,7 +120,6 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
         playsInline
         muted
         loop
-        poster={`${videoUrl}?x-oss-process=video/snapshot,t_1000,m_fast`}
       />
     </>
   );
