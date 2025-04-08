@@ -74,12 +74,14 @@ export const useOptimisticUpload = (onUploadComplete?: () => void) => {
       })
       .catch(error => {
         clearInterval(progressInterval);
+        console.error("Upload error details:", error);
+        
         setUploadState({
           isProcessing: false,
           progress: 0,
           isComplete: false,
           isError: true,
-          errorMessage: error.message || "Upload failed"
+          errorMessage: error.message || "Upload failed - Please check your network connection and try again"
         });
         return false;
       });

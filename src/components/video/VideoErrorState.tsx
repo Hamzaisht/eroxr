@@ -25,7 +25,7 @@ export const VideoErrorState = ({ onRetry, errorDetails }: VideoErrorStateProps)
         Error loading media
       </p>
       {errorDetails && (
-        <p className="text-xs text-red-400/80 mb-3 md:mb-4 text-center max-w-xs">
+        <p className="text-xs text-red-400/80 mb-3 md:mb-4 text-center max-w-xs overflow-auto">
           {errorDetails}
         </p>
       )}
@@ -36,8 +36,8 @@ export const VideoErrorState = ({ onRetry, errorDetails }: VideoErrorStateProps)
           onClick={onRetry}
           className="bg-white/10 hover:bg-white/20 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
         >
-          <RefreshCw className="h-3 w-3" />
-          Try Again
+          <RefreshCw className="h-3 w-3 animate-spin mr-1" />
+          Retry Loading
         </Button>
       )}
     </motion.div>

@@ -74,7 +74,7 @@ export const UploadProgress = ({
         >
           <div className="flex items-center">
             <AlertCircle className="h-5 w-5 mr-2" />
-            <span>{errorMessage || "Upload failed"}</span>
+            <span className="text-sm overflow-hidden text-ellipsis">{errorMessage || "Upload failed"}</span>
           </div>
           {onRetry && (
             <Button 

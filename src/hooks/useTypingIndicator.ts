@@ -1,33 +1,35 @@
 
-import { useCallback } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@supabase/auth-helpers-react';
 
-/**
- * Hook for sending typing indicator status
- */
-export const useTypingIndicator = (recipientId?: string) => {
-  const session = useSession();
-  const userId = session?.user?.id;
+export const useTypingIndicator = (chatId: string, userId: string) => {
+  const [isTyping, setIsTyping] = useState(false);
   
-  const sendTypingStatus = useCallback((isTyping: boolean, targetRecipientId: string = recipientId || '') => {
-    if (!userId || !targetRecipientId) return;
-    
-    supabase.channel('typing-status')
-      .send({
-        type: 'broadcast',
-        event: 'typing',
-        payload: {
-          user_id: userId,
-          recipient_id: targetRecipientId,
-          is_typing: isTyping,
-          timestamp: new Date().toISOString()
-        }
-      })
-      .catch(error => {
-        console.error('Error sending typing status:', error);
-      });
-  }, [userId, recipientId]);
-
-  return { sendTypingStatus };
+  // Send typing indicator to other users
+  const sendTypingIndicator = () => {
+    // Only send if we're not already shown as typing
+    if (!isTyping) {
+      setIsTyping(true);
+      
+      // Send typing event via Supabase realtime
+      supabase.channel(`chat:${chatId}`)
+        .send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: { userId }
+        })
+        .then(() => {
+          // Auto-reset typing after 2 seconds
+          setTimeout(() => {
+            setIsTyping(false);
+          }, 2000);
+        })
+        .catch(error => {
+          console.error('Error sending typing indicator:', error);
+          setIsTyping(false);
+        });
+    }
+  };
+  
+  return { isTyping, sendTypingIndicator };
 };

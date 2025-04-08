@@ -1,70 +1,67 @@
 
-import { useCallback, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useMessageAudit } from './useMessageAudit';
 
-/**
- * Hook to subscribe to realtime message updates and sync with query cache
- * @param recipientId Optional: Specific recipient to filter updates for
- */
-export const useRealtimeMessages = (recipientId?: string) => {
-  const queryClient = useQueryClient();
-  const session = useSession();
-  const userId = session?.user?.id;
-  const { logMessageActivity } = useMessageAudit();
+interface Message {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+}
+
+export const useRealtimeMessages = (conversationId: string | null) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!conversationId) {
+      setMessages([]);
+      setIsLoading(false);
+      return;
+    }
 
-    // Prepare filter based on whether we want all messages or just ones with a specific recipient
-    const filter = recipientId 
-      ? `(sender_id=eq.${userId} AND recipient_id=eq.${recipientId}) OR (sender_id=eq.${recipientId} AND recipient_id=eq.${userId})`
-      : `recipient_id=eq.${userId} OR sender_id=eq.${userId}`;
+    setIsLoading(true);
     
-    // Subscribe to all relevant message changes
-    const channel = supabase
-      .channel('messages-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'direct_messages',
-          filter: filter,
-        },
-        (payload) => {
-          // Log activity for audit purposes
-          const eventType = payload.eventType;
-          const messageData = payload.new || payload.old;
+    // Fetch initial messages
+    const fetchMessages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('direct_messages')
+          .select('*')
+          .or(`sender_id.eq.${conversationId},recipient_id.eq.${conversationId}`)
+          .order('created_at', { ascending: true });
           
-          if (messageData) {
-            logMessageActivity(`${eventType.toLowerCase()}`, messageData);
-          }
-          
-          // Update query cache based on the event type
-          const isSpecificChat = !!recipientId;
-          const chatQueryKey = isSpecificChat 
-            ? ['chat', userId, recipientId]
-            : ['messages', userId];
-          
-          // Invalidate the relevant queries to trigger refetch
-          queryClient.invalidateQueries({ queryKey: chatQueryKey });
-          
-          if (!isSpecificChat) {
-            // Also invalidate general messages list if this is not a specific chat update
-            queryClient.invalidateQueries({ queryKey: ['messages'] });
-          }
-        }
-      )
+        if (error) throw error;
+        
+        setMessages(data || []);
+        setIsLoading(false);
+      } catch (err: any) {
+        console.error('Error fetching messages:', err);
+        setError(err);
+        setIsLoading(false);
+      }
+    };
+
+    fetchMessages();
+
+    // Subscribe to new messages
+    const channel = supabase.channel(`conversation:${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `sender_id=eq.${conversationId}`,
+      }, (payload) => {
+        setMessages(current => [...current, payload.new as Message]);
+      })
       .subscribe();
 
-    // Cleanup subscription on unmount
+    // Cleanup
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, recipientId, queryClient, logMessageActivity]);
+  }, [conversationId]);
 
-  return {};
+  return { messages, isLoading, error };
 };
