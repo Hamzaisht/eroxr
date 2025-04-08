@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Progress } from "@/components/ui/progress";
 import { CheckCircle, AlertCircle, RefreshCw, ArrowUpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
