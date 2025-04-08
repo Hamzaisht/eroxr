@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { CheckCircle, AlertCircle, RefreshCw, ArrowUpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface UploadProgressProps {
@@ -29,7 +29,7 @@ export const UploadProgress = ({
       setShowSuccess(true);
       const timer = setTimeout(() => {
         setShowSuccess(false);
-      }, 2000); // Show success for 2 seconds
+      }, 3000); // Show success for 3 seconds
       
       return () => clearTimeout(timer);
     }
@@ -48,12 +48,19 @@ export const UploadProgress = ({
           className="space-y-2 w-full"
         >
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              Uploading...
-            </span>
+            <div className="flex items-center gap-2">
+              <ArrowUpCircle className="h-4 w-4 text-luxury-primary animate-pulse" />
+              <span className="text-sm text-muted-foreground">
+                Uploading...
+              </span>
+            </div>
             <span className="text-sm font-medium">{Math.round(progress)}%</span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress 
+            value={progress} 
+            className="h-2 bg-gray-800"
+            indicatorClassName="bg-gradient-to-r from-luxury-primary to-luxury-accent transition-all duration-500"
+          />
         </motion.div>
       )}
       
@@ -87,8 +94,8 @@ export const UploadProgress = ({
         <motion.div 
           key="success"
           initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0, transition: { duration: 0.3 } }}
+          exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
           className="bg-green-500/10 text-green-500 p-3 rounded-md flex items-center"
         >
           <CheckCircle className="h-5 w-5 mr-2" />

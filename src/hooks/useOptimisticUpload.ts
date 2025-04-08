@@ -64,7 +64,7 @@ export const useOptimisticUpload = (onUploadComplete?: () => void) => {
           
           // Add artificial delay for UX smoothness
           if (onUploadComplete) {
-            setTimeout(onUploadComplete, 200);
+            setTimeout(onUploadComplete, 300);
           }
           
           return true;

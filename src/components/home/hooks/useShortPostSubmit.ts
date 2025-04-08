@@ -22,7 +22,8 @@ export const useShortPostSubmit = () => {
   const { 
     uploadState, 
     simulateProgressiveUpload,
-    resetUploadState 
+    resetUploadState,
+    retryUpload
   } = useOptimisticUpload();
 
   useEffect(() => {
@@ -138,6 +139,9 @@ export const useShortPostSubmit = () => {
 
         console.log("Inserting post record:", postObject);
 
+        // Artificial delay before finalizing post for UX smoothness
+        await new Promise(resolve => setTimeout(resolve, 200));
+
         const { data: postData, error: postError } = await supabase
           .from('posts')
           .insert(postObject)
@@ -202,6 +206,10 @@ export const useShortPostSubmit = () => {
     isComplete: uploadState.isComplete,
     isError: uploadState.isError,
     errorMessage: uploadState.errorMessage,
-    resetUploadState
+    resetUploadState,
+    retryUpload: () => retryUpload(() => submitShortPost({
+      title: "", // These will be replaced when actually retrying
+      videoFile: new File([], "") // Placeholder
+    }))
   };
 };

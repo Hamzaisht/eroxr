@@ -1,6 +1,7 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Maximize, X } from "lucide-react";
+import { Maximize, X, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { VideoLoadingState } from "./VideoLoadingState";
@@ -92,19 +93,40 @@ export const VideoPlayer = ({
       setIsLoaded(false);
       if (onError) onError();
     };
+    
+    const handleWaiting = () => {
+      // Video is buffering
+      console.log("Video buffering");
+    };
 
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("error", handleError);
+    video.addEventListener("waiting", handleWaiting);
 
-    setIsPlaying(autoPlay);
+    // Reset states when URL changes
     setIsLoaded(false);
     setHasError(false);
-    
-    video.load();
+    if (url) {
+      // For some video URLs, use query string to avoid caching
+      const timestamp = Date.now();
+      const videoUrl = url.includes('?') ? 
+        `${url}&_t=${timestamp}` : 
+        `${url}?_t=${timestamp}`;
+      
+      // Use proper URL handling for network issues
+      try {
+        video.src = videoUrl;
+        video.load();
+      } catch (err) {
+        console.error("Error setting video source:", err);
+        setHasError(true);
+      }
+    }
 
     return () => {
       video.removeEventListener("loadeddata", handleLoadedData);
       video.removeEventListener("error", handleError);
+      video.removeEventListener("waiting", handleWaiting);
     };
   }, [url, onError, autoPlay]);
 
@@ -139,22 +161,29 @@ export const VideoPlayer = ({
     setHasError(false);
     setRetryCount(prev => prev + 1);
     
-    if (retryCount > 0) {
-      const cacheBuster = `?cacheBuster=${Date.now()}`;
-      const urlWithCacheBuster = url.includes('?') 
-        ? `${url}&cacheBuster=${Date.now()}`
-        : `${url}${cacheBuster}`;
+    // Create a new URL with cache buster
+    const cacheBuster = `?cacheBuster=${Date.now()}`;
+    const urlWithCacheBuster = url.includes('?') 
+      ? `${url}&cacheBuster=${Date.now()}`
+      : `${url}${cacheBuster}`;
+    
+    // Completely reload the video element
+    try {
+      videoRef.current.src = urlWithCacheBuster;
+      videoRef.current.load();
       
-      if (videoRef.current.src !== urlWithCacheBuster) {
-        videoRef.current.src = urlWithCacheBuster;
-      }
-    }
-    
-    videoRef.current.load();
-    
-    setTimeout(() => {
+      // Set a timeout to reset retry state if it's taking too long
+      setTimeout(() => {
+        if (!isLoaded) {
+          setIsRetrying(false);
+          setHasError(true);
+        }
+      }, 10000); // 10 second timeout
+    } catch (error) {
+      console.error("Error reloading video:", error);
       setIsRetrying(false);
-    }, 3000);
+      setHasError(true);
+    }
   };
 
   const { toggleFullscreen } = VideoFullscreenButton({
@@ -219,7 +248,7 @@ export const VideoPlayer = ({
         {hasError && !isRetrying && (
           <VideoErrorState 
             onRetry={handleRetry} 
-            errorDetails="The video could not be loaded. It may be unavailable or in an unsupported format."
+            errorDetails="Failed to load media content. Please try again later."
           />
         )}
         
@@ -227,8 +256,6 @@ export const VideoPlayer = ({
         
         <video
           ref={videoRef}
-          src={url}
-          poster={poster}
           muted={isMuted}
           playsInline
           loop={canPlayFull}
@@ -244,6 +271,7 @@ export const VideoPlayer = ({
             maxWidth: "100%",
             maxHeight: "100%"
           }}
+          poster={poster}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onClick={(e) => {
