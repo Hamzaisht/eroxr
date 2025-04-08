@@ -49,30 +49,47 @@ export const useShortPostSubmit = () => {
 
     setIsSubmitting(true);
     setIsUploading(true);
+    setUploadProgress(10); // Set initial progress to show activity
 
     try {
+      console.log("Starting video upload process...");
+      
       // Generate unique filename
       const fileExt = videoFile.name.split('.').pop();
       const fileName = `${session.user.id}/${uuidv4()}.${fileExt}`;
       const filePath = fileName;
 
-      // For video files, we'll use a CSS overlay watermark approach
-      // because re-encoding videos on the client is resource intensive
+      console.log("Uploading to path:", filePath);
       
-      // Upload video to storage
-      const { error: uploadError } = await supabase.storage
+      // Update progress to show we're starting the upload
+      setUploadProgress(20);
+      
+      // Upload video to storage with explicit upsert option
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('shorts')
         .upload(filePath, videoFile, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true, // Allow overwriting if file exists
+          contentType: videoFile.type // Explicitly set content type
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error details:", uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+      
+      console.log("Upload successful:", uploadData);
+      setUploadProgress(70);
 
       // Get public URL
       const { data } = supabase.storage.from('shorts').getPublicUrl(filePath);
       
-      if (!data.publicUrl) throw new Error('Failed to get public URL');
+      if (!data.publicUrl) {
+        throw new Error('Failed to get public URL for uploaded video');
+      }
+      
+      console.log("Public URL obtained:", data.publicUrl);
+      setUploadProgress(80);
 
       // Add tags for premium content
       const tags = ['eros', 'short'];
@@ -85,6 +102,9 @@ export const useShortPostSubmit = () => {
         watermarkUsername: username,
         creator: session.user.id
       };
+
+      console.log("Preparing post data with metadata:", metadata);
+      setUploadProgress(90);
 
       // Create the base post object without the optional description field
       const postObject: any = {
@@ -105,6 +125,8 @@ export const useShortPostSubmit = () => {
         postObject.content_extended = description;
       }
 
+      console.log("Inserting post record:", postObject);
+
       // Insert post record
       const { data: postData, error: postError } = await supabase
         .from('posts')
@@ -112,7 +134,13 @@ export const useShortPostSubmit = () => {
         .select('id')
         .single();
 
-      if (postError) throw postError;
+      if (postError) {
+        console.error("Post creation error:", postError);
+        throw new Error(`Failed to create post: ${postError.message}`);
+      }
+
+      console.log("Post created successfully:", postData);
+      setUploadProgress(100);
 
       toast({
         title: "Upload Successful",
@@ -120,11 +148,13 @@ export const useShortPostSubmit = () => {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Short post upload error:", error);
+      
+      // Provide more detailed error messages in the toast
       toast({
         title: "Upload Failed",
-        description: "Unable to upload your video. Please try again.",
+        description: error.message || "Unable to upload your video. Please try again.",
         variant: "destructive"
       });
       return false;
@@ -142,4 +172,3 @@ export const useShortPostSubmit = () => {
     isUploading 
   };
 };
-
