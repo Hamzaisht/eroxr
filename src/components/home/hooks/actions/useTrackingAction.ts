@@ -27,11 +27,11 @@ export const useTrackingAction = () => {
       if (countError) {
         console.warn("Error getting current view count, using direct increment:", countError);
         
-        // Fallback to direct increment
+        // Fallback to direct increment using raw SQL query expressions
         const { error: directUpdateError } = await supabase
           .from('posts')
           .update({ 
-            view_count: supabase.sql`COALESCE(view_count, 0) + 1`,
+            view_count: currentCount !== null ? currentCount + 1 : 1,
             last_engagement_at: new Date().toISOString()
           })
           .eq('id', contentId);
@@ -84,11 +84,11 @@ export const useTrackingAction = () => {
       if (countError) {
         console.warn("Error getting current share count, using direct increment:", countError);
         
-        // Fallback to direct increment
+        // Fallback to direct increment using a regular update
         const { error: directUpdateError } = await supabase
           .from('posts')
           .update({ 
-            share_count: supabase.sql`COALESCE(share_count, 0) + 1`,
+            share_count: currentCount !== null ? currentCount + 1 : 1,
             last_engagement_at: new Date().toISOString()
           })
           .eq('id', contentId);

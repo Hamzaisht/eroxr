@@ -100,7 +100,8 @@ export const StoryUploader = () => {
       };
 
       // Attempt upload
-      const { error: uploadError, data: uploadData } = await uploadWithProgress();
+      // Using 'let' instead of 'const' so it can be reassigned if needed
+      let { error: uploadError, data: uploadData } = await uploadWithProgress();
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
@@ -126,6 +127,7 @@ export const StoryUploader = () => {
           
           if (retryError) throw retryError;
           
+          // Now uploadData can be reassigned
           uploadData = retryData;
         } else {
           throw uploadError;
