@@ -44,6 +44,8 @@ export const VideoPlayer = ({
   const [hasError, setHasError] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string | undefined>(undefined);
   const [retryCount, setRetryCount] = useState(0);
+  const [isStalled, setIsStalled] = useState(false);
+  const [stallTimer, setStallTimer] = useState<NodeJS.Timeout | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,12 +54,14 @@ export const VideoPlayer = ({
   // Make sure URL is defined and valid
   const videoUrl = url?.trim() || '';
   const MAX_RETRIES = 2;
+  const STALL_TIMEOUT = 8000; // 8 seconds before considering a video stalled
 
   // Add cache buster to URL to prevent stale cache issues
   const getUrlWithCacheBuster = (baseUrl: string) => {
+    if (!baseUrl) return '';
     const timestamp = Date.now();
     const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}t=${timestamp}`;
+    return `${baseUrl}${separator}t=${timestamp}&cb=${Math.random().toString(36).substring(2, 15)}`;
   };
 
   // Log video URL for debugging
@@ -70,13 +74,52 @@ export const VideoPlayer = ({
   }, [videoUrl]);
 
   useEffect(() => {
+    // Clear any existing stall timer when component unmounts or URL changes
+    return () => {
+      if (stallTimer) {
+        clearTimeout(stallTimer);
+      }
+    };
+  }, [videoUrl, stallTimer]);
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    const startStallTimer = () => {
+      // Clear any existing timer first
+      if (stallTimer) {
+        clearTimeout(stallTimer);
+      }
+      
+      // Set a new timer for stall detection
+      const timer = setTimeout(() => {
+        if (isLoading && !isLoaded) {
+          console.warn("Video loading stalled:", videoUrl);
+          setIsStalled(true);
+          
+          if (retryCount < MAX_RETRIES) {
+            handleRetry();
+          } else {
+            setHasError(true);
+            setIsLoading(false);
+            setErrorDetails("Video loading timed out. Please try again.");
+          }
+        }
+      }, STALL_TIMEOUT);
+      
+      setStallTimer(timer as unknown as NodeJS.Timeout);
+    };
+
     const handleLoadedData = () => {
+      if (stallTimer) {
+        clearTimeout(stallTimer);
+      }
+      
       setIsLoaded(true);
       setIsLoading(false);
       setHasError(false);
+      setIsStalled(false);
       console.log("Video loaded successfully:", videoUrl);
       
       if (autoPlay) {
@@ -85,6 +128,14 @@ export const VideoPlayer = ({
           // Don't set error state on autoplay failure, just log it
         });
       }
+    };
+
+    const handleWaiting = () => {
+      setIsBuffering(true);
+    };
+
+    const handlePlaying = () => {
+      setIsBuffering(false);
     };
 
     const handleError = (e: Event) => {
@@ -127,6 +178,9 @@ export const VideoPlayer = ({
         videoElement.src = newUrl;
         videoElement.load();
         
+        // Start a new stall timer for the retry
+        startStallTimer();
+        
         // Don't set error state yet, just trying again
         return;
       }
@@ -136,14 +190,28 @@ export const VideoPlayer = ({
       setIsLoading(false);
       if (onError) onError();
     };
+    
+    const handleStalled = () => {
+      console.warn("Video playback stalled:", videoUrl);
+      setIsStalled(true);
+    };
+
+    const [isBuffering, setIsBuffering] = useState(false);
 
     // Set up loading state
     setIsLoading(true);
     setIsLoaded(false);
     setHasError(false);
+    setIsStalled(false);
 
-    video.addEventListener("loadeddata", handleLoadedData);  // Fixed: changed from "loadedData" to "loadeddata"
+    video.addEventListener("loadeddata", handleLoadedData);
+    video.addEventListener("waiting", handleWaiting);
+    video.addEventListener("playing", handlePlaying);
     video.addEventListener("error", handleError);
+    video.addEventListener("stalled", handleStalled);
+
+    // Start the stall timer
+    startStallTimer();
 
     // Force reload the video with cache buster
     try {
@@ -158,10 +226,17 @@ export const VideoPlayer = ({
     }
 
     return () => {
-      video.removeEventListener("loadeddata", handleLoadedData);  // Fixed: changed from "loadedData" to "loadeddata"
+      if (stallTimer) {
+        clearTimeout(stallTimer);
+      }
+      
+      video.removeEventListener("loadeddata", handleLoadedData);
+      video.removeEventListener("waiting", handleWaiting);
+      video.removeEventListener("playing", handlePlaying);
       video.removeEventListener("error", handleError);
+      video.removeEventListener("stalled", handleStalled);
     };
-  }, [videoUrl, onError, autoPlay, retryCount]);
+  }, [videoUrl, onError, autoPlay, retryCount, stallTimer]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -195,13 +270,20 @@ export const VideoPlayer = ({
     
     setIsLoading(true);
     setHasError(false);
-    setRetryCount(0);
+    setIsStalled(false);
+    setRetryCount(prev => prev + 1);
     
     // Create a new URL with cache buster to avoid browser caching
     const newUrl = getUrlWithCacheBuster(videoUrl);
     
     videoRef.current.src = newUrl;
     videoRef.current.load();
+    
+    toast({
+      title: "Retrying video",
+      description: "Attempting to reload the video...",
+      duration: 2000,
+    });
   };
 
   const toggleFullscreen = () => {
@@ -246,7 +328,9 @@ export const VideoPlayer = ({
       onClick={onClick && !isPlaying ? onClick : undefined}
     >
       {/* Loading State */}
-      {isLoading && <VideoLoadingState />}
+      {(isLoading || isStalled) && !hasError && (
+        <VideoLoadingState isStalled={isStalled} />
+      )}
       
       {/* Error State */}
       {hasError && (
@@ -259,14 +343,13 @@ export const VideoPlayer = ({
       {/* Video Element */}
       <video
         ref={videoRef}
-        src={videoUrl}
         poster={poster}
         muted={isMuted}
         playsInline
         loop
         className={cn(
           "w-full h-full object-contain",
-          isLoading || hasError ? "invisible" : "visible",
+          (isLoading || hasError) ? "invisible" : "visible",
           onClick ? "cursor-pointer" : ""
         )}
         onClick={!onClick ? handleVideoTap : undefined}

@@ -42,10 +42,29 @@ export const useShortPostSubmit = () => {
 
   // Helper function to add a cache buster to a URL
   const addCacheBuster = (url: string) => {
+    if (!url) return url;
+    
     const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 9);
     return url.includes('?') 
-      ? `${url}&t=${timestamp}` 
-      : `${url}?t=${timestamp}`;
+      ? `${url}&t=${timestamp}&r=${random}` 
+      : `${url}?t=${timestamp}&r=${random}`;
+  };
+
+  // Create a full public URL from a Supabase storage path
+  const getFullPublicUrl = (bucket: string, path: string): string => {
+    if (!path) return '';
+    
+    // Directly use getPublicUrl to get the correct URL format
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    
+    // Safety check - this should never happen if properly set up
+    if (!data.publicUrl) {
+      console.error("Failed to get public URL for", bucket, path);
+      return '';
+    }
+    
+    return data.publicUrl;
   };
 
   // Validate video file before upload
@@ -100,10 +119,12 @@ export const useShortPostSubmit = () => {
         console.log("Starting video upload process...");
         
         const fileExt = videoFile.name.split('.').pop();
-        const fileName = `${session.user.id}/${uuidv4()}.${fileExt}`;
+        const uniqueId = uuidv4();
+        const fileName = `${session.user.id}/${uniqueId}.${fileExt}`;
         const filePath = fileName;
+        const bucketName = 'shorts';
 
-        console.log("Uploading to path:", filePath);
+        console.log("Uploading to path:", filePath, "in bucket:", bucketName);
         
         // Check if we need to compress the video before upload
         let fileToUpload = videoFile;
@@ -114,7 +135,7 @@ export const useShortPostSubmit = () => {
         }
 
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('shorts')
+          .from(bucketName)
           .upload(filePath, fileToUpload, {
             cacheControl: '3600',
             upsert: true,
@@ -128,17 +149,20 @@ export const useShortPostSubmit = () => {
         
         console.log("Upload successful:", uploadData);
 
-        // IMPORTANT: Get the proper public URL
-        const { data } = supabase.storage.from('shorts').getPublicUrl(filePath);
+        // Get the proper public URL using the utility function
+        const publicUrl = getFullPublicUrl(bucketName, filePath);
         
-        if (!data.publicUrl) {
+        if (!publicUrl) {
           throw new Error('Failed to get public URL for uploaded video');
         }
         
         // Add cache buster to ensure fresh content
-        const publicUrlWithCacheBuster = addCacheBuster(data.publicUrl);
+        const publicUrlWithCacheBuster = addCacheBuster(publicUrl);
         
         console.log("Public URL obtained:", publicUrlWithCacheBuster);
+        
+        // Generate thumbnail URL (same as video URL for now)
+        const thumbnailUrl = publicUrlWithCacheBuster;
 
         const tags = ['eros', 'short'];
         if (isPremium) {
@@ -151,7 +175,7 @@ export const useShortPostSubmit = () => {
           creator_id: session.user.id,
           content: title,
           video_urls: [publicUrlWithCacheBuster],
-          video_thumbnail_url: publicUrlWithCacheBuster, 
+          video_thumbnail_url: thumbnailUrl, 
           visibility: isPremium ? 'subscribers_only' : 'public',
           video_processing_status: 'completed',
           tags: tags
@@ -174,7 +198,10 @@ export const useShortPostSubmit = () => {
               creator: session.user.id,
               uploadTimestamp: new Date().toISOString(),
               originalFilename: videoFile.name,
-              publicUrl: publicUrlWithCacheBuster
+              publicUrl: publicUrlWithCacheBuster,
+              bucketName: bucketName,
+              storagePath: filePath,
+              fileType: videoFile.type
             };
           } else {
             console.log("Metadata column doesn't exist, skipping");

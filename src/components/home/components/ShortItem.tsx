@@ -33,6 +33,7 @@ export const ShortItem = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [loadRetries, setLoadRetries] = useState(0);
+  const [isMediaAvailable, setIsMediaAvailable] = useState(true);
   
   // Hooks
   const { handleLike, handleSave, handleDelete, handleShare, handleShareTracking, handleView } = useShortActions();
@@ -41,30 +42,46 @@ export const ShortItem = ({
   const { playCommentSound } = useSoundEffects();
   const { toast } = useToast();
 
+  // Validate data for rendering
+  const isValidShort = !!short && !!short.id;
+  
   // Ensure we have a valid video URL
-  const videoUrl = short.video_urls?.[0] || null;
-
-  // Reset video error state when short changes
+  const videoUrl = short?.video_urls?.length ? short.video_urls[0] : null;
+  const hasThumbnail = !!short?.video_thumbnail_url;
+  
+  // Check if media is available
   useEffect(() => {
-    setVideoError(false);
-    setLoadRetries(0);
-  }, [short.id]);
+    if (!videoUrl && !hasThumbnail) {
+      console.warn("Short has no video or thumbnail:", short?.id);
+      setIsMediaAvailable(false);
+    } else {
+      setIsMediaAvailable(true);
+    }
+  }, [short?.id, videoUrl, hasThumbnail]);
 
   // Add cache buster to URL to prevent stale cache issues
   const getUrlWithCacheBuster = (baseUrl: string | null) => {
     if (!baseUrl) return null;
     const timestamp = Date.now();
     const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}cb=${timestamp}`;
+    return `${baseUrl}${separator}cb=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
   };
   
   // Get the video URL with cache buster
   const videoUrlWithCacheBuster = getUrlWithCacheBuster(videoUrl);
 
+  // Reset video error state when short changes
+  useEffect(() => {
+    if (isValidShort) {
+      setVideoError(false);
+      setLoadRetries(0);
+    }
+  }, [short?.id, isValidShort]);
+
   // Track view when this becomes the current video
   useEffect(() => {
     const trackView = async () => {
-      if (isCurrentVideo && !viewTracked && short.id) {
+      if (isCurrentVideo && !viewTracked && short?.id) {
         try {
           await handleView(short.id);
           setViewTracked(true);
@@ -75,18 +92,22 @@ export const ShortItem = ({
       }
     };
 
-    if (isCurrentVideo) {
+    if (isCurrentVideo && isValidShort) {
       trackView();
     }
-  }, [isCurrentVideo, viewTracked, short.id, handleView]);
+  }, [isCurrentVideo, viewTracked, short?.id, handleView, isValidShort]);
 
   // Reset view tracking when short changes
   useEffect(() => {
-    setViewTracked(false);
-  }, [short.id]);
+    if (isValidShort) {
+      setViewTracked(false);
+    }
+  }, [short?.id, isValidShort]);
 
   // Handlers
   const handleShareClick = (shortId: string) => {
+    if (!isValidShort) return;
+    
     setIsShareOpen(true);
     // Track share action
     if (handleShareTracking) {
@@ -95,6 +116,8 @@ export const ShortItem = ({
   };
 
   const handleCommentClick = () => {
+    if (!isValidShort) return;
+    
     if (!session) {
       toast({
         title: "Sign in required",
@@ -108,6 +131,8 @@ export const ShortItem = ({
   };
 
   const handleLikeClick = async (shortId: string) => {
+    if (!isValidShort) return;
+    
     if (!session) {
       toast({
         title: "Sign in required",
@@ -120,6 +145,8 @@ export const ShortItem = ({
   };
 
   const handleSaveClick = async (shortId: string) => {
+    if (!isValidShort) return;
+    
     if (!session) {
       toast({
         title: "Sign in required",
@@ -132,6 +159,8 @@ export const ShortItem = ({
   };
 
   const handleDeleteClick = async (shortId: string) => {
+    if (!isValidShort) return;
+    
     if (!session || session.user.id !== short.creator_id) {
       return;
     }
@@ -155,7 +184,7 @@ export const ShortItem = ({
   };
 
   const handleVideoError = () => {
-    console.error("Video error for short:", short.id, videoUrl);
+    console.error("Video error for short:", short?.id, videoUrl);
     setVideoError(true);
     setLoadRetries(prev => prev + 1);
     
@@ -174,6 +203,23 @@ export const ShortItem = ({
     }
   };
 
+  // If no valid short data, show a placeholder
+  if (!isValidShort) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="relative h-[100dvh] w-full snap-start snap-always flex items-center justify-center bg-luxury-darker"
+      >
+        <div className="text-center p-4">
+          <p className="text-luxury-neutral/70">This content is not available</p>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       key={short.id}
@@ -188,7 +234,11 @@ export const ShortItem = ({
     >
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
       
-      {!videoUrlWithCacheBuster ? (
+      {!isMediaAvailable ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
+          <p className="text-luxury-neutral/70">This video is not available</p>
+        </div>
+      ) : !videoUrlWithCacheBuster ? (
         <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
           <p className="text-luxury-neutral/70">This video is not available</p>
         </div>
@@ -206,7 +256,7 @@ export const ShortItem = ({
       <ShortContent
         short={{
           ...short,
-          description: short.content,
+          description: short.content || '',
           likes: short.likes_count || 0,
           comments: short.comments_count || 0,
           view_count: short.view_count || 0
@@ -226,20 +276,24 @@ export const ShortItem = ({
       />
 
       {/* Dialogs */}
-      <ShareDialog
-        open={isShareOpen}
-        onOpenChange={setIsShareOpen}
-        postId={short.id}
-      />
-      
-      <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
-        <DialogContent className={`${isMobile ? 'w-full h-[80dvh] rounded-t-xl mt-auto' : 'sm:max-w-[425px] h-[80vh]'} bg-black/95`}>
-          <CommentSection
+      {isValidShort && (
+        <>
+          <ShareDialog
+            open={isShareOpen}
+            onOpenChange={setIsShareOpen}
             postId={short.id}
-            commentsCount={short.comments_count ?? 0}
           />
-        </DialogContent>
-      </Dialog>
+          
+          <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
+            <DialogContent className={`${isMobile ? 'w-full h-[80dvh] rounded-t-xl mt-auto' : 'sm:max-w-[425px] h-[80vh]'} bg-black/95`}>
+              <CommentSection
+                postId={short.id}
+                commentsCount={short.comments_count ?? 0}
+              />
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
     </motion.div>
   );
 };

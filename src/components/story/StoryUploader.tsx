@@ -10,18 +10,55 @@ export const StoryUploader = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const session = useSession();
   const { toast } = useToast();
+  const MAX_RETRIES = 1;
+  const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+  const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+  const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
   const getUrlWithCacheBuster = (baseUrl: string) => {
     const timestamp = Date.now();
     const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}t=${timestamp}`;
+    return `${baseUrl}${separator}t=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
+  };
+
+  const validateFile = (file: File): { valid: boolean; message?: string } => {
+    if (file.size > MAX_FILE_SIZE) {
+      return { 
+        valid: false, 
+        message: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB`
+      };
+    }
+
+    const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
+    const isImage = SUPPORTED_IMAGE_TYPES.includes(file.type);
+
+    if (!isVideo && !isImage) {
+      return { 
+        valid: false, 
+        message: `Unsupported file type. Please upload an image (JPG, PNG, GIF, WEBP) or video (MP4, WEBM, MOV, AVI)`
+      };
+    }
+
+    return { valid: true };
   };
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !session?.user?.id) return;
+
+    // Validate file
+    const validation = validateFile(file);
+    if (!validation.valid) {
+      toast({
+        title: "Invalid file",
+        description: validation.message,
+        variant: "destructive",
+      });
+      return;
+    }
 
     setUploadError(null);
     
@@ -30,32 +67,77 @@ export const StoryUploader = () => {
       setUploadProgress(10); // Show initial progress
       
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
 
-      // Upload with progress tracking
-      const xhr = new XMLHttpRequest();
-      
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = Math.round((event.loaded / event.total) * 90) + 10; // 10-100%
-          setUploadProgress(percentComplete);
+      // Track upload progress
+      const uploadWithProgress = () => {
+        return new Promise<{ error?: any, data?: any }>((resolve) => {
+          // Simulate progress updates
+          const progressInterval = setInterval(() => {
+            setUploadProgress((prev) => {
+              const newProgress = prev + Math.floor(Math.random() * 10);
+              return newProgress > 90 ? 90 : newProgress;
+            });
+          }, 300);
+
+          // Start the upload
+          supabase.storage
+            .from('stories')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false
+            })
+            .then(({ data, error }) => {
+              clearInterval(progressInterval);
+              resolve({ data, error });
+            })
+            .catch((error) => {
+              clearInterval(progressInterval);
+              resolve({ error });
+            });
+        });
+      };
+
+      // Attempt upload
+      const { error: uploadError, data: uploadData } = await uploadWithProgress();
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        
+        // Try again if we haven't reached max retries
+        if (retryCount < MAX_RETRIES) {
+          setRetryCount(prev => prev + 1);
+          toast({
+            title: "Retrying upload",
+            description: "First attempt failed, trying again...",
+          });
+          
+          // Retry with a different file path
+          const retryFileName = `retry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+          const retryFilePath = `${session.user.id}/${retryFileName}`;
+          
+          const { error: retryError, data: retryData } = await supabase.storage
+            .from('stories')
+            .upload(retryFilePath, file, {
+              cacheControl: '3600',
+              upsert: true
+            });
+          
+          if (retryError) throw retryError;
+          
+          uploadData = retryData;
+        } else {
+          throw uploadError;
         }
-      });
-      
-      // Use traditional upload method since we can't easily track progress with XHR
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('stories')
-        .upload(filePath, file);
+      }
 
-      if (uploadError) throw uploadError;
-
-      setUploadProgress(100);
+      setUploadProgress(95); // Almost done
 
       // Get the public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage
         .from('stories')
-        .getPublicUrl(filePath);
+        .getPublicUrl(uploadData.path);
 
       if (!publicUrl) {
         throw new Error("Failed to get public URL for uploaded file");
@@ -64,9 +146,12 @@ export const StoryUploader = () => {
       // Add a cache buster to ensure the URL is fresh
       const cacheBustedUrl = getUrlWithCacheBuster(publicUrl);
       
-      // Determine if this is a video or image
-      const isVideo = file.type.startsWith('video/');
+      setUploadProgress(98); // Final step
       
+      // Determine if this is a video or image
+      const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
+      
+      // Insert the story record
       const { error: storyError } = await supabase
         .from('stories')
         .insert([{
@@ -77,6 +162,8 @@ export const StoryUploader = () => {
 
       if (storyError) throw storyError;
 
+      setUploadProgress(100);
+      
       toast({
         title: "Story uploaded successfully",
         description: "Your story is now live",
@@ -96,8 +183,9 @@ export const StoryUploader = () => {
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
+      setRetryCount(0);
     }
-  }, [session?.user?.id, toast]);
+  }, [session?.user?.id, toast, retryCount]);
 
   return (
     <motion.div
@@ -106,7 +194,7 @@ export const StoryUploader = () => {
     >
       <input
         type="file"
-        accept="image/*,video/*"
+        accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,video/x-msvideo"
         onChange={handleFileSelect}
         className="hidden"
         id="story-upload"
@@ -122,6 +210,12 @@ export const StoryUploader = () => {
             <span className="text-xs text-white/60 mt-2">
               {uploadProgress > 0 ? `${uploadProgress}%` : "Uploading..."}
             </span>
+            <div className="w-16 h-1 bg-luxury-dark/40 rounded-full mt-1 overflow-hidden">
+              <div 
+                className="h-full bg-luxury-primary/70 rounded-full" 
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
           </div>
         ) : uploadError ? (
           <div className="flex flex-col items-center justify-center">
