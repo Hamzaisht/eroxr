@@ -64,7 +64,7 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
     setHasError(false);
     setIsPlaying(false);
 
-    video.addEventListener('loadeddata', handleLoad);
+    video.addEventListener('loadeddata', handleLoad);  // Use correct event name
     video.addEventListener('error', handleError);
     video.addEventListener('pause', () => setIsPlaying(false));
     video.addEventListener('play', () => setIsPlaying(true));
@@ -74,7 +74,7 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
     video.src = cacheBuster;
 
     return () => {
-      video.removeEventListener('loadeddata', handleLoad);
+      video.removeEventListener('loadeddata', handleLoad);  // Use correct event name
       video.removeEventListener('error', handleError);
       video.removeEventListener('pause', () => setIsPlaying(false));
       video.removeEventListener('play', () => setIsPlaying(true));

@@ -76,7 +76,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         const cacheBustedUrl = getUrlWithCacheBuster(videoUrl);
         videoElement.current.src = cacheBustedUrl;
         
-        videoElement.current.addEventListener('loadeddata', handleVideoLoaded);
+        videoElement.current.addEventListener('loadeddata', handleVideoLoaded);  // Use correct event name
         videoElement.current.addEventListener('error', handleVideoError);
         
         if (!isPaused) {
@@ -90,7 +90,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         
         return () => {
           if (videoElement.current) {
-            videoElement.current.removeEventListener('loadeddata', handleVideoLoaded);
+            videoElement.current.removeEventListener('loadeddata', handleVideoLoaded);  // Use correct event name
             videoElement.current.removeEventListener('error', handleVideoError);
           }
         };

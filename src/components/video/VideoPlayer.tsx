@@ -142,7 +142,7 @@ export const VideoPlayer = ({
     setIsLoaded(false);
     setHasError(false);
 
-    video.addEventListener("loadedData", handleLoadedData);
+    video.addEventListener("loadeddata", handleLoadedData);  // Fixed: changed from "loadedData" to "loadeddata"
     video.addEventListener("error", handleError);
 
     // Force reload the video with cache buster
@@ -158,7 +158,7 @@ export const VideoPlayer = ({
     }
 
     return () => {
-      video.removeEventListener("loadedData", handleLoadedData);
+      video.removeEventListener("loadeddata", handleLoadedData);  // Fixed: changed from "loadedData" to "loadeddata"
       video.removeEventListener("error", handleError);
     };
   }, [videoUrl, onError, autoPlay, retryCount]);
