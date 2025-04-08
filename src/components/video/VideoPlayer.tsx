@@ -25,6 +25,7 @@ interface VideoPlayerProps {
   isPremium?: boolean;
   videoId?: string;
   creatorId?: string;
+  onClick?: () => void; // Added onClick prop
 }
 
 export const VideoPlayer = ({ 
@@ -38,7 +39,8 @@ export const VideoPlayer = ({
   showCloseButton = false,
   isPremium = false,
   videoId,
-  creatorId
+  creatorId,
+  onClick
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
@@ -194,6 +196,7 @@ export const VideoPlayer = ({
         "relative group overflow-hidden bg-black w-full h-full",
         className
       )}
+      onClick={onClick} // Use onClick prop here if provided
     >
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
         {!isLoaded && !hasError && !isRetrying && <VideoLoadingState />}
@@ -228,7 +231,17 @@ export const VideoPlayer = ({
           }}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
-          onClick={togglePlay}
+          onClick={(e) => {
+            // If we have a custom onClick handler, use that
+            if (onClick) {
+              e.stopPropagation();
+              onClick();
+            } else {
+              // Otherwise use the default toggle play behavior
+              e.stopPropagation();
+              togglePlay();
+            }
+          }}
         />
       </div>
       
@@ -254,7 +267,10 @@ export const VideoPlayer = ({
           variant="ghost"
           size="icon"
           className="absolute top-4 right-4 z-50 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
         >
           <X className="h-4 w-4" />
         </Button>
@@ -273,7 +289,10 @@ export const VideoPlayer = ({
             variant="ghost"
             size="icon"
             className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-            onClick={toggleFullscreen}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFullscreen();
+            }}
           >
             <Maximize className="h-4 w-4 text-white" />
           </Button>
