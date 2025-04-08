@@ -10,15 +10,26 @@ export const useTrackingAction = () => {
     try {
       console.log(`View tracked for short: ${contentId}`);
       
-      // Direct update approach as a fallback for the RPC function
+      // Use the get_current_count function to safely get the current count
+      const { data: currentCount, error: countError } = await supabase.rpc('get_current_count', { 
+        p_table: 'posts', 
+        p_column: 'view_count', 
+        p_id: contentId 
+      });
+      
+      if (countError) {
+        console.error("Error getting current view count:", countError);
+        throw countError;
+      }
+      
+      // Add 1 to the current count
+      const newCount = (currentCount || 0) + 1;
+      
+      // Direct update approach with the new count
       const { error: updateError } = await supabase
         .from('posts')
         .update({ 
-          view_count: supabase.rpc('get_current_count', { 
-            p_table: 'posts', 
-            p_column: 'view_count', 
-            p_id: contentId 
-          }).then(res => (res.data || 0) + 1),
+          view_count: newCount,
           last_engagement_at: new Date().toISOString()
         })
         .eq('id', contentId);
@@ -35,15 +46,26 @@ export const useTrackingAction = () => {
   
   const handleShareTracking = useCallback(async (contentId: string) => {
     try {
-      // Direct update approach
+      // Get current count safely
+      const { data: currentCount, error: countError } = await supabase.rpc('get_current_count', { 
+        p_table: 'posts', 
+        p_column: 'share_count', 
+        p_id: contentId 
+      });
+      
+      if (countError) {
+        console.error("Error getting current share count:", countError);
+        throw countError;
+      }
+      
+      // Add 1 to current count
+      const newCount = (currentCount || 0) + 1;
+      
+      // Direct update with new count  
       const { error: updateError } = await supabase
         .from('posts')
         .update({ 
-          share_count: supabase.rpc('get_current_count', { 
-            p_table: 'posts', 
-            p_column: 'share_count', 
-            p_id: contentId 
-          }).then(res => (res.data || 0) + 1),
+          share_count: newCount,
           last_engagement_at: new Date().toISOString()
         })
         .eq('id', contentId);
