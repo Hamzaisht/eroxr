@@ -7,5 +7,6 @@ export * from './use-mobile';
 export * from './useOptimisticUpload';
 
 // Export additional messaging hooks needed by MessageInput.tsx
-export { useTypingIndicator } from './messaging/useTypingIndicator';
-export { useMessageAudit } from './messaging/useMessageAudit';
+export { useTypingIndicator } from './useTypingIndicator';
+export { useMessageAudit } from './useMessageAudit';
+export { useRealtimeMessages } from './useRealtimeMessages';
