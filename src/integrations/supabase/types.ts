@@ -1502,6 +1502,7 @@ export type Database = {
         Row: {
           comments_count: number | null
           content: string
+          content_extended: string | null
           created_at: string
           creator_id: string
           downloads_count: number | null
@@ -1528,6 +1529,7 @@ export type Database = {
         Insert: {
           comments_count?: number | null
           content: string
+          content_extended?: string | null
           created_at?: string
           creator_id: string
           downloads_count?: number | null
@@ -1554,6 +1556,7 @@ export type Database = {
         Update: {
           comments_count?: number | null
           content?: string
+          content_extended?: string | null
           created_at?: string
           creator_id?: string
           downloads_count?: number | null

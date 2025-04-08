@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +20,6 @@ export const useShortPostSubmit = () => {
   const { toast } = useToast();
   const session = useSession();
 
-  // Fetch username when the component mounts
   useEffect(() => {
     if (session?.user?.id) {
       getUsernameForWatermark(session.user.id).then(name => {
@@ -49,28 +47,25 @@ export const useShortPostSubmit = () => {
 
     setIsSubmitting(true);
     setIsUploading(true);
-    setUploadProgress(10); // Set initial progress to show activity
+    setUploadProgress(10);
 
     try {
       console.log("Starting video upload process...");
       
-      // Generate unique filename
       const fileExt = videoFile.name.split('.').pop();
       const fileName = `${session.user.id}/${uuidv4()}.${fileExt}`;
       const filePath = fileName;
 
       console.log("Uploading to path:", filePath);
       
-      // Update progress to show we're starting the upload
       setUploadProgress(20);
-      
-      // Upload video to storage with explicit upsert option
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('shorts')
         .upload(filePath, videoFile, {
           cacheControl: '3600',
-          upsert: true, // Allow overwriting if file exists
-          contentType: videoFile.type // Explicitly set content type
+          upsert: true,
+          contentType: videoFile.type
         });
 
       if (uploadError) {
@@ -81,7 +76,6 @@ export const useShortPostSubmit = () => {
       console.log("Upload successful:", uploadData);
       setUploadProgress(70);
 
-      // Get public URL
       const { data } = supabase.storage.from('shorts').getPublicUrl(filePath);
       
       if (!data.publicUrl) {
@@ -91,13 +85,11 @@ export const useShortPostSubmit = () => {
       console.log("Public URL obtained:", data.publicUrl);
       setUploadProgress(80);
 
-      // Add tags for premium content
       const tags = ['eros', 'short'];
       if (isPremium) {
         tags.push('premium');
       }
 
-      // Store the username for watermarking
       const metadata = {
         watermarkUsername: username,
         creator: session.user.id
@@ -106,7 +98,6 @@ export const useShortPostSubmit = () => {
       console.log("Preparing post data with metadata:", metadata);
       setUploadProgress(90);
 
-      // Create the base post object without the optional description field
       const postObject: any = {
         creator_id: session.user.id,
         content: title,
@@ -118,16 +109,15 @@ export const useShortPostSubmit = () => {
         metadata: metadata
       };
 
-      // Only add the description field if it exists and is not empty
       if (description && description.trim() !== '') {
-        // Check if we need to store it in a different field name
-        // Use content_extended as fallback if description column doesn't exist
-        postObject.content_extended = description;
+        postObject.content_extended = description.trim();
+        console.log("Added description to content_extended:", description.trim());
+      } else {
+        console.log("No description provided, skipping content_extended field");
       }
 
       console.log("Inserting post record:", postObject);
 
-      // Insert post record
       const { data: postData, error: postError } = await supabase
         .from('posts')
         .insert(postObject)
@@ -151,7 +141,6 @@ export const useShortPostSubmit = () => {
     } catch (error: any) {
       console.error("Short post upload error:", error);
       
-      // Provide more detailed error messages in the toast
       toast({
         title: "Upload Failed",
         description: error.message || "Unable to upload your video. Please try again.",
