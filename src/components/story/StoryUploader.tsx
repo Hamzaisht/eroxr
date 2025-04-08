@@ -1,7 +1,7 @@
 
 import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,13 +9,22 @@ import { supabase } from "@/integrations/supabase/client";
 export const StoryUploader = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const session = useSession();
   const { toast } = useToast();
+
+  const getUrlWithCacheBuster = (baseUrl: string) => {
+    const timestamp = Date.now();
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}t=${timestamp}`;
+  };
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !session?.user?.id) return;
 
+    setUploadError(null);
+    
     try {
       setIsUploading(true);
       setUploadProgress(10); // Show initial progress
@@ -26,7 +35,6 @@ export const StoryUploader = () => {
 
       // Upload with progress tracking
       const xhr = new XMLHttpRequest();
-      xhr.open('PUT', '');
       
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable) {
@@ -36,7 +44,7 @@ export const StoryUploader = () => {
       });
       
       // Use traditional upload method since we can't easily track progress with XHR
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('stories')
         .upload(filePath, file);
 
@@ -49,11 +57,15 @@ export const StoryUploader = () => {
         .from('stories')
         .getPublicUrl(filePath);
 
-      // Determine if this is a video or image
-      const isVideo = file.type.startsWith('video/');
+      if (!publicUrl) {
+        throw new Error("Failed to get public URL for uploaded file");
+      }
       
       // Add a cache buster to ensure the URL is fresh
-      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+      const cacheBustedUrl = getUrlWithCacheBuster(publicUrl);
+      
+      // Determine if this is a video or image
+      const isVideo = file.type.startsWith('video/');
       
       const { error: storyError } = await supabase
         .from('stories')
@@ -75,6 +87,7 @@ export const StoryUploader = () => {
       
     } catch (error: any) {
       console.error('Upload error:', error);
+      setUploadError(error.message || "Failed to upload story");
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload story",
@@ -108,6 +121,16 @@ export const StoryUploader = () => {
             <Loader2 className="w-8 h-8 text-luxury-primary/80 animate-spin" />
             <span className="text-xs text-white/60 mt-2">
               {uploadProgress > 0 ? `${uploadProgress}%` : "Uploading..."}
+            </span>
+          </div>
+        ) : uploadError ? (
+          <div className="flex flex-col items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+            <span className="text-xs text-red-400 mt-1 text-center px-2">
+              Upload failed
+            </span>
+            <span className="text-[10px] text-red-400/80 mt-1 text-center">
+              Tap to try again
             </span>
           </div>
         ) : (

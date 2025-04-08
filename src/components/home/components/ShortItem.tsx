@@ -12,7 +12,6 @@ import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { Short } from "../types/short";
 import { useShortActions } from "../hooks/actions";
 import { useToast } from "@/hooks/use-toast";
-import { VideoLoadingState } from "@/components/video/VideoLoadingState";
 
 interface ShortItemProps {
   short: Short;
@@ -50,6 +49,17 @@ export const ShortItem = ({
     setVideoError(false);
     setLoadRetries(0);
   }, [short.id]);
+
+  // Add cache buster to URL to prevent stale cache issues
+  const getUrlWithCacheBuster = (baseUrl: string | null) => {
+    if (!baseUrl) return null;
+    const timestamp = Date.now();
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}cb=${timestamp}`;
+  };
+  
+  // Get the video URL with cache buster
+  const videoUrlWithCacheBuster = getUrlWithCacheBuster(videoUrl);
 
   // Track view when this becomes the current video
   useEffect(() => {
@@ -145,6 +155,7 @@ export const ShortItem = ({
   };
 
   const handleVideoError = () => {
+    console.error("Video error for short:", short.id, videoUrl);
     setVideoError(true);
     setLoadRetries(prev => prev + 1);
     
@@ -177,13 +188,13 @@ export const ShortItem = ({
     >
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
       
-      {!videoUrl ? (
+      {!videoUrlWithCacheBuster ? (
         <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
           <p className="text-luxury-neutral/70">This video is not available</p>
         </div>
       ) : (
         <VideoPlayer
-          url={videoUrl}
+          url={videoUrlWithCacheBuster}
           poster={short.video_thumbnail_url || undefined}
           className="h-full w-full object-cover"
           autoPlay={index === currentVideoIndex}

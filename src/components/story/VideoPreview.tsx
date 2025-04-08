@@ -13,7 +13,17 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const MAX_RETRIES = 2;
+
+  // Add cache buster to URL to prevent stale cache issues
+  const getUrlWithCacheBuster = (baseUrl: string) => {
+    if (!baseUrl) return '';
+    const timestamp = Date.now();
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}cb=${timestamp}`;
+  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -26,12 +36,24 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
       video.play().catch((error) => {
         console.error('Video playback error:', error);
         setIsPlaying(false);
-        setHasError(true);
       });
     };
 
     const handleError = (error: any) => {
       console.error('Video preview loading error:', error);
+      
+      // Auto retry up to MAX_RETRIES times
+      if (retryCount < MAX_RETRIES) {
+        console.log(`Auto-retrying video load (${retryCount + 1}/${MAX_RETRIES})...`);
+        setRetryCount(prev => prev + 1);
+        
+        // Try with cache buster
+        const cacheBuster = getUrlWithCacheBuster(videoUrl);
+        video.src = cacheBuster;
+        video.load();
+        return;
+      }
+      
       setHasError(true);
       setIsLoading(false);
       setIsPlaying(false);
@@ -48,7 +70,7 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
     video.addEventListener('play', () => setIsPlaying(true));
 
     // Add cache buster to prevent stale cache issues
-    const cacheBuster = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}cb=${Date.now()}`;
+    const cacheBuster = getUrlWithCacheBuster(videoUrl);
     video.src = cacheBuster;
 
     return () => {
@@ -58,14 +80,15 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
       video.removeEventListener('play', () => setIsPlaying(true));
       video.src = ''; // Clear source on cleanup
     };
-  }, [videoUrl]);
+  }, [videoUrl, retryCount]);
 
   const handleRetry = () => {
     if (videoRef.current) {
       setIsLoading(true);
       setHasError(false);
+      setRetryCount(0);
       // Add cache buster to force reload
-      const cacheBuster = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}cb=${Date.now()}`;
+      const cacheBuster = getUrlWithCacheBuster(videoUrl);
       videoRef.current.src = cacheBuster;
       videoRef.current.load();
     }

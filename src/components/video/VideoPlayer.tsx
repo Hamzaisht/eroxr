@@ -43,6 +43,7 @@ export const VideoPlayer = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string | undefined>(undefined);
+  const [retryCount, setRetryCount] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,6 +51,14 @@ export const VideoPlayer = ({
 
   // Make sure URL is defined and valid
   const videoUrl = url?.trim() || '';
+  const MAX_RETRIES = 2;
+
+  // Add cache buster to URL to prevent stale cache issues
+  const getUrlWithCacheBuster = (baseUrl: string) => {
+    const timestamp = Date.now();
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}t=${timestamp}`;
+  };
 
   // Log video URL for debugging
   useEffect(() => {
@@ -108,6 +117,20 @@ export const VideoPlayer = ({
         }
       }
       
+      // Check if we should retry automatically
+      if (retryCount < MAX_RETRIES) {
+        console.log(`Auto-retrying video load (${retryCount + 1}/${MAX_RETRIES})...`);
+        setRetryCount(prevCount => prevCount + 1);
+        
+        // Try with cache buster
+        const newUrl = getUrlWithCacheBuster(videoUrl);
+        videoElement.src = newUrl;
+        videoElement.load();
+        
+        // Don't set error state yet, just trying again
+        return;
+      }
+      
       setErrorDetails(errorMsg);
       setHasError(true);
       setIsLoading(false);
@@ -122,8 +145,10 @@ export const VideoPlayer = ({
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("error", handleError);
 
-    // Force reload the video
+    // Force reload the video with cache buster
     try {
+      const urlWithCacheBuster = getUrlWithCacheBuster(videoUrl);
+      video.src = urlWithCacheBuster;
       video.load();
     } catch (err) {
       console.error("Error while loading video:", err);
@@ -136,7 +161,7 @@ export const VideoPlayer = ({
       video.removeEventListener("loadeddata", handleLoadedData);
       video.removeEventListener("error", handleError);
     };
-  }, [videoUrl, onError, autoPlay]);
+  }, [videoUrl, onError, autoPlay, retryCount]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -170,13 +195,10 @@ export const VideoPlayer = ({
     
     setIsLoading(true);
     setHasError(false);
+    setRetryCount(0);
     
     // Create a new URL with cache buster to avoid browser caching
-    const timestamp = Date.now();
-    const cacheBuster = `?cb=${timestamp}`;
-    const newUrl = videoUrl.includes('?') 
-      ? `${videoUrl}&cb=${timestamp}` 
-      : `${videoUrl}${cacheBuster}`;
+    const newUrl = getUrlWithCacheBuster(videoUrl);
     
     videoRef.current.src = newUrl;
     videoRef.current.load();

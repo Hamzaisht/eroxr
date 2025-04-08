@@ -3,6 +3,8 @@ import { forwardRef, useEffect, useCallback, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import '../../../styles/watermark.css';
+import { VideoLoadingState } from "@/components/video/VideoLoadingState";
+import { VideoErrorState } from "@/components/video/VideoErrorState";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -16,13 +18,28 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     const { toast } = useToast();
     const [watermarkUsername, setWatermarkUsername] = useState<string>("eroxr");
     const [hasError, setHasError] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [errorDetails, setErrorDetails] = useState<string | undefined>(undefined);
+    const [retryCount, setRetryCount] = useState(0);
+    
+    // Add cache buster to URL to prevent stale cache issues
+    const getUrlWithCacheBuster = (baseUrl: string) => {
+      if (!baseUrl) return '';
+      const timestamp = Date.now();
+      const separator = baseUrl.includes('?') ? '&' : '?';
+      return `${baseUrl}${separator}cb=${timestamp}`;
+    };
 
-    const handleError = useCallback(() => {
-      console.error("Video loading error:", videoUrl);
+    const handleError = useCallback((error?: any) => {
+      console.error("Video loading error:", videoUrl, error);
       setHasError(true);
+      setIsLoading(false);
+      const errorMsg = error?.message || "Failed to play video. Please try again.";
+      setErrorDetails(errorMsg);
+      
       toast({
         title: "Video Error",
-        description: "Failed to play video. Please try again.",
+        description: errorMsg,
         variant: "destructive",
       });
     }, [toast, videoUrl]);
@@ -31,10 +48,12 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
       const videoElement = ref as React.MutableRefObject<HTMLVideoElement>;
       if (videoElement?.current) {
         setHasError(false);
+        setIsLoading(true);
+        setRetryCount(count => count + 1);
+        
         // Add cache buster to force reload
-        const timestamp = Date.now();
-        const cacheBuster = videoUrl.includes('?') ? `&cb=${timestamp}` : `?cb=${timestamp}`;
-        videoElement.current.src = videoUrl + cacheBuster;
+        const cacheBuster = getUrlWithCacheBuster(videoUrl);
+        videoElement.current.src = cacheBuster;
         videoElement.current.load();
         videoElement.current.play().catch(handleError);
       }
@@ -43,16 +62,40 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     useEffect(() => {
       const videoElement = ref as React.MutableRefObject<HTMLVideoElement>;
       if (videoElement?.current) {
-        if (isPaused) {
-          videoElement.current.pause();
-        } else {
+        const handleVideoLoaded = () => {
+          setIsLoading(false);
+          setHasError(false);
+        };
+        
+        const handleVideoError = (e: Event) => {
+          handleError((e.target as HTMLVideoElement).error);
+        };
+        
+        // Set up video with cache buster to avoid stale cache
+        setIsLoading(true);
+        const cacheBustedUrl = getUrlWithCacheBuster(videoUrl);
+        videoElement.current.src = cacheBustedUrl;
+        
+        videoElement.current.addEventListener('loadeddata', handleVideoLoaded);
+        videoElement.current.addEventListener('error', handleVideoError);
+        
+        if (!isPaused) {
           videoElement.current.play().catch(error => {
             console.error("Error playing video:", error);
-            handleError();
+            handleError(error);
           });
+        } else {
+          videoElement.current.pause();
         }
+        
+        return () => {
+          if (videoElement.current) {
+            videoElement.current.removeEventListener('loadeddata', handleVideoLoaded);
+            videoElement.current.removeEventListener('error', handleVideoError);
+          }
+        };
       }
-    }, [isPaused, ref, handleError]);
+    }, [isPaused, ref, handleError, videoUrl, retryCount]);
 
     useEffect(() => {
       getUsernameForWatermark(creatorId).then(name => {
@@ -64,16 +107,11 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
 
     if (hasError) {
       return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/80 text-center p-4">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="text-red-500 text-lg">Failed to load video</div>
-            <button 
-              onClick={handleRetry}
-              className="px-4 py-2 bg-luxury-primary/80 hover:bg-luxury-primary rounded-md"
-            >
-              Retry
-            </button>
-          </div>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/80">
+          <VideoErrorState 
+            message="Failed to load story video" 
+            onRetry={handleRetry}
+          />
         </div>
       );
     }
@@ -81,17 +119,17 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black overflow-hidden">
         <div className="relative w-full h-full max-w-[500px] mx-auto">
+          {isLoading && <VideoLoadingState />}
+          
           <div className="absolute inset-0 flex items-center justify-center">
             <video
               ref={ref}
-              src={videoUrl}
               className="w-full h-full object-cover"
               playsInline
               autoPlay
               muted={false}
               controls={false}
               onEnded={onEnded}
-              onError={handleError}
               style={{
                 maxHeight: '100vh',
                 backgroundColor: 'black',

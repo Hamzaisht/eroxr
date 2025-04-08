@@ -26,6 +26,10 @@ export const useShortPostSubmit = () => {
     retryUpload
   } = useOptimisticUpload();
 
+  // File validation constants
+  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+  const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
   useEffect(() => {
     if (session?.user?.id) {
       getUsernameForWatermark(session.user.id).then(name => {
@@ -35,6 +39,33 @@ export const useShortPostSubmit = () => {
       });
     }
   }, [session?.user?.id]);
+
+  // Helper function to add a cache buster to a URL
+  const addCacheBuster = (url: string) => {
+    const timestamp = Date.now();
+    return url.includes('?') 
+      ? `${url}&t=${timestamp}` 
+      : `${url}?t=${timestamp}`;
+  };
+
+  // Validate video file before upload
+  const validateVideoFile = (file: File): { valid: boolean; error?: string } => {
+    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+      return { 
+        valid: false, 
+        error: `Unsupported file type. Allowed types: ${ALLOWED_VIDEO_TYPES.map(t => t.replace('video/', '')).join(', ')}`
+      };
+    }
+    
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        valid: false,
+        error: `File size exceeds maximum allowed size (${MAX_FILE_SIZE / (1024 * 1024)}MB)`
+      };
+    }
+    
+    return { valid: true };
+  };
 
   const submitShortPost = async ({
     title, 
@@ -46,6 +77,17 @@ export const useShortPostSubmit = () => {
       toast({
         title: "Authentication Required",
         description: "Please log in to upload a short",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Validate the video file before proceeding
+    const validation = validateVideoFile(videoFile);
+    if (!validation.valid) {
+      toast({
+        title: "Invalid Video File",
+        description: validation.error,
         variant: "destructive"
       });
       return false;
@@ -86,13 +128,17 @@ export const useShortPostSubmit = () => {
         
         console.log("Upload successful:", uploadData);
 
+        // IMPORTANT: Get the proper public URL
         const { data } = supabase.storage.from('shorts').getPublicUrl(filePath);
         
         if (!data.publicUrl) {
           throw new Error('Failed to get public URL for uploaded video');
         }
         
-        console.log("Public URL obtained:", data.publicUrl);
+        // Add cache buster to ensure fresh content
+        const publicUrlWithCacheBuster = addCacheBuster(data.publicUrl);
+        
+        console.log("Public URL obtained:", publicUrlWithCacheBuster);
 
         const tags = ['eros', 'short'];
         if (isPremium) {
@@ -104,8 +150,8 @@ export const useShortPostSubmit = () => {
         const postObject: any = {
           creator_id: session.user.id,
           content: title,
-          video_urls: [data.publicUrl],
-          video_thumbnail_url: data.publicUrl, 
+          video_urls: [publicUrlWithCacheBuster],
+          video_thumbnail_url: publicUrlWithCacheBuster, 
           visibility: isPremium ? 'subscribers_only' : 'public',
           video_processing_status: 'completed',
           tags: tags
@@ -127,7 +173,8 @@ export const useShortPostSubmit = () => {
               watermarkUsername: username,
               creator: session.user.id,
               uploadTimestamp: new Date().toISOString(),
-              originalFilename: videoFile.name
+              originalFilename: videoFile.name,
+              publicUrl: publicUrlWithCacheBuster
             };
           } else {
             console.log("Metadata column doesn't exist, skipping");
