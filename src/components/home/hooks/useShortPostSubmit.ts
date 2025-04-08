@@ -86,20 +86,29 @@ export const useShortPostSubmit = () => {
         creator: session.user.id
       };
 
+      // Create the base post object without the optional description field
+      const postObject: any = {
+        creator_id: session.user.id,
+        content: title,
+        video_urls: [data.publicUrl],
+        video_thumbnail_url: data.publicUrl, 
+        visibility: isPremium ? 'subscribers_only' : 'public',
+        video_processing_status: 'completed',
+        tags: tags,
+        metadata: metadata
+      };
+
+      // Only add the description field if it exists and is not empty
+      if (description && description.trim() !== '') {
+        // Check if we need to store it in a different field name
+        // Use content_extended as fallback if description column doesn't exist
+        postObject.content_extended = description;
+      }
+
       // Insert post record
       const { data: postData, error: postError } = await supabase
         .from('posts')
-        .insert({
-          creator_id: session.user.id,
-          content: title,
-          description,
-          video_urls: [data.publicUrl],
-          video_thumbnail_url: data.publicUrl, 
-          visibility: isPremium ? 'subscribers_only' : 'public',
-          video_processing_status: 'completed',
-          tags: tags,
-          metadata: metadata
-        })
+        .insert(postObject)
         .select('id')
         .single();
 
@@ -133,3 +142,4 @@ export const useShortPostSubmit = () => {
     isUploading 
   };
 };
+
