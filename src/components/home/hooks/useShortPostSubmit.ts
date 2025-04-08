@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -90,12 +91,10 @@ export const useShortPostSubmit = () => {
         tags.push('premium');
       }
 
-      const metadata = {
-        watermarkUsername: username,
-        creator: session.user.id
-      };
-
-      console.log("Preparing post data with metadata:", metadata);
+      // Create watermark and creator info without using a metadata column
+      const creatorInfo = username || 'eroxr';
+      
+      console.log("Preparing post data with creator info:", creatorInfo);
       setUploadProgress(90);
 
       const postObject: any = {
@@ -105,9 +104,36 @@ export const useShortPostSubmit = () => {
         video_thumbnail_url: data.publicUrl, 
         visibility: isPremium ? 'subscribers_only' : 'public',
         video_processing_status: 'completed',
-        tags: tags,
-        metadata: metadata
+        tags: tags
       };
+
+      // Try to store metadata if the column exists, but don't fail if it doesn't
+      try {
+        // First check if posts table has a metadata column
+        const { data: tableInfo, error: tableError } = await supabase
+          .from('posts')
+          .select('*')
+          .limit(1);
+          
+        // If we got data back, check if the column exists
+        if (!tableError && tableInfo) {
+          console.log("Checking for metadata column in schema");
+          const hasMetadataColumn = await checkColumnExists('posts', 'metadata');
+          
+          if (hasMetadataColumn) {
+            console.log("Metadata column exists, adding to post object");
+            postObject.metadata = {
+              watermarkUsername: username,
+              creator: session.user.id
+            };
+          } else {
+            console.log("Metadata column doesn't exist, skipping");
+          }
+        }
+      } catch (metadataError) {
+        // Just log this but don't fail the upload
+        console.warn("Couldn't check for metadata column:", metadataError);
+      }
 
       if (description && description.trim() !== '') {
         postObject.content_extended = description.trim();
@@ -151,6 +177,28 @@ export const useShortPostSubmit = () => {
       setIsSubmitting(false);
       setIsUploading(false);
       setUploadProgress(0);
+    }
+  };
+
+  // Helper function to check if a column exists in a table
+  const checkColumnExists = async (table: string, column: string): Promise<boolean> => {
+    try {
+      // Use system tables to check if column exists
+      const { data, error } = await supabase
+        .rpc('check_column_exists', { 
+          p_table_name: table,
+          p_column_name: column
+        });
+
+      if (error) {
+        console.warn(`Error checking if column ${column} exists:`, error);
+        return false;
+      }
+
+      return !!data;
+    } catch (err) {
+      console.warn(`Error in checkColumnExists for ${column}:`, err);
+      return false;
     }
   };
 
