@@ -26,11 +26,12 @@ export const useMessageAudit = (messageId?: string, userId?: string) => {
   }, [messageId, userId]);
   
   // Add the logMessageActivity function to match usage in MessageInput
-  const logMessageActivity = (action: string, details: any) => {
+  const logMessageActivity = async (action: string, details: any) => {
     if (!userId) return;
     
     try {
-      const { error } = supabase.from('admin_audit_logs').insert({
+      // Execute the insert query with await to properly handle the response
+      const { error } = await supabase.from('admin_audit_logs').insert({
         user_id: userId,
         action,
         details: {
