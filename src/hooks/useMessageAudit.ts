@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useMessageAudit = (messageId: string, userId: string | undefined) => {
+export const useMessageAudit = (messageId?: string, userId?: string) => {
   useEffect(() => {
     if (!messageId || !userId) return;
     
@@ -25,5 +25,27 @@ export const useMessageAudit = (messageId: string, userId: string | undefined) =
     logMessageView();
   }, [messageId, userId]);
   
-  return null;
+  // Add the logMessageActivity function to match usage in MessageInput
+  const logMessageActivity = (action: string, details: any) => {
+    if (!userId) return;
+    
+    try {
+      supabase.from('admin_audit_logs').insert({
+        user_id: userId,
+        action,
+        details: {
+          ...details,
+          timestamp: new Date().toISOString()
+        }
+      }).then(() => {
+        // Success
+      }).catch(error => {
+        console.error('Error logging message activity:', error);
+      });
+    } catch (error) {
+      console.error('Error logging message activity:', error);
+    }
+  };
+  
+  return { logMessageActivity };
 };

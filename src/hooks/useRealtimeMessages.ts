@@ -9,7 +9,7 @@ interface Message {
   created_at: string;
 }
 
-export const useRealtimeMessages = (conversationId: string | null) => {
+export const useRealtimeMessages = (conversationId: string | null = null) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
