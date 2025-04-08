@@ -1,12 +1,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Maximize, X, Volume2, VolumeX } from "lucide-react";
+import { Maximize, X, Volume2, VolumeX, Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { VideoLoadingState } from "./VideoLoadingState";
 import { VideoErrorState } from "./VideoErrorState";
-import { supabase } from "@/integrations/supabase/client";
 
 interface VideoPlayerProps {
   url: string;
@@ -40,102 +39,52 @@ export const VideoPlayer = ({
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   const [errorDetails, setErrorDetails] = useState<string | undefined>(undefined);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Function to get a properly formatted URL from Supabase
+  // Make sure URL is defined and valid
+  const videoUrl = url?.trim() || '';
+
+  // Log video URL for debugging
   useEffect(() => {
-    const getProperUrl = async () => {
-      if (!url) {
-        setHasError(true);
-        setErrorDetails("No video URL provided");
-        return;
-      }
-      
-      try {
-        // Check if this is already a full URL
-        if (url.startsWith('http')) {
-          // Add cache-busting to prevent browser caching issues
-          const cacheBuster = `${url.includes('?') ? '&' : '?'}_cb=${Date.now()}`;
-          setVideoUrl(`${url}${cacheBuster}`);
-          return;
-        }
-        
-        // Try to get a public URL if it's a storage path
-        if (url.includes('/') && !url.startsWith('http')) {
-          const bucket = url.split('/')[0];
-          const path = url.substring(bucket.length + 1);
-          
-          // Try to get public URL first
-          const { data: publicUrlData } = supabase.storage
-            .from(bucket)
-            .getPublicUrl(path);
-            
-          if (publicUrlData?.publicUrl) {
-            const cacheBuster = `${publicUrlData.publicUrl.includes('?') ? '&' : '?'}_cb=${Date.now()}`;
-            setVideoUrl(`${publicUrlData.publicUrl}${cacheBuster}`);
-            return;
-          }
-          
-          // If not public, try signed URL as fallback
-          const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-            .from(bucket)
-            .createSignedUrl(path, 60 * 60); // 1 hour expiry
-            
-          if (signedUrlError) {
-            console.error("Error creating signed URL:", signedUrlError);
-            throw new Error(`Signed URL error: ${signedUrlError.message}`);
-          }
-          
-          if (signedUrlData?.signedUrl) {
-            setVideoUrl(signedUrlData.signedUrl);
-            return;
-          }
-        }
-        
-        // If we got here, use the original URL as fallback
-        setVideoUrl(url);
-        
-      } catch (error: any) {
-        console.error("Error processing video URL:", error);
-        setHasError(true);
-        setErrorDetails(`URL processing error: ${error.message}`);
-        if (onError) onError();
-      }
-    };
-    
-    getProperUrl();
-  }, [url, onError]);
+    if (videoUrl) {
+      console.info("Loading video from URL:", videoUrl);
+    } else {
+      console.warn("No video URL provided");
+    }
+  }, [videoUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !videoUrl) return;
+    if (!video) return;
 
     const handleLoadedData = () => {
       setIsLoaded(true);
+      setIsLoading(false);
       setHasError(false);
-      setRetryCount(0);
-      setErrorDetails(undefined);
       console.log("Video loaded successfully:", videoUrl);
+      
       if (autoPlay) {
-        video.play().catch(e => console.error("Autoplay failed:", e));
+        video.play().catch(e => {
+          console.error("Autoplay failed:", e);
+          // Don't set error state on autoplay failure, just log it
+        });
       }
     };
 
     const handleError = (e: Event) => {
       console.error("Video loading error:", e);
       const videoElement = e.target as HTMLVideoElement;
-      let errorMsg = "Unknown video error";
       
       // Get detailed error information
+      let errorMsg = "Unknown video error";
+      
       if (videoElement.error) {
         switch (videoElement.error.code) {
           case 1:
@@ -161,19 +110,27 @@ export const VideoPlayer = ({
       
       setErrorDetails(errorMsg);
       setHasError(true);
-      setIsLoaded(false);
+      setIsLoading(false);
       if (onError) onError();
     };
+
+    // Set up loading state
+    setIsLoading(true);
+    setIsLoaded(false);
+    setHasError(false);
 
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("error", handleError);
 
-    // Reset states when URL changes
-    setIsLoaded(false);
-    setHasError(false);
-    
-    // Force load the video with the new URL
-    video.load();
+    // Force reload the video
+    try {
+      video.load();
+    } catch (err) {
+      console.error("Error while loading video:", err);
+      setHasError(true);
+      setIsLoading(false);
+      setErrorDetails("Error loading video player");
+    }
 
     return () => {
       video.removeEventListener("loadeddata", handleLoadedData);
@@ -186,234 +143,169 @@ export const VideoPlayer = ({
     
     if (isPlaying) {
       videoRef.current.pause();
+      setIsPlaying(false);
     } else {
-      videoRef.current.play().catch(error => {
-        console.error('Video playback error:', error);
-        toast({
-          title: "Playback Error",
-          description: "Unable to play video. Please try again.",
-          variant: "destructive",
+      videoRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(error => {
+          console.error('Video playback error:', error);
+          toast({
+            title: "Playback Error",
+            description: "Unable to play video. Please try again.",
+            variant: "destructive",
+          });
         });
-      });
     }
-    setIsPlaying(!isPlaying);
   };
 
   const toggleMute = () => {
     if (!videoRef.current) return;
-    videoRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
+    const newMuteState = !isMuted;
+    videoRef.current.muted = newMuteState;
+    setIsMuted(newMuteState);
   };
 
   const handleRetry = () => {
     if (!videoRef.current) return;
     
-    setIsRetrying(true);
+    setIsLoading(true);
     setHasError(false);
-    setRetryCount(prev => prev + 1);
     
-    // Create a new URL with cache buster
+    // Create a new URL with cache buster to avoid browser caching
     const timestamp = Date.now();
-    const cacheBuster = `cacheBuster=${timestamp}`;
-    const newUrl = videoUrl 
-      ? videoUrl.includes('?') 
-        ? `${videoUrl}&${cacheBuster}` 
-        : `${videoUrl}?${cacheBuster}`
-      : url;
+    const cacheBuster = `?cb=${timestamp}`;
+    const newUrl = videoUrl.includes('?') 
+      ? `${videoUrl}&cb=${timestamp}` 
+      : `${videoUrl}${cacheBuster}`;
     
-    // Set new URL to force reload
-    setVideoUrl(newUrl);
-    
-    // Set a timeout to reset retry state if it's taking too long
-    setTimeout(() => {
-      if (!isLoaded) {
-        setIsRetrying(false);
-      }
-    }, 10000); // 10 second timeout
+    videoRef.current.src = newUrl;
+    videoRef.current.load();
   };
 
-  const toggleFullscreen = async () => {
+  const toggleFullscreen = () => {
     if (!containerRef.current) return;
     
     try {
       if (document.fullscreenElement) {
-        await document.exitFullscreen();
-        setIsFullscreen(false);
+        document.exitFullscreen().then(() => setIsFullscreen(false)).catch(console.error);
       } else {
-        await containerRef.current.requestFullscreen();
-        setIsFullscreen(true);
+        containerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(console.error);
       }
     } catch (error) {
       console.error("Fullscreen error:", error);
       toast({
         title: "Fullscreen Error",
-        description: "Could not enter fullscreen mode",
+        description: "Unable to enter fullscreen mode.",
         variant: "destructive",
       });
     }
   };
 
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
+  // Handle video tap to toggle play/pause when requested
+  const handleVideoTap = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick();
+      return;
+    }
     
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!playOnHover || !videoRef.current) return;
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const handleMouseEnter = () => {
-      if (videoRef.current) {
-        videoRef.current.play().catch(e => console.error("Hover play failed:", e));
-        setIsPlaying(true);
-      }
-    };
-    
-    const handleMouseLeave = () => {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      }
-    };
-    
-    container.addEventListener('mouseenter', handleMouseEnter);
-    container.addEventListener('mouseleave', handleMouseLeave);
-    
-    return () => {
-      container.removeEventListener('mouseenter', handleMouseEnter);
-      container.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, [playOnHover]);
+    // Prevent click from reaching controls underneath
+    e.preventDefault();
+    e.stopPropagation();
+    togglePlay();
+  };
 
   return (
     <div 
       ref={containerRef}
       className={cn(
-        "relative group overflow-hidden bg-luxury-darker w-full h-full",
+        "relative overflow-hidden bg-black",
         className
       )}
-      onClick={onClick}
+      onClick={onClick && !isPlaying ? onClick : undefined}
     >
-      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-        {(!isLoaded && !hasError && !isRetrying) && <VideoLoadingState />}
-        
-        {hasError && !isRetrying && (
-          <VideoErrorState 
-            onRetry={handleRetry} 
-            errorDetails={errorDetails || "Failed to load media content. Please try again later."}
-          />
-        )}
-        
-        {isRetrying && <VideoLoadingState />}
-        
-        {videoUrl && (
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            muted={isMuted}
-            playsInline
-            loop
-            className={cn(
-              "w-full h-full object-contain",
-              (hasError || !isLoaded) && "opacity-0",
-              isLoaded && !hasError && "opacity-100 transition-opacity duration-300"
-            )}
-            style={{
-              objectFit: "contain",
-              backgroundColor: "black",
-              maxWidth: "100%",
-              maxHeight: "100%"
-            }}
-            poster={poster}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onClick={(e) => {
-              if (onClick) {
-                e.stopPropagation();
-                onClick();
-              } else {
-                e.stopPropagation();
-                togglePlay();
-              }
-            }}
-          />
-        )}
-      </div>
+      {/* Loading State */}
+      {isLoading && <VideoLoadingState />}
       
-      {/* Video controls */}
-      <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/60 to-transparent z-10"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-      
-      {showCloseButton && onClose && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-4 right-4 z-50 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+      {/* Error State */}
+      {hasError && (
+        <VideoErrorState 
+          message={errorDetails || "Failed to load video"} 
+          onRetry={handleRetry}
+        />
       )}
       
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="absolute bottom-4 left-4 flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePlay();
-            }}
-          >
-            {isPlaying ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-white"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      {/* Video Element */}
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        poster={poster}
+        muted={isMuted}
+        playsInline
+        loop
+        className={cn(
+          "w-full h-full object-contain",
+          isLoading || hasError ? "invisible" : "visible",
+          onClick ? "cursor-pointer" : ""
+        )}
+        onClick={!onClick ? handleVideoTap : undefined}
+      />
+      
+      {/* Video Controls - only show when video is visible and not in error state */}
+      {!isLoading && !hasError && !onClick && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
+              onClick={togglePlay}
+              type="button"
+            >
+              {isPlaying ? (
+                <Pause className="h-4 w-4 text-white" />
+              ) : (
+                <Play className="h-4 w-4 text-white" />
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
+              onClick={toggleMute}
+              type="button"
+            >
+              {isMuted ? (
+                <VolumeX className="h-4 w-4 text-white" />
+              ) : (
+                <Volume2 className="h-4 w-4 text-white" />
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 ml-auto"
+              onClick={toggleFullscreen}
+              type="button"
+            >
+              <Maximize className="h-4 w-4 text-white" />
+            </Button>
+            
+            {showCloseButton && onClose && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
+                onClick={onClose}
+                type="button"
+              >
+                <X className="h-4 w-4 text-white" />
+              </Button>
             )}
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleMute();
-            }}
-          >
-            {isMuted ? (
-              <VolumeX className="h-4 w-4 text-white" />
-            ) : (
-              <Volume2 className="h-4 w-4 text-white" />
-            )}
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleFullscreen();
-            }}
-          >
-            <Maximize className="h-4 w-4 text-white" />
-          </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

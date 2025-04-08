@@ -42,6 +42,9 @@ export const ShortItem = ({
   const { playCommentSound } = useSoundEffects();
   const { toast } = useToast();
 
+  // Ensure we have a valid video URL
+  const videoUrl = short.video_urls?.[0] || null;
+
   // Reset video error state when short changes
   useEffect(() => {
     setVideoError(false);
@@ -174,14 +177,20 @@ export const ShortItem = ({
     >
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
       
-      <VideoPlayer
-        url={short.video_urls?.[0] ?? ""}
-        poster={`${short.video_urls?.[0]?.split('.').slice(0, -1).join('.')}.jpg`}
-        className="h-full w-full object-cover"
-        autoPlay={index === currentVideoIndex}
-        onError={handleVideoError}
-        creatorId={short.creator_id}
-      />
+      {!videoUrl ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
+          <p className="text-luxury-neutral/70">This video is not available</p>
+        </div>
+      ) : (
+        <VideoPlayer
+          url={videoUrl}
+          poster={short.video_thumbnail_url || undefined}
+          className="h-full w-full object-cover"
+          autoPlay={index === currentVideoIndex}
+          onError={handleVideoError}
+          creatorId={short.creator_id}
+        />
+      )}
       
       <ShortContent
         short={{

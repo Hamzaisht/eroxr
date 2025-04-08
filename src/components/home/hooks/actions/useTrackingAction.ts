@@ -1,88 +1,64 @@
 
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-/**
- * Hook for tracking user interactions with shorts
- * This handles view tracking and provides a mechanism for other tracking actions
- */
 export const useTrackingAction = () => {
-  const [trackedViews, setTrackedViews] = useState<Record<string, boolean>>({});
-  const queryClient = useQueryClient();
-
-  /**
-   * Track view for a short
-   * This ensures each short is only counted once per session
-   */
-  const handleView = useCallback(async (shortId: string) => {
+  const { toast } = useToast();
+  
+  const handleView = useCallback(async (contentId: string) => {
     try {
-      // Don't count repeated views in the same session
-      if (trackedViews[shortId]) {
-        return true;
-      }
-
-      // Record view in local state to prevent duplicate counts
-      setTrackedViews(prev => ({ ...prev, [shortId]: true }));
-
-      // Update view count in the database directly
-      const { error } = await supabase
+      console.log(`View tracked for short: ${contentId}`);
+      
+      // Direct update approach as a fallback for the RPC function
+      const { error: updateError } = await supabase
         .from('posts')
-        .update({ view_count: supabase.rpc('increment_counter', { 
-          row_id: shortId,
-          counter_name: 'view_count',
-          table_name: 'posts'
-        }) })
-        .eq('id', shortId);
-
-      if (error) {
-        console.error("Error incrementing view count:", error);
-        return false;
+        .update({ 
+          view_count: supabase.rpc('get_current_count', { 
+            p_table: 'posts', 
+            p_column: 'view_count', 
+            p_id: contentId 
+          }).then(res => (res.data || 0) + 1),
+          last_engagement_at: new Date().toISOString()
+        })
+        .eq('id', contentId);
+      
+      if (updateError) {
+        console.error("Error updating view count directly:", updateError);
+        throw updateError;
       }
-      
-      // Invalidate the query to update the UI with the new count
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      
-      return true;
     } catch (error) {
-      console.error("Error tracking view:", error);
-      return false;
+      console.error("Error incrementing view count:", error);
+      // Don't show toast to user for view tracking errors
     }
-  }, [trackedViews, queryClient]);
-
-  /**
-   * Track a share action
-   */
-  const handleShareTracking = useCallback(async (shortId: string) => {
+  }, []);
+  
+  const handleShareTracking = useCallback(async (contentId: string) => {
     try {
-      // Update share count in the database
-      const { error } = await supabase
+      // Direct update approach
+      const { error: updateError } = await supabase
         .from('posts')
-        .update({ share_count: supabase.rpc('increment_counter', { 
-          row_id: shortId,
-          counter_name: 'share_count',
-          table_name: 'posts'
-        }) })
-        .eq('id', shortId);
-
-      if (error) {
-        console.error("Error tracking share:", error);
-        return false;
+        .update({ 
+          share_count: supabase.rpc('get_current_count', { 
+            p_table: 'posts', 
+            p_column: 'share_count', 
+            p_id: contentId 
+          }).then(res => (res.data || 0) + 1),
+          last_engagement_at: new Date().toISOString()
+        })
+        .eq('id', contentId);
+        
+      if (updateError) {
+        console.error("Error updating share count:", updateError);
+        throw updateError;
       }
-      
-      // Invalidate the query to update the UI with the new count
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      
-      return true;
     } catch (error) {
       console.error("Error tracking share:", error);
-      return false;
     }
-  }, [queryClient]);
+  }, []);
 
   return { 
     handleView,
-    handleShareTracking,
-    trackedViews
+    handleShareTracking
   };
 };
