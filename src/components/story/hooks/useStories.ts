@@ -63,29 +63,30 @@ export const useStories = () => {
         const processedStories: Story[] = [];
         
         for (let i = 0; i < data.length; i++) {
-          const storyData = data[i];
+          const raw = data[i];
           
           // Skip invalid story data
-          if (!storyData || typeof storyData !== 'object') {
-            console.warn("Invalid story data encountered:", storyData);
+          if (!raw || typeof raw !== 'object') {
+            console.warn("Invalid story data encountered:", raw);
             continue;
           }
           
-          // Create a story object with proper typing - use null assertion to handle null checks
-          // First validate storyData exists and then access its properties with fallbacks
+          const storyData = raw as NonNullable<typeof raw>;
+          
+          // Create a story object with proper typing
           const story: Story = {
-            id: storyData?.id || '',
-            creator_id: storyData?.creator_id || '',
-            media_url: storyData?.media_url || null,
-            video_url: storyData?.video_url || null,
-            duration: storyData?.duration || null,
-            created_at: storyData?.created_at || new Date().toISOString(),
-            expires_at: storyData?.expires_at || new Date().toISOString(),
-            is_active: storyData?.is_active ?? true,
-            screenshot_disabled: storyData?.screenshot_disabled ?? true,
-            content_type: storyData?.content_type || 'image',
-            media_type: storyData?.media_type || null,
-            creator: storyData?.creator || { id: '', username: 'Unknown', avatar_url: null }
+            id: storyData.id || '',
+            creator_id: storyData.creator_id || '',
+            media_url: storyData.media_url || null,
+            video_url: storyData.video_url || null,
+            duration: storyData.duration || null,
+            created_at: storyData.created_at || new Date().toISOString(),
+            expires_at: storyData.expires_at || new Date().toISOString(),
+            is_active: storyData.is_active ?? true,
+            screenshot_disabled: storyData.screenshot_disabled ?? true,
+            content_type: storyData.content_type || 'image',
+            media_type: storyData.media_type || null,
+            creator: storyData.creator || { id: '', username: 'Unknown', avatar_url: null }
           };
           
           // Add cache busters to URLs to prevent caching issues
