@@ -16,48 +16,18 @@ export const useTrackingAction = () => {
     try {
       console.log(`Tracking view for content: ${contentId}`);
       
-      // First get current count to ensure we have a valid starting point
-      const { data: currentCount, error: countError } = await supabase.rpc('get_current_count', { 
-        p_table: 'posts', 
-        p_column: 'view_count', 
-        p_id: contentId 
-      });
+      // Get the current count directly using select
+      const { data: currentData, error: fetchError } = await supabase
+        .from('posts')
+        .select('view_count')
+        .eq('id', contentId)
+        .single();
       
-      if (countError) {
-        console.warn("Error getting current view count, using direct increment:", countError);
-        
-        // Get the current count directly using select
-        const { data: currentData, error: fetchError } = await supabase
-          .from('posts')
-          .select('view_count')
-          .eq('id', contentId)
-          .single();
-          
-        // If we were able to get the current count, use it, otherwise default to 0
-        const viewCount = fetchError ? 0 : (currentData?.view_count || 0);
-        const newCount = viewCount + 1;
-          
-        // Use direct update with the calculated value
-        const { error: directUpdateError } = await supabase
-          .from('posts')
-          .update({ 
-            view_count: newCount,
-            last_engagement_at: new Date().toISOString()
-          })
-          .eq('id', contentId);
-          
-        if (directUpdateError) {
-          console.error("Error incrementing view count directly:", directUpdateError);
-          throw directUpdateError;
-        }
-        
-        return;
-      }
+      // If we were able to get the current count, use it, otherwise default to 0
+      const viewCount = fetchError ? 0 : (currentData?.view_count || 0);
+      const newCount = viewCount + 1;
       
-      // Add 1 to the current count (defaulting to 0 if null)
-      const newCount = (currentCount || 0) + 1;
-      
-      // Direct update approach with the new count
+      // Use direct update with the calculated value
       const { error: updateError } = await supabase
         .from('posts')
         .update({ 
@@ -68,7 +38,15 @@ export const useTrackingAction = () => {
       
       if (updateError) {
         console.error("Error updating view count:", updateError);
-        throw updateError;
+        // Try fallback method without timestamp if there's an error
+        const { error: fallbackError } = await supabase
+          .from('posts')
+          .update({ view_count: newCount })
+          .eq('id', contentId);
+        
+        if (fallbackError) {
+          throw fallbackError;
+        }
       }
     } catch (error) {
       console.error("Error incrementing view count:", error);
@@ -83,48 +61,18 @@ export const useTrackingAction = () => {
     }
     
     try {
-      // Get current count safely
-      const { data: currentCount, error: countError } = await supabase.rpc('get_current_count', { 
-        p_table: 'posts', 
-        p_column: 'share_count', 
-        p_id: contentId 
-      });
+      // Get the current count directly using select
+      const { data: currentData, error: fetchError } = await supabase
+        .from('posts')
+        .select('share_count')
+        .eq('id', contentId)
+        .single();
       
-      if (countError) {
-        console.warn("Error getting current share count, using direct increment:", countError);
-        
-        // Get the current count directly using select
-        const { data: currentData, error: fetchError } = await supabase
-          .from('posts')
-          .select('share_count')
-          .eq('id', contentId)
-          .single();
-          
-        // If we were able to get the current count, use it, otherwise default to 0
-        const shareCount = fetchError ? 0 : (currentData?.share_count || 0);
-        const newCount = shareCount + 1;
-          
-        // Use direct update with the calculated value
-        const { error: directUpdateError } = await supabase
-          .from('posts')
-          .update({ 
-            share_count: newCount,
-            last_engagement_at: new Date().toISOString()
-          })
-          .eq('id', contentId);
-          
-        if (directUpdateError) {
-          console.error("Error incrementing share count directly:", directUpdateError);
-          throw directUpdateError;
-        }
-        
-        return;
-      }
+      // If we were able to get the current count, use it, otherwise default to 0
+      const shareCount = fetchError ? 0 : (currentData?.share_count || 0);
+      const newCount = shareCount + 1;
       
-      // Add 1 to current count (defaulting to 0 if null)
-      const newCount = (currentCount || 0) + 1;
-      
-      // Direct update with new count  
+      // Use direct update with the calculated value
       const { error: updateError } = await supabase
         .from('posts')
         .update({ 
@@ -132,10 +80,18 @@ export const useTrackingAction = () => {
           last_engagement_at: new Date().toISOString()
         })
         .eq('id', contentId);
-        
+      
       if (updateError) {
         console.error("Error updating share count:", updateError);
-        throw updateError;
+        // Try fallback method without timestamp if there's an error
+        const { error: fallbackError } = await supabase
+          .from('posts')
+          .update({ share_count: newCount })
+          .eq('id', contentId);
+        
+        if (fallbackError) {
+          throw fallbackError;
+        }
       }
     } catch (error) {
       console.error("Error tracking share:", error);

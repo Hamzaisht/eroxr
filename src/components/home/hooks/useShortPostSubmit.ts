@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -117,12 +118,14 @@ export const useShortPostSubmit = () => {
         const bucketName = 'shorts';
 
         console.log("Uploading to path:", filePath, "in bucket:", bucketName);
+        console.log("File type:", videoFile.type);
         
         let fileToUpload = videoFile;
         if (videoFile.size > 50 * 1024 * 1024) {
           console.log("Video is large, compression would happen here");
         }
 
+        // First upload attempt with explicit content type
         let uploadResult = await supabase.storage
           .from(bucketName)
           .upload(filePath, fileToUpload, {
@@ -141,7 +144,9 @@ export const useShortPostSubmit = () => {
           const retryFilePath = `${session.user.id}/retry_${retryId}.${fileExt}`;
           
           console.log("Retrying upload with path:", retryFilePath);
+          console.log("Retry with content type:", videoFile.type);
           
+          // Retry with slightly different options
           const retryResult = await supabase.storage
             .from(bucketName)
             .upload(retryFilePath, fileToUpload, {
@@ -258,18 +263,17 @@ export const useShortPostSubmit = () => {
 
   const checkColumnExists = async (table: string, column: string): Promise<boolean> => {
     try {
+      // Simpler check that's less likely to fail
       const { data, error } = await supabase
-        .rpc('check_column_exists', { 
-          p_table_name: table,
-          p_column_name: column
-        });
+        .from(table)
+        .select(column)
+        .limit(1);
 
-      if (error) {
-        console.warn(`Error checking if column ${column} exists:`, error);
+      if (error && error.message.includes(`column "${column}" does not exist`)) {
         return false;
       }
-
-      return !!data;
+      
+      return true;
     } catch (err) {
       console.warn(`Error in checkColumnExists for ${column}:`, err);
       return false;

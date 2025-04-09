@@ -1,428 +1,315 @@
 
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Maximize, X, Volume2, VolumeX, Play, Pause } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Play, Pause, VolumeX, Volume2, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { VideoLoadingState } from "./VideoLoadingState";
-import { VideoErrorState } from "./VideoErrorState";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface VideoPlayerProps {
   url: string;
   poster?: string;
   className?: string;
-  onError?: () => void;
   autoPlay?: boolean;
-  playOnHover?: boolean;
-  onClose?: () => void;
+  showControls?: boolean;
   showCloseButton?: boolean;
-  isPremium?: boolean;
-  videoId?: string;
+  onClose?: () => void;
   creatorId?: string;
-  onClick?: () => void;
+  onError?: () => void;
 }
 
-export const VideoPlayer = ({ 
-  url, 
-  poster, 
+export const VideoPlayer = ({
+  url,
+  poster,
   className,
-  onError,
   autoPlay = false,
-  playOnHover = false,
-  onClose,
+  showControls = false,
   showCloseButton = false,
-  isPremium = false,
-  videoId,
+  onClose,
   creatorId,
-  onClick
+  onError,
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [errorDetails, setErrorDetails] = useState<string | undefined>(undefined);
-  const [retryCount, setRetryCount] = useState(0);
+  const [isError, setIsError] = useState(false);
+  const [hasRetried, setHasRetried] = useState(false);
   const [isStalled, setIsStalled] = useState(false);
-  const [stallTimer, setStallTimer] = useState<NodeJS.Timeout | null>(null);
-  
   const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
+  const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Make sure URL is defined and valid
-  const videoUrl = url?.trim() || '';
-  const MAX_RETRIES = 2;
-  const STALL_TIMEOUT = 8000; // 8 seconds before considering a video stalled
-
-  // Add cache buster to URL to prevent stale cache issues
-  const getUrlWithCacheBuster = (baseUrl: string) => {
-    if (!baseUrl) return '';
-    const timestamp = Date.now();
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}t=${timestamp}&cb=${Math.random().toString(36).substring(2, 15)}`;
-  };
-
-  // Log video URL for debugging
-  useEffect(() => {
-    if (videoUrl) {
-      console.info("Loading video from URL:", videoUrl);
-    } else {
-      console.warn("No video URL provided");
-    }
-  }, [videoUrl]);
-
-  useEffect(() => {
-    // Clear any existing stall timer when component unmounts or URL changes
-    return () => {
-      if (stallTimer) {
-        clearTimeout(stallTimer);
-      }
-    };
-  }, [videoUrl, stallTimer]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !videoUrl) return;
-
-    const startStallTimer = () => {
-      // Clear any existing timer first
-      if (stallTimer) {
-        clearTimeout(stallTimer);
-      }
-      
-      // Set a new timer for stall detection
-      const timer = setTimeout(() => {
-        if (isLoading && !isLoaded) {
-          console.warn("Video loading stalled:", videoUrl);
-          setIsStalled(true);
-          
-          if (retryCount < MAX_RETRIES) {
-            handleRetry();
-          } else {
-            setHasError(true);
-            setIsLoading(false);
-            setErrorDetails("Video loading timed out. Please try again.");
-          }
-        }
-      }, STALL_TIMEOUT);
-      
-      setStallTimer(timer as unknown as NodeJS.Timeout);
-    };
-
-    const handleLoadedData = () => {
-      if (stallTimer) {
-        clearTimeout(stallTimer);
-      }
-      
-      setIsLoaded(true);
-      setIsLoading(false);
-      setHasError(false);
-      setIsStalled(false);
-      console.log("Video loaded successfully:", videoUrl);
-      
-      if (autoPlay) {
-        video.play().catch(e => {
-          console.error("Autoplay failed:", e);
-          // Don't set error state on autoplay failure, just log it
-        });
-      }
-    };
-
-    const handleWaiting = () => {
-      setIsBuffering(true);
-    };
-
-    const handlePlaying = () => {
-      setIsBuffering(false);
-    };
-
-    const handleError = (e: Event) => {
-      console.error("Video loading error:", e);
-      const videoElement = e.target as HTMLVideoElement;
-      
-      // Get detailed error information
-      let errorMsg = "Unknown video error";
-      
-      if (videoElement.error) {
-        switch (videoElement.error.code) {
-          case 1:
-            errorMsg = "Video loading aborted";
-            break;
-          case 2:
-            errorMsg = "Network error while loading video";
-            break;
-          case 3:
-            errorMsg = "Video decoding failed";
-            break;
-          case 4:
-            errorMsg = "Video not supported";
-            break;
-          default:
-            errorMsg = `Error code: ${videoElement.error.code}`;
-        }
-        
-        if (videoElement.error.message) {
-          errorMsg += ` - ${videoElement.error.message}`;
-        }
-      }
-      
-      // Check if we should retry automatically
-      if (retryCount < MAX_RETRIES) {
-        console.log(`Auto-retrying video load (${retryCount + 1}/${MAX_RETRIES})...`);
-        setRetryCount(prevCount => prevCount + 1);
-        
-        // Try with cache buster
-        if (videoElement) {
-          try {
-            const newUrl = getUrlWithCacheBuster(videoUrl);
-            videoElement.src = newUrl;
-            videoElement.load();
-            
-            // Start a new stall timer for the retry
-            startStallTimer();
-            
-            // Don't set error state yet, just trying again
-            return;
-          } catch (err) {
-            console.error("Error during retry:", err);
-          }
-        }
-      }
-      
-      setErrorDetails(errorMsg);
-      setHasError(true);
-      setIsLoading(false);
-      if (onError) onError();
-    };
-    
-    const handleStalled = () => {
-      console.warn("Video playback stalled:", videoUrl);
-      setIsStalled(true);
-    };
-
-    const [isBuffering, setIsBuffering] = useState(false);
-
-    // Set up loading state
-    setIsLoading(true);
-    setIsLoaded(false);
-    setHasError(false);
-    setIsStalled(false);
-
-    video.addEventListener("loadeddata", handleLoadedData);
-    video.addEventListener("waiting", handleWaiting);
-    video.addEventListener("playing", handlePlaying);
-    video.addEventListener("error", handleError);
-    video.addEventListener("stalled", handleStalled);
-
-    // Start the stall timer
-    startStallTimer();
-
-    // Force reload the video with cache buster
-    try {
-      const urlWithCacheBuster = getUrlWithCacheBuster(videoUrl);
-      video.src = urlWithCacheBuster;
-      video.load();
-    } catch (err) {
-      console.error("Error while loading video:", err);
-      setHasError(true);
-      setIsLoading(false);
-      setErrorDetails("Error loading video player");
-    }
-
-    return () => {
-      if (stallTimer) {
-        clearTimeout(stallTimer);
-      }
-      
-      video.removeEventListener("loadeddata", handleLoadedData);
-      video.removeEventListener("waiting", handleWaiting);
-      video.removeEventListener("playing", handlePlaying);
-      video.removeEventListener("error", handleError);
-      video.removeEventListener("stalled", handleStalled);
-    };
-  }, [videoUrl, onError, autoPlay, retryCount, stallTimer]);
-
+  // Handle play/pause toggle
   const togglePlay = () => {
-    if (!videoRef.current) return;
-    
-    if (isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      videoRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(error => {
-          console.error('Video playback error:', error);
-          toast({
-            title: "Playback Error",
-            description: "Unable to play video. Please try again.",
-            variant: "destructive",
-          });
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play().catch(error => {
+          console.warn("Error playing video:", error);
         });
+      }
     }
   };
 
+  // Handle mute/unmute toggle
   const toggleMute = () => {
-    if (!videoRef.current) return;
-    const newMuteState = !isMuted;
-    videoRef.current.muted = newMuteState;
-    setIsMuted(newMuteState);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
   };
 
   const handleRetry = () => {
-    if (!videoRef.current) return;
-    
-    setIsLoading(true);
-    setHasError(false);
-    setIsStalled(false);
-    setRetryCount(prev => prev + 1);
-    
-    // Create a new URL with cache buster to avoid browser caching
-    const newUrl = getUrlWithCacheBuster(videoUrl);
-    
-    try {
-      videoRef.current.src = newUrl;
-      videoRef.current.load();
+    if (videoRef.current) {
+      setIsLoading(true);
+      setIsError(false);
+      setIsStalled(false);
       
-      toast({
-        title: "Retrying video",
-        description: "Attempting to reload the video...",
-        duration: 2000,
-      });
-    } catch (err) {
-      console.error("Error during manual retry:", err);
-      setHasError(true);
-      setIsLoading(false);
-      setErrorDetails("Failed to reload video. Please try again later.");
-    }
-  };
-
-  const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-    
-    try {
-      if (document.fullscreenElement) {
-        document.exitFullscreen().then(() => setIsFullscreen(false)).catch(console.error);
-      } else {
-        containerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(console.error);
+      // Add cache buster to force reload
+      const cacheBuster = getUrlWithCacheBuster(url);
+      videoRef.current.src = cacheBuster;
+      videoRef.current.load();
+      setHasRetried(true);
+      
+      // Set up a stall timer again
+      if (stallTimerRef.current) {
+        clearTimeout(stallTimerRef.current);
       }
-    } catch (error) {
-      console.error("Fullscreen error:", error);
-      toast({
-        title: "Fullscreen Error",
-        description: "Unable to enter fullscreen mode.",
-        variant: "destructive",
-      });
+      
+      stallTimerRef.current = setTimeout(() => {
+        setIsStalled(true);
+      }, 10000);
     }
   };
 
-  // Handle video tap to toggle play/pause when requested
-  const handleVideoTap = (e: React.MouseEvent) => {
-    if (onClick) {
-      onClick();
-      return;
+  const getUrlWithCacheBuster = (url: string) => {
+    if (!url) return url;
+    
+    const timestamp = Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${timestamp}&r=${Math.random().toString(36).substring(2, 10)}`;
+  };
+
+  // Set up video event listeners
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    // Set up stall detection
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
     }
     
-    // Prevent click from reaching controls underneath
-    e.preventDefault();
-    e.stopPropagation();
-    togglePlay();
-  };
+    stallTimerRef.current = setTimeout(() => {
+      if (isLoading) {
+        setIsStalled(true);
+      }
+    }, 8000);
+    
+    // Set up loading timeout
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+    }
+    
+    loadingTimerRef.current = setTimeout(() => {
+      if (isLoading && !hasRetried) {
+        console.log("Video loading timed out, retrying...");
+        handleRetry();
+      } else if (isLoading && hasRetried) {
+        setIsError(true);
+        setIsLoading(false);
+      }
+    }, 15000);
+
+    // Event handlers
+    const handleLoaded = () => {
+      console.log("Video loaded successfully:", url);
+      setIsLoading(false);
+      setIsError(false);
+      setIsStalled(false);
+      
+      if (autoPlay) {
+        video.play().catch(err => {
+          console.warn("Autoplay prevented:", err);
+          setIsPlaying(false);
+        });
+      }
+      
+      if (stallTimerRef.current) {
+        clearTimeout(stallTimerRef.current);
+      }
+      
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+    };
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    
+    const handleVideoError = (e: Event) => {
+      console.warn("Video error:", e, "URL:", url);
+      
+      // Call onError callback if provided
+      if (onError) {
+        onError();
+      }
+      
+      if (!hasRetried) {
+        console.log("First error, retrying with cache buster");
+        handleRetry();
+      } else {
+        console.log("Already retried, showing error state");
+        setIsError(true);
+        setIsLoading(false);
+      }
+    };
+    
+    const handleStalled = () => {
+      console.warn("Video playback stalled:", url);
+      setIsStalled(true);
+    };
+
+    // Add event listeners
+    video.addEventListener('loadeddata', handleLoaded);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('error', handleVideoError);
+    video.addEventListener('stalled', handleStalled);
+
+    // Set initial video properties
+    video.muted = isMuted;
+    
+    // Add cache buster to URL and retry if needed
+    if (!hasRetried) {
+      video.src = getUrlWithCacheBuster(url);
+    }
+
+    // Clean up event listeners
+    return () => {
+      if (stallTimerRef.current) {
+        clearTimeout(stallTimerRef.current);
+      }
+      
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+      
+      video.removeEventListener('loadeddata', handleLoaded);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('error', handleVideoError);
+      video.removeEventListener('stalled', handleStalled);
+    };
+  }, [url, autoPlay, isMuted, onError, hasRetried]);
 
   return (
-    <div 
-      ref={containerRef}
-      className={cn(
-        "relative overflow-hidden bg-black",
-        className
-      )}
-      onClick={onClick && !isPlaying ? onClick : undefined}
-    >
-      {/* Loading State */}
-      {(isLoading || isStalled) && !hasError && (
-        <VideoLoadingState isStalled={isStalled} />
-      )}
-      
-      {/* Error State */}
-      {hasError && (
-        <VideoErrorState 
-          message={errorDetails || "Failed to load video"} 
-          onRetry={handleRetry}
-        />
-      )}
-      
-      {/* Video Element */}
+    <div className={cn("relative overflow-hidden", className)}>
+      {/* Loading indicator */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-20"
+          >
+            {isStalled ? (
+              <div className="flex flex-col items-center gap-2">
+                <AlertCircle className="h-8 w-8 text-yellow-500" />
+                <p className="text-sm text-white/80">Video is taking longer than usual...</p>
+                <button 
+                  onClick={handleRetry}
+                  className="mt-2 px-3 py-1.5 bg-luxury-primary/80 hover:bg-luxury-primary rounded-md flex items-center gap-1"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span>Retry</span>
+                </button>
+              </div>
+            ) : (
+              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Error state */}
+      <AnimatePresence>
+        {isError && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-20"
+          >
+            <AlertCircle className="h-8 w-8 text-red-500" />
+            <p className="text-sm text-white/80 mt-2">Failed to load video</p>
+            <button 
+              onClick={handleRetry}
+              className="mt-4 px-3 py-1.5 bg-luxury-primary/80 hover:bg-luxury-primary rounded-md flex items-center gap-1"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>Retry</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Video element */}
       <video
         ref={videoRef}
         poster={poster}
-        muted={isMuted}
+        className={cn(
+          "w-full h-full object-cover",
+          isError && "invisible" 
+        )}
         playsInline
         loop
-        className={cn(
-          "w-full h-full object-contain",
-          (isLoading || hasError) ? "invisible" : "visible",
-          onClick ? "cursor-pointer" : ""
-        )}
-        onClick={!onClick ? handleVideoTap : undefined}
+        muted={isMuted}
+        controls={showControls}
       />
-      
-      {/* Video Controls - only show when video is visible and not in error state */}
-      {!isLoading && !hasError && !onClick && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-              onClick={togglePlay}
-              type="button"
-            >
-              {isPlaying ? (
-                <Pause className="h-4 w-4 text-white" />
-              ) : (
-                <Play className="h-4 w-4 text-white" />
-              )}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-              onClick={toggleMute}
-              type="button"
-            >
-              {isMuted ? (
-                <VolumeX className="h-4 w-4 text-white" />
-              ) : (
-                <Volume2 className="h-4 w-4 text-white" />
-              )}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 ml-auto"
-              onClick={toggleFullscreen}
-              type="button"
-            >
-              <Maximize className="h-4 w-4 text-white" />
-            </Button>
-            
-            {showCloseButton && onClose && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-                onClick={onClose}
-                type="button"
+
+      {/* Play/Pause overlay */}
+      {!showControls && !isLoading && !isError && (
+        <div className="absolute inset-0 flex items-center justify-center" onClick={togglePlay}>
+          <AnimatePresence>
+            {!isPlaying && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="p-3 rounded-full bg-luxury-primary/30 backdrop-blur-sm hover:bg-luxury-primary/50 transition-colors"
               >
-                <X className="h-4 w-4 text-white" />
-              </Button>
+                <Play className="h-6 w-6 text-white" />
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
         </div>
+      )}
+
+      {/* Bottom controls */}
+      {!showControls && !isLoading && !isError && (
+        <div className="absolute bottom-2 right-2 flex items-center gap-2">
+          <button
+            onClick={toggleMute}
+            className="p-1.5 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+          >
+            {isMuted ? (
+              <VolumeX className="h-4 w-4 text-white" />
+            ) : (
+              <Volume2 className="h-4 w-4 text-white" />
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Close button */}
+      {showCloseButton && onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 hover:bg-black/50 transition-colors z-30"
+        >
+          <X className="h-4 w-4 text-white" />
+        </button>
       )}
     </div>
   );

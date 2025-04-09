@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,11 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
   const [validationError, setValidationError] = useState<string | null>(null);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   // Hooks
   const { toast } = useToast();
@@ -74,25 +77,52 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    console.log("Selected file:", file.name, file.type, file.size);
 
     // Validate file type
     if (!allowedTypes.includes(file.type)) {
-      setValidationError("Please upload a video file (MP4, WebM, or MOV)");
+      setValidationError(`Please upload a video file (MP4, WebM, or MOV). Selected type: ${file.type}`);
       return;
     }
 
     // Validate file size
     if (file.size > maxFileSize) {
-      setValidationError("Video size must be less than 100MB");
+      setValidationError(`Video size must be less than 100MB. Selected size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
       return;
     }
 
     setValidationError(null);
     setSelectedFile(file);
+    setIsPreviewLoading(true);
 
     // Create preview URL
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
+    
+    // Show a toast when file is valid and selected
+    toast({
+      title: "Video selected",
+      description: "Preview is being prepared...",
+    });
+  };
+
+  const handleVideoLoad = () => {
+    setIsPreviewLoading(false);
+    toast({
+      title: "Video preview ready",
+      description: "You can now add details and upload",
+    });
+  };
+
+  const handleVideoError = () => {
+    setIsPreviewLoading(false);
+    setValidationError("Failed to preview video. The format may be unsupported.");
+    
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
   };
 
   const handleUpload = async () => {
@@ -104,6 +134,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     }
 
     try {
+      console.log("Starting upload process with file:", selectedFile.name, selectedFile.type);
       const success = await submitShortPost({
         title,
         description: description.trim() || undefined,
@@ -165,19 +196,29 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
                 >
+                  {isPreviewLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker/80 z-10">
+                      <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
+                    </div>
+                  )}
                   <video 
+                    ref={videoRef}
                     src={previewUrl} 
                     className="w-full h-full object-contain"
                     controls
+                    onLoadedData={handleVideoLoad}
+                    onError={handleVideoError}
                   />
                   <Button
                     variant="ghost"
                     size="icon"
                     className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 rounded-full p-1.5"
                     onClick={() => {
-                      URL.revokeObjectURL(previewUrl);
-                      setPreviewUrl(null);
-                      setSelectedFile(null);
+                      if (previewUrl) {
+                        URL.revokeObjectURL(previewUrl);
+                        setPreviewUrl(null);
+                        setSelectedFile(null);
+                      }
                     }}
                   >
                     <X className="h-4 w-4" />
@@ -195,7 +236,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
                   ref={fileInputRef}
                   id="video"
                   type="file"
-                  accept="video/*"
+                  accept="video/mp4,video/webm,video/quicktime"
                   onChange={handleFileSelect}
                   className="hidden"
                 />

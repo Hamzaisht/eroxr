@@ -100,10 +100,8 @@ export const StoryUploader = () => {
         });
       };
 
-      // Use 'let' instead of 'const' to allow reassignment if needed
-      let uploadResult = await uploadWithProgress();
-      let uploadError = uploadResult.error;
-      let uploadData = uploadResult.data;
+      // Attempt upload - Note: using let instead of const for uploadData
+      let { error: uploadError, data: uploadData } = await uploadWithProgress();
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
@@ -120,7 +118,7 @@ export const StoryUploader = () => {
           const retryFileName = `retry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
           const retryFilePath = `${session.user.id}/${retryFileName}`;
           
-          const retryResult = await supabase.storage
+          const { error: retryError, data: retryData } = await supabase.storage
             .from('stories')
             .upload(retryFilePath, file, {
               cacheControl: '3600',
@@ -128,12 +126,9 @@ export const StoryUploader = () => {
               contentType: file.type // Add explicit content type
             });
           
-          if (retryResult.error) {
-            throw retryResult.error;
-          }
+          if (retryError) throw retryError;
           
-          // If retry was successful, use the retry data
-          uploadData = retryResult.data;
+          uploadData = retryData;
         } else {
           throw uploadError;
         }
