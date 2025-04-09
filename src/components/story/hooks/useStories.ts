@@ -60,8 +60,8 @@ export const useStories = () => {
       
       if (data && data.length > 0) {
         // Process stories to ensure proper URLs and types
-        const processedStories = data.map(storyData => {
-          // Create a new object with the same properties as storyData
+        const processedStories = data.map((storyData: any) => { // Use any type to avoid type errors
+          // Create a new Story object with explicit typing
           const story: Story = {
             id: storyData.id,
             creator_id: storyData.creator_id,
