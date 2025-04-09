@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Story } from "@/integrations/supabase/types/story";
 import { useToast } from "@/hooks/use-toast";
-import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster, getContentType } from "@/utils/mediaUtils";
 
 // Define a type for the raw story data from Supabase
 interface RawStory {
@@ -119,17 +118,9 @@ export const useStories = () => {
             story.video_url = getUrlWithCacheBuster(story.video_url);
           }
           
-          // Determine media type with fallback logic
-          if (!story.media_type && !story.content_type) {
-            if (story.video_url) {
-              story.media_type = 'video';
-            } else if (story.media_url) {
-              story.media_type = 'image';
-            } else {
-              story.media_type = 'image'; // Default fallback
-            }
-          } else if (!story.media_type && story.content_type) {
-            story.media_type = story.content_type;
+          // Determine media type with consistent logic
+          if (!story.media_type) {
+            story.media_type = getContentType(story) as 'video' | 'image';
           }
           
           processedStories.push(story);

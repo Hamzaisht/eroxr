@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
+import { getStorageUrl } from "@/utils/mediaUtils";
 
 interface UploadState {
   isUploading: boolean;
@@ -59,8 +60,9 @@ export const useVideoUpload = () => {
       });
       
       const fileExt = file.name.split('.').pop();
-      const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${session.user.id}/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = fileName;
+      const bucketName = 'shorts';
 
       // We'll use the XMLHttpRequest to track progress manually since
       // Supabase's upload method doesn't directly support progress tracking
@@ -92,10 +94,8 @@ export const useVideoUpload = () => {
         
         xhr.addEventListener("load", async () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            // Upload succeeded, get the public URL
-            const { data: { publicUrl } } = supabase.storage
-              .from('shorts')
-              .getPublicUrl(filePath);
+            // Generate full public URL using our utility function
+            const publicUrl = getStorageUrl(bucketName, filePath);
             
             setUploadState({
               isUploading: false,
@@ -127,7 +127,7 @@ export const useVideoUpload = () => {
           try {
             // Create a signed URL for the upload
             const { data: { signedUrl }, error: signedURLError } = await supabase.storage
-              .from('shorts')
+              .from(bucketName)
               .createSignedUploadUrl(filePath);
             
             if (signedURLError) {

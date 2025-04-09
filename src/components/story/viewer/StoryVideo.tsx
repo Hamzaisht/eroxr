@@ -5,6 +5,7 @@ import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import '../../../styles/watermark.css';
 import { VideoLoadingState } from "@/components/video/VideoLoadingState";
 import { VideoErrorState } from "@/components/video/VideoErrorState";
+import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -26,13 +27,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
     const MAX_RETRIES = 2;
     const STALL_TIMEOUT = 8000; // 8 seconds
-    
-    const getUrlWithCacheBuster = (baseUrl: string) => {
-      if (!baseUrl) return '';
-      const timestamp = Date.now();
-      const separator = baseUrl.includes('?') ? '&' : '?';
-      return `${baseUrl}${separator}cb=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
-    };
 
     const handleError = useCallback((error?: any) => {
       console.error("Video loading error:", videoUrl, error);
@@ -199,6 +193,17 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
       );
     }
 
+    if (!videoUrl) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/80">
+          <VideoErrorState 
+            message="No video URL available" 
+            onRetry={handleRetry}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black overflow-hidden">
         <div className="relative w-full h-full max-w-[500px] mx-auto">
@@ -210,6 +215,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
             <video
               ref={ref}
               className="w-full h-full object-cover"
+              src={videoUrl}
               playsInline
               autoPlay
               muted={false}

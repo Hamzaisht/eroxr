@@ -6,6 +6,7 @@ import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
+import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 
 interface PostContentProps {
   content: string;
@@ -37,6 +38,16 @@ export const PostContent = ({
     });
   };
 
+  // Error fallback component
+  const ErrorFallback = ({ message }: { message: string }) => (
+    <div className="w-full h-full flex items-center justify-center bg-luxury-darker rounded-lg">
+      <div className="flex flex-col items-center justify-center text-luxury-neutral/70 p-8">
+        <AlertCircle className="w-8 h-8 mb-2" />
+        <p>{message}</p>
+      </div>
+    </div>
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -60,7 +71,13 @@ export const PostContent = ({
                   {videoUrls && videoUrls.length > 0 && (
                     <div className="space-y-4">
                       {videoUrls.map((url, index) => {
-                        return !loadError[url] && (
+                        if (!url) return <ErrorFallback key={`video-error-${index}`} message="Video not available" />;
+                        if (loadError[url]) return null;
+                        
+                        const displayUrl = getUrlWithCacheBuster(url);
+                        const posterUrl = mediaUrls && mediaUrls[0] ? getUrlWithCacheBuster(mediaUrls[0]) : undefined;
+                        
+                        return (
                           <motion.div
                             key={`video-${index}`}
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -70,8 +87,8 @@ export const PostContent = ({
                             onClick={() => onMediaClick(url)}
                           >
                             <VideoPlayer
-                              url={url}
-                              poster={mediaUrls?.[0]}
+                              url={displayUrl}
+                              poster={posterUrl}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
                               creatorId={creatorId}
@@ -86,7 +103,12 @@ export const PostContent = ({
                   {mediaUrls && mediaUrls.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {mediaUrls.map((url, index) => {
-                        return !loadError[url] && (
+                        if (!url) return <ErrorFallback key={`image-error-${index}`} message="Image not available" />;
+                        if (loadError[url]) return null;
+                        
+                        const displayUrl = getUrlWithCacheBuster(url);
+                        
+                        return (
                           <motion.div
                             key={`image-${index}`}
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -97,7 +119,7 @@ export const PostContent = ({
                           >
                             <div className="relative w-full h-full">
                               <img
-                                src={url}
+                                src={displayUrl}
                                 alt={`Post media ${index + 1}`}
                                 className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                                 loading="eager"

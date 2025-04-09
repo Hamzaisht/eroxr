@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { initializeScreenshotProtection, reportSecurityViolation } from "@/lib/security";
+import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 
 export interface MediaViewerProps {
   media: string | null;
@@ -77,6 +78,8 @@ export const MediaViewer = ({
 
   if (!media) return null;
 
+  // Apply cache busting to the media URL
+  const displayUrl = getUrlWithCacheBuster(media);
   const isVideo = media.match(/\.(mp4|webm|ogg)$/i);
 
   const handleMediaClick = () => {
@@ -87,7 +90,7 @@ export const MediaViewer = ({
     <Dialog open={!!media} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-transparent border-none">
         <MediaContent 
-          url={media} 
+          url={displayUrl} 
           isVideo={!!isVideo} 
           creatorId={creatorId}
           username={username}

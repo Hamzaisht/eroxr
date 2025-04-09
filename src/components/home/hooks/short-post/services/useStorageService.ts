@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { addCacheBuster } from '../utils/urlUtils';
+import { getUrlWithCacheBuster } from '@/utils/mediaUtils';
+import { getStorageUrl } from '@/utils/mediaUtils';
 
 export const useStorageService = () => {
   /**
@@ -8,16 +9,7 @@ export const useStorageService = () => {
    */
   const getFullPublicUrl = (bucket: string, path: string): string => {
     if (!path) return '';
-    
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    
-    if (!data.publicUrl) {
-      console.error("Failed to get public URL for", bucket, path);
-      return '';
-    }
-    
-    console.log(`Got public URL for ${bucket}/${path}:`, data.publicUrl);
-    return data.publicUrl;
+    return getStorageUrl(bucket, path);
   };
 
   /**
@@ -26,11 +18,11 @@ export const useStorageService = () => {
   const uploadVideoToStorage = async (
     userId: string, 
     videoFile: File
-  ): Promise<{ success: boolean; path?: string; error?: string }> => {
+  ): Promise<{ success: boolean; path?: string; url?: string; error?: string }> => {
     try {
       const fileExt = videoFile.name.split('.').pop();
       const uniqueId = crypto.randomUUID();
-      const fileName = `${userId}/${uniqueId}.${fileExt}`;
+      const fileName = `${userId}/${Date.now()}_${uniqueId}.${fileExt}`;
       const bucketName = 'shorts';
 
       console.log("Uploading to path:", fileName, "in bucket:", bucketName);
@@ -56,7 +48,7 @@ export const useStorageService = () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         const retryId = crypto.randomUUID();
-        const retryFilePath = `${userId}/retry_${retryId}.${fileExt}`;
+        const retryFilePath = `${userId}/retry_${Date.now()}_${retryId}.${fileExt}`;
         
         console.log("Retrying upload with path:", retryFilePath);
         console.log("Retry with content type:", videoFile.type);
@@ -93,9 +85,14 @@ export const useStorageService = () => {
       
       console.log("Upload successful, path:", uploadData.path);
       
+      // Generate the full public URL for the uploaded file
+      const publicUrl = getStorageUrl(bucketName, uploadData.path);
+      console.log("Public URL:", publicUrl);
+      
       return { 
         success: true, 
-        path: uploadData.path
+        path: uploadData.path,
+        url: publicUrl
       };
     } catch (error: any) {
       console.error("Storage upload error:", error);

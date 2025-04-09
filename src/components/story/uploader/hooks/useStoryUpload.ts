@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDbService } from "@/components/home/hooks/short-post/services/useDbService";
 import { supabase } from "@/integrations/supabase/client";
+import { getUrlWithCacheBuster, getStorageUrl } from "@/utils/mediaUtils";
 
 // Maximum file size (100MB)
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -24,19 +24,6 @@ export const useStoryUpload = () => {
   const { toast } = useToast();
   const { checkColumnExists } = useDbService();
   const MAX_RETRIES = 1;
-
-  // Helper function to get full storage URL
-  const getFullStorageUrl = (path: string): string => {
-    // Extract project ID from the API URL
-    const projectId = 'ysqbdaeohlupucdmivkt'; // Using the hardcoded project ID from config.toml
-    return `https://${projectId}.supabase.co/storage/v1/object/public/stories/${path}`;
-  };
-
-  const getUrlWithCacheBuster = (baseUrl: string) => {
-    const timestamp = Date.now();
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}t=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
-  };
 
   const validateFile = (file: File): FileValidation => {
     if (file.size > MAX_FILE_SIZE) {
@@ -162,7 +149,7 @@ export const useStoryUpload = () => {
       setIsUploading(true);
       setUploadProgress(10); // Show initial progress
       
-      // Updated file path logic to include user ID and timestamp
+      // Updated file path logic to use userId and timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
@@ -215,12 +202,12 @@ export const useStoryUpload = () => {
 
       setUploadProgress(95); // Almost done
 
-      // Generate the full URL for the uploaded file - FIXED: Use proper URL construction
-      const fullUrl = getFullStorageUrl(uploadData.path);
-      console.log("Generated full URL:", fullUrl);
+      // Generate full public URL using our utility function
+      const publicUrl = getStorageUrl('stories', uploadData.path);
+      console.log("Generated full URL:", publicUrl);
       
       // Add a cache buster to ensure the URL is fresh
-      const cacheBustedUrl = getUrlWithCacheBuster(fullUrl);
+      const cacheBustedUrl = getUrlWithCacheBuster(publicUrl);
       
       setUploadProgress(98); // Final step
       
