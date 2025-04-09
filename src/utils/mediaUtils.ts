@@ -167,3 +167,116 @@ export const fixBrokenStorageUrl = (url: string | null): string => {
   
   return url;
 };
+
+/**
+ * Creates a watermarked version of text that can be applied to media
+ * @param text The text to watermark
+ * @param username The username to include in the watermark
+ * @returns A watermarked text string
+ */
+export const createWatermarkText = (username: string): string => {
+  return `www.eroxr.com/@${username}`;
+};
+
+/**
+ * Checks if a URL is valid
+ * @param url The URL to validate
+ * @returns Boolean indicating if the URL is valid
+ */
+export const isValidUrl = (url: string | null): boolean => {
+  if (!url) return false;
+  
+  try {
+    new URL(url);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+/**
+ * Refreshes a URL that might be stale or cached
+ * @param url The URL to refresh
+ * @returns A refreshed URL with new cache busting parameters
+ */
+export const refreshUrl = (url: string | null): string => {
+  if (!url) return '';
+  
+  // Remove any existing cache busting parameters
+  let cleanUrl = url;
+  if (url.includes('?')) {
+    const urlObj = new URL(url);
+    urlObj.searchParams.delete('cb');
+    urlObj.searchParams.delete('r');
+    cleanUrl = urlObj.toString();
+  }
+  
+  // Add fresh cache busting parameters
+  return getUrlWithCacheBuster(cleanUrl);
+};
+
+/**
+ * Extracts bucket name from a storage URL
+ * @param url The storage URL
+ * @returns The bucket name or null if not found
+ */
+export const extractBucketFromUrl = (url: string | null): string | null => {
+  if (!url || !url.includes('storage/v1/object/public/')) return null;
+  
+  try {
+    const parts = url.split('storage/v1/object/public/');
+    if (parts.length < 2) return null;
+    
+    const bucketAndPath = parts[1].split('/');
+    if (bucketAndPath.length < 1) return null;
+    
+    return bucketAndPath[0];
+  } catch (e) {
+    return null;
+  }
+};
+
+/**
+ * Gets the file extension from a filename or URL
+ * @param fileNameOrUrl The filename or URL
+ * @returns The file extension or empty string if not found
+ */
+export const getFileExtension = (fileNameOrUrl: string | null): string => {
+  if (!fileNameOrUrl) return '';
+  
+  // Clean URL parameters
+  const cleanName = fileNameOrUrl.split('?')[0];
+  
+  // Extract extension
+  const parts = cleanName.split('.');
+  if (parts.length < 2) return '';
+  
+  return parts[parts.length - 1].toLowerCase();
+};
+
+/**
+ * Determines media type from file extension or MIME type
+ * @param fileNameOrType The filename, extension or MIME type
+ * @returns The media type ('video', 'image', or 'unknown')
+ */
+export const getMediaTypeFromFile = (fileNameOrType: string): 'video' | 'image' | 'unknown' => {
+  const input = fileNameOrType.toLowerCase();
+  
+  // Check for MIME types
+  if (input.startsWith('video/')) return 'video';
+  if (input.startsWith('image/')) return 'image';
+  
+  // Check extensions for videos
+  const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'flv', 'm4v'];
+  if (videoExtensions.some(ext => input.endsWith(`.${ext}`) || input === ext)) {
+    return 'video';
+  }
+  
+  // Check extensions for images
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+  if (imageExtensions.some(ext => input.endsWith(`.${ext}`) || input === ext)) {
+    return 'image';
+  }
+  
+  return 'unknown';
+};

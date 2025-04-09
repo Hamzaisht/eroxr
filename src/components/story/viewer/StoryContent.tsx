@@ -5,7 +5,7 @@ import { StoryImage } from "./StoryImage";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { getContentType, getMediaUrl, fixBrokenStorageUrl, getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { getContentType, getMediaUrl, fixBrokenStorageUrl, getUrlWithCacheBuster, ensureProperMediaUrl } from "@/utils/mediaUtils";
 
 interface StoryContentProps {
   story: Story;
@@ -24,10 +24,12 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   // Get the appropriate URL based on content type
   let mediaUrl = getMediaUrl(story);
   
-  // Try to fix broken URLs
+  // Process URL to ensure it's properly formatted
   if (mediaUrl) {
+    // First fix any broken URLs
     mediaUrl = fixBrokenStorageUrl(mediaUrl);
-    // Add cache buster
+    
+    // Then add cache busting for freshness
     mediaUrl = getUrlWithCacheBuster(mediaUrl);
   }
   

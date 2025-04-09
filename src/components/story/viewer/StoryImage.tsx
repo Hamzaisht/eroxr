@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import '../../../styles/watermark.css';
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
-import { getUrlWithCacheBuster, fixBrokenStorageUrl } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster, fixBrokenStorageUrl, ensureProperMediaUrl, refreshUrl } from "@/utils/mediaUtils";
 
 interface StoryImageProps {
   mediaUrl: string;
@@ -19,6 +19,8 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [hasRetried, setHasRetried] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 2;
   
   useEffect(() => {
     getUsernameForWatermark(creatorId).then(name => {
@@ -31,14 +33,11 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
     setIsLoading(true);
     setLoadError(false);
     setHasRetried(false);
+    setRetryCount(0);
   }, [creatorId, mediaUrl]);
   
   // Fix potentially broken URL and add cache buster
-  let fixedUrl = mediaUrl;
-  if (fixedUrl) {
-    fixedUrl = fixBrokenStorageUrl(fixedUrl);
-    fixedUrl = getUrlWithCacheBuster(fixedUrl);
-  }
+  let fixedUrl = ensureProperMediaUrl(mediaUrl);
   
   const handleImageLoad = () => {
     setIsLoading(false);
@@ -48,26 +47,31 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   
   const handleImageError = () => {
     setIsLoading(false);
-    setLoadError(true);
-    console.error("Failed to load story image:", fixedUrl);
     
-    if (!hasRetried) {
-      // Try once more with a fresh cache buster
-      setHasRetried(true);
-      // Small delay before retry
+    if (retryCount < MAX_RETRIES) {
+      console.log(`Retrying image load (${retryCount + 1}/${MAX_RETRIES}):`, fixedUrl);
+      setRetryCount(prev => prev + 1);
+      
+      // Wait a moment and retry with a fresh URL
       setTimeout(() => {
+        fixedUrl = refreshUrl(fixedUrl);
         setIsLoading(true);
-        setLoadError(false);
       }, 500);
-    } else if (onError) {
-      onError();
+    } else {
+      console.error("Failed to load story image after multiple attempts:", fixedUrl);
+      setLoadError(true);
+      
+      if (onError) {
+        onError();
+      }
     }
   };
   
   const handleRetry = () => {
     setIsLoading(true);
     setLoadError(false);
-    setHasRetried(true);
+    setRetryCount(0);
+    fixedUrl = refreshUrl(fixedUrl);
   };
   
   if (!fixedUrl) {
