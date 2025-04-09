@@ -32,7 +32,7 @@ export const useShortPostSubmit = () => {
   useEffect(() => {
     if (session?.user?.id) {
       getUsernameForWatermark(session.user.id).then(name => {
-        setUsername(name);
+        if (name) setUsername(name);
       }).catch(error => {
         console.error("Error fetching watermark username:", error);
       });
@@ -197,7 +197,8 @@ export const useShortPostSubmit = () => {
           visibility: isPremium ? 'subscribers_only' : 'public',
           video_processing_status: 'completed',
           tags: tags,
-          content_type: 'video'
+          content_type: 'video',
+          is_public: true // Add this to ensure it works with RLS policies
         };
 
         if (description && description.trim() !== '') {

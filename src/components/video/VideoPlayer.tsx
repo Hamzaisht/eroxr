@@ -14,6 +14,8 @@ interface VideoPlayerProps {
   onClose?: () => void;
   creatorId?: string;
   onError?: () => void;
+  playOnHover?: boolean;
+  onClick?: () => void;
 }
 
 export const VideoPlayer = ({
@@ -26,6 +28,8 @@ export const VideoPlayer = ({
   onClose,
   creatorId,
   onError,
+  playOnHover = false,
+  onClick,
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
@@ -36,6 +40,11 @@ export const VideoPlayer = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
   const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Log the URL for debugging
+  useEffect(() => {
+    console.log("VideoPlayer rendering with URL:", url);
+  }, [url]);
 
   // Handle play/pause toggle
   const togglePlay = () => {
@@ -88,6 +97,45 @@ export const VideoPlayer = ({
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}t=${timestamp}&r=${Math.random().toString(36).substring(2, 10)}`;
   };
+
+  // Handle click events
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else if (!showControls) {
+      togglePlay();
+    }
+  };
+
+  // Handle playOnHover
+  useEffect(() => {
+    if (!videoRef.current || !playOnHover) return;
+
+    const handleMouseEnter = () => {
+      if (videoRef.current && !isError) {
+        videoRef.current.play().catch(err => console.warn("Autoplay on hover prevented:", err));
+      }
+    };
+
+    const handleMouseLeave = () => {
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+    };
+
+    const videoElement = videoRef.current;
+    if (playOnHover) {
+      videoElement.addEventListener('mouseenter', handleMouseEnter);
+      videoElement.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      if (playOnHover && videoElement) {
+        videoElement.removeEventListener('mouseenter', handleMouseEnter);
+        videoElement.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, [playOnHover, isError]);
 
   // Set up video event listeners
   useEffect(() => {
@@ -203,7 +251,10 @@ export const VideoPlayer = ({
   }, [url, autoPlay, isMuted, onError, hasRetried]);
 
   return (
-    <div className={cn("relative overflow-hidden", className)}>
+    <div 
+      className={cn("relative overflow-hidden", className)}
+      onClick={handleClick}
+    >
       {/* Loading indicator */}
       <AnimatePresence>
         {isLoading && (
@@ -218,7 +269,10 @@ export const VideoPlayer = ({
                 <AlertCircle className="h-8 w-8 text-yellow-500" />
                 <p className="text-sm text-white/80">Video is taking longer than usual...</p>
                 <button 
-                  onClick={handleRetry}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRetry();
+                  }}
                   className="mt-2 px-3 py-1.5 bg-luxury-primary/80 hover:bg-luxury-primary rounded-md flex items-center gap-1"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -244,7 +298,10 @@ export const VideoPlayer = ({
             <AlertCircle className="h-8 w-8 text-red-500" />
             <p className="text-sm text-white/80 mt-2">Failed to load video</p>
             <button 
-              onClick={handleRetry}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRetry();
+              }}
               className="mt-4 px-3 py-1.5 bg-luxury-primary/80 hover:bg-luxury-primary rounded-md flex items-center gap-1"
             >
               <RefreshCw className="h-4 w-4" />
@@ -269,7 +326,7 @@ export const VideoPlayer = ({
       />
 
       {/* Play/Pause overlay */}
-      {!showControls && !isLoading && !isError && (
+      {!showControls && !isLoading && !isError && !onClick && (
         <div className="absolute inset-0 flex items-center justify-center" onClick={togglePlay}>
           <AnimatePresence>
             {!isPlaying && (
@@ -290,7 +347,10 @@ export const VideoPlayer = ({
       {!showControls && !isLoading && !isError && (
         <div className="absolute bottom-2 right-2 flex items-center gap-2">
           <button
-            onClick={toggleMute}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleMute();
+            }}
             className="p-1.5 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
           >
             {isMuted ? (
@@ -305,7 +365,10 @@ export const VideoPlayer = ({
       {/* Close button */}
       {showCloseButton && onClose && (
         <button
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onClose) onClose();
+          }}
           className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 hover:bg-black/50 transition-colors z-30"
         >
           <X className="h-4 w-4 text-white" />

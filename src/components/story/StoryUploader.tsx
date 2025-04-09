@@ -11,6 +11,7 @@ export const StoryUploader = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [isStalled, setIsStalled] = useState(false);
   const session = useSession();
   const { toast } = useToast();
   const MAX_RETRIES = 1;
@@ -128,6 +129,7 @@ export const StoryUploader = () => {
           
           if (retryError) throw retryError;
           
+          // Use let instead of const for uploadData
           uploadData = retryData;
         } else {
           throw uploadError;
@@ -167,6 +169,7 @@ export const StoryUploader = () => {
           content_type: isVideo ? 'video' : 'image',
           media_type: isVideo ? 'video' : 'image',
           is_active: true,
+          is_public: true, // Add this to ensure it works with RLS policies
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
         }]);
 

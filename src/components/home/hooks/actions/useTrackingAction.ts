@@ -45,7 +45,17 @@ export const useTrackingAction = () => {
           .eq('id', contentId);
         
         if (fallbackError) {
-          throw fallbackError;
+          console.error("Fallback update failed:", fallbackError);
+          // Last resort: Use RPC function if available
+          try {
+            await supabase.rpc('increment_counter', {
+              row_id: contentId,
+              counter_name: 'view_count',
+              table_name: 'posts'
+            });
+          } catch (rpcError) {
+            console.error("RPC increment failed:", rpcError);
+          }
         }
       }
     } catch (error) {
@@ -90,7 +100,17 @@ export const useTrackingAction = () => {
           .eq('id', contentId);
         
         if (fallbackError) {
-          throw fallbackError;
+          console.error("Fallback update failed:", fallbackError);
+          // Last resort: Use RPC function if available
+          try {
+            await supabase.rpc('increment_counter', {
+              row_id: contentId,
+              counter_name: 'share_count',
+              table_name: 'posts'
+            });
+          } catch (rpcError) {
+            console.error("RPC increment failed:", rpcError);
+          }
         }
       }
     } catch (error) {
