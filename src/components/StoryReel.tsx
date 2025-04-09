@@ -1,10 +1,9 @@
-
 import { useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { motion } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
 import { supabase } from "@/integrations/supabase/client";
-import { StoryUploader } from "./story/StoryUploader";
+import { StoryUploader } from "./story/uploader";
 import { StoryItem } from "./story/StoryItem";
 import { StoryViewer } from "./story/StoryViewer";
 import { StoryNavigation } from "./story/StoryNavigation";
