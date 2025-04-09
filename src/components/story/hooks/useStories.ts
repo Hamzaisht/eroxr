@@ -5,6 +5,26 @@ import { Story } from "@/integrations/supabase/types/story";
 import { useToast } from "@/hooks/use-toast";
 import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 
+// Define a type for the raw story data from Supabase
+interface RawStory {
+  id: string;
+  creator_id: string;
+  media_url: string | null;
+  video_url: string | null;
+  duration: number | null;
+  created_at: string;
+  expires_at: string;
+  is_active: boolean | null;
+  screenshot_disabled: boolean | null;
+  content_type?: string;
+  media_type?: string;
+  creator: {
+    id: string;
+    username: string;
+    avatar_url: string | null;
+  } | null;
+}
+
 export const useStories = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +91,8 @@ export const useStories = () => {
             continue;
           }
           
-          const storyData = raw as NonNullable<typeof raw>;
+          // Type cast the raw data to our RawStory type
+          const storyData = raw as RawStory;
           
           // Create a story object with proper typing
           const story: Story = {
