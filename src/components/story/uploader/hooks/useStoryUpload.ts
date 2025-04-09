@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +25,7 @@ export const useStoryUpload = () => {
   const { checkColumnExists } = useDbService();
   const MAX_RETRIES = 1;
 
+  // Single definition of validateFile
   const validateFile = (file: File): FileValidation => {
     if (file.size > MAX_FILE_SIZE) {
       return { 
@@ -258,27 +258,6 @@ export const useStoryUpload = () => {
       setUploadProgress(0);
       setRetryCount(0);
     }
-  };
-
-  const validateFile = (file: File): FileValidation => {
-    if (file.size > MAX_FILE_SIZE) {
-      return { 
-        valid: false, 
-        message: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB`
-      };
-    }
-
-    const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
-    const isImage = SUPPORTED_IMAGE_TYPES.includes(file.type);
-
-    if (!isVideo && !isImage) {
-      return { 
-        valid: false, 
-        message: `Unsupported file type. Please upload an image (JPG, PNG, GIF, WEBP) or video (MP4, WEBM, MOV, AVI)`
-      };
-    }
-
-    return { valid: true };
   };
 
   return {
