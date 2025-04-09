@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { useDbService } from './useDbService';
+import { getUsernameForWatermark } from '@/utils/watermarkUtils';
 
 export const usePostService = () => {
   const { checkColumnExists } = useDbService();
@@ -15,6 +16,14 @@ export const usePostService = () => {
       // Decide whether to create a story or a post
       const isShortStory = caption.length <= 50;
       
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get username for watermark
+      const username = await getUsernameForWatermark(userId);
+      
       if (isShortStory) {
         // Check if content_type column exists in stories table
         const hasContentType = await checkColumnExists('stories', 'content_type');
@@ -22,7 +31,7 @@ export const usePostService = () => {
         
         // Create story record
         const storyData: any = {
-          creator_id: supabase.auth.getUser().data.user?.id,
+          creator_id: userId,
           video_url: videoUrl,
           duration: 30, // 30 seconds for stories
           is_active: true,
@@ -51,7 +60,7 @@ export const usePostService = () => {
           .from('posts')
           .insert([
             {
-              creator_id: supabase.auth.getUser().data.user?.id,
+              creator_id: userId,
               content: caption,
               video_urls: [videoUrl],
               visibility: visibility,
