@@ -17,8 +17,8 @@ export const usePostService = () => {
       const isShortStory = caption.length <= 50;
       
       // Properly await the auth user response
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
+      const { data: { user } } = await supabase.auth.getSession();
+      const userId = user?.id;
       
       if (!userId) {
         throw new Error('User not authenticated');
@@ -33,6 +33,11 @@ export const usePostService = () => {
         const hasIsPublic = await checkColumnExists('stories', 'is_public');
         const hasMediaType = await checkColumnExists('stories', 'media_type');
         
+        // Determine content type based on video URL
+        const contentType = videoUrl.toLowerCase().endsWith('.mp4') || videoUrl.toLowerCase().endsWith('.mov') 
+          ? 'video' 
+          : 'image';
+        
         // Create story record with required fields
         const storyData: any = {
           creator_id: userId,
@@ -44,11 +49,11 @@ export const usePostService = () => {
         
         // Add optional fields if columns exist
         if (hasContentType) {
-          storyData.content_type = 'video';
+          storyData.content_type = contentType;
         }
         
         if (hasMediaType) {
-          storyData.media_type = 'video';
+          storyData.media_type = contentType;
         }
         
         if (hasIsPublic) {
