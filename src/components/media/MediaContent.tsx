@@ -222,7 +222,7 @@ export const MediaContent = ({
               autoPlay={true}
               onClick={handleMediaClick}
               onError={handleVideoError}
-              onLoadedData={handleVideoLoaded}
+              onLoadedData={handleVideoLoaded} // This is where the error occurs - we need to update the VideoPlayer component
             />
           ) : (
             isImageError ? (

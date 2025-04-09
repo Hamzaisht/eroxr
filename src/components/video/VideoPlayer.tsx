@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { X, Play, Pause, VolumeX, Volume2, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +15,7 @@ interface VideoPlayerProps {
   onError?: () => void;
   playOnHover?: boolean;
   onClick?: () => void;
+  onLoadedData?: () => void;
 }
 
 export const VideoPlayer = ({
@@ -30,6 +30,7 @@ export const VideoPlayer = ({
   onError,
   playOnHover = false,
   onClick,
+  onLoadedData,
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
@@ -189,6 +190,11 @@ export const VideoPlayer = ({
       if (loadingTimerRef.current) {
         clearTimeout(loadingTimerRef.current);
       }
+      
+      // Call onLoadedData callback if provided
+      if (onLoadedData) {
+        onLoadedData();
+      }
     };
 
     const handlePlay = () => setIsPlaying(true);
@@ -248,7 +254,7 @@ export const VideoPlayer = ({
       video.removeEventListener('error', handleVideoError);
       video.removeEventListener('stalled', handleStalled);
     };
-  }, [url, autoPlay, isMuted, onError, hasRetried]);
+  }, [url, autoPlay, isMuted, onError, hasRetried, onLoadedData]);
 
   return (
     <div 
