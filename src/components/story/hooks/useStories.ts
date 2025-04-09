@@ -59,8 +59,11 @@ export const useStories = () => {
       if (fetchError) throw fetchError;
       
       if (data && data.length > 0) {
+        // Use a type assertion for the raw data
+        const rawStories = data as any[];
+        
         // Process stories to ensure proper URLs and types
-        const processedStories = data.map((storyData: any) => { // Use any type to avoid type errors
+        const processedStories = rawStories.map(storyData => {
           // Create a new Story object with explicit typing
           const story: Story = {
             id: storyData.id,
