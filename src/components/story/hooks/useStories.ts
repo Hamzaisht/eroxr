@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Story } from "@/integrations/supabase/types/story";
@@ -75,6 +74,7 @@ export const useStories = () => {
             )
           `)
           .eq('is_active', true)
+          .eq('is_public', true)
           .in('creator_id', uniqueCreatorIds)
           .order('created_at', { ascending: false });
 

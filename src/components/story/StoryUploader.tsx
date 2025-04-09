@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Loader2, AlertCircle } from "lucide-react";
@@ -180,35 +179,13 @@ export const StoryUploader = () => {
           content_type: contentType,
           media_type: contentType,
           is_active: true,
-          is_public: true, // Add this to ensure it works with RLS policies
+          is_public: true, // Use the new is_public column
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
         }]);
 
       if (storyError) {
         console.error("Story DB insert error:", storyError);
-        
-        // Try again with just the essential fields if the first attempt fails
-        if (storyError.message.includes('violates row-level security policy')) {
-          console.log("Retrying story insert with minimal data and explicit is_public flag");
-          
-          const { error: retryStoryError } = await supabase
-            .from('stories')
-            .insert([{
-              creator_id: session.user.id,
-              [isVideo ? 'video_url' : 'media_url']: cacheBustedUrl,
-              is_public: true,
-              is_active: true,
-              content_type: contentType
-            }]);
-            
-          if (retryStoryError) {
-            throw retryStoryError;
-          } else {
-            console.log("Story insert retry succeeded");
-          }
-        } else {
-          throw storyError;
-        }
+        throw storyError;
       }
 
       setUploadProgress(100);

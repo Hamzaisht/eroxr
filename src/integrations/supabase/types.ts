@@ -1894,6 +1894,7 @@ export type Database = {
           expires_at: string
           id: string
           is_active: boolean | null
+          is_public: boolean | null
           last_modified_by: string | null
           media_url: string | null
           screenshot_disabled: boolean | null
@@ -1907,6 +1908,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_active?: boolean | null
+          is_public?: boolean | null
           last_modified_by?: string | null
           media_url?: string | null
           screenshot_disabled?: boolean | null
@@ -1920,6 +1922,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_active?: boolean | null
+          is_public?: boolean | null
           last_modified_by?: string | null
           media_url?: string | null
           screenshot_disabled?: boolean | null

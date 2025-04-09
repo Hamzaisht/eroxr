@@ -1,160 +1,109 @@
 
-import { useState, useEffect } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
-import { useOptimisticUpload } from "@/hooks/useOptimisticUpload";
-import { useStorageService } from "./services/useStorageService";
-import { useWatermarkService } from "./services/useWatermarkService";
-import { usePostService } from "./services/usePostService";
-import { addCacheBuster } from "./utils/urlUtils";
-
-interface ShortPostSubmitParams {
-  title: string;
-  description?: string;
-  videoFile: File;
-  isPremium?: boolean;
-}
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useSession } from '@supabase/auth-helpers-react';
+import { useDbService } from './services/useDbService';
+import { useStorageService } from './services/useStorageService';
+import { useWatermarkService } from './services/useWatermarkService';
+import { usePostService } from './services/usePostService';
+import { addCacheBuster } from './utils/urlUtils';
 
 export const useShortPostSubmit = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [username, setUsername] = useState<string>('eroxr');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const session = useSession();
-  const { uploadState, simulateProgressiveUpload, resetUploadState, retryUpload } = useOptimisticUpload();
-  const { getFullPublicUrl, uploadVideoToStorage } = useStorageService();
+  const { checkColumnExists } = useDbService();
+  const { uploadVideoToStorage } = useStorageService();
   const { getUsernameForWatermark } = useWatermarkService();
-  const { createPost } = usePostService();
+  const { createPostWithVideo } = usePostService();
 
-  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
-  const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-
-  useEffect(() => {
-    if (session?.user?.id) {
-      getUsernameForWatermark(session.user.id).then(name => {
-        if (name) setUsername(name);
-      }).catch(error => {
-        console.error("Error fetching watermark username:", error);
-      });
-    }
-  }, [session?.user?.id]);
-
-  const validateVideoFile = (file: File): { valid: boolean; error?: string } => {
-    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
-      return { 
-        valid: false, 
-        error: `Unsupported file type. Allowed types: ${ALLOWED_VIDEO_TYPES.map(t => t.replace('video/', '')).join(', ')}`
-      };
-    }
-    
-    if (file.size > MAX_FILE_SIZE) {
-      return {
-        valid: false,
-        error: `File size exceeds maximum allowed size (${MAX_FILE_SIZE / (1024 * 1024)}MB)`
-      };
-    }
-    
-    return { valid: true };
-  };
-
-  const submitShortPost = async ({
-    title, 
-    description, 
-    videoFile,
-    isPremium = false
-  }: ShortPostSubmitParams) => {
-    if (!session?.user?.id) {
+  const submitShortPost = async (
+    videoFile: File,
+    caption: string,
+    visibility: 'public' | 'subscribers_only' = 'public',
+    tags: string[] = []
+  ) => {
+    if (!session?.user) {
+      setError('You must be logged in to upload videos');
       toast({
-        title: "Authentication Required",
-        description: "Please log in to upload a short",
-        variant: "destructive"
+        title: 'Authentication Error',
+        description: 'You must be logged in to upload videos',
+        variant: 'destructive',
       });
-      return false;
+      return { success: false, error: 'Authentication required' };
     }
 
-    const validation = validateVideoFile(videoFile);
-    if (!validation.valid) {
-      toast({
-        title: "Invalid Video File",
-        description: validation.error,
-        variant: "destructive"
-      });
-      return false;
-    }
+    try {
+      setError(null);
+      setIsUploading(true);
+      setUploadProgress(10);
 
-    setIsSubmitting(true);
-
-    return simulateProgressiveUpload(async () => {
-      try {
-        console.log("Starting video upload process for:", videoFile.name);
-        
-        // Upload the video file to storage
-        const uploadResult = await uploadVideoToStorage(session.user.id, videoFile);
-        
-        if (!uploadResult.success || !uploadResult.path) {
-          throw new Error(uploadResult.error || "Failed to upload video");
+      // Get watermark username
+      const watermarkUsername = await getUsernameForWatermark(session.user.id);
+      
+      // Upload video to storage
+      const { videoUrl, error: uploadError } = await uploadVideoToStorage(
+        videoFile,
+        session.user.id,
+        watermarkUsername,
+        (progress) => {
+          setUploadProgress(10 + progress * 0.6); // 10-70% for upload
         }
+      );
 
-        // Get the public URL for the uploaded file
-        const publicUrl = getFullPublicUrl('shorts', uploadResult.path);
-        
-        if (!publicUrl) {
-          throw new Error('Failed to get public URL for uploaded video');
-        }
-        
-        const publicUrlWithCacheBuster = addCacheBuster(publicUrl);
-        console.log("Public URL obtained:", publicUrlWithCacheBuster);
-        
-        // Create the post
-        const postResult = await createPost({
-          userId: session.user.id,
-          title,
-          description,
-          videoUrl: publicUrlWithCacheBuster,
-          thumbnailUrl: publicUrlWithCacheBuster, // Using same URL as thumbnail for now
-          isPremium,
-          tags: ['eros', 'short'],
-          username,
-          videoPath: uploadResult.path,
-          videoFile
-        });
-
-        if (!postResult.success) {
-          throw new Error(postResult.error || "Failed to create post");
-        }
-
-        toast({
-          title: "Upload Successful",
-          description: "Your Eros video is now live!",
-        });
-
-        return true;
-      } catch (error: any) {
-        console.error("Short post upload error:", error);
-        
-        toast({
-          title: "Upload Failed",
-          description: error.message || "Unable to upload your video. Please try again.",
-          variant: "destructive"
-        });
-        return false;
-      } finally {
-        setIsSubmitting(false);
+      if (uploadError || !videoUrl) {
+        throw new Error(uploadError || 'Failed to upload video');
       }
-    });
+
+      setUploadProgress(80);
+      
+      // Add cache buster to video URL to prevent caching issues
+      const cacheBustedUrl = addCacheBuster(videoUrl);
+      
+      // Create post or story with video URL
+      const result = await createPostWithVideo({
+        userId: session.user.id,
+        videoUrl: cacheBustedUrl,
+        caption,
+        visibility,
+        tags
+      });
+
+      setUploadProgress(100);
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      toast({
+        title: 'Upload successful',
+        description: 'Your video has been uploaded successfully',
+      });
+      
+      return { success: true, data: result.data };
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to upload video';
+      console.error('Short post submission error:', err);
+      setError(errorMessage);
+      toast({
+        title: 'Upload Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
-  return { 
-    submitShortPost, 
-    isSubmitting,
-    uploadProgress: uploadState.progress,
-    isUploading: uploadState.isProcessing,
-    isComplete: uploadState.isComplete,
-    isError: uploadState.isError,
-    errorMessage: uploadState.errorMessage,
-    resetUploadState,
-    retryUpload: () => retryUpload(() => submitShortPost({
-      title: "", 
-      videoFile: new File([], "")
-    }))
+  return {
+    submitShortPost,
+    isUploading,
+    uploadProgress,
+    error,
   };
 };
