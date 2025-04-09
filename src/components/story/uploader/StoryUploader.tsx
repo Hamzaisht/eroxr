@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";

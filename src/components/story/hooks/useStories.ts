@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Story } from "@/integrations/supabase/types/story";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useDbService } from "@/components/home/hooks/short-post/services/useDbService";
 
 export const useStories = () => {
   const [stories, setStories] = useState<Story[]>([]);
@@ -10,12 +12,17 @@ export const useStories = () => {
   const [error, setError] = useState<string | null>(null);
   const session = useSession();
   const { toast } = useToast();
+  const { checkColumnExists } = useDbService();
 
   useEffect(() => {
     const fetchStories = async () => {
       try {
         setError(null);
         console.info('Fetching stories');
+        
+        // Check if media_type column exists
+        const hasMediaType = await checkColumnExists('stories', 'media_type');
+        console.log("stories table has media_type column:", hasMediaType);
         
         // Get creator IDs from subscriptions
         const { data: subscriptions, error: subsError } = await supabase
@@ -74,7 +81,6 @@ export const useStories = () => {
             )
           `)
           .eq('is_active', true)
-          .eq('is_public', true)
           .in('creator_id', uniqueCreatorIds)
           .order('created_at', { ascending: false });
 

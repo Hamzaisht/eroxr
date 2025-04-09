@@ -1896,6 +1896,7 @@ export type Database = {
           is_active: boolean | null
           is_public: boolean | null
           last_modified_by: string | null
+          media_type: string | null
           media_url: string | null
           screenshot_disabled: boolean | null
           video_url: string | null
@@ -1910,6 +1911,7 @@ export type Database = {
           is_active?: boolean | null
           is_public?: boolean | null
           last_modified_by?: string | null
+          media_type?: string | null
           media_url?: string | null
           screenshot_disabled?: boolean | null
           video_url?: string | null
@@ -1924,6 +1926,7 @@ export type Database = {
           is_active?: boolean | null
           is_public?: boolean | null
           last_modified_by?: string | null
+          media_type?: string | null
           media_url?: string | null
           screenshot_disabled?: boolean | null
           video_url?: string | null

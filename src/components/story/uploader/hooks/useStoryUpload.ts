@@ -87,47 +87,64 @@ export const useStoryUpload = () => {
     isVideo: boolean, 
     contentType: string
   ) => {
-    // Check for required and optional columns in stories table
-    const hasContentType = await checkColumnExists('stories', 'content_type');
-    const hasMediaType = await checkColumnExists('stories', 'media_type');
-    const hasIsPublic = await checkColumnExists('stories', 'is_public');
-    
-    // Prepare the story data with required fields first
-    const storyData: any = {
-      creator_id: userId,
-      duration: isVideo ? 30 : 10,
-      is_active: true,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
-    };
-    
-    // Add content based on file type
-    if (isVideo) {
-      storyData.video_url = fileUrl;
-    } else {
-      storyData.media_url = fileUrl;
+    try {
+      // Check for required and optional columns in stories table
+      const hasContentType = await checkColumnExists('stories', 'content_type');
+      const hasMediaType = await checkColumnExists('stories', 'media_type');
+      const hasIsPublic = await checkColumnExists('stories', 'is_public');
+      
+      console.log("Column check results:", { 
+        hasContentType, 
+        hasMediaType, 
+        hasIsPublic 
+      });
+      
+      // Prepare the story data with required fields first
+      const storyData: any = {
+        creator_id: userId,
+        duration: isVideo ? 30 : 10,
+        is_active: true,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
+      };
+      
+      // Add content based on file type
+      if (isVideo) {
+        storyData.video_url = fileUrl;
+      } else {
+        storyData.media_url = fileUrl;
+      }
+      
+      // Add optional fields if the columns exist
+      if (hasContentType) {
+        storyData.content_type = contentType;
+      }
+      
+      if (hasMediaType) {
+        storyData.media_type = contentType;
+      }
+      
+      if (hasIsPublic) {
+        storyData.is_public = true;
+      }
+      
+      console.log("Inserting story with data:", storyData);
+      
+      // Insert the story record
+      const { error, data } = await supabase
+        .from('stories')
+        .insert([storyData])
+        .select();
+      
+      if (error) {
+        console.error("Story DB insert error:", error);
+        throw error;
+      }
+      
+      return { error: null, data };
+    } catch (error) {
+      console.error("Error creating story record:", error);
+      return { error, data: null };
     }
-    
-    // Add optional fields if the columns exist
-    if (hasContentType) {
-      storyData.content_type = contentType;
-    }
-    
-    if (hasMediaType) {
-      storyData.media_type = contentType;
-    }
-    
-    if (hasIsPublic) {
-      storyData.is_public = true;
-    }
-    
-    console.log("Inserting story with data:", storyData);
-    
-    // Insert the story record
-    const { error, data } = await supabase
-      .from('stories')
-      .insert([storyData]);
-    
-    return { error, data };
   };
 
   const handleFileSelect = async (file: File) => {

@@ -30,8 +30,14 @@ export const usePostService = () => {
       if (isShortStory) {
         // Check if optional columns exist in stories table
         const hasContentType = await checkColumnExists('stories', 'content_type');
-        const hasIsPublic = await checkColumnExists('stories', 'is_public');
         const hasMediaType = await checkColumnExists('stories', 'media_type');
+        const hasIsPublic = await checkColumnExists('stories', 'is_public');
+        
+        console.log("Column existence check results:", {
+          hasContentType,
+          hasMediaType,
+          hasIsPublic
+        });
         
         // Determine content type based on video URL
         const contentType = videoUrl.toLowerCase().endsWith('.mp4') || videoUrl.toLowerCase().endsWith('.mov') 
@@ -60,6 +66,8 @@ export const usePostService = () => {
           storyData.is_public = visibility === 'public';
         }
         
+        console.log("Inserting story with data:", storyData);
+        
         // Insert the story record
         const { data, error } = await supabase
           .from('stories')
@@ -68,9 +76,10 @@ export const usePostService = () => {
           
         if (error) {
           console.error('Error creating story:', error);
+          throw error;
         }
           
-        return { data: data?.[0] || null, error: error?.message };
+        return { data: data?.[0] || null, error: null };
       } else {
         // Create post record
         const { data, error } = await supabase
@@ -86,7 +95,12 @@ export const usePostService = () => {
           ])
           .select();
           
-        return { data: data?.[0] || null, error: error?.message };
+        if (error) {
+          console.error('Error creating post:', error);
+          throw error;
+        }
+          
+        return { data: data?.[0] || null, error: null };
       }
     } catch (err: any) {
       console.error('Error creating post/story:', err);
