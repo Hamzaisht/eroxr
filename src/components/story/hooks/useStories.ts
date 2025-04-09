@@ -58,50 +58,51 @@ export const useStories = () => {
 
       if (fetchError) throw fetchError;
       
-      if (data && data.length > 0) {
-        // Use a type assertion for the raw data
-        const rawStories = data as any[];
-        
+      if (data && Array.isArray(data) && data.length > 0) {
         // Process stories to ensure proper URLs and types
-        const processedStories = rawStories.map(storyData => {
-          // Create a new Story object with explicit typing
-          const story: Story = {
-            id: storyData.id,
-            creator_id: storyData.creator_id,
-            media_url: storyData.media_url,
-            video_url: storyData.video_url,
-            duration: storyData.duration,
-            created_at: storyData.created_at,
-            expires_at: storyData.expires_at,
-            is_active: storyData.is_active,
-            screenshot_disabled: storyData.screenshot_disabled,
-            content_type: storyData.content_type,
-            media_type: storyData.media_type,
-            creator: storyData.creator
-          };
-          
-          // Add cache busters to URLs to prevent caching issues
-          if (story.media_url) {
-            story.media_url = getUrlWithCacheBuster(story.media_url);
-          }
-          
-          if (story.video_url) {
-            story.video_url = getUrlWithCacheBuster(story.video_url);
-          }
-          
-          // Determine media type with fallback logic
-          if (!story.media_type && !story.content_type) {
-            if (story.video_url) {
-              story.media_type = 'video';
-            } else if (story.media_url) {
-              story.media_type = 'image';
+        const processedStories: Story[] = [];
+        
+        for (const storyData of data) {
+          if (typeof storyData === 'object' && storyData !== null) {
+            // Create a story object with proper typing
+            const story: Story = {
+              id: storyData.id,
+              creator_id: storyData.creator_id,
+              media_url: storyData.media_url,
+              video_url: storyData.video_url,
+              duration: storyData.duration,
+              created_at: storyData.created_at,
+              expires_at: storyData.expires_at,
+              is_active: storyData.is_active,
+              screenshot_disabled: storyData.screenshot_disabled,
+              content_type: storyData.content_type,
+              media_type: storyData.media_type,
+              creator: storyData.creator
+            };
+            
+            // Add cache busters to URLs to prevent caching issues
+            if (story.media_url) {
+              story.media_url = getUrlWithCacheBuster(story.media_url);
             }
-          } else if (!story.media_type && story.content_type) {
-            story.media_type = story.content_type;
+            
+            if (story.video_url) {
+              story.video_url = getUrlWithCacheBuster(story.video_url);
+            }
+            
+            // Determine media type with fallback logic
+            if (!story.media_type && !story.content_type) {
+              if (story.video_url) {
+                story.media_type = 'video';
+              } else if (story.media_url) {
+                story.media_type = 'image';
+              }
+            } else if (!story.media_type && story.content_type) {
+              story.media_type = story.content_type;
+            }
+            
+            processedStories.push(story);
           }
-          
-          return story;
-        });
+        }
         
         setStories(processedStories);
         console.log("Fetched stories:", processedStories);
