@@ -14,6 +14,7 @@ interface StoryImageProps {
 export const StoryImage = ({ mediaUrl, username, isPaused, creatorId }: StoryImageProps) => {
   const [watermarkUsername, setWatermarkUsername] = useState<string>(username);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   
   useEffect(() => {
     getUsernameForWatermark(creatorId).then(name => {
@@ -24,7 +25,20 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId }: StoryIma
     
     // Reset loading state when URL changes
     setIsLoading(true);
+    setLoadError(false);
   }, [creatorId, mediaUrl]);
+  
+  const handleImageLoad = () => {
+    setIsLoading(false);
+    setLoadError(false);
+    console.log("Story image loaded:", mediaUrl);
+  };
+  
+  const handleImageError = () => {
+    setIsLoading(false);
+    setLoadError(true);
+    console.error("Failed to load story image:", mediaUrl);
+  };
   
   return (
     <motion.div
@@ -40,23 +54,36 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId }: StoryIma
         </div>
       )}
       
+      {/* Error state */}
+      {loadError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <p className="mt-2">Failed to load image</p>
+        </div>
+      )}
+      
       {/* Image */}
       <img
         src={mediaUrl}
         alt={`Story by ${username}`}
         className="w-full h-full object-contain max-h-[100vh]"
         loading="eager"
-        onLoad={() => setIsLoading(false)}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
         style={{
           objectFit: 'contain',
-          display: isLoading ? 'none' : 'block'
+          display: isLoading || loadError ? 'none' : 'block'
         }}
       />
       
       {/* Watermark overlay */}
-      <div className="watermark-overlay">
-        www.eroxr.com/@{watermarkUsername}
-      </div>
+      {!isLoading && !loadError && (
+        <div className="watermark-overlay">
+          www.eroxr.com/@{watermarkUsername}
+        </div>
+      )}
     </motion.div>
   );
 };

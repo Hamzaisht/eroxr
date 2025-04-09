@@ -25,7 +25,7 @@ export const StoryReel = () => {
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { stories, isLoading, error, setStories } = useStories();
+  const { stories, isLoading, error, refetchStories } = useStories();
 
   const handleDeleteStory = async (storyId: string) => {
     try {
@@ -36,7 +36,9 @@ export const StoryReel = () => {
 
       if (error) throw error;
 
-      setStories(prev => prev.filter(story => story.id !== storyId));
+      // Refresh stories
+      refetchStories();
+      
       toast({
         title: "Story deleted",
         description: "Your story has been removed successfully",
@@ -49,6 +51,10 @@ export const StoryReel = () => {
         variant: "destructive",
       });
     }
+  };
+  
+  const handleCloseViewer = () => {
+    setSelectedStoryIndex(null);
   };
 
   const groupStoriesByCreator = (stories: Story[]): GroupedStories => {
@@ -148,7 +154,7 @@ export const StoryReel = () => {
         <StoryViewer
           stories={stories}
           initialStoryIndex={selectedStoryIndex}
-          onClose={() => setSelectedStoryIndex(null)}
+          onClose={handleCloseViewer}
         />
       )}
     </div>

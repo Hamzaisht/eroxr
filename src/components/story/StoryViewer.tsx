@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { StoryContainer } from "./viewer/StoryContainer";
@@ -65,7 +66,12 @@ export const StoryViewer = ({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     try {
       const { error } = await supabase
         .from('stories')
@@ -78,6 +84,9 @@ export const StoryViewer = ({
         title: "Story deleted",
         description: "Your story has been removed successfully",
       });
+      
+      // Update local state and handle deletion
+      window.dispatchEvent(new CustomEvent('story-uploaded'));
       
       if (stories.length === 1) {
         onClose();
@@ -98,7 +107,12 @@ export const StoryViewer = ({
     }
   };
 
-  const handleEdit = () => {
+  const handleEdit = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     toast({
       title: "Coming soon",
       description: "Story editing will be available soon",
@@ -116,6 +130,7 @@ export const StoryViewer = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-50"
+        onClick={(e) => e.stopPropagation()}
       >
         <StoryContainer
           stories={stories}

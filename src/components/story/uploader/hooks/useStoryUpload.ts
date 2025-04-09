@@ -247,8 +247,9 @@ export const useStoryUpload = () => {
         description: "Your story is now live",
       });
       
-      // Force a page refresh to show the new story
-      window.location.reload();
+      // Instead of reloading the page, refresh stories data
+      // We'll add a state update that components can listen to
+      window.dispatchEvent(new CustomEvent('story-uploaded'));
       
     } catch (error: any) {
       console.error('Upload error:', error);

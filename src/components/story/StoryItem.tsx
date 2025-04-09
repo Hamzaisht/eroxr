@@ -24,6 +24,17 @@ export const StoryItem = ({
   const isVideo = story.content_type === 'video' || !!story.video_url;
   const mediaUrl = isVideo ? story.video_url : story.media_url;
   
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default navigation
+    onClick();
+  };
+  
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default navigation
+    e.stopPropagation();
+    if (onDelete) onDelete();
+  };
+  
   return (
     <div className="relative">
       {/* Stacked appearance for multiple stories */}
@@ -38,7 +49,7 @@ export const StoryItem = ({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className="relative w-24 h-36 rounded-xl overflow-hidden cursor-pointer group border border-luxury-primary/20"
-        onClick={onClick}
+        onClick={handleClick}
       >
         {/* Gradient overlay for better text visibility */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 z-10" />
@@ -79,10 +90,7 @@ export const StoryItem = ({
               variant="destructive"
               size="icon"
               className="w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
+              onClick={handleDelete}
             >
               <Trash2 className="w-3 h-3" />
             </Button>

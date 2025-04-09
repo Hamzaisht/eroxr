@@ -20,6 +20,8 @@ export const StoryUploader = () => {
   } = useStoryUpload();
 
   const onFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault(); // Prevent default behavior
+    
     const file = event.target.files?.[0];
     if (!file || !session?.user?.id) return;
 
