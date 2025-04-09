@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { StoryVideo } from "./StoryVideo";
 import { StoryImage } from "./StoryImage";
 import { Story } from "@/integrations/supabase/types/story";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { AlertCircle, Image, Play } from "lucide-react";
 
 interface StoryContentProps {
   story: Story;
@@ -13,13 +14,14 @@ interface StoryContentProps {
 
 export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasMediaError, setHasMediaError] = useState(false);
   
-  // Determine content type - ensure we check both properties
-  const isVideo = story.content_type === 'video' || 
-                 (story.media_type && story.media_type === 'video') || 
-                 !!story.video_url;
-                 
-  const mediaUrl = isVideo ? story.video_url! : story.media_url!;
+  // Determine content type with clear fallback logic
+  const mediaType = story.media_type || story.content_type || (story.video_url ? 'video' : 'image');
+  const isVideo = mediaType === 'video' || !!story.video_url;
+  
+  // Determine the media URL to use
+  const mediaUrl = isVideo ? story.video_url : story.media_url;
   
   // Log content info for debugging
   console.log("Story content:", { 
@@ -30,6 +32,11 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
     url: mediaUrl
   });
 
+  const handleMediaError = () => {
+    console.error("Media failed to load:", mediaUrl);
+    setHasMediaError(true);
+  };
+
   return (
     <motion.div
       key={story.id}
@@ -39,20 +46,27 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
       className="w-full h-full flex items-center justify-center bg-black"
     >
       <div className="relative w-full h-full">
-        {isVideo ? (
+        {hasMediaError ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-white">
+            <AlertCircle className="w-12 h-12 text-red-500 mb-2" />
+            <p className="text-sm text-gray-300">Media could not be loaded</p>
+          </div>
+        ) : isVideo ? (
           <StoryVideo
             ref={videoRef}
-            videoUrl={mediaUrl}
+            videoUrl={mediaUrl || ''}
             onEnded={onNext}
             isPaused={isPaused}
             creatorId={story.creator.id}
+            onError={handleMediaError}
           />
         ) : (
           <StoryImage
-            mediaUrl={mediaUrl}
+            mediaUrl={mediaUrl || ''}
             username={story.creator.username}
             isPaused={isPaused}
             creatorId={story.creator.id}
+            onError={handleMediaError}
           />
         )}
       </div>

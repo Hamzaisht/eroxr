@@ -3,15 +3,17 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import '../../../styles/watermark.css';
+import { Loader2 } from "lucide-react";
 
 interface StoryImageProps {
   mediaUrl: string;
   username: string;
   isPaused: boolean;
   creatorId: string;
+  onError?: () => void;
 }
 
-export const StoryImage = ({ mediaUrl, username, isPaused, creatorId }: StoryImageProps) => {
+export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }: StoryImageProps) => {
   const [watermarkUsername, setWatermarkUsername] = useState<string>(username);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -38,6 +40,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId }: StoryIma
     setIsLoading(false);
     setLoadError(true);
     console.error("Failed to load story image:", mediaUrl);
+    if (onError) onError();
   };
   
   return (
@@ -50,7 +53,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId }: StoryIma
       {/* Loading indicator */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-luxury-primary/30 border-t-luxury-primary rounded-full animate-spin" />
+          <Loader2 className="w-8 h-8 text-luxury-primary animate-spin" />
         </div>
       )}
       

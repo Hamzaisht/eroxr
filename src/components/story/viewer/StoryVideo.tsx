@@ -1,4 +1,3 @@
-
 import { forwardRef, useEffect, useCallback, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
@@ -11,10 +10,11 @@ interface StoryVideoProps {
   onEnded: () => void;
   isPaused: boolean;
   creatorId: string;
+  onError?: () => void;
 }
 
 export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
-  ({ videoUrl, onEnded, isPaused, creatorId }, ref) => {
+  ({ videoUrl, onEnded, isPaused, creatorId, onError }, ref) => {
     const { toast } = useToast();
     const [watermarkUsername, setWatermarkUsername] = useState<string>("eroxr");
     const [hasError, setHasError] = useState(false);
@@ -26,7 +26,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     const MAX_RETRIES = 2;
     const STALL_TIMEOUT = 8000; // 8 seconds
     
-    // Add cache buster to URL to prevent stale cache issues
     const getUrlWithCacheBuster = (baseUrl: string) => {
       if (!baseUrl) return '';
       const timestamp = Date.now();
@@ -42,20 +41,20 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
       const errorMsg = error?.message || "Failed to play video. Please try again.";
       setErrorDetails(errorMsg);
       
+      if (onError) onError();
+      
       toast({
         title: "Video Error",
         description: errorMsg,
         variant: "destructive",
       });
-    }, [toast, videoUrl]);
+    }, [toast, videoUrl, onError]);
 
     const startStallTimer = useCallback(() => {
-      // Clear any existing timer first
       if (stallTimerRef.current) {
         clearTimeout(stallTimerRef.current);
       }
       
-      // Set a new timer for stall detection
       const timer = setTimeout(() => {
         if (isLoading) {
           console.warn("Story video loading stalled:", videoUrl);
@@ -82,15 +81,12 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         setIsStalled(false);
         setRetryCount(count => count + 1);
         
-        // Add cache buster to force reload
         const cacheBuster = getUrlWithCacheBuster(videoUrl);
         videoElement.current.src = cacheBuster;
         videoElement.current.load();
         
-        // Start a new stall timer
         startStallTimer();
         
-        // Attempt to play
         videoElement.current.play().catch(handleError);
       }
     }, [ref, videoUrl, handleError, startStallTimer]);
@@ -99,7 +95,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
       const videoElement = ref as React.MutableRefObject<HTMLVideoElement>;
       if (videoElement?.current) {
         const handleVideoLoaded = () => {
-          // Clear stall timer
           if (stallTimerRef.current) {
             clearTimeout(stallTimerRef.current);
           }
@@ -112,22 +107,18 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         };
         
         const handleVideoError = (e: Event) => {
-          // Clear stall timer
           if (stallTimerRef.current) {
             clearTimeout(stallTimerRef.current);
           }
           
-          // Auto retry up to MAX_RETRIES times
           if (retryCount < MAX_RETRIES) {
             console.log(`Auto-retrying story video load (${retryCount + 1}/${MAX_RETRIES})...`);
             setRetryCount(prev => prev + 1);
             
-            // Try with cache buster
             const cacheBustedUrl = getUrlWithCacheBuster(videoUrl);
             videoElement.current.src = cacheBustedUrl;
             videoElement.current.load();
             
-            // Start a new stall timer
             startStallTimer();
             return;
           }
@@ -140,17 +131,14 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
           setIsStalled(true);
           
           if (retryCount < MAX_RETRIES) {
-            // Auto retry if stalled during playback
             handleRetry();
           }
         };
         
-        // Reset states
         setIsLoading(true);
         setHasError(false);
         setIsStalled(false);
         
-        // Set up video with cache buster to avoid stale cache
         const cacheBustedUrl = getUrlWithCacheBuster(videoUrl);
         videoElement.current.src = cacheBustedUrl;
         
@@ -158,7 +146,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         videoElement.current.addEventListener('error', handleVideoError);
         videoElement.current.addEventListener('stalled', handleStalled);
         
-        // Start the stall timer
         startStallTimer();
         
         if (!isPaused) {
@@ -171,7 +158,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         }
         
         return () => {
-          // Clear stall timer
           if (stallTimerRef.current) {
             clearTimeout(stallTimerRef.current);
           }
@@ -195,7 +181,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
 
     useEffect(() => {
       return () => {
-        // Clear stall timer on component unmount
         if (stallTimerRef.current) {
           clearTimeout(stallTimerRef.current);
         }
@@ -237,7 +222,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
             />
           </div>
           
-          {/* Watermark overlay */}
           <div className="watermark-overlay">
             www.eroxr.com/@{watermarkUsername}
           </div>

@@ -97,10 +97,18 @@ export const useStories = () => {
         if (!hasMedia) console.log("Story missing media:", story.id);
         if (!hasCreator) console.log("Story missing creator:", story.id);
         
-        // Set content_type if it's missing (backwards compatibility)
-        if (story && !story.content_type) {
-          story.content_type = story.video_url ? 'video' : 'image';
-          console.log(`Added missing content_type '${story.content_type}' to story:`, story.id);
+        // Set content_type and media_type if they're missing (backwards compatibility)
+        if (story) {
+          if (!story.content_type && !story.media_type) {
+            story.content_type = story.video_url ? 'video' : 'image';
+            console.log(`Added missing content_type '${story.content_type}' to story:`, story.id);
+          }
+          
+          // Ensure media_type is always set
+          if (!story.media_type) {
+            story.media_type = story.content_type || (story.video_url ? 'video' : 'image');
+            console.log(`Set media_type to '${story.media_type}' for story:`, story.id);
+          }
         }
         
         return hasMedia && hasCreator;
@@ -111,18 +119,12 @@ export const useStories = () => {
       if (validStories.length > 0) {
         // Add cache buster to media URLs to prevent stale cache
         const storiesWithCacheBusters = validStories.map(story => {
-          const mediaUrl = story.media_url || story.video_url;
-          if (mediaUrl) {
-            const cacheBuster = mediaUrl.includes('?') 
-              ? `${mediaUrl}&cb=${Date.now()}` 
-              : `${mediaUrl}?cb=${Date.now()}`;
-            return {
-              ...story,
-              media_url: story.media_url ? cacheBuster : story.media_url,
-              video_url: story.video_url ? cacheBuster : story.video_url
-            };
-          }
-          return story;
+          const cacheBuster = `cb=${Date.now()}`;
+          return {
+            ...story,
+            media_url: story.media_url ? addCacheBuster(story.media_url, cacheBuster) : story.media_url,
+            video_url: story.video_url ? addCacheBuster(story.video_url, cacheBuster) : story.video_url
+          };
         });
         
         setStories(storiesWithCacheBusters);
@@ -141,6 +143,12 @@ export const useStories = () => {
       setIsLoading(false);
     }
   }, [session?.user?.id, toast, checkColumnExists]);
+
+  // Helper function to add cache buster to URLs
+  const addCacheBuster = (url: string, cacheBuster: string) => {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}${cacheBuster}`;
+  };
 
   useEffect(() => {
     if (session?.user?.id) {
