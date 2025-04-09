@@ -1,3 +1,4 @@
+
 import { forwardRef, useEffect, useCallback, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
@@ -202,7 +203,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
       <div className="fixed inset-0 flex items-center justify-center bg-black overflow-hidden">
         <div className="relative w-full h-full max-w-[500px] mx-auto">
           {(isLoading || isStalled) && (
-            <VideoLoadingState isStalled={isStalled} />
+            <VideoLoadingState isStalled={isStalled} onRetry={handleRetry} />
           )}
           
           <div className="absolute inset-0 flex items-center justify-center">
