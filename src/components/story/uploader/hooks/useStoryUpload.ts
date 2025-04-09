@@ -155,6 +155,7 @@ export const useStoryUpload = () => {
       setIsUploading(true);
       setUploadProgress(10); // Show initial progress
       
+      // Updated file path logic to include user ID and timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
@@ -175,7 +176,7 @@ export const useStoryUpload = () => {
             description: "First attempt failed, trying again...",
           });
           
-          // Retry with a different file path
+          // Retry with a different file path - using updated naming pattern
           const retryFileName = `retry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
           const retryFilePath = `${session.user.id}/${retryFileName}`;
           
