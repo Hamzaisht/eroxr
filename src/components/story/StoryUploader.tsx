@@ -1,3 +1,4 @@
+
 import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Loader2, AlertCircle } from "lucide-react";
@@ -43,6 +44,26 @@ export const StoryUploader = () => {
     }
 
     return { valid: true };
+  };
+
+  // Helper function to check if a column exists in a table
+  const checkColumnExists = async (table: string, column: string): Promise<boolean> => {
+    try {
+      // Simple check by selecting from the table with the column
+      const { data, error } = await supabase
+        .from(table)
+        .select(column)
+        .limit(1);
+
+      if (error && error.message.includes(`column "${column}" does not exist`)) {
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.warn(`Error in checkColumnExists for ${column}:`, err);
+      return false;
+    }
   };
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,7 +123,7 @@ export const StoryUploader = () => {
         });
       };
 
-      // Attempt upload - Note: using let instead of const for uploadData
+      // Attempt upload
       let { error: uploadError, data: uploadData } = await uploadWithProgress();
 
       if (uploadError) {
@@ -136,7 +157,6 @@ export const StoryUploader = () => {
           }
           
           console.log("Retry upload succeeded");
-          // Use let instead of const for uploadData
           uploadData = retryData;
         } else {
           throw uploadError;
@@ -165,23 +185,49 @@ export const StoryUploader = () => {
       
       setUploadProgress(98); // Final step
       
-      // Determine if this is a video or image
+      // Determine if this is a video or image based on file type
       const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
       const contentType = isVideo ? 'video' : 'image';
+      
+      // Check for required and optional columns in stories table
+      const hasContentType = await checkColumnExists('stories', 'content_type');
+      const hasMediaType = await checkColumnExists('stories', 'media_type');
+      const hasIsPublic = await checkColumnExists('stories', 'is_public');
+      
+      // Prepare the story data with required fields first
+      const storyData: any = {
+        creator_id: session.user.id,
+        duration: isVideo ? 30 : 10,
+        is_active: true,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
+      };
+      
+      // Add content based on file type
+      if (isVideo) {
+        storyData.video_url = cacheBustedUrl;
+      } else {
+        storyData.media_url = cacheBustedUrl;
+      }
+      
+      // Add optional fields if the columns exist
+      if (hasContentType) {
+        storyData.content_type = contentType;
+      }
+      
+      if (hasMediaType) {
+        storyData.media_type = contentType;
+      }
+      
+      if (hasIsPublic) {
+        storyData.is_public = true;
+      }
+      
+      console.log("Inserting story with data:", storyData);
       
       // Insert the story record
       const { error: storyError } = await supabase
         .from('stories')
-        .insert([{
-          creator_id: session.user.id,
-          [isVideo ? 'video_url' : 'media_url']: cacheBustedUrl,
-          duration: isVideo ? 30 : 10,
-          content_type: contentType,
-          media_type: contentType,
-          is_active: true,
-          is_public: true, // Use the new is_public column
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
-        }]);
+        .insert([storyData]);
 
       if (storyError) {
         console.error("Story DB insert error:", storyError);

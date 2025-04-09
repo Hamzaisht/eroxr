@@ -1,6 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Gets username for adding watermark to videos
+ */
 export const getUsernameForWatermark = async (userId: string): Promise<string> => {
   try {
     // First check if userId might actually be a username (in some legacy cases)

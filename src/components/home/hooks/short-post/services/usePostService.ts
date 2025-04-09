@@ -28,12 +28,12 @@ export const usePostService = () => {
       const username = await getUsernameForWatermark(userId);
       
       if (isShortStory) {
-        // Check if content_type column exists in stories table
+        // Check if optional columns exist in stories table
         const hasContentType = await checkColumnExists('stories', 'content_type');
         const hasIsPublic = await checkColumnExists('stories', 'is_public');
         const hasMediaType = await checkColumnExists('stories', 'media_type');
         
-        // Create story record
+        // Create story record with required fields
         const storyData: any = {
           creator_id: userId,
           video_url: videoUrl,
@@ -42,25 +42,28 @@ export const usePostService = () => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24h from now
         };
         
-        // Add content_type field if column exists
+        // Add optional fields if columns exist
         if (hasContentType) {
           storyData.content_type = 'video';
         }
         
-        // Add media_type field if column exists
         if (hasMediaType) {
           storyData.media_type = 'video';
         }
         
-        // Add is_public field if column exists (it should now)
         if (hasIsPublic) {
           storyData.is_public = visibility === 'public';
         }
         
+        // Insert the story record
         const { data, error } = await supabase
           .from('stories')
           .insert([storyData])
           .select();
+          
+        if (error) {
+          console.error('Error creating story:', error);
+        }
           
         return { data: data?.[0] || null, error: error?.message };
       } else {
