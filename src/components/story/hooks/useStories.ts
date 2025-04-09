@@ -1,176 +1,132 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { Story } from "@/integrations/supabase/types/story";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Story } from "@/integrations/supabase/types/story";
 import { useToast } from "@/hooks/use-toast";
-import { useDbService } from "@/components/home/hooks/short-post/services/useDbService";
+import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 
 export const useStories = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const session = useSession();
   const { toast } = useToast();
-  const { checkColumnExists } = useDbService();
 
-  const fetchStories = useCallback(async () => {
+  const fetchStories = async () => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      setError(null);
-      console.log('Fetching stories');
+      // Check if the media_type column exists
+      const { data: columnCheck, error: columnError } = await supabase.rpc(
+        "check_column_exists",
+        { p_table_name: "stories", p_column_name: "media_type" }
+      );
       
-      // Check if media_type column exists
-      const hasMediaType = await checkColumnExists('stories', 'media_type');
-      console.log("stories table has media_type column:", hasMediaType);
+      const hasMediaTypeColumn = columnCheck === true;
       
-      // Get creator IDs from subscriptions
-      const { data: subscriptions, error: subsError } = await supabase
-        .from('creator_subscriptions')
-        .select('creator_id')
-        .eq('user_id', session?.user?.id);
-
-      if (subsError) {
-        console.error("Error fetching subscriptions:", subsError);
-        throw subsError;
-      }
-
-      // Get creator IDs from following
-      const { data: following, error: followError } = await supabase
-        .from('followers')
-        .select('following_id')
-        .eq('follower_id', session?.user?.id);
-
-      if (followError) {
-        console.error("Error fetching following:", followError);
-        throw followError;
-      }
-
-      // Combine all creator IDs 
-      const creatorIds = [
-        ...(subscriptions?.map(sub => sub.creator_id) || []),
-        ...(following?.map(f => f.following_id) || [])
-      ];
-
-      // Always include user's own stories
-      if (session?.user?.id) {
-        creatorIds.push(session.user.id);
-      }
-
-      // Make unique array of creator IDs
-      const uniqueCreatorIds = [...new Set(creatorIds)];
-      console.log("Using creator IDs for stories fetch:", uniqueCreatorIds);
-
-      // If no creators to fetch, show empty state
-      if (uniqueCreatorIds.length === 0) {
-        console.log("No creator IDs found for stories");
-        setStories([]);
-        setIsLoading(false);
-        return;
-      }
-
-      // Fetch stories with creator profiles
-      const { data, error } = await supabase
-        .from('stories')
+      console.log("Stories table has media_type column:", hasMediaTypeColumn);
+      
+      // Define the columns to select
+      const baseColumns = `
+        id, 
+        creator_id, 
+        media_url,
+        video_url, 
+        duration, 
+        created_at,
+        expires_at,
+        is_active,
+        screenshot_disabled,
+        content_type
+      `;
+      
+      const columnsWithMediaType = `
+        ${baseColumns},
+        media_type
+      `;
+      
+      // Fetch stories with creator info
+      const { data, error: fetchError } = await supabase
+        .from("stories")
         .select(`
-          *,
-          creator:profiles!stories_creator_id_fkey(
-            id,
-            username,
-            avatar_url
-          )
+          ${hasMediaTypeColumn ? columnsWithMediaType : baseColumns},
+          creator:profiles(id, username, avatar_url)
         `)
-        .eq('is_active', true)
-        .in('creator_id', uniqueCreatorIds)
-        .order('created_at', { ascending: false });
+        .eq("is_active", true)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching stories with profiles:", error);
-        throw error;
-      }
-
-      console.log("Stories data returned:", data);
-
-      // Filter out stories with missing media or creator info
-      const validStories = data?.filter(story => {
-        const hasMedia = story.media_url || story.video_url;
-        const hasCreator = !!story.creator;
-        if (!hasMedia) console.log("Story missing media:", story.id);
-        if (!hasCreator) console.log("Story missing creator:", story.id);
-        
-        // Set content_type and media_type if they're missing (backwards compatibility)
-        if (story) {
-          if (!story.content_type && !story.media_type) {
-            story.content_type = story.video_url ? 'video' : 'image';
-            console.log(`Added missing content_type '${story.content_type}' to story:`, story.id);
+      if (fetchError) throw fetchError;
+      
+      if (data && data.length > 0) {
+        // Process stories to ensure proper URLs
+        const processedStories: Story[] = data.map(story => {
+          // Add cache busters to URLs to prevent caching issues
+          if (story.media_url) {
+            story.media_url = getUrlWithCacheBuster(story.media_url);
           }
           
-          // Ensure media_type is always set
-          if (!story.media_type) {
-            story.media_type = story.content_type || (story.video_url ? 'video' : 'image');
-            console.log(`Set media_type to '${story.media_type}' for story:`, story.id);
+          if (story.video_url) {
+            story.video_url = getUrlWithCacheBuster(story.video_url);
           }
-        }
-        
-        return hasMedia && hasCreator;
-      }) || [];
-
-      console.log("Valid stories to display:", validStories.length);
-      
-      if (validStories.length > 0) {
-        // Add cache buster to media URLs to prevent stale cache
-        const storiesWithCacheBusters = validStories.map(story => {
-          const cacheBuster = `cb=${Date.now()}`;
-          return {
-            ...story,
-            media_url: story.media_url ? addCacheBuster(story.media_url, cacheBuster) : story.media_url,
-            video_url: story.video_url ? addCacheBuster(story.video_url, cacheBuster) : story.video_url
-          };
+          
+          // Determine media type with fallback logic
+          if (!story.media_type && !story.content_type) {
+            if (story.video_url) {
+              story.media_type = 'video';
+            } else if (story.media_url) {
+              story.media_type = 'image';
+            }
+          } else if (!story.media_type && story.content_type) {
+            story.media_type = story.content_type;
+          }
+          
+          return story as Story;
         });
         
-        setStories(storiesWithCacheBusters);
+        setStories(processedStories);
+        console.log("Fetched stories:", processedStories);
       } else {
+        console.log("No active stories found");
         setStories([]);
       }
-    } catch (error) {
-      console.error('Error fetching stories:', error);
-      setError('Failed to load stories');
+    } catch (err: any) {
+      console.error("Error fetching stories:", err);
+      setError(err.message || "Failed to load stories");
       toast({
-        title: "Error loading stories",
-        description: "Please try again later",
+        title: "Failed to load stories",
+        description: err.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, toast, checkColumnExists]);
+  };
 
-  // Helper function to add cache buster to URLs
-  const addCacheBuster = (url: string, cacheBuster: string) => {
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}${cacheBuster}`;
+  const refetchStories = () => {
+    fetchStories();
   };
 
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchStories();
-    } else {
-      // If not logged in, clear stories and stop loading
-      setStories([]);
-      setIsLoading(false);
-    }
+    fetchStories();
     
-    // Listen for story upload event to refresh stories
+    // Listen for story-uploaded custom event
     const handleStoryUploaded = () => {
+      console.log("Story uploaded event detected, refetching stories...");
       fetchStories();
     };
     
     window.addEventListener('story-uploaded', handleStoryUploaded);
     
-    // Clean up event listener
     return () => {
       window.removeEventListener('story-uploaded', handleStoryUploaded);
     };
-  }, [session?.user?.id, fetchStories]);
+  }, []);
 
-  return { stories, isLoading, error, setStories, refetchStories: fetchStories };
+  return {
+    stories,
+    isLoading,
+    error,
+    refetchStories,
+  };
 };
