@@ -197,6 +197,19 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     }
   };
 
+  // Fix for the typing bug
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    console.log("Title changed to:", newValue);
+    setTitle(newValue);
+  };
+  
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    console.log("Description changed to:", newValue);
+    setDescription(newValue);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] bg-black text-white">
@@ -311,7 +324,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
               <Input
                 id="title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={handleTitleChange}
                 className="bg-transparent"
                 placeholder="Add a title to your video"
                 maxLength={100}
@@ -327,7 +340,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
               <Textarea
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={handleDescriptionChange}
                 className="bg-transparent"
                 placeholder="Describe your video"
                 rows={3}

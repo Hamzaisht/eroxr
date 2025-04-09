@@ -103,6 +103,13 @@ export const useStories = () => {
           const hasCreator = !!story.creator;
           if (!hasMedia) console.log("Story missing media:", story.id);
           if (!hasCreator) console.log("Story missing creator:", story.id);
+          
+          // Set content_type if it's missing (backwards compatibility)
+          if (story && !story.content_type) {
+            story.content_type = story.video_url ? 'video' : 'image';
+            console.log(`Added missing content_type '${story.content_type}' to story:`, story.id);
+          }
+          
           return hasMedia && hasCreator;
         }) || [];
 

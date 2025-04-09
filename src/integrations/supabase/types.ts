@@ -1887,6 +1887,7 @@ export type Database = {
       }
       stories: {
         Row: {
+          content_type: string | null
           created_at: string
           creator_id: string
           duration: number | null
@@ -1899,6 +1900,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          content_type?: string | null
           created_at?: string
           creator_id: string
           duration?: number | null
@@ -1911,6 +1913,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          content_type?: string | null
           created_at?: string
           creator_id?: string
           duration?: number | null

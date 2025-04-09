@@ -13,7 +13,8 @@ interface StoryContentProps {
 
 export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const isVideo = !!story.video_url;
+  // Determine if it's a video based on content_type or video_url
+  const isVideo = story.content_type === 'video' || !!story.video_url;
 
   return (
     <motion.div

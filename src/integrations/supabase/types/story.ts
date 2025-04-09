@@ -1,3 +1,4 @@
+
 import { Creator } from './profile';
 
 export type Story = {
@@ -10,5 +11,6 @@ export type Story = {
   expires_at: string;
   is_active: boolean | null;
   screenshot_disabled: boolean | null;
+  content_type?: string; // Added content_type field
   creator: Creator;
 };

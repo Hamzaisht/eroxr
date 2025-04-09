@@ -168,6 +168,7 @@ export const StoryUploader = () => {
       
       // Determine if this is a video or image
       const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
+      const contentType = isVideo ? 'video' : 'image';
       
       // Insert the story record
       const { error: storyError } = await supabase
@@ -176,8 +177,8 @@ export const StoryUploader = () => {
           creator_id: session.user.id,
           [isVideo ? 'video_url' : 'media_url']: cacheBustedUrl,
           duration: isVideo ? 30 : 10,
-          content_type: isVideo ? 'video' : 'image',
-          media_type: isVideo ? 'video' : 'image',
+          content_type: contentType,
+          media_type: contentType,
           is_active: true,
           is_public: true, // Add this to ensure it works with RLS policies
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
@@ -197,7 +198,7 @@ export const StoryUploader = () => {
               [isVideo ? 'video_url' : 'media_url']: cacheBustedUrl,
               is_public: true,
               is_active: true,
-              content_type: isVideo ? 'video' : 'image'
+              content_type: contentType
             }]);
             
           if (retryStoryError) {
