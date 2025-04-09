@@ -194,7 +194,7 @@ export const useShortPostSubmit = () => {
         console.log("Preparing post data with creator info:", username);
 
         // Create the post object with all required fields
-        const postObject = {
+        const postObject: any = {
           creator_id: session.user.id,
           content: title,
           video_urls: [publicUrlWithCacheBuster],
