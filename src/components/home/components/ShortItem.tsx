@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -12,6 +11,7 @@ import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { Short } from "../types/short";
 import { useShortActions } from "../hooks/actions";
 import { useToast } from "@/hooks/use-toast";
+import { getUrlWithCacheBuster, fixBrokenStorageUrl } from "@/utils/mediaUtils";
 
 interface ShortItemProps {
   short: Short;
@@ -59,17 +59,24 @@ export const ShortItem = ({
     }
   }, [short?.id, videoUrl, hasThumbnail]);
 
-  // Add cache buster to URL to prevent stale cache issues
-  const getUrlWithCacheBuster = (baseUrl: string | null) => {
-    if (!baseUrl) return null;
-    const timestamp = Date.now();
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}cb=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
+  // Fix and cache-bust the video URL
+  const getProperVideoUrl = () => {
+    if (!videoUrl) return null;
+    
+    // First fix any broken URLs
+    const fixedUrl = fixBrokenStorageUrl(videoUrl);
+    
+    // Then add cache busting
+    return getUrlWithCacheBuster(fixedUrl);
   };
   
-  // Get the video URL with cache buster
-  const videoUrlWithCacheBuster = getUrlWithCacheBuster(videoUrl);
-
+  // Get the video URL with proper handling
+  const videoUrlWithCacheBuster = getProperVideoUrl();
+  
+  // Also fix the thumbnail URL if present
+  const thumbnailUrlWithCacheBuster = short?.video_thumbnail_url ? 
+    getUrlWithCacheBuster(fixBrokenStorageUrl(short.video_thumbnail_url)) : undefined;
+  
   // Reset video error state when short changes
   useEffect(() => {
     if (isValidShort) {
@@ -245,7 +252,7 @@ export const ShortItem = ({
       ) : (
         <VideoPlayer
           url={videoUrlWithCacheBuster}
-          poster={short.video_thumbnail_url || undefined}
+          poster={thumbnailUrlWithCacheBuster}
           className="h-full w-full object-cover"
           autoPlay={index === currentVideoIndex}
           onError={handleVideoError}

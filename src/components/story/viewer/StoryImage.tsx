@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import '../../../styles/watermark.css';
-import { Loader2 } from "lucide-react";
-import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { getUrlWithCacheBuster, fixBrokenStorageUrl } from "@/utils/mediaUtils";
 
 interface StoryImageProps {
   mediaUrl: string;
@@ -18,6 +18,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const [watermarkUsername, setWatermarkUsername] = useState<string>(username);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [hasRetried, setHasRetried] = useState(false);
   
   useEffect(() => {
     getUsernameForWatermark(creatorId).then(name => {
@@ -29,25 +30,47 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
     // Reset loading state when URL changes
     setIsLoading(true);
     setLoadError(false);
+    setHasRetried(false);
   }, [creatorId, mediaUrl]);
   
-  // Add cache buster to the media URL
-  const displayUrl = getUrlWithCacheBuster(mediaUrl);
+  // Fix potentially broken URL and add cache buster
+  let fixedUrl = mediaUrl;
+  if (fixedUrl) {
+    fixedUrl = fixBrokenStorageUrl(fixedUrl);
+    fixedUrl = getUrlWithCacheBuster(fixedUrl);
+  }
   
   const handleImageLoad = () => {
     setIsLoading(false);
     setLoadError(false);
-    console.log("Story image loaded:", mediaUrl);
+    console.log("Story image loaded:", fixedUrl);
   };
   
   const handleImageError = () => {
     setIsLoading(false);
     setLoadError(true);
-    console.error("Failed to load story image:", mediaUrl);
-    if (onError) onError();
+    console.error("Failed to load story image:", fixedUrl);
+    
+    if (!hasRetried) {
+      // Try once more with a fresh cache buster
+      setHasRetried(true);
+      // Small delay before retry
+      setTimeout(() => {
+        setIsLoading(true);
+        setLoadError(false);
+      }, 500);
+    } else if (onError) {
+      onError();
+    }
   };
   
-  if (!mediaUrl) {
+  const handleRetry = () => {
+    setIsLoading(true);
+    setLoadError(false);
+    setHasRetried(true);
+  };
+  
+  if (!fixedUrl) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -55,10 +78,8 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
         exit={{ opacity: 0 }}
         className="absolute inset-0 flex flex-col items-center justify-center bg-black"
       >
-        <div className="text-red-500">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+        <div className="text-red-500 flex flex-col items-center">
+          <AlertCircle className="h-12 w-12" />
           <p className="mt-2">Image URL not available</p>
         </div>
       </motion.div>
@@ -79,22 +100,28 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
         </div>
       )}
       
-      {/* Error state */}
+      {/* Error state with retry button */}
       {loadError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <p className="mt-2">Failed to load image</p>
+          <AlertCircle className="h-12 w-12 mb-2" />
+          <p className="mb-4">Failed to load image</p>
+          <button 
+            onClick={handleRetry}
+            className="flex items-center gap-2 px-4 py-2 bg-luxury-primary/80 hover:bg-luxury-primary text-white rounded-md"
+          >
+            <RefreshCw className="h-4 w-4" /> 
+            Retry
+          </button>
         </div>
       )}
       
       {/* Image */}
       <img
-        src={displayUrl}
+        src={fixedUrl}
         alt={`Story by ${username}`}
         className="w-full h-full object-contain max-h-[100vh]"
         loading="eager"
+        crossOrigin="anonymous"
         onLoad={handleImageLoad}
         onError={handleImageError}
         style={{

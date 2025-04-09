@@ -3,10 +3,10 @@ import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
-import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster, fixBrokenStorageUrl } from "@/utils/mediaUtils";
 
 interface PostContentProps {
   content: string;
@@ -24,26 +24,48 @@ export const PostContent = ({
   onMediaClick,
 }: PostContentProps) => {
   const [loadError, setLoadError] = useState<Record<string, boolean>>({});
+  const [retries, setRetries] = useState<Record<string, number>>({});
   const { toast } = useToast();
+  
   // Safely check if either array has content
   const hasMedia = (mediaUrls?.length ?? 0) > 0 || (videoUrls?.length ?? 0) > 0;
 
   const handleMediaError = (url: string) => {
     console.error('Media load error for URL:', url);
     setLoadError(prev => ({ ...prev, [url]: true }));
-    toast({
-      title: "Error loading media",
-      description: "Failed to load media content. Please try again later.",
-      variant: "destructive",
-    });
+    
+    // Track retry count
+    const currentRetries = retries[url] || 0;
+    if (currentRetries < 2) {
+      setRetries(prev => ({ ...prev, [url]: currentRetries + 1 }));
+    } else {
+      toast({
+        title: "Error loading media",
+        description: "Failed to load media content after multiple attempts",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRetry = (url: string) => {
+    setLoadError(prev => ({ ...prev, [url]: false }));
   };
 
   // Error fallback component
-  const ErrorFallback = ({ message }: { message: string }) => (
+  const ErrorFallback = ({ message, url }: { message: string, url?: string }) => (
     <div className="w-full h-full flex items-center justify-center bg-luxury-darker rounded-lg">
       <div className="flex flex-col items-center justify-center text-luxury-neutral/70 p-8">
         <AlertCircle className="w-8 h-8 mb-2" />
-        <p>{message}</p>
+        <p className="mb-3">{message}</p>
+        {url && (
+          <button 
+            onClick={() => handleRetry(url)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-luxury-primary/80 hover:bg-luxury-primary text-white rounded-md"
+          >
+            <RefreshCw className="h-4 w-4" /> 
+            Retry
+          </button>
+        )}
       </div>
     </div>
   );
@@ -72,14 +94,18 @@ export const PostContent = ({
                     <div className="space-y-4">
                       {videoUrls.map((url, index) => {
                         if (!url) return <ErrorFallback key={`video-error-${index}`} message="Video not available" />;
-                        if (loadError[url]) return null;
+                        if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`video-error-${index}`} message="Failed to load video" url={url} />;
                         
-                        const displayUrl = getUrlWithCacheBuster(url);
-                        const posterUrl = mediaUrls && mediaUrls[0] ? getUrlWithCacheBuster(mediaUrls[0]) : undefined;
+                        // Fix potentially broken URL and add cache busting
+                        const fixedUrl = fixBrokenStorageUrl(url);
+                        const displayUrl = getUrlWithCacheBuster(fixedUrl);
+                        
+                        // Try to get a poster image
+                        const posterUrl = mediaUrls && mediaUrls[0] ? getUrlWithCacheBuster(fixBrokenStorageUrl(mediaUrls[0])) : undefined;
                         
                         return (
                           <motion.div
-                            key={`video-${index}`}
+                            key={`video-${index}-${retries[url] || 0}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
@@ -104,13 +130,15 @@ export const PostContent = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {mediaUrls.map((url, index) => {
                         if (!url) return <ErrorFallback key={`image-error-${index}`} message="Image not available" />;
-                        if (loadError[url]) return null;
+                        if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`image-error-${index}`} message="Failed to load image" url={url} />;
                         
-                        const displayUrl = getUrlWithCacheBuster(url);
+                        // Fix potentially broken URL and add cache busting
+                        const fixedUrl = fixBrokenStorageUrl(url);
+                        const displayUrl = getUrlWithCacheBuster(fixedUrl);
                         
                         return (
                           <motion.div
-                            key={`image-${index}`}
+                            key={`image-${index}-${retries[url] || 0}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}

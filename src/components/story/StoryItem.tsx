@@ -7,7 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { AvatarImage } from "@/components/ui/avatar";
 import { AvatarFallback } from "@/components/ui/avatar";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster, getContentType, getMediaUrl, fixBrokenStorageUrl } from "@/utils/mediaUtils";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface StoryItemProps {
@@ -29,14 +29,20 @@ export const StoryItem = ({
   const [hasMediaError, setHasMediaError] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   
-  // Determine media type with fallback logic
-  const mediaType = story.media_type || (story.video_url ? 'video' : 'image');
-  const isVideo = mediaType === 'video' || !!story.video_url;
+  // Determine media type with consistent logic
+  const mediaType = getContentType(story);
+  const isVideo = mediaType === 'video';
   
-  // Get appropriate media URL with cache buster
-  const mediaUrl = isVideo 
-    ? getUrlWithCacheBuster(story.video_url || '') 
-    : getUrlWithCacheBuster(story.media_url || '');
+  // Get appropriate media URL
+  let mediaUrl = getMediaUrl(story);
+  
+  // Try to fix broken URLs
+  if (mediaUrl) {
+    mediaUrl = fixBrokenStorageUrl(mediaUrl);
+  }
+  
+  // Add cache buster
+  const displayUrl = getUrlWithCacheBuster(mediaUrl);
   
   // Format the timestamp
   const timestamp = new Date(story.created_at);
@@ -47,14 +53,14 @@ export const StoryItem = ({
 
   const handleImageLoad = () => {
     setIsMediaLoaded(true);
+    setHasMediaError(false);
   };
 
   const handleImageError = () => {
     setHasMediaError(true);
-    console.error("Failed to load story thumbnail:", mediaUrl);
+    setIsMediaLoaded(false);
+    console.error("Failed to load story thumbnail:", displayUrl);
   };
-
-  const thumbnailUrl = isVideo ? story.video_url : story.media_url;
 
   return (
     <motion.div
@@ -89,14 +95,15 @@ export const StoryItem = ({
             </div>
           </div>
         ) : (
-          thumbnailUrl ? (
+          displayUrl ? (
             <img
-              src={thumbnailUrl}
+              src={displayUrl}
               alt={`Story by ${story.creator?.username || 'user'}`}
               className="w-full h-full object-cover"
               onLoad={handleImageLoad}
               onError={handleImageError}
               style={{ opacity: isMediaLoaded ? 1 : 0 }}
+              crossOrigin="anonymous"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">

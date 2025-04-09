@@ -4,7 +4,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDbService } from "@/components/home/hooks/short-post/services/useDbService";
 import { supabase } from "@/integrations/supabase/client";
-import { getUrlWithCacheBuster, getStorageUrl, createUniqueFilePath } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster, createUniqueFilePath, getStorageUrl } from "@/utils/mediaUtils";
 
 // Maximum file size (100MB)
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -150,6 +150,12 @@ export const useStoryUpload = () => {
       setIsUploading(true);
       setUploadProgress(10); // Show initial progress
       
+      // File validation
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        throw new Error(validation.message || "Invalid file");
+      }
+      
       // Use our utility function to create a unique file path
       const filePath = createUniqueFilePath(session.user.id, file.name);
 
@@ -200,7 +206,7 @@ export const useStoryUpload = () => {
 
       setUploadProgress(95); // Almost done
 
-      // Get the public URL using Supabase's getPublicUrl method
+      // Get the full public URL using getPublicUrl method
       const { data: { publicUrl } } = supabase.storage
         .from('stories')
         .getPublicUrl(uploadData.path);
@@ -252,6 +258,27 @@ export const useStoryUpload = () => {
       setUploadProgress(0);
       setRetryCount(0);
     }
+  };
+
+  const validateFile = (file: File): FileValidation => {
+    if (file.size > MAX_FILE_SIZE) {
+      return { 
+        valid: false, 
+        message: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB`
+      };
+    }
+
+    const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
+    const isImage = SUPPORTED_IMAGE_TYPES.includes(file.type);
+
+    if (!isVideo && !isImage) {
+      return { 
+        valid: false, 
+        message: `Unsupported file type. Please upload an image (JPG, PNG, GIF, WEBP) or video (MP4, WEBM, MOV, AVI)`
+      };
+    }
+
+    return { valid: true };
   };
 
   return {

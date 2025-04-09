@@ -6,6 +6,13 @@
  */
 export const getUrlWithCacheBuster = (baseUrl: string | null): string => {
   if (!baseUrl) return '';
+  
+  // Skip if URL already has cache busting
+  if (baseUrl.includes('cb=') && baseUrl.includes('r=')) {
+    return baseUrl;
+  }
+  
+  // Add appropriate separator
   const timestamp = Date.now();
   const separator = baseUrl.includes('?') ? '&' : '?';
   return `${baseUrl}${separator}cb=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
@@ -21,11 +28,11 @@ export const getContentType = (content: any): 'video' | 'image' | 'unknown' => {
   
   // First check explicit content type properties
   if (content.media_type) {
-    return content.media_type as 'video' | 'image';
+    return content.media_type.toLowerCase() as 'video' | 'image';
   }
   
   if (content.content_type) {
-    return content.content_type as 'video' | 'image';
+    return content.content_type.toLowerCase() as 'video' | 'image';
   }
   
   // Then look at URL properties
@@ -58,7 +65,12 @@ export const getContentType = (content: any): 'video' | 'image' | 'unknown' => {
 export const getStorageUrl = (bucket: string, path: string | null): string => {
   if (!path) return '';
   
-  // Extract project ID from environment or config
+  // If it's already a full URL, return it
+  if (path.startsWith('http')) {
+    return path;
+  }
+  
+  // Extract project ID from environment or hardcode it
   const projectId = 'ysqbdaeohlupucdmivkt';
   return `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}/${path}`;
 };
@@ -74,13 +86,29 @@ export const getMediaUrl = (content: any): string | null => {
   const mediaType = getContentType(content);
   
   if (mediaType === 'video') {
-    return content.video_url || 
-           (Array.isArray(content.video_urls) && content.video_urls.length > 0 ? content.video_urls[0] : null);
+    // Handle video URLs
+    if (content.video_url) {
+      return content.video_url;
+    } 
+    
+    if (Array.isArray(content.video_urls) && content.video_urls.length > 0) {
+      return content.video_urls[0];
+    }
+    
+    return null;
   }
   
   if (mediaType === 'image') {
-    return content.media_url || 
-           (Array.isArray(content.media_urls) && content.media_urls.length > 0 ? content.media_urls[0] : null);
+    // Handle image URLs
+    if (content.media_url) {
+      return content.media_url;
+    }
+    
+    if (Array.isArray(content.media_urls) && content.media_urls.length > 0) {
+      return content.media_urls[0];
+    }
+    
+    return null;
   }
   
   return null;
@@ -97,4 +125,45 @@ export const createUniqueFilePath = (userId: string, fileName: string): string =
   const randomId = Math.random().toString(36).substring(2, 9);
   const safeFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
   return `${userId}/${timestamp}_${randomId}_${safeFileName}`;
+};
+
+/**
+ * Ensures a media URL is properly formatted and freshened with cache busting
+ * @param url The media URL to format
+ * @param bucket Optional bucket name if URL is just a path
+ * @returns A properly formatted and cache-busted URL
+ */
+export const ensureProperMediaUrl = (url: string | null, bucket?: string): string => {
+  if (!url) return '';
+  
+  // If it's just a path and bucket is provided, convert to full URL
+  let fullUrl = url;
+  if (bucket && !url.startsWith('http')) {
+    fullUrl = getStorageUrl(bucket, url);
+  }
+  
+  // Add cache busting
+  return getUrlWithCacheBuster(fullUrl);
+};
+
+/**
+ * Fixes a broken Supabase storage URL by reconstructing it properly
+ * @param url The potentially broken URL
+ * @returns A fixed URL or the original if it appears valid
+ */
+export const fixBrokenStorageUrl = (url: string | null): string => {
+  if (!url) return '';
+  
+  // Check if URL is just a path without the domain
+  if (!url.startsWith('http') && !url.includes('supabase.co')) {
+    // Try to extract the bucket and path
+    const parts = url.split('/');
+    if (parts.length >= 2) {
+      const bucket = parts[0];
+      const path = parts.slice(1).join('/');
+      return getStorageUrl(bucket, path);
+    }
+  }
+  
+  return url;
 };
