@@ -5,19 +5,12 @@ import { useDbService } from './useDbService';
 export const usePostService = () => {
   const { checkColumnExists } = useDbService();
 
-  const createPostWithVideo = async ({
-    userId,
-    videoUrl,
-    caption,
-    visibility,
-    tags
-  }: {
-    userId: string;
-    videoUrl: string;
-    caption: string;
-    visibility: 'public' | 'subscribers_only';
-    tags: string[];
-  }) => {
+  const createPostWithVideo = async (
+    videoUrl: string,
+    caption: string,
+    visibility: 'public' | 'subscribers_only' = 'public',
+    tags: string[] = []
+  ) => {
     try {
       // Decide whether to create a story or a post
       const isShortStory = caption.length <= 50;
@@ -29,7 +22,7 @@ export const usePostService = () => {
         
         // Create story record
         const storyData: any = {
-          creator_id: userId,
+          creator_id: supabase.auth.getUser().data.user?.id,
           video_url: videoUrl,
           duration: 30, // 30 seconds for stories
           is_active: true,
@@ -58,7 +51,7 @@ export const usePostService = () => {
           .from('posts')
           .insert([
             {
-              creator_id: userId,
+              creator_id: supabase.auth.getUser().data.user?.id,
               content: caption,
               video_urls: [videoUrl],
               visibility: visibility,

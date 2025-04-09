@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useDbService } from './services/useDbService';
@@ -13,6 +12,7 @@ export const useShortPostSubmit = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const session = useSession();
   const { checkColumnExists } = useDbService();
@@ -20,17 +20,25 @@ export const useShortPostSubmit = () => {
   const { getUsernameForWatermark } = useWatermarkService();
   const { createPostWithVideo } = usePostService();
 
+  const resetUploadState = () => {
+    setIsUploading(false);
+    setUploadProgress(0);
+    setError(null);
+    setIsSubmitting(false);
+  };
+
   const submitShortPost = async (
     videoFile: File,
     caption: string,
     visibility: 'public' | 'subscribers_only' = 'public',
     tags: string[] = []
-  ) => {
+  ): Promise<{ success: boolean; data?: any; error?: any }> => {
     if (!session?.user) {
-      setError('You must be logged in to upload videos');
+      const authError = 'You must be logged in to upload videos';
+      setError(authError);
       toast({
         title: 'Authentication Error',
-        description: 'You must be logged in to upload videos',
+        description: authError,
         variant: 'destructive',
       });
       return { success: false, error: 'Authentication required' };
@@ -39,39 +47,33 @@ export const useShortPostSubmit = () => {
     try {
       setError(null);
       setIsUploading(true);
+      setIsSubmitting(true);
       setUploadProgress(10);
 
       // Get watermark username
       const watermarkUsername = await getUsernameForWatermark(session.user.id);
       
       // Upload video to storage
-      const { videoUrl, error: uploadError } = await uploadVideoToStorage(
-        videoFile,
-        session.user.id,
-        watermarkUsername,
-        (progress) => {
-          setUploadProgress(10 + progress * 0.6); // 10-70% for upload
-        }
+      const { path, error: uploadError } = await uploadVideoToStorage(
+        session.user.id, 
+        videoFile
       );
 
-      if (uploadError || !videoUrl) {
+      if (uploadError || !path) {
         throw new Error(uploadError || 'Failed to upload video');
       }
 
       setUploadProgress(80);
       
-      // Add cache buster to video URL to prevent caching issues
-      const cacheBustedUrl = addCacheBuster(videoUrl);
+      // Get full public URL from storage path
+      const videoUrl = addCacheBuster(`/api/storage/shorts/${path}`);
       
       // Create post or story with video URL
-      const result = await createPostWithVideo({
-        userId: session.user.id,
-        videoUrl: cacheBustedUrl,
-        caption,
-        visibility,
-        tags
-      });
-
+      const result = await createPostWithVideo(
+        videoUrl,
+        caption
+      );
+      
       setUploadProgress(100);
       
       if (result.error) {
@@ -95,6 +97,7 @@ export const useShortPostSubmit = () => {
       });
       return { success: false, error: errorMessage };
     } finally {
+      setIsSubmitting(false);
       setIsUploading(false);
       setUploadProgress(0);
     }
@@ -105,5 +108,9 @@ export const useShortPostSubmit = () => {
     isUploading,
     uploadProgress,
     error,
+    isSubmitting,
+    errorMessage: error, // Alias for error for backward compatibility
+    resetUploadState,
+    isError: !!error, // Computed property for convenience
   };
 };

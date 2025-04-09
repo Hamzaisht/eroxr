@@ -38,12 +38,13 @@ export const useVideoDialogState = (open: boolean, onOpenChange: (open: boolean)
   
   const { 
     submitShortPost, 
-    isSubmitting, 
-    uploadProgress, 
     isUploading, 
-    isError, 
-    errorMessage,
-    resetUploadState
+    uploadProgress, 
+    error,
+    isSubmitting,
+    resetUploadState,
+    isError,
+    errorMessage
   } = useShortPostSubmit();
 
   // Constants
@@ -64,7 +65,11 @@ export const useVideoDialogState = (open: boolean, onOpenChange: (open: boolean)
         isPreviewLoading: false,
         uploadComplete: false
       });
-      resetUploadState();
+      
+      // Reset upload state if that function is available
+      if (resetUploadState) {
+        resetUploadState();
+      }
     }
   }, [open, resetUploadState]);
 
@@ -193,14 +198,23 @@ export const useVideoDialogState = (open: boolean, onOpenChange: (open: boolean)
 
     try {
       console.log("Starting upload process with file:", state.selectedFile.name, state.selectedFile.type);
-      const success = await submitShortPost({
-        title: state.title,
-        description: state.description.trim() || undefined,
-        videoFile: state.selectedFile,
-        isPremium: state.isPremium
-      });
+      
+      // Use the title as the caption, and description if available
+      const caption = state.description.trim() 
+        ? `${state.title}\n\n${state.description}` 
+        : state.title;
+      
+      // Pass video file and caption to submitShortPost
+      // Use isPremium to determine visibility
+      const visibility = state.isPremium ? 'subscribers_only' : 'public';
+      
+      const result = await submitShortPost(
+        state.selectedFile,
+        caption,
+        visibility
+      );
 
-      if (success) {
+      if (result.success) {
         updateState({ uploadComplete: true });
         
         toast({
