@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +25,6 @@ export const useShortPostSubmit = () => {
     retryUpload
   } = useOptimisticUpload();
 
-  // File validation constants
   const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
   const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
@@ -40,7 +38,6 @@ export const useShortPostSubmit = () => {
     }
   }, [session?.user?.id]);
 
-  // Helper function to add a cache buster to a URL
   const addCacheBuster = (url: string) => {
     if (!url) return url;
     
@@ -51,14 +48,11 @@ export const useShortPostSubmit = () => {
       : `${url}?t=${timestamp}&r=${random}`;
   };
 
-  // Create a full public URL from a Supabase storage path
   const getFullPublicUrl = (bucket: string, path: string): string => {
     if (!path) return '';
     
-    // Directly use getPublicUrl to get the correct URL format
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     
-    // Safety check - this should never happen if properly set up
     if (!data.publicUrl) {
       console.error("Failed to get public URL for", bucket, path);
       return '';
@@ -67,7 +61,6 @@ export const useShortPostSubmit = () => {
     return data.publicUrl;
   };
 
-  // Validate video file before upload
   const validateVideoFile = (file: File): { valid: boolean; error?: string } => {
     if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
       return { 
@@ -101,7 +94,6 @@ export const useShortPostSubmit = () => {
       return false;
     }
 
-    // Validate the video file before proceeding
     const validation = validateVideoFile(videoFile);
     if (!validation.valid) {
       toast({
@@ -126,15 +118,12 @@ export const useShortPostSubmit = () => {
 
         console.log("Uploading to path:", filePath, "in bucket:", bucketName);
         
-        // Check if we need to compress the video before upload
         let fileToUpload = videoFile;
         if (videoFile.size > 50 * 1024 * 1024) {
-          // For simplicity, we're not actually implementing compression
-          // But this is where you would compress the video
           console.log("Video is large, compression would happen here");
         }
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        let uploadResult = await supabase.storage
           .from(bucketName)
           .upload(filePath, fileToUpload, {
             cacheControl: '3600',
@@ -142,26 +131,50 @@ export const useShortPostSubmit = () => {
             contentType: videoFile.type
           });
 
+        let uploadData = uploadResult.data;
+        let uploadError = uploadResult.error;
+
         if (uploadError) {
-          console.error("Upload error details:", uploadError);
-          throw new Error(`Upload failed: ${uploadError.message}`);
+          console.error("First upload attempt failed:", uploadError);
+          
+          const retryId = uuidv4();
+          const retryFilePath = `${session.user.id}/retry_${retryId}.${fileExt}`;
+          
+          console.log("Retrying upload with path:", retryFilePath);
+          
+          const retryResult = await supabase.storage
+            .from(bucketName)
+            .upload(retryFilePath, fileToUpload, {
+              cacheControl: '3600',
+              upsert: true,
+              contentType: videoFile.type
+            });
+          
+          uploadData = retryResult.data;
+          uploadError = retryResult.error;
+          
+          if (uploadError) {
+            console.error("Retry upload failed:", uploadError);
+            throw new Error(`Upload failed after retry: ${uploadError.message}`);
+          }
         }
         
         console.log("Upload successful:", uploadData);
 
-        // Get the proper public URL using the utility function
-        const publicUrl = getFullPublicUrl(bucketName, filePath);
+        if (!uploadData || !uploadData.path) {
+          throw new Error('Upload completed but no file path returned');
+        }
+        
+        const publicUrl = getFullPublicUrl(bucketName, uploadData.path);
         
         if (!publicUrl) {
           throw new Error('Failed to get public URL for uploaded video');
         }
         
-        // Add cache buster to ensure fresh content
         const publicUrlWithCacheBuster = addCacheBuster(publicUrl);
         
         console.log("Public URL obtained:", publicUrlWithCacheBuster);
         
-        // Generate thumbnail URL (same as video URL for now)
         const thumbnailUrl = publicUrlWithCacheBuster;
 
         const tags = ['eros', 'short'];
@@ -178,21 +191,18 @@ export const useShortPostSubmit = () => {
           video_thumbnail_url: thumbnailUrl, 
           visibility: isPremium ? 'subscribers_only' : 'public',
           video_processing_status: 'completed',
-          tags: tags
+          tags: tags,
+          content_type: 'video'
         };
 
-        // Add description if provided
         if (description && description.trim() !== '') {
           postObject.content_extended = description.trim();
-          console.log("Added description to content_extended:", description.trim());
         }
 
-        // Try to store metadata if the column exists
         try {
           const hasMetadataColumn = await checkColumnExists('posts', 'metadata');
           
           if (hasMetadataColumn) {
-            console.log("Metadata column exists, adding to post object");
             postObject.metadata = {
               watermarkUsername: username,
               creator: session.user.id,
@@ -200,20 +210,16 @@ export const useShortPostSubmit = () => {
               originalFilename: videoFile.name,
               publicUrl: publicUrlWithCacheBuster,
               bucketName: bucketName,
-              storagePath: filePath,
+              storagePath: uploadData.path,
               fileType: videoFile.type
             };
-          } else {
-            console.log("Metadata column doesn't exist, skipping");
           }
         } catch (metadataError) {
-          // Just log this but don't fail the upload
           console.warn("Couldn't check for metadata column:", metadataError);
         }
 
         console.log("Inserting post record:", postObject);
 
-        // Artificial delay before finalizing post for UX smoothness
         await new Promise(resolve => setTimeout(resolve, 200));
 
         const { data: postData, error: postError } = await supabase
@@ -250,10 +256,8 @@ export const useShortPostSubmit = () => {
     });
   };
 
-  // Helper function to check if a column exists in a table
   const checkColumnExists = async (table: string, column: string): Promise<boolean> => {
     try {
-      // Use system tables to check if column exists
       const { data, error } = await supabase
         .rpc('check_column_exists', { 
           p_table_name: table,
@@ -282,8 +286,8 @@ export const useShortPostSubmit = () => {
     errorMessage: uploadState.errorMessage,
     resetUploadState,
     retryUpload: () => retryUpload(() => submitShortPost({
-      title: "", // These will be replaced when actually retrying
-      videoFile: new File([], "") // Placeholder
+      title: "", 
+      videoFile: new File([], "")
     }))
   };
 };

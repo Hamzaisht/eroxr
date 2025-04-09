@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -115,6 +114,11 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
       if (success) {
         setUploadComplete(true);
         
+        toast({
+          title: "Upload successful",
+          description: "Your Eros video is now being processed and will be available soon.",
+        });
+        
         // Navigate to shorts feed after successful upload with a slight delay
         setTimeout(() => {
           onOpenChange(false);
@@ -123,6 +127,11 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
       }
     } catch (error) {
       console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: "There was a problem uploading your video. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -130,6 +139,8 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
+    setSelectedFile(null);
+    setPreviewUrl(null);
     onOpenChange(false);
   };
 

@@ -86,7 +86,8 @@ export const StoryUploader = () => {
             .from('stories')
             .upload(filePath, file, {
               cacheControl: '3600',
-              upsert: false
+              upsert: false,
+              contentType: file.type // Add explicit content type
             })
             .then(({ data, error }) => {
               clearInterval(progressInterval);
@@ -99,9 +100,10 @@ export const StoryUploader = () => {
         });
       };
 
-      // Attempt upload
-      // Using 'let' instead of 'const' so it can be reassigned if needed
-      let { error: uploadError, data: uploadData } = await uploadWithProgress();
+      // Use 'let' instead of 'const' to allow reassignment if needed
+      let uploadResult = await uploadWithProgress();
+      let uploadError = uploadResult.error;
+      let uploadData = uploadResult.data;
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
@@ -118,20 +120,27 @@ export const StoryUploader = () => {
           const retryFileName = `retry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
           const retryFilePath = `${session.user.id}/${retryFileName}`;
           
-          const { error: retryError, data: retryData } = await supabase.storage
+          const retryResult = await supabase.storage
             .from('stories')
             .upload(retryFilePath, file, {
               cacheControl: '3600',
-              upsert: true
+              upsert: true,
+              contentType: file.type // Add explicit content type
             });
           
-          if (retryError) throw retryError;
+          if (retryResult.error) {
+            throw retryResult.error;
+          }
           
-          // Now uploadData can be reassigned
-          uploadData = retryData;
+          // If retry was successful, use the retry data
+          uploadData = retryResult.data;
         } else {
           throw uploadError;
         }
+      }
+
+      if (!uploadData || !uploadData.path) {
+        throw new Error("Upload completed but no file path returned");
       }
 
       setUploadProgress(95); // Almost done
@@ -159,7 +168,11 @@ export const StoryUploader = () => {
         .insert([{
           creator_id: session.user.id,
           [isVideo ? 'video_url' : 'media_url']: cacheBustedUrl,
-          duration: isVideo ? 30 : 10
+          duration: isVideo ? 30 : 10,
+          content_type: isVideo ? 'video' : 'image',
+          media_type: isVideo ? 'video' : 'image',
+          is_active: true,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
         }]);
 
       if (storyError) throw storyError;

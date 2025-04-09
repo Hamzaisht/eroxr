@@ -84,7 +84,7 @@ export const VideoPlayer = ({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !videoUrl) return;
 
     const startStallTimer = () => {
       // Clear any existing timer first
@@ -174,15 +174,21 @@ export const VideoPlayer = ({
         setRetryCount(prevCount => prevCount + 1);
         
         // Try with cache buster
-        const newUrl = getUrlWithCacheBuster(videoUrl);
-        videoElement.src = newUrl;
-        videoElement.load();
-        
-        // Start a new stall timer for the retry
-        startStallTimer();
-        
-        // Don't set error state yet, just trying again
-        return;
+        if (videoElement) {
+          try {
+            const newUrl = getUrlWithCacheBuster(videoUrl);
+            videoElement.src = newUrl;
+            videoElement.load();
+            
+            // Start a new stall timer for the retry
+            startStallTimer();
+            
+            // Don't set error state yet, just trying again
+            return;
+          } catch (err) {
+            console.error("Error during retry:", err);
+          }
+        }
       }
       
       setErrorDetails(errorMsg);
@@ -276,14 +282,21 @@ export const VideoPlayer = ({
     // Create a new URL with cache buster to avoid browser caching
     const newUrl = getUrlWithCacheBuster(videoUrl);
     
-    videoRef.current.src = newUrl;
-    videoRef.current.load();
-    
-    toast({
-      title: "Retrying video",
-      description: "Attempting to reload the video...",
-      duration: 2000,
-    });
+    try {
+      videoRef.current.src = newUrl;
+      videoRef.current.load();
+      
+      toast({
+        title: "Retrying video",
+        description: "Attempting to reload the video...",
+        duration: 2000,
+      });
+    } catch (err) {
+      console.error("Error during manual retry:", err);
+      setHasError(true);
+      setIsLoading(false);
+      setErrorDetails("Failed to reload video. Please try again later.");
+    }
   };
 
   const toggleFullscreen = () => {
