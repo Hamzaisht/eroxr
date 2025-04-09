@@ -1,17 +1,10 @@
 
 import { useState } from "react";
-import { Plus, Loader2, Video } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { UploadVideoDialog } from "./UploadVideoDialog";
 
 export const UploadShortButton = () => {
