@@ -5,7 +5,7 @@ import { StoryImage } from "./StoryImage";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { getContentType, getMediaUrl, fixBrokenStorageUrl, getUrlWithCacheBuster, ensureProperMediaUrl } from "@/utils/mediaUtils";
+import { getContentType, getMediaUrl, fixBrokenStorageUrl, getUrlWithCacheBuster } from "@/utils/mediaUtils";
 
 interface StoryContentProps {
   story: Story;

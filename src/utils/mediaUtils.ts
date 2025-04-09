@@ -1,4 +1,3 @@
-
 /**
  * Adds cache busting parameters to a URL to prevent caching issues
  * @param baseUrl The original URL
@@ -128,25 +127,6 @@ export const createUniqueFilePath = (userId: string, fileName: string): string =
 };
 
 /**
- * Ensures a media URL is properly formatted and freshened with cache busting
- * @param url The media URL to format
- * @param bucket Optional bucket name if URL is just a path
- * @returns A properly formatted and cache-busted URL
- */
-export const ensureProperMediaUrl = (url: string | null, bucket?: string): string => {
-  if (!url) return '';
-  
-  // If it's just a path and bucket is provided, convert to full URL
-  let fullUrl = url;
-  if (bucket && !url.startsWith('http')) {
-    fullUrl = getStorageUrl(bucket, url);
-  }
-  
-  // Add cache busting
-  return getUrlWithCacheBuster(fullUrl);
-};
-
-/**
  * Fixes a broken Supabase storage URL by reconstructing it properly
  * @param url The potentially broken URL
  * @returns A fixed URL or the original if it appears valid
@@ -166,6 +146,46 @@ export const fixBrokenStorageUrl = (url: string | null): string => {
   }
   
   return url;
+};
+
+/**
+ * Refreshes a URL that might be stale or cached
+ * @param url The URL to refresh
+ * @returns A refreshed URL with new cache busting parameters
+ */
+export const refreshUrl = (url: string | null): string => {
+  if (!url) return '';
+  
+  // Remove any existing cache busting parameters
+  let cleanUrl = url;
+  if (url.includes('?')) {
+    const urlObj = new URL(url);
+    urlObj.searchParams.delete('cb');
+    urlObj.searchParams.delete('r');
+    cleanUrl = urlObj.toString();
+  }
+  
+  // Add fresh cache busting parameters
+  return getUrlWithCacheBuster(cleanUrl);
+};
+
+/**
+ * Ensures a media URL is properly formatted and freshened with cache busting
+ * @param url The media URL to format
+ * @param bucket Optional bucket name if URL is just a path
+ * @returns A properly formatted and cache-busted URL
+ */
+export const ensureProperMediaUrl = (url: string | null, bucket?: string): string => {
+  if (!url) return '';
+  
+  // If it's just a path and bucket is provided, convert to full URL
+  let fullUrl = url;
+  if (bucket && !url.startsWith('http')) {
+    fullUrl = getStorageUrl(bucket, url);
+  }
+  
+  // Add cache busting
+  return getUrlWithCacheBuster(fullUrl);
 };
 
 /**
@@ -192,27 +212,6 @@ export const isValidUrl = (url: string | null): boolean => {
   } catch (e) {
     return false;
   }
-};
-
-/**
- * Refreshes a URL that might be stale or cached
- * @param url The URL to refresh
- * @returns A refreshed URL with new cache busting parameters
- */
-export const refreshUrl = (url: string | null): string => {
-  if (!url) return '';
-  
-  // Remove any existing cache busting parameters
-  let cleanUrl = url;
-  if (url.includes('?')) {
-    const urlObj = new URL(url);
-    urlObj.searchParams.delete('cb');
-    urlObj.searchParams.delete('r');
-    cleanUrl = urlObj.toString();
-  }
-  
-  // Add fresh cache busting parameters
-  return getUrlWithCacheBuster(cleanUrl);
 };
 
 /**

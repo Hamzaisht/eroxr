@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import '../../../styles/watermark.css';
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
-import { getUrlWithCacheBuster, fixBrokenStorageUrl, ensureProperMediaUrl, refreshUrl } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster, refreshUrl } from "@/utils/mediaUtils";
 
 interface StoryImageProps {
   mediaUrl: string;
@@ -18,7 +18,6 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const [watermarkUsername, setWatermarkUsername] = useState<string>(username);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [hasRetried, setHasRetried] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 2;
   
@@ -32,33 +31,29 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
     // Reset loading state when URL changes
     setIsLoading(true);
     setLoadError(false);
-    setHasRetried(false);
     setRetryCount(0);
   }, [creatorId, mediaUrl]);
-  
-  // Fix potentially broken URL and add cache buster
-  let fixedUrl = ensureProperMediaUrl(mediaUrl);
   
   const handleImageLoad = () => {
     setIsLoading(false);
     setLoadError(false);
-    console.log("Story image loaded:", fixedUrl);
+    console.log("Story image loaded:", mediaUrl);
   };
   
   const handleImageError = () => {
     setIsLoading(false);
     
     if (retryCount < MAX_RETRIES) {
-      console.log(`Retrying image load (${retryCount + 1}/${MAX_RETRIES}):`, fixedUrl);
+      console.log(`Retrying image load (${retryCount + 1}/${MAX_RETRIES}):`, mediaUrl);
       setRetryCount(prev => prev + 1);
       
       // Wait a moment and retry with a fresh URL
       setTimeout(() => {
-        fixedUrl = refreshUrl(fixedUrl);
+        const freshUrl = refreshUrl(mediaUrl);
         setIsLoading(true);
       }, 500);
     } else {
-      console.error("Failed to load story image after multiple attempts:", fixedUrl);
+      console.error("Failed to load story image after multiple attempts:", mediaUrl);
       setLoadError(true);
       
       if (onError) {
@@ -71,10 +66,9 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
     setIsLoading(true);
     setLoadError(false);
     setRetryCount(0);
-    fixedUrl = refreshUrl(fixedUrl);
   };
   
-  if (!fixedUrl) {
+  if (!mediaUrl) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -121,7 +115,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
       
       {/* Image */}
       <img
-        src={fixedUrl}
+        src={mediaUrl}
         alt={`Story by ${username}`}
         className="w-full h-full object-contain max-h-[100vh]"
         loading="eager"
