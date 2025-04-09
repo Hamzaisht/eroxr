@@ -16,9 +16,9 @@ export const usePostService = () => {
       // Decide whether to create a story or a post
       const isShortStory = caption.length <= 50;
       
-      // Properly await the auth user response
-      const { data: { user } } = await supabase.auth.getSession();
-      const userId = user?.id;
+      // Properly handle the auth session response
+      const { data } = await supabase.auth.getSession();
+      const userId = data.session?.user?.id;
       
       if (!userId) {
         throw new Error('User not authenticated');
