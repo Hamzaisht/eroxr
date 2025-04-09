@@ -5,7 +5,7 @@ import { StoryImage } from "./StoryImage";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { getContentType } from "@/utils/mediaUtils";
+import { getContentType, getMediaUrl } from "@/utils/mediaUtils";
 
 interface StoryContentProps {
   story: Story;
@@ -17,12 +17,10 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasMediaError, setHasMediaError] = useState(false);
   
-  // Use our utility function for consistent content type detection
+  // Use our utility functions for consistent content type and URL detection
   const mediaType = getContentType(story);
   const isVideo = mediaType === 'video';
-  
-  // Determine the media URL to use
-  const mediaUrl = isVideo ? story.video_url : story.media_url;
+  const mediaUrl = getMediaUrl(story);
   
   // Log content info for debugging
   console.log("Story content:", { 

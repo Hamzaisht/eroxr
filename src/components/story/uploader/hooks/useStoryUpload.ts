@@ -1,9 +1,10 @@
+
 import { useState } from 'react';
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDbService } from "@/components/home/hooks/short-post/services/useDbService";
 import { supabase } from "@/integrations/supabase/client";
-import { getUrlWithCacheBuster, getStorageUrl } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster, getStorageUrl, createUniqueFilePath } from "@/utils/mediaUtils";
 
 // Maximum file size (100MB)
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -101,7 +102,7 @@ export const useStoryUpload = () => {
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
       };
       
-      // Add content based on file type
+      // Add content based on file type - use the full URL directly
       if (isVideo) {
         storyData.video_url = fileUrl;
       } else {
@@ -149,10 +150,8 @@ export const useStoryUpload = () => {
       setIsUploading(true);
       setUploadProgress(10); // Show initial progress
       
-      // Updated file path logic to use userId and timestamp
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-      const filePath = `${session.user.id}/${fileName}`;
+      // Use our utility function to create a unique file path
+      const filePath = createUniqueFilePath(session.user.id, file.name);
 
       console.log("Uploading story file:", file.type, filePath);
 
@@ -170,9 +169,8 @@ export const useStoryUpload = () => {
             description: "First attempt failed, trying again...",
           });
           
-          // Retry with a different file path - using updated naming pattern
-          const retryFileName = `retry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-          const retryFilePath = `${session.user.id}/${retryFileName}`;
+          // Retry with a different file path using our utility
+          const retryFilePath = createUniqueFilePath(session.user.id, `retry_${file.name}`);
           
           console.log("Retrying upload with path:", retryFilePath, "Content-Type:", file.type);
           
@@ -202,9 +200,12 @@ export const useStoryUpload = () => {
 
       setUploadProgress(95); // Almost done
 
-      // Generate full public URL using our utility function
-      const publicUrl = getStorageUrl('stories', uploadData.path);
-      console.log("Generated full URL:", publicUrl);
+      // Get the public URL using Supabase's getPublicUrl method
+      const { data: { publicUrl } } = supabase.storage
+        .from('stories')
+        .getPublicUrl(uploadData.path);
+      
+      console.log("Generated public URL:", publicUrl);
       
       // Add a cache buster to ensure the URL is fresh
       const cacheBustedUrl = getUrlWithCacheBuster(publicUrl);
@@ -215,7 +216,7 @@ export const useStoryUpload = () => {
       const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
       const contentType = isVideo ? 'video' : 'image';
       
-      // Create story record
+      // Create story record with the full URL
       const { error: storyError } = await createStoryRecord(
         session.user.id,
         cacheBustedUrl,
@@ -235,8 +236,7 @@ export const useStoryUpload = () => {
         description: "Your story is now live",
       });
       
-      // Instead of reloading the page, refresh stories data
-      // We'll add a state update that components can listen to
+      // Refresh stories data
       window.dispatchEvent(new CustomEvent('story-uploaded'));
       
     } catch (error: any) {

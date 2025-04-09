@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { getUrlWithCacheBuster } from '@/utils/mediaUtils';
-import { getStorageUrl } from '@/utils/mediaUtils';
+import { getUrlWithCacheBuster, createUniqueFilePath } from '@/utils/mediaUtils';
 
 export const useStorageService = () => {
   /**
@@ -9,7 +8,12 @@ export const useStorageService = () => {
    */
   const getFullPublicUrl = (bucket: string, path: string): string => {
     if (!path) return '';
-    return getStorageUrl(bucket, path);
+    
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(path);
+    
+    return data.publicUrl;
   };
 
   /**
@@ -20,18 +24,17 @@ export const useStorageService = () => {
     videoFile: File
   ): Promise<{ success: boolean; path?: string; url?: string; error?: string }> => {
     try {
-      const fileExt = videoFile.name.split('.').pop();
-      const uniqueId = crypto.randomUUID();
-      const fileName = `${userId}/${Date.now()}_${uniqueId}.${fileExt}`;
+      // Use utility function to create a unique file path
+      const filePath = createUniqueFilePath(userId, videoFile.name);
       const bucketName = 'shorts';
 
-      console.log("Uploading to path:", fileName, "in bucket:", bucketName);
+      console.log("Uploading to path:", filePath, "in bucket:", bucketName);
       console.log("File type:", videoFile.type);
       
       // First upload attempt with explicit content type
       let uploadResult = await supabase.storage
         .from(bucketName)
-        .upload(fileName, videoFile, {
+        .upload(filePath, videoFile, {
           cacheControl: '3600',
           upsert: true,
           contentType: videoFile.type // Explicitly set content type
@@ -47,8 +50,8 @@ export const useStorageService = () => {
         // Add a small delay before retry
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        const retryId = crypto.randomUUID();
-        const retryFilePath = `${userId}/retry_${Date.now()}_${retryId}.${fileExt}`;
+        // Use utility function to create a unique retry file path
+        const retryFilePath = createUniqueFilePath(userId, `retry_${videoFile.name}`);
         
         console.log("Retrying upload with path:", retryFilePath);
         console.log("Retry with content type:", videoFile.type);
@@ -85,14 +88,20 @@ export const useStorageService = () => {
       
       console.log("Upload successful, path:", uploadData.path);
       
-      // Generate the full public URL for the uploaded file
-      const publicUrl = getStorageUrl(bucketName, uploadData.path);
+      // Generate the full public URL using Supabase's getPublicUrl method
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(uploadData.path);
+        
       console.log("Public URL:", publicUrl);
+      
+      // Add cache busting to ensure fresh content delivery
+      const cacheBustedUrl = getUrlWithCacheBuster(publicUrl);
       
       return { 
         success: true, 
         path: uploadData.path,
-        url: publicUrl
+        url: cacheBustedUrl
       };
     } catch (error: any) {
       console.error("Storage upload error:", error);
