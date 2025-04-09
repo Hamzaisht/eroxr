@@ -1,10 +1,12 @@
 
-import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useDbService = () => {
   /**
-   * Checks if a column exists in a table
+   * Checks if a column exists in a specific table
+   * @param table The table name
+   * @param column The column name
+   * @returns Promise<boolean> indicating if column exists
    */
   const checkColumnExists = async (table: string, column: string): Promise<boolean> => {
     try {
@@ -15,6 +17,7 @@ export const useDbService = () => {
         .limit(1);
 
       if (error && error.message.includes(`column "${column}" does not exist`)) {
+        console.log(`Column "${column}" does not exist in table "${table}"`);
         return false;
       }
       

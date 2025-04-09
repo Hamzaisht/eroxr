@@ -16,7 +16,7 @@ export const usePostService = () => {
       // Decide whether to create a story or a post
       const isShortStory = caption.length <= 50;
       
-      // Properly handle the auth session response
+      // Properly handle the auth session response with optional chaining
       const { data } = await supabase.auth.getSession();
       const userId = data.session?.user?.id;
       
