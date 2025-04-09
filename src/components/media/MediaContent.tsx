@@ -1,12 +1,14 @@
+
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { Loader2, X, Maximize2, Minimize2, AlertCircle } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { WatermarkOverlay } from "./WatermarkOverlay";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { MediaControls } from "./MediaControls";
 import { MediaViewer } from "./MediaViewer";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MediaContentProps {
   url: string;
@@ -36,7 +38,49 @@ export const MediaContent = ({
   const [isZoomed, setIsZoomed] = useState(false);
   const [showEnlargedMedia, setShowEnlargedMedia] = useState(false);
   const [isImageError, setIsImageError] = useState(false);
+  const [publicUrl, setPublicUrl] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Function to get the public URL
+  useEffect(() => {
+    const getPublicUrl = async () => {
+      try {
+        // If it's already a full URL, use it directly
+        if (url.startsWith('http')) {
+          setPublicUrl(url);
+          return;
+        }
+        
+        // Check if it's a storage path
+        if (url.includes('/')) {
+          const parts = url.split('/');
+          const bucket = parts[0];
+          const path = parts.slice(1).join('/');
+          
+          console.log(`Fetching public URL for bucket: ${bucket}, path: ${path}`);
+          
+          const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+          
+          if (data?.publicUrl) {
+            console.log("Retrieved public URL:", data.publicUrl);
+            setPublicUrl(data.publicUrl);
+          } else {
+            // If no public URL was retrieved, fallback to the original URL
+            console.warn("Could not get public URL, using original:", url);
+            setPublicUrl(url);
+          }
+        } else {
+          // If it's not a clear storage path, just use as is
+          setPublicUrl(url);
+        }
+      } catch (error) {
+        console.error("Error getting public URL:", error);
+        setPublicUrl(url); // Fallback to original URL
+      }
+    };
+    
+    getPublicUrl();
+  }, [url]);
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -53,7 +97,7 @@ export const MediaContent = ({
   };
 
   // Add cache busting to URL to prevent stale responses
-  const getUrlWithCacheBuster = (baseUrl: string) => {
+  const getUrlWithCacheBuster = (baseUrl: string | null) => {
     if (!baseUrl) return '';
     const timestamp = Date.now();
     const separator = baseUrl.includes('?') ? '&' : '?';
@@ -61,12 +105,13 @@ export const MediaContent = ({
   };
 
   // Apply cache buster to url
-  const mediaUrlWithCacheBuster = getUrlWithCacheBuster(url);
+  const mediaUrlWithCacheBuster = getUrlWithCacheBuster(publicUrl);
 
   // Function to handle image load errors
   const handleImageError = () => {
     console.error("Failed to load image:", url);
     setIsImageError(true);
+    setIsLoading(false);
   };
 
   const handleMediaClick = () => {
@@ -79,6 +124,19 @@ export const MediaContent = ({
       // For images, we toggle zoom if not using MediaViewer
       setIsZoomed(!isZoomed);
     }
+  };
+
+  // Handle video load success
+  const handleVideoLoaded = () => {
+    console.log("Video loaded successfully:", url);
+    setIsLoading(false);
+  };
+
+  // Handle video load error
+  const handleVideoError = () => {
+    console.error("Video loading error:", url);
+    setIsImageError(true);
+    setIsLoading(false);
   };
 
   return (
@@ -143,7 +201,7 @@ export const MediaContent = ({
           userSelect: 'none',
         }}
       >
-        {isLoading && (
+        {isLoading && !isImageError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
             <Loader2 className="w-8 h-8 animate-spin text-white" />
           </div>
@@ -163,6 +221,8 @@ export const MediaContent = ({
               onClose={() => {}}
               autoPlay={true}
               onClick={handleMediaClick}
+              onError={handleVideoError}
+              onLoadedData={handleVideoLoaded}
             />
           ) : (
             isImageError ? (
@@ -189,7 +249,7 @@ export const MediaContent = ({
                   alt="Media content"
                   className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg"
                   style={getEnlargedImageStyles()}
-                  srcSet={generateSrcSet(url)}
+                  srcSet={generateSrcSet(mediaUrlWithCacheBuster)}
                   sizes={getResponsiveSizes()}
                   loading="eager"
                   decoding="sync"
@@ -210,7 +270,7 @@ export const MediaContent = ({
       {/* Media Viewer for enlarged display */}
       {showEnlargedMedia && (
         <MediaViewer
-          media={url}
+          media={mediaUrlWithCacheBuster}
           onClose={() => setShowEnlargedMedia(false)}
           creatorId={creatorId}
         />

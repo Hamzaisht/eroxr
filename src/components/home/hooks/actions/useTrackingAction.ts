@@ -32,7 +32,8 @@ export const useTrackingAction = () => {
         .from('posts')
         .update({ 
           view_count: newCount,
-          last_engagement_at: new Date().toISOString()
+          last_engagement_at: new Date().toISOString(),
+          is_public: true // Ensure is_public is set to true to comply with RLS
         })
         .eq('id', contentId);
       
@@ -41,12 +42,12 @@ export const useTrackingAction = () => {
         // Try fallback method without timestamp if there's an error
         const { error: fallbackError } = await supabase
           .from('posts')
-          .update({ view_count: newCount })
+          .update({ view_count: newCount, is_public: true })
           .eq('id', contentId);
         
         if (fallbackError) {
           console.error("Fallback update failed:", fallbackError);
-          // Last resort: Use RPC function if available
+          // Use RPC function as last resort
           try {
             await supabase.rpc('increment_counter', {
               row_id: contentId,
@@ -60,7 +61,6 @@ export const useTrackingAction = () => {
       }
     } catch (error) {
       console.error("Error incrementing view count:", error);
-      // Don't show toast to user for view tracking errors
     }
   }, []);
   
@@ -87,7 +87,8 @@ export const useTrackingAction = () => {
         .from('posts')
         .update({ 
           share_count: newCount,
-          last_engagement_at: new Date().toISOString()
+          last_engagement_at: new Date().toISOString(),
+          is_public: true // Ensure is_public is set to true to comply with RLS
         })
         .eq('id', contentId);
       
@@ -96,12 +97,12 @@ export const useTrackingAction = () => {
         // Try fallback method without timestamp if there's an error
         const { error: fallbackError } = await supabase
           .from('posts')
-          .update({ share_count: newCount })
+          .update({ share_count: newCount, is_public: true })
           .eq('id', contentId);
         
         if (fallbackError) {
           console.error("Fallback update failed:", fallbackError);
-          // Last resort: Use RPC function if available
+          // Use RPC function as last resort
           try {
             await supabase.rpc('increment_counter', {
               row_id: contentId,

@@ -59,6 +59,7 @@ export const useShortPostSubmit = () => {
       return '';
     }
     
+    console.log(`Got public URL for ${bucket}/${path}:`, data.publicUrl);
     return data.publicUrl;
   };
 
@@ -198,7 +199,7 @@ export const useShortPostSubmit = () => {
           video_processing_status: 'completed',
           tags: tags,
           content_type: 'video',
-          is_public: true // Add this to ensure it works with RLS policies
+          is_public: true // Important for RLS policy
         };
 
         if (description && description.trim() !== '') {
