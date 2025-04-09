@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { motion } from "framer-motion";
@@ -61,6 +62,7 @@ export const StoryReel = () => {
   };
 
   const groupedStories = groupStoriesByCreator(stories);
+  const hasStories = Object.keys(groupedStories).length > 0;
 
   if (isLoading) return <StoryLoadingState />;
   if (error) return <StoryErrorState error={error} />;
@@ -75,6 +77,7 @@ export const StoryReel = () => {
             ref={containerRef}
             className="flex gap-3 overflow-x-auto scrollbar-hide relative py-2 px-2"
           >
+            {/* Story uploader */}
             {session && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -86,6 +89,7 @@ export const StoryReel = () => {
               </motion.div>
             )}
             
+            {/* Story items */}
             {Object.entries(groupedStories).map(([creatorId, creatorStories], index) => (
               <motion.div 
                 key={creatorId}
@@ -111,7 +115,8 @@ export const StoryReel = () => {
               </motion.div>
             ))}
 
-            {stories.length === 0 && !isLoading && (
+            {/* Empty state */}
+            {!hasStories && !isLoading && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -124,6 +129,7 @@ export const StoryReel = () => {
             )}
           </div>
 
+          {/* Navigation buttons */}
           {stories.length > (isMobile ? 3 : 5) && (
             <StoryNavigation 
               onScroll={(direction) => {
@@ -137,6 +143,7 @@ export const StoryReel = () => {
         </div>
       </div>
       
+      {/* Story viewer modal */}
       {selectedStoryIndex !== null && (
         <StoryViewer
           stories={stories}

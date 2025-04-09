@@ -13,6 +13,7 @@ interface StoryImageProps {
 
 export const StoryImage = ({ mediaUrl, username, isPaused, creatorId }: StoryImageProps) => {
   const [watermarkUsername, setWatermarkUsername] = useState<string>(username);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     getUsernameForWatermark(creatorId).then(name => {
@@ -20,22 +21,35 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId }: StoryIma
     }).catch(error => {
       console.error("Error fetching watermark username:", error);
     });
-  }, [creatorId]);
+    
+    // Reset loading state when URL changes
+    setIsLoading(true);
+  }, [creatorId, mediaUrl]);
   
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 bg-black aspect-[9/16] w-full h-full"
+      className="absolute inset-0 flex items-center justify-center bg-black"
     >
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-luxury-primary/30 border-t-luxury-primary rounded-full animate-spin" />
+        </div>
+      )}
+      
+      {/* Image */}
       <img
         src={mediaUrl}
         alt={`Story by ${username}`}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain max-h-[100vh]"
         loading="eager"
+        onLoad={() => setIsLoading(false)}
         style={{
-          objectPosition: 'center center'
+          objectFit: 'contain',
+          display: isLoading ? 'none' : 'block'
         }}
       />
       

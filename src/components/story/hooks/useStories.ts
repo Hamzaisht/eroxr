@@ -18,7 +18,7 @@ export const useStories = () => {
     const fetchStories = async () => {
       try {
         setError(null);
-        console.info('Fetching stories');
+        console.log('Fetching stories');
         
         // Check if media_type column exists
         const hasMediaType = await checkColumnExists('stories', 'media_type');
@@ -150,7 +150,7 @@ export const useStories = () => {
       setStories([]);
       setIsLoading(false);
     }
-  }, [session?.user?.id, toast]);
+  }, [session?.user?.id, toast, checkColumnExists]);
 
   return { stories, isLoading, error, setStories };
 };

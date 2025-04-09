@@ -1,10 +1,10 @@
-
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { StoryContainer } from "./viewer/StoryContainer";
 import { useToast } from "@/hooks/use-toast";
 import { Story } from "@/integrations/supabase/types/story";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface StoryViewerProps {
   stories: Story[];
@@ -22,10 +22,12 @@ export const StoryViewer = ({
   const [progress, setProgress] = useState(0);
   const progressInterval = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
+  const session = useSession();
 
   const currentStory = stories[currentIndex];
-  const isVideo = !!currentStory?.video_url;
-  const duration = isVideo ? 0 : (currentStory?.duration || 5000);
+  const isVideo = currentStory?.content_type === 'video' || !!currentStory?.video_url;
+  const duration = isVideo ? 0 : (currentStory?.duration || 5) * 1000;
+  const isOwner = session?.user?.id === currentStory?.creator_id;
 
   useEffect(() => {
     if (!isVideo && !isPaused) {
@@ -76,7 +78,16 @@ export const StoryViewer = ({
         title: "Story deleted",
         description: "Your story has been removed successfully",
       });
-      onClose();
+      
+      if (stories.length === 1) {
+        onClose();
+      } 
+      else if (currentIndex === stories.length - 1) {
+        handlePrevious();
+      }
+      else {
+        setProgress(0);
+      }
     } catch (error) {
       console.error('Error deleting story:', error);
       toast({
@@ -88,7 +99,6 @@ export const StoryViewer = ({
   };
 
   const handleEdit = () => {
-    // To be implemented
     toast({
       title: "Coming soon",
       description: "Story editing will be available soon",
@@ -100,27 +110,29 @@ export const StoryViewer = ({
     : `${Math.ceil((duration - (progress / 100) * duration) / 1000)}s`;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50"
-    >
-      <StoryContainer
-        stories={stories}
-        currentStory={currentStory}
-        currentIndex={currentIndex}
-        progress={progress}
-        isPaused={isPaused}
-        onClose={onClose}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onPause={() => setIsPaused(true)}
-        onResume={() => setIsPaused(false)}
-        onDelete={handleDelete}
-        onEdit={handleEdit}
-        timeRemaining={timeRemaining}
-      />
-    </motion.div>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50"
+      >
+        <StoryContainer
+          stories={stories}
+          currentStory={currentStory}
+          currentIndex={currentIndex}
+          progress={progress}
+          isPaused={isPaused}
+          onClose={onClose}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onPause={() => setIsPaused(true)}
+          onResume={() => setIsPaused(false)}
+          onDelete={isOwner ? handleDelete : undefined}
+          onEdit={isOwner ? handleEdit : undefined}
+          timeRemaining={timeRemaining}
+        />
+      </motion.div>
+    </AnimatePresence>
   );
 };

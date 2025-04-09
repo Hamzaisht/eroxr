@@ -13,8 +13,18 @@ interface StoryContentProps {
 
 export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  // Determine if it's a video based on content_type or video_url
+  
+  // Determine content type
   const isVideo = story.content_type === 'video' || !!story.video_url;
+  const mediaUrl = isVideo ? story.video_url! : story.media_url!;
+  
+  // Log content info for debugging
+  console.log("Story content:", { 
+    id: story.id, 
+    type: isVideo ? 'video' : 'image', 
+    contentType: story.content_type,
+    url: mediaUrl
+  });
 
   return (
     <motion.div
@@ -28,14 +38,14 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
         {isVideo ? (
           <StoryVideo
             ref={videoRef}
-            videoUrl={story.video_url!}
+            videoUrl={mediaUrl}
             onEnded={onNext}
             isPaused={isPaused}
             creatorId={story.creator.id}
           />
         ) : (
           <StoryImage
-            mediaUrl={story.media_url || ''}
+            mediaUrl={mediaUrl}
             username={story.creator.username}
             isPaused={isPaused}
             creatorId={story.creator.id}
