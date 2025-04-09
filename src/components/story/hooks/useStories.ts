@@ -61,27 +61,29 @@ export const useStories = () => {
       if (data && data.length > 0) {
         // Process stories to ensure proper URLs
         const processedStories: Story[] = data.map(story => {
+          const storyObject: any = {...story}; // Create a copy of the story object
+          
           // Add cache busters to URLs to prevent caching issues
-          if (story.media_url) {
-            story.media_url = getUrlWithCacheBuster(story.media_url);
+          if (storyObject.media_url) {
+            storyObject.media_url = getUrlWithCacheBuster(storyObject.media_url);
           }
           
-          if (story.video_url) {
-            story.video_url = getUrlWithCacheBuster(story.video_url);
+          if (storyObject.video_url) {
+            storyObject.video_url = getUrlWithCacheBuster(storyObject.video_url);
           }
           
           // Determine media type with fallback logic
-          if (!story.media_type && !story.content_type) {
-            if (story.video_url) {
-              story.media_type = 'video';
-            } else if (story.media_url) {
-              story.media_type = 'image';
+          if (!storyObject.media_type && !storyObject.content_type) {
+            if (storyObject.video_url) {
+              storyObject.media_type = 'video';
+            } else if (storyObject.media_url) {
+              storyObject.media_type = 'image';
             }
-          } else if (!story.media_type && story.content_type) {
-            story.media_type = story.content_type;
+          } else if (!storyObject.media_type && storyObject.content_type) {
+            storyObject.media_type = storyObject.content_type;
           }
           
-          return story as Story;
+          return storyObject as Story;
         });
         
         setStories(processedStories);
