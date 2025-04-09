@@ -6,15 +6,63 @@
 export const getUrlWithCacheBuster = (baseUrl: string | null): string => {
   if (!baseUrl) return '';
   
-  // Skip if URL already has cache busting
-  if (baseUrl.includes('cb=') && baseUrl.includes('r=')) {
-    return baseUrl;
+  try {
+    // Skip if URL already has cache busting
+    if (baseUrl.includes('cb=') && baseUrl.includes('r=')) {
+      return baseUrl;
+    }
+    
+    // Create URL object to properly handle parameters
+    const url = new URL(baseUrl);
+    
+    // Add cache busting params
+    url.searchParams.set('cb', Date.now().toString());
+    url.searchParams.set('r', Math.random().toString(36).substring(2, 9));
+    
+    return url.toString();
+  } catch (e) {
+    // If URL parsing fails, use simple string concatenation
+    console.warn("URL parsing failed, using fallback method for cache busting:", e);
+    const timestamp = Date.now();
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}cb=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
   }
+};
+
+/**
+ * Creates a fresh URL with new cache busting parameters
+ * @param url The URL to refresh
+ * @returns A fresh URL with new cache busting parameters
+ */
+export const refreshUrl = (url: string | null): string => {
+  if (!url) return '';
   
-  // Add appropriate separator
-  const timestamp = Date.now();
-  const separator = baseUrl.includes('?') ? '&' : '?';
-  return `${baseUrl}${separator}cb=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
+  try {
+    // Remove any existing cache busting parameters
+    const parsedUrl = new URL(url);
+    parsedUrl.searchParams.delete('cb');
+    parsedUrl.searchParams.delete('r');
+    parsedUrl.searchParams.delete('t');
+    
+    // Add new cache busting parameters
+    parsedUrl.searchParams.set('cb', Date.now().toString());
+    parsedUrl.searchParams.set('r', Math.random().toString(36).substring(2, 9));
+    
+    return parsedUrl.toString();
+  } catch (e) {
+    // If URL parsing fails, use simple string manipulation
+    console.warn("URL parsing failed during refresh, using fallback method:", e);
+    
+    // Strip existing cache busting params if present
+    let cleanUrl = url;
+    if (url.includes('?')) {
+      cleanUrl = url.split(/[?&](cb|r|t)=/)[0];
+    }
+    
+    // Add fresh cache busting
+    const separator = cleanUrl.includes('?') ? '&' : '?';
+    return `${cleanUrl}${separator}cb=${Date.now()}&r=${Math.random().toString(36).substring(2, 9)}`;
+  }
 };
 
 /**
@@ -69,7 +117,7 @@ export const getStorageUrl = (bucket: string, path: string | null): string => {
     return path;
   }
   
-  // Extract project ID from environment or hardcode it
+  // Extract project ID from environment or hardcode it (should ideally come from env)
   const projectId = 'ysqbdaeohlupucdmivkt';
   return `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}/${path}`;
 };
@@ -134,8 +182,13 @@ export const createUniqueFilePath = (userId: string, fileName: string): string =
 export const fixBrokenStorageUrl = (url: string | null): string => {
   if (!url) return '';
   
+  // If URL already starts with http, assume it's valid
+  if (url.startsWith('http')) {
+    return url;
+  }
+  
   // Check if URL is just a path without the domain
-  if (!url.startsWith('http') && !url.includes('supabase.co')) {
+  if (!url.includes('supabase.co')) {
     // Try to extract the bucket and path
     const parts = url.split('/');
     if (parts.length >= 2) {
@@ -146,27 +199,6 @@ export const fixBrokenStorageUrl = (url: string | null): string => {
   }
   
   return url;
-};
-
-/**
- * Refreshes a URL that might be stale or cached
- * @param url The URL to refresh
- * @returns A refreshed URL with new cache busting parameters
- */
-export const refreshUrl = (url: string | null): string => {
-  if (!url) return '';
-  
-  // Remove any existing cache busting parameters
-  let cleanUrl = url;
-  if (url.includes('?')) {
-    const urlObj = new URL(url);
-    urlObj.searchParams.delete('cb');
-    urlObj.searchParams.delete('r');
-    cleanUrl = urlObj.toString();
-  }
-  
-  // Add fresh cache busting parameters
-  return getUrlWithCacheBuster(cleanUrl);
 };
 
 /**

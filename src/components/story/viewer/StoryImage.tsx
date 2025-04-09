@@ -19,19 +19,24 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [currentSrc, setCurrentSrc] = useState(mediaUrl);
   const MAX_RETRIES = 2;
   
   useEffect(() => {
-    getUsernameForWatermark(creatorId).then(name => {
-      setWatermarkUsername(name);
-    }).catch(error => {
-      console.error("Error fetching watermark username:", error);
-    });
+    // Apply cache busting to URL when component mounts or URL changes
+    setCurrentSrc(getUrlWithCacheBuster(mediaUrl));
     
     // Reset loading state when URL changes
     setIsLoading(true);
     setLoadError(false);
     setRetryCount(0);
+    
+    // Get watermark username
+    getUsernameForWatermark(creatorId).then(name => {
+      setWatermarkUsername(name);
+    }).catch(error => {
+      console.error("Error fetching watermark username:", error);
+    });
   }, [creatorId, mediaUrl]);
   
   const handleImageLoad = () => {
@@ -41,6 +46,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   };
   
   const handleImageError = () => {
+    console.error("Failed to load story image:", currentSrc);
     setIsLoading(false);
     
     if (retryCount < MAX_RETRIES) {
@@ -50,10 +56,10 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
       // Wait a moment and retry with a fresh URL
       setTimeout(() => {
         const freshUrl = refreshUrl(mediaUrl);
+        setCurrentSrc(freshUrl);
         setIsLoading(true);
       }, 500);
     } else {
-      console.error("Failed to load story image after multiple attempts:", mediaUrl);
       setLoadError(true);
       
       if (onError) {
@@ -66,23 +72,10 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
     setIsLoading(true);
     setLoadError(false);
     setRetryCount(0);
+    // Generate a new URL with fresh cache busting
+    const freshUrl = refreshUrl(mediaUrl);
+    setCurrentSrc(freshUrl);
   };
-  
-  if (!mediaUrl) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 flex flex-col items-center justify-center bg-black"
-      >
-        <div className="text-red-500 flex flex-col items-center">
-          <AlertCircle className="h-12 w-12" />
-          <p className="mt-2">Image URL not available</p>
-        </div>
-      </motion.div>
-    );
-  }
   
   return (
     <motion.div
@@ -115,7 +108,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
       
       {/* Image */}
       <img
-        src={mediaUrl}
+        src={currentSrc}
         alt={`Story by ${username}`}
         className="w-full h-full object-contain max-h-[100vh]"
         loading="eager"

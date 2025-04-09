@@ -28,9 +28,6 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   if (mediaUrl) {
     // First fix any broken URLs
     mediaUrl = fixBrokenStorageUrl(mediaUrl);
-    
-    // Then add cache busting for freshness
-    mediaUrl = getUrlWithCacheBuster(mediaUrl);
   }
   
   // Log content info for debugging

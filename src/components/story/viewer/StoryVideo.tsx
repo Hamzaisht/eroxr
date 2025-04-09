@@ -20,34 +20,37 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     const [loadError, setLoadError] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
     const [watermarkUsername, setWatermarkUsername] = useState<string>("");
+    const [currentSrc, setCurrentSrc] = useState(videoUrl);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const MAX_RETRIES = 2;
     
     // Use forwarded ref or internal ref
     const resolvedRef = (ref as React.RefObject<HTMLVideoElement>) || videoRef;
     
-    // Apply watermark
+    // Initialize with cache-busted URL and set up watermark
     useEffect(() => {
-      getUsernameForWatermark(creatorId).then(name => {
-        setWatermarkUsername(name);
-      }).catch(error => {
-        console.error("Error fetching watermark username:", error);
-      });
-    }, [creatorId]);
-    
-    // Add cache buster to URL
-    const cacheBustedUrl = getUrlWithCacheBuster(videoUrl);
-    
-    useEffect(() => {
+      // Apply cache busting to URL
+      setCurrentSrc(getUrlWithCacheBuster(videoUrl));
+      
       // Reset state when URL changes
       setIsLoading(true);
       setLoadError(false);
       setRetryCount(0);
       
+      // Apply watermark
+      getUsernameForWatermark(creatorId).then(name => {
+        setWatermarkUsername(name);
+      }).catch(error => {
+        console.error("Error fetching watermark username:", error);
+      });
+    }, [videoUrl, creatorId]);
+    
+    useEffect(() => {
       const video = resolvedRef.current;
       if (!video) return;
       
       const handleLoadedData = () => {
+        console.log("Video loaded successfully:", videoUrl);
         setIsLoading(false);
         setLoadError(false);
         
@@ -59,7 +62,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
       };
       
       const handleLoadingError = () => {
-        console.error(`Video loading error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, cacheBustedUrl);
+        console.error(`Video loading error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, currentSrc);
         
         if (retryCount < MAX_RETRIES) {
           setRetryCount(prev => prev + 1);
@@ -67,10 +70,9 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
           // Wait a moment then retry with a fresh URL
           setTimeout(() => {
             if (video) {
-              const freshUrl = refreshUrl(cacheBustedUrl);
+              const freshUrl = refreshUrl(currentSrc);
               console.log("Retrying with fresh URL:", freshUrl);
-              video.src = freshUrl;
-              video.load();
+              setCurrentSrc(freshUrl);
             }
           }, 1000);
         } else {
@@ -91,7 +93,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         video.removeEventListener("loadeddata", handleLoadedData);
         video.removeEventListener("error", handleLoadingError);
       };
-    }, [videoUrl, isPaused, onError, retryCount, cacheBustedUrl]);
+    }, [currentSrc, isPaused, onError, retryCount, videoUrl]);
     
     // Handle playback state changes
     useEffect(() => {
@@ -116,12 +118,8 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
       setLoadError(false);
       setRetryCount(0);
       
-      const video = resolvedRef.current;
-      if (video) {
-        const freshUrl = refreshUrl(cacheBustedUrl);
-        video.src = freshUrl;
-        video.load();
-      }
+      const freshUrl = refreshUrl(videoUrl);
+      setCurrentSrc(freshUrl);
     };
     
     return (
@@ -130,7 +128,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         <video
           ref={resolvedRef}
           className="w-full h-full object-contain"
-          src={cacheBustedUrl}
+          src={currentSrc}
           playsInline
           muted
           onEnded={handleEnded}
