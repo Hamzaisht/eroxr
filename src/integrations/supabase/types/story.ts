@@ -11,6 +11,7 @@ export type Story = {
   expires_at: string;
   is_active: boolean | null;
   screenshot_disabled: boolean | null;
-  content_type?: string; // Added content_type field
+  content_type?: string;
+  media_type?: string; // Added media_type field
   creator: Creator;
 };
