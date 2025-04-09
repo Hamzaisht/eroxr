@@ -71,34 +71,20 @@ export const useStories = () => {
             continue;
           }
           
-          // Safely access properties with null checks
-          const id = storyData?.id || '';
-          const creator_id = storyData?.creator_id || '';
-          const media_url = storyData?.media_url || null;
-          const video_url = storyData?.video_url || null;
-          const duration = storyData?.duration || null;
-          const created_at = storyData?.created_at || new Date().toISOString();
-          const expires_at = storyData?.expires_at || new Date().toISOString();
-          const is_active = storyData?.is_active !== undefined ? storyData.is_active : true;
-          const screenshot_disabled = storyData?.screenshot_disabled !== undefined ? storyData.screenshot_disabled : true;
-          const content_type = storyData?.content_type || 'image';
-          const media_type = storyData?.media_type || null;
-          const creator = storyData?.creator || { id: '', username: 'Unknown', avatar_url: null };
-          
-          // Create a story object with proper typing
+          // Create a story object with proper typing - use null assertion to handle null checks
           const story: Story = {
-            id,
-            creator_id,
-            media_url,
-            video_url,
-            duration,
-            created_at,
-            expires_at,
-            is_active,
-            screenshot_disabled,
-            content_type,
-            media_type,
-            creator
+            id: storyData.id || '',
+            creator_id: storyData.creator_id || '',
+            media_url: storyData.media_url || null,
+            video_url: storyData.video_url || null,
+            duration: storyData.duration || null,
+            created_at: storyData.created_at || new Date().toISOString(),
+            expires_at: storyData.expires_at || new Date().toISOString(),
+            is_active: storyData.is_active ?? true,
+            screenshot_disabled: storyData.screenshot_disabled ?? true,
+            content_type: storyData.content_type || 'image',
+            media_type: storyData.media_type || null,
+            creator: storyData.creator || { id: '', username: 'Unknown', avatar_url: null }
           };
           
           // Add cache busters to URLs to prevent caching issues
