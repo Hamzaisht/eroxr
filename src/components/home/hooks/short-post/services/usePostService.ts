@@ -31,6 +31,7 @@ export const usePostService = () => {
         // Check if content_type column exists in stories table
         const hasContentType = await checkColumnExists('stories', 'content_type');
         const hasIsPublic = await checkColumnExists('stories', 'is_public');
+        const hasMediaType = await checkColumnExists('stories', 'media_type');
         
         // Create story record
         const storyData: any = {
@@ -44,6 +45,11 @@ export const usePostService = () => {
         // Add content_type field if column exists
         if (hasContentType) {
           storyData.content_type = 'video';
+        }
+        
+        // Add media_type field if column exists
+        if (hasMediaType) {
+          storyData.media_type = 'video';
         }
         
         // Add is_public field if column exists (it should now)
