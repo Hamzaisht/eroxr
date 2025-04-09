@@ -25,6 +25,13 @@ export const useStoryUpload = () => {
   const { checkColumnExists } = useDbService();
   const MAX_RETRIES = 1;
 
+  // Helper function to get full storage URL
+  const getFullStorageUrl = (path: string): string => {
+    // Extract project ID from the API URL
+    const projectId = 'ysqbdaeohlupucdmivkt'; // Using the hardcoded project ID from config.toml
+    return `https://${projectId}.supabase.co/storage/v1/object/public/stories/${path}`;
+  };
+
   const getUrlWithCacheBuster = (baseUrl: string) => {
     const timestamp = Date.now();
     const separator = baseUrl.includes('?') ? '&' : '?';
@@ -208,19 +215,12 @@ export const useStoryUpload = () => {
 
       setUploadProgress(95); // Almost done
 
-      // Get the public URL for the uploaded file
-      const { data: { publicUrl } } = supabase.storage
-        .from('stories')
-        .getPublicUrl(uploadData.path);
-
-      if (!publicUrl) {
-        throw new Error("Failed to get public URL for uploaded file");
-      }
-      
-      console.log("Story public URL:", publicUrl);
+      // Generate the full URL for the uploaded file - FIXED: Use proper URL construction
+      const fullUrl = getFullStorageUrl(uploadData.path);
+      console.log("Generated full URL:", fullUrl);
       
       // Add a cache buster to ensure the URL is fresh
-      const cacheBustedUrl = getUrlWithCacheBuster(publicUrl);
+      const cacheBustedUrl = getUrlWithCacheBuster(fullUrl);
       
       setUploadProgress(98); // Final step
       
