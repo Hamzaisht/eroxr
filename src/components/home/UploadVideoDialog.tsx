@@ -20,7 +20,7 @@ interface UploadVideoDialogProps {
 }
 
 export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps) => {
-  // State
+  // State for form fields and UI
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -76,6 +76,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     };
   }, [previewUrl]);
 
+  // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -118,6 +119,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     }
   };
 
+  // Handle video preview loading
   const handleVideoLoad = () => {
     console.log("Video preview loaded successfully");
     setIsPreviewLoading(false);
@@ -127,6 +129,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     });
   };
 
+  // Handle video preview error
   const handleVideoError = () => {
     console.error("Video preview failed to load");
     setIsPreviewLoading(false);
@@ -138,6 +141,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     }
   };
 
+  // Handle form submission
   const handleUpload = async () => {
     if (!session?.user?.id || !selectedFile) return;
     
@@ -179,6 +183,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     }
   };
 
+  // Handle dialog cancel
   const handleCancel = () => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -188,6 +193,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     onOpenChange(false);
   };
 
+  // Clear selected video
   const clearVideo = () => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -197,17 +203,15 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     }
   };
 
-  // Fix for the typing bug
+  // Safe handlers for input fields to fix the typing bug
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    console.log("Title changed to:", newValue);
-    setTitle(newValue);
+    setTitle(e.target.value);
+    console.log("Title updated:", e.target.value);
   };
   
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    console.log("Description changed to:", newValue);
-    setDescription(newValue);
+    setDescription(e.target.value);
+    console.log("Description updated:", e.target.value);
   };
 
   return (

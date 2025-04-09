@@ -69,6 +69,14 @@ export const VideoPlayer = ({
     }
   };
 
+  const getUrlWithCacheBuster = (url: string) => {
+    if (!url) return url;
+    
+    const timestamp = Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${timestamp}&r=${Math.random().toString(36).substring(2, 10)}`;
+  };
+
   const handleRetry = () => {
     if (videoRef.current) {
       setIsLoading(true);
@@ -91,14 +99,6 @@ export const VideoPlayer = ({
         setIsStalled(true);
       }, 10000);
     }
-  };
-
-  const getUrlWithCacheBuster = (url: string) => {
-    if (!url) return url;
-    
-    const timestamp = Date.now();
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}t=${timestamp}&r=${Math.random().toString(36).substring(2, 10)}`;
   };
 
   // Handle click events
@@ -239,12 +239,10 @@ export const VideoPlayer = ({
     // Set initial video properties
     video.muted = isMuted;
     
-    // Add cache buster to URL and retry if needed
-    if (!hasRetried) {
-      const cachedUrl = getUrlWithCacheBuster(url);
-      console.log("Using cached URL:", cachedUrl);
-      video.src = cachedUrl;
-    }
+    // Add cache buster to URL and load
+    const cachedUrl = getUrlWithCacheBuster(url);
+    console.log("Using cached URL:", cachedUrl);
+    video.src = cachedUrl;
 
     // Clean up event listeners
     return () => {

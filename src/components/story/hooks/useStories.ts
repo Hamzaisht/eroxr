@@ -18,18 +18,6 @@ export const useStories = () => {
         setError(null);
         console.info('Fetching stories');
         
-        // For testing, get all stories first
-        const { data: allStories, error: allStoriesError } = await supabase
-          .from('stories')
-          .select('*')
-          .limit(10);
-          
-        if (allStoriesError) {
-          console.error("Error fetching all stories:", allStoriesError);
-        } else {
-          console.log("All available stories:", allStories);
-        }
-        
         // Get creator IDs from subscriptions
         const { data: subscriptions, error: subsError } = await supabase
           .from('creator_subscriptions')

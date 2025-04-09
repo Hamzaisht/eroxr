@@ -110,7 +110,7 @@ export const useShortPostSubmit = () => {
 
     return simulateProgressiveUpload(async () => {
       try {
-        console.log("Starting video upload process...");
+        console.log("Starting video upload process for:", videoFile.name, videoFile.type, videoFile.size);
         
         const fileExt = videoFile.name.split('.').pop();
         const uniqueId = uuidv4();
@@ -121,15 +121,10 @@ export const useShortPostSubmit = () => {
         console.log("Uploading to path:", filePath, "in bucket:", bucketName);
         console.log("File type:", videoFile.type);
         
-        let fileToUpload = videoFile;
-        if (videoFile.size > 50 * 1024 * 1024) {
-          console.log("Video is large, compression would happen here");
-        }
-
         // First upload attempt with explicit content type
         let uploadResult = await supabase.storage
           .from(bucketName)
-          .upload(filePath, fileToUpload, {
+          .upload(filePath, videoFile, {
             cacheControl: '3600',
             upsert: true,
             contentType: videoFile.type // Explicitly set content type
@@ -138,8 +133,12 @@ export const useShortPostSubmit = () => {
         let uploadData = uploadResult.data;
         let uploadError = uploadResult.error;
 
+        // Handle upload error with retry
         if (uploadError) {
           console.error("First upload attempt failed:", uploadError);
+          
+          // Add a small delay before retry
+          await new Promise(resolve => setTimeout(resolve, 500));
           
           const retryId = uuidv4();
           const retryFilePath = `${session.user.id}/retry_${retryId}.${fileExt}`;
@@ -150,7 +149,7 @@ export const useShortPostSubmit = () => {
           // Retry with slightly different options
           const retryResult = await supabase.storage
             .from(bucketName)
-            .upload(retryFilePath, fileToUpload, {
+            .upload(retryFilePath, videoFile, {
               cacheControl: '3600',
               upsert: true,
               contentType: videoFile.type
@@ -167,12 +166,13 @@ export const useShortPostSubmit = () => {
           }
         }
         
-        console.log("Upload successful:", uploadData);
-
         if (!uploadData || !uploadData.path) {
           throw new Error('Upload completed but no file path returned');
         }
         
+        console.log("Upload successful, path:", uploadData.path);
+        
+        // Get the public URL for the uploaded file
         const publicUrl = getFullPublicUrl(bucketName, uploadData.path);
         
         if (!publicUrl) {
@@ -180,11 +180,12 @@ export const useShortPostSubmit = () => {
         }
         
         const publicUrlWithCacheBuster = addCacheBuster(publicUrl);
-        
         console.log("Public URL obtained:", publicUrlWithCacheBuster);
         
+        // Generate a thumbnail URL (using the same URL for now)
         const thumbnailUrl = publicUrlWithCacheBuster;
 
+        // Add appropriate tags
         const tags = ['eros', 'short'];
         if (isPremium) {
           tags.push('premium');
@@ -192,7 +193,8 @@ export const useShortPostSubmit = () => {
         
         console.log("Preparing post data with creator info:", username);
 
-        const postObject: any = {
+        // Create the post object with all required fields
+        const postObject = {
           creator_id: session.user.id,
           content: title,
           video_urls: [publicUrlWithCacheBuster],
@@ -204,10 +206,12 @@ export const useShortPostSubmit = () => {
           is_public: true // Important for RLS policy
         };
 
+        // Add description if provided
         if (description && description.trim() !== '') {
           postObject.content_extended = description.trim();
         }
 
+        // Add metadata if possible
         try {
           const hasMetadataColumn = await checkColumnExists('posts', 'metadata');
           
@@ -229,14 +233,17 @@ export const useShortPostSubmit = () => {
 
         console.log("Inserting post record:", postObject);
 
+        // Add a small delay to ensure storage processing is complete
         await new Promise(resolve => setTimeout(resolve, 200));
 
+        // Insert the post into the database
         const { data: postData, error: postError } = await supabase
           .from('posts')
           .insert(postObject)
           .select('id')
           .single();
 
+        // Handle database insert error
         if (postError) {
           console.error("Post creation error:", postError);
           
@@ -290,7 +297,7 @@ export const useShortPostSubmit = () => {
 
   const checkColumnExists = async (table: string, column: string): Promise<boolean> => {
     try {
-      // Simpler check that's less likely to fail
+      // Simple check by selecting from the table with the column
       const { data, error } = await supabase
         .from(table)
         .select(column)
