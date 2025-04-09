@@ -29,6 +29,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
   const [uploadComplete, setUploadComplete] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +62,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
       setDescription("");
       setUploadComplete(false);
       setValidationError(null);
+      setPreviewError(null);
       resetUploadState();
     }
   }, [open, resetUploadState]);
@@ -93,21 +95,31 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     }
 
     setValidationError(null);
+    setPreviewError(null);
     setSelectedFile(file);
-    setIsPreviewLoading(true);
-
-    // Create preview URL
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
     
-    // Show a toast when file is valid and selected
-    toast({
-      title: "Video selected",
-      description: "Preview is being prepared...",
-    });
+    // Create and set preview URL
+    try {
+      setIsPreviewLoading(true);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+      
+      // Show a toast when file is valid and selected
+      toast({
+        title: "Video selected",
+        description: "Preview is being prepared...",
+      });
+      
+      console.log("Created preview URL:", objectUrl);
+    } catch (error) {
+      console.error("Error creating preview URL:", error);
+      setPreviewError("Could not generate video preview");
+      setIsPreviewLoading(false);
+    }
   };
 
   const handleVideoLoad = () => {
+    console.log("Video preview loaded successfully");
     setIsPreviewLoading(false);
     toast({
       title: "Video preview ready",
@@ -116,8 +128,9 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
   };
 
   const handleVideoError = () => {
+    console.error("Video preview failed to load");
     setIsPreviewLoading(false);
-    setValidationError("Failed to preview video. The format may be unsupported.");
+    setPreviewError("Failed to preview video. The format may be unsupported.");
     
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -156,11 +169,11 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
           navigate('/shorts');
         }, 1500);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
       toast({
         title: "Upload failed",
-        description: "There was a problem uploading your video. Please try again.",
+        description: error?.message || "There was a problem uploading your video. Please try again.",
         variant: "destructive",
       });
     }
@@ -173,6 +186,15 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
     setSelectedFile(null);
     setPreviewUrl(null);
     onOpenChange(false);
+  };
+
+  const clearVideo = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      setSelectedFile(null);
+      setPreviewError(null);
+    }
   };
 
   return (
@@ -201,25 +223,36 @@ export const UploadVideoDialog = ({ open, onOpenChange }: UploadVideoDialogProps
                       <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
                     </div>
                   )}
-                  <video 
-                    ref={videoRef}
-                    src={previewUrl} 
-                    className="w-full h-full object-contain"
-                    controls
-                    onLoadedData={handleVideoLoad}
-                    onError={handleVideoError}
-                  />
+                  
+                  {previewError ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-4">
+                      <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
+                      <p className="text-sm text-white/90 text-center">{previewError}</p>
+                      <Button
+                        onClick={clearVideo}
+                        variant="outline"
+                        className="mt-4"
+                        size="sm"
+                      >
+                        Select Another Video
+                      </Button>
+                    </div>
+                  ) : (
+                    <video 
+                      ref={videoRef}
+                      src={previewUrl} 
+                      className="w-full h-full object-contain"
+                      controls
+                      onLoadedData={handleVideoLoad}
+                      onError={handleVideoError}
+                    />
+                  )}
+                  
                   <Button
                     variant="ghost"
                     size="icon"
                     className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 rounded-full p-1.5"
-                    onClick={() => {
-                      if (previewUrl) {
-                        URL.revokeObjectURL(previewUrl);
-                        setPreviewUrl(null);
-                        setSelectedFile(null);
-                      }
-                    }}
+                    onClick={clearVideo}
                   >
                     <X className="h-4 w-4" />
                   </Button>

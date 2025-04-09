@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { X, Play, Pause, VolumeX, Volume2, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -76,6 +77,7 @@ export const VideoPlayer = ({
       
       // Add cache buster to force reload
       const cacheBuster = getUrlWithCacheBuster(url);
+      console.log("Retrying with URL:", cacheBuster);
       videoRef.current.src = cacheBuster;
       videoRef.current.load();
       setHasRetried(true);
@@ -143,6 +145,8 @@ export const VideoPlayer = ({
     const video = videoRef.current;
     if (!video) return;
     
+    console.log("Setting up video with src:", url);
+    
     // Set up stall detection
     if (stallTimerRef.current) {
       clearTimeout(stallTimerRef.current);
@@ -150,6 +154,7 @@ export const VideoPlayer = ({
     
     stallTimerRef.current = setTimeout(() => {
       if (isLoading) {
+        console.log("Video loading stalled after 8 seconds");
         setIsStalled(true);
       }
     }, 8000);
@@ -164,6 +169,7 @@ export const VideoPlayer = ({
         console.log("Video loading timed out, retrying...");
         handleRetry();
       } else if (isLoading && hasRetried) {
+        console.log("Video failed after retry, showing error");
         setIsError(true);
         setIsLoading(false);
       }
@@ -235,7 +241,9 @@ export const VideoPlayer = ({
     
     // Add cache buster to URL and retry if needed
     if (!hasRetried) {
-      video.src = getUrlWithCacheBuster(url);
+      const cachedUrl = getUrlWithCacheBuster(url);
+      console.log("Using cached URL:", cachedUrl);
+      video.src = cachedUrl;
     }
 
     // Clean up event listeners

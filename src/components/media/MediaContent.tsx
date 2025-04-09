@@ -47,6 +47,7 @@ export const MediaContent = ({
       try {
         // If it's already a full URL, use it directly
         if (url.startsWith('http')) {
+          console.log("Using direct URL:", url);
           setPublicUrl(url);
           return;
         }
@@ -71,6 +72,7 @@ export const MediaContent = ({
           }
         } else {
           // If it's not a clear storage path, just use as is
+          console.log("Using raw URL (not a storage path):", url);
           setPublicUrl(url);
         }
       } catch (error) {
@@ -222,7 +224,7 @@ export const MediaContent = ({
               autoPlay={true}
               onClick={handleMediaClick}
               onError={handleVideoError}
-              onLoadedData={handleVideoLoaded} // This is where the error occurs - we need to update the VideoPlayer component
+              onLoadedData={handleVideoLoaded}
             />
           ) : (
             isImageError ? (

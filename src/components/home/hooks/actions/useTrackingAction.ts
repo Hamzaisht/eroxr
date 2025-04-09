@@ -42,7 +42,10 @@ export const useTrackingAction = () => {
         // Try fallback method without timestamp if there's an error
         const { error: fallbackError } = await supabase
           .from('posts')
-          .update({ view_count: newCount, is_public: true })
+          .update({ 
+            view_count: newCount, 
+            is_public: true // Keep this to comply with RLS policies
+          })
           .eq('id', contentId);
         
         if (fallbackError) {
@@ -97,7 +100,10 @@ export const useTrackingAction = () => {
         // Try fallback method without timestamp if there's an error
         const { error: fallbackError } = await supabase
           .from('posts')
-          .update({ share_count: newCount, is_public: true })
+          .update({ 
+            share_count: newCount, 
+            is_public: true // Keep this to comply with RLS policies
+          })
           .eq('id', contentId);
         
         if (fallbackError) {

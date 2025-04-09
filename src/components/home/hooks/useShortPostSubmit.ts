@@ -132,7 +132,7 @@ export const useShortPostSubmit = () => {
           .upload(filePath, fileToUpload, {
             cacheControl: '3600',
             upsert: true,
-            contentType: videoFile.type
+            contentType: videoFile.type // Explicitly set content type
           });
 
         let uploadData = uploadResult.data;
@@ -162,6 +162,8 @@ export const useShortPostSubmit = () => {
           if (uploadError) {
             console.error("Retry upload failed:", uploadError);
             throw new Error(`Upload failed after retry: ${uploadError.message}`);
+          } else {
+            console.log("Retry upload successful");
           }
         }
         
@@ -237,7 +239,30 @@ export const useShortPostSubmit = () => {
 
         if (postError) {
           console.error("Post creation error:", postError);
-          throw new Error(`Failed to create post: ${postError.message}`);
+          
+          // Try again with minimal data if the first attempt fails
+          if (postError.message.includes('violates row-level security policy')) {
+            console.log("Retrying insert with explicit is_public flag");
+            const minimalPostObject = {
+              creator_id: session.user.id,
+              content: title,
+              video_urls: [publicUrlWithCacheBuster],
+              video_thumbnail_url: thumbnailUrl,
+              is_public: true, // Explicit flag needed for RLS
+              content_type: 'video',
+              tags: tags
+            };
+            
+            const { error: retryPostError } = await supabase
+              .from('posts')
+              .insert(minimalPostObject);
+              
+            if (retryPostError) {
+              throw new Error(`Failed to create post after retry: ${retryPostError.message}`);
+            }
+          } else {
+            throw new Error(`Failed to create post: ${postError.message}`);
+          }
         }
 
         console.log("Post created successfully:", postData);

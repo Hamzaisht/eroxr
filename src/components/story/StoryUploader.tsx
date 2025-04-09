@@ -71,6 +71,8 @@ export const StoryUploader = () => {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
 
+      console.log("Uploading story file:", file.type, filePath);
+
       // Track upload progress
       const uploadWithProgress = () => {
         return new Promise<{ error?: any, data?: any }>((resolve) => {
@@ -119,6 +121,8 @@ export const StoryUploader = () => {
           const retryFileName = `retry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
           const retryFilePath = `${session.user.id}/${retryFileName}`;
           
+          console.log("Retrying upload with path:", retryFilePath, "Content-Type:", file.type);
+          
           const { error: retryError, data: retryData } = await supabase.storage
             .from('stories')
             .upload(retryFilePath, file, {
@@ -127,8 +131,12 @@ export const StoryUploader = () => {
               contentType: file.type // Add explicit content type
             });
           
-          if (retryError) throw retryError;
+          if (retryError) {
+            console.error("Retry upload failed:", retryError);
+            throw retryError;
+          }
           
+          console.log("Retry upload succeeded");
           // Use let instead of const for uploadData
           uploadData = retryData;
         } else {
@@ -150,6 +158,8 @@ export const StoryUploader = () => {
       if (!publicUrl) {
         throw new Error("Failed to get public URL for uploaded file");
       }
+      
+      console.log("Story public URL:", publicUrl);
       
       // Add a cache buster to ensure the URL is fresh
       const cacheBustedUrl = getUrlWithCacheBuster(publicUrl);
@@ -173,7 +183,32 @@ export const StoryUploader = () => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h from now
         }]);
 
-      if (storyError) throw storyError;
+      if (storyError) {
+        console.error("Story DB insert error:", storyError);
+        
+        // Try again with just the essential fields if the first attempt fails
+        if (storyError.message.includes('violates row-level security policy')) {
+          console.log("Retrying story insert with minimal data and explicit is_public flag");
+          
+          const { error: retryStoryError } = await supabase
+            .from('stories')
+            .insert([{
+              creator_id: session.user.id,
+              [isVideo ? 'video_url' : 'media_url']: cacheBustedUrl,
+              is_public: true,
+              is_active: true,
+              content_type: isVideo ? 'video' : 'image'
+            }]);
+            
+          if (retryStoryError) {
+            throw retryStoryError;
+          } else {
+            console.log("Story insert retry succeeded");
+          }
+        } else {
+          throw storyError;
+        }
+      }
 
       setUploadProgress(100);
       
