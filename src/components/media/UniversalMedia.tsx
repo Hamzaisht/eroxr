@@ -10,6 +10,8 @@ interface UniversalMediaProps {
   item: any;
   className?: string;
   onError?: () => void;
+  onLoad?: () => void;
+  onEnded?: () => void;
   autoPlay?: boolean;
   controls?: boolean;
   showWatermark?: boolean;
@@ -20,6 +22,8 @@ export const UniversalMedia = ({
   item,
   className = "",
   onError,
+  onLoad,
+  onEnded,
   autoPlay = false,
   controls = true,
   showWatermark = false,
@@ -47,6 +51,7 @@ export const UniversalMedia = ({
   const handleLoad = () => {
     setIsLoading(false);
     setLoadError(false);
+    if (onLoad) onLoad();
   };
   
   const handleError = () => {
@@ -58,6 +63,10 @@ export const UniversalMedia = ({
       url: displayUrl,
       item 
     });
+  };
+  
+  const handleEnded = () => {
+    if (onEnded) onEnded();
   };
   
   // If media URL couldn't be determined
@@ -100,6 +109,7 @@ export const UniversalMedia = ({
           autoPlay={autoPlay}
           className="w-full h-full"
           onError={handleError}
+          onEnded={handleEnded}
           creatorId={item?.creator_id}
         />
       ) : (
