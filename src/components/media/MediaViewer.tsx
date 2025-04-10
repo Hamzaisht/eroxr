@@ -4,9 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Download, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
-import { VideoPlayer } from "../video/VideoPlayer";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
+import { UniversalMedia } from "./UniversalMedia";
 
 interface MediaViewerProps {
   media: string | null;
@@ -25,13 +24,12 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
     media.toLowerCase().endsWith('.webm') || 
     media.toLowerCase().endsWith('.mov') : false;
   
-  // Process the media URL
-  const processedUrl = media ? 
-    getPlayableMediaUrl({media_url: media}) : null;
-  
-  // Add cache buster
-  const displayUrl = processedUrl ? 
-    addCacheBuster(processedUrl) : null;
+  const mediaItem = {
+    media_url: !isVideo ? media : null,
+    video_url: isVideo ? media : null,
+    creator_id: creatorId,
+    media_type: isVideo ? "video" : "image"
+  };
   
   // Get watermark username if creatorId is provided
   useEffect(() => {
@@ -43,25 +41,25 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
   }, [creatorId]);
   
   const handleDownload = () => {
-    if (!displayUrl) return;
+    if (!media) return;
     
     const link = document.createElement('a');
-    link.href = displayUrl;
+    link.href = media;
     link.download = `media-${Date.now()}${isVideo ? '.mp4' : '.jpg'}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
   
-  const handleImageLoad = () => {
+  const handleLoad = () => {
     setIsLoading(false);
     setHasError(false);
   };
   
-  const handleMediaError = () => {
+  const handleError = () => {
     setIsLoading(false);
     setHasError(true);
-    console.error("Error loading media:", displayUrl);
+    console.error("Error loading media:", media);
   };
   
   return (
@@ -85,31 +83,21 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
           
           {/* Media content */}
           <AnimatePresence mode="wait">
-            {displayUrl && !hasError && (
+            {media && !hasError && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="w-full h-full flex items-center justify-center"
               >
-                {isVideo ? (
-                  <VideoPlayer
-                    url={displayUrl}
-                    className="w-full h-full max-h-full"
-                    onError={handleMediaError}
-                    autoPlay
-                    creatorId={creatorId}
-                  />
-                ) : (
-                  <img
-                    src={displayUrl}
-                    alt="Media content"
-                    className="max-w-full max-h-full object-contain"
-                    onLoad={handleImageLoad}
-                    onError={handleMediaError}
-                    style={{ display: isLoading ? 'none' : 'block' }}
-                  />
-                )}
+                <UniversalMedia
+                  item={mediaItem}
+                  className="max-w-full max-h-full object-contain"
+                  onLoad={handleLoad}
+                  onError={handleError}
+                  autoPlay={isVideo}
+                  controls={isVideo}
+                />
                 
                 {watermarkUsername && (
                   <div className="absolute bottom-4 right-4 text-xs text-white/60 bg-black/30 px-2 py-1 rounded z-20">

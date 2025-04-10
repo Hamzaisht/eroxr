@@ -1,9 +1,9 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LiveSession } from "../types";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface MediaPreviewDialogProps {
   session: LiveSession | null;
@@ -40,61 +40,42 @@ export const MediaPreviewDialog = ({
     }
   };
 
-  // Determine if media is image or video
-  const isVideo = (url: string) => {
-    return url.match(/\.(mp4|webm|ogg|mov)($|\?)/i);
-  };
-
   // Get current media URL
   const currentMedia = mediaUrls[currentIndex] || "";
 
+  // Check if it's a video call or has a video property
+  const videoUrl = (session as any).video_url;
+  
+  const mediaItem = {
+    video_url: videoUrl || (session.type === "call" ? currentMedia : null),
+    media_url: session.type !== "call" ? currentMedia : null,
+    content_type: session.content_type,
+    media_type: session.content_type || (videoUrl ? "video" : "image")
+  };
+
   const renderMediaPreview = () => {
-    // Check if it's a video call or has a video property (added as any type for compatibility)
-    const videoUrl = (session as any).video_url;
-    
+    // Check if it's a call or has a video
     if (session.type === "call" || videoUrl) {
       return (
-        <video
-          controls
-          autoPlay
-          className="w-full rounded-md max-h-[70vh] object-contain bg-black"
-          src={videoUrl || ""}
-        />
-      );
-    }
-
-    // Check if it's a bodycontact ad with video
-    if (session.type === "bodycontact" && (session as any).video_url) {
-      return (
-        <video
-          controls
-          autoPlay
-          className="w-full rounded-md max-h-[70vh] object-contain bg-black"
-          src={(session as any).video_url}
+        <UniversalMedia
+          item={mediaItem}
+          className="w-full rounded-md max-h-[70vh] object-contain"
+          autoPlay={true}
+          controls={true}
         />
       );
     }
 
     // Otherwise handle regular media
     if (currentMedia) {
-      if (isVideo(currentMedia)) {
-        return (
-          <video
-            controls
-            autoPlay
-            className="w-full rounded-md max-h-[70vh] object-contain bg-black"
-            src={currentMedia}
-          />
-        );
-      } else {
-        return (
-          <img
-            src={currentMedia}
-            alt="Media content"
-            className="w-full rounded-md max-h-[70vh] object-contain"
-          />
-        );
-      }
+      return (
+        <UniversalMedia
+          item={mediaItem}
+          className="w-full rounded-md max-h-[70vh] object-contain"
+          autoPlay={mediaItem.media_type === "video"}
+          controls={mediaItem.media_type === "video"}
+        />
+      );
     }
 
     return (

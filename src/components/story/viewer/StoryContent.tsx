@@ -1,12 +1,10 @@
 
 import { motion } from "framer-motion";
-import { StoryVideo } from "./StoryVideo";
-import { StoryImage } from "./StoryImage";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface StoryContentProps {
   story: Story;
@@ -19,30 +17,14 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   const [hasMediaError, setHasMediaError] = useState(false);
   const { toast } = useToast();
   
-  // Use our utility functions for consistent media handling
-  const isVideo = story.content_type === 'video' || 
-                  story.media_type === 'video' || 
-                  story.video_url !== null;
-  
-  // Get the appropriate URL using our utility
-  let mediaUrl = getPlayableMediaUrl(story);
-  
-  // Add cache buster to URL
-  if (mediaUrl) {
-    mediaUrl = addCacheBuster(mediaUrl);
-  }
-  
   // Log content info for debugging
   console.log("Story content:", { 
     id: story.id, 
-    type: isVideo ? 'video' : 'image', 
-    contentType: story.content_type,
-    mediaType: story.media_type,
-    url: mediaUrl
+    type: story.content_type || story.media_type,
   });
 
   const handleMediaError = () => {
-    console.error("Media failed to load:", mediaUrl);
+    console.error("Media failed to load:", story);
     setHasMediaError(true);
     
     toast({
@@ -60,20 +42,6 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
     </div>
   );
 
-  // If no media URL is available, show error
-  if (!mediaUrl) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="w-full h-full flex items-center justify-center bg-black"
-      >
-        <ErrorFallback message="Media could not be loaded" />
-      </motion.div>
-    );
-  }
-
   return (
     <motion.div
       key={story.id}
@@ -85,22 +53,15 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
       <div className="relative w-full h-full">
         {hasMediaError ? (
           <ErrorFallback message="Media could not be loaded" />
-        ) : isVideo ? (
-          <StoryVideo
-            ref={videoRef}
-            videoUrl={mediaUrl}
-            onEnded={onNext}
-            isPaused={isPaused}
-            creatorId={story.creator.id}
-            onError={handleMediaError}
-          />
         ) : (
-          <StoryImage
-            mediaUrl={mediaUrl}
-            username={story.creator.username}
-            isPaused={isPaused}
-            creatorId={story.creator.id}
+          <UniversalMedia
+            item={story}
+            className="w-full h-full"
             onError={handleMediaError}
+            autoPlay={!isPaused}
+            controls={false}
+            showWatermark={true}
+            onClick={onNext}
           />
         )}
       </div>

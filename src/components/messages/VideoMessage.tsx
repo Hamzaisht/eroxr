@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { useSession } from "@supabase/auth-helpers-react";
-import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface VideoMessageProps {
   messageId: string;
@@ -23,9 +23,10 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
   const { isGhostMode = false } = useGhostMode();
   const session = useSession();
 
-  // Get the playable URL using our utility
-  const mediaItem = { video_url: videoUrl };
-  const displayUrl = addCacheBuster(getPlayableMediaUrl(mediaItem));
+  const mediaItem = { 
+    video_url: videoUrl,
+    media_type: 'video'
+  };
 
   useEffect(() => {
     if (videoRef.current) {
@@ -42,56 +43,50 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
   }, [toast]);
 
   const handlePlay = async () => {
-    if (videoRef.current) {
-      setIsPlaying(true);
-      videoRef.current.play();
-      
-      // In Ghost Mode, we view the content but don't mark it as viewed
-      if (isGhostMode) {
-        // Log this action for audit purposes
-        if (session?.user?.id) {
-          await supabase.from('admin_audit_logs').insert({
-            user_id: session.user.id,
-            action: 'ghost_view_video',
-            details: {
-              message_id: messageId,
-              video_url: videoUrl,
-              timestamp: new Date().toISOString()
-            }
-          });
-        }
-        return;
+    setIsPlaying(true);
+    
+    // In Ghost Mode, we view the content but don't mark it as viewed
+    if (isGhostMode) {
+      // Log this action for audit purposes
+      if (session?.user?.id) {
+        await supabase.from('admin_audit_logs').insert({
+          user_id: session.user.id,
+          action: 'ghost_view_video',
+          details: {
+            message_id: messageId,
+            video_url: videoUrl,
+            timestamp: new Date().toISOString()
+          }
+        });
       }
-      
-      // Normal behavior for non-ghost mode
-      onView();
-      
-      // Mark message as viewed in database
-      const { error } = await supabase
-        .from('direct_messages')
-        .update({ viewed_at: new Date().toISOString() })
-        .eq('id', messageId);
+      return;
+    }
+    
+    // Normal behavior for non-ghost mode
+    onView();
+    
+    // Mark message as viewed in database
+    const { error } = await supabase
+      .from('direct_messages')
+      .update({ viewed_at: new Date().toISOString() })
+      .eq('id', messageId);
 
-      if (error) {
-        console.error('Error marking message as viewed:', error);
-      }
+    if (error) {
+      console.error('Error marking message as viewed:', error);
     }
   };
 
   const handleEnded = () => {
     setIsPlaying(false);
-    if (videoRef.current) {
-      videoRef.current.style.display = 'none';
-    }
   };
 
   // In ghost mode, we can view expired content
   const showExpiredMessage = isViewed && !isGhostMode;
 
-  if (!displayUrl && !showExpiredMessage) {
+  if (showExpiredMessage) {
     return (
-      <div className="text-center text-muted-foreground p-4 rounded-lg bg-black">
-        Video not available
+      <div className="text-center text-muted-foreground p-4">
+        This video message has expired
       </div>
     );
   }
@@ -104,36 +99,28 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
         </div>
       )}
       
-      {showExpiredMessage ? (
-        <div className="text-center text-muted-foreground p-4">
-          This video message has expired
-        </div>
+      {isPlaying ? (
+        <UniversalMedia
+          item={mediaItem}
+          className="w-full h-full object-contain"
+          onEnded={handleEnded}
+          autoPlay={true}
+          controls={false}
+        />
       ) : (
-        <>
-          <video
-            ref={videoRef}
-            src={displayUrl || undefined}
-            className="w-full h-full object-contain"
-            onEnded={handleEnded}
-            style={{ display: isPlaying ? 'block' : 'none' }}
-          />
-          
-          {!isPlaying && (
-            <Button
-              onClick={handlePlay}
-              className="absolute inset-0 w-full h-full bg-black/50 hover:bg-black/60"
-            >
-              <Play className="h-12 w-12" />
-            </Button>
-          )}
-          
-          {isGhostMode && isViewed && (
-            <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-white border border-purple-500/30 shadow-lg flex items-center space-x-1">
-              <Ghost className="h-3 w-3 text-purple-400" />
-              <span>Ghost View</span>
-            </div>
-          )}
-        </>
+        <Button
+          onClick={handlePlay}
+          className="absolute inset-0 w-full h-full bg-black/50 hover:bg-black/60"
+        >
+          <Play className="h-12 w-12" />
+        </Button>
+      )}
+      
+      {isGhostMode && isViewed && (
+        <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-white border border-purple-500/30 shadow-lg flex items-center space-x-1">
+          <Ghost className="h-3 w-3 text-purple-400" />
+          <span>Ghost View</span>
+        </div>
       )}
     </div>
   );

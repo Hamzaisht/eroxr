@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface VideoPlayerProps {
   url: string;
@@ -37,194 +37,150 @@ export const VideoPlayer = ({
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [watermarkUsername, setWatermarkUsername] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  // Process URL with our utility
-  const processedUrl = getPlayableMediaUrl({media_url: url});
-  const processedPoster = poster ? getPlayableMediaUrl({media_url: poster}) : undefined;
+  const mediaItem = { 
+    video_url: url,
+    media_type: "video",
+    poster_url: poster
+  };
+  
+  const handleError = () => {
+    setError(true);
+    setIsLoading(false);
+    if (onError) onError();
+  };
+  
+  const handleLoad = () => {
+    setIsLoading(false);
+    setError(false);
+    if (onLoadedData) onLoadedData();
+  };
+  
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play().catch(error => {
+          console.error("Error playing video:", error);
+          if (onError) onError();
+        });
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+  
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
   
   useEffect(() => {
-    if (creatorId) {
-      getUsernameForWatermark(creatorId)
-        .then(username => setWatermarkUsername(username))
-        .catch(err => console.error("Error getting watermark username:", err));
-    }
-  }, [creatorId]);
-
-  useEffect(() => {
-    setIsLoading(true);
-    setError(false);
-    
-    if (!processedUrl) {
-      setError(true);
-      setIsLoading(false);
-      if (onError) onError();
-      return;
-    }
-    
     const video = videoRef.current;
     if (!video) return;
     
-    const handleCanPlay = () => {
-      setIsLoading(false);
-      if (autoPlay) {
-        video.play().catch(err => {
-          console.warn("Autoplay prevented:", err);
-          setIsPlaying(false);
-        });
-      }
-      if (onLoadedData) onLoadedData();
-    };
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
     
-    const handleError = () => {
-      console.error("Video error:", processedUrl);
-      setError(true);
-      setIsLoading(false);
-      if (onError) onError();
-    };
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
     
-    video.addEventListener("canplay", handleCanPlay);
-    video.addEventListener("error", handleError);
+    if (autoPlay && !isLoading) {
+      video.play().catch(error => console.error("Autoplay prevented:", error));
+    }
     
     return () => {
-      video.removeEventListener("canplay", handleCanPlay);
-      video.removeEventListener("error", handleError);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
     };
-  }, [processedUrl, autoPlay, onError, onLoadedData]);
-
-  // Handle play on hover if enabled
-  useEffect(() => {
-    if (!playOnHover || !videoRef.current) return;
-
-    const video = videoRef.current;
-    
-    const handleMouseEnter = () => {
-      video.play().catch(err => {
-        console.warn("Play on hover prevented:", err);
-      });
-    };
-    
-    const handleMouseLeave = () => {
-      video.pause();
-    };
-    
-    const container = video.parentElement;
-    if (container) {
-      container.addEventListener('mouseenter', handleMouseEnter);
-      container.addEventListener('mouseleave', handleMouseLeave);
-      
-      return () => {
-        container.removeEventListener('mouseenter', handleMouseEnter);
-        container.removeEventListener('mouseleave', handleMouseLeave);
-      };
-    }
-  }, [playOnHover]);
-
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    
-    if (isPlaying) {
-      videoRef.current.pause();
-    } else {
-      videoRef.current.play().catch(error => {
-        console.error("Error playing video:", error);
-      });
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  const toggleMute = () => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
-  };
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (onClick) {
-      onClick();
-    } else {
-      togglePlay();
-    }
-  };
+  }, [autoPlay, isLoading]);
 
   return (
-    <div className={cn("relative group overflow-hidden", className)}>
+    <div 
+      className={cn("relative overflow-hidden", className)}
+      onClick={onClick}
+    >
+      {/* Loading state */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-          <Loader2 className="h-8 w-8 animate-spin text-white" />
+          <Loader2 className="h-8 w-8 animate-spin text-white/80" />
         </div>
       )}
       
-      {error ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-10">
-          <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
-          <p className="text-white/80">Failed to load video</p>
-        </div>
-      ) : (
-        <video
-          ref={videoRef}
-          src={processedUrl || undefined}
-          poster={processedPoster}
-          className="w-full h-full object-cover"
-          playsInline
-          loop
-          muted={isMuted}
-          onClick={handleClick}
-        />
-      )}
-      
-      {!error && !isLoading && (
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 text-white"
-              onClick={togglePlay}
-            >
-              {isPlaying ? (
-                <Pause className="h-4 w-4" />
-              ) : (
-                <Play className="h-4 w-4" />
-              )}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 text-white"
-              onClick={toggleMute}
-            >
-              {isMuted ? (
-                <VolumeX className="h-4 w-4" />
-              ) : (
-                <Volume2 className="h-4 w-4" />
-              )}
-            </Button>
+      {/* Error state */}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-10 w-10 text-red-500 mb-2" />
+            <p className="text-white/90">Failed to load video</p>
           </div>
         </div>
       )}
       
-      {showCloseButton && onClose && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      )}
+      {/* Media content */}
+      <div className="w-full h-full">
+        <UniversalMedia 
+          item={mediaItem}
+          className="w-full h-full object-cover"
+          onError={handleError}
+          autoPlay={autoPlay} 
+          controls={true}
+        />
+      </div>
       
-      {!error && !isLoading && watermarkUsername && (
-        <div className="absolute bottom-2 right-2 text-xs text-white/60 bg-black/30 px-2 py-1 rounded">
-          @{watermarkUsername}
+      {/* Video controls overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlay();
+            }}
+          >
+            {isPlaying ? (
+              <Pause className="h-4 w-4" />
+            ) : (
+              <Play className="h-4 w-4" />
+            )}
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleMute();
+            }}
+          >
+            {isMuted ? (
+              <VolumeX className="h-4 w-4" />
+            ) : (
+              <Volume2 className="h-4 w-4" />
+            )}
+          </Button>
         </div>
-      )}
+        
+        {showCloseButton && onClose && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

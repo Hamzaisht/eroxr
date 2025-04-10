@@ -1,8 +1,9 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface VideoPreviewProps {
   videoUrl: string;
@@ -12,140 +13,35 @@ interface VideoPreviewProps {
 export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [isStalled, setIsStalled] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
   const MAX_RETRIES = 2;
-  const STALL_TIMEOUT = 8000; // 8 seconds before considering a video stalled
 
-  // Add cache buster to URL to prevent stale cache issues
-  const getUrlWithCacheBuster = (baseUrl: string) => {
-    if (!baseUrl) return '';
-    const timestamp = Date.now();
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}cb=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
+  const mediaItem = {
+    video_url: videoUrl,
+    media_type: "video"
   };
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+  const handleLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
 
-    const startStallTimer = () => {
-      // Clear any existing timer first
-      if (stallTimerRef.current) {
-        clearTimeout(stallTimerRef.current);
-      }
-      
-      // Set a new timer for stall detection
-      const timer = setTimeout(() => {
-        if (isLoading) {
-          console.warn("Video preview loading stalled:", videoUrl);
-          setIsStalled(true);
-          
-          if (retryCount < MAX_RETRIES) {
-            // Auto retry if stalled
-            handleRetry();
-          } else {
-            setHasError(true);
-            setIsLoading(false);
-          }
-        }
-      }, STALL_TIMEOUT);
-      
-      stallTimerRef.current = timer;
-    };
-
-    const handleLoad = () => {
-      // Clear stall timer
-      if (stallTimerRef.current) {
-        clearTimeout(stallTimerRef.current);
-      }
-      
-      console.info('Video preview loaded successfully:', videoUrl);
-      setIsLoading(false);
-      setIsStalled(false);
-      setIsPlaying(true);
-      video.play().catch((error) => {
-        console.error('Video playback error:', error);
-        setIsPlaying(false);
-      });
-    };
-
-    const handleError = (error: any) => {
-      console.error('Video preview loading error:', error);
-      
-      // Auto retry up to MAX_RETRIES times
-      if (retryCount < MAX_RETRIES) {
-        console.log(`Auto-retrying video load (${retryCount + 1}/${MAX_RETRIES})...`);
-        setRetryCount(prev => prev + 1);
-        
-        // Try with cache buster
-        const cacheBuster = getUrlWithCacheBuster(videoUrl);
-        video.src = cacheBuster;
-        video.load();
-        
-        // Start a new stall timer
-        startStallTimer();
-        return;
-      }
-      
+  const handleError = () => {
+    console.error('Video preview loading error:', videoUrl);
+    
+    if (retryCount < MAX_RETRIES) {
+      console.log(`Auto-retrying video load (${retryCount + 1}/${MAX_RETRIES})...`);
+      setRetryCount(prev => prev + 1);
+    } else {
       setHasError(true);
       setIsLoading(false);
-      setIsPlaying(false);
-    };
-    
-    const handleStalled = () => {
-      console.warn("Video preview playback stalled:", videoUrl);
-      setIsStalled(true);
-    };
-
-    // Reset states when video URL changes
-    setIsLoading(true);
-    setHasError(false);
-    setIsPlaying(false);
-    setIsStalled(false);
-
-    video.addEventListener('loadeddata', handleLoad);
-    video.addEventListener('error', handleError);
-    video.addEventListener('stalled', handleStalled);
-    video.addEventListener('pause', () => setIsPlaying(false));
-    video.addEventListener('play', () => setIsPlaying(true));
-
-    // Start the stall timer
-    startStallTimer();
-
-    // Add cache buster to prevent stale cache issues
-    const cacheBuster = getUrlWithCacheBuster(videoUrl);
-    video.src = cacheBuster;
-
-    return () => {
-      if (stallTimerRef.current) {
-        clearTimeout(stallTimerRef.current);
-      }
-      
-      video.removeEventListener('loadeddata', handleLoad);
-      video.removeEventListener('error', handleError);
-      video.removeEventListener('stalled', handleStalled);
-      video.removeEventListener('pause', () => setIsPlaying(false));
-      video.removeEventListener('play', () => setIsPlaying(true));
-      video.src = ''; // Clear source on cleanup
-    };
-  }, [videoUrl, retryCount]);
+    }
+  };
 
   const handleRetry = () => {
-    if (videoRef.current) {
-      setIsLoading(true);
-      setHasError(false);
-      setRetryCount(0);
-      setIsStalled(false);
-      
-      // Add cache buster to force reload
-      const cacheBuster = getUrlWithCacheBuster(videoUrl);
-      videoRef.current.src = cacheBuster;
-      videoRef.current.load();
-    }
+    setIsLoading(true);
+    setHasError(false);
+    setRetryCount(0);
   };
 
   if (hasError) {
@@ -181,30 +77,26 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
             className
           )}
         >
-          {isStalled ? (
-            <>
-              <AlertCircle className="w-5 h-5 text-yellow-500 mb-1" />
-              <span className="text-xs text-luxury-neutral/70">Loading...</span>
-            </>
-          ) : (
-            <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
-          )}
+          <Loader2 className="w-6 h-6 animate-spin text-luxury-primary" />
         </motion.div>
       )}
-      <motion.video
-        ref={videoRef}
+      <motion.div
         className={cn(
           className,
-          isLoading ? "hidden" : "block",
-          "object-cover"
+          isLoading ? "hidden" : "block"
         )}
         initial={{ opacity: 0 }}
-        animate={{ opacity: isPlaying ? 1 : 0 }}
-        preload="metadata"
-        playsInline
-        muted
-        loop
-      />
+        animate={{ opacity: 1 }}
+      >
+        <UniversalMedia
+          item={mediaItem}
+          className="w-full h-full object-cover"
+          onLoad={handleLoad}
+          onError={handleError}
+          autoPlay={true}
+          controls={false}
+        />
+      </motion.div>
     </>
   );
 };

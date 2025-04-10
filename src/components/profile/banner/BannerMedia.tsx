@@ -1,5 +1,6 @@
 
 import { motion } from "framer-motion";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface BannerMediaProps {
   mediaUrl?: string;
@@ -10,26 +11,18 @@ interface BannerMediaProps {
 export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProps) => {
   if (!mediaUrl) return null;
 
-  if (mediaType === 'video') {
-    return (
-      <video
-        key={mediaUrl} // Add key to force re-render when URL changes
-        className="w-full h-full object-cover"
-        src={mediaUrl}
-        autoPlay
-        loop
-        muted
-        playsInline
-      />
-    );
-  }
+  const mediaItem = {
+    media_url: mediaType === 'image' || mediaType === 'gif' ? mediaUrl : null,
+    video_url: mediaType === 'video' ? mediaUrl : null,
+    media_type: mediaType,
+  };
 
   return (
-    <img
-      key={mediaUrl} // Add key to force re-render when URL changes
+    <UniversalMedia
+      item={mediaItem}
       className="w-full h-full object-cover"
-      src={mediaUrl}
-      alt="Profile Banner"
+      autoPlay={isHovering || mediaType === 'video'}
+      controls={false}
     />
   );
 };

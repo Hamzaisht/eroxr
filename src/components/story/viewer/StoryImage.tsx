@@ -1,10 +1,10 @@
+
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import '../../../styles/watermark.css';
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
-import { refreshUrl } from "@/utils/mediaUtils";
-import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface StoryImageProps {
   mediaUrl: string;
@@ -18,15 +18,16 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const [watermarkUsername, setWatermarkUsername] = useState<string>(username);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [currentSrc, setCurrentSrc] = useState(mediaUrl);
-  const MAX_RETRIES = 2;
+  
+  const mediaItem = {
+    media_url: mediaUrl,
+    creator_id: creatorId,
+    media_type: "image"
+  };
   
   useEffect(() => {
-    setCurrentSrc(addCacheBuster(mediaUrl));
     setIsLoading(true);
     setLoadError(false);
-    setRetryCount(0);
     getUsernameForWatermark(creatorId).then(name => {
       setWatermarkUsername(name);
     }).catch(error => {
@@ -34,40 +35,20 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
     });
   }, [creatorId, mediaUrl]);
   
-  const handleImageLoad = () => {
+  const handleLoad = () => {
     setIsLoading(false);
     setLoadError(false);
-    console.log("Story image loaded:", mediaUrl);
   };
   
-  const handleImageError = () => {
-    console.error("Failed to load story image:", currentSrc);
+  const handleError = () => {
+    setLoadError(true);
     setIsLoading(false);
-    
-    if (retryCount < MAX_RETRIES) {
-      console.log(`Retrying image load (${retryCount + 1}/${MAX_RETRIES}):`, mediaUrl);
-      setRetryCount(prev => prev + 1);
-      
-      setTimeout(() => {
-        const freshUrl = refreshUrl(mediaUrl);
-        setCurrentSrc(addCacheBuster(freshUrl));
-        setIsLoading(true);
-      }, 500);
-    } else {
-      setLoadError(true);
-      
-      if (onError) {
-        onError();
-      }
-    }
+    if (onError) onError();
   };
   
   const handleRetry = () => {
     setIsLoading(true);
     setLoadError(false);
-    setRetryCount(0);
-    const freshUrl = refreshUrl(mediaUrl);
-    setCurrentSrc(addCacheBuster(freshUrl));
   };
   
   return (
@@ -97,18 +78,12 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
         </div>
       )}
       
-      <img
-        src={currentSrc}
-        alt={`Story by ${username}`}
+      <UniversalMedia
+        item={mediaItem}
         className="w-full h-full object-contain max-h-[100vh]"
-        loading="eager"
-        crossOrigin="anonymous"
-        onLoad={handleImageLoad}
-        onError={handleImageError}
-        style={{
-          objectFit: 'contain',
-          display: isLoading || loadError ? 'none' : 'block'
-        }}
+        onLoad={handleLoad}
+        onError={handleError}
+        showWatermark={true}
       />
       
       {!isLoading && !loadError && (

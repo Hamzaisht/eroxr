@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { PlayCircle, ImageIcon } from "lucide-react";
@@ -6,9 +7,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { AvatarImage } from "@/components/ui/avatar";
 import { AvatarFallback } from "@/components/ui/avatar";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface StoryItemProps {
   story: Story;
@@ -29,18 +29,6 @@ export const StoryItem = ({
   const [hasMediaError, setHasMediaError] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   
-  // Use getPlayableMediaUrl to get a consistent media URL
-  const mediaUrl = getPlayableMediaUrl(story);
-  
-  // Determine if this is a video
-  const isVideo = story.content_type === "video" || 
-                  story.media_type === "video" || 
-                  story.video_url !== null ||
-                  (mediaUrl && mediaUrl.endsWith(".mp4"));
-  
-  // Add cache buster to URL
-  const displayUrl = mediaUrl ? getUrlWithCacheBuster(mediaUrl) : null;
-  
   // Format the timestamp
   const timestamp = new Date(story.created_at);
   const timeAgo = Math.floor((Date.now() - timestamp.getTime()) / (1000 * 60));
@@ -48,15 +36,14 @@ export const StoryItem = ({
     ? `${timeAgo}m` 
     : `${Math.floor(timeAgo / 60)}h`;
 
-  const handleImageLoad = () => {
+  const handleLoad = () => {
     setIsMediaLoaded(true);
     setHasMediaError(false);
   };
 
-  const handleImageError = () => {
+  const handleError = () => {
     setHasMediaError(true);
     setIsMediaLoaded(false);
-    console.error("Failed to load story thumbnail:", displayUrl);
   };
 
   return (
@@ -92,28 +79,16 @@ export const StoryItem = ({
             </div>
           </div>
         ) : (
-          displayUrl ? (
-            <img
-              src={displayUrl}
-              alt={`Story by ${story.creator?.username || 'user'}`}
-              className="w-full h-full object-cover"
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-              style={{ opacity: isMediaLoaded ? 1 : 0 }}
-              crossOrigin="anonymous"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
-              <div className="text-luxury-neutral/50 flex flex-col items-center">
-                <ImageIcon className="h-6 w-6 mb-1" />
-                <span className="text-xs">No media</span>
-              </div>
-            </div>
-          )
+          <UniversalMedia
+            item={story}
+            className="w-full h-full object-cover"
+            onLoad={handleLoad}
+            onError={handleError}
+          />
         )}
         
         {/* Media type indicator */}
-        {isVideo && isMediaLoaded && (
+        {(story.content_type === "video" || story.media_type === "video" || story.video_url) && isMediaLoaded && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-15">
             <PlayCircle className="h-8 w-8 text-white/80" />
           </div>

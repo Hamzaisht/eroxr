@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PPVContent } from "./PPVContent";
-import { VideoPlayer } from "../video/VideoPlayer";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface PostProps {
   post: PostType;
@@ -21,7 +21,7 @@ interface PostProps {
   currentUser: User | null;
   onEdit?: (postId: string) => void;
   onDelete?: (postId: string) => void;
-  onLike?: (postId: string) => void;  // Added this prop
+  onLike?: (postId: string) => void;
 }
 
 export const Post = ({ 
@@ -100,11 +100,15 @@ export const Post = ({
             {post.video_urls && post.video_urls.length > 0 && (
               <div className="space-y-3">
                 {post.video_urls.map((url, index) => (
-                  <VideoPlayer
+                  <UniversalMedia
                     key={`video-${index}`}
-                    url={url}
+                    item={{
+                      video_url: url,
+                      media_type: "video",
+                      creator_id: creator.id,
+                      poster_url: post.media_url?.[0]
+                    }}
                     className="w-full aspect-[4/3] sm:aspect-[16/9]"
-                    poster={post.media_url?.[0]}
                   />
                 ))}
               </div>
@@ -114,12 +118,14 @@ export const Post = ({
             {post.media_url && post.media_url.length > 0 && (
               <div className="space-y-3">
                 {post.media_url.map((url, index) => (
-                  <img 
+                  <UniversalMedia
                     key={`image-${index}`}
-                    src={url}
-                    alt={`Post media ${index + 1}`}
+                    item={{
+                      media_url: url,
+                      creator_id: creator.id,
+                      media_type: "image"
+                    }}
                     className="w-full object-cover"
-                    loading="lazy"
                   />
                 ))}
               </div>

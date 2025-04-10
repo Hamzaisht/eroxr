@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getUsernameForWatermark } from '@/utils/watermarkUtils';
 import { useSession } from "@supabase/auth-helpers-react";
 import '../../styles/watermark.css';
+import { UniversalMedia } from './UniversalMedia';
 
 interface WatermarkedMediaProps {
   src: string;
@@ -22,7 +23,6 @@ export const WatermarkedMedia: React.FC<WatermarkedMediaProps> = ({
   imageProps
 }) => {
   const [username, setUsername] = useState<string>('eroxr');
-  const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
   const session = useSession();
   
   // Fetch username for watermark
@@ -42,23 +42,20 @@ export const WatermarkedMedia: React.FC<WatermarkedMediaProps> = ({
   // Check if this is the current user's own content
   const isOwnContent = session?.user?.id === creatorId;
   
+  const mediaItem = {
+    media_url: type === 'image' ? src : null,
+    video_url: type === 'video' ? src : null,
+    media_type: type,
+    creator_id: creatorId,
+  };
+  
   return (
     <div className="relative">
-      {type === 'video' ? (
-        <video
-          ref={mediaRef as React.RefObject<HTMLVideoElement>}
-          src={src}
-          className={className}
-          {...videoProps}
-        />
-      ) : (
-        <img
-          ref={mediaRef as React.RefObject<HTMLImageElement>}
-          src={src}
-          className={className}
-          {...imageProps}
-        />
-      )}
+      <UniversalMedia 
+        item={mediaItem}
+        className={className}
+        showWatermark={true}
+      />
       
       {/* CSS-based watermark overlay - rendered on all content */}
       <div className="watermark-overlay">

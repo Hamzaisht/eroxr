@@ -1,9 +1,10 @@
+
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface PostContentProps {
   content: string;
@@ -64,11 +65,16 @@ export const PostContent = ({
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="relative aspect-video w-full"
                           >
-                            <VideoPlayer
-                              url={url}
-                              poster={mediaUrls?.[0]}
+                            <UniversalMedia
+                              item={{
+                                video_url: url,
+                                media_type: "video",
+                                creator_id: creatorId,
+                                poster_url: mediaUrls?.[0]
+                              }}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
+                              controls={true}
                             />
                           </motion.div>
                         )
@@ -89,23 +95,16 @@ export const PostContent = ({
                             className="relative aspect-[4/3] cursor-pointer group"
                             onClick={() => onMediaClick(url)}
                           >
-                            {url ? (
-                              <>
-                                <img
-                                  src={url}
-                                  alt={`Post media ${index + 1}`}
-                                  className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                                  loading="eager"
-                                  decoding="sync"
-                                  onError={() => handleMediaError(url)}
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
-                              </>
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-luxury-darker rounded-lg">
-                                <AlertCircle className="w-8 h-8 text-luxury-neutral/50" />
-                              </div>
-                            )}
+                            <UniversalMedia
+                              item={{
+                                media_url: url,
+                                media_type: "image",
+                                creator_id: creatorId
+                              }}
+                              className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                              onError={() => handleMediaError(url)}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </motion.div>
                         )
                       ))}
