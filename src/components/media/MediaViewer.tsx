@@ -1,109 +1,146 @@
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { MediaContent } from "./MediaContent";
 import { useState, useEffect } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { initializeScreenshotProtection, reportSecurityViolation } from "@/lib/security";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Download, AlertCircle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { VideoPlayer } from "../video/VideoPlayer";
+import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 
-export interface MediaViewerProps {
+interface MediaViewerProps {
   media: string | null;
   onClose: () => void;
-  creatorId?: string;
-  onNext?: () => void;
-  onPrevious?: () => void;
-  hasMultipleItems?: boolean;
+  creatorId?: string | undefined;
 }
 
-export const MediaViewer = ({ 
-  media, 
-  onClose, 
-  creatorId,
-  onNext,
-  onPrevious,
-  hasMultipleItems = false
-}: MediaViewerProps) => {
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [username, setUsername] = useState<string>("");
-  const session = useSession();
-
+export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [watermarkUsername, setWatermarkUsername] = useState<string | null>(null);
+  
+  // Determine media type
+  const isVideo = media ? 
+    media.toLowerCase().endsWith('.mp4') || 
+    media.toLowerCase().endsWith('.webm') || 
+    media.toLowerCase().endsWith('.mov') : false;
+  
+  // Process the media URL
+  const processedUrl = media ? 
+    getPlayableMediaUrl({media_url: media}) : null;
+  
+  // Add cache buster
+  const displayUrl = processedUrl ? 
+    addCacheBuster(processedUrl) : null;
+  
+  // Get watermark username if creatorId is provided
   useEffect(() => {
-    // Fetch username for watermark
     if (creatorId) {
-      supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', creatorId)
-        .single()
-        .then(({ data }) => {
-          if (data?.username) {
-            setUsername(data.username);
-          }
-        });
+      getUsernameForWatermark(creatorId)
+        .then(username => setWatermarkUsername(username))
+        .catch(err => console.error("Error getting watermark username:", err));
     }
   }, [creatorId]);
-
-  useEffect(() => {
-    // Apply all security protections
-    if (session?.user?.id && creatorId) {
-      initializeScreenshotProtection(session.user.id, creatorId);
-    }
-
-    // Disable right-click
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-      return false;
-    };
-
-    // Add anti-screenshot detection
-    const detectScreenCapture = () => {
-      if (document.visibilityState === 'hidden') {
-        console.log('Possible screenshot taken');
-        // Log the screenshot attempt
-        if (session?.user?.id && creatorId) {
-          reportSecurityViolation(session.user.id, creatorId, 'screenshot_attempt');
-        }
-      }
-    };
-
-    document.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('visibilitychange', detectScreenCapture);
-
-    return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('visibilitychange', detectScreenCapture);
-    };
-  }, [creatorId, session]);
-
-  if (!media) return null;
-
-  // Use our utility to get a playable URL
-  const mediaItem = { media_url: media };
-  const displayUrl = addCacheBuster(getPlayableMediaUrl(mediaItem));
   
-  if (!displayUrl) return null;
-  
-  const isVideo = displayUrl.match(/\.(mp4|webm|ogg)$/i);
-
-  const handleMediaClick = () => {
-    setIsZoomed(!isZoomed);
+  const handleDownload = () => {
+    if (!displayUrl) return;
+    
+    const link = document.createElement('a');
+    link.href = displayUrl;
+    link.download = `media-${Date.now()}${isVideo ? '.mp4' : '.jpg'}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
-
+  
+  const handleImageLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+  
+  const handleMediaError = () => {
+    setIsLoading(false);
+    setHasError(true);
+    console.error("Error loading media:", displayUrl);
+  };
+  
   return (
     <Dialog open={!!media} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-transparent border-none">
-        <MediaContent 
-          url={displayUrl} 
-          isVideo={!!isVideo} 
-          creatorId={creatorId}
-          username={username}
-          onClose={onClose}
-          onMediaClick={handleMediaClick}
-          onNext={onNext}
-          onPrevious={onPrevious}
-          showControls={hasMultipleItems}
-        />
+      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 bg-black/90 border-luxury-primary/20">
+        <div className="relative w-full h-full flex items-center justify-center">
+          {/* Loading spinner */}
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <Loader2 className="h-10 w-10 text-luxury-primary animate-spin" />
+            </div>
+          )}
+          
+          {/* Error state */}
+          {hasError && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500 z-10">
+              <AlertCircle className="h-16 w-16 mb-4" />
+              <p className="text-lg">Failed to load media</p>
+            </div>
+          )}
+          
+          {/* Media content */}
+          <AnimatePresence mode="wait">
+            {displayUrl && !hasError && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="w-full h-full flex items-center justify-center"
+              >
+                {isVideo ? (
+                  <VideoPlayer
+                    url={displayUrl}
+                    className="w-full h-full max-h-full"
+                    onError={handleMediaError}
+                    autoPlay
+                    creatorId={creatorId}
+                  />
+                ) : (
+                  <img
+                    src={displayUrl}
+                    alt="Media content"
+                    className="max-w-full max-h-full object-contain"
+                    onLoad={handleImageLoad}
+                    onError={handleMediaError}
+                    style={{ display: isLoading ? 'none' : 'block' }}
+                  />
+                )}
+                
+                {watermarkUsername && (
+                  <div className="absolute bottom-4 right-4 text-xs text-white/60 bg-black/30 px-2 py-1 rounded z-20">
+                    @{watermarkUsername}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Controls */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 z-30">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full bg-black/50 hover:bg-black/70 text-white"
+              onClick={handleDownload}
+              disabled={isLoading || hasError}
+            >
+              <Download className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full bg-black/50 hover:bg-black/70 text-white"
+              onClick={onClose}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
