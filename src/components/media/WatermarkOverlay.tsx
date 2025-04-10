@@ -4,17 +4,21 @@ import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 
 interface WatermarkOverlayProps {
   username: string;
+  creatorId?: string;  // Added creatorId as optional prop
   className?: string;
 }
 
-export const WatermarkOverlay = ({ username, className = "" }: WatermarkOverlayProps) => {
+export const WatermarkOverlay = ({ username, creatorId, className = "" }: WatermarkOverlayProps) => {
   const [displayName, setDisplayName] = useState<string>("");
 
   useEffect(() => {
-    getUsernameForWatermark(username)
+    // If creatorId is provided, use that, otherwise use username
+    const idToUse = creatorId || username;
+    
+    getUsernameForWatermark(idToUse)
       .then(name => setDisplayName(name))
       .catch(err => console.error("Error fetching watermark name:", err));
-  }, [username]);
+  }, [username, creatorId]);
 
   if (!displayName) return null;
 

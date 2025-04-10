@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
@@ -13,6 +13,11 @@ interface VideoPlayerProps {
   autoPlay?: boolean;
   onError?: () => void;
   creatorId?: string;
+  playOnHover?: boolean;
+  showCloseButton?: boolean;
+  onClose?: () => void;
+  onLoadedData?: () => void;
+  onClick?: () => void;
 }
 
 export const VideoPlayer = ({ 
@@ -21,7 +26,12 @@ export const VideoPlayer = ({
   className,
   autoPlay = false,
   onError,
-  creatorId
+  creatorId,
+  playOnHover = false,
+  showCloseButton = false,
+  onClose,
+  onLoadedData,
+  onClick
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
@@ -64,6 +74,7 @@ export const VideoPlayer = ({
           setIsPlaying(false);
         });
       }
+      if (onLoadedData) onLoadedData();
     };
     
     const handleError = () => {
@@ -80,7 +91,35 @@ export const VideoPlayer = ({
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("error", handleError);
     };
-  }, [processedUrl, autoPlay, onError]);
+  }, [processedUrl, autoPlay, onError, onLoadedData]);
+
+  // Handle play on hover if enabled
+  useEffect(() => {
+    if (!playOnHover || !videoRef.current) return;
+
+    const video = videoRef.current;
+    
+    const handleMouseEnter = () => {
+      video.play().catch(err => {
+        console.warn("Play on hover prevented:", err);
+      });
+    };
+    
+    const handleMouseLeave = () => {
+      video.pause();
+    };
+    
+    const container = video.parentElement;
+    if (container) {
+      container.addEventListener('mouseenter', handleMouseEnter);
+      container.addEventListener('mouseleave', handleMouseLeave);
+      
+      return () => {
+        container.removeEventListener('mouseenter', handleMouseEnter);
+        container.removeEventListener('mouseleave', handleMouseLeave);
+      };
+    }
+  }, [playOnHover]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -99,6 +138,14 @@ export const VideoPlayer = ({
     if (!videoRef.current) return;
     videoRef.current.muted = !isMuted;
     setIsMuted(!isMuted);
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick();
+    } else {
+      togglePlay();
+    }
   };
 
   return (
@@ -123,7 +170,7 @@ export const VideoPlayer = ({
           playsInline
           loop
           muted={isMuted}
-          onClick={togglePlay}
+          onClick={handleClick}
         />
       )}
       
@@ -157,6 +204,20 @@ export const VideoPlayer = ({
             </Button>
           </div>
         </div>
+      )}
+      
+      {showCloseButton && onClose && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+        >
+          <X className="h-4 w-4" />
+        </Button>
       )}
       
       {!error && !isLoading && watermarkUsername && (
