@@ -5,7 +5,9 @@ import { StoryImage } from "./StoryImage";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { getContentType, getMediaUrl, fixBrokenStorageUrl, getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { getContentType, getMediaUrl } from "@/utils/mediaUtils";
+import { useToast } from "@/hooks/use-toast";
+import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
 interface StoryContentProps {
   story: Story;
@@ -16,6 +18,7 @@ interface StoryContentProps {
 export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasMediaError, setHasMediaError] = useState(false);
+  const { toast } = useToast();
   
   // Use our utility functions for consistent content type and URL detection
   const mediaType = getContentType(story);
@@ -24,10 +27,9 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   // Get the appropriate URL based on content type
   let mediaUrl = getMediaUrl(story);
   
-  // Process URL to ensure it's properly formatted
+  // Add cache buster to URL
   if (mediaUrl) {
-    // First fix any broken URLs
-    mediaUrl = fixBrokenStorageUrl(mediaUrl);
+    mediaUrl = addCacheBuster(mediaUrl);
   }
   
   // Log content info for debugging
@@ -42,6 +44,12 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   const handleMediaError = () => {
     console.error("Media failed to load:", mediaUrl);
     setHasMediaError(true);
+    
+    toast({
+      title: "Media Error",
+      description: "Failed to load story content",
+      variant: "destructive"
+    });
   };
 
   // Error fallback component

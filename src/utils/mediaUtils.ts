@@ -1,313 +1,94 @@
+
+import { Story } from "@/integrations/supabase/types/story";
+import { buildStorageUrl } from "./media/getPlayableMediaUrl";
+
 /**
- * Adds cache busting parameters to a URL to prevent caching issues
- * @param baseUrl The original URL
- * @returns URL with cache busting parameters
+ * Gets the appropriate content type from a story object
  */
-export const getUrlWithCacheBuster = (baseUrl: string | null): string => {
-  if (!baseUrl) return '';
+export const getContentType = (story: Story): 'video' | 'image' => {
+  // First check explicit content_type field
+  if (story.content_type === 'video') return 'video';
+  if (story.media_type === 'video') return 'video';
   
-  try {
-    // Skip if URL already has cache busting
-    if (baseUrl.includes('cb=') && baseUrl.includes('r=')) {
-      return baseUrl;
-    }
-    
-    // Create URL object to properly handle parameters
-    const url = new URL(baseUrl);
-    
-    // Add cache busting params
-    url.searchParams.set('cb', Date.now().toString());
-    url.searchParams.set('r', Math.random().toString(36).substring(2, 9));
-    
-    return url.toString();
-  } catch (e) {
-    // If URL parsing fails, use simple string concatenation
-    console.warn("URL parsing failed, using fallback method for cache busting:", e);
-    const timestamp = Date.now();
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}cb=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
-  }
+  // Then check for video URL existence
+  if (story.video_url) return 'video';
+  
+  // Default to image for all other cases
+  return 'image';
 };
 
 /**
- * Creates a fresh URL with new cache busting parameters
- * @param url The URL to refresh
- * @returns A fresh URL with new cache busting parameters
+ * Gets the appropriate media URL from a story object
  */
-export const refreshUrl = (url: string | null): string => {
-  if (!url) return '';
-  
-  try {
-    // Remove any existing cache busting parameters
-    const parsedUrl = new URL(url);
-    parsedUrl.searchParams.delete('cb');
-    parsedUrl.searchParams.delete('r');
-    parsedUrl.searchParams.delete('t');
-    
-    // Add new cache busting parameters
-    parsedUrl.searchParams.set('cb', Date.now().toString());
-    parsedUrl.searchParams.set('r', Math.random().toString(36).substring(2, 9));
-    
-    return parsedUrl.toString();
-  } catch (e) {
-    // If URL parsing fails, use simple string manipulation
-    console.warn("URL parsing failed during refresh, using fallback method:", e);
-    
-    // Strip existing cache busting params if present
-    let cleanUrl = url;
-    if (url.includes('?')) {
-      cleanUrl = url.split(/[?&](cb|r|t)=/)[0];
+export const getMediaUrl = (story: Story): string | null => {
+  // First check for video URL if it's a video
+  if (getContentType(story) === 'video' && story.video_url) {
+    // Handle full URLs vs storage paths
+    if (story.video_url.startsWith('http')) {
+      return story.video_url;
+    } else {
+      return buildStorageUrl('videos', story.video_url);
     }
-    
-    // Add fresh cache busting
-    const separator = cleanUrl.includes('?') ? '&' : '?';
-    return `${cleanUrl}${separator}cb=${Date.now()}&r=${Math.random().toString(36).substring(2, 9)}`;
-  }
-};
-
-/**
- * Determines the content type based on available properties
- * @param content Any content object with potential media properties
- * @returns Content type string ('video', 'image', or 'unknown')
- */
-export const getContentType = (content: any): 'video' | 'image' | 'unknown' => {
-  if (!content) return 'unknown';
-  
-  // First check explicit content type properties
-  if (content.media_type) {
-    return content.media_type.toLowerCase() as 'video' | 'image';
   }
   
-  if (content.content_type) {
-    return content.content_type.toLowerCase() as 'video' | 'image';
-  }
-  
-  // Then look at URL properties
-  if (content.video_url) {
-    return 'video';
-  }
-  
-  if (content.media_url) {
-    return 'image';
-  }
-  
-  // If we have arrays of URLs, check the first item
-  if (Array.isArray(content.video_urls) && content.video_urls.length > 0) {
-    return 'video';
-  }
-  
-  if (Array.isArray(content.media_urls) && content.media_urls.length > 0) {
-    return 'image';
-  }
-  
-  return 'unknown';
-};
-
-/**
- * Generates a full Supabase storage URL from a path
- * @param bucket The storage bucket name
- * @param path The relative path within the bucket
- * @returns Full public URL
- */
-export const getStorageUrl = (bucket: string, path: string | null): string => {
-  if (!path) return '';
-  
-  // If it's already a full URL, return it
-  if (path.startsWith('http')) {
-    return path;
-  }
-  
-  // Extract project ID from environment or hardcode it (should ideally come from env)
-  const projectId = 'ysqbdaeohlupucdmivkt';
-  return `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}/${path}`;
-};
-
-/**
- * Gets the appropriate media URL based on content type
- * @param content Content object that may have various media properties
- * @returns The appropriate media URL or null if not found
- */
-export const getMediaUrl = (content: any): string | null => {
-  if (!content) return null;
-  
-  const mediaType = getContentType(content);
-  
-  if (mediaType === 'video') {
-    // Handle video URLs
-    if (content.video_url) {
-      return content.video_url;
-    } 
-    
-    if (Array.isArray(content.video_urls) && content.video_urls.length > 0) {
-      return content.video_urls[0];
+  // Then try media_url
+  if (story.media_url) {
+    if (story.media_url.startsWith('http')) {
+      return story.media_url;
+    } else {
+      return buildStorageUrl('media', story.media_url);
     }
-    
-    return null;
-  }
-  
-  if (mediaType === 'image') {
-    // Handle image URLs
-    if (content.media_url) {
-      return content.media_url;
-    }
-    
-    if (Array.isArray(content.media_urls) && content.media_urls.length > 0) {
-      return content.media_urls[0];
-    }
-    
-    return null;
   }
   
   return null;
 };
 
 /**
- * Creates a file path based on user ID with timestamp for uniqueness
- * @param userId User ID for file organization
- * @param fileName Original file name
- * @returns Structured file path
+ * Fixes broken storage URLs that might be missing parts of the path
  */
-export const createUniqueFilePath = (userId: string, fileName: string): string => {
-  const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(2, 9);
-  const safeFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-  return `${userId}/${timestamp}_${randomId}_${safeFileName}`;
+export const fixBrokenStorageUrl = (url: string): string => {
+  if (!url) return url;
+  
+  // If already a proper URL, return as is
+  if (url.startsWith('http')) return url;
+  
+  // If this is a path, build the storage URL
+  if (url.includes('/')) {
+    const parts = url.split('/');
+    const bucket = parts[0];
+    const path = parts.slice(1).join('/');
+    return buildStorageUrl(bucket, path);
+  }
+  
+  // Default to media bucket if unclear
+  return buildStorageUrl('media', url);
 };
 
 /**
- * Fixes a broken Supabase storage URL by reconstructing it properly
- * @param url The potentially broken URL
- * @returns A fixed URL or the original if it appears valid
+ * Adds a cache busting parameter to prevent browser caching
  */
-export const fixBrokenStorageUrl = (url: string | null): string => {
-  if (!url) return '';
+export const getUrlWithCacheBuster = (url: string | null): string | null => {
+  if (!url) return null;
   
-  // If URL already starts with http, assume it's valid
-  if (url.startsWith('http')) {
-    return url;
-  }
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}cache=${Date.now()}`;
+};
+
+/**
+ * Refreshes a URL with a new cache buster to force reloading
+ */
+export const refreshUrl = (url: string | null): string | null => {
+  if (!url) return null;
   
-  // Check if URL is just a path without the domain
-  if (!url.includes('supabase.co')) {
-    // Try to extract the bucket and path
-    const parts = url.split('/');
-    if (parts.length >= 2) {
-      const bucket = parts[0];
-      const path = parts.slice(1).join('/');
-      return getStorageUrl(bucket, path);
+  // Remove any existing cache param
+  let cleanUrl = url;
+  if (cleanUrl.includes('cache=')) {
+    cleanUrl = cleanUrl.split('cache=')[0];
+    if (cleanUrl.endsWith('?') || cleanUrl.endsWith('&')) {
+      cleanUrl = cleanUrl.slice(0, -1);
     }
   }
   
-  return url;
-};
-
-/**
- * Ensures a media URL is properly formatted and freshened with cache busting
- * @param url The media URL to format
- * @param bucket Optional bucket name if URL is just a path
- * @returns A properly formatted and cache-busted URL
- */
-export const ensureProperMediaUrl = (url: string | null, bucket?: string): string => {
-  if (!url) return '';
-  
-  // If it's just a path and bucket is provided, convert to full URL
-  let fullUrl = url;
-  if (bucket && !url.startsWith('http')) {
-    fullUrl = getStorageUrl(bucket, url);
-  }
-  
-  // Add cache busting
-  return getUrlWithCacheBuster(fullUrl);
-};
-
-/**
- * Creates a watermarked version of text that can be applied to media
- * @param text The text to watermark
- * @param username The username to include in the watermark
- * @returns A watermarked text string
- */
-export const createWatermarkText = (username: string): string => {
-  return `www.eroxr.com/@${username}`;
-};
-
-/**
- * Checks if a URL is valid
- * @param url The URL to validate
- * @returns Boolean indicating if the URL is valid
- */
-export const isValidUrl = (url: string | null): boolean => {
-  if (!url) return false;
-  
-  try {
-    new URL(url);
-    return true;
-  } catch (e) {
-    return false;
-  }
-};
-
-/**
- * Extracts bucket name from a storage URL
- * @param url The storage URL
- * @returns The bucket name or null if not found
- */
-export const extractBucketFromUrl = (url: string | null): string | null => {
-  if (!url || !url.includes('storage/v1/object/public/')) return null;
-  
-  try {
-    const parts = url.split('storage/v1/object/public/');
-    if (parts.length < 2) return null;
-    
-    const bucketAndPath = parts[1].split('/');
-    if (bucketAndPath.length < 1) return null;
-    
-    return bucketAndPath[0];
-  } catch (e) {
-    return null;
-  }
-};
-
-/**
- * Gets the file extension from a filename or URL
- * @param fileNameOrUrl The filename or URL
- * @returns The file extension or empty string if not found
- */
-export const getFileExtension = (fileNameOrUrl: string | null): string => {
-  if (!fileNameOrUrl) return '';
-  
-  // Clean URL parameters
-  const cleanName = fileNameOrUrl.split('?')[0];
-  
-  // Extract extension
-  const parts = cleanName.split('.');
-  if (parts.length < 2) return '';
-  
-  return parts[parts.length - 1].toLowerCase();
-};
-
-/**
- * Determines media type from file extension or MIME type
- * @param fileNameOrType The filename, extension or MIME type
- * @returns The media type ('video', 'image', or 'unknown')
- */
-export const getMediaTypeFromFile = (fileNameOrType: string): 'video' | 'image' | 'unknown' => {
-  const input = fileNameOrType.toLowerCase();
-  
-  // Check for MIME types
-  if (input.startsWith('video/')) return 'video';
-  if (input.startsWith('image/')) return 'image';
-  
-  // Check extensions for videos
-  const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'flv', 'm4v'];
-  if (videoExtensions.some(ext => input.endsWith(`.${ext}`) || input === ext)) {
-    return 'video';
-  }
-  
-  // Check extensions for images
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
-  if (imageExtensions.some(ext => input.endsWith(`.${ext}`) || input === ext)) {
-    return 'image';
-  }
-  
-  return 'unknown';
+  // Add new cache buster
+  return getUrlWithCacheBuster(cleanUrl);
 };

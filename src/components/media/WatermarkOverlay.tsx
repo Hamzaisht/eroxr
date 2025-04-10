@@ -1,44 +1,38 @@
-import { useEffect, useState } from "react";
-import { getUsernameForWatermark } from "@/utils/watermarkUtils";
+
+import { useEffect, useState } from 'react';
+import { getUsernameForWatermark } from '@/utils/watermarkUtils';
 
 interface WatermarkOverlayProps {
   username: string;
-  creatorId?: string;
+  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 }
 
-export const WatermarkOverlay = ({ username, creatorId }: WatermarkOverlayProps) => {
-  const [displayName, setDisplayName] = useState<string>("eroxr-user");
-
+export const WatermarkOverlay = ({ 
+  username,
+  position = 'bottom-right'
+}: WatermarkOverlayProps) => {
+  const [displayName, setDisplayName] = useState<string>(username);
+  
   useEffect(() => {
-    const fetchUsername = async () => {
-      try {
-        // If username is already provided and looks like a username (not a UUID), use it directly
-        if (username && username.length < 20 && !username.includes('-')) {
-          setDisplayName(username);
-          return;
-        }
-        
-        // Otherwise try to get username from creatorId or fall back to provided username
-        const sourceId = creatorId || username;
-        
-        if (!sourceId) {
-          setDisplayName("eroxr-user");
-          return;
-        }
-        
-        const name = await getUsernameForWatermark(sourceId);
-        setDisplayName(name || "eroxr-user");
-      } catch (error) {
-        console.error('Error in WatermarkOverlay:', error);
-        setDisplayName(username || "eroxr-user");
-      }
-    };
-
-    fetchUsername();
-  }, [username, creatorId]);
-
+    // Try to get a prettier username if we have a UUID
+    if (username.includes('-')) {
+      getUsernameForWatermark(username).then(name => {
+        if (name) setDisplayName(name);
+      }).catch(error => {
+        console.error("Error fetching watermark username:", error);
+      });
+    }
+  }, [username]);
+  
+  const positionClass = {
+    'bottom-right': 'bottom-4 right-4',
+    'bottom-left': 'bottom-4 left-4',
+    'top-right': 'top-4 right-4',
+    'top-left': 'top-4 left-4',
+  }[position];
+  
   return (
-    <div className="absolute bottom-2 right-2 text-white/60 text-xs sm:text-sm font-medium z-20 pointer-events-none select-none drop-shadow-md bg-black/20 px-2 py-1 backdrop-blur-sm rounded">
+    <div className={`absolute ${positionClass} bg-black/50 text-white/80 px-3 py-1 rounded-md text-xs z-30 backdrop-blur-sm pointer-events-none select-none watermark-overlay`}>
       www.eroxr.com/@{displayName}
     </div>
   );

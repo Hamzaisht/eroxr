@@ -6,7 +6,7 @@ import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
-import { getUrlWithCacheBuster, fixBrokenStorageUrl } from "@/utils/mediaUtils";
+import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
 interface PostContentProps {
   content: string;
@@ -96,12 +96,11 @@ export const PostContent = ({
                         if (!url) return <ErrorFallback key={`video-error-${index}`} message="Video not available" />;
                         if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`video-error-${index}`} message="Failed to load video" url={url} />;
                         
-                        // Fix potentially broken URL and add cache busting
-                        const fixedUrl = fixBrokenStorageUrl(url);
-                        const displayUrl = getUrlWithCacheBuster(fixedUrl);
+                        // Add cache busting
+                        const displayUrl = addCacheBuster(url);
                         
                         // Try to get a poster image
-                        const posterUrl = mediaUrls && mediaUrls[0] ? getUrlWithCacheBuster(fixBrokenStorageUrl(mediaUrls[0])) : undefined;
+                        const posterUrl = mediaUrls && mediaUrls[0] ? addCacheBuster(mediaUrls[0]) : undefined;
                         
                         return (
                           <motion.div
@@ -113,7 +112,7 @@ export const PostContent = ({
                             onClick={() => onMediaClick(url)}
                           >
                             <VideoPlayer
-                              url={displayUrl}
+                              url={displayUrl || ''}
                               poster={posterUrl}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
@@ -132,9 +131,8 @@ export const PostContent = ({
                         if (!url) return <ErrorFallback key={`image-error-${index}`} message="Image not available" />;
                         if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`image-error-${index}`} message="Failed to load image" url={url} />;
                         
-                        // Fix potentially broken URL and add cache busting
-                        const fixedUrl = fixBrokenStorageUrl(url);
-                        const displayUrl = getUrlWithCacheBuster(fixedUrl);
+                        // Add cache busting
+                        const displayUrl = addCacheBuster(url);
                         
                         return (
                           <motion.div
@@ -147,7 +145,7 @@ export const PostContent = ({
                           >
                             <div className="relative w-full h-full">
                               <img
-                                src={displayUrl}
+                                src={displayUrl || ''}
                                 alt={`Post media ${index + 1}`}
                                 className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                                 loading="eager"
