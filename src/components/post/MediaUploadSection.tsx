@@ -3,7 +3,8 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
+import { uploadFileToStorage } from "@/utils/mediaUtils";
 
 interface MediaUploadSectionProps {
   onMediaSelect: (urls: string[]) => void;
@@ -13,10 +14,11 @@ interface MediaUploadSectionProps {
 export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSectionProps) => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const { toast } = useToast();
+  const session = useSession();
 
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files) return;
+    if (!files || !session?.user?.id) return;
 
     setSelectedFiles(files);
     
@@ -28,27 +30,14 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
           fileToUpload = await optimizeImage(file);
         }
 
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${Date.now()}_${fileName}`;
-
-        // Upload file
-        const { data, error } = await supabase.storage
-          .from('posts')
-          .upload(filePath, fileToUpload, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: file.type
-          });
-
-        if (error) throw error;
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('posts')
-          .getPublicUrl(data.path);
-
-        return publicUrl;
+        // Upload to Supabase storage
+        const result = await uploadFileToStorage(fileToUpload, 'media', session.user.id);
+        
+        if (!result.success || !result.url) {
+          throw new Error(result.error || "Failed to upload file");
+        }
+        
+        return result.url;
       });
 
       const urls = await Promise.all(uploadPromises);
@@ -56,19 +45,19 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
 
       toast({
         title: "Media uploaded",
-        description: "Your media has been uploaded successfully",
+        description: "Your media has been uploaded successfully to storage",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
       toast({
         title: "Upload failed",
-        description: "Failed to upload media. Please try again.",
+        description: error.message || "Failed to upload media. Please try again.",
         variant: "destructive",
       });
     } finally {
       setSelectedFiles(null);
     }
-  }, [onMediaSelect, toast]);
+  }, [onMediaSelect, toast, session?.user?.id]);
 
   const optimizeImage = async (file: File): Promise<File> => {
     return new Promise((resolve) => {

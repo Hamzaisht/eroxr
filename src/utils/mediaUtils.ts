@@ -1,125 +1,78 @@
 
-import { Story } from "@/integrations/supabase/types/story";
-import { buildStorageUrl } from "./media/getPlayableMediaUrl";
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Gets the appropriate content type from a story object
- */
-export const getContentType = (story: Story): 'video' | 'image' => {
-  // First check explicit content_type field
-  if (story.content_type === 'video') return 'video';
-  if (story.media_type === 'video') return 'video';
-  
-  // Then check for video URL existence
-  if (story.video_url) return 'video';
-  
-  // Default to image for all other cases
-  return 'image';
-};
-
-/**
- * Gets the appropriate media URL from a story object
- */
-export const getMediaUrl = (story: Story): string | null => {
-  // First check for video URL if it's a video
-  if (getContentType(story) === 'video' && story.video_url) {
-    // Handle full URLs vs storage paths
-    if (story.video_url.startsWith("http")) {
-      return story.video_url;
-    } else {
-      return buildStorageUrl('videos', story.video_url);
-    }
-  }
-  
-  // Then try media_url
-  if (story.media_url) {
-    if (story.media_url.startsWith("http")) {
-      return story.media_url;
-    } else {
-      return buildStorageUrl('media', story.media_url);
-    }
-  }
-  
-  return null;
-};
-
-/**
- * Fixes broken storage URLs that might be missing parts of the path
- */
-export const fixBrokenStorageUrl = (url: string): string => {
-  if (!url) return url;
-  
-  // If already a proper URL, return as is
-  if (url.startsWith("http")) return url;
-  
-  // If this is a path, build the storage URL
-  if (url.includes('/')) {
-    const parts = url.split('/');
-    const bucket = parts[0];
-    const path = parts.slice(1).join('/');
-    return buildStorageUrl(bucket, path);
-  }
-  
-  // Default to media bucket if unclear
-  return buildStorageUrl('media', url);
-};
-
-/**
- * Adds a cache busting parameter to prevent browser caching
- */
-export const getUrlWithCacheBuster = (url: string | null): string | null => {
-  if (!url) return null;
-  
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}cache=${Date.now()}`;
-};
-
-/**
- * Refreshes a URL with a new cache buster to force reloading
- */
-export const refreshUrl = (url: string | null): string | null => {
-  if (!url) return null;
-  
-  // Remove any existing cache param
-  let cleanUrl = url;
-  if (cleanUrl.includes('cache=')) {
-    cleanUrl = cleanUrl.split('cache=')[0];
-    if (cleanUrl.endsWith('?') || cleanUrl.endsWith('&')) {
-      cleanUrl = cleanUrl.slice(0, -1);
-    }
-  }
-  
-  // Add new cache buster
-  return getUrlWithCacheBuster(cleanUrl);
-};
-
-/**
- * Creates a unique file path for upload
+ * Creates a unique file path for uploading to storage
  */
 export const createUniqueFilePath = (userId: string, fileName: string): string => {
+  const fileExt = fileName.split('.').pop();
+  const uniqueId = uuidv4().substring(0, 8);
+  return `${userId}/${Date.now()}_${uniqueId}.${fileExt}`;
+};
+
+/**
+ * Adds a cache buster to a URL to prevent caching issues
+ */
+export const getUrlWithCacheBuster = (baseUrl: string): string => {
   const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 10);
-  const fileExt = fileName.split('.').pop() || 'file';
-  
-  return `${userId}/${timestamp}_${randomString}.${fileExt}`;
+  const separator = baseUrl.includes('?') ? '&' : '?';
+  return `${baseUrl}${separator}t=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
 };
 
 /**
- * Gets complete storage URL from bucket and path
+ * Gets a public URL for a file in Supabase storage
  */
-export const getStorageUrl = (bucket: string, path?: string): string => {
+export const getStorageUrl = (bucket: string, path: string): string => {
   if (!path) return '';
-  return buildStorageUrl(bucket, path);
+  
+  // If already a full URL, return as is
+  if (path.startsWith('http')) {
+    return path;
+  }
+  
+  const { data } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(path);
+  
+  return data.publicUrl;
 };
 
 /**
- * Add a cache buster to a URL
+ * Uploads a file to Supabase storage
  */
-export const addCacheBuster = (url: string | null): string | null => {
-  return getUrlWithCacheBuster(url);
-};
+export const uploadFileToStorage = async (
+  file: File, 
+  bucket: string = 'media',
+  userId: string
+): Promise<{ success: boolean; path?: string; url?: string; error?: string }> => {
+  try {
+    const filePath = createUniqueFilePath(userId, file.name);
+    
+    // Upload the file
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type // Explicitly set content type
+      });
 
-/**
- * Re-export the getPlayableMediaUrl function to maintain compatibility
- */
-export { getPlayableMediaUrl } from "./media/getPlayableMediaUrl";
+    if (error) throw error;
+
+    // Get the public URL
+    const publicUrl = getStorageUrl(bucket, data.path);
+    
+    return { 
+      success: true, 
+      path: data.path,
+      url: getUrlWithCacheBuster(publicUrl)
+    };
+  } catch (error: any) {
+    console.error('Storage upload error:', error);
+    return { 
+      success: false, 
+      error: error.message || "Failed to upload file" 
+    };
+  }
+};

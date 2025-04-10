@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDbService } from "@/components/home/hooks/short-post/services/useDbService";
-import { supabase } from "@/integrations/supabase/client";
-import { getUrlWithCacheBuster, createUniqueFilePath, getStorageUrl } from "@/utils/mediaUtils";
+import { uploadFileToStorage, getUrlWithCacheBuster } from "@/utils/mediaUtils";
 
 // Maximum file size (100MB)
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -46,35 +45,6 @@ export const useStoryUpload = () => {
     }
 
     return { valid: true };
-  };
-
-  const uploadFile = async (file: File, filePath: string) => {
-    return new Promise<{ error?: any, data?: any }>((resolve) => {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          const newProgress = prev + Math.floor(Math.random() * 10);
-          return newProgress > 90 ? 90 : newProgress;
-        });
-      }, 300);
-
-      // Start the upload
-      supabase.storage
-        .from('stories')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type // Add explicit content type
-        })
-        .then(({ data, error }) => {
-          clearInterval(progressInterval);
-          resolve({ data, error });
-        })
-        .catch((error) => {
-          clearInterval(progressInterval);
-          resolve({ error });
-        });
-    });
   };
 
   const createStoryRecord = async (
@@ -157,82 +127,37 @@ export const useStoryUpload = () => {
         throw new Error(validation.message || "Invalid file");
       }
       
-      // Use our utility function to create a unique file path
-      const filePath = createUniqueFilePath(session.user.id, file.name);
+      // Track progress during upload
+      const onProgress = (progress: number) => {
+        setUploadProgress(progress);
+      };
 
-      console.log("Uploading story file:", file.type, filePath);
+      // Upload to Supabase storage
+      const result = await uploadFileToStorage(file, 'stories', session.user.id);
 
-      // Attempt upload
-      let { error: uploadError, data: uploadData } = await uploadFile(file, filePath);
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        
-        // Try again if we haven't reached max retries
-        if (retryCount < MAX_RETRIES) {
-          setRetryCount(prev => prev + 1);
-          toast({
-            title: "Retrying upload",
-            description: "First attempt failed, trying again...",
-          });
-          
-          // Retry with a different file path using our utility
-          const retryFilePath = createUniqueFilePath(session.user.id, `retry_${file.name}`);
-          
-          console.log("Retrying upload with path:", retryFilePath, "Content-Type:", file.type);
-          
-          const { error: retryError, data: retryData } = await supabase.storage
-            .from('stories')
-            .upload(retryFilePath, file, {
-              cacheControl: '3600',
-              upsert: true,
-              contentType: file.type // Add explicit content type
-            });
-          
-          if (retryError) {
-            console.error("Retry upload failed:", retryError);
-            throw retryError;
-          }
-          
-          console.log("Retry upload succeeded");
-          uploadData = retryData;
-        } else {
-          throw uploadError;
-        }
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
 
-      if (!uploadData || !uploadData.path) {
-        throw new Error("Upload completed but no file path returned");
+      if (!result.url) {
+        throw new Error("Upload completed but no URL returned");
       }
-
+      
       setUploadProgress(95); // Almost done
-
-      // Get the full public URL using getPublicUrl method
-      const { data: { publicUrl } } = supabase.storage
-        .from('stories')
-        .getPublicUrl(uploadData.path);
-      
-      console.log("Generated public URL:", publicUrl);
-      
-      // Add a cache buster to ensure the URL is fresh
-      const cacheBustedUrl = getUrlWithCacheBuster(publicUrl);
-      
-      setUploadProgress(98); // Final step
       
       // Determine if this is a video or image based on file type
       const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
       const contentType = isVideo ? 'video' : 'image';
       
-      // Create story record with the full URL
+      // Create story record with the URL
       const { error: storyError } = await createStoryRecord(
         session.user.id,
-        cacheBustedUrl,
+        result.url,
         isVideo,
         contentType
       );
 
       if (storyError) {
-        console.error("Story DB insert error:", storyError);
         throw storyError;
       }
 

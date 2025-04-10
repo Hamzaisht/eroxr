@@ -34,7 +34,7 @@ export const getPlayableMediaUrl = (item: {
   
   // Handle storage paths for video
   if (item?.video_url) {
-    return buildStorageUrl("videos", item.video_url);
+    return buildStorageUrl("media", item.video_url);
   }
   
   // Handle storage paths for media

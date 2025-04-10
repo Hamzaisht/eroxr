@@ -4,17 +4,14 @@ import { motion } from "framer-motion";
 
 export const StoryUploadButton = () => {
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full">
-      <motion.div 
-        className="bg-luxury-primary/20 p-2 rounded-full mb-2"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Plus className="w-5 h-5 text-luxury-primary" />
-      </motion.div>
-      <span className="text-xs text-luxury-neutral/80 text-center">
+    <>
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary to-luxury-accent opacity-20 blur-lg group-hover:opacity-40 transition-opacity duration-300" />
+        <Plus className="w-8 h-8 text-white/80 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+      </div>
+      <span className="text-xs text-white/60 mt-2 group-hover:text-white/80 transition-colors duration-300">
         Add Story
       </span>
-    </div>
+    </>
   );
 };
