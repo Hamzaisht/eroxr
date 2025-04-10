@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { useSession } from "@supabase/auth-helpers-react";
+import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
 interface VideoMessageProps {
   messageId: string;
@@ -21,6 +22,10 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
   const { toast } = useToast();
   const { isGhostMode = false } = useGhostMode();
   const session = useSession();
+
+  // Get the playable URL using our utility
+  const mediaItem = { video_url: videoUrl };
+  const displayUrl = addCacheBuster(getPlayableMediaUrl(mediaItem));
 
   useEffect(() => {
     if (videoRef.current) {
@@ -83,6 +88,14 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
   // In ghost mode, we can view expired content
   const showExpiredMessage = isViewed && !isGhostMode;
 
+  if (!displayUrl && !showExpiredMessage) {
+    return (
+      <div className="text-center text-muted-foreground p-4 rounded-lg bg-black">
+        Video not available
+      </div>
+    );
+  }
+
   return (
     <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
       {isLoading && (
@@ -99,7 +112,7 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
         <>
           <video
             ref={videoRef}
-            src={videoUrl}
+            src={displayUrl || undefined}
             className="w-full h-full object-contain"
             onEnded={handleEnded}
             style={{ display: isPlaying ? 'block' : 'none' }}

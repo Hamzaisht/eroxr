@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, RefreshCw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { addCacheBuster, buildStorageUrl } from "@/utils/media/getPlayableMediaUrl";
+import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 
 interface VideoPlayerProps {

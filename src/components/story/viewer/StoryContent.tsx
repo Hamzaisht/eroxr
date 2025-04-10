@@ -5,9 +5,9 @@ import { StoryImage } from "./StoryImage";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { getContentType, getMediaUrl } from "@/utils/mediaUtils";
+import { getContentType } from "@/utils/mediaUtils";
 import { useToast } from "@/hooks/use-toast";
-import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
 interface StoryContentProps {
   story: Story;
@@ -24,8 +24,8 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   const mediaType = getContentType(story);
   const isVideo = mediaType === 'video';
   
-  // Get the appropriate URL based on content type
-  let mediaUrl = getMediaUrl(story);
+  // Get the appropriate URL using our utility
+  let mediaUrl = getPlayableMediaUrl(story);
   
   // Add cache buster to URL
   if (mediaUrl) {

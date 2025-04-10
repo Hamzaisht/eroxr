@@ -6,7 +6,7 @@ import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
-import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
 interface PostContentProps {
   content: string;
@@ -96,11 +96,13 @@ export const PostContent = ({
                         if (!url) return <ErrorFallback key={`video-error-${index}`} message="Video not available" />;
                         if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`video-error-${index}`} message="Failed to load video" url={url} />;
                         
-                        // Add cache busting
-                        const displayUrl = addCacheBuster(url);
+                        // Use our utility to get a playable URL
+                        const videoItem = { video_url: url };
+                        const displayUrl = addCacheBuster(getPlayableMediaUrl(videoItem));
                         
                         // Try to get a poster image
-                        const posterUrl = mediaUrls && mediaUrls[0] ? addCacheBuster(mediaUrls[0]) : undefined;
+                        const posterItem = mediaUrls && mediaUrls[0] ? { media_url: mediaUrls[0] } : null;
+                        const posterUrl = posterItem ? addCacheBuster(getPlayableMediaUrl(posterItem)) : undefined;
                         
                         return (
                           <motion.div
@@ -131,8 +133,9 @@ export const PostContent = ({
                         if (!url) return <ErrorFallback key={`image-error-${index}`} message="Image not available" />;
                         if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`image-error-${index}`} message="Failed to load image" url={url} />;
                         
-                        // Add cache busting
-                        const displayUrl = addCacheBuster(url);
+                        // Use our utility to get a playable URL
+                        const mediaItem = { media_url: url };
+                        const displayUrl = addCacheBuster(getPlayableMediaUrl(mediaItem));
                         
                         return (
                           <motion.div

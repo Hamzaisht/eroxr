@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { initializeScreenshotProtection, reportSecurityViolation } from "@/lib/security";
-import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
 export interface MediaViewerProps {
   media: string | null;
@@ -78,9 +78,13 @@ export const MediaViewer = ({
 
   if (!media) return null;
 
-  // Apply cache busting to the media URL
-  const displayUrl = getUrlWithCacheBuster(media);
-  const isVideo = media.match(/\.(mp4|webm|ogg)$/i);
+  // Use our utility to get a playable URL
+  const mediaItem = { media_url: media };
+  const displayUrl = addCacheBuster(getPlayableMediaUrl(mediaItem));
+  
+  if (!displayUrl) return null;
+  
+  const isVideo = displayUrl.match(/\.(mp4|webm|ogg)$/i);
 
   const handleMediaClick = () => {
     setIsZoomed(!isZoomed);

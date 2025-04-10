@@ -11,7 +11,7 @@ import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { Short } from "../types/short";
 import { useShortActions } from "../hooks/actions";
 import { useToast } from "@/hooks/use-toast";
-import { getUrlWithCacheBuster, fixBrokenStorageUrl } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster, fixBrokenStorageUrl, getPlayableMediaUrl, addCacheBuster } from "@/utils/mediaUtils";
 
 interface ShortItemProps {
   short: Short;
@@ -45,9 +45,13 @@ export const ShortItem = ({
   // Validate data for rendering
   const isValidShort = !!short && !!short.id;
   
-  // Ensure we have a valid video URL
-  const videoUrl = short?.video_urls?.length ? short.video_urls[0] : null;
+  // Use our utility to get a playable URL
+  const videoUrl = short?.video_urls?.length ? 
+    getPlayableMediaUrl({ video_url: short.video_urls[0] }) : null;
+  
   const hasThumbnail = !!short?.video_thumbnail_url;
+  const thumbnailUrl = hasThumbnail ? 
+    getPlayableMediaUrl({ media_url: short.video_thumbnail_url }) : undefined;
   
   // Check if media is available
   useEffect(() => {
@@ -59,23 +63,9 @@ export const ShortItem = ({
     }
   }, [short?.id, videoUrl, hasThumbnail]);
 
-  // Fix and cache-bust the video URL
-  const getProperVideoUrl = () => {
-    if (!videoUrl) return null;
-    
-    // First fix any broken URLs
-    const fixedUrl = fixBrokenStorageUrl(videoUrl);
-    
-    // Then add cache busting
-    return getUrlWithCacheBuster(fixedUrl);
-  };
-  
-  // Get the video URL with proper handling
-  const videoUrlWithCacheBuster = getProperVideoUrl();
-  
-  // Also fix the thumbnail URL if present
-  const thumbnailUrlWithCacheBuster = short?.video_thumbnail_url ? 
-    getUrlWithCacheBuster(fixBrokenStorageUrl(short.video_thumbnail_url)) : undefined;
+  // Add cache busting to URLs
+  const videoUrlWithCacheBuster = videoUrl ? addCacheBuster(videoUrl) : null;
+  const thumbnailUrlWithCacheBuster = thumbnailUrl ? addCacheBuster(thumbnailUrl) : undefined;
   
   // Reset video error state when short changes
   useEffect(() => {
