@@ -1,321 +1,169 @@
 
-import { useState, useEffect, useRef, forwardRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, RefreshCw, X } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
-import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
+import { getUsernameForWatermark } from "@/utils/watermarkUtils";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface VideoPlayerProps {
   url: string;
-  index?: number;
   poster?: string;
-  isMuted?: boolean;
-  isCurrentVideo?: boolean;
-  onMuteChange?: (muted: boolean) => void;
-  onIndexChange?: (index: number) => void;
   className?: string;
-  onError?: () => void;
   autoPlay?: boolean;
+  onError?: () => void;
   creatorId?: string;
-  playOnHover?: boolean;
-  showCloseButton?: boolean;
-  onClose?: () => void;
-  onClick?: () => void;
-  onLoadedData?: () => void;
 }
 
-export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
-  url,
-  index,
+export const VideoPlayer = ({ 
+  url, 
   poster,
-  isMuted = true,
-  isCurrentVideo = false,
-  onMuteChange,
-  onIndexChange,
   className,
-  onError,
   autoPlay = false,
-  creatorId,
-  playOnHover = false,
-  showCloseButton = false,
-  onClose,
-  onClick,
-  onLoadedData
-}, ref) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  onError,
+  creatorId
+}: VideoPlayerProps) => {
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [watermarkUsername, setWatermarkUsername] = useState<string>("");
+  const videoRef = useRef<HTMLVideoElement>(null);
   
-  // Safely handle the forwarded ref, which could be a function ref or an object ref
-  const videoRef = ref || internalVideoRef;
+  // Process URL with our utility
+  const processedUrl = getPlayableMediaUrl({media_url: url});
+  const processedPoster = poster ? getPlayableMediaUrl({media_url: poster}) : undefined;
   
-  // Get actual video element, handling both function and object refs
-  const getVideoElement = () => {
-    if (!videoRef) return null;
-    
-    // For object refs (RefObject)
-    if ('current' in videoRef) {
-      return videoRef.current;
+  useEffect(() => {
+    if (creatorId) {
+      getUsernameForWatermark(creatorId)
+        .then(username => setWatermarkUsername(username))
+        .catch(err => console.error("Error getting watermark username:", err));
     }
-    
-    // For internal ref as fallback
-    return internalVideoRef.current;
-  };
-  
-  const { toast } = useToast();
-
-  // Add cache buster to URL
-  const videoUrl = addCacheBuster(url);
+  }, [creatorId]);
 
   useEffect(() => {
-    const video = getVideoElement();
-    if (!video) return;
-
-    const handleLoadedData = () => {
-      setIsLoaded(true);
-      setIsBuffering(false);
-      setHasError(false);
-      console.log("Video loaded successfully:", url);
-      
-      if (onLoadedData) {
-        onLoadedData();
-      }
-      
-      // Auto play if current video or autoPlay is true
-      if ((isCurrentVideo || autoPlay) && video.paused) {
-        video.play().catch(error => {
-          console.warn("Autoplay prevented:", error);
-        });
-      }
-    };
-
-    const handleWaiting = () => {
-      setIsBuffering(true);
-    };
-
-    const handlePlaying = () => {
-      setIsBuffering(false);
-      setIsPlaying(true);
-    };
-
-    const handleError = (e: Event) => {
-      console.error("Video loading error:", e, url);
-      setIsBuffering(false);
-      setHasError(true);
-      
-      // Auto retry a couple of times
-      if (retryCount < 2) {
-        console.log(`Auto retrying video load (${retryCount + 1}/2):`, url);
-        setRetryCount(prev => prev + 1);
-        
-        // Wait a moment and retry with a fresh URL
-        setTimeout(() => {
-          if (video) {
-            video.load();
-          }
-        }, 1000);
-      } else if (onError) {
-        onError();
-      }
-    };
+    setIsLoading(true);
+    setError(false);
     
-    const handlePause = () => {
-      setIsPlaying(false);
-    };
-
-    // Set up event handlers
-    video.addEventListener("loadeddata", handleLoadedData);
-    video.addEventListener("waiting", handleWaiting);
-    video.addEventListener("playing", handlePlaying);
-    video.addEventListener("error", handleError);
-    video.addEventListener("pause", handlePause);
-
-    return () => {
-      video.removeEventListener("loadeddata", handleLoadedData);
-      video.removeEventListener("waiting", handleWaiting);
-      video.removeEventListener("playing", handlePlaying);
-      video.removeEventListener("error", handleError);
-      video.removeEventListener("pause", handlePause);
-    };
-  }, [url, retryCount, isCurrentVideo, autoPlay, onError, onLoadedData]);
-
-  // Handle playback state changes
-  useEffect(() => {
-    const video = getVideoElement();
-    if (!video) return;
-    
-    if (isCurrentVideo && !isBuffering && !hasError) {
-      video.play().catch(err => {
-        console.warn("Video play error:", err);
-      });
-    } 
-  }, [isCurrentVideo, isBuffering, hasError]);
-  
-  // Handle mute state
-  useEffect(() => {
-    const video = getVideoElement();
-    if (video) {
-      video.muted = isMuted;
-    }
-  }, [isMuted]);
-  
-  // Handle hover playback if enabled
-  useEffect(() => {
-    if (!playOnHover) return;
-    
-    const video = getVideoElement();
-    if (video) {
-      if (isCurrentVideo) {
-        video.play().catch(console.error);
-      } else {
-        video.pause();
-      }
-    }
-  }, [playOnHover, isCurrentVideo]);
-
-  const togglePlay = () => {
-    const video = getVideoElement();
-    if (!video) return;
-    
-    if (isPlaying) {
-      video.pause();
-    } else {
-      video.play().catch(error => {
-        console.error('Video playback error:', error);
-        toast({
-          title: "Playback Error",
-          description: "Unable to play video. Please try again.",
-          variant: "destructive",
-        });
-      });
-      
-      if (typeof index !== 'undefined' && onIndexChange) {
-        onIndexChange(index);
-      }
-    }
-  };
-
-  const toggleMute = () => {
-    if (!onMuteChange) return;
-    onMuteChange(!isMuted);
-  };
-  
-  const handleRetry = () => {
-    setHasError(false);
-    setIsBuffering(true);
-    setRetryCount(0);
-    
-    const video = getVideoElement();
-    if (video) {
-      video.load();
-      video.play().catch(console.error);
-    }
-  };
-  
-  const handleClick = (e: React.MouseEvent) => {
-    if (onClick) {
-      onClick();
+    if (!processedUrl) {
+      setError(true);
+      setIsLoading(false);
+      if (onError) onError();
       return;
     }
     
-    togglePlay();
-  };
-  
-  const handleCloseClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onClose) {
-      onClose();
+    const video = videoRef.current;
+    if (!video) return;
+    
+    const handleCanPlay = () => {
+      setIsLoading(false);
+      if (autoPlay) {
+        video.play().catch(err => {
+          console.warn("Autoplay prevented:", err);
+          setIsPlaying(false);
+        });
+      }
+    };
+    
+    const handleError = () => {
+      console.error("Video error:", processedUrl);
+      setError(true);
+      setIsLoading(false);
+      if (onError) onError();
+    };
+    
+    video.addEventListener("canplay", handleCanPlay);
+    video.addEventListener("error", handleError);
+    
+    return () => {
+      video.removeEventListener("canplay", handleCanPlay);
+      video.removeEventListener("error", handleError);
+    };
+  }, [processedUrl, autoPlay, onError]);
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    
+    if (isPlaying) {
+      videoRef.current.pause();
+    } else {
+      videoRef.current.play().catch(error => {
+        console.error("Error playing video:", error);
+      });
     }
+    setIsPlaying(!isPlaying);
+  };
+
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = !isMuted;
+    setIsMuted(!isMuted);
   };
 
   return (
-    <div className={cn("relative group", className)}>
-      {isBuffering && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
-          <Loader2 className="w-8 h-8 animate-spin text-white" />
+    <div className={cn("relative group overflow-hidden", className)}>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+          <Loader2 className="h-8 w-8 animate-spin text-white" />
         </div>
       )}
       
-      {hasError && retryCount >= 2 && (
+      {error ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-10">
-          <AlertCircle className="w-12 h-12 text-red-500 mb-2" />
-          <p className="text-white mb-4">Failed to load video</p>
-          <Button
-            variant="default"
-            className="flex items-center gap-2"
-            onClick={handleRetry}
-          >
-            <RefreshCw className="h-4 w-4" /> 
-            Retry
-          </Button>
+          <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
+          <p className="text-white/80">Failed to load video</p>
         </div>
+      ) : (
+        <video
+          ref={videoRef}
+          src={processedUrl || undefined}
+          poster={processedPoster}
+          className="w-full h-full object-cover"
+          playsInline
+          loop
+          muted={isMuted}
+          onClick={togglePlay}
+        />
       )}
       
-      <video
-        ref={videoRef as React.RefObject<HTMLVideoElement>}
-        src={videoUrl || undefined}
-        poster={poster}
-        muted={isMuted}
-        playsInline
-        loop
-        className="w-full h-full object-cover"
-        onClick={handleClick}
-      />
-      
-      {showCloseButton && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/70 z-20 text-white"
-          onClick={handleCloseClick}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      )}
-      
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
-            onClick={togglePlay}
-          >
-            {isPlaying ? (
-              <Pause className="h-4 w-4 text-white" />
-            ) : (
-              <Play className="h-4 w-4 text-white" />
-            )}
-          </Button>
-          
-          {onMuteChange && (
+      {!error && !isLoading && (
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40"
+              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 text-white"
+              onClick={togglePlay}
+            >
+              {isPlaying ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 text-white"
               onClick={toggleMute}
             >
               {isMuted ? (
-                <VolumeX className="h-4 w-4 text-white" />
+                <VolumeX className="h-4 w-4" />
               ) : (
-                <Volume2 className="h-4 w-4 text-white" />
+                <Volume2 className="h-4 w-4" />
               )}
             </Button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
       
-      {/* Add watermark if creator ID is provided */}
-      {creatorId && !isBuffering && !hasError && (
-        <WatermarkOverlay username={creatorId} />
+      {!error && !isLoading && watermarkUsername && (
+        <div className="absolute bottom-2 right-2 text-xs text-white/60 bg-black/30 px-2 py-1 rounded">
+          @{watermarkUsername}
+        </div>
       )}
     </div>
   );
-});
-
-VideoPlayer.displayName = "VideoPlayer";
+};
