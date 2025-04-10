@@ -1,4 +1,6 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 /**
  * Adds a timestamp to a URL to prevent caching
  */
@@ -39,8 +41,6 @@ export const getMediaType = (url: string): 'video' | 'gif' | 'image' => {
   
   return 'image';
 };
-
-import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Uploads a file to Supabase storage and returns the result
@@ -139,4 +139,3 @@ export const getContentType = (item: any): 'video' | 'image' => {
   // Default to image
   return 'image';
 };
-
