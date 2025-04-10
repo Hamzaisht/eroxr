@@ -1,6 +1,8 @@
+
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause } from "lucide-react";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface VideoPlayerProps {
   url: string;
@@ -11,6 +13,9 @@ interface VideoPlayerProps {
 export const VideoPlayer = ({ url, poster, onError }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Process the URL correctly using the appropriate parameter structure
+  const processedUrl = getPlayableMediaUrl({media_url: url});
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -35,7 +40,7 @@ export const VideoPlayer = ({ url, poster, onError }: VideoPlayerProps) => {
     >
       <video
         ref={videoRef}
-        src={url}
+        src={processedUrl || undefined}
         poster={poster}  // Added poster attribute
         className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
         playsInline

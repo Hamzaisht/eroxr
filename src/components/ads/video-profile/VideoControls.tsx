@@ -1,6 +1,7 @@
 
 import { useRef, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface VideoControlsProps {
   videoUrl: string | null;
@@ -37,12 +38,15 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
     }
   }, [isActive, videoUrl, toast]);
 
+  // Process the video URL using the appropriate parameter structure
+  const processedVideoUrl = videoUrl ? getPlayableMediaUrl({media_url: videoUrl}) : null;
+
   return (
     <div className="absolute inset-0 w-full h-full">
-      {videoUrl ? (
+      {processedVideoUrl ? (
         <video
           ref={videoRef}
-          src={videoUrl}
+          src={processedVideoUrl}
           className="h-full w-full object-cover"
           loop
           muted

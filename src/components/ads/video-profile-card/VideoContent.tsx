@@ -3,6 +3,7 @@ import { useRef, useEffect } from 'react';
 import { Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DatingAd } from '../types/dating';
+import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
 
 interface VideoContentProps {
   ad: DatingAd;
@@ -32,7 +33,7 @@ export const VideoContent = ({ ad, isActive, isHovered }: VideoContentProps) => 
         <div className="w-full h-full flex items-center justify-center">
           <video
             ref={videoRef}
-            src={ad.video_url}
+            src={getPlayableMediaUrl({media_url: ad.video_url})}
             className={cn(
               "w-full h-full object-cover transition-all duration-500",
               isActive || isHovered ? "opacity-100" : "opacity-90 scale-[1.01]"
