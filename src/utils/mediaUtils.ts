@@ -21,6 +21,13 @@ export const getUrlWithCacheBuster = (baseUrl: string): string => {
 };
 
 /**
+ * Refreshes a URL by adding a new cache buster
+ */
+export const refreshUrl = (url: string): string => {
+  return getUrlWithCacheBuster(url);
+};
+
+/**
  * Gets a public URL for a file in Supabase storage
  */
 export const getStorageUrl = (bucket: string, path: string): string => {
@@ -36,6 +43,111 @@ export const getStorageUrl = (bucket: string, path: string): string => {
     .getPublicUrl(path);
   
   return data.publicUrl;
+};
+
+/**
+ * Determines the content type (image/video) from file extension or metadata
+ */
+export const getContentType = (item: any): string => {
+  // Use explicit media_type or content_type if available
+  if (item.media_type) return item.media_type;
+  if (item.content_type) return item.content_type;
+  
+  // Infer from URLs
+  if (item.video_url) return 'video';
+  if (item.media_url) {
+    if (typeof item.media_url === 'string') {
+      return inferMediaTypeFromUrl(item.media_url);
+    } 
+    if (Array.isArray(item.media_url) && item.media_url.length > 0) {
+      return inferMediaTypeFromUrl(item.media_url[0]);
+    }
+  }
+  
+  // Default to image if we can't determine
+  return 'image';
+};
+
+/**
+ * Attempts to get a valid media URL from various item properties
+ */
+export const getMediaUrl = (item: any): string | null => {
+  // Check for direct full URLs
+  if (item?.video_url && item.video_url.startsWith("http")) {
+    return item.video_url;
+  }
+  
+  if (item?.media_url) {
+    if (typeof item.media_url === 'string' && item.media_url.startsWith("http")) {
+      return item.media_url;
+    } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
+      return item.media_url[0];
+    }
+  }
+  
+  // Handle storage paths
+  if (item?.video_url) {
+    return getStorageUrl("media", item.video_url);
+  }
+  
+  if (item?.media_url) {
+    if (typeof item.media_url === 'string') {
+      return getStorageUrl("media", item.media_url);
+    } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
+      return getStorageUrl("media", item.media_url[0]);
+    }
+  }
+  
+  return null;
+};
+
+/**
+ * Attempts to fix potential broken storage URLs
+ */
+export const fixBrokenStorageUrl = (url: string): string => {
+  // Return as is if it's already a valid URL or is missing
+  if (!url || url.startsWith('http')) {
+    return url;
+  }
+  
+  // Try to build a proper Supabase URL
+  try {
+    // Remove leading slashes if present
+    const cleanPath = url.startsWith("/") ? url.substring(1) : url;
+    // Determine bucket based on path segments
+    const pathSegments = cleanPath.split('/');
+    let bucket = 'media'; // Default bucket
+    
+    // Try to infer bucket from path
+    if (pathSegments[0] === 'stories') bucket = 'stories';
+    else if (pathSegments[0] === 'posts') bucket = 'posts';
+    else if (pathSegments[0] === 'avatars') bucket = 'avatars';
+    else if (pathSegments[0] === 'shorts') bucket = 'shorts';
+    
+    // Get the public URL from supabase client
+    const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
+    return data.publicUrl;
+  } catch (error) {
+    console.error("Error fixing broken URL:", error);
+    return url; // Return original if fix fails
+  }
+};
+
+/**
+ * Infer media type from URL or file extension
+ */
+const inferMediaTypeFromUrl = (url: string): string => {
+  if (!url) return 'image'; // Default to image
+  
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.m4v'];
+  const lowercaseUrl = url.toLowerCase();
+  
+  // Check for video extensions
+  if (videoExtensions.some(ext => lowercaseUrl.includes(ext))) {
+    return 'video';
+  }
+  
+  return 'image'; // Default to image for everything else
 };
 
 /**

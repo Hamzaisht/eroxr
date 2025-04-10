@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDbService } from "@/components/home/hooks/short-post/services/useDbService";
 import { uploadFileToStorage, getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 // Maximum file size (100MB)
 const MAX_FILE_SIZE = 100 * 1024 * 1024;

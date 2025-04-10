@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { PlayCircle, ImageIcon } from "lucide-react";
@@ -7,7 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { AvatarImage } from "@/components/ui/avatar";
 import { AvatarFallback } from "@/components/ui/avatar";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { getUrlWithCacheBuster, getContentType, getMediaUrl, fixBrokenStorageUrl } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface StoryItemProps {

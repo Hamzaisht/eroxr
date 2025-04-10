@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, forwardRef, useState } from "react";
 import { Loader2, AlertCircle, RefreshCw, VolumeX } from "lucide-react";
 import { motion } from "framer-motion";
@@ -24,20 +23,15 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const MAX_RETRIES = 2;
     
-    // Use forwarded ref or internal ref
     const resolvedRef = (ref as React.RefObject<HTMLVideoElement>) || videoRef;
     
-    // Initialize with cache-busted URL and set up watermark
     useEffect(() => {
-      // Apply cache busting to URL
       setCurrentSrc(getUrlWithCacheBuster(videoUrl));
       
-      // Reset state when URL changes
       setIsLoading(true);
       setLoadError(false);
       setRetryCount(0);
       
-      // Apply watermark
       getUsernameForWatermark(creatorId).then(name => {
         setWatermarkUsername(name);
       }).catch(error => {
@@ -67,7 +61,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         if (retryCount < MAX_RETRIES) {
           setRetryCount(prev => prev + 1);
           
-          // Wait a moment then retry with a fresh URL
           setTimeout(() => {
             if (video) {
               const freshUrl = refreshUrl(currentSrc);
@@ -85,7 +78,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         }
       };
       
-      // Set up event handlers
       video.addEventListener("loadeddata", handleLoadedData);
       video.addEventListener("error", handleLoadingError);
       
@@ -95,7 +87,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
       };
     }, [currentSrc, isPaused, onError, retryCount, videoUrl]);
     
-    // Handle playback state changes
     useEffect(() => {
       const video = resolvedRef.current;
       if (!video) return;
@@ -124,7 +115,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     
     return (
       <div className="relative w-full h-full bg-black">
-        {/* Video element */}
         <video
           ref={resolvedRef}
           className="w-full h-full object-contain"
@@ -137,14 +127,12 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
           }}
         />
         
-        {/* Loading state */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="w-8 h-8 text-luxury-primary animate-spin" />
           </div>
         )}
         
-        {/* Error state */}
         {loadError && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -163,14 +151,12 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
           </motion.div>
         )}
         
-        {/* Muted indicator */}
         {!isLoading && !loadError && (
           <div className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
             <VolumeX className="h-5 w-5 text-white" />
           </div>
         )}
         
-        {/* Watermark */}
         {!isLoading && !loadError && watermarkUsername && (
           <div className="watermark-overlay">
             www.eroxr.com/@{watermarkUsername}

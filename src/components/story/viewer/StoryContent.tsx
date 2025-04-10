@@ -5,7 +5,7 @@ import { StoryImage } from "./StoryImage";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { getContentType } from "@/utils/mediaUtils";
+import { getContentType } from "@/utils/mediaUtils"; // Updated import
 import { useToast } from "@/hooks/use-toast";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 

@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
@@ -23,15 +22,10 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const MAX_RETRIES = 2;
   
   useEffect(() => {
-    // Apply cache busting to URL when component mounts or URL changes
     setCurrentSrc(getUrlWithCacheBuster(mediaUrl));
-    
-    // Reset loading state when URL changes
     setIsLoading(true);
     setLoadError(false);
     setRetryCount(0);
-    
-    // Get watermark username
     getUsernameForWatermark(creatorId).then(name => {
       setWatermarkUsername(name);
     }).catch(error => {
@@ -53,7 +47,6 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
       console.log(`Retrying image load (${retryCount + 1}/${MAX_RETRIES}):`, mediaUrl);
       setRetryCount(prev => prev + 1);
       
-      // Wait a moment and retry with a fresh URL
       setTimeout(() => {
         const freshUrl = refreshUrl(mediaUrl);
         setCurrentSrc(freshUrl);
@@ -72,7 +65,6 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
     setIsLoading(true);
     setLoadError(false);
     setRetryCount(0);
-    // Generate a new URL with fresh cache busting
     const freshUrl = refreshUrl(mediaUrl);
     setCurrentSrc(freshUrl);
   };
@@ -84,14 +76,12 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
       exit={{ opacity: 0 }}
       className="absolute inset-0 flex items-center justify-center bg-black"
     >
-      {/* Loading indicator */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-luxury-primary animate-spin" />
         </div>
       )}
       
-      {/* Error state with retry button */}
       {loadError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500">
           <AlertCircle className="h-12 w-12 mb-2" />
@@ -106,7 +96,6 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
         </div>
       )}
       
-      {/* Image */}
       <img
         src={currentSrc}
         alt={`Story by ${username}`}
@@ -121,7 +110,6 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
         }}
       />
       
-      {/* Watermark overlay */}
       {!isLoading && !loadError && (
         <div className="watermark-overlay">
           www.eroxr.com/@{watermarkUsername}
