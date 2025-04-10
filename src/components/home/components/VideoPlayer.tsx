@@ -15,6 +15,7 @@ interface VideoPlayerProps {
   onIndexChange?: (index: number) => void;
   className?: string;
   onError?: () => void;
+  onEnded?: () => void;
 }
 
 export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
@@ -26,7 +27,8 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
   onMuteChange,
   onIndexChange,
   className,
-  onError
+  onError,
+  onEnded
 }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -78,10 +80,15 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
       if (onError) onError();
     };
 
+    const handleVideoEnded = () => {
+      if (onEnded) onEnded();
+    };
+
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("waiting", handleWaiting);
     video.addEventListener("playing", handlePlaying);
     video.addEventListener("error", handleError);
+    video.addEventListener("ended", handleVideoEnded);
 
     // Reset video state when URL changes
     setIsPlaying(false);
@@ -94,8 +101,9 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
       video.removeEventListener("waiting", handleWaiting);
       video.removeEventListener("playing", handlePlaying);
       video.removeEventListener("error", handleError);
+      video.removeEventListener("ended", handleVideoEnded);
     };
-  }, [url, onError, isCurrentVideo]);
+  }, [url, onError, isCurrentVideo, onEnded]);
 
   useEffect(() => {
     const video = getVideoElement();
@@ -162,6 +170,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
         className="w-full h-full object-cover"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        onEnded={onEnded}
         onClick={handleVideoTap}
       />
       

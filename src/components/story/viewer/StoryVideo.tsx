@@ -82,6 +82,8 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
           autoPlay={!isPaused && !isLoading && !loadError}
           controls={false}
           onError={handleError}
+          onLoad={handleLoad}
+          onEnded={onEnded}
           showWatermark={true}
         />
         

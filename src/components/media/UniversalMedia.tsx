@@ -110,7 +110,9 @@ export const UniversalMedia = ({
           className="w-full h-full"
           onError={handleError}
           onEnded={handleEnded}
+          onLoadedData={handleLoad}
           creatorId={item?.creator_id}
+          controls={controls}
         />
       ) : (
         <img

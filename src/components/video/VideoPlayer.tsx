@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface VideoPlayerProps {
   url: string;
@@ -12,12 +11,14 @@ interface VideoPlayerProps {
   className?: string;
   autoPlay?: boolean;
   onError?: () => void;
+  onEnded?: () => void;
   creatorId?: string;
   playOnHover?: boolean;
   showCloseButton?: boolean;
   onClose?: () => void;
   onLoadedData?: () => void;
   onClick?: () => void;
+  controls?: boolean;
 }
 
 export const VideoPlayer = ({ 
@@ -26,24 +27,20 @@ export const VideoPlayer = ({
   className,
   autoPlay = false,
   onError,
+  onEnded,
   creatorId,
   playOnHover = false,
   showCloseButton = false,
   onClose,
   onLoadedData,
-  onClick
+  onClick,
+  controls = true
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  
-  const mediaItem = { 
-    video_url: url,
-    media_type: "video",
-    poster_url: poster
-  };
   
   const handleError = () => {
     setError(true);
@@ -84,9 +81,13 @@ export const VideoPlayer = ({
     
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
+    const handleVideoEnded = () => {
+      if (onEnded) onEnded();
+    };
     
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
+    video.addEventListener('ended', handleVideoEnded);
     
     if (autoPlay && !isLoading) {
       video.play().catch(error => console.error("Autoplay prevented:", error));
@@ -95,8 +96,9 @@ export const VideoPlayer = ({
     return () => {
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
+      video.removeEventListener('ended', handleVideoEnded);
     };
-  }, [autoPlay, isLoading]);
+  }, [autoPlay, isLoading, onEnded]);
 
   return (
     <div 
@@ -120,67 +122,73 @@ export const VideoPlayer = ({
         </div>
       )}
       
-      {/* Media content */}
-      <div className="w-full h-full">
-        <UniversalMedia 
-          item={mediaItem}
-          className="w-full h-full object-cover"
-          onError={handleError}
-          autoPlay={autoPlay} 
-          controls={true}
-        />
-      </div>
+      {/* Video element */}
+      <video
+        ref={videoRef}
+        src={url}
+        poster={poster}
+        className="w-full h-full object-cover"
+        muted={isMuted}
+        playsInline
+        loop
+        controls={controls}
+        onError={handleError}
+        onLoadedData={handleLoad}
+        onEnded={onEnded}
+      />
       
       {/* Video controls overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity">
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePlay();
-            }}
-          >
-            {isPlaying ? (
-              <Pause className="h-4 w-4" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-          </Button>
+      {controls && (
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity">
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePlay();
+              }}
+            >
+              {isPlaying ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleMute();
+              }}
+            >
+              {isMuted ? (
+                <VolumeX className="h-4 w-4" />
+              ) : (
+                <Volume2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleMute();
-            }}
-          >
-            {isMuted ? (
-              <VolumeX className="h-4 w-4" />
-            ) : (
-              <Volume2 className="h-4 w-4" />
-            )}
-          </Button>
+          {showCloseButton && onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
-        
-        {showCloseButton && onClose && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+      )}
     </div>
   );
 };

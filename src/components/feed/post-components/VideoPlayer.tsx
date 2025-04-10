@@ -6,11 +6,12 @@ import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface VideoPlayerProps {
   url: string;
-  poster?: string;  // Added poster prop
+  poster?: string;
   onError: () => void;
+  onEnded?: () => void;
 }
 
-export const VideoPlayer = ({ url, poster, onError }: VideoPlayerProps) => {
+export const VideoPlayer = ({ url, poster, onError, onEnded }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
@@ -31,6 +32,11 @@ export const VideoPlayer = ({ url, poster, onError }: VideoPlayerProps) => {
     }
   };
 
+  const handleEnded = () => {
+    setIsPlaying(false);
+    if (onEnded) onEnded();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -41,11 +47,12 @@ export const VideoPlayer = ({ url, poster, onError }: VideoPlayerProps) => {
       <video
         ref={videoRef}
         src={processedUrl || undefined}
-        poster={poster}  // Added poster attribute
+        poster={poster}
         className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
         playsInline
         loop
         onError={onError}
+        onEnded={handleEnded}
       />
       <div 
         className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center"
