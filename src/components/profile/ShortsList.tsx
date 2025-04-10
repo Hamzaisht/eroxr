@@ -197,7 +197,7 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
           {selectedVideo && (
             <div className="relative w-full aspect-[9/16]">
               <VideoPlayer 
-                url={getPlayableMediaUrl(selectedVideo.video_urls?.[0] || "")} 
+                url={getPlayableMediaUrl({video_url: selectedVideo.video_urls?.[0] || ""})} 
                 poster={selectedVideo.video_thumbnail_url || undefined}
                 autoPlay
                 showCloseButton

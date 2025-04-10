@@ -153,7 +153,7 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
                         {hoveredAdId !== ad.id && (
                           <div className="absolute inset-0 z-10 bg-black">
                             <img
-                              src={getPlayableMediaUrl(ad.video_url)}
+                              src={getPlayableMediaUrl({media_url: ad.video_url})}
                               alt={ad.title}
                               className="w-full h-full object-cover"
                               onError={(e) => {

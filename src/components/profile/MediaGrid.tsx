@@ -268,7 +268,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
                   >
                     {mediaItem.type === 'video' ? (
                       <video
-                        src={getPlayableMediaUrl(mediaItem.url)}
+                        src={getPlayableMediaUrl({video_url: mediaItem.url})}
                         className={cn(
                           "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
                           mediaItem.isPremium ? "blur-lg" : ""
@@ -367,7 +367,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
                   >
                     {mediaItem.type === 'video' ? (
                       <video
-                        src={getPlayableMediaUrl(mediaItem.url)}
+                        src={getPlayableMediaUrl({video_url: mediaItem.url})}
                         className={cn(
                           "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
                           mediaItem.isPremium ? "blur-lg" : ""
