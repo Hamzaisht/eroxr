@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -12,6 +11,7 @@ import { useMessageEdit } from "@/hooks/useMessageEdit";
 import { useMessageDelete } from "@/hooks/useMessageDelete";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { Shield, Ghost } from "lucide-react";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface MessageBubbleProps {
   message: DirectMessage;
@@ -43,7 +43,6 @@ export const MessageBubble = ({
   
   const { isDeleting, handleDelete } = useMessageDelete(message.id);
 
-  // Reset states when switching chats
   useEffect(() => {
     cancelEditing();
     setSelectedMedia(null);
@@ -84,7 +83,6 @@ export const MessageBubble = ({
     if (!url) return;
     setSelectedMedia(url);
     
-    // In ghost mode, we view media but don't mark it as viewed
     if (isGhostMode) {
       if (currentUserId) {
         await supabase.from('admin_audit_logs').insert({
@@ -100,31 +98,27 @@ export const MessageBubble = ({
       return;
     }
 
-    // For regular messages (not snaps), we just view normally
     if (message.message_type !== 'snap') {
       return;
     }
     
-    // Special handling for snap messages
     if (!message.viewed_at) {
       await supabase
         .from('direct_messages')
         .update({ viewed_at: new Date().toISOString() })
         .eq('id', message.id);
 
-      // Auto-delete snap after viewing (with a delay to allow viewing)
       if (message.expires_at) {
         setTimeout(() => {
           supabase
             .from('direct_messages')
             .delete()
             .eq('id', message.id);
-        }, 5000); // 5 second delay before deletion
+        }, 5000);
       }
     }
   };
 
-  // Show deleted snaps to ghost admins with an overlay indicator
   const isDeletedSnap = message.message_type === 'snap' && message.viewed_at && isGhostMode;
 
   return (

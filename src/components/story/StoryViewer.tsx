@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { StoryContainer } from "./viewer/StoryContainer";
@@ -6,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Story } from "@/integrations/supabase/types/story";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface StoryViewerProps {
   stories: Story[];

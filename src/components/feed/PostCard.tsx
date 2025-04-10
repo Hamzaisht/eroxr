@@ -8,6 +8,7 @@ import { PostHeader } from "./post-components/PostHeader";
 import { PostContent } from "./post-components/PostContent";
 import { PostActions } from "./post-components/PostActions";
 import { PostMenu } from "./post-components/PostMenu";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 import { PostEditDialog } from "./post-components/PostEditDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { Post } from "./types";

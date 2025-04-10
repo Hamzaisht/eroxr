@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { motion } from "framer-motion";
@@ -14,6 +13,7 @@ import { useStories } from "./story/hooks/useStories";
 import { StoryLoadingState } from "./story/components/StoryLoadingState";
 import { StoryErrorState } from "./story/components/StoryErrorState";
 import { StoryReelHeader } from "./story/components/StoryReelHeader";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface GroupedStories {
   [creatorId: string]: Story[];

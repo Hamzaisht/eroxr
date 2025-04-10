@@ -24,7 +24,7 @@ export const getMediaUrl = (story: Story): string | null => {
   // First check for video URL if it's a video
   if (getContentType(story) === 'video' && story.video_url) {
     // Handle full URLs vs storage paths
-    if (story.video_url.startsWith('http')) {
+    if (story.video_url.startsWith("http")) {
       return story.video_url;
     } else {
       return buildStorageUrl('videos', story.video_url);
@@ -33,7 +33,7 @@ export const getMediaUrl = (story: Story): string | null => {
   
   // Then try media_url
   if (story.media_url) {
-    if (story.media_url.startsWith('http')) {
+    if (story.media_url.startsWith("http")) {
       return story.media_url;
     } else {
       return buildStorageUrl('media', story.media_url);
@@ -50,7 +50,7 @@ export const fixBrokenStorageUrl = (url: string): string => {
   if (!url) return url;
   
   // If already a proper URL, return as is
-  if (url.startsWith('http')) return url;
+  if (url.startsWith("http")) return url;
   
   // If this is a path, build the storage URL
   if (url.includes('/')) {

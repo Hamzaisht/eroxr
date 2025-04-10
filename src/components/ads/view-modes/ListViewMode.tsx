@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Eye, MapPin, Calendar, User, Clock } from "lucide-react";
@@ -14,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface ListViewModeProps {
   ads: DatingAd[];
@@ -30,17 +30,14 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   
-  // Format age range for display
   const formatAgeRange = (ad: DatingAd) => {
     if (!ad.age_range) return "N/A";
     return `${ad.age_range.lower}-${ad.age_range.upper}`;
   };
   
-  // Convert "looking_for" array to a readable format
   const formatLookingFor = (ad: DatingAd) => {
     if (!ad.looking_for || ad.looking_for.length === 0) return "Anyone";
     
-    // Map common terms to more user-friendly versions
     const lookingForMap: Record<string, string> = {
       "female": "Women",
       "male": "Men",
@@ -52,9 +49,8 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
     return ad.looking_for.map(type => lookingForMap[type] || type).join(", ");
   };
   
-  // Handle message button click
   const handleMessageClick = (ad: DatingAd, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent opening the full view
+    e.stopPropagation();
     
     if (!session) {
       toast({
@@ -65,7 +61,6 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
       return;
     }
     
-    // Check if user is premium (this needs to be implemented)
     const isPremium = session?.user?.email && ["hamzaishtiaq242@gmail.com"].includes(session.user.email.toLowerCase());
     
     if (!isPremium) {
@@ -77,29 +72,25 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
       return;
     }
     
-    // Navigate to messages with this user
     navigate(`/messages?user=${ad.user_id}`);
   };
   
-  // Handle clicking on a tag
   const handleTagClick = (tag: string, e: React.MouseEvent, adToTag: DatingAd) => {
-    e.stopPropagation(); // Prevent opening the full view
+    e.stopPropagation();
     
     if (adToTag.onTagClick) {
       adToTag.onTagClick(tag);
     }
   };
 
-  // Toggle description expansion
   const toggleDescription = (adId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent opening the full view
+    e.stopPropagation();
     setExpandedDescriptions(prev => ({
       ...prev,
       [adId]: !prev[adId]
     }));
   };
 
-  // Reset hovered ad when component unmounts or ads change
   useEffect(() => {
     return () => setHoveredAdId(null);
   }, [ads]);
@@ -145,7 +136,6 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
             <AdActions ad={ad} />
             
             <div className="flex flex-col sm:flex-row h-full">
-              {/* Left side: Video thumbnail */}
               <div className="sm:w-80 h-48 sm:h-auto relative flex-shrink-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -157,15 +147,13 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
                 </Tooltip>
                 
                 {!isMobile ? (
-                  // Desktop behavior (hover to play)
                   <>
                     {ad.video_url ? (
                       <>
-                        {/* Thumbnail/poster image (shown by default) */}
                         {hoveredAdId !== ad.id && (
                           <div className="absolute inset-0 z-10 bg-black">
                             <img
-                              src={`${ad.video_url?.split('.').slice(0, -1).join('.')}.jpg`}
+                              src={getPlayableMediaUrl(ad.video_url)}
                               alt={ad.title}
                               className="w-full h-full object-cover"
                               onError={(e) => {
@@ -175,7 +163,6 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
                           </div>
                         )}
                         
-                        {/* Video (shown on hover) */}
                         <VideoPlayer 
                           url={ad.video_url} 
                           className="w-full h-full"
@@ -190,7 +177,6 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
                     )}
                   </>
                 ) : (
-                  // Mobile behavior (tap to preview)
                   <>
                     {ad.video_url ? (
                       <VideoPlayer 
@@ -208,7 +194,6 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
                 )}
               </div>
               
-              {/* Right side: Ad info */}
               <div className="p-4 flex flex-col justify-between flex-grow">
                 <div className="space-y-2">
                   <div className="flex justify-between items-start">
@@ -245,7 +230,6 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
                     </div>
                   </div>
                   
-                  {/* Description with expand/collapse on mobile */}
                   {ad.description && (
                     <div className="mt-2">
                       <p className={`text-sm text-luxury-neutral/90 ${isMobile && !expandedDescriptions[ad.id] ? 'line-clamp-2' : ''}`}>
@@ -264,7 +248,6 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
                     </div>
                   )}
                   
-                  {/* Tags */}
                   {ad.tags && ad.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
                       {ad.tags.slice(0, 4).map((tag) => (
@@ -319,7 +302,6 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
         ))}
       </div>
       
-      {/* Fullscreen Ad Viewer */}
       <AnimatePresence>
         {selectedAd && (
           <FullscreenAdViewer 

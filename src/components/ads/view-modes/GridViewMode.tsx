@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DatingAd } from "../types/dating";
@@ -15,6 +14,7 @@ import {
   TooltipTrigger 
 } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface GridViewModeProps {
   ads: DatingAd[];
@@ -27,16 +27,14 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   
-  // Handle clicking on a tag
   const handleTagClick = (tag: string, e: React.MouseEvent, ad: DatingAd) => {
-    e.stopPropagation(); // Prevent opening the full view
+    e.stopPropagation();
     
     if (ad.onTagClick) {
       ad.onTagClick(tag);
     }
   };
 
-  // Reset hovered ad when component unmounts or ads change
   useEffect(() => {
     return () => setHoveredAdId(null);
   }, [ads]);
@@ -84,18 +82,15 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
           >
             <AdActions ad={ad} />
             
-            {/* Video Content */}
             <div className="aspect-video w-full relative">
               {!isMobile ? (
-                // Desktop behavior (hover to play)
                 <>
                   {ad.video_url ? (
                     <>
-                      {/* Thumbnail/poster image (shown by default) */}
                       {hoveredAdId !== ad.id && (
                         <div className="absolute inset-0 z-10 bg-black">
                           <img
-                            src={`${ad.video_url?.split('.').slice(0, -1).join('.')}.jpg`}
+                            src={getPlayableMediaUrl(ad.video_url)}
                             alt={ad.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -105,7 +100,6 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
                         </div>
                       )}
                       
-                      {/* Video (shown on hover) */}
                       <VideoPlayer 
                         url={ad.video_url} 
                         className="w-full h-full"
@@ -120,7 +114,6 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
                   )}
                 </>
               ) : (
-                // Mobile behavior (tap to preview)
                 <>
                   {ad.video_url ? (
                     <VideoPlayer 
@@ -137,7 +130,6 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
                 </>
               )}
               
-              {/* Hover tooltip */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="absolute inset-0 z-20 opacity-0" />
@@ -148,7 +140,6 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
               </Tooltip>
             </div>
             
-            {/* Profile Info */}
             <div className="p-4 flex-grow flex flex-col">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
@@ -169,7 +160,6 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
                 </div>
               </div>
               
-              {/* Stats */}
               <div className="flex items-center justify-between text-xs text-luxury-neutral/80 mt-3">
                 <div className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
@@ -181,7 +171,6 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
                 </div>
               </div>
               
-              {/* Tags */}
               {ad.tags && ad.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {ad.tags.slice(0, 3).map((tag) => (
@@ -209,7 +198,6 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
         ))}
       </div>
       
-      {/* Fullscreen Ad Viewer */}
       <AnimatePresence>
         {selectedAd && (
           <FullscreenAdViewer 

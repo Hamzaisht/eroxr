@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Post } from "@/integrations/supabase/types/post";
 import { DeleteConfirmDialog } from "@/components/feed/DeleteConfirmDialog";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface MediaGridProps {
   onImageClick: (url: string) => void;
@@ -209,7 +210,6 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
     );
   }
 
-  // Group media items by type (regular posts vs. BD ads)
   const bdMediaItems = mediaItems.filter(item => item.url.includes('dating-ads') || item.url.includes('dating-videos'));
   const regularMediaItems = mediaItems.filter(item => !item.url.includes('dating-ads') && !item.url.includes('dating-videos'));
 
@@ -268,7 +268,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
                   >
                     {mediaItem.type === 'video' ? (
                       <video
-                        src={mediaItem.url}
+                        src={getPlayableMediaUrl(mediaItem.url)}
                         className={cn(
                           "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
                           mediaItem.isPremium ? "blur-lg" : ""
@@ -367,7 +367,7 @@ export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
                   >
                     {mediaItem.type === 'video' ? (
                       <video
-                        src={mediaItem.url}
+                        src={getPlayableMediaUrl(mediaItem.url)}
                         className={cn(
                           "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
                           mediaItem.isPremium ? "blur-lg" : ""
