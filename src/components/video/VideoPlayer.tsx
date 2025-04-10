@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, RefreshCw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { addCacheBuster, buildStorageUrl } from "@/utils/media/getPlayableMediaUrl";
@@ -19,6 +19,11 @@ interface VideoPlayerProps {
   onError?: () => void;
   autoPlay?: boolean;
   creatorId?: string;
+  playOnHover?: boolean;
+  showCloseButton?: boolean;
+  onClose?: () => void;
+  onClick?: () => void;
+  onLoadedData?: () => void;
 }
 
 export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
@@ -32,14 +37,19 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
   className,
   onError,
   autoPlay = false,
-  creatorId
+  creatorId,
+  playOnHover = false,
+  showCloseButton = false,
+  onClose,
+  onClick,
+  onLoadedData
 }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  internalVideoRef = useRef<HTMLVideoElement>(null);
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
   
   // Safely handle the forwarded ref, which could be a function ref or an object ref
   const videoRef = ref || internalVideoRef;
@@ -71,6 +81,10 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
       setIsBuffering(false);
       setHasError(false);
       console.log("Video loaded successfully:", url);
+      
+      if (onLoadedData) {
+        onLoadedData();
+      }
       
       // Auto play if current video or autoPlay is true
       if ((isCurrentVideo || autoPlay) && video.paused) {
@@ -128,7 +142,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
       video.removeEventListener("error", handleError);
       video.removeEventListener("pause", handlePause);
     };
-  }, [url, retryCount, isCurrentVideo, autoPlay, onError]);
+  }, [url, retryCount, isCurrentVideo, autoPlay, onError, onLoadedData]);
 
   // Handle playback state changes
   useEffect(() => {
@@ -149,6 +163,20 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
       video.muted = isMuted;
     }
   }, [isMuted]);
+  
+  // Handle hover playback if enabled
+  useEffect(() => {
+    if (!playOnHover) return;
+    
+    const video = getVideoElement();
+    if (video) {
+      if (isCurrentVideo) {
+        video.play().catch(console.error);
+      } else {
+        video.pause();
+      }
+    }
+  }, [playOnHover, isCurrentVideo]);
 
   const togglePlay = () => {
     const video = getVideoElement();
@@ -188,6 +216,22 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
       video.play().catch(console.error);
     }
   };
+  
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+    
+    togglePlay();
+  };
+  
+  const handleCloseClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onClose) {
+      onClose();
+    }
+  };
 
   return (
     <div className={cn("relative group", className)}>
@@ -220,8 +264,19 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
         playsInline
         loop
         className="w-full h-full object-cover"
-        onClick={togglePlay}
+        onClick={handleClick}
       />
+      
+      {showCloseButton && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/70 z-20 text-white"
+          onClick={handleCloseClick}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
       
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
         <div className="flex items-center gap-2">

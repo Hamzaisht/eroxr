@@ -92,3 +92,22 @@ export const refreshUrl = (url: string | null): string | null => {
   // Add new cache buster
   return getUrlWithCacheBuster(cleanUrl);
 };
+
+/**
+ * Creates a unique file path for upload
+ */
+export const createUniqueFilePath = (userId: string, fileName: string): string => {
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 10);
+  const fileExt = fileName.split('.').pop() || 'file';
+  
+  return `${userId}/${timestamp}_${randomString}.${fileExt}`;
+};
+
+/**
+ * Gets complete storage URL from bucket and path
+ */
+export const getStorageUrl = (bucket: string, path?: string): string => {
+  if (!path) return '';
+  return buildStorageUrl(bucket, path);
+};

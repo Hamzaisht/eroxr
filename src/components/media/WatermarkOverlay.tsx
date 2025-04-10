@@ -5,24 +5,28 @@ import { getUsernameForWatermark } from '@/utils/watermarkUtils';
 interface WatermarkOverlayProps {
   username: string;
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  creatorId?: string; // Added creatorId as optional prop
 }
 
 export const WatermarkOverlay = ({ 
   username,
-  position = 'bottom-right'
+  position = 'bottom-right',
+  creatorId
 }: WatermarkOverlayProps) => {
   const [displayName, setDisplayName] = useState<string>(username);
   
   useEffect(() => {
-    // Try to get a prettier username if we have a UUID
-    if (username.includes('-')) {
-      getUsernameForWatermark(username).then(name => {
+    // If creatorId is provided and username looks like a UUID, try to get a prettier username
+    const userIdentifier = creatorId || username;
+    
+    if (userIdentifier && userIdentifier.includes('-')) {
+      getUsernameForWatermark(userIdentifier).then(name => {
         if (name) setDisplayName(name);
       }).catch(error => {
         console.error("Error fetching watermark username:", error);
       });
     }
-  }, [username]);
+  }, [username, creatorId]);
   
   const positionClass = {
     'bottom-right': 'bottom-4 right-4',
