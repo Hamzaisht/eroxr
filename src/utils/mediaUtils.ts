@@ -111,3 +111,15 @@ export const getStorageUrl = (bucket: string, path?: string): string => {
   if (!path) return '';
   return buildStorageUrl(bucket, path);
 };
+
+/**
+ * Add a cache buster to a URL
+ */
+export const addCacheBuster = (url: string | null): string | null => {
+  return getUrlWithCacheBuster(url);
+};
+
+/**
+ * Re-export the getPlayableMediaUrl function to maintain compatibility
+ */
+export { getPlayableMediaUrl } from "./media/getPlayableMediaUrl";
