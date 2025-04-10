@@ -8,6 +8,7 @@ import { AvatarFallback } from "@/components/ui/avatar";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface StoryItemProps {
   story: Story;
@@ -28,20 +29,17 @@ export const StoryItem = ({
   const [hasMediaError, setHasMediaError] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   
-  // Determine media type with consistent logic
-  const mediaType = getContentType(story);
-  const isVideo = mediaType === 'video';
+  // Use getPlayableMediaUrl to get a consistent media URL
+  const mediaUrl = getPlayableMediaUrl(story);
   
-  // Get appropriate media URL
-  let mediaUrl = getMediaUrl(story);
+  // Determine if this is a video
+  const isVideo = story.content_type === "video" || 
+                  story.media_type === "video" || 
+                  story.video_url !== null ||
+                  (mediaUrl && mediaUrl.endsWith(".mp4"));
   
-  // Try to fix broken URLs
-  if (mediaUrl) {
-    mediaUrl = fixBrokenStorageUrl(mediaUrl);
-  }
-  
-  // Add cache buster
-  const displayUrl = getUrlWithCacheBuster(mediaUrl);
+  // Add cache buster to URL
+  const displayUrl = mediaUrl ? getUrlWithCacheBuster(mediaUrl) : null;
   
   // Format the timestamp
   const timestamp = new Date(story.created_at);
