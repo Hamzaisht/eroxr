@@ -11,7 +11,7 @@ import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { Short } from "../types/short";
 import { useShortActions } from "../hooks/actions";
 import { useToast } from "@/hooks/use-toast";
-import { getUrlWithCacheBuster, fixBrokenStorageUrl } from "@/utils/mediaUtils";
+import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
 interface ShortItemProps {

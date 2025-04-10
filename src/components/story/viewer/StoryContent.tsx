@@ -5,7 +5,6 @@ import { StoryImage } from "./StoryImage";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { getContentType } from "@/utils/mediaUtils"; // Updated import
 import { useToast } from "@/hooks/use-toast";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
@@ -20,9 +19,10 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   const [hasMediaError, setHasMediaError] = useState(false);
   const { toast } = useToast();
   
-  // Use our utility functions for consistent content type and URL detection
-  const mediaType = getContentType(story);
-  const isVideo = mediaType === 'video';
+  // Use our utility functions for consistent media handling
+  const isVideo = story.content_type === 'video' || 
+                  story.media_type === 'video' || 
+                  story.video_url !== null;
   
   // Get the appropriate URL using our utility
   let mediaUrl = getPlayableMediaUrl(story);

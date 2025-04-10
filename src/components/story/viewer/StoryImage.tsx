@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import '../../../styles/watermark.css';
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
-import { getUrlWithCacheBuster, refreshUrl } from "@/utils/mediaUtils";
+import { refreshUrl } from "@/utils/mediaUtils";
+import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
 interface StoryImageProps {
   mediaUrl: string;
@@ -22,7 +23,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const MAX_RETRIES = 2;
   
   useEffect(() => {
-    setCurrentSrc(getUrlWithCacheBuster(mediaUrl));
+    setCurrentSrc(addCacheBuster(mediaUrl));
     setIsLoading(true);
     setLoadError(false);
     setRetryCount(0);
@@ -49,7 +50,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
       
       setTimeout(() => {
         const freshUrl = refreshUrl(mediaUrl);
-        setCurrentSrc(freshUrl);
+        setCurrentSrc(addCacheBuster(freshUrl));
         setIsLoading(true);
       }, 500);
     } else {
@@ -66,7 +67,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
     setLoadError(false);
     setRetryCount(0);
     const freshUrl = refreshUrl(mediaUrl);
-    setCurrentSrc(freshUrl);
+    setCurrentSrc(addCacheBuster(freshUrl));
   };
   
   return (

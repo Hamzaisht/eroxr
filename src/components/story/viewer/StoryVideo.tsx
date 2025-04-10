@@ -3,7 +3,8 @@ import { Loader2, AlertCircle, RefreshCw, VolumeX } from "lucide-react";
 import { motion } from "framer-motion";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import '../../../styles/watermark.css';
-import { refreshUrl, getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { refreshUrl } from "@/utils/mediaUtils";
+import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -26,7 +27,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     const resolvedRef = (ref as React.RefObject<HTMLVideoElement>) || videoRef;
     
     useEffect(() => {
-      setCurrentSrc(getUrlWithCacheBuster(videoUrl));
+      setCurrentSrc(addCacheBuster(videoUrl));
       
       setIsLoading(true);
       setLoadError(false);
@@ -65,7 +66,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
             if (video) {
               const freshUrl = refreshUrl(currentSrc);
               console.log("Retrying with fresh URL:", freshUrl);
-              setCurrentSrc(freshUrl);
+              setCurrentSrc(addCacheBuster(freshUrl));
             }
           }, 1000);
         } else {
@@ -110,7 +111,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
       setRetryCount(0);
       
       const freshUrl = refreshUrl(videoUrl);
-      setCurrentSrc(freshUrl);
+      setCurrentSrc(addCacheBuster(freshUrl));
     };
     
     return (
