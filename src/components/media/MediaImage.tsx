@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
@@ -9,7 +8,9 @@ import {
   extractDirectImagePath,
   tryAllImageLoadingStrategies,
   handleJsonContentTypeIssue,
-  forceFetchAsContentType
+  forceFetchAsContentType,
+  isDebugErrorResponse,
+  MediaDebugResponse
 } from "@/utils/media/debugMediaUtils";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,26 @@ export const MediaImage = ({
           const debugResult = await debugMediaUrl(cachedUrl);
           console.log("URL pre-check result:", debugResult);
           
+          // Check if we got an error response
+          if (isDebugErrorResponse(debugResult)) {
+            console.warn("Debug check failed:", debugResult.error);
+            
+            // If it's a CORS error, try a workaround
+            if (debugResult.isCorsError) {
+              setIsCorsError(true);
+              try {
+                const corsWorkaround = await attemptImageCorsWorkaround(cachedUrl);
+                setFallbackDataUrl(corsWorkaround);
+                setUseFallbackImage(true);
+                setLoadingStrategy('cors-error-preemptive');
+                return;
+              } catch (e) {
+                console.error("CORS workaround failed:", e);
+              }
+            }
+            return;
+          }
+          
           // Check if the content type is unexpected (e.g., application/json for an image)
           if (debugResult.contentType && 
               debugResult.contentType.includes('application/json') && 
@@ -133,7 +154,7 @@ export const MediaImage = ({
           }
           
           // For other potential CORS issues, set up a data URL fallback
-          if (debugResult.isCorsError || (debugResult.cors && !debugResult.cors.allowOrigin)) {
+          if (debugResult.cors && !debugResult.cors.allowOrigin) {
             setIsCorsError(true);
             try {
               console.log("Trying CORS workaround...");
@@ -188,31 +209,34 @@ export const MediaImage = ({
         console.log("Image URL debug result:", result);
         
         // Check if this is a CORS error
-        if (result.errorType === 'TypeError' || result.isCorsError) {
-          setIsCorsError(true);
-          
-          // Try the fallback data URL approach if we have one
-          if (fallbackDataUrl && !useFallbackImage) {
-            console.log("Attempting to use fallback data URL approach for CORS issue");
-            setUseFallbackImage(true);
-            setIsLoading(true);
-            setLoadError(false);
-            setLoadingStrategy('cors-workaround-after-error');
-            return;
-          }
-          
-          // If we don't have a fallback yet, try to create one
-          attemptImageCorsWorkaround(displayUrl)
-            .then(dataUrl => {
-              setFallbackDataUrl(dataUrl);
+        if (isDebugErrorResponse(result)) {
+          if (result.errorType === 'TypeError' || result.isCorsError) {
+            setIsCorsError(true);
+            
+            // Try the fallback data URL approach if we have one
+            if (fallbackDataUrl && !useFallbackImage) {
+              console.log("Attempting to use fallback data URL approach for CORS issue");
               setUseFallbackImage(true);
               setIsLoading(true);
               setLoadError(false);
-              setLoadingStrategy('cors-workaround-new');
-            })
-            .catch(error => {
-              console.error("Failed to create fallback URL:", error);
-            });
+              setLoadingStrategy('cors-workaround-after-error');
+              return;
+            }
+            
+            // If we don't have a fallback yet, try to create one
+            attemptImageCorsWorkaround(displayUrl)
+              .then(dataUrl => {
+                setFallbackDataUrl(dataUrl);
+                setUseFallbackImage(true);
+                setIsLoading(true);
+                setLoadError(false);
+                setLoadingStrategy('cors-workaround-new');
+              })
+              .catch(error => {
+                console.error("Failed to create fallback URL:", error);
+              });
+          }
+          return;
         }
         
         // Check for content type mismatch

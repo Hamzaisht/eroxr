@@ -3,10 +3,42 @@
  * like CORS errors and content type mismatches
  */
 
+// Define types for our debug response to make it easier to work with
+type MediaDebugErrorResponse = {
+  error: string;
+  errorType?: string;
+  isCorsError?: boolean;
+  url?: string;
+};
+
+type MediaDebugSuccessResponse = {
+  url: string;
+  status: number;
+  statusText: string;
+  contentType?: string | null;
+  contentLength?: string | null;
+  cors: {
+    allowOrigin: string | null;
+    allowMethods: string | null;
+    allowHeaders: string | null;
+  };
+  headersDebug?: string[];
+  headers?: [string, string][];
+  isJSON?: boolean;
+  responseBody?: any;
+};
+
+export type MediaDebugResponse = MediaDebugErrorResponse | MediaDebugSuccessResponse;
+
+// Helper function to check if the response is an error
+export const isDebugErrorResponse = (response: MediaDebugResponse): response is MediaDebugErrorResponse => {
+  return 'error' in response;
+};
+
 /**
  * Debug a media URL by analyzing response headers and content
  */
-export const debugMediaUrl = async (url: string) => {
+export const debugMediaUrl = async (url: string): Promise<MediaDebugResponse> => {
   if (!url) return { error: 'No URL provided' };
   
   try {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { getPlayableMediaUrl, addCacheBuster, checkUrlAccessibility } from "@/utils/media/getPlayableMediaUrl";
 import { getContentType } from "@/utils/mediaUtils";
@@ -9,7 +8,8 @@ import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 import { 
   debugMediaUrl, 
   handleJsonContentTypeIssue, 
-  forceFetchAsContentType 
+  forceFetchAsContentType,
+  isDebugErrorResponse
 } from "@/utils/media/debugMediaUtils";
 import { MediaImage } from "@/components/media/MediaImage";
 
@@ -85,20 +85,25 @@ export const UniversalMedia = ({
           // Check for content type mismatch proactively
           try {
             const debugResult = await debugMediaUrl(cachedUrl);
-            if (debugResult.isJSON || (debugResult.contentType && debugResult.contentType.includes('application/json'))) {
-              console.warn("Content type mismatch detected:", debugResult.contentType);
-              setIsContentTypeMismatch(true);
-              
-              // Try to handle JSON content type issue
-              const jsonFixUrl = await handleJsonContentTypeIssue(cachedUrl);
-              if (jsonFixUrl) {
-                setFallbackUrl(jsonFixUrl);
-              } else {
-                // If JSON fix fails, try force fetch
-                const mediaType = isVideo(item, cachedUrl) ? 'video' : 'image';
-                const forcedUrl = await forceFetchAsContentType(cachedUrl, mediaType);
-                if (forcedUrl) {
-                  setFallbackUrl(forcedUrl);
+            
+            // Use our type guard to safely check properties
+            if (!isDebugErrorResponse(debugResult)) {
+              // Check if this is a JSON response when we expect an image/video
+              if (debugResult.isJSON || (debugResult.contentType && debugResult.contentType.includes('application/json'))) {
+                console.warn("Content type mismatch detected:", debugResult.contentType);
+                setIsContentTypeMismatch(true);
+                
+                // Try to handle JSON content type issue
+                const jsonFixUrl = await handleJsonContentTypeIssue(cachedUrl);
+                if (jsonFixUrl) {
+                  setFallbackUrl(jsonFixUrl);
+                } else {
+                  // If JSON fix fails, try force fetch
+                  const mediaType = isVideo(item, cachedUrl) ? 'video' : 'image';
+                  const forcedUrl = await forceFetchAsContentType(cachedUrl, mediaType);
+                  if (forcedUrl) {
+                    setFallbackUrl(forcedUrl);
+                  }
                 }
               }
             }
@@ -145,8 +150,6 @@ export const UniversalMedia = ({
            ));
   };
   
-  const isVideoContent = isVideo(item, fallbackUrl || displayUrl);
-  
   const handleLoad = () => {
     setIsLoading(false);
     setLoadError(false);
@@ -161,8 +164,8 @@ export const UniversalMedia = ({
       debugMediaUrl(displayUrl).then(result => {
         console.log("Media URL debug result:", result);
         
-        // Check for content type mismatch
-        if (result.contentType && result.contentType.includes('application/json')) {
+        // Check for content type mismatch using our type guard
+        if (!isDebugErrorResponse(result) && result.contentType && result.contentType.includes('application/json')) {
           setIsContentTypeMismatch(true);
           
           handleJsonContentTypeIssue(displayUrl).then(fixedUrl => {
