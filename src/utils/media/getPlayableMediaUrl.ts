@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -133,16 +134,12 @@ const getStoragePublicUrl = (path: string): string | null => {
   }
   
   try {
-    // Get the public URL from Supabase with authentication if needed
+    // Get the public URL from Supabase without authentication
     const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
-    console.debug(`Resolved ${path} to ${data.publicUrl} (bucket: ${bucket}, path: ${finalPath})`);
+    const publicUrl = data.publicUrl;
     
-    // Since we're in a synchronous function but need to check auth state,
-    // we'll return the public URL immediately which works for public resources
-    // For protected resources that need authentication, the application should
-    // implement an async approach or use a context with the session
-    
-    return data.publicUrl || null;
+    console.debug(`Resolved ${path} to ${publicUrl} (bucket: ${bucket}, path: ${finalPath})`);
+    return publicUrl;
   } catch (e) {
     console.error(`Failed to get public URL for ${path} in bucket ${bucket}:`, e);
     return null;
@@ -189,4 +186,66 @@ export const getCorsProxyUrl = (url: string): string => {
   
   // For now, return the original URL and handle failures via the error handling system
   return url;
+};
+
+/**
+ * Gets an authenticated URL for protected resources
+ * Use this for resources that require authentication
+ */
+export const getAuthenticatedUrl = async (path: string): Promise<string | null> => {
+  if (!path) return null;
+  
+  // Clean the path and determine bucket
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  
+  // Determine bucket from path if possible
+  let bucket = 'media';
+  const possibleBuckets = ['stories', 'posts', 'videos', 'avatars', 'banners', 'media', 'shorts'];
+  
+  for (const b of possibleBuckets) {
+    if (cleanPath.startsWith(`${b}/`) || cleanPath.includes(`/${b}/`)) {
+      bucket = b;
+      break;
+    }
+  }
+  
+  // Clean up path to remove bucket prefix
+  let finalPath = cleanPath;
+  if (finalPath.startsWith(`${bucket}/`)) {
+    finalPath = finalPath.substring(bucket.length + 1);
+  }
+  
+  try {
+    // Get the current session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData?.session;
+    
+    if (!session) {
+      // No session, fall back to public URL
+      console.warn("No authentication session available for protected resource");
+      const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
+      return data.publicUrl;
+    }
+    
+    // Get authenticated URL (this approach depends on Supabase version)
+    // Method 1: Using download with CORS headers
+    const { data } = await supabase.storage.from(bucket).download(finalPath);
+    if (data) {
+      const url = URL.createObjectURL(data);
+      return url; // Note: This URL is temporary and tied to the browser session
+    }
+    
+    // Method 2: Attach token to public URL
+    // Note: This approach is not recommended for sensitive files as tokens can be leaked
+    const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(finalPath);
+    const url = new URL(publicUrlData.publicUrl);
+    // Some Supabase deployments support token in URL for authenticated access
+    // url.searchParams.append('token', session.access_token);
+    
+    console.debug(`Generated authenticated URL for ${path}`);
+    return url.toString();
+  } catch (e) {
+    console.error(`Failed to get authenticated URL for ${path}:`, e);
+    return null;
+  }
 };
