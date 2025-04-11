@@ -28,9 +28,20 @@ export const debugMediaUrl = async (url: string | null) => {
     });
     console.log(`GET status: ${getResponse.status}`);
     
+    // Try to analyze the response content type
+    const contentType = getResponse.headers.get('content-type');
+    console.log(`Content-Type: ${contentType || 'unknown'}`);
+    
     if (getResponse.ok) {
       console.log("URL is accessible!");
-      return { success: true };
+      return { 
+        success: true,
+        contentType,
+        headers: Array.from(getResponse.headers.entries()).reduce((obj, [key, value]) => {
+          obj[key] = value;
+          return obj;
+        }, {} as Record<string, string>)
+      };
     } else {
       console.error("URL returned error status:", getResponse.status);
       return { success: false, error: `HTTP error: ${getResponse.status}` };

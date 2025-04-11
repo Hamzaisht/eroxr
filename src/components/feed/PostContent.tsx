@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaImage } from "@/components/media/MediaImage";
 
 interface PostContentProps {
   content: string;
@@ -95,14 +96,12 @@ export const PostContent = ({
                             className="relative aspect-[4/3] cursor-pointer group"
                             onClick={() => onMediaClick(url)}
                           >
-                            <UniversalMedia
-                              item={{
-                                media_url: url,
-                                media_type: "image",
-                                creator_id: creatorId
-                              }}
+                            <MediaImage
+                              url={url}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               onError={() => handleMediaError(url)}
+                              showWatermark={true}
+                              creatorId={creatorId}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </motion.div>

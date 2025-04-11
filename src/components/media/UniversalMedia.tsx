@@ -7,6 +7,7 @@ import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { ErrorComponent } from "@/components/ErrorComponent";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
+import { MediaImage } from "@/components/media/MediaImage";
 
 interface UniversalMediaProps {
   item: any;
@@ -204,21 +205,15 @@ export const UniversalMedia = ({
           onClick={onClick}
         />
       ) : (
-        <img
-          src={displayUrl}
+        <MediaImage
+          url={displayUrl}
           alt={item?.alt_text || "Media content"}
-          className={`w-full h-full object-cover ${loadError ? 'hidden' : ''}`}
+          className="w-full h-full"
           onLoad={handleLoad}
           onError={handleError}
-          style={{ display: isLoading ? 'none' : 'block' }}
-          crossOrigin="anonymous"
-        />
-      )}
-
-      {showWatermark && !loadError && !isLoading && item?.creator_id && (
-        <WatermarkOverlay 
-          username={item.creator_id} 
-          creatorId={item.creator_id} 
+          showWatermark={showWatermark}
+          creatorId={item?.creator_id}
+          onClick={onClick}
         />
       )}
     </div>
