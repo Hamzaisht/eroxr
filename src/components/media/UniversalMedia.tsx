@@ -50,7 +50,25 @@ export const UniversalMedia = ({
   useEffect(() => {
     const setupMediaUrl = async () => {
       try {
-        const url = getPlayableMediaUrl(item);
+        let url = getPlayableMediaUrl(item);
+        
+        // Special handling for stories bucket which has content-type issues
+        if (url && 
+            (url.includes('/stories/') || 
+             (item.content_type === 'story' || item.media_type === 'story'))) {
+          
+          console.log("Detected story media, applying special handling");
+          
+          // If it's from the stories bucket and we can identify it from the URL
+          if (url.includes('supabase.co/storage/v1/object/public/stories/')) {
+            // Try to modify the URL to use the render endpoint
+            url = url.replace(
+              'storage/v1/object/public/stories/',
+              'storage/v1/render/image/public/stories/'
+            );
+          }
+        }
+        
         setMediaUrl(url);
         
         if (url) {

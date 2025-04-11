@@ -139,6 +139,16 @@ const getStoragePublicUrl = (path: string): string | null => {
     const publicUrl = data.publicUrl;
     
     console.debug(`Resolved ${path} to ${publicUrl} (bucket: ${bucket}, path: ${finalPath})`);
+    
+    // Special case for stories bucket which seems to have the content type issue
+    if (bucket === 'stories') {
+      // Force the correct content type by appending a parameter 
+      // This is a workaround for the content-type issue
+      return publicUrl.includes('?') 
+        ? `${publicUrl}&contentType=image/jpeg` 
+        : `${publicUrl}?contentType=image/jpeg`;
+    }
+    
     return publicUrl;
   } catch (e) {
     console.error(`Failed to get public URL for ${path} in bucket ${bucket}:`, e);

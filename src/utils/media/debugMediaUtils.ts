@@ -1,501 +1,381 @@
 
 /**
- * Utility to debug media loading issues
+ * Utility functions for debugging media URLs and fixing common issues
+ * like CORS errors and content type mismatches
  */
-export const debugMediaUrl = async (url: string | null) => {
-  if (!url) {
-    console.error("Cannot debug null URL");
-    return { success: false, error: "Null URL" };
-  }
-  
-  console.group(`Debugging media URL: ${url}`);
+
+/**
+ * Debug a media URL by analyzing response headers and content
+ */
+export const debugMediaUrl = async (url: string) => {
+  if (!url) return { error: 'No URL provided' };
   
   try {
-    // Test with HEAD request first
-    console.log("Testing with HEAD request...");
+    // First, try a HEAD request to get headers without downloading the content
     const headResponse = await fetch(url, { 
       method: 'HEAD',
       mode: 'cors',
-      credentials: 'omit',
       cache: 'no-cache',
-      headers: {
-        'Origin': window.location.origin,
-        'Accept': 'image/*, video/*, application/octet-stream'
-      }
-    });
-    console.log(`HEAD status: ${headResponse.status}`);
-    
-    // Test with GET request
-    console.log("Testing with GET request...");
-    const getResponse = await fetch(url, {
-      mode: 'cors',
-      credentials: 'omit',
-      cache: 'no-cache',
-      headers: {
-        'Origin': window.location.origin,
-        'Accept': 'image/*, video/*, application/octet-stream, text/plain, */*' // Accept all content types to see what's returned
-      }
-    });
-    console.log(`GET status: ${getResponse.status}`);
-    
-    // Try to analyze the response content type
-    const contentType = getResponse.headers.get('content-type');
-    console.log(`Content-Type: ${contentType || 'unknown'}`);
-
-    // Log all headers for detailed debugging
-    console.log("Response headers:", Object.fromEntries(getResponse.headers.entries()));
-
-    // Specifically check if content type mismatch might be causing issues
-    if (contentType && contentType.includes('application/json')) {
-      console.warn("Content type is application/json instead of an image type!");
-      
-      try {
-        // Try to read and log the JSON response to see if it contains error info
-        const jsonResponse = await getResponse.clone().json();
-        console.log("JSON response content:", jsonResponse);
-        
-        if (jsonResponse.error) {
-          return { 
-            success: false, 
-            error: `Server returned error: ${jsonResponse.error}`,
-            contentType,
-            jsonResponse
-          };
-        }
-        
-        // Check if this is actually a Supabase storage path that needs direct access
-        if (url.includes('supabase.co/storage/v1/object')) {
-          console.log("This appears to be a Supabase storage URL that may need direct access");
-          return {
-            success: false,
-            error: "Supabase storage access issue",
-            contentType,
-            needsDirectPath: true
-          };
-        }
-      } catch (e) {
-        console.log("Could not parse response as JSON");
-      }
-    }
-
-    // Check for access-control headers
-    const accessControlAllowOrigin = getResponse.headers.get('access-control-allow-origin');
-    const accessControlAllowMethods = getResponse.headers.get('access-control-allow-methods');
-    const accessControlAllowHeaders = getResponse.headers.get('access-control-allow-headers');
-    
-    console.log('CORS Headers:', {
-      'Access-Control-Allow-Origin': accessControlAllowOrigin || 'not present',
-      'Access-Control-Allow-Methods': accessControlAllowMethods || 'not present',
-      'Access-Control-Allow-Headers': accessControlAllowHeaders || 'not present'
+      credentials: 'omit'
+    }).catch(err => {
+      console.log(`HEAD request failed for ${url}:`, err);
+      return null;
     });
     
-    if (getResponse.ok) {
-      console.log("URL is accessible!");
-      
-      // Check if content can be loaded in browser
-      if (url.match(/\.(jpg|jpeg|png|gif|webp|avif|svg)$/i)) {
-        await getImageDimensions(url)
-          .then(dimensions => console.log(`Image dimensions: ${dimensions.width}x${dimensions.height}`))
-          .catch(err => console.log('Could not load as image:', err.message));
-      }
-      
-      return { 
-        success: true,
-        contentType,
-        cors: {
-          allowOrigin: accessControlAllowOrigin,
-          allowMethods: accessControlAllowMethods,
-          allowHeaders: accessControlAllowHeaders
-        },
-        headers: Object.fromEntries(getResponse.headers.entries()),
-        hasInvalidContentType: contentType && !contentType.startsWith('image/') && url.match(/\.(jpg|jpeg|png|gif|webp|avif|svg)$/i),
-        isJSON: contentType && contentType.includes('application/json')
-      };
-    } else {
-      console.error("URL returned error status:", getResponse.status);
-      return { 
-        success: false, 
-        error: `HTTP error: ${getResponse.status}`,
-        headers: Object.fromEntries(getResponse.headers.entries())
-      };
-    }
-  } catch (error: any) {
-    console.error("Error accessing URL:", error);
-    return { 
-      success: false, 
-      error: error.message,
-      errorType: error.name,
-      isCorsError: error.name === 'TypeError' && error.message.includes('CORS')
+    // Get content type from HEAD request if available
+    let contentType = headResponse?.headers?.get('content-type');
+    let contentLength = headResponse?.headers?.get('content-length');
+    let cors = {
+      allowOrigin: headResponse?.headers?.get('access-control-allow-origin') || null,
+      allowMethods: headResponse?.headers?.get('access-control-allow-methods') || null,
+      allowHeaders: headResponse?.headers?.get('access-control-allow-headers') || null
     };
-  } finally {
-    console.groupEnd();
-  }
-};
-
-/**
- * Checks if the URL contains a cache buster
- */
-export const hasCacheBuster = (url: string): boolean => {
-  if (!url) return false;
-  
-  try {
-    const urlObj = new URL(url);
-    return urlObj.searchParams.has('t') || urlObj.searchParams.has('r');
-  } catch (e) {
-    return false;
-  }
-};
-
-/**
- * Gets image dimensions if possible
- */
-export const getImageDimensions = (url: string): Promise<{width: number, height: number}> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
     
-    // Set a timeout to avoid hanging
-    const timeout = setTimeout(() => {
-      reject(new Error('Image loading timed out'));
-    }, 10000);
-    
-    img.onload = () => {
-      clearTimeout(timeout);
-      resolve({
-        width: img.width,
-        height: img.height
+    // Log all headers for debugging
+    const headersDebug = [];
+    if (headResponse?.headers) {
+      headResponse.headers.forEach((value, key) => {
+        headersDebug.push(`${key}: ${value}`);
       });
-    };
-    img.onerror = (e) => {
-      clearTimeout(timeout);
-      reject(new Error(`Failed to load image: ${e instanceof Error ? e.message : 'Unknown error'}`));
-    };
+    }
     
-    // Add cache-buster to avoid cached errors
-    const cacheBuster = `${url.includes('?') ? '&' : '?'}_cb=${Date.now()}`;
-    img.src = url + cacheBuster;
-  });
-};
-
-/**
- * Check if a URL is being blocked by CORS
- */
-export const checkCorsBlocking = async (url: string): Promise<{blocked: boolean, reason?: string}> => {
-  try {
-    // Test with preflight OPTIONS request
-    const corsCheckResponse = await fetch(url, {
-      method: 'OPTIONS',
-      mode: 'cors',
-      credentials: 'omit',
-      headers: {
-        'Origin': window.location.origin,
-        'Access-Control-Request-Method': 'GET',
-        'Access-Control-Request-Headers': 'Content-Type',
-        'Accept': 'image/*, video/*, application/octet-stream, */*'
+    // If HEAD request failed, try a GET request instead
+    if (!headResponse) {
+      console.log(`Falling back to GET request for ${url}`);
+      const getResponse = await fetch(url, { 
+        method: 'GET',
+        mode: 'cors',
+        cache: 'no-cache',
+        credentials: 'omit'
+      }).catch(err => {
+        console.log(`GET request also failed for ${url}:`, err);
+        return { 
+          error: err.message, 
+          errorType: err.constructor.name,
+          isCorsError: err.message.includes('CORS') || err instanceof TypeError
+        };
+      });
+      
+      if (!getResponse.headers) {
+        return { 
+          error: 'Network request failed',
+          errorType: 'NetworkError',
+          isCorsError: true
+        };
       }
-    });
-    
-    // Check if we have proper CORS headers in response
-    const allowOrigin = corsCheckResponse.headers.get('access-control-allow-origin');
-    const allowMethods = corsCheckResponse.headers.get('access-control-allow-methods');
-    
-    if (!allowOrigin) {
-      return { blocked: true, reason: 'Missing Access-Control-Allow-Origin header' };
+      
+      contentType = getResponse.headers?.get('content-type');
+      contentLength = getResponse.headers?.get('content-length');
+      cors = {
+        allowOrigin: getResponse.headers?.get('access-control-allow-origin') || null,
+        allowMethods: getResponse.headers?.get('access-control-allow-methods') || null,
+        allowHeaders: getResponse.headers?.get('access-control-allow-headers') || null
+      };
+      
+      // Check if response is JSON to detect error responses
+      let isJSON = false;
+      let responseBody = null;
+      
+      if (contentType?.includes('application/json')) {
+        isJSON = true;
+        try {
+          const clonedResponse = getResponse.clone();
+          responseBody = await clonedResponse.json().catch(() => null);
+        } catch (err) {
+          console.log('Error parsing JSON response:', err);
+        }
+      }
+      
+      return {
+        url,
+        status: getResponse.status,
+        statusText: getResponse.statusText,
+        contentType,
+        contentLength,
+        cors,
+        isJSON,
+        responseBody,
+        headers: Array.from(getResponse.headers.entries())
+      };
     }
     
-    if (allowOrigin !== '*' && allowOrigin !== window.location.origin) {
-      return { blocked: true, reason: `Origin not allowed: ${allowOrigin}` };
-    }
-    
-    if (!allowMethods || !allowMethods.includes('GET')) {
-      return { blocked: true, reason: 'GET method not allowed by CORS policy' };
-    }
-    
-    return { blocked: false };
-  } catch (error) {
-    // If fetch throws an error, it's likely a CORS issue
-    return { blocked: true, reason: error instanceof Error ? error.message : 'Unknown CORS error' };
+    return {
+      url,
+      status: headResponse.status,
+      statusText: headResponse.statusText,
+      contentType,
+      contentLength,
+      cors,
+      headersDebug,
+      headers: Array.from(headResponse.headers.entries())
+    };
+  } catch (err) {
+    console.error('Error in debugMediaUrl:', err);
+    return {
+      url,
+      error: err.message,
+      errorType: err.constructor.name,
+      isCorsError: err.message.includes('CORS') || err instanceof TypeError
+    };
   }
 };
 
 /**
- * Attempts to work around CORS issues by using an image object
+ * Attempt to work around CORS issues by fetching the image as a blob and
+ * creating a local object URL
  */
-export const attemptImageCorsWorkaround = (url: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    
-    img.onload = () => {
-      try {
-        // Create a canvas and draw the image to get a data URL
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width || 300;
-        canvas.height = img.height || 200;
-        
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Failed to get canvas context'));
-          return;
-        }
-        
-        ctx.drawImage(img, 0, 0);
-        const dataUrl = canvas.toDataURL('image/png');
-        resolve(dataUrl);
-      } catch (e) {
-        reject(new Error('Failed to convert image to data URL'));
-      }
-    };
-    
-    img.onerror = () => {
-      reject(new Error('Failed to load image for CORS workaround'));
-    };
-    
-    // Add timestamp to prevent caching
-    img.src = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
-  });
-};
-
-/**
- * Tries to fetch the actual image data directly as a blob
- * This can sometimes work when the image request is returned with incorrect content-type
- */
-export const fetchImageAsBlob = async (url: string): Promise<string> => {
+export const attemptImageCorsWorkaround = async (url: string): Promise<string> => {
   try {
     const response = await fetch(url, {
       mode: 'cors',
-      credentials: 'omit',
       cache: 'no-cache',
+      credentials: 'omit'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+    }
+    
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (err) {
+    console.error('CORS workaround failed:', err);
+    throw err;
+  }
+};
+
+/**
+ * Fetches an image as a blob and returns a data URL
+ */
+export const fetchImageAsBlob = async (url: string): Promise<string> => {
+  try {
+    // Add cache busting to avoid cached responses
+    const cacheBustedUrl = `${url}${url.includes('?') ? '&' : '?'}_cb=${Date.now()}`;
+    
+    const response = await fetch(cacheBustedUrl, {
+      cache: 'no-cache',
+      credentials: 'omit',
       headers: {
-        'Accept': 'image/*, video/*, application/octet-stream, */*'
+        // Some servers need to think we're a browser
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        // Request image/* content instead of whatever the server might default to
+        'Accept': 'image/*'
       }
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
+      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
     }
     
-    // Get the response as a blob
     const blob = await response.blob();
     
-    // Check if blob really is an image using its type
-    const contentType = blob.type;
-    if (contentType && !contentType.startsWith('image/') && 
-        !contentType.includes('octet-stream') && !contentType.includes('video/')) {
-      console.warn(`Blob has unexpected content type: ${contentType}`);
+    // Force the mime type if it's coming as application/json
+    const contentType = response.headers.get('content-type');
+    let correctBlob = blob;
+    
+    // If the content type is application/json but the URL suggests it's an image,
+    // create a new blob with the correct content type
+    if (contentType?.includes('application/json') && 
+        (url.match(/\.(jpg|jpeg|png|gif|webp)$/i) || url.includes('image'))) {
+      
+      // Try to determine the correct mime type from the URL
+      let mimeType = 'image/jpeg';  // Default mime type
+      
+      if (url.match(/\.png$/i)) mimeType = 'image/png';
+      else if (url.match(/\.gif$/i)) mimeType = 'image/gif';
+      else if (url.match(/\.webp$/i)) mimeType = 'image/webp';
+      
+      correctBlob = new Blob([await blob.arrayBuffer()], { type: mimeType });
     }
     
-    // Create an object URL from the blob
-    const objectUrl = URL.createObjectURL(blob);
-    return objectUrl;
-  } catch (error) {
-    console.error("Failed to fetch image as blob:", error);
-    throw error;
+    return URL.createObjectURL(correctBlob);
+  } catch (err) {
+    console.error('Fetch as blob failed:', err);
+    throw err;
   }
 };
 
 /**
- * Direct path approach - attempts to extract the actual path from URLs
- * that might be wrapped in JSON responses
+ * Extract direct path for images from storage URLs
+ * This can bypass some issues with URL structures
  */
 export const extractDirectImagePath = (url: string): string | null => {
-  // Check for URL patterns that suggest the image path is wrapped in a different URL structure
-  if (url.includes('storage/v1/object/public')) {
-    // Extract the actual path after public/
-    const match = url.match(/\/public\/([^?]+)/);
-    if (match && match[1]) {
-      const bucket = match[1].split('/')[0];
-      const path = match[1].substring(bucket.length + 1);
+  if (!url) return null;
+  
+  // Check if this is a Supabase storage URL
+  if (!url.includes('supabase') || !url.includes('storage')) {
+    return null;
+  }
+  
+  // Special handling for stories bucket which seems to have issues
+  if (url.includes('/stories/')) {
+    try {
+      // Try to parse the URL
+      const urlObj = new URL(url);
       
-      // Try to use a direct path approach
-      const supabaseUrl = url.split('/storage/v1')[0];
-      const directUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
-      console.log(`Extracted direct path: ${directUrl}`);
-      return directUrl;
+      // Check if this is a storage/v1/object URL pattern
+      if (url.includes('storage/v1/object')) {
+        // Convert from storage/v1/object/public/bucket/path to storage/v1/render/image/public/bucket/path
+        // This forces the correct content type
+        return url.replace('storage/v1/object', 'storage/v1/render/image');
+      }
+    } catch (err) {
+      console.error('URL parsing failed:', err);
     }
   }
   
+  // No transformation needed or applicable
   return null;
 };
 
 /**
- * Try common image file extensions when the extension might be wrong or missing
+ * Try multiple strategies to load an image URL that's returning
+ * application/json content type
  */
-export const tryAlternateExtensions = (url: string): string[] => {
-  const baseUrl = url.split('?')[0];
-  const queryParams = url.includes('?') ? url.substring(url.indexOf('?')) : '';
-  const extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
-  
-  // Remove any existing extension
-  let urlWithoutExt = baseUrl;
-  const lastDotIndex = baseUrl.lastIndexOf('.');
-  const lastSlashIndex = baseUrl.lastIndexOf('/');
-  
-  if (lastDotIndex > lastSlashIndex) {
-    urlWithoutExt = baseUrl.substring(0, lastDotIndex);
+export const tryAllImageLoadingStrategies = async (url: string) => {
+  // Strategy 1: Force content type via URL parameter (for Supabase)
+  if (url.includes('supabase') && url.includes('storage')) {
+    try {
+      const contentTypeUrl = url.includes('?') 
+        ? `${url}&contentType=image/jpeg` 
+        : `${url}?contentType=image/jpeg`;
+      
+      const response = await fetch(contentTypeUrl, { method: 'HEAD' });
+      if (response.ok && !response.headers.get('content-type')?.includes('application/json')) {
+        return { url: contentTypeUrl, strategy: 'content-type-param', success: true };
+      }
+    } catch (err) {
+      console.log('Strategy 1 failed:', err);
+    }
+    
+    // Strategy 2: Convert object URL to render/image URL (for Supabase)
+    if (url.includes('storage/v1/object')) {
+      const renderUrl = url.replace('storage/v1/object', 'storage/v1/render/image');
+      try {
+        const response = await fetch(renderUrl, { method: 'HEAD' });
+        if (response.ok) {
+          return { url: renderUrl, strategy: 'render-image-url', success: true };
+        }
+      } catch (err) {
+        console.log('Strategy 2 failed:', err);
+      }
+    }
   }
   
-  // Generate URLs with different extensions
-  return extensions.map(ext => `${urlWithoutExt}${ext}${queryParams}`);
-};
-
-/**
- * Tries various strategies to load an image that has server response issues
- */
-export const tryAllImageLoadingStrategies = async (url: string): Promise<{
-  url: string | null,
-  strategy: string,
-  success: boolean
-}> => {
-  // Try blob approach first (often works with content type mismatches)
+  // Strategy 3: Use blob URL
   try {
     const blobUrl = await fetchImageAsBlob(url);
-    return { url: blobUrl, strategy: 'blob', success: true };
-  } catch (error) {
-    console.log('Blob strategy failed, trying alternatives');
+    return { url: blobUrl, strategy: 'blob-url', success: true };
+  } catch (err) {
+    console.log('Strategy 3 failed:', err);
   }
   
-  // Try direct path if it looks like a Supabase storage URL
-  if (url.includes('supabase.co/storage')) {
-    const directPath = extractDirectImagePath(url);
-    if (directPath) {
-      try {
-        const blobUrl = await fetchImageAsBlob(directPath);
-        return { url: blobUrl, strategy: 'direct-path-blob', success: true };
-      } catch (error) {
-        console.log('Direct path blob strategy failed');
-      }
-    }
-  }
-  
-  // Try CORS workaround with data URL
-  try {
-    const dataUrl = await attemptImageCorsWorkaround(url);
-    return { url: dataUrl, strategy: 'data-url', success: true };
-  } catch (error) {
-    console.log('Data URL strategy failed');
-  }
-
-  // Try alternate extensions
-  const alternateUrls = tryAlternateExtensions(url);
-  for (const altUrl of alternateUrls) {
-    try {
-      const blobUrl = await fetchImageAsBlob(altUrl);
-      return { url: blobUrl, strategy: 'alternate-extension', success: true };
-    } catch (error) {
-      console.log(`Alternate extension failed: ${altUrl}`);
-    }
-  }
-  
-  return { url: null, strategy: 'all-failed', success: false };
+  // If all strategies fail, return the original URL
+  return { url, strategy: 'original', success: false };
 };
 
 /**
- * Handles the application/json content-type issue that often happens with Supabase Storage
- * This creates a direct fetch with content negotiation and returns the URL for the actual content
+ * Special handler for content type mismatch when server returns JSON
+ * for image requests
  */
 export const handleJsonContentTypeIssue = async (url: string): Promise<string | null> => {
-  try {
-    console.log("Attempting to handle application/json content-type issue for:", url);
-    
-    // First try with a more specific Accept header for images/videos
-    const response = await fetch(url, {
-      mode: 'cors',
-      credentials: 'omit',
-      cache: 'no-cache',
-      headers: {
-        'Accept': 'image/*, video/*, application/octet-stream, */*',
-        'X-Content-Type': 'binary'
+  if (!url) return null;
+  
+  // Strategy for Supabase storage URLs
+  if (url.includes('supabase.co/storage')) {
+    // Try the render endpoint for images
+    if (url.includes('storage/v1/object/public')) {
+      const renderUrl = url.replace(
+        'storage/v1/object/public', 
+        'storage/v1/render/image/public'
+      );
+      
+      try {
+        const response = await fetch(renderUrl, { method: 'HEAD' });
+        if (response.ok) {
+          return renderUrl;
+        }
+      } catch (err) {
+        console.log('render endpoint approach failed:', err);
       }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
     }
     
-    // Get the content type to verify
-    const contentType = response.headers.get('content-type');
+    // Try content-type parameter approach
+    const contentTypeUrl = url.includes('?') 
+      ? `${url}&contentType=image/jpeg` 
+      : `${url}?contentType=image/jpeg`;
     
-    // If it's still JSON, we need to try a different approach
-    if (contentType && contentType.includes('application/json')) {
-      console.log("Still receiving JSON, trying blob approach");
-      
-      // Try the blob approach which often works despite content-type
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // Create a backup approach - check if it's really an image
-      // by attempting to create an image from the blob
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          console.log("Successfully created image from blob despite JSON content-type");
-          resolve(blobUrl);
-        };
-        
-        img.onerror = () => {
-          console.log("Failed to create image from blob, likely real JSON data");
-          URL.revokeObjectURL(blobUrl);
-          resolve(null);
-        };
-        
-        img.src = blobUrl;
-        
-        // Set a timeout for the image load check
-        setTimeout(() => {
-          if (!img.complete) {
-            console.log("Image load timed out, assuming it's not a valid image");
-            URL.revokeObjectURL(blobUrl);
-            img.src = '';
-            resolve(null);
-          }
-        }, 5000);
-      });
+    try {
+      const response = await fetch(contentTypeUrl, { method: 'HEAD' });
+      if (response.ok) {
+        return contentTypeUrl;
+      }
+    } catch (err) {
+      console.log('content-type parameter approach failed:', err);
     }
-    
-    // If we got a non-JSON content type, create a blob URL
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
-    
-  } catch (error) {
-    console.error("Failed to handle JSON content-type issue:", error);
+  }
+  
+  // Generic approach - try to get as blob and create object URL
+  try {
+    return await fetchImageAsBlob(url);
+  } catch (err) {
+    console.log('blob approach failed:', err);
     return null;
   }
 };
 
 /**
- * Force fetches media as specific content type
- * This utility is useful for cases where the server returns the wrong content-type
- * but the actual content is the correct media format
+ * Force fetch a URL as a specific content type regardless
+ * of what the server returns
  */
-export const forceFetchAsContentType = async (
-  url: string, 
-  targetType: 'image' | 'video'
-): Promise<string | null> => {
+export const forceFetchAsContentType = async (url: string, type: 'image' | 'video'): Promise<string | null> => {
+  if (!url) return null;
+  
   try {
-    const response = await fetch(url, {
-      cache: 'no-cache',
-      headers: {
-        'Accept': targetType === 'image' 
-          ? 'image/*, application/octet-stream, */*' 
-          : 'video/*, application/octet-stream, */*'
+    // For Supabase storage URLs, try the render endpoint
+    if (url.includes('supabase.co/storage') && type === 'image') {
+      if (url.includes('storage/v1/object/public')) {
+        const renderUrl = url.replace(
+          'storage/v1/object/public', 
+          'storage/v1/render/image/public'
+        );
+        
+        const response = await fetch(renderUrl, { method: 'HEAD' });
+        if (response.ok) {
+          return renderUrl;
+        }
       }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch with status: ${response.status}`);
+      
+      // Special handling for stories bucket
+      if (url.includes('/stories/')) {
+        // Try adding download=true parameter to force download instead of preview
+        const downloadUrl = url.includes('?')
+          ? `${url}&download=true` 
+          : `${url}?download=true`;
+          
+        const response = await fetch(downloadUrl);
+        if (response.ok) {
+          const blob = await response.blob();
+          // Force the blob to be treated as an image
+          const imageBlob = new Blob([await blob.arrayBuffer()], { type: 'image/jpeg' });
+          return URL.createObjectURL(imageBlob);
+        }
+      }
     }
+    
+    // Fallback to fetching as blob and forcing the content type
+    const response = await fetch(url);
+    if (!response.ok) return null;
     
     const blob = await response.blob();
     
-    // Create a new blob with the desired type
-    const newBlob = new Blob([blob], { 
-      type: targetType === 'image' ? 'image/jpeg' : 'video/mp4' 
-    });
+    // Force the correct mime type based on requested type
+    const mimeType = type === 'image' ? 'image/jpeg' : 'video/mp4';
+    const typedBlob = new Blob([await blob.arrayBuffer()], { type: mimeType });
     
-    return URL.createObjectURL(newBlob);
-  } catch (error) {
-    console.error(`Failed to force fetch as ${targetType}:`, error);
+    return URL.createObjectURL(typedBlob);
+  } catch (err) {
+    console.error('Force fetch failed:', err);
     return null;
   }
 };
