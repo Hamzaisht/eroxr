@@ -12,11 +12,11 @@ interface VideoPlayerProps {
   autoPlay?: boolean;
   onError?: () => void;
   onEnded?: () => void;
+  onLoadedData?: () => void;
   creatorId?: string;
   playOnHover?: boolean;
   showCloseButton?: boolean;
   onClose?: () => void;
-  onLoadedData?: () => void;
   onClick?: () => void;
   controls?: boolean;
 }
