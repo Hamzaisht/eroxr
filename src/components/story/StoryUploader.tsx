@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Loader2, AlertCircle } from "lucide-react";
@@ -11,10 +10,9 @@ export const StoryUploader = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [isStalled, setIsStalled] = useState(false);
   const session = useSession();
   const { toast } = useToast();
-  const MAX_RETRIES = 1;
+  const MAX_RETRIES = 2;
   const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
   const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
   const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -22,7 +20,7 @@ export const StoryUploader = () => {
   const getUrlWithCacheBuster = (baseUrl: string) => {
     const timestamp = Date.now();
     const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}t=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
+    return `${baseUrl}${separator}t=${timestamp}`;
   };
 
   const validateFile = (file: File): { valid: boolean; message?: string } => {
@@ -104,13 +102,13 @@ export const StoryUploader = () => {
             });
           }, 300);
 
-          // Start the upload
+          // Start the upload with explicit content type
           supabase.storage
             .from('stories')
             .upload(filePath, file, {
               cacheControl: '3600',
-              upsert: false,
-              contentType: file.type // Add explicit content type
+              upsert: true, // Changed to true for reliability
+              contentType: file.type // Explicitly set content type
             })
             .then(({ data, error }) => {
               clearInterval(progressInterval);
@@ -141,14 +139,14 @@ export const StoryUploader = () => {
           const retryFileName = `retry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
           const retryFilePath = `${session.user.id}/${retryFileName}`;
           
-          console.log("Retrying upload with path:", retryFilePath, "Content-Type:", file.type);
+          console.log("Retrying upload with path:", retryFilePath);
           
           const { error: retryError, data: retryData } = await supabase.storage
             .from('stories')
             .upload(retryFilePath, file, {
               cacheControl: '3600',
               upsert: true,
-              contentType: file.type // Add explicit content type
+              contentType: file.type // Explicitly set content type
             });
           
           if (retryError) {

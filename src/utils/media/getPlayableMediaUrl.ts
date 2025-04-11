@@ -67,21 +67,13 @@ export const getPlayableMediaUrl = (item: any): string | null => {
     return null;
   }
   
-  // If it's already a full URL, ensure CORS headers are respected
+  // If it's already a full URL, return it directly
   if (typeof firstValidUrl === 'string') {
     if (firstValidUrl.startsWith('http') || firstValidUrl.startsWith('/api/')) {
-      // For external URLs, we need to ensure CORS is handled
-      // If the URL is from our Supabase storage, we're good
-      if (firstValidUrl.includes('supabase.co/storage')) {
-        return firstValidUrl;
-      }
-      
-      // For other external URLs, we might need a proxy in some cases
-      // But for now, return the URL directly and monitor for CORS issues
       return firstValidUrl;
     }
     
-    // If it's a storage path, get the public URL with proper auth headers
+    // If it's a storage path, get the public URL
     return getStoragePublicUrl(firstValidUrl);
   }
   
@@ -138,16 +130,7 @@ const getStoragePublicUrl = (path: string): string | null => {
     const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
     const publicUrl = data.publicUrl;
     
-    console.debug(`Resolved ${path} to ${publicUrl} (bucket: ${bucket}, path: ${finalPath})`);
-    
-    // Special case for stories bucket which seems to have the content type issue
-    if (bucket === 'stories') {
-      // Force the correct content type by appending a parameter 
-      // This is a workaround for the content-type issue
-      return publicUrl.includes('?') 
-        ? `${publicUrl}&contentType=image/jpeg` 
-        : `${publicUrl}?contentType=image/jpeg`;
-    }
+    console.debug(`Resolved ${path} to ${publicUrl}`);
     
     return publicUrl;
   } catch (e) {
@@ -167,8 +150,7 @@ export const checkUrlAccessibility = async (url: string): Promise<boolean> => {
     // Use HEAD request to check if URL is accessible without downloading content
     const response = await fetch(url, { 
       method: 'HEAD',
-      mode: 'cors',
-      credentials: 'omit' // Don't send cookies for cross-origin requests
+      cache: 'no-store' // Prevent caching
     });
     
     return response.ok;
@@ -176,26 +158,6 @@ export const checkUrlAccessibility = async (url: string): Promise<boolean> => {
     console.error(`URL accessibility check failed for ${url}:`, error);
     return false;
   }
-};
-
-/**
- * Gets the CORS-friendly version of a URL
- * This can be used for problematic URLs that need proxy handling
- */
-export const getCorsProxyUrl = (url: string): string => {
-  if (!url) return url;
-  
-  // If it's a Supabase URL, it should already handle CORS
-  if (url.includes('supabase.co')) {
-    return url;
-  }
-  
-  // For external URLs that might have CORS issues, we could use a proxy
-  // This is a placeholder - in a real app, you might implement a proxy service
-  // or use an existing CORS proxy service
-  
-  // For now, return the original URL and handle failures via the error handling system
-  return url;
 };
 
 /**
@@ -226,36 +188,20 @@ export const getAuthenticatedUrl = async (path: string): Promise<string | null> 
   }
   
   try {
-    // Get the current session
-    const { data: sessionData } = await supabase.auth.getSession();
-    const session = sessionData?.session;
+    // Get the public URL with timestamp to avoid caching
+    const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
+    const publicUrl = data.publicUrl;
     
-    if (!session) {
-      // No session, fall back to public URL
-      console.warn("No authentication session available for protected resource");
-      const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
-      return data.publicUrl;
-    }
+    // Add timestamp to URL to prevent caching
+    const timestamp = Date.now();
+    const url = publicUrl.includes('?') ? 
+      `${publicUrl}&t=${timestamp}` : 
+      `${publicUrl}?t=${timestamp}`;
     
-    // Get authenticated URL (this approach depends on Supabase version)
-    // Method 1: Using download with CORS headers
-    const { data } = await supabase.storage.from(bucket).download(finalPath);
-    if (data) {
-      const url = URL.createObjectURL(data);
-      return url; // Note: This URL is temporary and tied to the browser session
-    }
-    
-    // Method 2: Attach token to public URL
-    // Note: This approach is not recommended for sensitive files as tokens can be leaked
-    const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(finalPath);
-    const url = new URL(publicUrlData.publicUrl);
-    // Some Supabase deployments support token in URL for authenticated access
-    // url.searchParams.append('token', session.access_token);
-    
-    console.debug(`Generated authenticated URL for ${path}`);
-    return url.toString();
+    console.debug(`Generated URL for ${path}: ${url}`);
+    return url;
   } catch (e) {
-    console.error(`Failed to get authenticated URL for ${path}:`, e);
+    console.error(`Failed to get URL for ${path}:`, e);
     return null;
   }
 };

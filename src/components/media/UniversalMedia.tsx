@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { getPlayableMediaUrl, addCacheBuster, checkUrlAccessibility } from "@/utils/media/getPlayableMediaUrl";
-import { getContentType } from "@/utils/mediaUtils";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { ErrorComponent } from "@/components/ErrorComponent";
@@ -45,71 +44,25 @@ export const UniversalMedia = ({
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [displayUrl, setDisplayUrl] = useState<string | null>(null);
   const [accessibleUrl, setAccessibleUrl] = useState<boolean>(true);
-  const [isContentTypeMismatch, setIsContentTypeMismatch] = useState(false);
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
   
   useEffect(() => {
     const setupMediaUrl = async () => {
       try {
-        let url = getPlayableMediaUrl(item);
-        
-        // Special handling for stories bucket which has content-type issues
-        if (url && 
-            (url.includes('/stories/') || 
-             (item.content_type === 'story' || item.media_type === 'story'))) {
-          
-          console.log("Detected story media, applying special handling");
-          
-          // If it's from the stories bucket and we can identify it from the URL
-          if (url.includes('supabase.co/storage/v1/object/public/stories/')) {
-            // Try to modify the URL to use the render endpoint
-            url = url.replace(
-              'storage/v1/object/public/stories/',
-              'storage/v1/render/image/public/stories/'
-            );
-          }
-        }
-        
+        const url = getPlayableMediaUrl(item);
         setMediaUrl(url);
         
         if (url) {
+          // Add cache buster to URL
           const cachedUrl = addCacheBuster(url);
           setDisplayUrl(cachedUrl);
           
+          // Check if URL is accessible
           const isAccessible = await checkUrlAccessibility(cachedUrl || '');
           setAccessibleUrl(isAccessible);
           
           if (!isAccessible) {
             console.warn("Media URL is not accessible:", cachedUrl);
-          }
-          
-          // Check for content type mismatch proactively
-          try {
-            const debugResult = await debugMediaUrl(cachedUrl);
-            
-            // Use our type guard to safely check properties
-            if (!isDebugErrorResponse(debugResult)) {
-              // Check if this is a JSON response when we expect an image/video
-              if (debugResult.isJSON || (debugResult.contentType && debugResult.contentType.includes('application/json'))) {
-                console.warn("Content type mismatch detected:", debugResult.contentType);
-                setIsContentTypeMismatch(true);
-                
-                // Try to handle JSON content type issue
-                const jsonFixUrl = await handleJsonContentTypeIssue(cachedUrl);
-                if (jsonFixUrl) {
-                  setFallbackUrl(jsonFixUrl);
-                } else {
-                  // If JSON fix fails, try force fetch
-                  const mediaType = isVideo(item, cachedUrl) ? 'video' : 'image';
-                  const forcedUrl = await forceFetchAsContentType(cachedUrl, mediaType);
-                  if (forcedUrl) {
-                    setFallbackUrl(forcedUrl);
-                  }
-                }
-              }
-            }
-          } catch (err) {
-            console.error("Error in content type check:", err);
           }
         } else {
           setLoadError(true);
@@ -121,8 +74,7 @@ export const UniversalMedia = ({
           original: item?.media_url || item?.video_url,
           resolvedUrl: url,
           cachedUrl: displayUrl,
-          isAccessible: accessibleUrl,
-          fallbackUrl: fallbackUrl
+          isAccessible: accessibleUrl
         });
         
         setIsLoading(true);
@@ -162,20 +114,24 @@ export const UniversalMedia = ({
     setLoadError(true);
     
     if (displayUrl) {
+      // Try to debug the URL issue
       debugMediaUrl(displayUrl).then(result => {
         console.log("Media URL debug result:", result);
         
-        // Check for content type mismatch using our type guard
-        if (!isDebugErrorResponse(result) && result.contentType && result.contentType.includes('application/json')) {
-          setIsContentTypeMismatch(true);
-          
-          handleJsonContentTypeIssue(displayUrl).then(fixedUrl => {
-            if (fixedUrl) {
-              setFallbackUrl(fixedUrl);
-              setLoadError(false);
-              setIsLoading(true);
-            }
-          }).catch(console.error);
+        if (!isDebugErrorResponse(result)) {
+          // If content type mismatch detected, try to fix it
+          if (result.isJSON || 
+              (result.contentType && result.contentType.includes('application/json'))) {
+            
+            // Try to handle JSON content type issue
+            handleJsonContentTypeIssue(displayUrl).then(fixedUrl => {
+              if (fixedUrl) {
+                setFallbackUrl(fixedUrl);
+                setLoadError(false);
+                setIsLoading(true);
+              }
+            });
+          }
         }
       });
     }
@@ -183,15 +139,14 @@ export const UniversalMedia = ({
     console.error("Media load error:", { 
       url: displayUrl,
       item,
-      accessibleUrl,
-      isContentTypeMismatch
+      accessibleUrl
     });
     
-    if (retryCount < 3) {
+    if (retryCount < 2) {
       setRetryCount(prev => prev + 1);
       setTimeout(() => {
         if (retryCount === 1 && !fallbackUrl && displayUrl) {
-          // On second retry, try force fetch approach if we don't have a fallback yet
+          // On second retry, try force fetch approach
           const mediaType = isVideo(item, displayUrl) ? 'video' : 'image';
           forceFetchAsContentType(displayUrl, mediaType)
             .then(forcedUrl => {
@@ -207,13 +162,6 @@ export const UniversalMedia = ({
               setDisplayUrl(freshUrl);
               setLoadError(false);
               setIsLoading(true);
-            })
-            .catch(() => {
-              // Last resort - fresh URL
-              const freshUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
-              setDisplayUrl(freshUrl);
-              setLoadError(false);
-              setIsLoading(true);
             });
         } else {
           // First retry - just use a fresh cache-busted URL
@@ -222,7 +170,7 @@ export const UniversalMedia = ({
           setLoadError(false);
           setIsLoading(true);
         }
-      }, 1000 * (retryCount + 1));
+      }, 1000);
     } else if (onError) {
       onError();
     }
@@ -239,7 +187,7 @@ export const UniversalMedia = ({
     
     // On manual retry, try all approaches
     if (displayUrl) {
-      // First try the content-type fix approach
+      // Try the content-type fix approach
       handleJsonContentTypeIssue(displayUrl)
         .then(fixedUrl => {
           if (fixedUrl) {
@@ -252,20 +200,13 @@ export const UniversalMedia = ({
           return forceFetchAsContentType(displayUrl, mediaType);
         })
         .then(forcedUrl => {
-          if (forcedUrl && forcedUrl !== fallbackUrl) {
+          if (forcedUrl) {
             setFallbackUrl(forcedUrl);
           } else {
             // Last resort - fresh URL
             const freshUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
             setDisplayUrl(freshUrl);
           }
-        })
-        .catch(() => {
-          // Fallback to a fresh cache-busted URL
-          const url = getPlayableMediaUrl(item);
-          setMediaUrl(url);
-          const freshUrl = url ? addCacheBuster(url) : null;
-          setDisplayUrl(freshUrl);
         });
     }
   };
@@ -307,10 +248,8 @@ export const UniversalMedia = ({
           <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
           <p className="text-white/80 mb-3 text-center px-4">
             {!accessibleUrl 
-              ? "Media access error (CORS or authentication)" 
-              : isContentTypeMismatch
-                ? "Content type mismatch error"
-                : "Failed to load media"}
+              ? "Media access error" 
+              : "Failed to load media"}
           </p>
           <button 
             onClick={(e) => {
@@ -322,10 +261,6 @@ export const UniversalMedia = ({
             <RefreshCw className="h-4 w-4" /> 
             Retry
           </button>
-          
-          <div className="text-white/50 text-xs mt-2">
-            {isContentTypeMismatch && "Server returned incorrect content type"}
-          </div>
         </div>
       )}
       
