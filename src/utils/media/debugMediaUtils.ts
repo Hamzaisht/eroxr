@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for debugging media URLs and fixing common issues
  * like CORS errors and content type mismatches
@@ -32,7 +31,7 @@ export const debugMediaUrl = async (url: string) => {
     };
     
     // Log all headers for debugging
-    const headersDebug = [];
+    const headersDebug: string[] = [];
     if (headResponse?.headers) {
       headResponse.headers.forEach((value, key) => {
         headersDebug.push(`${key}: ${value}`);
@@ -56,12 +55,10 @@ export const debugMediaUrl = async (url: string) => {
         };
       });
       
-      if (!getResponse.headers) {
-        return { 
-          error: 'Network request failed',
-          errorType: 'NetworkError',
-          isCorsError: true
-        };
+      // Check if getResponse is a proper Response object or our error object
+      if ('error' in getResponse) {
+        // This is our error object, not a Response
+        return getResponse;
       }
       
       contentType = getResponse.headers?.get('content-type');
