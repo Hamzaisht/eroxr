@@ -1,23 +1,24 @@
 
 import { Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface UploadingIndicatorProps {
   progress: number;
 }
 
 export const UploadingIndicator = ({ progress }: UploadingIndicatorProps) => {
+  const displayProgress = Math.min(100, Math.max(0, progress));
+  
   return (
-    <div className="flex flex-col items-center justify-center">
-      <Loader2 className="w-8 h-8 text-luxury-primary/80 animate-spin" />
-      <span className="text-xs text-white/60 mt-2">
-        {progress > 0 ? `${progress}%` : "Uploading..."}
+    <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-2">
+      <Loader2 className="h-4 w-4 text-luxury-primary animate-spin" />
+      <Progress 
+        value={displayProgress} 
+        className="h-1 w-full bg-luxury-neutral/10" 
+      />
+      <span className="text-xs text-luxury-primary/80">
+        {Math.round(displayProgress)}%
       </span>
-      <div className="w-16 h-1 bg-luxury-dark/40 rounded-full mt-1 overflow-hidden">
-        <div 
-          className="h-full bg-luxury-primary/70 rounded-full" 
-          style={{ width: `${progress}%` }}
-        />
-      </div>
     </div>
   );
 };

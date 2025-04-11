@@ -1,17 +1,15 @@
 
 import { Plus } from "lucide-react";
-import { motion } from "framer-motion";
 
 export const StoryUploadButton = () => {
   return (
-    <>
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary to-luxury-accent opacity-20 blur-lg group-hover:opacity-40 transition-opacity duration-300" />
-        <Plus className="w-8 h-8 text-white/80 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+    <div className="flex flex-col items-center justify-center w-full h-full">
+      <div className="rounded-full bg-luxury-primary/20 p-2 mb-2">
+        <Plus className="h-4 w-4 text-luxury-primary" />
       </div>
-      <span className="text-xs text-white/60 mt-2 group-hover:text-white/80 transition-colors duration-300">
+      <span className="text-xs text-luxury-primary text-center">
         Add Story
       </span>
-    </>
+    </div>
   );
 };

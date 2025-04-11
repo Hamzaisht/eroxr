@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { useStoryUpload } from "./hooks/useStoryUpload";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { StoryUploadButton } from "./components/StoryUploadButton";
 import { UploadingIndicator } from "./components/UploadingIndicator";
 import { UploadErrorState } from "./components/UploadErrorState";
@@ -11,16 +11,27 @@ import { UploadErrorState } from "./components/UploadErrorState";
 export const StoryUploader = () => {
   const session = useSession();
   const { toast } = useToast();
-  const {
-    isUploading,
-    uploadProgress,
-    uploadError,
-    handleFileSelect,
+  
+  // Use our new media upload hook with story-specific options
+  const { 
+    state: {
+      isUploading,
+      progress,
+      error
+    },
+    uploadMedia,
     validateFile
-  } = useStoryUpload();
+  } = useMediaUpload({
+    contentCategory: 'story',
+    maxSizeInMB: 100,
+    allowedTypes: [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'
+    ]
+  });
 
   const onFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault(); // Prevent default behavior
+    event.preventDefault();
     
     const file = event.target.files?.[0];
     if (!file || !session?.user?.id) return;
@@ -36,8 +47,19 @@ export const StoryUploader = () => {
       return;
     }
 
-    handleFileSelect(file);
-  }, [session?.user?.id, toast, handleFileSelect, validateFile]);
+    // Upload the file
+    const result = await uploadMedia(file);
+    
+    if (result.success && result.url) {
+      // Refresh stories data on successful upload
+      window.dispatchEvent(new CustomEvent('story-uploaded'));
+      
+      toast({
+        title: "Story uploaded successfully",
+        description: "Your story is now live",
+      });
+    }
+  }, [session?.user?.id, toast, uploadMedia, validateFile]);
 
   return (
     <motion.div
@@ -57,8 +79,8 @@ export const StoryUploader = () => {
         className="cursor-pointer w-full h-full flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-luxury-primary/10 to-luxury-accent/10 border-2 border-dashed border-luxury-primary/30 group-hover:border-luxury-accent/50 transition-all duration-300"
       >
         {isUploading ? (
-          <UploadingIndicator progress={uploadProgress} />
-        ) : uploadError ? (
+          <UploadingIndicator progress={progress} />
+        ) : error ? (
           <UploadErrorState />
         ) : (
           <StoryUploadButton />
