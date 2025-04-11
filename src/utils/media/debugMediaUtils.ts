@@ -33,7 +33,7 @@ export const debugMediaUrl = async (url: string | null) => {
       cache: 'no-cache',
       headers: {
         'Origin': window.location.origin,
-        'Accept': 'image/*, video/*, application/octet-stream, text/plain' // Accept more content types
+        'Accept': 'image/*, video/*, application/octet-stream, text/plain, */*' // Accept all content types to see what's returned
       }
     });
     console.log(`GET status: ${getResponse.status}`);
@@ -41,6 +41,9 @@ export const debugMediaUrl = async (url: string | null) => {
     // Try to analyze the response content type
     const contentType = getResponse.headers.get('content-type');
     console.log(`Content-Type: ${contentType || 'unknown'}`);
+
+    // Log all headers for detailed debugging
+    console.log("Response headers:", Object.fromEntries(getResponse.headers.entries()));
 
     // Specifically check if content type mismatch might be causing issues
     if (contentType && contentType.includes('application/json')) {
@@ -277,7 +280,8 @@ export const fetchImageAsBlob = async (url: string): Promise<string> => {
     
     // Check if blob really is an image using its type
     const contentType = blob.type;
-    if (contentType && !contentType.startsWith('image/') && !contentType.includes('octet-stream')) {
+    if (contentType && !contentType.startsWith('image/') && 
+        !contentType.includes('octet-stream') && !contentType.includes('video/')) {
       console.warn(`Blob has unexpected content type: ${contentType}`);
     }
     
@@ -305,7 +309,9 @@ export const extractDirectImagePath = (url: string): string | null => {
       
       // Try to use a direct path approach
       const supabaseUrl = url.split('/storage/v1')[0];
-      return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+      const directUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+      console.log(`Extracted direct path: ${directUrl}`);
+      return directUrl;
     }
   }
   
@@ -369,6 +375,127 @@ export const tryAllImageLoadingStrategies = async (url: string): Promise<{
   } catch (error) {
     console.log('Data URL strategy failed');
   }
+
+  // Try alternate extensions
+  const alternateUrls = tryAlternateExtensions(url);
+  for (const altUrl of alternateUrls) {
+    try {
+      const blobUrl = await fetchImageAsBlob(altUrl);
+      return { url: blobUrl, strategy: 'alternate-extension', success: true };
+    } catch (error) {
+      console.log(`Alternate extension failed: ${altUrl}`);
+    }
+  }
   
   return { url: null, strategy: 'all-failed', success: false };
+};
+
+/**
+ * Handles the application/json content-type issue that often happens with Supabase Storage
+ * This creates a direct fetch with content negotiation and returns the URL for the actual content
+ */
+export const handleJsonContentTypeIssue = async (url: string): Promise<string | null> => {
+  try {
+    console.log("Attempting to handle application/json content-type issue for:", url);
+    
+    // First try with a more specific Accept header for images/videos
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-cache',
+      headers: {
+        'Accept': 'image/*, video/*, application/octet-stream, */*',
+        'X-Content-Type': 'binary'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+    
+    // Get the content type to verify
+    const contentType = response.headers.get('content-type');
+    
+    // If it's still JSON, we need to try a different approach
+    if (contentType && contentType.includes('application/json')) {
+      console.log("Still receiving JSON, trying blob approach");
+      
+      // Try the blob approach which often works despite content-type
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Create a backup approach - check if it's really an image
+      // by attempting to create an image from the blob
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          console.log("Successfully created image from blob despite JSON content-type");
+          resolve(blobUrl);
+        };
+        
+        img.onerror = () => {
+          console.log("Failed to create image from blob, likely real JSON data");
+          URL.revokeObjectURL(blobUrl);
+          resolve(null);
+        };
+        
+        img.src = blobUrl;
+        
+        // Set a timeout for the image load check
+        setTimeout(() => {
+          if (!img.complete) {
+            console.log("Image load timed out, assuming it's not a valid image");
+            URL.revokeObjectURL(blobUrl);
+            img.src = '';
+            resolve(null);
+          }
+        }, 5000);
+      });
+    }
+    
+    // If we got a non-JSON content type, create a blob URL
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+    
+  } catch (error) {
+    console.error("Failed to handle JSON content-type issue:", error);
+    return null;
+  }
+};
+
+/**
+ * Force fetches media as specific content type
+ * This utility is useful for cases where the server returns the wrong content-type
+ * but the actual content is the correct media format
+ */
+export const forceFetchAsContentType = async (
+  url: string, 
+  targetType: 'image' | 'video'
+): Promise<string | null> => {
+  try {
+    const response = await fetch(url, {
+      cache: 'no-cache',
+      headers: {
+        'Accept': targetType === 'image' 
+          ? 'image/*, application/octet-stream, */*' 
+          : 'video/*, application/octet-stream, */*'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch with status: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    
+    // Create a new blob with the desired type
+    const newBlob = new Blob([blob], { 
+      type: targetType === 'image' ? 'image/jpeg' : 'video/mp4' 
+    });
+    
+    return URL.createObjectURL(newBlob);
+  } catch (error) {
+    console.error(`Failed to force fetch as ${targetType}:`, error);
+    return null;
+  }
 };
