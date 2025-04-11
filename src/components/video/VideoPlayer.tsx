@@ -1,10 +1,10 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, X, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import { addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
 
 interface VideoPlayerProps {
   url: string;
@@ -47,7 +47,6 @@ export const VideoPlayer = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const currentUrlRef = useRef<string>(url);
   
-  // Reset status when URL changes
   useEffect(() => {
     if (currentUrlRef.current !== url) {
       currentUrlRef.current = url;
@@ -66,11 +65,9 @@ export const VideoPlayer = ({
     }
   }, [url]);
   
-  // Set up stall detection
   useEffect(() => {
     if (isLoading && !error && videoRef.current) {
       const timer = setTimeout(() => {
-        // If still loading after 10 seconds, consider it stalled
         if (isLoading) {
           setStallDetected(true);
         }
@@ -90,22 +87,25 @@ export const VideoPlayer = ({
     setStallDetected(false);
     console.error("Video error occurred for URL:", url);
     
+    if (url) {
+      debugMediaUrl(url).then(result => {
+        console.log("Video URL debug result:", result);
+      });
+    }
+    
     if (stallTimer) {
       clearTimeout(stallTimer);
     }
     
-    // Try to reload if we haven't tried too many times
     if (retryCount < 3) {
       setRetryCount(prevCount => prevCount + 1);
       setTimeout(() => {
         if (videoRef.current) {
-          // Try refreshing the video element
           videoRef.current.pause();
           videoRef.current.removeAttribute('src');
           
           setTimeout(() => {
             if (videoRef.current) {
-              // Add a cache busting parameter
               const cacheBuster = addCacheBuster(url) || url;
               videoRef.current.src = cacheBuster;
               videoRef.current.load();
@@ -114,7 +114,7 @@ export const VideoPlayer = ({
             }
           }, 500);
         }
-      }, 1000 * (retryCount + 1)); // Progressive backoff
+      }, 1000 * (retryCount + 1));
     } else if (onError) {
       onError();
     }
@@ -131,13 +131,11 @@ export const VideoPlayer = ({
     
     if (onLoadedData) onLoadedData();
     
-    // Try autoplay if requested
     if (autoPlay && videoRef.current && videoRef.current.paused) {
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(error => {
           console.warn("Autoplay prevented:", error);
-          // Most browsers require user interaction before playing with sound
           if (videoRef.current) {
             videoRef.current.muted = true;
             setIsMuted(true);
@@ -161,7 +159,6 @@ export const VideoPlayer = ({
         if (playPromise !== undefined) {
           playPromise.catch(error => {
             console.error("Error playing video:", error);
-            // Try with muted if it fails
             if (videoRef.current && !videoRef.current.muted) {
               videoRef.current.muted = true;
               setIsMuted(true);
@@ -197,14 +194,11 @@ export const VideoPlayer = ({
       setIsLoading(true);
       setStallDetected(false);
       
-      // Generate a new URL with cache buster
       const cacheBuster = addCacheBuster(url) || url;
       
-      // Reset video element
       videoRef.current.pause();
       videoRef.current.removeAttribute('src');
       
-      // Set new source with delay to ensure full reset
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.src = cacheBuster;
@@ -218,7 +212,6 @@ export const VideoPlayer = ({
     const video = videoRef.current;
     if (!video) return;
     
-    // Reset video state when URL changes
     setIsPlaying(false);
     setIsLoading(true);
     setError(false);
@@ -247,7 +240,6 @@ export const VideoPlayer = ({
       }
     };
     
-    // Add all event listeners
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
     video.addEventListener('ended', handleVideoEnded);
@@ -256,13 +248,11 @@ export const VideoPlayer = ({
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('playing', handlePlaying);
     
-    // Try to autoplay when component mounts
     if (autoPlay && !isLoading) {
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise.catch(error => {
           console.warn("Autoplay prevented:", error);
-          // Most browsers require user interaction before playing with sound
           video.muted = true;
           setIsMuted(true);
           video.play().catch(e => console.error("Even muted autoplay failed:", e));
@@ -270,7 +260,6 @@ export const VideoPlayer = ({
       }
     }
     
-    // Clean up event listeners on unmount
     return () => {
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
@@ -285,8 +274,7 @@ export const VideoPlayer = ({
       }
     };
   }, [autoPlay, url, onEnded, onError]);
-
-  // Handle click on the video container
+  
   const handleVideoClick = (e: React.MouseEvent) => {
     if (onClick) {
       onClick();
@@ -300,7 +288,6 @@ export const VideoPlayer = ({
       className={cn("relative overflow-hidden", className)}
       onClick={handleVideoClick}
     >
-      {/* Loading state */}
       {isLoading && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
           {stallDetected ? (
@@ -326,7 +313,6 @@ export const VideoPlayer = ({
         </div>
       )}
       
-      {/* Error state */}
       {error && retryCount >= 3 && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-10">
           <div className="text-center px-4">
@@ -348,7 +334,6 @@ export const VideoPlayer = ({
         </div>
       )}
       
-      {/* Video element */}
       <video
         ref={videoRef}
         src={url}
@@ -364,7 +349,6 @@ export const VideoPlayer = ({
         crossOrigin="anonymous"
       />
       
-      {/* Video controls overlay */}
       {controls && !error && (
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity">
           <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-2">

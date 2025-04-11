@@ -13,6 +13,7 @@ import { useShortActions } from "../hooks/actions";
 import { useToast } from "@/hooks/use-toast";
 import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
 
 interface ShortItemProps {
   short: Short;
@@ -183,6 +184,14 @@ export const ShortItem = ({
 
   const handleVideoError = () => {
     console.error("Video error for short:", short?.id, videoUrl);
+    
+    // Debug the URL when error occurs
+    if (videoUrlWithCacheBuster) {
+      debugMediaUrl(videoUrlWithCacheBuster).then(result => {
+        console.log("Short video URL debug result:", result);
+      });
+    }
+    
     setVideoError(true);
     setLoadRetries(prev => prev + 1);
     

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { getPlayableMediaUrl, addCacheBuster, checkUrlAccessibility } from "@/utils/media/getPlayableMediaUrl";
 import { getContentType } from "@/utils/mediaUtils";
@@ -6,6 +5,7 @@ import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { ErrorComponent } from "@/components/ErrorComponent";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
+import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
 
 interface UniversalMediaProps {
   item: any;
@@ -39,7 +39,6 @@ export const UniversalMedia = ({
   const [displayUrl, setDisplayUrl] = useState<string | null>(null);
   const [accessibleUrl, setAccessibleUrl] = useState<boolean>(true);
   
-  // Get media URL using our utility function and add cache buster
   useEffect(() => {
     const setupMediaUrl = async () => {
       try {
@@ -47,15 +46,12 @@ export const UniversalMedia = ({
         setMediaUrl(url);
         
         if (url) {
-          // Add cache buster to prevent caching issues
           const cachedUrl = addCacheBuster(url);
           setDisplayUrl(cachedUrl);
           
-          // Check if URL is accessible (for CORS issues)
           const isAccessible = await checkUrlAccessibility(cachedUrl || '');
           setAccessibleUrl(isAccessible);
           
-          // If URL is not accessible, trigger error handling early
           if (!isAccessible) {
             console.warn("Media URL is not accessible:", cachedUrl);
           }
@@ -65,7 +61,6 @@ export const UniversalMedia = ({
           if (onError) onError();
         }
         
-        // Debug log
         console.debug("Media processed:", { 
           original: item?.media_url || item?.video_url,
           resolvedUrl: url,
@@ -73,7 +68,6 @@ export const UniversalMedia = ({
           isAccessible: accessibleUrl
         });
         
-        // Reset states when item or URL changes
         setIsLoading(true);
         setLoadError(false);
         setRetryCount(0);
@@ -88,7 +82,6 @@ export const UniversalMedia = ({
     setupMediaUrl();
   }, [item]);
   
-  // Determine media type
   const isVideo = 
     item?.content_type === "video" || 
     item?.media_type === "video" || 
@@ -109,23 +102,26 @@ export const UniversalMedia = ({
     setIsLoading(false);
     setLoadError(true);
     
+    if (displayUrl) {
+      debugMediaUrl(displayUrl).then(result => {
+        console.log("Media URL debug result:", result);
+      });
+    }
+    
     console.error("Media load error:", { 
       url: displayUrl,
       item,
       accessibleUrl
     });
     
-    // Try retry logic
     if (retryCount < 3) {
       setRetryCount(prev => prev + 1);
-      // Allow some time before retry
       setTimeout(() => {
-        // Get a fresh URL with a new cache buster
         const freshUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
         setDisplayUrl(freshUrl);
         setLoadError(false);
         setIsLoading(true);
-      }, 1000 * (retryCount + 1)); // Increasing delay for each retry
+      }, 1000 * (retryCount + 1));
     } else if (onError) {
       onError();
     }
@@ -140,16 +136,13 @@ export const UniversalMedia = ({
     setIsLoading(true);
     setRetryCount(0);
     
-    // Try getting a new URL with potentially different parameters
     const url = getPlayableMediaUrl(item);
     setMediaUrl(url);
     
-    // Add cache buster to ensure fresh load
     const freshUrl = url ? addCacheBuster(url) : null;
     setDisplayUrl(freshUrl);
   };
   
-  // If media URL couldn't be determined
   if (!displayUrl) {
     return <ErrorComponent 
       message="Media unavailable" 
@@ -158,7 +151,6 @@ export const UniversalMedia = ({
     />;
   }
   
-  // Handle click
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
       e.preventDefault();
@@ -171,14 +163,12 @@ export const UniversalMedia = ({
       className={`relative overflow-hidden ${className}`}
       onClick={handleClick}
     >
-      {/* Loading indicator */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
           <Loader2 className="h-8 w-8 animate-spin text-white/80" />
         </div>
       )}
       
-      {/* Error state with retry */}
       {loadError && retryCount >= 3 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10">
           <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
@@ -200,7 +190,6 @@ export const UniversalMedia = ({
         </div>
       )}
       
-      {/* Media content */}
       {isVideo ? (
         <VideoPlayer
           url={displayUrl}
@@ -225,7 +214,6 @@ export const UniversalMedia = ({
         />
       )}
 
-      {/* Conditionally render watermark */}
       {showWatermark && !loadError && !isLoading && item?.creator_id && (
         <WatermarkOverlay 
           username={item.creator_id} 
@@ -235,4 +223,3 @@ export const UniversalMedia = ({
     </div>
   );
 };
-
