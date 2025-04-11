@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadFileToStorage } from "@/utils/mediaUtils";
+import { uploadFileToStorage, UploadOptions } from "@/utils/mediaUtils";
 
 interface ProfileImageUploadProps {
   avatarPreview: string;
@@ -42,11 +41,14 @@ export const ProfileImageUpload = ({ avatarPreview, onAvatarChange }: ProfileIma
       reader.readAsDataURL(file);
       
       // Then upload to Supabase storage
-      const contentCategory = 'profile';
+      const uploadOptions: UploadOptions = {
+        contentCategory: 'profile'
+      };
+      
       const result = await uploadFileToStorage(
         file,
-        contentCategory,
-        session.user.id
+        session.user.id,
+        uploadOptions
       );
       
       if (!result.success) {

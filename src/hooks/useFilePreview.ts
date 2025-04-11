@@ -8,9 +8,6 @@ interface FilePreviewState {
   error: string | null;
 }
 
-/**
- * Hook for generating and managing file previews
- */
 export const useFilePreview = (file: File | null) => {
   const [state, setState] = useState<FilePreviewState>({
     previewUrl: null,
@@ -18,10 +15,9 @@ export const useFilePreview = (file: File | null) => {
     error: null
   });
   
-  // Generate preview when file changes
   useEffect(() => {
     if (!file) {
-      // Clean up any existing preview
+      // Clear preview if file is null
       if (state.previewUrl) {
         revokeFilePreview(state.previewUrl);
       }
@@ -35,6 +31,7 @@ export const useFilePreview = (file: File | null) => {
       return;
     }
     
+    // Start loading
     setState(prev => ({
       ...prev,
       isLoading: true,
@@ -42,23 +39,24 @@ export const useFilePreview = (file: File | null) => {
     }));
     
     try {
-      // Create preview URL
-      const url = createFilePreview(file);
+      // Create a file preview
+      const previewUrl = createFilePreview(file);
       
       setState({
-        previewUrl: url,
+        previewUrl,
         isLoading: false,
         error: null
       });
     } catch (error: any) {
+      console.error("Error creating preview:", error);
       setState({
         previewUrl: null,
         isLoading: false,
-        error: error.message || "Failed to generate preview"
+        error: error.message || "Could not create preview"
       });
     }
     
-    // Clean up when unmounted or file changes
+    // Cleanup the object URL when component unmounts or file changes
     return () => {
       if (state.previewUrl) {
         revokeFilePreview(state.previewUrl);
@@ -66,7 +64,7 @@ export const useFilePreview = (file: File | null) => {
     };
   }, [file]);
   
-  // Method to clear preview manually
+  // Method to manually clear preview
   const clearPreview = () => {
     if (state.previewUrl) {
       revokeFilePreview(state.previewUrl);

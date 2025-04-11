@@ -1,10 +1,9 @@
-
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadFileToStorage } from "@/utils/mediaUtils";
+import { uploadFileToStorage, UploadOptions } from "@/utils/mediaUtils";
 import { Loader2 } from "lucide-react";
 
 interface MediaDialogProps {
@@ -30,12 +29,15 @@ export const MediaDialog = ({ isOpen, onClose, onMediaSelect }: MediaDialogProps
       onMediaSelect(files);
       
       // Upload files to Supabase storage and get URLs
-      const contentCategory = 'message';
+      const uploadOptions: UploadOptions = {
+        contentCategory: 'message'
+      };
+      
       const uploadPromises = Array.from(files).map(async (file) => {
         const result = await uploadFileToStorage(
           file,
-          contentCategory,
-          session.user.id
+          session.user.id,
+          uploadOptions
         );
         
         if (!result.success || !result.url) {

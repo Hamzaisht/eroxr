@@ -3,7 +3,9 @@
 export { 
   uploadFile as uploadFileToStorage,
   addCacheBuster as getUrlWithCacheBuster,
-  getPublicUrl
+  getPublicUrl,
+  type UploadOptions,
+  type UploadResult
 } from './upload/storageService';
 
 export {

@@ -30,12 +30,20 @@ export interface UploadResult {
 export const uploadFile = async (
   file: File, 
   userId: string,
-  options?: UploadOptions
+  options?: UploadOptions | string
 ): Promise<UploadResult> => {
   try {
+    // Handle string option as contentCategory for backwards compatibility
+    let processedOptions: UploadOptions = {};
+    if (typeof options === 'string') {
+      processedOptions = { contentCategory: options };
+    } else if (options) {
+      processedOptions = options;
+    }
+    
     // Determine bucket based on options or file type
-    const bucketName = options?.bucketName || 
-                       (options?.contentCategory && getBucketForFileType(file, options.contentCategory)) || 
+    const bucketName = processedOptions.bucketName || 
+                       (processedOptions.contentCategory && getBucketForFileType(file, processedOptions.contentCategory)) || 
                        getBucketForFileType(file);
     
     // Create a unique path for the file
@@ -45,9 +53,9 @@ export const uploadFile = async (
     
     // Prepare upload options
     const uploadOptions = {
-      cacheControl: options?.cacheControl || '3600',
-      upsert: options?.upsert !== undefined ? options.upsert : true,
-      contentType: options?.contentType || file.type
+      cacheControl: processedOptions.cacheControl || '3600',
+      upsert: processedOptions.upsert !== undefined ? processedOptions.upsert : true,
+      contentType: processedOptions.contentType || file.type
     };
     
     // Upload the file

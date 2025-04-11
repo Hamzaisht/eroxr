@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Upload, X, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,7 +76,6 @@ export const MultiFileUploader = ({
     return 'image/*,video/*';
   })();
   
-  // Setup upload options
   const uploadOptions: MediaUploadOptions = {
     contentCategory,
     maxSizeInMB,
@@ -90,7 +88,6 @@ export const MultiFileUploader = ({
     validateFile 
   } = useMediaUpload(uploadOptions);
   
-  // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -99,28 +96,22 @@ export const MultiFileUploader = ({
     const newFileErrors: Record<string, string> = {};
     const newPreviews: Record<string, string> = {};
     
-    // Check max files limit
     if (selectedFiles.length + files.length > maxFiles) {
       onUploadError?.(`You can upload a maximum of ${maxFiles} files`);
       return;
     }
     
-    // Process each file
     Array.from(files).forEach(file => {
-      // Generate unique ID for this file
       const fileId = `${file.name}-${Date.now()}`;
       
-      // Validate the file
       const validation = validateFile(file);
       if (!validation.valid) {
         newFileErrors[fileId] = validation.message || "Invalid file";
         return;
       }
       
-      // Add to selected files
       newFiles.push(file);
       
-      // Create preview URL
       try {
         const previewUrl = createFilePreview(file);
         newPreviews[fileId] = previewUrl;
@@ -129,23 +120,19 @@ export const MultiFileUploader = ({
       }
     });
     
-    // Update state
     setSelectedFiles(prev => [...prev, ...newFiles]);
     setFileErrors(prev => ({ ...prev, ...newFileErrors }));
     setPreviews(prev => ({ ...prev, ...newPreviews }));
     
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
     
-    // Auto upload if enabled
     if (autoUpload && newFiles.length > 0) {
       handleUploadAll(newFiles);
     }
   };
   
-  // Upload a single file
   const handleUploadFile = async (file: File, index: number) => {
     const result = await uploadMedia(file);
     
@@ -159,7 +146,6 @@ export const MultiFileUploader = ({
     return result;
   };
   
-  // Upload all files
   const handleUploadAll = async (filesToUpload = selectedFiles) => {
     const urls: string[] = [];
     
@@ -175,17 +161,14 @@ export const MultiFileUploader = ({
     }
   };
   
-  // Remove a file
   const handleRemoveFile = (index: number) => {
     const fileToRemove = selectedFiles[index];
     if (!fileToRemove) return;
     
-    // Clean up preview URL
     const fileId = `${fileToRemove.name}-${Date.now()}`;
     if (previews[fileId]) {
       revokeFilePreview(previews[fileId]);
       
-      // Update states
       setPreviews(prev => {
         const newPreviews = { ...prev };
         delete newPreviews[fileId];
@@ -193,18 +176,14 @@ export const MultiFileUploader = ({
       });
     }
     
-    // Update selected files
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
   
-  // Clear all files
   const handleClearAll = () => {
-    // Clean up all preview URLs
     Object.values(previews).forEach(url => {
       revokeFilePreview(url);
     });
     
-    // Reset states
     setSelectedFiles([]);
     setFileErrors({});
     setPreviews({});
@@ -213,7 +192,6 @@ export const MultiFileUploader = ({
   
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* File input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -224,7 +202,6 @@ export const MultiFileUploader = ({
         disabled={uploadState.isUploading || selectedFiles.length >= maxFiles}
       />
       
-      {/* File selection button */}
       <Button
         variant="outline"
         onClick={() => fileInputRef.current?.click()}
@@ -240,7 +217,6 @@ export const MultiFileUploader = ({
         </div>
       </Button>
       
-      {/* Selected files list */}
       {selectedFiles.length > 0 && (
         <div className="space-y-2 max-h-64 overflow-y-auto">
           <div className="flex justify-between items-center">
@@ -265,7 +241,6 @@ export const MultiFileUploader = ({
                 key={`${file.name}-${index}`}
                 className="flex items-center gap-3 p-2 border rounded-md bg-background"
               >
-                {/* Preview thumbnail */}
                 <div className="h-12 w-12 flex-shrink-0 bg-muted rounded overflow-hidden">
                   {preview && isImageFile(file) ? (
                     <img 
@@ -289,7 +264,6 @@ export const MultiFileUploader = ({
                   )}
                 </div>
                 
-                {/* File details */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{file.name}</p>
                   <p className="text-xs text-muted-foreground">
@@ -297,7 +271,6 @@ export const MultiFileUploader = ({
                   </p>
                 </div>
                 
-                {/* Remove button */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -313,7 +286,6 @@ export const MultiFileUploader = ({
         </div>
       )}
       
-      {/* Upload button (if not auto upload) */}
       {!autoUpload && selectedFiles.length > 0 && (
         <Button
           variant="default"
@@ -326,7 +298,6 @@ export const MultiFileUploader = ({
         </Button>
       )}
       
-      {/* Upload progress */}
       {uploadState.isUploading && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -341,7 +312,6 @@ export const MultiFileUploader = ({
         </div>
       )}
       
-      {/* Error message */}
       {uploadState.error && (
         <div className="flex items-center gap-2 text-destructive text-sm p-2 bg-destructive/10 rounded-md">
           <AlertCircle className="h-4 w-4" />

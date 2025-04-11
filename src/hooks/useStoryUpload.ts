@@ -17,7 +17,7 @@ export const useStoryUpload = () => {
     state: { isUploading, progress: uploadProgress, error: uploadError },
     uploadMedia,
     validateFile,
-    resetState
+    resetUploadState
   } = useMediaUpload({
     contentCategory: 'story',
     maxSizeInMB: 100,
@@ -91,7 +91,7 @@ export const useStoryUpload = () => {
 
   const handleFileSelect = async (file: File) => {
     if (!session?.user?.id) return;
-    resetState();
+    resetUploadState();
     
     try {
       // Upload to storage using our improved upload system

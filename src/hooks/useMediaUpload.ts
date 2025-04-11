@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { uploadFileToStorage } from '@/utils/mediaUtils';
+import { uploadFile, UploadResult, UploadOptions } from '@/utils/upload/storageService';
 import { validateMediaFile } from '@/utils/upload/validators';
 
 export interface MediaUploadOptions {
@@ -48,7 +48,7 @@ export const useMediaUpload = (options: MediaUploadOptions = {}) => {
   }, [options.maxSizeInMB, options.allowedTypes]);
   
   // Upload media file
-  const uploadMedia = useCallback(async (file: File) => {
+  const uploadMedia = useCallback(async (file: File): Promise<UploadResult> => {
     if (!session?.user?.id) {
       return {
         success: false,
@@ -87,11 +87,16 @@ export const useMediaUpload = (options: MediaUploadOptions = {}) => {
         }));
       }, 200);
       
+      // Create upload options
+      const uploadOptions: UploadOptions = {
+        contentCategory: options.contentCategory || 'generic'
+      };
+      
       // Upload file
-      const result = await uploadFileToStorage(
+      const result = await uploadFile(
         file,
-        options.contentCategory || 'generic',
-        session.user.id
+        session.user.id,
+        uploadOptions
       );
       
       clearInterval(progressInterval);

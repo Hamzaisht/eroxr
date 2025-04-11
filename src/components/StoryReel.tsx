@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { motion } from "framer-motion";
@@ -25,7 +26,7 @@ export const StoryReel = () => {
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { stories, isLoading, error, refetchStories } = useStories();
+  const { stories, loading: isLoading, error, refreshStories } = useStories();
 
   const handleDeleteStory = async (storyId: string) => {
     try {
@@ -37,7 +38,7 @@ export const StoryReel = () => {
       if (error) throw error;
 
       // Refresh stories
-      refetchStories();
+      refreshStories();
       
       toast({
         title: "Story deleted",

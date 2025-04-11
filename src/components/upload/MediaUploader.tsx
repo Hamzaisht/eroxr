@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Upload, X, AlertCircle, Image, FileVideo } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -80,7 +79,6 @@ export const MediaUploader = ({
     return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
   })();
   
-  // Set up upload options
   const uploadOptions: MediaUploadOptions = {
     contentCategory,
     maxSizeInMB,
@@ -89,7 +87,6 @@ export const MediaUploader = ({
     resetDelay: 3000
   };
   
-  // Use our custom hooks
   const { 
     state: uploadState, 
     uploadMedia, 
@@ -103,12 +100,10 @@ export const MediaUploader = ({
     clearPreview
   } = useFilePreview(selectedFile);
   
-  // Handle file selection
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Validate file
     const validation = validateFile(file);
     if (!validation.valid) {
       if (onUploadError) onUploadError(validation.message || "Invalid file");
@@ -117,20 +112,17 @@ export const MediaUploader = ({
     
     setSelectedFile(file);
     
-    // Auto upload if enabled
     if (autoUpload) {
       handleUpload(file);
     }
   };
   
-  // Handle manual upload button click
   const handleUploadClick = async () => {
     if (selectedFile) {
       handleUpload(selectedFile);
     }
   };
   
-  // Handle file upload
   const handleUpload = async (file: File) => {
     const result = await uploadMedia(file);
     
@@ -141,12 +133,10 @@ export const MediaUploader = ({
     }
   };
   
-  // Clear selected file
   const handleClear = () => {
     setSelectedFile(null);
     clearPreview();
     
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -154,7 +144,6 @@ export const MediaUploader = ({
   
   return (
     <div className={`relative space-y-4 ${className}`}>
-      {/* File input */}
       <input
         ref={fileInputRef}
         id="media-upload"
@@ -165,7 +154,6 @@ export const MediaUploader = ({
         disabled={uploadState.isUploading}
       />
       
-      {/* File preview */}
       {showPreview && selectedFile && previewUrl && (
         <div className="relative border rounded-md overflow-hidden bg-black/5">
           <Button
@@ -200,7 +188,6 @@ export const MediaUploader = ({
         </div>
       )}
       
-      {/* Upload button */}
       {!selectedFile ? (
         <Button
           variant={buttonVariant}
@@ -231,7 +218,6 @@ export const MediaUploader = ({
         </Button>
       ) : null}
       
-      {/* Upload progress */}
       {uploadState.isUploading && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -246,7 +232,6 @@ export const MediaUploader = ({
         </div>
       )}
       
-      {/* Error message */}
       {uploadState.error && (
         <div className="flex items-center gap-2 text-destructive text-sm p-2 bg-destructive/10 rounded-md">
           <AlertCircle className="h-4 w-4" />
