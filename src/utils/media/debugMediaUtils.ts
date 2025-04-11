@@ -19,7 +19,8 @@ export const debugMediaUrl = async (url: string | null) => {
       credentials: 'omit',
       cache: 'no-cache',
       headers: {
-        'Origin': window.location.origin
+        'Origin': window.location.origin,
+        'Accept': 'image/*, video/*, application/octet-stream'
       }
     });
     console.log(`HEAD status: ${headResponse.status}`);
@@ -31,7 +32,8 @@ export const debugMediaUrl = async (url: string | null) => {
       credentials: 'omit',
       cache: 'no-cache',
       headers: {
-        'Origin': window.location.origin
+        'Origin': window.location.origin,
+        'Accept': 'image/*, video/*, application/octet-stream'
       }
     });
     console.log(`GET status: ${getResponse.status}`);
@@ -39,6 +41,28 @@ export const debugMediaUrl = async (url: string | null) => {
     // Try to analyze the response content type
     const contentType = getResponse.headers.get('content-type');
     console.log(`Content-Type: ${contentType || 'unknown'}`);
+
+    // Specifically check if content type mismatch might be causing issues
+    if (contentType && contentType.includes('application/json')) {
+      console.warn("Content type is application/json instead of an image type!");
+      
+      // Try to read the JSON response to see if it contains an error message
+      try {
+        const jsonResponse = await getResponse.clone().json();
+        console.log("JSON response:", jsonResponse);
+        
+        if (jsonResponse.error) {
+          return { 
+            success: false, 
+            error: `Server returned error: ${jsonResponse.error}`,
+            contentType,
+            jsonResponse
+          };
+        }
+      } catch (e) {
+        console.log("Could not parse response as JSON");
+      }
+    }
 
     // Check for access-control headers
     const accessControlAllowOrigin = getResponse.headers.get('access-control-allow-origin');
@@ -72,7 +96,8 @@ export const debugMediaUrl = async (url: string | null) => {
         headers: Array.from(getResponse.headers.entries()).reduce((obj, [key, value]) => {
           obj[key] = value;
           return obj;
-        }, {} as Record<string, string>)
+        }, {} as Record<string, string>),
+        hasInvalidContentType: contentType && !contentType.startsWith('image/') && url.match(/\.(jpg|jpeg|png|gif|webp|avif|svg)$/i)
       };
     } else {
       console.error("URL returned error status:", getResponse.status);
@@ -156,7 +181,8 @@ export const checkCorsBlocking = async (url: string): Promise<{blocked: boolean,
       headers: {
         'Origin': window.location.origin,
         'Access-Control-Request-Method': 'GET',
-        'Access-Control-Request-Headers': 'Content-Type'
+        'Access-Control-Request-Headers': 'Content-Type',
+        'Accept': 'image/*, video/*, application/octet-stream'
       }
     });
     
@@ -219,4 +245,57 @@ export const attemptImageCorsWorkaround = (url: string): Promise<string> => {
     // Add timestamp to prevent caching
     img.src = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
   });
+};
+
+/**
+ * Tries to fetch the actual image data directly as a blob
+ * This can sometimes work when the image request is returned with incorrect content-type
+ */
+export const fetchImageAsBlob = async (url: string): Promise<string> => {
+  try {
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-cache',
+      headers: {
+        'Accept': 'image/*, video/*, application/octet-stream'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+    
+    // Get the response as a blob
+    const blob = await response.blob();
+    
+    // Create an object URL from the blob
+    const objectUrl = URL.createObjectURL(blob);
+    return objectUrl;
+  } catch (error) {
+    console.error("Failed to fetch image as blob:", error);
+    throw error;
+  }
+};
+
+/**
+ * Direct path approach - attempts to extract the actual path from URLs
+ * that might be wrapped in JSON responses
+ */
+export const extractDirectImagePath = (url: string): string | null => {
+  // Check for URL patterns that suggest the image path is wrapped in a different URL structure
+  if (url.includes('storage/v1/object/public')) {
+    // Extract the actual path after public/
+    const match = url.match(/\/public\/([^?]+)/);
+    if (match && match[1]) {
+      const bucket = match[1].split('/')[0];
+      const path = match[1].substring(bucket.length + 1);
+      
+      // Try to use a direct path approach
+      const supabaseUrl = url.split('/storage/v1')[0];
+      return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+    }
+  }
+  
+  return null;
 };

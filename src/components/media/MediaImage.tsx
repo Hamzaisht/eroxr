@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
-import { debugMediaUrl, attemptImageCorsWorkaround } from "@/utils/media/debugMediaUtils";
+import { debugMediaUrl, attemptImageCorsWorkaround, fetchImageAsBlob, extractDirectImagePath } from "@/utils/media/debugMediaUtils";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,7 @@ export const MediaImage = ({
   const [useFallbackImage, setUseFallbackImage] = useState(false);
   const [fallbackDataUrl, setFallbackDataUrl] = useState<string | null>(null);
   const [isCorsError, setIsCorsError] = useState(false);
+  const [isContentTypeMismatch, setIsContentTypeMismatch] = useState(false);
   
   useEffect(() => {
     if (!url) {
@@ -48,20 +49,57 @@ export const MediaImage = ({
       setLoadError(false);
       setUseFallbackImage(false);
       setIsCorsError(false);
+      setIsContentTypeMismatch(false);
       
       // Process the URL
       const processedUrl = getPlayableMediaUrl({ media_url: url });
-      const cachedUrl = processedUrl ? addCacheBuster(processedUrl) : null;
+      let cachedUrl = processedUrl ? addCacheBuster(processedUrl) : null;
+      
+      // Try alternate path approach if the URL contains storage/v1/object/public
+      const directUrl = processedUrl ? extractDirectImagePath(processedUrl) : null;
+      if (directUrl) {
+        console.log("Trying direct path approach:", directUrl);
+        cachedUrl = addCacheBuster(directUrl);
+      }
+      
       setDisplayUrl(cachedUrl);
       
       // Check for potential CORS issues early
       if (cachedUrl && !cachedUrl.startsWith('data:') && !cachedUrl.includes(window.location.origin)) {
         try {
-          // Try to get a data URL as a fallback in case of CORS issues
-          const dataUrl = await attemptImageCorsWorkaround(cachedUrl);
-          setFallbackDataUrl(dataUrl);
+          // Debug the URL to check for content type issues
+          const debugResult = await debugMediaUrl(cachedUrl);
+          console.log("URL pre-check result:", debugResult);
+          
+          // Check if the content type is unexpected (e.g., application/json for an image)
+          if (debugResult.contentType && 
+              debugResult.contentType.includes('application/json') && 
+              cachedUrl.match(/\.(jpg|jpeg|png|gif|webp|avif|svg)$/i)) {
+            console.warn("Content type mismatch detected:", debugResult.contentType);
+            setIsContentTypeMismatch(true);
+            
+            // Try to fetch as blob as a fallback
+            try {
+              const blobUrl = await fetchImageAsBlob(cachedUrl);
+              setFallbackDataUrl(blobUrl);
+              setUseFallbackImage(true);
+              return;
+            } catch (err) {
+              console.log("Could not fetch as blob:", err);
+            }
+          }
+          
+          // For other potential CORS issues, set up a data URL fallback
+          if (debugResult.isCorsError || !debugResult.success) {
+            try {
+              const dataUrl = await attemptImageCorsWorkaround(cachedUrl);
+              setFallbackDataUrl(dataUrl);
+            } catch (err) {
+              console.log("Could not prepare fallback image:", err);
+            }
+          }
         } catch (err) {
-          console.log("Could not prepare fallback image:", err);
+          console.log("Error in URL pre-check:", err);
         }
       }
     };
@@ -99,6 +137,26 @@ export const MediaImage = ({
           }
         }
         
+        // Check for content type mismatch
+        if (result.contentType && result.contentType.includes('application/json')) {
+          setIsContentTypeMismatch(true);
+          
+          // Try blob approach if not already using fallback
+          if (!useFallbackImage && displayUrl) {
+            fetchImageAsBlob(displayUrl)
+              .then(blobUrl => {
+                setFallbackDataUrl(blobUrl);
+                setUseFallbackImage(true);
+                setIsLoading(true);
+                setLoadError(false);
+              })
+              .catch(error => {
+                console.error("Failed to fetch image as blob:", error);
+              });
+            return;
+          }
+        }
+        
         // Auto-retry logic
         if (retryCount < 2) {
           setRetryCount(prev => prev + 1);
@@ -124,11 +182,26 @@ export const MediaImage = ({
     setIsLoading(true);
     setLoadError(false);
     setUseFallbackImage(false);
+    setIsContentTypeMismatch(false);
     
     // Generate a fresh URL
     const processedUrl = getPlayableMediaUrl({ media_url: url });
     const freshUrl = processedUrl ? addCacheBuster(processedUrl) : null;
-    setDisplayUrl(freshUrl);
+    
+    // If we previously had a content type mismatch, try the blob approach directly
+    if (isContentTypeMismatch && freshUrl) {
+      fetchImageAsBlob(freshUrl)
+        .then(blobUrl => {
+          setFallbackDataUrl(blobUrl);
+          setUseFallbackImage(true);
+        })
+        .catch(() => {
+          // If blob approach fails, fall back to regular URL
+          setDisplayUrl(freshUrl);
+        });
+    } else {
+      setDisplayUrl(freshUrl);
+    }
   };
   
   const handleImageClick = (e: React.MouseEvent) => {
@@ -167,7 +240,9 @@ export const MediaImage = ({
           <p className="text-white/80 mb-3 text-center px-4">
             {isCorsError 
               ? "Cross-origin error: can't load image" 
-              : "Failed to load image"}
+              : isContentTypeMismatch
+                ? "Content type mismatch error"
+                : "Failed to load image"}
           </p>
           <button 
             onClick={(e) => {
@@ -182,7 +257,7 @@ export const MediaImage = ({
         </div>
       )}
       
-      {/* Use fallback data URL if we have CORS issues */}
+      {/* Use fallback data URL if we have CORS issues or content type mismatch */}
       {useFallbackImage && fallbackDataUrl ? (
         <img
           src={fallbackDataUrl}
