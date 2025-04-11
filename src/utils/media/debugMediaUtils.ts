@@ -33,7 +33,7 @@ export const debugMediaUrl = async (url: string | null) => {
       cache: 'no-cache',
       headers: {
         'Origin': window.location.origin,
-        'Accept': 'image/*, video/*, application/octet-stream'
+        'Accept': 'image/*, video/*, application/octet-stream, text/plain' // Accept more content types
       }
     });
     console.log(`GET status: ${getResponse.status}`);
@@ -46,10 +46,10 @@ export const debugMediaUrl = async (url: string | null) => {
     if (contentType && contentType.includes('application/json')) {
       console.warn("Content type is application/json instead of an image type!");
       
-      // Try to read the JSON response to see if it contains an error message
       try {
+        // Try to read and log the JSON response to see if it contains error info
         const jsonResponse = await getResponse.clone().json();
-        console.log("JSON response:", jsonResponse);
+        console.log("JSON response content:", jsonResponse);
         
         if (jsonResponse.error) {
           return { 
@@ -57,6 +57,17 @@ export const debugMediaUrl = async (url: string | null) => {
             error: `Server returned error: ${jsonResponse.error}`,
             contentType,
             jsonResponse
+          };
+        }
+        
+        // Check if this is actually a Supabase storage path that needs direct access
+        if (url.includes('supabase.co/storage/v1/object')) {
+          console.log("This appears to be a Supabase storage URL that may need direct access");
+          return {
+            success: false,
+            error: "Supabase storage access issue",
+            contentType,
+            needsDirectPath: true
           };
         }
       } catch (e) {
@@ -93,21 +104,16 @@ export const debugMediaUrl = async (url: string | null) => {
           allowMethods: accessControlAllowMethods,
           allowHeaders: accessControlAllowHeaders
         },
-        headers: Array.from(getResponse.headers.entries()).reduce((obj, [key, value]) => {
-          obj[key] = value;
-          return obj;
-        }, {} as Record<string, string>),
-        hasInvalidContentType: contentType && !contentType.startsWith('image/') && url.match(/\.(jpg|jpeg|png|gif|webp|avif|svg)$/i)
+        headers: Object.fromEntries(getResponse.headers.entries()),
+        hasInvalidContentType: contentType && !contentType.startsWith('image/') && url.match(/\.(jpg|jpeg|png|gif|webp|avif|svg)$/i),
+        isJSON: contentType && contentType.includes('application/json')
       };
     } else {
       console.error("URL returned error status:", getResponse.status);
       return { 
         success: false, 
         error: `HTTP error: ${getResponse.status}`,
-        headers: Array.from(getResponse.headers.entries()).reduce((obj, [key, value]) => {
-          obj[key] = value;
-          return obj;
-        }, {} as Record<string, string>)
+        headers: Object.fromEntries(getResponse.headers.entries())
       };
     }
   } catch (error: any) {
@@ -182,7 +188,7 @@ export const checkCorsBlocking = async (url: string): Promise<{blocked: boolean,
         'Origin': window.location.origin,
         'Access-Control-Request-Method': 'GET',
         'Access-Control-Request-Headers': 'Content-Type',
-        'Accept': 'image/*, video/*, application/octet-stream'
+        'Accept': 'image/*, video/*, application/octet-stream, */*'
       }
     });
     
@@ -221,8 +227,8 @@ export const attemptImageCorsWorkaround = (url: string): Promise<string> => {
       try {
         // Create a canvas and draw the image to get a data URL
         const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = img.width || 300;
+        canvas.height = img.height || 200;
         
         const ctx = canvas.getContext('2d');
         if (!ctx) {
@@ -258,7 +264,7 @@ export const fetchImageAsBlob = async (url: string): Promise<string> => {
       credentials: 'omit',
       cache: 'no-cache',
       headers: {
-        'Accept': 'image/*, video/*, application/octet-stream'
+        'Accept': 'image/*, video/*, application/octet-stream, */*'
       }
     });
     
@@ -268,6 +274,12 @@ export const fetchImageAsBlob = async (url: string): Promise<string> => {
     
     // Get the response as a blob
     const blob = await response.blob();
+    
+    // Check if blob really is an image using its type
+    const contentType = blob.type;
+    if (contentType && !contentType.startsWith('image/') && !contentType.includes('octet-stream')) {
+      console.warn(`Blob has unexpected content type: ${contentType}`);
+    }
     
     // Create an object URL from the blob
     const objectUrl = URL.createObjectURL(blob);
@@ -298,4 +310,65 @@ export const extractDirectImagePath = (url: string): string | null => {
   }
   
   return null;
+};
+
+/**
+ * Try common image file extensions when the extension might be wrong or missing
+ */
+export const tryAlternateExtensions = (url: string): string[] => {
+  const baseUrl = url.split('?')[0];
+  const queryParams = url.includes('?') ? url.substring(url.indexOf('?')) : '';
+  const extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
+  
+  // Remove any existing extension
+  let urlWithoutExt = baseUrl;
+  const lastDotIndex = baseUrl.lastIndexOf('.');
+  const lastSlashIndex = baseUrl.lastIndexOf('/');
+  
+  if (lastDotIndex > lastSlashIndex) {
+    urlWithoutExt = baseUrl.substring(0, lastDotIndex);
+  }
+  
+  // Generate URLs with different extensions
+  return extensions.map(ext => `${urlWithoutExt}${ext}${queryParams}`);
+};
+
+/**
+ * Tries various strategies to load an image that has server response issues
+ */
+export const tryAllImageLoadingStrategies = async (url: string): Promise<{
+  url: string | null,
+  strategy: string,
+  success: boolean
+}> => {
+  // Try blob approach first (often works with content type mismatches)
+  try {
+    const blobUrl = await fetchImageAsBlob(url);
+    return { url: blobUrl, strategy: 'blob', success: true };
+  } catch (error) {
+    console.log('Blob strategy failed, trying alternatives');
+  }
+  
+  // Try direct path if it looks like a Supabase storage URL
+  if (url.includes('supabase.co/storage')) {
+    const directPath = extractDirectImagePath(url);
+    if (directPath) {
+      try {
+        const blobUrl = await fetchImageAsBlob(directPath);
+        return { url: blobUrl, strategy: 'direct-path-blob', success: true };
+      } catch (error) {
+        console.log('Direct path blob strategy failed');
+      }
+    }
+  }
+  
+  // Try CORS workaround with data URL
+  try {
+    const dataUrl = await attemptImageCorsWorkaround(url);
+    return { url: dataUrl, strategy: 'data-url', success: true };
+  } catch (error) {
+    console.log('Data URL strategy failed');
+  }
+  
+  return { url: null, strategy: 'all-failed', success: false };
 };
