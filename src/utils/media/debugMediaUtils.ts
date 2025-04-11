@@ -16,7 +16,11 @@ export const debugMediaUrl = async (url: string | null) => {
     const headResponse = await fetch(url, { 
       method: 'HEAD',
       mode: 'cors',
-      credentials: 'omit'
+      credentials: 'omit',
+      cache: 'no-cache',
+      headers: {
+        'Origin': window.location.origin
+      }
     });
     console.log(`HEAD status: ${headResponse.status}`);
     
@@ -24,19 +28,47 @@ export const debugMediaUrl = async (url: string | null) => {
     console.log("Testing with GET request...");
     const getResponse = await fetch(url, {
       mode: 'cors',
-      credentials: 'omit'
+      credentials: 'omit',
+      cache: 'no-cache',
+      headers: {
+        'Origin': window.location.origin
+      }
     });
     console.log(`GET status: ${getResponse.status}`);
     
     // Try to analyze the response content type
     const contentType = getResponse.headers.get('content-type');
     console.log(`Content-Type: ${contentType || 'unknown'}`);
+
+    // Check for access-control headers
+    const accessControlAllowOrigin = getResponse.headers.get('access-control-allow-origin');
+    const accessControlAllowMethods = getResponse.headers.get('access-control-allow-methods');
+    const accessControlAllowHeaders = getResponse.headers.get('access-control-allow-headers');
+    
+    console.log('CORS Headers:', {
+      'Access-Control-Allow-Origin': accessControlAllowOrigin || 'not present',
+      'Access-Control-Allow-Methods': accessControlAllowMethods || 'not present',
+      'Access-Control-Allow-Headers': accessControlAllowHeaders || 'not present'
+    });
     
     if (getResponse.ok) {
       console.log("URL is accessible!");
+      
+      // Check if content can be loaded in browser
+      if (url.match(/\.(jpg|jpeg|png|gif|webp|avif|svg)$/i)) {
+        await getImageDimensions(url)
+          .then(dimensions => console.log(`Image dimensions: ${dimensions.width}x${dimensions.height}`))
+          .catch(err => console.log('Could not load as image:', err.message));
+      }
+      
       return { 
         success: true,
         contentType,
+        cors: {
+          allowOrigin: accessControlAllowOrigin,
+          allowMethods: accessControlAllowMethods,
+          allowHeaders: accessControlAllowHeaders
+        },
         headers: Array.from(getResponse.headers.entries()).reduce((obj, [key, value]) => {
           obj[key] = value;
           return obj;
@@ -44,11 +76,23 @@ export const debugMediaUrl = async (url: string | null) => {
       };
     } else {
       console.error("URL returned error status:", getResponse.status);
-      return { success: false, error: `HTTP error: ${getResponse.status}` };
+      return { 
+        success: false, 
+        error: `HTTP error: ${getResponse.status}`,
+        headers: Array.from(getResponse.headers.entries()).reduce((obj, [key, value]) => {
+          obj[key] = value;
+          return obj;
+        }, {} as Record<string, string>)
+      };
     }
   } catch (error: any) {
     console.error("Error accessing URL:", error);
-    return { success: false, error: error.message };
+    return { 
+      success: false, 
+      error: error.message,
+      errorType: error.name,
+      isCorsError: error.name === 'TypeError' && error.message.includes('CORS')
+    };
   } finally {
     console.groupEnd();
   }
@@ -74,15 +118,105 @@ export const hasCacheBuster = (url: string): boolean => {
 export const getImageDimensions = (url: string): Promise<{width: number, height: number}> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
+    
+    // Set a timeout to avoid hanging
+    const timeout = setTimeout(() => {
+      reject(new Error('Image loading timed out'));
+    }, 10000);
+    
     img.onload = () => {
+      clearTimeout(timeout);
       resolve({
         width: img.width,
         height: img.height
       });
     };
-    img.onerror = () => {
-      reject(new Error('Failed to load image'));
+    img.onerror = (e) => {
+      clearTimeout(timeout);
+      reject(new Error(`Failed to load image: ${e instanceof Error ? e.message : 'Unknown error'}`));
     };
-    img.src = url;
+    
+    // Add cache-buster to avoid cached errors
+    const cacheBuster = `${url.includes('?') ? '&' : '?'}_cb=${Date.now()}`;
+    img.src = url + cacheBuster;
+  });
+};
+
+/**
+ * Check if a URL is being blocked by CORS
+ */
+export const checkCorsBlocking = async (url: string): Promise<{blocked: boolean, reason?: string}> => {
+  try {
+    // Test with preflight OPTIONS request
+    const corsCheckResponse = await fetch(url, {
+      method: 'OPTIONS',
+      mode: 'cors',
+      credentials: 'omit',
+      headers: {
+        'Origin': window.location.origin,
+        'Access-Control-Request-Method': 'GET',
+        'Access-Control-Request-Headers': 'Content-Type'
+      }
+    });
+    
+    // Check if we have proper CORS headers in response
+    const allowOrigin = corsCheckResponse.headers.get('access-control-allow-origin');
+    const allowMethods = corsCheckResponse.headers.get('access-control-allow-methods');
+    
+    if (!allowOrigin) {
+      return { blocked: true, reason: 'Missing Access-Control-Allow-Origin header' };
+    }
+    
+    if (allowOrigin !== '*' && allowOrigin !== window.location.origin) {
+      return { blocked: true, reason: `Origin not allowed: ${allowOrigin}` };
+    }
+    
+    if (!allowMethods || !allowMethods.includes('GET')) {
+      return { blocked: true, reason: 'GET method not allowed by CORS policy' };
+    }
+    
+    return { blocked: false };
+  } catch (error) {
+    // If fetch throws an error, it's likely a CORS issue
+    return { blocked: true, reason: error instanceof Error ? error.message : 'Unknown CORS error' };
+  }
+};
+
+/**
+ * Attempts to work around CORS issues by using an image object
+ */
+export const attemptImageCorsWorkaround = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    
+    img.onload = () => {
+      try {
+        // Create a canvas and draw the image to get a data URL
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL('image/png');
+        resolve(dataUrl);
+      } catch (e) {
+        reject(new Error('Failed to convert image to data URL'));
+      }
+    };
+    
+    img.onerror = () => {
+      reject(new Error('Failed to load image for CORS workaround'));
+    };
+    
+    // Add timestamp to prevent caching
+    img.src = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
   });
 };

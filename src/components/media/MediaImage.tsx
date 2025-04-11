@@ -2,8 +2,9 @@
 import { useState, useEffect } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
-import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
+import { debugMediaUrl, attemptImageCorsWorkaround } from "@/utils/media/debugMediaUtils";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
+import { cn } from "@/lib/utils";
 
 interface MediaImageProps {
   url: string | null;
@@ -30,6 +31,9 @@ export const MediaImage = ({
   const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [displayUrl, setDisplayUrl] = useState<string | null>(null);
+  const [useFallbackImage, setUseFallbackImage] = useState(false);
+  const [fallbackDataUrl, setFallbackDataUrl] = useState<string | null>(null);
+  const [isCorsError, setIsCorsError] = useState(false);
   
   useEffect(() => {
     if (!url) {
@@ -39,13 +43,30 @@ export const MediaImage = ({
     }
     
     // Process the URL
-    const processedUrl = getPlayableMediaUrl({ media_url: url });
-    const cachedUrl = processedUrl ? addCacheBuster(processedUrl) : null;
-    setDisplayUrl(cachedUrl);
+    const processUrl = async () => {
+      setIsLoading(true);
+      setLoadError(false);
+      setUseFallbackImage(false);
+      setIsCorsError(false);
+      
+      // Process the URL
+      const processedUrl = getPlayableMediaUrl({ media_url: url });
+      const cachedUrl = processedUrl ? addCacheBuster(processedUrl) : null;
+      setDisplayUrl(cachedUrl);
+      
+      // Check for potential CORS issues early
+      if (cachedUrl && !cachedUrl.startsWith('data:') && !cachedUrl.includes(window.location.origin)) {
+        try {
+          // Try to get a data URL as a fallback in case of CORS issues
+          const dataUrl = await attemptImageCorsWorkaround(cachedUrl);
+          setFallbackDataUrl(dataUrl);
+        } catch (err) {
+          console.log("Could not prepare fallback image:", err);
+        }
+      }
+    };
     
-    // Reset state when URL changes
-    setIsLoading(true);
-    setLoadError(false);
+    processUrl();
     setRetryCount(0);
   }, [url]);
   
@@ -63,22 +84,36 @@ export const MediaImage = ({
     if (displayUrl) {
       debugMediaUrl(displayUrl).then(result => {
         console.log("Image URL debug result:", result);
+        
+        // Check if this is a CORS error
+        if (result.errorType === 'TypeError' || result.isCorsError) {
+          setIsCorsError(true);
+          
+          // Try the fallback data URL approach if we have one
+          if (fallbackDataUrl && !useFallbackImage) {
+            console.log("Attempting to use fallback data URL approach for CORS issue");
+            setUseFallbackImage(true);
+            setIsLoading(true);
+            setLoadError(false);
+            return;
+          }
+        }
+        
+        // Auto-retry logic
+        if (retryCount < 2) {
+          setRetryCount(prev => prev + 1);
+          setTimeout(() => {
+            // Try a fresh cache-busted URL
+            const processedUrl = getPlayableMediaUrl({ media_url: url });
+            const freshUrl = processedUrl ? addCacheBuster(processedUrl) : null;
+            setDisplayUrl(freshUrl);
+            setIsLoading(true);
+            setLoadError(false);
+          }, 1000 * (retryCount + 1));
+        } else if (onError) {
+          onError();
+        }
       });
-    }
-    
-    console.error("Image load error for URL:", url);
-    
-    // Auto-retry logic
-    if (retryCount < 2) {
-      setRetryCount(prev => prev + 1);
-      setTimeout(() => {
-        // Try a fresh cache-busted URL
-        const processedUrl = getPlayableMediaUrl({ media_url: url });
-        const freshUrl = processedUrl ? addCacheBuster(processedUrl) : null;
-        setDisplayUrl(freshUrl);
-        setIsLoading(true);
-        setLoadError(false);
-      }, 1000 * (retryCount + 1));
     } else if (onError) {
       onError();
     }
@@ -88,6 +123,7 @@ export const MediaImage = ({
     setRetryCount(0);
     setIsLoading(true);
     setLoadError(false);
+    setUseFallbackImage(false);
     
     // Generate a fresh URL
     const processedUrl = getPlayableMediaUrl({ media_url: url });
@@ -102,7 +138,7 @@ export const MediaImage = ({
     }
   };
   
-  if (!displayUrl) {
+  if (!displayUrl && !useFallbackImage) {
     return (
       <div className={`flex items-center justify-center bg-luxury-darker/50 ${className}`}>
         <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
@@ -113,7 +149,10 @@ export const MediaImage = ({
   
   return (
     <div 
-      className={`relative overflow-hidden ${className}`}
+      className={cn(
+        "relative overflow-hidden",
+        className
+      )}
       onClick={handleImageClick}
     >
       {isLoading && (
@@ -126,7 +165,9 @@ export const MediaImage = ({
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10">
           <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
           <p className="text-white/80 mb-3 text-center px-4">
-            Failed to load image
+            {isCorsError 
+              ? "Cross-origin error: can't load image" 
+              : "Failed to load image"}
           </p>
           <button 
             onClick={(e) => {
@@ -141,15 +182,33 @@ export const MediaImage = ({
         </div>
       )}
       
-      <img
-        src={displayUrl}
-        alt={alt}
-        className={`w-full h-full object-cover ${loadError ? 'hidden' : ''}`}
-        onLoad={handleLoad}
-        onError={handleError}
-        style={{ display: isLoading ? 'none' : 'block' }}
-        crossOrigin="anonymous"
-      />
+      {/* Use fallback data URL if we have CORS issues */}
+      {useFallbackImage && fallbackDataUrl ? (
+        <img
+          src={fallbackDataUrl}
+          alt={alt}
+          className={cn(
+            "w-full h-full object-cover",
+            loadError ? 'hidden' : ''
+          )}
+          onLoad={handleLoad}
+          onError={handleError}
+          style={{ display: isLoading ? 'none' : 'block' }}
+        />
+      ) : (
+        <img
+          src={displayUrl || ''}
+          alt={alt}
+          className={cn(
+            "w-full h-full object-cover",
+            loadError ? 'hidden' : ''
+          )}
+          onLoad={handleLoad}
+          onError={handleError}
+          style={{ display: isLoading ? 'none' : 'block' }}
+          crossOrigin="anonymous"
+        />
+      )}
 
       {showWatermark && !loadError && !isLoading && creatorId && (
         <WatermarkOverlay 
