@@ -1,7 +1,22 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { generateUniqueFileName, getBucketForFileType } from "./fileUtils";
+import { supabase } from '@/integrations/supabase/client';
+import { createUserFilePath, getBucketForFileType } from './fileUtils';
 
+/**
+ * Interface for upload options
+ */
+export interface UploadOptions {
+  bucketName?: string;
+  contentCategory?: string;
+  upsert?: boolean;
+  cacheControl?: string;
+  contentType?: string;
+  onProgress?: (progress: number) => void;
+}
+
+/**
+ * Interface for upload result
+ */
 export interface UploadResult {
   success: boolean;
   url?: string;
@@ -9,178 +24,91 @@ export interface UploadResult {
   error?: string;
 }
 
-export interface UploadOptions {
-  bucket?: string;
-  path?: string;
-  onProgress?: (progress: number) => void;
-  contentType?: string;
-  cacheControl?: string;
-  upsert?: boolean;
-  metadata?: Record<string, string>;
-}
-
-export interface FileInfo {
-  url: string;
-  path: string;
-  bucket: string;
-  size: number;
-  contentType: string;
-  createdAt: Date;
-}
-
 /**
- * Uploads a file to Supabase storage
+ * Upload a file to Supabase storage
  */
 export const uploadFile = async (
   file: File, 
   userId: string,
-  options: UploadOptions = {}
+  options?: UploadOptions
 ): Promise<UploadResult> => {
   try {
-    // Get bucket or determine based on file type
-    const bucket = options.bucket || getBucketForFileType(file.type);
+    // Determine bucket based on options or file type
+    const bucketName = options?.bucketName || 
+                       (options?.contentCategory && getBucketForFileType(file, options.contentCategory)) || 
+                       getBucketForFileType(file);
     
-    // Generate unique file path if not provided
-    const filePath = options.path || 
-      `${userId}/${options.contentType || 'media'}/${generateUniqueFileName(file.name)}`;
+    // Create a unique path for the file
+    const filePath = createUserFilePath(userId, file.name);
     
-    console.log(`Uploading ${file.name} to ${bucket}/${filePath}`);
+    console.log(`Uploading file to ${bucketName}/${filePath}`);
     
-    const uploadOptions: Record<string, any> = {
-      cacheControl: options.cacheControl || '3600',
-      upsert: options.upsert ?? false,
+    // Prepare upload options
+    const uploadOptions = {
+      cacheControl: options?.cacheControl || '3600',
+      upsert: options?.upsert !== undefined ? options.upsert : true,
+      contentType: options?.contentType || file.type
     };
     
-    // Explicitly set content type if provided
-    if (options.contentType || file.type) {
-      uploadOptions.contentType = options.contentType || file.type;
-    }
-    
-    // Metadata if provided
-    if (options.metadata) {
-      uploadOptions.metadata = options.metadata;
-    }
-    
-    // Upload the file to storage
+    // Upload the file
     const { data, error } = await supabase.storage
-      .from(bucket)
+      .from(bucketName)
       .upload(filePath, file, uploadOptions);
     
+    // Handle upload error
     if (error) {
       console.error("Storage upload error:", error);
-      return { success: false, error: error.message };
-    }
-    
-    if (!data || !data.path) {
-      return { 
-        success: false, 
-        error: 'Upload completed but no file path returned' 
+      return {
+        success: false,
+        error: error.message || "Error uploading file"
       };
     }
     
     // Get the public URL
     const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(data.path);
+      .from(bucketName)
+      .getPublicUrl(data?.path || filePath);
     
-    // Add timestamp to URL to prevent caching
-    const cacheBustedUrl = addCacheBuster(publicUrl);
+    // Add cache buster
+    const url = addCacheBuster(publicUrl);
     
-    console.log(`Upload successful. Public URL: ${cacheBustedUrl}`);
-    
-    return { 
-      success: true, 
-      url: cacheBustedUrl || publicUrl,
-      path: data.path
+    return {
+      success: true,
+      path: data?.path || filePath,
+      url
     };
   } catch (error: any) {
     console.error("File upload error:", error);
-    return { 
-      success: false, 
-      error: error.message || "An unknown error occurred during upload" 
+    return {
+      success: false,
+      error: error.message || "An unexpected error occurred during upload"
     };
   }
 };
 
 /**
- * Adds a cache busting parameter to a URL
+ * Add cache busting parameter to URL
  */
-export const addCacheBuster = (url: string | null): string | null => {
-  if (!url) return null;
+export const addCacheBuster = (url: string): string => {
+  if (!url) return '';
   
-  const separator = url.includes('?') ? '&' : '?';
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 9);
+  const random = Math.random().toString(36).substring(2, 8);
   
-  return `${url}${separator}t=${timestamp}&r=${random}`;
+  return url.includes('?') 
+    ? `${url}&t=${timestamp}&r=${random}` 
+    : `${url}?t=${timestamp}&r=${random}`;
 };
 
 /**
- * Gets a public URL for a file in storage
+ * Get public URL for a file in storage
  */
-export const getPublicUrl = (bucket: string, path: string): string | null => {
-  if (!path) return null;
+export const getPublicUrl = (bucketName: string, filePath: string): string => {
+  if (!filePath) return '';
   
-  try {
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
-    
-    return data?.publicUrl || null;
-  } catch (error) {
-    console.error("Error getting public URL:", error);
-    return null;
-  }
-};
-
-/**
- * Deletes a file from storage
- */
-export const deleteFile = async (bucket: string, path: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([path]);
-    
-    if (error) {
-      console.error("Error deleting file:", error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("Error deleting file:", error);
-    return false;
-  }
-};
-
-/**
- * Lists files in a bucket/folder
- */
-export const listFiles = async (
-  bucket: string, 
-  path: string
-): Promise<FileInfo[] | null> => {
-  try {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .list(path);
-    
-    if (error || !data) {
-      console.error("Error listing files:", error);
-      return null;
-    }
-    
-    return data.map(item => ({
-      url: getPublicUrl(bucket, `${path}/${item.name}`) || '',
-      path: `${path}/${item.name}`,
-      bucket,
-      size: item.metadata?.size || 0,
-      contentType: item.metadata?.mimetype || '',
-      createdAt: new Date(item.created_at || Date.now())
-    }));
-  } catch (error) {
-    console.error("Error listing files:", error);
-    return null;
-  }
+  const { data } = supabase.storage
+    .from(bucketName)
+    .getPublicUrl(filePath);
+  
+  return data.publicUrl;
 };

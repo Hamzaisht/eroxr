@@ -31,7 +31,12 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
         }
 
         // Upload to Supabase storage
-        const result = await uploadFileToStorage(fileToUpload, 'media', session.user.id);
+        const contentCategory = 'post';
+        const result = await uploadFileToStorage(
+          fileToUpload,
+          contentCategory,
+          session.user.id
+        );
         
         if (!result.success || !result.url) {
           throw new Error(result.error || "Failed to upload file");

@@ -42,7 +42,12 @@ export const ProfileImageUpload = ({ avatarPreview, onAvatarChange }: ProfileIma
       reader.readAsDataURL(file);
       
       // Then upload to Supabase storage
-      const result = await uploadFileToStorage(file, 'avatars', session.user.id);
+      const contentCategory = 'profile';
+      const result = await uploadFileToStorage(
+        file,
+        contentCategory,
+        session.user.id
+      );
       
       if (!result.success) {
         throw new Error(result.error || "Upload failed");

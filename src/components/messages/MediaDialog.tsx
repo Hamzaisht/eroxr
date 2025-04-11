@@ -30,8 +30,13 @@ export const MediaDialog = ({ isOpen, onClose, onMediaSelect }: MediaDialogProps
       onMediaSelect(files);
       
       // Upload files to Supabase storage and get URLs
+      const contentCategory = 'message';
       const uploadPromises = Array.from(files).map(async (file) => {
-        const result = await uploadFileToStorage(file, 'media', session.user.id);
+        const result = await uploadFileToStorage(
+          file,
+          contentCategory,
+          session.user.id
+        );
         
         if (!result.success || !result.url) {
           throw new Error(result.error || "Failed to upload file");

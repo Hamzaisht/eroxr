@@ -1,174 +1,165 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Story } from "@/integrations/supabase/types/story";
-import { useToast } from "@/hooks/use-toast";
-import { getUrlWithCacheBuster, getContentType } from "@/utils/mediaUtils";
 
-// Define a type for the raw story data from Supabase
-interface RawStory {
-  id: string;
-  creator_id: string;
-  media_url: string | null;
-  video_url: string | null;
-  duration: number | null;
-  created_at: string;
-  expires_at: string;
-  is_active: boolean | null;
-  screenshot_disabled: boolean | null;
-  content_type?: string;
-  media_type?: string;
-  creator: {
-    id: string;
-    username: string;
-    avatar_url: string | null;
-  } | null;
-}
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Story } from '@/integrations/supabase/types/story';
+import { uploadFileToStorage, getUrlWithCacheBuster } from '@/utils/mediaUtils';
+import { useSession } from '@supabase/auth-helpers-react';
+import { useToast } from '@/hooks/use-toast';
 
 export const useStories = () => {
   const [stories, setStories] = useState<Story[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [creatorStories, setCreatorStories] = useState<Record<string, Story[]>>({});
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const session = useSession();
   const { toast } = useToast();
 
-  const fetchStories = async () => {
-    setIsLoading(true);
+  // Fetch all stories
+  const fetchStories = useCallback(async () => {
+    setLoading(true);
     setError(null);
     
     try {
-      // Check if the media_type column exists
-      const { data: columnCheck, error: columnError } = await supabase.rpc(
-        "check_column_exists",
-        { p_table_name: "stories", p_column_name: "media_type" }
+      const { data, error } = await supabase
+        .from('stories')
+        .select(`
+          *,
+          creator:profiles(
+            id, 
+            username, 
+            full_name, 
+            avatar_url, 
+            is_verified,
+            is_paying_customer
+          )
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Process the stories
+      const processedStories = data.map(story => ({
+        ...story,
+        media_url: story.media_url ? getUrlWithCacheBuster(story.media_url) : null,
+        video_url: story.video_url ? getUrlWithCacheBuster(story.video_url) : null
+      }));
+      
+      setStories(processedStories);
+      
+      // Group stories by creator
+      const storiesByCreator: Record<string, Story[]> = {};
+      processedStories.forEach(story => {
+        const creatorId = story.creator_id;
+        if (!storiesByCreator[creatorId]) {
+          storiesByCreator[creatorId] = [];
+        }
+        storiesByCreator[creatorId].push(story);
+      });
+      
+      setCreatorStories(storiesByCreator);
+    } catch (err: any) {
+      console.error('Error fetching stories:', err);
+      setError(err.message || 'Failed to fetch stories');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Upload a new story
+  const uploadStory = async (file: File, options?: { isVideo?: boolean }) => {
+    if (!session?.user?.id) {
+      toast({
+        title: 'Authentication required',
+        description: 'You need to be logged in to upload stories',
+        variant: 'destructive',
+      });
+      return { success: false, error: 'Authentication required' };
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    try {
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 5, 90));
+      }, 300);
+      
+      // Upload the file to storage
+      const contentCategory = 'story';
+      const result = await uploadFileToStorage(
+        file,
+        contentCategory,
+        session.user.id
       );
       
-      const hasMediaTypeColumn = columnCheck === true;
+      clearInterval(progressInterval);
       
-      console.log("Stories table has media_type column:", hasMediaTypeColumn);
-      
-      // Define the columns to select
-      const baseColumns = `
-        id, 
-        creator_id, 
-        media_url,
-        video_url, 
-        duration, 
-        created_at,
-        expires_at,
-        is_active,
-        screenshot_disabled,
-        content_type
-      `;
-      
-      const columnsWithMediaType = `
-        ${baseColumns},
-        media_type
-      `;
-      
-      // Fetch stories with creator info
-      const { data, error: fetchError } = await supabase
-        .from("stories")
-        .select(`
-          ${hasMediaTypeColumn ? columnsWithMediaType : baseColumns},
-          creator:profiles(id, username, avatar_url)
-        `)
-        .eq("is_active", true)
-        .gt("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false });
-
-      if (fetchError) throw fetchError;
-      
-      if (data && Array.isArray(data) && data.length > 0) {
-        // Process stories to ensure proper URLs and types
-        const processedStories: Story[] = [];
-        
-        for (let i = 0; i < data.length; i++) {
-          const raw = data[i];
-          
-          // Skip invalid story data
-          if (!raw || typeof raw !== 'object') {
-            console.warn("Invalid story data encountered:", raw);
-            continue;
-          }
-          
-          // Type cast the raw data to our RawStory type
-          const storyData = raw as RawStory;
-          
-          // Create a story object with proper typing
-          const story: Story = {
-            id: storyData.id || '',
-            creator_id: storyData.creator_id || '',
-            media_url: storyData.media_url || null,
-            video_url: storyData.video_url || null,
-            duration: storyData.duration || null,
-            created_at: storyData.created_at || new Date().toISOString(),
-            expires_at: storyData.expires_at || new Date().toISOString(),
-            is_active: storyData.is_active ?? true,
-            screenshot_disabled: storyData.screenshot_disabled ?? true,
-            content_type: storyData.content_type || 'image',
-            media_type: storyData.media_type || null,
-            creator: storyData.creator || { id: '', username: 'Unknown', avatar_url: null }
-          };
-          
-          // Add cache busters to URLs to prevent caching issues
-          if (story.media_url) {
-            story.media_url = getUrlWithCacheBuster(story.media_url);
-          }
-          
-          if (story.video_url) {
-            story.video_url = getUrlWithCacheBuster(story.video_url);
-          }
-          
-          // Determine media type with consistent logic
-          if (!story.media_type) {
-            story.media_type = getContentType(story) as 'video' | 'image';
-          }
-          
-          processedStories.push(story);
-        }
-        
-        setStories(processedStories);
-        console.log("Fetched stories:", processedStories);
-      } else {
-        console.log("No active stories found");
-        setStories([]);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to upload file');
       }
-    } catch (err: any) {
-      console.error("Error fetching stories:", err);
-      setError(err.message || "Failed to load stories");
+      
+      // Determine whether it's a video or image
+      const isVideo = options?.isVideo || file.type.startsWith('video/');
+      
+      // Add the story to the database
+      const { data, error } = await supabase
+        .from('stories')
+        .insert({
+          creator_id: session.user.id,
+          [isVideo ? 'video_url' : 'media_url']: result.url,
+          content_type: isVideo ? 'video' : 'image',
+          media_type: isVideo ? 'video' : 'image',
+          is_active: true,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      // Update progress
+      setUploadProgress(100);
+      
       toast({
-        title: "Failed to load stories",
-        description: err.message || "An unexpected error occurred",
-        variant: "destructive",
+        title: 'Story uploaded successfully',
+        description: 'Your story is now visible to your followers',
       });
+      
+      // Refetch stories
+      fetchStories();
+      
+      return { success: true, data: data[0] };
+    } catch (err: any) {
+      console.error('Error uploading story:', err);
+      
+      toast({
+        title: 'Upload failed',
+        description: err.message || 'There was a problem uploading your story',
+        variant: 'destructive',
+      });
+      
+      return { success: false, error: err.message || 'Failed to upload story' };
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
+      setUploadProgress(0);
     }
-  };
-
-  const refetchStories = () => {
-    fetchStories();
   };
 
   useEffect(() => {
     fetchStories();
-    
-    // Listen for story-uploaded custom event
-    const handleStoryUploaded = () => {
-      console.log("Story uploaded event detected, refetching stories...");
-      fetchStories();
-    };
-    
-    window.addEventListener('story-uploaded', handleStoryUploaded);
-    
-    return () => {
-      window.removeEventListener('story-uploaded', handleStoryUploaded);
-    };
-  }, []);
+  }, [fetchStories]);
 
   return {
     stories,
-    isLoading,
+    creatorStories,
+    loading,
     error,
-    refetchStories,
+    uploadStory,
+    isUploading,
+    uploadProgress,
+    refreshStories: fetchStories
   };
 };

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadFileToStorage, getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { uploadFileToStorage } from "@/utils/mediaUtils";
 
 interface UploadState {
   isUploading: boolean;
@@ -75,7 +75,12 @@ export const useVideoUpload = () => {
       }, 300);
       
       // Upload to Supabase storage
-      const result = await uploadFileToStorage(file, 'shorts', session.user.id);
+      const contentCategory = 'shorts';
+      const result = await uploadFileToStorage(
+        file,
+        contentCategory,
+        session.user.id
+      );
       
       clearInterval(progressInterval);
       

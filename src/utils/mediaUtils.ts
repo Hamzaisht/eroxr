@@ -7,14 +7,13 @@ export {
 } from './upload/storageService';
 
 export {
-  createUniqueFilePath,
   getContentType,
-  getMediaType,
-  refreshUrl
+  isVideo as getMediaType,
+  getFileExtension,
 } from './media/mediaTypeUtils';
 
 export {
-  createUserFilePath,
+  createUserFilePath as createUniqueFilePath,
   generateUniqueFileName, 
   formatFileSize,
   createFilePreview,
@@ -23,3 +22,12 @@ export {
 } from './upload/fileUtils';
 
 export { validateMediaFile, isImageFile, isVideoFile } from './upload/validators';
+
+// Helper function to refresh URLs with cache busting
+export const refreshUrl = (url: string): string => {
+  if (!url) return '';
+  const timestamp = Date.now();
+  return url.includes('?') 
+    ? `${url}&t=${timestamp}` 
+    : `${url}?t=${timestamp}`;
+};
