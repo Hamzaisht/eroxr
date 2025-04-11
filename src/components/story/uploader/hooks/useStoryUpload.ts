@@ -1,9 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDbService } from "@/components/home/hooks/short-post/services/useDbService";
-import { uploadFileToStorage, getUrlWithCacheBuster } from "@/utils/mediaUtils";
+import { uploadFileToStorage } from "@/utils/mediaUtils";
 import { supabase } from "@/integrations/supabase/client";
 
 // Maximum file size (100MB)
@@ -26,7 +26,7 @@ export const useStoryUpload = () => {
   const { checkColumnExists } = useDbService();
   const MAX_RETRIES = 1;
 
-  // Single validateFile function definition
+  // File validation function
   const validateFile = (file: File): FileValidation => {
     if (file.size > MAX_FILE_SIZE) {
       return { 
