@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -138,28 +137,10 @@ const getStoragePublicUrl = (path: string): string | null => {
     const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
     console.debug(`Resolved ${path} to ${data.publicUrl} (bucket: ${bucket}, path: ${finalPath})`);
     
-    // Check for auth session and add token for protected resources if needed
-    const checkForAuthToken = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData && sessionData.session && bucket !== 'avatars' && bucket !== 'banners' && bucket !== 'media') {
-          // For protected buckets, append auth token
-          const token = sessionData.session.access_token;
-          if (token) {
-            const url = new URL(data.publicUrl);
-            url.searchParams.append('token', token);
-            return url.toString();
-          }
-        }
-      } catch (error) {
-        console.warn("Error getting auth session:", error);
-      }
-      return data.publicUrl;
-    };
-    
-    // Since we're in a synchronous function but need async functionality,
-    // we'll return the public URL immediately and let the auth check happen separately if needed
-    // This is a compromise - for fully authenticated URLs, consider using an async approach
+    // Since we're in a synchronous function but need to check auth state,
+    // we'll return the public URL immediately which works for public resources
+    // For protected resources that need authentication, the application should
+    // implement an async approach or use a context with the session
     
     return data.publicUrl || null;
   } catch (e) {
@@ -209,4 +190,3 @@ export const getCorsProxyUrl = (url: string): string => {
   // For now, return the original URL and handle failures via the error handling system
   return url;
 };
-
