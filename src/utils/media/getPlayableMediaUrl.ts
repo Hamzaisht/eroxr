@@ -7,8 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 export const addCacheBuster = (url: string | null): string | null => {
   if (!url) return null;
   
+  // Generate unique timestamp and random string for effective cache busting
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 9);
+  
+  // Append cache busters to the URL
   return url.includes('?') 
     ? `${url}&t=${timestamp}&r=${random}` 
     : `${url}?t=${timestamp}&r=${random}`;
