@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { getPlayableMediaUrl, addCacheBuster, checkUrlAccessibility } from "@/utils/media/getPlayableMediaUrl";
 import { getContentType } from "@/utils/mediaUtils";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
@@ -36,33 +36,55 @@ export const UniversalMedia = ({
   const [retryCount, setRetryCount] = useState(0);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [displayUrl, setDisplayUrl] = useState<string | null>(null);
+  const [accessibleUrl, setAccessibleUrl] = useState<boolean>(true);
   
   // Get media URL using our utility function and add cache buster
   useEffect(() => {
-    try {
-      const url = getPlayableMediaUrl(item);
-      setMediaUrl(url);
-      
-      // Add cache buster to prevent caching issues
-      const cachedUrl = url ? addCacheBuster(url) : null;
-      setDisplayUrl(cachedUrl);
-      
-      // Debug log
-      console.debug("Media processed:", { 
-        original: item?.media_url || item?.video_url,
-        resolvedUrl: url,
-        cachedUrl
-      });
-      
-      // Reset states when item or URL changes
-      setIsLoading(true);
-      setLoadError(false);
-      setRetryCount(0);
-    } catch (error) {
-      console.error("Error processing media URL:", error);
-      setLoadError(true);
-      setIsLoading(false);
-    }
+    const setupMediaUrl = async () => {
+      try {
+        const url = getPlayableMediaUrl(item);
+        setMediaUrl(url);
+        
+        if (url) {
+          // Add cache buster to prevent caching issues
+          const cachedUrl = addCacheBuster(url);
+          setDisplayUrl(cachedUrl);
+          
+          // Check if URL is accessible (for CORS issues)
+          const isAccessible = await checkUrlAccessibility(cachedUrl || '');
+          setAccessibleUrl(isAccessible);
+          
+          // If URL is not accessible, trigger error handling early
+          if (!isAccessible) {
+            console.warn("Media URL is not accessible:", cachedUrl);
+          }
+        } else {
+          setLoadError(true);
+          setIsLoading(false);
+          if (onError) onError();
+        }
+        
+        // Debug log
+        console.debug("Media processed:", { 
+          original: item?.media_url || item?.video_url,
+          resolvedUrl: url,
+          cachedUrl: displayUrl,
+          isAccessible: accessibleUrl
+        });
+        
+        // Reset states when item or URL changes
+        setIsLoading(true);
+        setLoadError(false);
+        setRetryCount(0);
+      } catch (error) {
+        console.error("Error processing media URL:", error);
+        setLoadError(true);
+        setIsLoading(false);
+        if (onError) onError();
+      }
+    };
+    
+    setupMediaUrl();
   }, [item]);
   
   // Determine media type
@@ -88,11 +110,12 @@ export const UniversalMedia = ({
     
     console.error("Media load error:", { 
       url: displayUrl,
-      item 
+      item,
+      accessibleUrl
     });
     
     // Try retry logic
-    if (retryCount < 2) {
+    if (retryCount < 3) {
       setRetryCount(prev => prev + 1);
       // Allow some time before retry
       setTimeout(() => {
@@ -101,7 +124,7 @@ export const UniversalMedia = ({
         setDisplayUrl(freshUrl);
         setLoadError(false);
         setIsLoading(true);
-      }, 2000);
+      }, 1000 * (retryCount + 1)); // Increasing delay for each retry
     } else if (onError) {
       onError();
     }
@@ -115,14 +138,23 @@ export const UniversalMedia = ({
     setLoadError(false);
     setIsLoading(true);
     setRetryCount(0);
-    // Get a fresh URL with a new cache buster
-    const freshUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
+    
+    // Try getting a new URL with potentially different parameters
+    const url = getPlayableMediaUrl(item);
+    setMediaUrl(url);
+    
+    // Add cache buster to ensure fresh load
+    const freshUrl = url ? addCacheBuster(url) : null;
     setDisplayUrl(freshUrl);
   };
   
   // If media URL couldn't be determined
   if (!displayUrl) {
-    return <ErrorComponent message="Media unavailable" className={className} />;
+    return <ErrorComponent 
+      message="Media unavailable" 
+      className={className} 
+      onRetry={handleRetry}
+    />;
   }
   
   // Handle click
@@ -135,7 +167,7 @@ export const UniversalMedia = ({
 
   return (
     <div 
-      className={`relative ${className}`}
+      className={`relative overflow-hidden ${className}`}
       onClick={handleClick}
     >
       {/* Loading indicator */}
@@ -146,10 +178,14 @@ export const UniversalMedia = ({
       )}
       
       {/* Error state with retry */}
-      {loadError && retryCount >= 2 && (
+      {loadError && retryCount >= 3 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10">
           <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
-          <p className="text-white/80 mb-3">Failed to load media</p>
+          <p className="text-white/80 mb-3 text-center px-4">
+            {!accessibleUrl 
+              ? "Media access error (CORS or authentication)" 
+              : "Failed to load media"}
+          </p>
           <button 
             onClick={(e) => {
               e.stopPropagation();

@@ -1,5 +1,6 @@
 
 import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ErrorComponentProps {
   message: string;
@@ -13,12 +14,17 @@ export const ErrorComponent = ({ message, className = "", onRetry }: ErrorCompon
       <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
       <p className="text-sm text-center text-red-100 mb-2">{message}</p>
       {onRetry && (
-        <button
-          onClick={onRetry}
-          className="text-xs px-3 py-1 bg-red-500/30 hover:bg-red-500/50 text-white rounded"
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRetry();
+          }}
+          variant="outline"
+          size="sm"
+          className="text-xs border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-white"
         >
           Try Again
-        </button>
+        </Button>
       )}
     </div>
   );

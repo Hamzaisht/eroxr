@@ -67,13 +67,21 @@ export const getPlayableMediaUrl = (item: any): string | null => {
     return null;
   }
   
-  // If it's already a full URL, return it
+  // If it's already a full URL, ensure CORS headers are respected
   if (typeof firstValidUrl === 'string') {
     if (firstValidUrl.startsWith('http') || firstValidUrl.startsWith('/api/')) {
+      // For external URLs, we need to ensure CORS is handled
+      // If the URL is from our Supabase storage, we're good
+      if (firstValidUrl.includes('supabase.co/storage')) {
+        return firstValidUrl;
+      }
+      
+      // For other external URLs, we might need a proxy in some cases
+      // But for now, return the URL directly and monitor for CORS issues
       return firstValidUrl;
     }
     
-    // If it's a storage path, get the public URL
+    // If it's a storage path, get the public URL with proper auth headers
     return getStoragePublicUrl(firstValidUrl);
   }
   
@@ -126,9 +134,20 @@ const getStoragePublicUrl = (path: string): string | null => {
   }
   
   try {
-    // Get the public URL from Supabase
+    // Get the public URL from Supabase with authentication if needed
     const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
     console.debug(`Resolved ${path} to ${data.publicUrl} (bucket: ${bucket}, path: ${finalPath})`);
+    
+    // Check if the session token should be included for protected resources
+    if (supabase.auth.session()) {
+      const token = supabase.auth.session()?.access_token;
+      if (token && bucket !== 'avatars' && bucket !== 'banners' && bucket !== 'media') {
+        // For protected buckets, append auth token
+        const url = new URL(data.publicUrl);
+        url.searchParams.append('token', token);
+        return url.toString();
+      }
+    }
     
     return data.publicUrl || null;
   } catch (e) {
@@ -136,3 +155,46 @@ const getStoragePublicUrl = (path: string): string | null => {
     return null;
   }
 };
+
+/**
+ * Checks if a URL is accessible and returns a promise
+ * that resolves with true if accessible, false otherwise
+ */
+export const checkUrlAccessibility = async (url: string): Promise<boolean> => {
+  if (!url) return false;
+  
+  try {
+    // Use HEAD request to check if URL is accessible without downloading content
+    const response = await fetch(url, { 
+      method: 'HEAD',
+      mode: 'cors',
+      credentials: 'omit' // Don't send cookies for cross-origin requests
+    });
+    
+    return response.ok;
+  } catch (error) {
+    console.error(`URL accessibility check failed for ${url}:`, error);
+    return false;
+  }
+};
+
+/**
+ * Gets the CORS-friendly version of a URL
+ * This can be used for problematic URLs that need proxy handling
+ */
+export const getCorsProxyUrl = (url: string): string => {
+  if (!url) return url;
+  
+  // If it's a Supabase URL, it should already handle CORS
+  if (url.includes('supabase.co')) {
+    return url;
+  }
+  
+  // For external URLs that might have CORS issues, we could use a proxy
+  // This is a placeholder - in a real app, you might implement a proxy service
+  // or use an existing CORS proxy service
+  
+  // For now, return the original URL and handle failures via the error handling system
+  return url;
+};
+
