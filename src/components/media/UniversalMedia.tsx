@@ -5,6 +5,7 @@ import { getContentType } from "@/utils/mediaUtils";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { ErrorComponent } from "@/components/ErrorComponent";
+import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 
 interface UniversalMediaProps {
   item: any;
@@ -15,7 +16,7 @@ interface UniversalMediaProps {
   onLoadedData?: () => void;
   autoPlay?: boolean;
   controls?: boolean;
-  showWatermark?: boolean;
+  showWatermark?: boolean; // Make this explicitly optional
   onClick?: () => void;
 }
 
@@ -28,7 +29,7 @@ export const UniversalMedia = ({
   onLoadedData,
   autoPlay = false,
   controls = true,
-  showWatermark = false,
+  showWatermark = false, // Default to false
   onClick
 }: UniversalMediaProps) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -223,6 +224,15 @@ export const UniversalMedia = ({
           crossOrigin="anonymous"
         />
       )}
+
+      {/* Conditionally render watermark */}
+      {showWatermark && !loadError && !isLoading && item?.creator_id && (
+        <WatermarkOverlay 
+          username={item.creator_id} 
+          creatorId={item.creator_id} 
+        />
+      )}
     </div>
   );
 };
+
