@@ -133,7 +133,7 @@ export const useStoryUpload = () => {
         setUploadProgress(progress);
       };
 
-      // Upload to Supabase storage
+      // Upload to Supabase storage with complete URL
       const result = await uploadFileToStorage(file, 'stories', session.user.id);
 
       if (!result.success) {
@@ -150,7 +150,7 @@ export const useStoryUpload = () => {
       const isVideo = SUPPORTED_VIDEO_TYPES.includes(file.type);
       const contentType = isVideo ? 'video' : 'image';
       
-      // Create story record with the URL
+      // Create story record with the full URL
       const { error: storyError } = await createStoryRecord(
         session.user.id,
         result.url,

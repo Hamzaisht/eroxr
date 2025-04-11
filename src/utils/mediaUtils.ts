@@ -43,7 +43,7 @@ export const getMediaType = (url: string): 'video' | 'gif' | 'image' => {
 };
 
 /**
- * Uploads a file to Supabase storage and returns the result
+ * Upload file to a specified bucket and return the full public URL
  */
 export const uploadFileToStorage = async (
   file: File, 
