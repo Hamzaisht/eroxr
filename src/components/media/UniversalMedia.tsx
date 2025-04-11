@@ -113,6 +113,7 @@ export const UniversalMedia = ({
           onLoadedData={handleLoad}
           creatorId={item?.creator_id}
           controls={controls}
+          onClick={onClick}
         />
       ) : (
         <img
