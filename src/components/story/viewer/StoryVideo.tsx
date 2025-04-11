@@ -84,6 +84,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
           onError={handleError}
           onLoad={handleLoad}
           onEnded={onEnded}
+          onLoadedData={handleLoad}
           showWatermark={true}
         />
         

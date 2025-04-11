@@ -12,6 +12,7 @@ interface UniversalMediaProps {
   onError?: () => void;
   onLoad?: () => void;
   onEnded?: () => void;
+  onLoadedData?: () => void;
   autoPlay?: boolean;
   controls?: boolean;
   showWatermark?: boolean;
@@ -24,6 +25,7 @@ export const UniversalMedia = ({
   onError,
   onLoad,
   onEnded,
+  onLoadedData,
   autoPlay = false,
   controls = true,
   showWatermark = false,
@@ -110,7 +112,7 @@ export const UniversalMedia = ({
           className="w-full h-full"
           onError={handleError}
           onEnded={handleEnded}
-          onLoadedData={handleLoad}
+          onLoadedData={onLoadedData || handleLoad}
           creatorId={item?.creator_id}
           controls={controls}
           onClick={onClick}
