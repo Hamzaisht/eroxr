@@ -34,12 +34,36 @@ export const UniversalMedia = ({
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [displayUrl, setDisplayUrl] = useState<string | null>(null);
   
-  // Get media URL using our utility function
-  const mediaUrl = getPlayableMediaUrl(item);
-  
-  // Add cache buster to prevent caching issues
-  const displayUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
+  // Get media URL using our utility function and add cache buster
+  useEffect(() => {
+    try {
+      const url = getPlayableMediaUrl(item);
+      setMediaUrl(url);
+      
+      // Add cache buster to prevent caching issues
+      const cachedUrl = url ? addCacheBuster(url) : null;
+      setDisplayUrl(cachedUrl);
+      
+      // Debug log
+      console.debug("Media processed:", { 
+        original: item?.media_url || item?.video_url,
+        resolvedUrl: url,
+        cachedUrl
+      });
+      
+      // Reset states when item or URL changes
+      setIsLoading(true);
+      setLoadError(false);
+      setRetryCount(0);
+    } catch (error) {
+      console.error("Error processing media URL:", error);
+      setLoadError(true);
+      setIsLoading(false);
+    }
+  }, [item]);
   
   // Determine media type
   const isVideo = 
@@ -48,15 +72,9 @@ export const UniversalMedia = ({
     (displayUrl && (
       displayUrl.toLowerCase().endsWith(".mp4") || 
       displayUrl.toLowerCase().endsWith(".webm") || 
-      displayUrl.toLowerCase().endsWith(".mov")
+      displayUrl.toLowerCase().endsWith(".mov") ||
+      displayUrl.includes("video")
     ));
-  
-  useEffect(() => {
-    // Reset states when item changes
-    setIsLoading(true);
-    setLoadError(false);
-    setRetryCount(0);
-  }, [item, mediaUrl]);
   
   const handleLoad = () => {
     setIsLoading(false);
@@ -78,6 +96,9 @@ export const UniversalMedia = ({
       setRetryCount(prev => prev + 1);
       // Allow some time before retry
       setTimeout(() => {
+        // Get a fresh URL with a new cache buster
+        const freshUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
+        setDisplayUrl(freshUrl);
         setLoadError(false);
         setIsLoading(true);
       }, 2000);
@@ -94,6 +115,9 @@ export const UniversalMedia = ({
     setLoadError(false);
     setIsLoading(true);
     setRetryCount(0);
+    // Get a fresh URL with a new cache buster
+    const freshUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
+    setDisplayUrl(freshUrl);
   };
   
   // If media URL couldn't be determined

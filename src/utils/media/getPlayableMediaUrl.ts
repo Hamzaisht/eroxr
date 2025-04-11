@@ -7,14 +7,27 @@ import { supabase } from "@/integrations/supabase/client";
 export const addCacheBuster = (url: string | null): string | null => {
   if (!url) return null;
   
+  // First, clean up any existing cache busters to avoid chaining too many
+  let cleanUrl = url;
+  try {
+    const urlObj = new URL(url);
+    // Remove any existing t= and r= parameters
+    if (urlObj.searchParams.has('t')) urlObj.searchParams.delete('t');
+    if (urlObj.searchParams.has('r')) urlObj.searchParams.delete('r');
+    cleanUrl = urlObj.toString();
+  } catch (e) {
+    // If URL parsing fails, proceed with original URL
+    console.warn("Could not parse URL for cleaning:", url);
+  }
+  
   // Generate unique timestamp and random string for effective cache busting
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 9);
   
   // Append cache busters to the URL
-  return url.includes('?') 
-    ? `${url}&t=${timestamp}&r=${random}` 
-    : `${url}?t=${timestamp}&r=${random}`;
+  return cleanUrl.includes('?') 
+    ? `${cleanUrl}&t=${timestamp}&r=${random}` 
+    : `${cleanUrl}?t=${timestamp}&r=${random}`;
 };
 
 /**
@@ -24,6 +37,9 @@ export const addCacheBuster = (url: string | null): string | null => {
 export const getPlayableMediaUrl = (item: any): string | null => {
   // Handle null or undefined input
   if (!item) return null;
+
+  // Debug info to help identify issues
+  console.debug("Getting playable URL for:", item);
 
   // Handle array of URLs (return first valid one)
   if (item?.media_url && Array.isArray(item.media_url) && item.media_url.length > 0) {
@@ -46,15 +62,24 @@ export const getPlayableMediaUrl = (item: any): string | null => {
   // Return the first available URL
   const firstValidUrl = videoUrl || mediaUrl || url;
   
-  if (!firstValidUrl) return null;
-  
-  // If it's already a full URL, return it
-  if (typeof firstValidUrl === 'string' && firstValidUrl.startsWith('http')) {
-    return firstValidUrl;
+  if (!firstValidUrl) {
+    console.debug("No valid media URL found in item:", item);
+    return null;
   }
   
-  // If it's a storage path, get the public URL
-  return getStoragePublicUrl(firstValidUrl);
+  // If it's already a full URL, return it
+  if (typeof firstValidUrl === 'string') {
+    if (firstValidUrl.startsWith('http') || firstValidUrl.startsWith('/api/')) {
+      return firstValidUrl;
+    }
+    
+    // If it's a storage path, get the public URL
+    return getStoragePublicUrl(firstValidUrl);
+  }
+  
+  // If we got here and firstValidUrl is not a string, log and return null
+  console.warn("Invalid URL type:", typeof firstValidUrl, firstValidUrl);
+  return null;
 };
 
 /**
@@ -68,7 +93,7 @@ const getFirstValidUrl = (urls: string[]): string | null => {
   if (!firstUrl) return null;
   
   // If it's already a full URL, return it
-  if (firstUrl.startsWith('http')) return firstUrl;
+  if (firstUrl.startsWith('http') || firstUrl.startsWith('/api/')) return firstUrl;
   
   // Get the public URL from Supabase storage
   return getStoragePublicUrl(firstUrl);
@@ -80,25 +105,34 @@ const getFirstValidUrl = (urls: string[]): string | null => {
 const getStoragePublicUrl = (path: string): string | null => {
   if (!path) return null;
   
+  // Ensure the path doesn't start with /
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  
   // Determine bucket from path if possible
   let bucket = 'media';
-  const possibleBuckets = ['stories', 'posts', 'videos', 'avatars', 'banners', 'media'];
+  const possibleBuckets = ['stories', 'posts', 'videos', 'avatars', 'banners', 'media', 'shorts'];
   
   for (const b of possibleBuckets) {
-    if (path.startsWith(`${b}/`) || path.includes(`/${b}/`)) {
+    if (cleanPath.startsWith(`${b}/`) || cleanPath.includes(`/${b}/`)) {
       bucket = b;
       break;
     }
   }
   
   // Make sure we have a clean path that doesn't include the bucket name at the start
-  let cleanPath = path;
-  if (cleanPath.startsWith(`${bucket}/`)) {
-    cleanPath = cleanPath.substring(bucket.length + 1);
+  let finalPath = cleanPath;
+  if (finalPath.startsWith(`${bucket}/`)) {
+    finalPath = finalPath.substring(bucket.length + 1);
   }
   
-  // Get the public URL from Supabase
-  const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
-  
-  return data.publicUrl || null;
+  try {
+    // Get the public URL from Supabase
+    const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
+    console.debug(`Resolved ${path} to ${data.publicUrl} (bucket: ${bucket}, path: ${finalPath})`);
+    
+    return data.publicUrl || null;
+  } catch (e) {
+    console.error(`Failed to get public URL for ${path} in bucket ${bucket}:`, e);
+    return null;
+  }
 };

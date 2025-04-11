@@ -43,6 +43,17 @@ export const VideoPlayer = ({
   const [retryCount, setRetryCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  // Reset status when URL changes
+  useEffect(() => {
+    setIsLoading(true);
+    setError(false);
+    setRetryCount(0);
+    
+    if (videoRef.current) {
+      videoRef.current.load();
+    }
+  }, [url]);
+  
   const handleError = () => {
     setError(true);
     setIsLoading(false);
@@ -53,15 +64,20 @@ export const VideoPlayer = ({
       setRetryCount(prevCount => prevCount + 1);
       setTimeout(() => {
         if (videoRef.current) {
-          videoRef.current.src = '';
+          // Try refreshing the video element
+          videoRef.current.pause();
+          videoRef.current.removeAttribute('src');
+          
           setTimeout(() => {
             if (videoRef.current) {
-              videoRef.current.src = url;
+              // Add a cache busting parameter
+              const cacheBuster = `${url}${url.includes('?') ? '&' : '?'}cb=${Date.now()}`;
+              videoRef.current.src = cacheBuster;
               videoRef.current.load();
             }
-          }, 1000);
+          }, 500);
         }
-      }, 2000);
+      }, 1000);
     } else if (onError) {
       onError();
     }
@@ -71,23 +87,59 @@ export const VideoPlayer = ({
     setIsLoading(false);
     setError(false);
     if (onLoadedData) onLoadedData();
+    
+    // Try autoplay if requested
+    if (autoPlay && videoRef.current && videoRef.current.paused) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.warn("Autoplay prevented:", error);
+          // Most browsers require user interaction before playing with sound
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(e => console.error("Even muted autoplay failed:", e));
+          }
+        });
+      }
+    }
   };
   
-  const togglePlay = () => {
+  const togglePlay = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play().catch(error => {
-          console.error("Error playing video:", error);
-          if (onError) onError();
-        });
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error("Error playing video:", error);
+            // Try with muted if it fails
+            if (videoRef.current && !videoRef.current.muted) {
+              videoRef.current.muted = true;
+              setIsMuted(true);
+              videoRef.current.play().catch(e => {
+                console.error("Even muted playback failed:", e);
+                if (onError) onError();
+              });
+            } else if (onError) {
+              onError();
+            }
+          });
+        }
       }
       setIsPlaying(!isPlaying);
     }
   };
   
-  const toggleMute = () => {
+  const toggleMute = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
@@ -98,8 +150,8 @@ export const VideoPlayer = ({
     const video = videoRef.current;
     if (!video) return;
     
-    // Reset retry count on url change
-    setRetryCount(0);
+    // Reset video state when URL changes
+    setIsPlaying(false);
     setIsLoading(true);
     setError(false);
     
@@ -109,26 +161,55 @@ export const VideoPlayer = ({
       setIsPlaying(false);
       if (onEnded) onEnded();
     };
+    const handleLoadedData = () => {
+      handleLoad();
+    };
+    const handleVideoError = () => {
+      handleError();
+    };
     
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
     video.addEventListener('ended', handleVideoEnded);
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('error', handleVideoError);
     
+    // Try to autoplay when component mounts
     if (autoPlay && !isLoading) {
-      video.play().catch(error => console.error("Autoplay prevented:", error));
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.warn("Autoplay prevented:", error);
+          // Most browsers require user interaction before playing with sound
+          video.muted = true;
+          setIsMuted(true);
+          video.play().catch(e => console.error("Even muted autoplay failed:", e));
+        });
+      }
     }
     
     return () => {
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('ended', handleVideoEnded);
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('error', handleVideoError);
     };
-  }, [autoPlay, isLoading, onEnded, url]);
+  }, [autoPlay, url, onEnded, onError]);
+
+  // Handle click on the video container
+  const handleVideoClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick();
+    } else {
+      togglePlay(e);
+    }
+  };
 
   return (
     <div 
       className={cn("relative overflow-hidden", className)}
-      onClick={onClick}
+      onClick={handleVideoClick}
     >
       {/* Loading state */}
       {isLoading && (
@@ -157,9 +238,9 @@ export const VideoPlayer = ({
         playsInline
         loop
         controls={controls}
-        onError={handleError}
         onLoadedData={handleLoad}
         onEnded={onEnded}
+        onError={handleError}
       />
       
       {/* Video controls overlay */}
