@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { getPlayableMediaUrl, addCacheBuster, checkUrlAccessibility } from "@/utils/media/getPlayableMediaUrl";
 import { getContentType } from "@/utils/mediaUtils";
@@ -191,7 +192,7 @@ export const UniversalMedia = ({
       setTimeout(() => {
         if (retryCount === 1 && !fallbackUrl && displayUrl) {
           // On second retry, try force fetch approach if we don't have a fallback yet
-          const mediaType = isVideoContent ? 'video' : 'image';
+          const mediaType = isVideo(item, displayUrl) ? 'video' : 'image';
           forceFetchAsContentType(displayUrl, mediaType)
             .then(forcedUrl => {
               if (forcedUrl) {
@@ -247,7 +248,7 @@ export const UniversalMedia = ({
           }
           
           // If that fails, try force fetch
-          const mediaType = isVideoContent ? 'video' : 'image';
+          const mediaType = isVideo(item, displayUrl) ? 'video' : 'image';
           return forceFetchAsContentType(displayUrl, mediaType);
         })
         .then(forcedUrl => {
@@ -286,6 +287,9 @@ export const UniversalMedia = ({
 
   // Determine which URL to use
   const effectiveUrl = fallbackUrl || displayUrl;
+  
+  // Determine if content is video using the isVideo helper function
+  const isVideoContent = isVideo(item, effectiveUrl);
 
   return (
     <div 
