@@ -1,17 +1,10 @@
 
-import { useState, useEffect } from "react";
-import { getPlayableMediaUrl, addCacheBuster, checkUrlAccessibility } from "@/utils/media/getPlayableMediaUrl";
+import { useState } from "react";
+import { MediaLoadingState } from "@/components/media/states/MediaLoadingState";
+import { MediaErrorState } from "@/components/media/states/MediaErrorState";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
-import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
-import { ErrorComponent } from "@/components/ErrorComponent";
-import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
-import { 
-  debugMediaUrl, 
-  handleJsonContentTypeIssue, 
-  forceFetchAsContentType,
-  isDebugErrorResponse
-} from "@/utils/media/debugMediaUtils";
 import { MediaImage } from "@/components/media/MediaImage";
+import { useMediaHandler } from "@/hooks/useMediaHandler";
 
 interface UniversalMediaProps {
   item: any;
@@ -38,185 +31,28 @@ export const UniversalMedia = ({
   showWatermark = false,
   onClick
 }: UniversalMediaProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
-  const [displayUrl, setDisplayUrl] = useState<string | null>(null);
-  const [accessibleUrl, setAccessibleUrl] = useState<boolean>(true);
-  const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const setupMediaUrl = async () => {
-      try {
-        const url = getPlayableMediaUrl(item);
-        setMediaUrl(url);
-        
-        if (url) {
-          // Add cache buster to URL
-          const cachedUrl = addCacheBuster(url);
-          setDisplayUrl(cachedUrl);
-          
-          // Check if URL is accessible
-          const isAccessible = await checkUrlAccessibility(cachedUrl || '');
-          setAccessibleUrl(isAccessible);
-          
-          if (!isAccessible) {
-            console.warn("Media URL is not accessible:", cachedUrl);
-          }
-        } else {
-          setLoadError(true);
-          setIsLoading(false);
-          if (onError) onError();
-        }
-        
-        console.debug("Media processed:", { 
-          original: item?.media_url || item?.video_url,
-          resolvedUrl: url,
-          cachedUrl: displayUrl,
-          isAccessible: accessibleUrl
-        });
-        
-        setIsLoading(true);
-        setLoadError(false);
-        setRetryCount(0);
-      } catch (error) {
-        console.error("Error processing media URL:", error);
-        setLoadError(true);
-        setIsLoading(false);
-        if (onError) onError();
-      }
-    };
-    
-    setupMediaUrl();
-  }, [item]);
-  
-  // Determine if the content should be treated as a video
-  const isVideo = (item: any, url: string | null): boolean => {
-    return item?.content_type === "video" || 
-           item?.media_type === "video" || 
-           (url && (
-             url.toLowerCase().endsWith(".mp4") || 
-             url.toLowerCase().endsWith(".webm") || 
-             url.toLowerCase().endsWith(".mov") ||
-             url.includes("video")
-           ));
-  };
-  
-  const handleLoad = () => {
-    setIsLoading(false);
-    setLoadError(false);
-    if (onLoad) onLoad();
-  };
-  
-  const handleError = () => {
-    setIsLoading(false);
-    setLoadError(true);
-    
-    if (displayUrl) {
-      // Try to debug the URL issue
-      debugMediaUrl(displayUrl).then(result => {
-        console.log("Media URL debug result:", result);
-        
-        if (!isDebugErrorResponse(result)) {
-          // If content type mismatch detected, try to fix it
-          if (result.isJSON || 
-              (result.contentType && result.contentType.includes('application/json'))) {
-            
-            // Try to handle JSON content type issue
-            handleJsonContentTypeIssue(displayUrl).then(fixedUrl => {
-              if (fixedUrl) {
-                setFallbackUrl(fixedUrl);
-                setLoadError(false);
-                setIsLoading(true);
-              }
-            });
-          }
-        }
-      });
-    }
-    
-    console.error("Media load error:", { 
-      url: displayUrl,
-      item,
-      accessibleUrl
-    });
-    
-    if (retryCount < 2) {
-      setRetryCount(prev => prev + 1);
-      setTimeout(() => {
-        if (retryCount === 1 && !fallbackUrl && displayUrl) {
-          // On second retry, try force fetch approach
-          const mediaType = isVideo(item, displayUrl) ? 'video' : 'image';
-          forceFetchAsContentType(displayUrl, mediaType)
-            .then(forcedUrl => {
-              if (forcedUrl) {
-                setFallbackUrl(forcedUrl);
-                setLoadError(false);
-                setIsLoading(true);
-                return;
-              }
-              
-              // If that fails too, try a fresh URL
-              const freshUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
-              setDisplayUrl(freshUrl);
-              setLoadError(false);
-              setIsLoading(true);
-            });
-        } else {
-          // First retry - just use a fresh cache-busted URL
-          const freshUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
-          setDisplayUrl(freshUrl);
-          setLoadError(false);
-          setIsLoading(true);
-        }
-      }, 1000);
-    } else if (onError) {
-      onError();
-    }
-  };
-  
-  const handleEnded = () => {
-    if (onEnded) onEnded();
-  };
-  
-  const handleRetry = () => {
-    setLoadError(false);
-    setIsLoading(true);
-    setRetryCount(0);
-    
-    // On manual retry, try all approaches
-    if (displayUrl) {
-      // Try the content-type fix approach
-      handleJsonContentTypeIssue(displayUrl)
-        .then(fixedUrl => {
-          if (fixedUrl) {
-            setFallbackUrl(fixedUrl);
-            return;
-          }
-          
-          // If that fails, try force fetch
-          const mediaType = isVideo(item, displayUrl) ? 'video' : 'image';
-          return forceFetchAsContentType(displayUrl, mediaType);
-        })
-        .then(forcedUrl => {
-          if (forcedUrl) {
-            setFallbackUrl(forcedUrl);
-          } else {
-            // Last resort - fresh URL
-            const freshUrl = mediaUrl ? addCacheBuster(mediaUrl) : null;
-            setDisplayUrl(freshUrl);
-          }
-        });
-    }
-  };
-  
-  if (!displayUrl && !fallbackUrl) {
-    return <ErrorComponent 
-      message="Media unavailable" 
-      className={className} 
-      onRetry={handleRetry}
-    />;
+  const {
+    isLoading,
+    loadError,
+    retryCount,
+    accessibleUrl,
+    effectiveUrl,
+    isVideoContent,
+    handleLoad,
+    handleError,
+    handleRetry
+  } = useMediaHandler({
+    item,
+    onError,
+    onLoad
+  });
+
+  if (!effectiveUrl) {
+    return (
+      <div className={`flex items-center justify-center bg-luxury-darker/80 ${className}`}>
+        <p className="text-luxury-neutral py-8">Media unavailable</p>
+      </div>
+    );
   }
   
   const handleClick = (e: React.MouseEvent) => {
@@ -226,42 +62,19 @@ export const UniversalMedia = ({
     }
   };
 
-  // Determine which URL to use
-  const effectiveUrl = fallbackUrl || displayUrl;
-  
-  // Determine if content is video using the isVideo helper function
-  const isVideoContent = isVideo(item, effectiveUrl);
-
   return (
     <div 
       className={`relative overflow-hidden ${className}`}
       onClick={handleClick}
     >
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-          <Loader2 className="h-8 w-8 animate-spin text-white/80" />
-        </div>
-      )}
+      {isLoading && <MediaLoadingState />}
       
       {loadError && retryCount >= 3 && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10">
-          <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
-          <p className="text-white/80 mb-3 text-center px-4">
-            {!accessibleUrl 
-              ? "Media access error" 
-              : "Failed to load media"}
-          </p>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRetry();
-            }}
-            className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded"
-          >
-            <RefreshCw className="h-4 w-4" /> 
-            Retry
-          </button>
-        </div>
+        <MediaErrorState 
+          onRetry={handleRetry}
+          accessibleUrl={accessibleUrl}
+          retryCount={retryCount}
+        />
       )}
       
       {isVideoContent ? (
@@ -270,7 +83,7 @@ export const UniversalMedia = ({
           autoPlay={autoPlay}
           className="w-full h-full"
           onError={handleError}
-          onEnded={handleEnded}
+          onEnded={onEnded}
           onLoadedData={onLoadedData || handleLoad}
           creatorId={item?.creator_id}
           controls={controls}
