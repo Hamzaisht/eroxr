@@ -1,9 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
 import { getContentType } from "@/utils/mediaUtils";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { ErrorComponent } from "@/components/ErrorComponent";
 
 interface UniversalMediaProps {
@@ -33,6 +33,7 @@ export const UniversalMedia = ({
 }: UniversalMediaProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Get media URL using our utility function
   const mediaUrl = getPlayableMediaUrl(item);
@@ -50,6 +51,13 @@ export const UniversalMedia = ({
       displayUrl.toLowerCase().endsWith(".mov")
     ));
   
+  useEffect(() => {
+    // Reset states when item changes
+    setIsLoading(true);
+    setLoadError(false);
+    setRetryCount(0);
+  }, [item, mediaUrl]);
+  
   const handleLoad = () => {
     setIsLoading(false);
     setLoadError(false);
@@ -59,16 +67,33 @@ export const UniversalMedia = ({
   const handleError = () => {
     setIsLoading(false);
     setLoadError(true);
-    if (onError) onError();
     
     console.error("Media load error:", { 
       url: displayUrl,
       item 
     });
+    
+    // Try retry logic
+    if (retryCount < 2) {
+      setRetryCount(prev => prev + 1);
+      // Allow some time before retry
+      setTimeout(() => {
+        setLoadError(false);
+        setIsLoading(true);
+      }, 2000);
+    } else if (onError) {
+      onError();
+    }
   };
   
   const handleEnded = () => {
     if (onEnded) onEnded();
+  };
+  
+  const handleRetry = () => {
+    setLoadError(false);
+    setIsLoading(true);
+    setRetryCount(0);
   };
   
   // If media URL couldn't be determined
@@ -96,11 +121,21 @@ export const UniversalMedia = ({
         </div>
       )}
       
-      {/* Error state */}
-      {loadError && (
+      {/* Error state with retry */}
+      {loadError && retryCount >= 2 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10">
           <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
-          <p className="text-white/80">Failed to load media</p>
+          <p className="text-white/80 mb-3">Failed to load media</p>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRetry();
+            }}
+            className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded"
+          >
+            <RefreshCw className="h-4 w-4" /> 
+            Retry
+          </button>
         </div>
       )}
       
@@ -125,6 +160,7 @@ export const UniversalMedia = ({
           onLoad={handleLoad}
           onError={handleError}
           style={{ display: isLoading ? 'none' : 'block' }}
+          crossOrigin="anonymous"
         />
       )}
     </div>

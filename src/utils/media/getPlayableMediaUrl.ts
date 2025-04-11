@@ -19,6 +19,9 @@ export const addCacheBuster = (url: string | null): string | null => {
  * This function handles several different data structures and returns a usable URL.
  */
 export const getPlayableMediaUrl = (item: any): string | null => {
+  // Handle null or undefined input
+  if (!item) return null;
+
   // Handle array of URLs (return first valid one)
   if (item?.media_url && Array.isArray(item.media_url) && item.media_url.length > 0) {
     return getFirstValidUrl(item.media_url);

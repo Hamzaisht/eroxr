@@ -28,11 +28,11 @@ export const VideoPlayer = ({
   autoPlay = false,
   onError,
   onEnded,
+  onLoadedData,
   creatorId,
   playOnHover = false,
   showCloseButton = false,
   onClose,
-  onLoadedData,
   onClick,
   controls = true
 }: VideoPlayerProps) => {
@@ -40,12 +40,31 @@ export const VideoPlayer = ({
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const handleError = () => {
     setError(true);
     setIsLoading(false);
-    if (onError) onError();
+    console.error("Video error occurred for URL:", url);
+    
+    // Try to reload if we haven't tried too many times
+    if (retryCount < 2) {
+      setRetryCount(prevCount => prevCount + 1);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.src = '';
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.src = url;
+              videoRef.current.load();
+            }
+          }, 1000);
+        }
+      }, 2000);
+    } else if (onError) {
+      onError();
+    }
   };
   
   const handleLoad = () => {
@@ -79,9 +98,15 @@ export const VideoPlayer = ({
     const video = videoRef.current;
     if (!video) return;
     
+    // Reset retry count on url change
+    setRetryCount(0);
+    setIsLoading(true);
+    setError(false);
+    
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleVideoEnded = () => {
+      setIsPlaying(false);
       if (onEnded) onEnded();
     };
     
@@ -98,7 +123,7 @@ export const VideoPlayer = ({
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('ended', handleVideoEnded);
     };
-  }, [autoPlay, isLoading, onEnded]);
+  }, [autoPlay, isLoading, onEnded, url]);
 
   return (
     <div 
@@ -113,7 +138,7 @@ export const VideoPlayer = ({
       )}
       
       {/* Error state */}
-      {error && (
+      {error && retryCount >= 2 && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
           <div className="text-center">
             <AlertCircle className="mx-auto h-10 w-10 text-red-500 mb-2" />
@@ -138,7 +163,7 @@ export const VideoPlayer = ({
       />
       
       {/* Video controls overlay */}
-      {controls && (
+      {controls && !error && (
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity">
           <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-2">
             <Button
