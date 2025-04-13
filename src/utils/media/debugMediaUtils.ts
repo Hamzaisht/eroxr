@@ -1,11 +1,5 @@
 
 /**
- * Debugging utilities for media URLs
- */
-
-import { checkUrlContentType, inferContentTypeFromUrl } from './urlUtils';
-
-/**
  * Debug a media URL to identify common issues
  */
 export const debugMediaUrl = (url: string): void => {
@@ -16,8 +10,6 @@ export const debugMediaUrl = (url: string): void => {
   
   console.log(`Debugging media URL: ${url}`);
   
-  // Since we don't want to return a Promise, we'll log inside this function
-  // and not use async/await or .then syntax
   try {
     // Log the URL components to help identify issues
     const urlObj = new URL(url);
@@ -40,40 +32,58 @@ export const debugMediaUrl = (url: string): void => {
       console.log('URL already includes cache-busting parameters');
     }
     
-    // Make non-blocking content type check
-    checkUrlContentType(url).then(({ contentType, isValid, headers, status }) => {
-      console.log(`Content type: ${contentType || 'unknown'}`);
-      console.log(`Valid media type: ${isValid}`);
-      console.log(`Status code: ${status}`);
+    // Check for Supabase storage URL pattern
+    if (url.includes('storage/v1/object/public/')) {
+      console.log('URL is a Supabase storage URL');
       
-      if (!isValid) {
-        console.warn('Media type validation failed - URL may return incorrect content type');
+      // Check if the correct bucket is being used
+      const matches = url.match(/\/storage\/v1\/object\/public\/([^\/]+)/);
+      if (matches && matches[1]) {
+        console.log(`Bucket name: ${matches[1]}`);
         
-        // Suggest content type based on URL
-        const inferredType = inferContentTypeFromUrl(url);
-        if (inferredType) {
-          console.log(`Inferred content type from URL: ${inferredType}`);
+        // Validate bucket name
+        const validBuckets = ['media', 'posts', 'videos', 'avatars', 'banners', 'stories', 'shorts'];
+        if (!validBuckets.includes(matches[1])) {
+          console.warn(`Bucket '${matches[1]}' may not exist or is not standard`);
         }
       }
-    }).catch(error => {
-      console.error('Error checking content type:', error);
-    });
+    }
   } catch (error) {
-    console.error(`Failed to debug URL: ${error}`);
+    console.error(`Failed to analyze URL: ${error}`);
   }
 };
 
 /**
- * Check if the response indicates a debug error 
+ * Infer content type from file extension
  */
-export const isDebugErrorResponse = (response: any): boolean => {
-  if (!response) return false;
-  
-  const isError = response.error || 
-                  response.status === 'error' || 
-                  (response.data && response.data.error);
-                  
-  return isError;
+export const inferContentTypeFromUrl = (url: string): string | null => {
+  try {
+    // Remove query parameters and get the path
+    const urlPath = url.split('?')[0];
+    // Get the extension
+    const extension = urlPath.split('.').pop()?.toLowerCase();
+    
+    if (!extension) return null;
+    
+    // Map extensions to content types
+    const contentTypeMap: Record<string, string> = {
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'webp': 'image/webp',
+      'svg': 'image/svg+xml',
+      'mp4': 'video/mp4',
+      'mov': 'video/quicktime',
+      'webm': 'video/webm',
+      'avi': 'video/x-msvideo'
+    };
+    
+    return contentTypeMap[extension] || null;
+  } catch (error) {
+    console.warn('Failed to infer content type:', error);
+    return null;
+  }
 };
 
 /**
@@ -124,7 +134,7 @@ export const fetchImageAsBlob = async (url: string): Promise<string | null> => {
 };
 
 /**
- * Try to extract a direct path from a storage URL
+ * Extract a direct path from a storage URL
  */
 export const extractDirectImagePath = (url: string): string | null => {
   try {
@@ -149,154 +159,11 @@ export const extractDirectImagePath = (url: string): string | null => {
   }
 };
 
-/**
- * Handle case when server returns JSON instead of media content
- */
-export const handleJsonContentTypeIssue = async (url: string): Promise<string | null> => {
-  try {
-    // Try to fetch the content and see if it's JSON
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache',
-      },
-      cache: 'no-store',
-    });
-    
-    if (!response.ok) {
-      return null;
-    }
-    
-    // Try to parse as JSON to see if we're getting an error response
-    const text = await response.text();
-    
-    try {
-      const json = JSON.parse(text);
-      console.warn('Server returned JSON instead of media:', json);
-      
-      if (json.signedURL) {
-        console.log('Found signedURL in response, using it instead');
-        return json.signedURL;
-      }
-      
-      if (json.url) {
-        console.log('Found url in response, using it instead');
-        return json.url;
-      }
-      
-      return null;
-    } catch {
-      // Not JSON, probably correct media response
-      return url;
-    }
-  } catch (error) {
-    console.warn('JSON content type check failed:', error);
-    return null;
-  }
-};
-
-/**
- * Force fetch a URL as a specific content type
- */
-export const forceFetchAsContentType = async (
-  url: string, 
-  type: 'image' | 'video' | 'audio'
-): Promise<string | null> => {
-  try {
-    // Determine expected content type
-    let expectedType = 'application/octet-stream';
-    switch (type) {
-      case 'image':
-        expectedType = 'image/jpeg'; // Default to JPEG
-        break;
-      case 'video':
-        expectedType = 'video/mp4'; // Default to MP4
-        break;
-      case 'audio':
-        expectedType = 'audio/mpeg'; // Default to MP3
-        break;
-    }
-    
-    // Try to infer more specific content type from URL
-    const inferredType = inferContentTypeFromUrl(url);
-    if (inferredType) {
-      expectedType = inferredType;
-    }
-    
-    // Fetch and create a blob with correct content type
-    const response = await fetch(url, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
-    });
-    
-    if (!response.ok) {
-      return null;
-    }
-    
-    const originalBlob = await response.blob();
-    const fixedBlob = new Blob([await originalBlob.arrayBuffer()], { 
-      type: expectedType 
-    });
-    
-    return URL.createObjectURL(fixedBlob);
-  } catch (error) {
-    console.warn('Force fetch failed:', error);
-    return null;
-  }
-};
-
-/**
- * Try all possible strategies for loading an image
- */
-export const tryAllImageLoadingStrategies = async (url: string): Promise<{
-  success: boolean;
-  url: string | null;
-  strategy: string;
-}> => {
-  // Try different strategies in sequence
-  try {
-    // 1. First try direct blob fetch
-    const blobUrl = await fetchImageAsBlob(url);
-    if (blobUrl) {
-      return { success: true, url: blobUrl, strategy: 'blob' };
-    }
-    
-    // 2. Try CORS workaround
-    const corsUrl = await attemptImageCorsWorkaround(url);
-    if (corsUrl) {
-      return { success: true, url: corsUrl, strategy: 'cors-workaround' };
-    }
-    
-    // 3. Try extracting direct path
-    const directPath = extractDirectImagePath(url);
-    if (directPath) {
-      const directUrl = await fetchImageAsBlob(directPath);
-      if (directUrl) {
-        return { success: true, url: directUrl, strategy: 'direct-path' };
-      }
-    }
-    
-    // 4. Check for content type issues
-    const jsonFixUrl = await handleJsonContentTypeIssue(url);
-    if (jsonFixUrl && jsonFixUrl !== url) {
-      const fixedUrl = await fetchImageAsBlob(jsonFixUrl);
-      if (fixedUrl) {
-        return { success: true, url: fixedUrl, strategy: 'json-fix' };
-      }
-    }
-    
-    // 5. Force content type
-    const forcedUrl = await forceFetchAsContentType(url, 'image');
-    if (forcedUrl) {
-      return { success: true, url: forcedUrl, strategy: 'forced-type' };
-    }
-    
-    // All strategies failed
-    return { success: false, url: null, strategy: 'none' };
-  } catch (error) {
-    console.error('All image loading strategies failed:', error);
-    return { success: false, url: null, strategy: 'error' };
-  }
+// Export only relevant functions
+export {
+  debugMediaUrl,
+  inferContentTypeFromUrl,
+  fetchImageAsBlob,
+  attemptImageCorsWorkaround,
+  extractDirectImagePath
 };

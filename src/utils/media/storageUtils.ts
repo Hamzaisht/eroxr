@@ -8,14 +8,7 @@ export const getFirstValidUrl = (urls: string[]): string | null => {
   if (!urls || !Array.isArray(urls) || urls.length === 0) return null;
   
   // Find first non-empty URL
-  const firstUrl = urls.find(url => !!url);
-  if (!firstUrl) return null;
-  
-  // If it's already a full URL, return it
-  if (firstUrl.startsWith('http') || firstUrl.startsWith('/api/')) return firstUrl;
-  
-  // Get the public URL from Supabase storage
-  return getStoragePublicUrl(firstUrl);
+  return urls.find(url => !!url) || null;
 };
 
 /**
@@ -24,6 +17,9 @@ export const getFirstValidUrl = (urls: string[]): string | null => {
 export const getStoragePublicUrl = (path: string): string | null => {
   if (!path) return null;
   
+  // If it's already a full URL, return it
+  if (path.startsWith('http')) return path;
+
   // Ensure the path doesn't start with /
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
   
@@ -45,15 +41,11 @@ export const getStoragePublicUrl = (path: string): string | null => {
   }
   
   try {
-    // Get a public URL
-    const publicUrlData = supabase.storage.from(bucket).getPublicUrl(finalPath);
-    const publicUrl = publicUrlData.data.publicUrl;
-    
-    // Log for debugging
-    console.debug(`Resolved ${path} to ${publicUrl}`);
+    // Get a public URL - direct approach
+    const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
     
     // Return the URL immediately for synchronous use
-    return publicUrl;
+    return data.publicUrl;
   } catch (e) {
     console.error(`Failed to get public URL for ${path} in bucket ${bucket}:`, e);
     return null;
@@ -62,10 +54,12 @@ export const getStoragePublicUrl = (path: string): string | null => {
 
 /**
  * Gets an authenticated URL for protected resources
- * Use this for resources that require authentication
  */
 export const getAuthenticatedUrl = async (path: string): Promise<string | null> => {
   if (!path) return null;
+  
+  // If it's already a full URL, return it
+  if (path.startsWith('http')) return path;
   
   // Clean the path and determine bucket
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
@@ -94,22 +88,12 @@ export const getAuthenticatedUrl = async (path: string): Promise<string | null> 
       .createSignedUrl(finalPath, 60 * 60); // 1 hour expiry
       
     if (data?.signedUrl && !error) {
-      console.debug(`Generated signed URL for protected resource ${path}: ${data.signedUrl}`);
       return data.signedUrl;
     }
     
-    // Fall back to public URL with timestamp
+    // Fall back to public URL
     const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(finalPath);
-    const publicUrl = publicUrlData.publicUrl;
-    
-    // Add timestamp to URL to prevent caching
-    const timestamp = Date.now();
-    const url = publicUrl.includes('?') ? 
-      `${publicUrl}&t=${timestamp}` : 
-      `${publicUrl}?t=${timestamp}`;
-    
-    console.debug(`Generated URL for ${path}: ${url}`);
-    return url;
+    return publicUrlData.publicUrl;
   } catch (e) {
     console.error(`Failed to get URL for ${path}:`, e);
     return null;

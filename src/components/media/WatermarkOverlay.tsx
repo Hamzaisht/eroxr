@@ -1,30 +1,44 @@
 
 import { useState, useEffect } from "react";
-import { getUsernameForWatermark } from "@/utils/watermarkUtils";
+import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WatermarkOverlayProps {
-  username: string;
-  creatorId?: string;  // Added creatorId as optional prop
-  className?: string;
+  creatorId: string;
 }
 
-export const WatermarkOverlay = ({ username, creatorId, className = "" }: WatermarkOverlayProps) => {
-  const [displayName, setDisplayName] = useState<string>("");
-
+export const WatermarkOverlay = ({ creatorId }: WatermarkOverlayProps) => {
+  const [username, setUsername] = useState<string>("");
+  
   useEffect(() => {
-    // If creatorId is provided, use that, otherwise use username
-    const idToUse = creatorId || username;
+    const fetchUsername = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", creatorId)
+          .single();
+          
+        if (data && !error) {
+          setUsername(data.username || "");
+        }
+      } catch (error) {
+        console.error("Error fetching username for watermark:", error);
+      }
+    };
     
-    getUsernameForWatermark(idToUse)
-      .then(name => setDisplayName(name))
-      .catch(err => console.error("Error fetching watermark name:", err));
-  }, [username, creatorId]);
-
-  if (!displayName) return null;
-
+    if (creatorId) {
+      fetchUsername();
+    }
+  }, [creatorId]);
+  
+  if (!username) return null;
+  
   return (
-    <div className={`absolute bottom-2 right-2 text-xs text-white/60 bg-black/30 px-2 py-1 rounded ${className}`}>
-      @{displayName}
+    <div className="absolute bottom-2 right-2 bg-black/30 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
+      @{username}
     </div>
   );
 };
+
+export default WatermarkOverlay;
