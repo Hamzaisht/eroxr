@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -185,11 +186,10 @@ export const ShortItem = ({
   const handleVideoError = () => {
     console.error("Video error for short:", short?.id, videoUrl);
     
-    // Debug the URL when error occurs
+    // Debug the URL when error occurs - fixed by removing .then()
     if (videoUrlWithCacheBuster) {
-      debugMediaUrl(videoUrlWithCacheBuster).then(result => {
-        console.log("Short video URL debug result:", result);
-      });
+      debugMediaUrl(videoUrlWithCacheBuster);
+      console.log("Debugging video URL:", videoUrlWithCacheBuster);
     }
     
     setVideoError(true);
