@@ -45,6 +45,21 @@ export const getStoragePublicUrl = (path: string): string | null => {
   }
   
   try {
+    // First try to get a signed URL for better access
+    try {
+      const { data, error } = supabase.storage
+        .from(bucket)
+        .createSignedUrl(finalPath, 60 * 60); // 1 hour expiry
+        
+      if (data?.signedUrl && !error) {
+        console.debug(`Generated signed URL for ${path}: ${data.signedUrl}`);
+        return data.signedUrl;
+      }
+    } catch (signError) {
+      console.warn(`Failed to get signed URL for ${path}:`, signError);
+      // Fall back to public URL approach
+    }
+    
     // Get the public URL from Supabase without authentication
     const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
     const publicUrl = data.publicUrl;
@@ -86,6 +101,21 @@ export const getAuthenticatedUrl = async (path: string): Promise<string | null> 
   }
   
   try {
+    // First try to get a signed URL for better access
+    try {
+      const { data, error } = supabase.storage
+        .from(bucket)
+        .createSignedUrl(finalPath, 60 * 60); // 1 hour expiry
+        
+      if (data?.signedUrl && !error) {
+        console.debug(`Generated signed URL for protected resource ${path}: ${data.signedUrl}`);
+        return data.signedUrl;
+      }
+    } catch (signError) {
+      console.warn(`Failed to get signed URL for ${path}:`, signError);
+      // Fall back to public URL approach
+    }
+    
     // Get the public URL with timestamp to avoid caching
     const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
     const publicUrl = data.publicUrl;

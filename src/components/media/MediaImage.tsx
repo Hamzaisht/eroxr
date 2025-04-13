@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
@@ -15,6 +14,7 @@ import {
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 import { cn } from "@/lib/utils";
 import { checkUrlContentType, inferContentTypeFromUrl, fixUrlContentType } from "@/utils/media/urlUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MediaImageProps {
   url: string | null;
@@ -46,11 +46,7 @@ export const MediaImage = ({
   const [isCorsError, setIsCorsError] = useState(false);
   const [isContentTypeMismatch, setIsContentTypeMismatch] = useState(false);
   const [loadingStrategy, setLoadingStrategy] = useState<string>('standard');
-  const [contentTypeInfo, setContentTypeInfo] = useState<{
-    contentType: string | null;
-    isValid: boolean;
-  }>({ contentType: null, isValid: true });
-  
+
   useEffect(() => {
     if (!url) {
       setLoadError(true);
@@ -67,93 +63,56 @@ export const MediaImage = ({
       setIsContentTypeMismatch(false);
       setLoadingStrategy('standard');
       
-      // Process the URL
+      // Generate basic URL
       const processedUrl = getPlayableMediaUrl({ media_url: url });
       let cachedUrl = processedUrl ? addCacheBuster(processedUrl) : null;
       
       console.log("MediaImage - original URL:", url);
       console.log("MediaImage - processed URL:", processedUrl);
       
-      // Try alternate path approach if the URL contains storage/v1/object/public
-      const directUrl = processedUrl ? extractDirectImagePath(processedUrl) : null;
-      if (directUrl) {
-        console.log("Trying direct path approach:", directUrl);
-        cachedUrl = addCacheBuster(directUrl);
-        setLoadingStrategy('direct-path');
-      }
-      
-      setDisplayUrl(cachedUrl);
-      
-      // Pre-check content type
-      if (cachedUrl && !cachedUrl.startsWith('data:') && !cachedUrl.includes(window.location.origin)) {
+      // If URL contains Supabase storage and appears to be failing, try to get a signed URL
+      if (processedUrl && processedUrl.includes('supabase') && processedUrl.includes('/storage/v1/object/public/')) {
         try {
-          // Check URL content type
-          const contentTypeResult = await checkUrlContentType(cachedUrl);
-          setContentTypeInfo({
-            contentType: contentTypeResult.contentType,
-            isValid: contentTypeResult.isValid
-          });
+          // Extract bucket and path information
+          const storagePattern = /\/storage\/v1\/object\/public\/([^\/]+)\/(.+)/;
+          const match = processedUrl.match(storagePattern);
           
-          console.log(`Content type check for ${cachedUrl}:`, contentTypeResult);
-          
-          // Handle content type issues
-          if (
-            !contentTypeResult.isValid && 
-            contentTypeResult.status === 200 &&
-            contentTypeResult.contentType === 'application/json'
-          ) {
-            // We have a content type mismatch - wrong content type but successful response
-            setIsContentTypeMismatch(true);
+          if (match) {
+            const bucket = match[1];
+            const path = match[2].split('?')[0]; // Remove query params
             
-            // Try to infer correct content type from URL
-            const inferredType = inferContentTypeFromUrl(cachedUrl);
-            if (inferredType) {
-              console.log(`Inferred content type: ${inferredType} for ${cachedUrl}`);
+            console.log(`Trying signed URL approach for bucket: ${bucket}, path: ${path}`);
+            
+            // Try to get a signed URL with extended expiry
+            const { data, error } = await supabase.storage
+              .from(bucket)
+              .createSignedUrl(path, 60 * 60); // 1 hour expiry
               
-              // Fix the content type
-              const fixedUrl = await fixUrlContentType(cachedUrl, inferredType);
-              if (fixedUrl && fixedUrl !== cachedUrl) {
-                setFallbackDataUrl(fixedUrl);
-                setUseFallbackImage(true);
-                setLoadingStrategy('content-type-fix');
-                console.log(`Fixed content type using blob URL: ${fixedUrl}`);
-                return;
-              }
-            }
-            
-            // If we couldn't infer or fix, try additional strategies
-            const result = await tryAllImageLoadingStrategies(cachedUrl);
-            if (result.success) {
-              setFallbackDataUrl(result.url);
-              setUseFallbackImage(true);
-              setLoadingStrategy(`inferred-${result.strategy}`);
-              return;
-            }
-          } else if (!contentTypeResult.isValid) {
-            // Try debug utility
-            const debugResult = await debugMediaUrl(cachedUrl);
-            console.log("URL debug result:", debugResult);
-            
-            if (isDebugErrorResponse(debugResult) && debugResult.isCorsError) {
-              setIsCorsError(true);
-              const corsWorkaround = await attemptImageCorsWorkaround(cachedUrl);
-              setFallbackDataUrl(corsWorkaround);
-              setUseFallbackImage(true);
-              setLoadingStrategy('cors-error-preemptive');
-            } else if (!isDebugErrorResponse(debugResult) && debugResult.contentType?.includes('application/json')) {
-              // Handle JSON content type
-              const fixedUrl = await handleJsonContentTypeIssue(cachedUrl);
-              if (fixedUrl) {
-                setFallbackDataUrl(fixedUrl);
-                setUseFallbackImage(true);
-                setLoadingStrategy('json-content-fix');
-              }
+            if (data?.signedUrl && !error) {
+              console.log("Successfully created signed URL:", data.signedUrl);
+              cachedUrl = data.signedUrl;
+              setLoadingStrategy('signed-url');
+            } else {
+              console.warn("Failed to create signed URL:", error);
             }
           }
         } catch (err) {
-          console.error("Error during URL pre-check:", err);
+          console.error("Error creating signed URL:", err);
         }
       }
+      
+      // Try direct path as backup strategy
+      const directUrl = processedUrl ? extractDirectImagePath(processedUrl) : null;
+      if (directUrl && (!cachedUrl || cachedUrl.includes('supabase'))) {
+        console.log("Also trying direct path approach:", directUrl);
+        // Keep the signed URL as primary, but store direct URL as backup
+        if (!cachedUrl) {
+          cachedUrl = addCacheBuster(directUrl);
+          setLoadingStrategy('direct-path');
+        }
+      }
+      
+      setDisplayUrl(cachedUrl);
     };
     
     processUrl();
@@ -170,45 +129,26 @@ export const MediaImage = ({
     setIsLoading(false);
     setLoadError(true);
     
-    // Debug the URL
+    // Debug and attempt recovery
     if (displayUrl) {
       console.error(`Image load error for URL: ${displayUrl}`);
       
-      // Check if we need to try fixing content type
-      if (isContentTypeMismatch || contentTypeInfo.contentType === 'application/json') {
-        // Try fixing the content type
-        const inferredType = inferContentTypeFromUrl(displayUrl);
-        
-        if (inferredType) {
-          console.log(`Attempting to fix content type to ${inferredType}`);
-          
-          fixUrlContentType(displayUrl, inferredType)
-            .then(fixedUrl => {
-              if (fixedUrl !== displayUrl) {
-                setFallbackDataUrl(fixedUrl);
-                setUseFallbackImage(true);
-                setIsLoading(true);
-                setLoadError(false);
-                setLoadingStrategy('error-content-type-fix');
-              }
-            })
-            .catch(err => {
-              console.error("Content type fix failed:", err);
-            });
-          
-          return;
-        }
-      }
-      
-      // Try fallback approaches
-      if (retryCount < 2) {
+      // Try different strategies for recovery
+      if (retryCount < 3) {
         setRetryCount(prev => prev + 1);
         
         setTimeout(() => {
-          if (retryCount === 1) {
-            // On second retry, try force fetch approach
-            const mediaType = 'image';
-            forceFetchAsContentType(displayUrl, mediaType)
+          // On first retry - add a new cache buster
+          if (retryCount === 0) {
+            const freshUrl = url ? addCacheBuster(getPlayableMediaUrl({ media_url: url })) : null;
+            setDisplayUrl(freshUrl);
+            setIsLoading(true);
+            setLoadError(false);
+            setLoadingStrategy('fresh-url-retry');
+          } 
+          // On second retry - try force fetch approach
+          else if (retryCount === 1) {
+            forceFetchAsContentType(displayUrl!, 'image')
               .then(forcedUrl => {
                 if (forcedUrl) {
                   setFallbackDataUrl(forcedUrl);
@@ -216,23 +156,46 @@ export const MediaImage = ({
                   setIsLoading(true);
                   setLoadError(false);
                   setLoadingStrategy('forced-type-retry');
-                  return;
+                } else {
+                  // If that fails, try direct URL
+                  const directPath = url && extractDirectImagePath(url);
+                  if (directPath) {
+                    const directUrl = addCacheBuster(directPath);
+                    setDisplayUrl(directUrl);
+                    setIsLoading(true);
+                    setLoadError(false);
+                    setLoadingStrategy('direct-path-retry');
+                  }
                 }
-                
-                // If that fails too, try a fresh URL
-                const freshUrl = url ? addCacheBuster(getPlayableMediaUrl({ media_url: url })) : null;
-                setDisplayUrl(freshUrl);
-                setIsLoading(true);
-                setLoadError(false);
-                setLoadingStrategy('fresh-url-retry');
               });
-          } else {
-            // First retry - use a fresh cache-busted URL
-            const freshUrl = url ? addCacheBuster(getPlayableMediaUrl({ media_url: url })) : null;
-            setDisplayUrl(freshUrl);
-            setIsLoading(true);
-            setLoadError(false);
-            setLoadingStrategy('simple-retry');
+          }
+          // On third retry - try signed URL approach directly
+          else if (retryCount === 2 && url && url.includes('supabase')) {
+            try {
+              // Extract bucket and path information
+              const storagePattern = /\/storage\/v1\/object\/public\/([^\/]+)\/(.+)/;
+              const match = url.match(storagePattern);
+              
+              if (match) {
+                const bucket = match[1];
+                const path = match[2].split('?')[0]; // Remove query params
+                
+                // Try to get a signed URL with extended expiry
+                supabase.storage
+                  .from(bucket)
+                  .createSignedUrl(path, 60 * 60 * 24) // 24 hour expiry
+                  .then(({ data }) => {
+                    if (data?.signedUrl) {
+                      setDisplayUrl(data.signedUrl);
+                      setIsLoading(true);
+                      setLoadError(false);
+                      setLoadingStrategy('direct-signed-url');
+                    }
+                  });
+              }
+            } catch (err) {
+              console.error("Error in third retry:", err);
+            }
           }
         }, 1000);
       } else if (onError) {
@@ -248,55 +211,71 @@ export const MediaImage = ({
     setIsLoading(true);
     setLoadError(false);
     setUseFallbackImage(false);
-    setIsContentTypeMismatch(false);
-    setIsCorsError(false);
     
-    // Try all strategies at once
+    // Try all strategies at once for manual retry
     if (url) {
-      const processedUrl = getPlayableMediaUrl({ media_url: url });
-      if (processedUrl) {
-        // First try to fix the content type
-        const inferredType = inferContentTypeFromUrl(processedUrl);
-        if (inferredType) {
-          fixUrlContentType(processedUrl, inferredType)
-            .then(fixedUrl => {
-              if (fixedUrl !== processedUrl) {
-                setFallbackDataUrl(fixedUrl);
-                setUseFallbackImage(true);
-                setLoadingStrategy('manual-retry-fix');
-                return;
-              }
-              return forceFetchAsContentType(processedUrl, 'image');
-            })
-            .then(forcedUrl => {
-              if (forcedUrl) {
-                setFallbackDataUrl(forcedUrl);
-                setUseFallbackImage(true);
-                setLoadingStrategy('manual-retry-forced');
-              } else {
-                // Last resort - try all strategies
-                return tryAllImageLoadingStrategies(processedUrl);
-              }
-            })
-            .then(result => {
-              if (result && result.success) {
-                setFallbackDataUrl(result.url);
-                setUseFallbackImage(true);
-                setLoadingStrategy(`manual-retry-${result.strategy}`);
-              } else {
-                const freshUrl = addCacheBuster(processedUrl);
-                setDisplayUrl(freshUrl);
-                setLoadingStrategy('manual-retry-standard');
-              }
-            })
-            .catch(() => {
-              // Fallback to standard approach
-              const freshUrl = addCacheBuster(processedUrl);
-              setDisplayUrl(freshUrl);
-              setLoadingStrategy('manual-retry-fallback');
-            });
-        } else {
-          // If we can't infer type, try all strategies
+      // This is a user-initiated retry, so we'll be more aggressive
+      // Start by getting a fresh signed URL if it's a Supabase URL
+      if (url.includes('supabase') && url.includes('/storage/v1/object/')) {
+        try {
+          const storagePattern = /\/storage\/v1\/object\/public\/([^\/]+)\/(.+)/;
+          const match = url.match(storagePattern);
+          
+          if (match) {
+            const bucket = match[1];
+            const path = match[2].split('?')[0]; // Remove query params
+            
+            // Try to get a signed URL with extended expiry
+            supabase.storage
+              .from(bucket)
+              .createSignedUrl(path, 60 * 60 * 24) // 24 hour expiry
+              .then(({ data }) => {
+                if (data?.signedUrl) {
+                  console.log("Manual retry: Got fresh signed URL");
+                  setDisplayUrl(data.signedUrl);
+                  setLoadingStrategy('manual-signed-url');
+                  return;
+                }
+                
+                // If signed URL fails, try direct path approach
+                const directPath = extractDirectImagePath(url);
+                if (directPath) {
+                  console.log("Manual retry: Trying direct path");
+                  setDisplayUrl(addCacheBuster(directPath));
+                  setLoadingStrategy('manual-direct-path');
+                } else {
+                  // Last resort - fresh standard URL
+                  const freshUrl = addCacheBuster(url);
+                  setDisplayUrl(freshUrl);
+                  setLoadingStrategy('manual-standard');
+                }
+              })
+              .catch(() => {
+                // Try direct blob fetch as fallback
+                fetchImageAsBlob(url).then(blobUrl => {
+                  if (blobUrl) {
+                    setFallbackDataUrl(blobUrl);
+                    setUseFallbackImage(true);
+                    setLoadingStrategy('manual-blob');
+                  } else {
+                    const freshUrl = addCacheBuster(url);
+                    setDisplayUrl(freshUrl);
+                    setLoadingStrategy('manual-fallback');
+                  }
+                });
+              });
+          }
+        } catch (err) {
+          console.error("Error in manual retry:", err);
+          const freshUrl = addCacheBuster(url);
+          setDisplayUrl(freshUrl);
+          setLoadingStrategy('manual-error-fallback');
+        }
+      } else {
+        // Non-Supabase URL, try standard approaches
+        const processedUrl = getPlayableMediaUrl({ media_url: url });
+        if (processedUrl) {
+          // Try all strategies
           tryAllImageLoadingStrategies(processedUrl)
             .then(result => {
               if (result.success) {
@@ -344,15 +323,11 @@ export const MediaImage = ({
         </div>
       )}
       
-      {loadError && retryCount >= 2 && (
+      {loadError && retryCount >= 3 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10">
           <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
           <p className="text-white/80 mb-3 text-center px-4">
-            {isCorsError 
-              ? "Cross-origin error: can't load image" 
-              : isContentTypeMismatch
-                ? "Content type mismatch error"
-                : "Failed to load image"}
+            Failed to load image
           </p>
           <button 
             onClick={(e) => {
@@ -366,12 +341,11 @@ export const MediaImage = ({
           </button>
           <div className="text-white/50 text-xs mt-2 px-2 text-center">
             {loadingStrategy !== 'standard' && `Last attempt: ${loadingStrategy}`}
-            {contentTypeInfo.contentType && ` (server returned: ${contentTypeInfo.contentType})`}
           </div>
         </div>
       )}
       
-      {/* Use fallback data URL if we have CORS issues or content type mismatch */}
+      {/* Use fallback data URL if available */}
       {useFallbackImage && fallbackDataUrl ? (
         <img
           src={fallbackDataUrl}

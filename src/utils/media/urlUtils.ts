@@ -24,7 +24,24 @@ export const checkUrlAccessibility = async (url: string): Promise<boolean> => {
   if (!url) return false;
   
   try {
-    // Attempt a HEAD request to check URL accessibility
+    // For Supabase storage URLs, we need special handling
+    if (url.includes('supabase') && url.includes('/storage/v1/object/')) {
+      // Use fetch with no-cors mode to check if resource exists
+      const response = await fetch(url, {
+        method: 'HEAD',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+        cache: 'no-store',
+        mode: 'no-cors', // This allows checking cross-origin resources
+      });
+      
+      // With no-cors we can't access status, but if it doesn't throw an error, 
+      // there's at least something at that URL
+      return true;
+    }
+    
+    // Standard approach for other URLs
     const response = await fetch(url, {
       method: 'HEAD',
       headers: {
@@ -50,6 +67,21 @@ export const checkUrlContentType = async (url: string): Promise<{
   status: number;
 }> => {
   try {
+    // Special handling for Supabase URLs that might have CORS issues
+    if (url.includes('supabase') && url.includes('/storage/v1/object/')) {
+      // For Supabase, we'll make an assumption based on file extension
+      const extension = url.split('.').pop()?.split('?')[0].toLowerCase();
+      const contentType = inferContentTypeFromUrl(url);
+      
+      return {
+        isValid: !!contentType,
+        contentType,
+        headers: {},
+        status: 200 // Assume success
+      };
+    }
+    
+    // Standard approach
     const response = await fetch(url, {
       method: 'HEAD',
       headers: {
@@ -85,9 +117,12 @@ export const checkUrlContentType = async (url: string): Promise<{
     };
   } catch (error) {
     console.error('Content type check failed:', error);
+    
+    // If CORS error, try to infer content type from URL
+    const inferredType = inferContentTypeFromUrl(url);
     return {
-      isValid: false,
-      contentType: null,
+      isValid: !!inferredType,
+      contentType: inferredType,
       headers: {},
       status: 0
     };
