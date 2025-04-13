@@ -16,7 +16,7 @@ export {
 } from './media/mediaTypeUtils';
 
 export {
-  createUserFilePath as createUniqueFilePath,
+  createUserFilePath as createUniqueFilePath, 
   generateUniqueFileName, 
   formatFileSize,
   createFilePreview,
@@ -33,18 +33,10 @@ export {
 } from './upload/validators';
 
 export {
-  addCacheBuster as refreshUrl,
+  addCacheBuster as refreshUrl, // Keep only this refreshUrl export
   checkUrlContentType,
   inferContentTypeFromUrl,
   fixUrlContentType,
   checkUrlAccessibility
 } from './media/urlUtils';
 
-// Legacy helper function to refresh URLs with cache busting
-export const refreshUrl = (url: string): string => {
-  if (!url) return '';
-  const timestamp = Date.now();
-  return url.includes('?') 
-    ? `${url}&t=${timestamp}` 
-    : `${url}?t=${timestamp}`;
-};
