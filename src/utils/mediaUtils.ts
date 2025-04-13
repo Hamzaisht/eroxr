@@ -32,11 +32,20 @@ export {
   SUPPORTED_VIDEO_TYPES
 } from './upload/validators';
 
+// Export from urlUtils but rename to avoid conflict with the legacy name
 export {
-  addCacheBuster as refreshUrl, // Keep only this refreshUrl export
+  addCacheBuster, // Export without renaming to avoid conflicts
   checkUrlContentType,
   inferContentTypeFromUrl,
   fixUrlContentType,
   checkUrlAccessibility
 } from './media/urlUtils';
 
+// Create a utility function to avoid conflicts with other exports
+export const refreshMediaUrl = (url: string): string => {
+  if (!url) return '';
+  const timestamp = Date.now();
+  return url.includes('?') 
+    ? `${url}&t=${timestamp}` 
+    : `${url}?t=${timestamp}`;
+};
