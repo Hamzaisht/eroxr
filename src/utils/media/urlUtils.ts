@@ -5,9 +5,15 @@
 
 /**
  * Add cache busting parameters to a URL
+ * Use sparingly to avoid excessive cache busting
  */
 export const addCacheBuster = (url: string): string => {
   if (!url) return '';
+  
+  // If URL already has cache busting parameters, don't add more
+  if (url.includes('t=') && url.includes('r=')) {
+    return url;
+  }
   
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
@@ -105,7 +111,6 @@ export const checkUrlContentType = async (url: string): Promise<{
       contentType.startsWith('audio/')
     );
     
-    console.log(`Content type for ${url}: ${contentType} (valid: ${isValid})`);
     if (!isValid) {
       console.warn('Invalid content type detected:', headersObj);
     }

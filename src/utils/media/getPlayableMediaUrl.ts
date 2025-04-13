@@ -1,6 +1,5 @@
 
 import { getFirstValidUrl, getStoragePublicUrl } from "./storageUtils";
-import { addCacheBuster, checkUrlAccessibility } from "./urlUtils";
 
 /**
  * Generate a playable media URL from an item record.
@@ -42,19 +41,6 @@ export const getPlayableMediaUrl = (item: any): string | null => {
   // If it's already a full URL, return it directly
   if (typeof firstValidUrl === 'string') {
     if (firstValidUrl.startsWith('http') || firstValidUrl.startsWith('/api/')) {
-      // For Supabase storage URLs, try to add a token if they're protected
-      if (firstValidUrl.includes('supabase') && firstValidUrl.includes('/storage/v1/object/')) {
-        // Try to use a signed URL for better access
-        try {
-          // Add a timestamp parameter to avoid caching issues
-          const timestamp = new Date().getTime();
-          return `${firstValidUrl}${firstValidUrl.includes('?') ? '&' : '?'}t=${timestamp}`;
-        } catch (e) {
-          console.warn("Error creating signed URL:", e);
-          return firstValidUrl;
-        }
-      }
-      
       return firstValidUrl;
     }
     

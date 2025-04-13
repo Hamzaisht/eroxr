@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Loader2, AlertCircle, X, RefreshCw } from "lucide-react";
@@ -89,7 +88,6 @@ export const VideoPlayer = ({
     console.error("Video error occurred for URL:", url);
     
     if (url) {
-      // Fixed by removing .then()
       debugMediaUrl(url);
       console.log("Debugging URL for video error:", url);
     }
