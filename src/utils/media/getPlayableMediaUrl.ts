@@ -1,5 +1,6 @@
 
 import { getFirstValidUrl, getStoragePublicUrl } from "./storageUtils";
+import { addCacheBuster, checkUrlAccessibility } from "./urlUtils";
 
 /**
  * Generate a playable media URL from an item record.
@@ -53,6 +54,6 @@ export const getPlayableMediaUrl = (item: any): string | null => {
   return null;
 };
 
-// Re-export the functions from other files for backward compatibility
+// Re-export the functions from other files for easy access
 export { addCacheBuster, checkUrlAccessibility } from "./urlUtils";
-export { getAuthenticatedUrl } from "./storageUtils";
+
