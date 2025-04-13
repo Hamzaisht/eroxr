@@ -12,6 +12,7 @@ export const addCacheBuster = (url: string): string => {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
   
+  // Use both timestamp and random string for effective cache busting
   return url.includes('?') 
     ? `${url}&t=${timestamp}&r=${random}` 
     : `${url}?t=${timestamp}&r=${random}`;

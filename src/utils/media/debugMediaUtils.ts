@@ -1,200 +1,94 @@
 
 /**
- * Utilities to help debug and fix media URL issues
+ * Utility functions for debugging media loading issues
  */
 
-type DebugResult = {
-  url: string;
-  isAccessible: boolean;
-  statusCode?: number;
-  contentType?: string | null;
-  headers?: Record<string, string>;
-  isJSON?: boolean;
-  error?: string;
-};
-
-type ErrorResponse = {
-  error: string;
-  isCorsError?: boolean;
-  isNetworkError?: boolean;
-};
-
-/**
- * Check if a debug response is an error
- */
-export const isDebugErrorResponse = (response: DebugResult | ErrorResponse): response is ErrorResponse => {
-  return 'error' in response && typeof response.error === 'string';
-};
-
-/**
- * Debug a media URL to find issues
- */
-export const debugMediaUrl = async (url: string): Promise<DebugResult | ErrorResponse> => {
+// Log verbose info about a URL
+export const debugMediaUrl = (url: string): void => {
+  console.log(`Debug media URL: ${url}`);
+  
   try {
-    console.log(`Debugging media URL: ${url}`);
-    
-    // Try a HEAD request first to get headers
-    const response = await fetch(url, {
-      method: 'HEAD',
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
-      cache: 'no-store',
-    });
-    
-    const headers: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-      headers[key] = value;
-    });
-    
-    const contentType = response.headers.get('content-type');
-    const isJSON = contentType?.includes('application/json');
-    
-    console.log(`Status: ${response.status}, Content-Type: ${contentType}`);
-    
-    return {
-      url,
-      isAccessible: response.ok,
-      statusCode: response.status,
-      contentType,
-      headers,
-      isJSON
-    };
-  } catch (error: any) {
-    console.error(`Error debugging URL ${url}:`, error);
-    
-    // Try to detect if it's a CORS error
-    const isCorsError = error.message?.includes('CORS') || 
-                        error.name === 'TypeError' ||
-                        error.message?.includes('cross-origin');
-    
-    // Try to detect network errors
-    const isNetworkError = error.name === 'TypeError' && 
-                          (error.message?.includes('network') || 
-                           error.message?.includes('Failed to fetch'));
-    
-    return {
-      error: error.message || 'Unknown error',
-      isCorsError,
-      isNetworkError
-    };
-  }
-};
-
-/**
- * Handle JSON content type issue
- */
-export const handleJsonContentTypeIssue = async (url: string): Promise<string | null> => {
-  try {
-    console.log(`Attempting to fix JSON content type issue for: ${url}`);
-    
-    // Try to download as blob and infer media type
-    const response = await fetch(url, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-    }
-    
-    // Get response as text
-    const text = await response.text();
-    
-    // Check if it's actually JSON
-    try {
-      const jsonData = JSON.parse(text);
-      console.error('Content is actual JSON, cannot fix:', jsonData);
-      return null;
-    } catch (e) {
-      // Not JSON, likely binary data with wrong content type
-      console.log('Content is not JSON, attempting to fix content type');
+    // Check if it's a Supabase URL
+    if (url.includes('supabase')) {
+      console.log('This is a Supabase storage URL');
       
-      // Try to infer type from URL or create generic image type
-      let mimeType = 'image/jpeg';
-      
-      if (url.toLowerCase().endsWith('.png')) {
-        mimeType = 'image/png';
-      } else if (url.toLowerCase().endsWith('.webp')) {
-        mimeType = 'image/webp';
-      } else if (url.toLowerCase().endsWith('.gif')) {
-        mimeType = 'image/gif';
-      } else if (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().includes('video')) {
-        mimeType = 'video/mp4';
+      if (url.includes('/storage/v1/object/public/')) {
+        const storagePattern = /\/storage\/v1\/object\/public\/([^\/]+)\/(.+)/;
+        const match = url.match(storagePattern);
+        
+        if (match) {
+          const bucket = match[1];
+          const path = match[2].split('?')[0];
+          console.log(`  - Bucket: ${bucket}`);
+          console.log(`  - Path: ${path}`);
+          console.log(`  - Has query params: ${url.includes('?')}`);
+        }
       }
       
-      // Convert text back to blob with correct type
-      const blob = new Blob([new TextEncoder().encode(text)], { type: mimeType });
-      
-      // Create object URL
-      return URL.createObjectURL(blob);
+      if (url.includes('/storage/v1/object/sign/')) {
+        console.log('This is a signed URL path which might be problematic');
+      }
     }
-  } catch (error) {
-    console.error('Failed to handle JSON content type issue:', error);
-    return null;
+  } catch (e) {
+    console.error('Error during URL debugging:', e);
   }
 };
 
-/**
- * Extract direct image path from Supabase storage URL
- */
+// Extract the direct path from a Supabase URL
 export const extractDirectImagePath = (url: string): string | null => {
+  if (!url) return null;
+  
   try {
-    // Example URL: https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/posts/user/image.jpg
-    const match = url.match(/\/storage\/v1\/object\/public\/([^\/]+)\/(.+)/);
-    if (!match) return null;
-    
-    const bucket = match[1];
-    const path = match[2];
-    
-    // Try alternate path format
-    return `${url.split('/storage/v1/object/public/')[0]}/storage/v1/object/sign/${bucket}/${path}`;
-  } catch (err) {
-    console.error('Error extracting direct path:', err);
-    return null;
-  }
-};
-
-/**
- * Fetch image as blob and return as data URL
- */
-export const fetchImageAsBlob = async (url: string): Promise<string | null> => {
-  try {
-    const response = await fetch(url, { 
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+    // Handle Supabase storage URLs
+    if (url.includes('supabase') && url.includes('/storage/v1/object/public/')) {
+      const storagePattern = /\/storage\/v1\/object\/public\/([^\/]+)\/(.+?)(?:\?|$)/;
+      const match = url.match(storagePattern);
+      
+      if (match) {
+        const bucket = match[1];
+        const path = match[2];
+        console.log(`Extracted path from URL: bucket=${bucket}, path=${path}`);
+        
+        // Construct a direct path - sometimes this works better
+        return `https://ysqbdaeohlupucdmivkt.supabase.co/storage/v1/object/public/${bucket}/${path}`;
+      }
     }
-    
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
-  } catch (err) {
-    console.error('Error fetching as blob:', err);
-    return null;
+  } catch (e) {
+    console.error('Error extracting direct path:', e);
   }
+  
+  return null;
 };
 
-/**
- * Attempt a workaround for CORS issues with images
- */
+// Attempt to work around CORS issues with images
 export const attemptImageCorsWorkaround = async (url: string): Promise<string | null> => {
   try {
-    console.log(`Attempting CORS workaround for: ${url}`);
+    console.log('Attempting CORS workaround for:', url);
     
-    // Try using a proxy service (this is just an example)
-    // In production, you should use your own proxy
-    // const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    // Add cache busting parameter
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    const cacheBustUrl = url.includes('?') 
+      ? `${url}&t=${timestamp}&r=${random}` 
+      : `${url}?t=${timestamp}&r=${random}`;
     
-    // Instead of proxy, try to fetch directly as a blob and create an object URL
-    const response = await fetch(url, { 
-      mode: 'cors',
+    return cacheBustUrl;
+  } catch (e) {
+    console.error('CORS workaround failed:', e);
+    return null;
+  }
+};
+
+// Try to fetch an image as a blob to handle CORS/content-type issues
+export const fetchImageAsBlob = async (url: string): Promise<string | null> => {
+  try {
+    console.log('Fetching image as blob:', url);
+    
+    const response = await fetch(url, {
       cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' }
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
     });
     
     if (!response.ok) {
@@ -202,92 +96,142 @@ export const attemptImageCorsWorkaround = async (url: string): Promise<string | 
     }
     
     const blob = await response.blob();
-    return URL.createObjectURL(blob);
-  } catch (err) {
-    console.error('CORS workaround failed:', err);
+    const objectUrl = URL.createObjectURL(blob);
+    console.log('Created blob URL:', objectUrl);
+    
+    return objectUrl;
+  } catch (e) {
+    console.error('Blob fetch failed:', e);
     return null;
   }
 };
 
-/**
- * Try all possible strategies to load an image
- */
-export const tryAllImageLoadingStrategies = async (url: string): Promise<{
-  success: boolean;
-  url: string | null;
-  strategy: string;
-}> => {
-  // Strategy 1: Try direct blob fetch
+// Force fetch a URL as a specific content type
+export const forceFetchAsContentType = async (url: string, mediaType: 'image' | 'video'): Promise<string | null> => {
+  try {
+    console.log(`Force fetching as ${mediaType}: ${url}`);
+    
+    const response = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+    }
+    
+    const contentType = mediaType === 'image' 
+      ? 'image/jpeg'  // Assume JPEG for simplicity
+      : 'video/mp4';  // Assume MP4 for videos
+    
+    const blob = await response.blob();
+    const fixedBlob = new Blob([await blob.arrayBuffer()], { type: contentType });
+    const objectUrl = URL.createObjectURL(fixedBlob);
+    
+    return objectUrl;
+  } catch (e) {
+    console.error('Force fetch failed:', e);
+    return null;
+  }
+};
+
+// Check for debug error responses from Supabase
+export const isDebugErrorResponse = (response: Response): boolean => {
+  return response.status === 400 && 
+         response.headers.get('content-type')?.includes('application/json');
+};
+
+// Handle potential JSON content type issues with media
+export const handleJsonContentTypeIssue = async (url: string, expectedType: string): Promise<string | null> => {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': expectedType }
+    });
+    
+    if (!response.ok) return null;
+    
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType?.includes('application/json')) {
+      // If the response is JSON but should be media, it's likely an error
+      console.warn('Received JSON when expecting media type:', expectedType);
+      const json = await response.json();
+      console.error('Error response:', json);
+      return null;
+    }
+    
+    // Create a blob with the correct type
+    const blob = await response.blob();
+    const fixedBlob = new Blob([await blob.arrayBuffer()], { type: expectedType });
+    return URL.createObjectURL(fixedBlob);
+  } catch (e) {
+    console.error('JSON content type handling failed:', e);
+    return null;
+  }
+};
+
+// Try all image loading strategies
+export const tryAllImageLoadingStrategies = async (url: string): Promise<{ success: boolean; url: string | null; strategy: string }> => {
+  // Strategy 1: Simple cache busting
+  try {
+    const timestamp = Date.now();
+    const cacheBustUrl = url.includes('?') 
+      ? `${url}&t=${timestamp}` 
+      : `${url}?t=${timestamp}`;
+    
+    const response = await fetch(cacheBustUrl, { 
+      method: 'HEAD',
+      cache: 'no-store'
+    });
+    
+    if (response.ok) {
+      return { success: true, url: cacheBustUrl, strategy: 'cache-bust' };
+    }
+  } catch (e) {
+    console.warn('Cache busting strategy failed');
+  }
+  
+  // Strategy 2: Blob URL approach
   try {
     const blobUrl = await fetchImageAsBlob(url);
     if (blobUrl) {
-      return { success: true, url: blobUrl, strategy: 'blob' };
+      return { success: true, url: blobUrl, strategy: 'blob-url' };
     }
-  } catch (err) {
-    console.error('Blob strategy failed:', err);
+  } catch (e) {
+    console.warn('Blob URL strategy failed');
   }
   
-  // Strategy 2: Try direct path
-  try {
-    const directPath = extractDirectImagePath(url);
-    if (directPath) {
-      const blobUrl = await fetchImageAsBlob(directPath);
-      if (blobUrl) {
-        return { success: true, url: blobUrl, strategy: 'direct-path' };
-      }
-    }
-  } catch (err) {
-    console.error('Direct path strategy failed:', err);
-  }
-  
-  // Strategy 3: Try CORS workaround
-  try {
-    const corsWorkaround = await attemptImageCorsWorkaround(url);
-    if (corsWorkaround) {
-      return { success: true, url: corsWorkaround, strategy: 'cors-workaround' };
-    }
-  } catch (err) {
-    console.error('CORS workaround failed:', err);
-  }
-  
-  // Strategy 4: Try to force fetch with specific content type
+  // Strategy 3: Force content type
   try {
     const forcedUrl = await forceFetchAsContentType(url, 'image');
     if (forcedUrl) {
       return { success: true, url: forcedUrl, strategy: 'forced-content-type' };
     }
-  } catch (err) {
-    console.error('Force fetch strategy failed:', err);
+  } catch (e) {
+    console.warn('Force content type strategy failed');
+  }
+  
+  // Strategy 4: Direct path extraction (for Supabase URLs)
+  if (url.includes('supabase')) {
+    const directUrl = extractDirectImagePath(url);
+    if (directUrl) {
+      try {
+        const response = await fetch(directUrl, { 
+          method: 'HEAD',
+          cache: 'no-store'
+        });
+        
+        if (response.ok) {
+          return { success: true, url: directUrl, strategy: 'direct-path' };
+        }
+      } catch (e) {
+        console.warn('Direct path strategy failed');
+      }
+    }
   }
   
   return { success: false, url: null, strategy: 'none' };
-};
-
-/**
- * Force fetch as specific content type
- */
-export const forceFetchAsContentType = async (url: string, type: 'image' | 'video'): Promise<string | null> => {
-  try {
-    console.log(`Force fetching as ${type}: ${url}`);
-    
-    const response = await fetch(url, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-    }
-    
-    const blob = await response.blob();
-    
-    // Create a new blob with the forced content type
-    const contentType = type === 'image' ? 'image/jpeg' : 'video/mp4';
-    const forcedBlob = new Blob([await blob.arrayBuffer()], { type: contentType });
-    
-    return URL.createObjectURL(forcedBlob);
-  } catch (err) {
-    console.error('Force fetch failed:', err);
-    return null;
-  }
 };
