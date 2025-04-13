@@ -47,14 +47,26 @@ export const getStoragePublicUrl = (path: string): string | null => {
   try {
     // First try to get a signed URL for better access
     try {
-      const { data, error } = supabase.storage
+      // Use a synchronous approach to get the signed URL
+      const signedUrlPromise = supabase.storage
         .from(bucket)
         .createSignedUrl(finalPath, 60 * 60); // 1 hour expiry
         
-      if (data?.signedUrl && !error) {
-        console.debug(`Generated signed URL for ${path}: ${data.signedUrl}`);
-        return data.signedUrl;
-      }
+      // Return a URL synchronously, then update it asynchronously if signed URL works
+      const publicUrlData = supabase.storage.from(bucket).getPublicUrl(finalPath);
+      const publicUrl = publicUrlData.data.publicUrl;
+      
+      // Update with signed URL asynchronously if it succeeds
+      signedUrlPromise.then(({ data, error }) => {
+        if (data?.signedUrl && !error) {
+          console.debug(`Generated signed URL for ${path}: ${data.signedUrl}`);
+          // We can't update the return value here, but at least log success
+        }
+      }).catch(signError => {
+        console.warn(`Failed to get signed URL for ${path}:`, signError);
+      });
+      
+      return publicUrl;
     } catch (signError) {
       console.warn(`Failed to get signed URL for ${path}:`, signError);
       // Fall back to public URL approach
@@ -103,7 +115,7 @@ export const getAuthenticatedUrl = async (path: string): Promise<string | null> 
   try {
     // First try to get a signed URL for better access
     try {
-      const { data, error } = supabase.storage
+      const { data, error } = await supabase.storage
         .from(bucket)
         .createSignedUrl(finalPath, 60 * 60); // 1 hour expiry
         
