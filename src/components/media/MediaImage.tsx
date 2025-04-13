@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
@@ -9,11 +10,11 @@ import {
   tryAllImageLoadingStrategies,
   handleJsonContentTypeIssue,
   forceFetchAsContentType,
-  isDebugErrorResponse,
-  MediaDebugResponse
+  isDebugErrorResponse
 } from "@/utils/media/debugMediaUtils";
 import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 import { cn } from "@/lib/utils";
+import { checkUrlContentType, inferContentTypeFromUrl, fixUrlContentType } from "@/utils/media/urlUtils";
 
 interface MediaImageProps {
   url: string | null;
@@ -45,6 +46,10 @@ export const MediaImage = ({
   const [isCorsError, setIsCorsError] = useState(false);
   const [isContentTypeMismatch, setIsContentTypeMismatch] = useState(false);
   const [loadingStrategy, setLoadingStrategy] = useState<string>('standard');
+  const [contentTypeInfo, setContentTypeInfo] = useState<{
+    contentType: string | null;
+    isValid: boolean;
+  }>({ contentType: null, isValid: true });
   
   useEffect(() => {
     if (!url) {
@@ -79,112 +84,74 @@ export const MediaImage = ({
       
       setDisplayUrl(cachedUrl);
       
-      // Check for potential CORS issues or content type mismatches early
+      // Pre-check content type
       if (cachedUrl && !cachedUrl.startsWith('data:') && !cachedUrl.includes(window.location.origin)) {
         try {
-          // Debug the URL to check for content type issues
-          const debugResult = await debugMediaUrl(cachedUrl);
-          console.log("URL pre-check result:", debugResult);
+          // Check URL content type
+          const contentTypeResult = await checkUrlContentType(cachedUrl);
+          setContentTypeInfo({
+            contentType: contentTypeResult.contentType,
+            isValid: contentTypeResult.isValid
+          });
           
-          // Check if we got an error response
-          if (isDebugErrorResponse(debugResult)) {
-            console.warn("Debug check failed:", debugResult.error);
-            
-            // If it's a CORS error, try a workaround
-            if (debugResult.isCorsError) {
-              setIsCorsError(true);
-              try {
-                const corsWorkaround = await attemptImageCorsWorkaround(cachedUrl);
-                setFallbackDataUrl(corsWorkaround);
-                setUseFallbackImage(true);
-                setLoadingStrategy('cors-error-preemptive');
-                return;
-              } catch (e) {
-                console.error("CORS workaround failed:", e);
-              }
-            }
-            return;
-          }
+          console.log(`Content type check for ${cachedUrl}:`, contentTypeResult);
           
-          // Check if the content type is unexpected (e.g., application/json for an image)
-          if (debugResult.contentType && 
-              debugResult.contentType.includes('application/json') && 
-              (cachedUrl.match(/\.(jpg|jpeg|png|gif|webp|avif|svg)$/i) || 
-               !debugResult.contentType.includes('image/'))) {
-            console.warn("Content type mismatch detected:", debugResult.contentType);
+          // Handle content type issues
+          if (
+            !contentTypeResult.isValid && 
+            contentTypeResult.status === 200 &&
+            contentTypeResult.contentType === 'application/json'
+          ) {
+            // We have a content type mismatch - wrong content type but successful response
             setIsContentTypeMismatch(true);
             
-            // Try specialized handler for JSON content type issue
-            try {
-              const jsonFixUrl = await handleJsonContentTypeIssue(cachedUrl);
-              if (jsonFixUrl) {
-                setFallbackDataUrl(jsonFixUrl);
+            // Try to infer correct content type from URL
+            const inferredType = inferContentTypeFromUrl(cachedUrl);
+            if (inferredType) {
+              console.log(`Inferred content type: ${inferredType} for ${cachedUrl}`);
+              
+              // Fix the content type
+              const fixedUrl = await fixUrlContentType(cachedUrl, inferredType);
+              if (fixedUrl && fixedUrl !== cachedUrl) {
+                setFallbackDataUrl(fixedUrl);
                 setUseFallbackImage(true);
-                setLoadingStrategy('json-content-type-fix');
+                setLoadingStrategy('content-type-fix');
+                console.log(`Fixed content type using blob URL: ${fixedUrl}`);
                 return;
               }
-            } catch (err) {
-              console.log("JSON content type fix failed:", err);
             }
             
-            // Try to fetch as blob as a fallback immediately instead of waiting for error
-            try {
-              console.log("Trying to fetch as blob due to content type mismatch");
-              const blobUrl = await fetchImageAsBlob(cachedUrl);
-              setFallbackDataUrl(blobUrl);
+            // If we couldn't infer or fix, try additional strategies
+            const result = await tryAllImageLoadingStrategies(cachedUrl);
+            if (result.success) {
+              setFallbackDataUrl(result.url);
               setUseFallbackImage(true);
-              setLoadingStrategy('blob-preemptive');
+              setLoadingStrategy(`inferred-${result.strategy}`);
               return;
-            } catch (err) {
-              console.log("Could not fetch as blob:", err);
             }
-
-            // Last resort - force fetch as image type
-            try {
-              const forcedImageUrl = await forceFetchAsContentType(cachedUrl, 'image');
-              if (forcedImageUrl) {
-                setFallbackDataUrl(forcedImageUrl);
-                setUseFallbackImage(true);
-                setLoadingStrategy('forced-image-type');
-                return;
-              }
-            } catch (err) {
-              console.log("Force fetch as image failed:", err);
-            }
-          }
-          
-          // For other potential CORS issues, set up a data URL fallback
-          if (debugResult.cors && !debugResult.cors.allowOrigin) {
-            setIsCorsError(true);
-            try {
-              console.log("Trying CORS workaround...");
-              const dataUrl = await attemptImageCorsWorkaround(cachedUrl);
-              setFallbackDataUrl(dataUrl);
+          } else if (!contentTypeResult.isValid) {
+            // Try debug utility
+            const debugResult = await debugMediaUrl(cachedUrl);
+            console.log("URL debug result:", debugResult);
+            
+            if (isDebugErrorResponse(debugResult) && debugResult.isCorsError) {
+              setIsCorsError(true);
+              const corsWorkaround = await attemptImageCorsWorkaround(cachedUrl);
+              setFallbackDataUrl(corsWorkaround);
               setUseFallbackImage(true);
-              setLoadingStrategy('cors-workaround-preemptive');
-            } catch (err) {
-              console.log("Could not prepare fallback image:", err);
-            }
-          }
-          
-          // If server responses with JSON but URL should be an image
-          if (debugResult.isJSON) {
-            try {
-              // Try the more aggressive approach - fetch as blob
-              const { url: strategizedUrl, strategy, success } = await tryAllImageLoadingStrategies(cachedUrl);
-              if (success && strategizedUrl) {
-                setFallbackDataUrl(strategizedUrl);
+              setLoadingStrategy('cors-error-preemptive');
+            } else if (!isDebugErrorResponse(debugResult) && debugResult.contentType?.includes('application/json')) {
+              // Handle JSON content type
+              const fixedUrl = await handleJsonContentTypeIssue(cachedUrl);
+              if (fixedUrl) {
+                setFallbackDataUrl(fixedUrl);
                 setUseFallbackImage(true);
-                setLoadingStrategy(`advanced-${strategy}`);
-                return;
+                setLoadingStrategy('json-content-fix');
               }
-            } catch (err) {
-              console.log("Advanced strategies failed:", err);
             }
           }
-          
         } catch (err) {
-          console.log("Error in URL pre-check:", err);
+          console.error("Error during URL pre-check:", err);
         }
       }
     };
@@ -205,105 +172,72 @@ export const MediaImage = ({
     
     // Debug the URL
     if (displayUrl) {
-      debugMediaUrl(displayUrl).then(result => {
-        console.log("Image URL debug result:", result);
+      console.error(`Image load error for URL: ${displayUrl}`);
+      
+      // Check if we need to try fixing content type
+      if (isContentTypeMismatch || contentTypeInfo.contentType === 'application/json') {
+        // Try fixing the content type
+        const inferredType = inferContentTypeFromUrl(displayUrl);
         
-        // Check if this is a CORS error
-        if (isDebugErrorResponse(result)) {
-          if (result.errorType === 'TypeError' || result.isCorsError) {
-            setIsCorsError(true);
-            
-            // Try the fallback data URL approach if we have one
-            if (fallbackDataUrl && !useFallbackImage) {
-              console.log("Attempting to use fallback data URL approach for CORS issue");
-              setUseFallbackImage(true);
-              setIsLoading(true);
-              setLoadError(false);
-              setLoadingStrategy('cors-workaround-after-error');
-              return;
-            }
-            
-            // If we don't have a fallback yet, try to create one
-            attemptImageCorsWorkaround(displayUrl)
-              .then(dataUrl => {
-                setFallbackDataUrl(dataUrl);
+        if (inferredType) {
+          console.log(`Attempting to fix content type to ${inferredType}`);
+          
+          fixUrlContentType(displayUrl, inferredType)
+            .then(fixedUrl => {
+              if (fixedUrl !== displayUrl) {
+                setFallbackDataUrl(fixedUrl);
                 setUseFallbackImage(true);
                 setIsLoading(true);
                 setLoadError(false);
-                setLoadingStrategy('cors-workaround-new');
-              })
-              .catch(error => {
-                console.error("Failed to create fallback URL:", error);
-              });
-          }
+                setLoadingStrategy('error-content-type-fix');
+              }
+            })
+            .catch(err => {
+              console.error("Content type fix failed:", err);
+            });
+          
           return;
         }
+      }
+      
+      // Try fallback approaches
+      if (retryCount < 2) {
+        setRetryCount(prev => prev + 1);
         
-        // Check for content type mismatch
-        if (result.contentType && result.contentType.includes('application/json')) {
-          setIsContentTypeMismatch(true);
-          
-          // Try specialized handler for JSON content type
-          handleJsonContentTypeIssue(displayUrl)
-            .then(jsonFixUrl => {
-              if (jsonFixUrl) {
-                setFallbackDataUrl(jsonFixUrl);
-                setUseFallbackImage(true);
+        setTimeout(() => {
+          if (retryCount === 1) {
+            // On second retry, try force fetch approach
+            const mediaType = 'image';
+            forceFetchAsContentType(displayUrl, mediaType)
+              .then(forcedUrl => {
+                if (forcedUrl) {
+                  setFallbackDataUrl(forcedUrl);
+                  setUseFallbackImage(true);
+                  setIsLoading(true);
+                  setLoadError(false);
+                  setLoadingStrategy('forced-type-retry');
+                  return;
+                }
+                
+                // If that fails too, try a fresh URL
+                const freshUrl = url ? addCacheBuster(getPlayableMediaUrl({ media_url: url })) : null;
+                setDisplayUrl(freshUrl);
                 setIsLoading(true);
                 setLoadError(false);
-                setLoadingStrategy('json-fix-after-error');
-                return;
-              }
-              
-              // Fall back to blob approach if JSON fix didn't work
-              return fetchImageAsBlob(displayUrl);
-            })
-            .then(blobUrl => {
-              if (blobUrl && blobUrl !== fallbackDataUrl) {
-                setFallbackDataUrl(blobUrl);
-                setUseFallbackImage(true);
-                setIsLoading(true);
-                setLoadError(false);
-                setLoadingStrategy('blob-after-error');
-              }
-            })
-            .catch(error => {
-              console.error("Failed content type fix attempts:", error);
-              
-              // If all approaches fail, try the aggressive fallback strategy
-              tryAllImageLoadingStrategies(displayUrl)
-                .then(({ url: strategizedUrl, strategy, success }) => {
-                  if (success && strategizedUrl) {
-                    setFallbackDataUrl(strategizedUrl);
-                    setUseFallbackImage(true);
-                    setIsLoading(true);
-                    setLoadError(false);
-                    setLoadingStrategy(`recovery-${strategy}`);
-                  }
-                })
-                .catch(err => {
-                  console.error("All recovery strategies failed:", err);
-                });
-            });
-            return;
-        }
-        
-        // Auto-retry logic for regular errors
-        if (retryCount < 2) {
-          setRetryCount(prev => prev + 1);
-          setTimeout(() => {
-            // Try a fresh cache-busted URL
-            const processedUrl = getPlayableMediaUrl({ media_url: url });
-            const freshUrl = processedUrl ? addCacheBuster(processedUrl) : null;
+                setLoadingStrategy('fresh-url-retry');
+              });
+          } else {
+            // First retry - use a fresh cache-busted URL
+            const freshUrl = url ? addCacheBuster(getPlayableMediaUrl({ media_url: url })) : null;
             setDisplayUrl(freshUrl);
             setIsLoading(true);
             setLoadError(false);
-            setLoadingStrategy('retry-standard');
-          }, 1000 * (retryCount + 1));
-        } else if (onError) {
-          onError();
-        }
-      });
+            setLoadingStrategy('simple-retry');
+          }
+        }, 1000);
+      } else if (onError) {
+        onError();
+      }
     } else if (onError) {
       onError();
     }
@@ -317,39 +251,65 @@ export const MediaImage = ({
     setIsContentTypeMismatch(false);
     setIsCorsError(false);
     
-    // Try using a more aggressive approach with all strategies
+    // Try all strategies at once
     if (url) {
       const processedUrl = getPlayableMediaUrl({ media_url: url });
       if (processedUrl) {
-        tryAllImageLoadingStrategies(processedUrl)
-          .then(({ url: strategizedUrl, strategy, success }) => {
-            if (success && strategizedUrl) {
-              setFallbackDataUrl(strategizedUrl);
-              setUseFallbackImage(true);
-              setLoadingStrategy(`manual-retry-${strategy}`);
-            } else {
-              // Last resort - force fetch as image
+        // First try to fix the content type
+        const inferredType = inferContentTypeFromUrl(processedUrl);
+        if (inferredType) {
+          fixUrlContentType(processedUrl, inferredType)
+            .then(fixedUrl => {
+              if (fixedUrl !== processedUrl) {
+                setFallbackDataUrl(fixedUrl);
+                setUseFallbackImage(true);
+                setLoadingStrategy('manual-retry-fix');
+                return;
+              }
               return forceFetchAsContentType(processedUrl, 'image');
-            }
-          })
-          .then(forcedUrl => {
-            if (forcedUrl) {
-              setFallbackDataUrl(forcedUrl);
-              setUseFallbackImage(true);
-              setLoadingStrategy('manual-retry-forced');
-            } else {
-              // If all strategies fail, try direct URL again with fresh cache buster
+            })
+            .then(forcedUrl => {
+              if (forcedUrl) {
+                setFallbackDataUrl(forcedUrl);
+                setUseFallbackImage(true);
+                setLoadingStrategy('manual-retry-forced');
+              } else {
+                // Last resort - try all strategies
+                return tryAllImageLoadingStrategies(processedUrl);
+              }
+            })
+            .then(result => {
+              if (result && result.success) {
+                setFallbackDataUrl(result.url);
+                setUseFallbackImage(true);
+                setLoadingStrategy(`manual-retry-${result.strategy}`);
+              } else {
+                const freshUrl = addCacheBuster(processedUrl);
+                setDisplayUrl(freshUrl);
+                setLoadingStrategy('manual-retry-standard');
+              }
+            })
+            .catch(() => {
+              // Fallback to standard approach
               const freshUrl = addCacheBuster(processedUrl);
               setDisplayUrl(freshUrl);
-              setLoadingStrategy('manual-retry-standard');
-            }
-          })
-          .catch(() => {
-            // Fallback to standard approach
-            const freshUrl = processedUrl ? addCacheBuster(processedUrl) : null;
-            setDisplayUrl(freshUrl);
-            setLoadingStrategy('manual-retry-fallback');
-          });
+              setLoadingStrategy('manual-retry-fallback');
+            });
+        } else {
+          // If we can't infer type, try all strategies
+          tryAllImageLoadingStrategies(processedUrl)
+            .then(result => {
+              if (result.success) {
+                setFallbackDataUrl(result.url);
+                setUseFallbackImage(true);
+                setLoadingStrategy(`manual-retry-${result.strategy}`);
+              } else {
+                const freshUrl = addCacheBuster(processedUrl);
+                setDisplayUrl(freshUrl);
+                setLoadingStrategy('manual-retry-standard');
+              }
+            });
+        }
       }
     }
   };
@@ -406,6 +366,7 @@ export const MediaImage = ({
           </button>
           <div className="text-white/50 text-xs mt-2 px-2 text-center">
             {loadingStrategy !== 'standard' && `Last attempt: ${loadingStrategy}`}
+            {contentTypeInfo.contentType && ` (server returned: ${contentTypeInfo.contentType})`}
           </div>
         </div>
       )}

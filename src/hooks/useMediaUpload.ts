@@ -1,8 +1,8 @@
 
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { uploadFile, UploadResult, UploadOptions } from '@/utils/upload/storageService';
-import { validateMediaFile } from '@/utils/upload/validators';
+import { uploadFileToStorage, UploadResult, UploadOptions } from '@/utils/mediaUtils';
+import { validateMediaFile } from '@/utils/mediaUtils';
 
 export interface MediaUploadOptions {
   contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
@@ -93,7 +93,7 @@ export const useMediaUpload = (options: MediaUploadOptions = {}) => {
       };
       
       // Upload file
-      const result = await uploadFile(
+      const result = await uploadFileToStorage(
         file,
         session.user.id,
         uploadOptions

@@ -17,7 +17,8 @@ export const StoryUploader = () => {
     state: {
       isUploading,
       progress,
-      error
+      error,
+      isComplete
     },
     uploadMedia,
     validateFile
@@ -27,7 +28,9 @@ export const StoryUploader = () => {
     allowedTypes: [
       'image/jpeg', 'image/png', 'image/gif', 'image/webp',
       'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'
-    ]
+    ],
+    autoResetOnCompletion: true,
+    resetDelay: 3000
   });
 
   const onFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +44,7 @@ export const StoryUploader = () => {
     if (!validation.valid) {
       toast({
         title: "Invalid file",
-        description: validation.message,
+        description: validation.message || "The selected file cannot be used for stories",
         variant: "destructive",
       });
       return;
@@ -57,6 +60,12 @@ export const StoryUploader = () => {
       toast({
         title: "Story uploaded successfully",
         description: "Your story is now live",
+      });
+    } else {
+      toast({
+        title: "Upload failed",
+        description: result.error || "There was a problem uploading your story",
+        variant: "destructive",
       });
     }
   }, [session?.user?.id, toast, uploadMedia, validateFile]);

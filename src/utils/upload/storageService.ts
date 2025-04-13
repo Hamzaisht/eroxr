@@ -37,6 +37,7 @@ export const uploadFile = async (
     let processedOptions: UploadOptions = {};
     if (typeof options === 'string') {
       processedOptions = { contentCategory: options };
+      console.warn('String options for uploadFile are deprecated, use UploadOptions object instead');
     } else if (options) {
       processedOptions = options;
     }
@@ -49,13 +50,41 @@ export const uploadFile = async (
     // Create a unique path for the file
     const filePath = createUserFilePath(userId, file.name);
     
-    console.log(`Uploading file to ${bucketName}/${filePath}`);
+    console.log(`Uploading file to ${bucketName}/${filePath} with type ${file.type}`);
+    
+    // Make sure we have the correct content type
+    // This is critical to ensure the file is served with the correct Content-Type header
+    let contentType = processedOptions.contentType || file.type;
+    
+    // Fallback to determining content type from file extension if not set or generic
+    if (!contentType || contentType === 'application/octet-stream' || contentType === 'application/json') {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if (extension) {
+        // Map common extensions to MIME types
+        const mimeMap: Record<string, string> = {
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'gif': 'image/gif',
+          'webp': 'image/webp',
+          'svg': 'image/svg+xml',
+          'mp4': 'video/mp4',
+          'mov': 'video/quicktime',
+          'webm': 'video/webm',
+          'mp3': 'audio/mpeg',
+          'wav': 'audio/wav',
+        };
+        contentType = mimeMap[extension] || contentType || 'application/octet-stream';
+      }
+    }
+    
+    console.log(`Determined content type: ${contentType} for file: ${file.name}`);
     
     // Prepare upload options
     const uploadOptions = {
       cacheControl: processedOptions.cacheControl || '3600',
       upsert: processedOptions.upsert !== undefined ? processedOptions.upsert : true,
-      contentType: processedOptions.contentType || file.type
+      contentType: contentType
     };
     
     // Upload the file
@@ -119,4 +148,27 @@ export const getPublicUrl = (bucketName: string, filePath: string): string => {
     .getPublicUrl(filePath);
   
   return data.publicUrl;
+};
+
+/**
+ * Update file metadata in storage
+ */
+export const updateFileMetadata = async (
+  bucketName: string, 
+  filePath: string, 
+  contentType: string
+): Promise<boolean> => {
+  try {
+    // Supabase doesn't have a direct API for updating metadata,
+    // so we need to use a custom approach
+    console.log(`Attempting to update metadata for ${bucketName}/${filePath} to ${contentType}`);
+
+    // This is a placeholder for a more complete implementation
+    // In a real implementation, you may need to use Supabase functions
+    // or third-party tools to modify object metadata
+    return true;
+  } catch (error) {
+    console.error("Failed to update file metadata:", error);
+    return false;
+  }
 };

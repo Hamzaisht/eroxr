@@ -7,6 +7,7 @@ import {
   forceFetchAsContentType,
   isDebugErrorResponse
 } from "@/utils/media/debugMediaUtils";
+import { checkUrlContentType, inferContentTypeFromUrl, fixUrlContentType } from "@/utils/media/urlUtils";
 
 interface UseMediaHandlerProps {
   item: any;
@@ -22,6 +23,10 @@ export const useMediaHandler = ({ item, onError, onLoad }: UseMediaHandlerProps)
   const [displayUrl, setDisplayUrl] = useState<string | null>(null);
   const [accessibleUrl, setAccessibleUrl] = useState<boolean>(true);
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
+  const [contentTypeInfo, setContentTypeInfo] = useState<{
+    contentType: string | null;
+    isValid: boolean;
+  }>({ contentType: null, isValid: true });
 
   // Initialize the media URL
   useEffect(() => {
@@ -42,6 +47,32 @@ export const useMediaHandler = ({ item, onError, onLoad }: UseMediaHandlerProps)
           if (!isAccessible) {
             console.warn("Media URL is not accessible:", cachedUrl);
           }
+          
+          // Check content type
+          const contentTypeResult = await checkUrlContentType(cachedUrl);
+          setContentTypeInfo({
+            contentType: contentTypeResult.contentType,
+            isValid: contentTypeResult.isValid
+          });
+          
+          // Handle content type issues proactively
+          if (!contentTypeResult.isValid && contentTypeResult.contentType === 'application/json') {
+            console.log("Content type mismatch detected, trying to fix...");
+            
+            // Try to infer correct content type
+            const inferredType = inferContentTypeFromUrl(cachedUrl);
+            if (inferredType) {
+              try {
+                const fixedUrl = await fixUrlContentType(cachedUrl, inferredType);
+                if (fixedUrl !== cachedUrl) {
+                  console.log(`Fixed URL with correct content type: ${inferredType}`);
+                  setFallbackUrl(fixedUrl);
+                }
+              } catch (err) {
+                console.error("Error fixing content type:", err);
+              }
+            }
+          }
         } else {
           setLoadError(true);
           setIsLoading(false);
@@ -52,7 +83,9 @@ export const useMediaHandler = ({ item, onError, onLoad }: UseMediaHandlerProps)
           original: item?.media_url || item?.video_url,
           resolvedUrl: url,
           cachedUrl: displayUrl,
-          isAccessible: accessibleUrl
+          isAccessible: accessibleUrl,
+          contentType: contentTypeInfo.contentType,
+          contentTypeValid: contentTypeInfo.isValid
         });
         
         setIsLoading(true);
@@ -97,7 +130,21 @@ export const useMediaHandler = ({ item, onError, onLoad }: UseMediaHandlerProps)
                 setFallbackUrl(fixedUrl);
                 setLoadError(false);
                 setIsLoading(true);
+              } else {
+                // If that didn't work, try to infer content type
+                const inferredType = inferContentTypeFromUrl(displayUrl);
+                if (inferredType) {
+                  return fixUrlContentType(displayUrl, inferredType);
+                }
               }
+            }).then(fixedUrl => {
+              if (fixedUrl) {
+                setFallbackUrl(fixedUrl);
+                setLoadError(false);
+                setIsLoading(true);
+              }
+            }).catch(err => {
+              console.error("Error fixing content type:", err);
             });
           }
         }
@@ -157,7 +204,13 @@ export const useMediaHandler = ({ item, onError, onLoad }: UseMediaHandlerProps)
         .then(fixedUrl => {
           if (fixedUrl) {
             setFallbackUrl(fixedUrl);
-            return;
+            return null;
+          }
+          
+          // If that fails, try inferred content type
+          const inferredType = inferContentTypeFromUrl(displayUrl);
+          if (inferredType) {
+            return fixUrlContentType(displayUrl, inferredType);
           }
           
           // If that fails, try force fetch
@@ -201,6 +254,7 @@ export const useMediaHandler = ({ item, onError, onLoad }: UseMediaHandlerProps)
     accessibleUrl,
     effectiveUrl,
     isVideoContent,
+    contentTypeInfo,
     handleLoad,
     handleError,
     handleRetry

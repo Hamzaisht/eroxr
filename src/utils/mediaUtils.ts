@@ -4,6 +4,7 @@ export {
   uploadFile as uploadFileToStorage,
   addCacheBuster as getUrlWithCacheBuster,
   getPublicUrl,
+  updateFileMetadata,
   type UploadOptions,
   type UploadResult
 } from './upload/storageService';
@@ -23,9 +24,23 @@ export {
   getBucketForFileType 
 } from './upload/fileUtils';
 
-export { validateMediaFile, isImageFile, isVideoFile } from './upload/validators';
+export { 
+  validateMediaFile, 
+  isImageFile, 
+  isVideoFile,
+  SUPPORTED_IMAGE_TYPES,
+  SUPPORTED_VIDEO_TYPES
+} from './upload/validators';
 
-// Helper function to refresh URLs with cache busting
+export {
+  addCacheBuster as refreshUrl,
+  checkUrlContentType,
+  inferContentTypeFromUrl,
+  fixUrlContentType,
+  checkUrlAccessibility
+} from './media/urlUtils';
+
+// Legacy helper function to refresh URLs with cache busting
 export const refreshUrl = (url: string): string => {
   if (!url) return '';
   const timestamp = Date.now();
