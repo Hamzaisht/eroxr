@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { extractMediaUrl } from "@/utils/media/mediaUrlUtils";
 
 export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
   const [selectedVideo, setSelectedVideo] = useState<Post | null>(null);
@@ -86,6 +87,15 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
     }
     
     return "00:30";
+  };
+  
+  const handleVideoError = () => {
+    console.error("Video failed to load in ShortsList");
+    toast({
+      title: "Video Error",
+      description: "Unable to play this video. Please try again later.",
+      variant: "destructive",
+    });
   };
 
   return (
@@ -198,11 +208,12 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
           {selectedVideo && (
             <div className="relative w-full aspect-[9/16]">
               <VideoPlayer 
-                url={getPlayableMediaUrl({video_url: selectedVideo.video_urls?.[0] || ""})} 
+                url={extractMediaUrl(selectedVideo.video_urls?.[0] || "")} 
                 poster={selectedVideo.video_thumbnail_url || undefined}
                 autoPlay
                 showCloseButton
                 onClose={() => setSelectedVideo(null)}
+                onError={handleVideoError}
               />
             </div>
           )}
