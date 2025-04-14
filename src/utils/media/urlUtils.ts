@@ -10,6 +10,11 @@
 export const addCacheBuster = (url: string): string => {
   if (!url) return '';
   
+  // Don't add cache busters to blob URLs or data URLs
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  
   // If URL already has cache busting parameters, don't add more
   if (url.includes('t=') && url.includes('r=')) {
     return url;
@@ -33,14 +38,11 @@ export const checkUrlAccessibility = async (url: string): Promise<boolean> => {
   try {
     // For Supabase storage URLs, we need special handling
     if (url.includes('supabase') && url.includes('/storage/v1/object/')) {
-      // Use fetch with no-cors mode to check if resource exists
+      // Try to fetch with no-cors mode to check if resource exists
       const response = await fetch(url, {
         method: 'HEAD',
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
-        cache: 'no-store',
         mode: 'no-cors', // This allows checking cross-origin resources
+        cache: 'no-store',
       });
       
       // With no-cors we can't access status, but if it doesn't throw an error, 
@@ -51,9 +53,6 @@ export const checkUrlAccessibility = async (url: string): Promise<boolean> => {
     // Standard approach for other URLs
     const response = await fetch(url, {
       method: 'HEAD',
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
       cache: 'no-store',
     });
     
@@ -87,39 +86,54 @@ export const checkUrlContentType = async (url: string): Promise<{
       };
     }
     
-    // Standard approach
-    const response = await fetch(url, {
-      method: 'HEAD',
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
-      cache: 'no-store',
-    });
-    
-    const contentType = response.headers.get('content-type');
-    const headersObj: Record<string, string> = {};
-    
-    response.headers.forEach((value, key) => {
-      headersObj[key] = value;
-    });
-    
-    // Check if the content type is valid for media
-    const isValid = contentType !== null && (
-      contentType.startsWith('image/') || 
-      contentType.startsWith('video/') ||
-      contentType.startsWith('audio/')
-    );
-    
-    return {
-      isValid,
-      contentType,
-      headers: headersObj,
-      status: response.status
-    };
+    // Attempt a HEAD request with no-cors first
+    try {
+      const response = await fetch(url, {
+        method: 'HEAD',
+        cache: 'no-store',
+        mode: 'no-cors',
+      });
+      
+      // If we get here without an error, the URL is likely valid,
+      // but we can't access headers due to CORS
+      return {
+        isValid: true,
+        contentType: inferContentTypeFromUrl(url),
+        headers: {},
+        status: 200 // Assume success since we couldn't get real status
+      };
+    } catch (noCorsError) {
+      // Try standard approach as fallback
+      const response = await fetch(url, {
+        method: 'HEAD',
+        cache: 'no-store',
+      });
+      
+      const contentType = response.headers.get('content-type');
+      const headersObj: Record<string, string> = {};
+      
+      response.headers.forEach((value, key) => {
+        headersObj[key] = value;
+      });
+      
+      // Check if the content type is valid for media
+      const isValid = contentType !== null && (
+        contentType.startsWith('image/') || 
+        contentType.startsWith('video/') ||
+        contentType.startsWith('audio/')
+      );
+      
+      return {
+        isValid,
+        contentType,
+        headers: headersObj,
+        status: response.status
+      };
+    }
   } catch (error) {
     console.error('Content type check failed:', error);
     
-    // If CORS error, try to infer content type from URL
+    // If CORS error or other fetch error, try to infer content type from URL
     const inferredType = inferContentTypeFromUrl(url);
     return {
       isValid: !!inferredType,
@@ -173,9 +187,7 @@ export const fixUrlContentType = async (url: string, expectedType: string): Prom
     // Download as blob and create a local object URL with correct type
     const response = await fetch(url, {
       cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
+      mode: 'cors', // Try cors first
     });
     
     if (!response.ok) {
@@ -193,6 +205,23 @@ export const fixUrlContentType = async (url: string, expectedType: string): Prom
     return URL.createObjectURL(fixedBlob);
   } catch (error) {
     console.error('Failed to fix content type:', error);
-    return url; // Return original URL if fixing failed
+    
+    try {
+      // Try again with no-cors as fallback
+      const response = await fetch(url, {
+        cache: 'no-store',
+        mode: 'no-cors',
+      });
+      
+      const blob = await response.blob();
+      const fixedBlob = new Blob([await blob.arrayBuffer()], { 
+        type: expectedType 
+      });
+      
+      return URL.createObjectURL(fixedBlob);
+    } catch (retryError) {
+      console.error('Failed to fix content type with no-cors fallback:', retryError);
+      return url; // Return original URL if all attempts fail
+    }
   }
 };

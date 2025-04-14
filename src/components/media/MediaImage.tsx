@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Image } from "lucide-react";
-import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
+import { Skeleton } from "@/components/ui/skeleton";
+import { WatermarkOverlay } from "./WatermarkOverlay";
+import { getUsernameForWatermark } from "@/utils/watermarkUtils";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface MediaImageProps {
   url: string | null;
-  alt: string;
+  alt?: string;
   className?: string;
   onLoad?: () => void;
   onError?: () => void;
@@ -16,69 +18,99 @@ interface MediaImageProps {
 
 export const MediaImage = ({
   url,
-  alt,
+  alt = "Media content",
   className = "",
   onLoad,
   onError,
   showWatermark = false,
   creatorId,
-  onClick
+  onClick,
 }: MediaImageProps) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  
-  // Reset state when URL changes
-  useEffect(() => {
-    setIsLoaded(false);
-    setHasError(false);
-  }, [url]);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
-  // Handle successful load
+  useEffect(() => {
+    // Reset state when URL changes
+    setLoaded(false);
+    setError(false);
+    
+    if (showWatermark && creatorId) {
+      getUsernameForWatermark(creatorId)
+        .then(name => setUsername(name))
+        .catch(() => setUsername(null));
+    }
+  }, [url, showWatermark, creatorId]);
+
   const handleLoad = () => {
-    setIsLoaded(true);
-    setHasError(false);
+    setLoaded(true);
+    setError(false);
     if (onLoad) onLoad();
   };
 
-  // Handle load error
   const handleError = () => {
-    setHasError(true);
-    console.error("Image load error for URL:", url);
+    setError(true);
+    setLoaded(false);
+    
+    // If we have a URL that failed, try to diagnose the issue
+    if (url) {
+      console.error(`Failed to load image from URL: ${url}`);
+      
+      // Try to load the image again with a new cache buster
+      const retryUrl = `${url}${url.includes('?') ? '&' : '?'}retry=${Date.now()}`;
+      
+      // Create and test a new image element
+      const testImg = new Image();
+      testImg.onload = () => {
+        console.log("Image loaded successfully on retry with direct element");
+        // Update the src with the retry URL in case it helps
+        const imgElements = document.querySelectorAll(`img[src='${url}']`);
+        imgElements.forEach(img => {
+          (img as HTMLImageElement).src = retryUrl;
+        });
+      };
+      testImg.onerror = () => {
+        console.error("Image failed to load even on retry with direct element");
+      };
+      testImg.src = retryUrl;
+    }
+    
     if (onError) onError();
   };
 
-  // If no URL provided, show placeholder
   if (!url) {
     return (
-      <div className={`flex items-center justify-center bg-luxury-darker/70 ${className}`}>
-        <Image className="h-12 w-12 text-luxury-neutral/30" />
-      </div>
+      <Skeleton className={`w-full h-full ${className}`} />
     );
   }
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker/30">
-          <Image className="h-8 w-8 text-luxury-neutral/30" />
+    <div
+      className={`relative ${className} overflow-hidden bg-black/20 ${onClick ? 'cursor-pointer' : ''}`}
+      onClick={onClick}
+    >
+      {!loaded && !error && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Skeleton className="w-full h-full" />
         </div>
       )}
       
       <img
         src={url}
         alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
-          isLoaded ? "opacity-100" : "opacity-0"
-        }`}
+        className={`w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
         onLoad={handleLoad}
         onError={handleError}
-        onClick={onClick}
-        style={{ cursor: onClick ? "pointer" : "default" }}
-        loading="lazy"
+        loading="eager"
       />
       
-      {showWatermark && isLoaded && creatorId && (
-        <WatermarkOverlay creatorId={creatorId} />
+      {showWatermark && loaded && !error && username && (
+        <WatermarkOverlay
+          className={isMobile ? 'text-xs' : 'text-sm'}
+          creatorId={creatorId}
+          username={username}
+        />
       )}
     </div>
   );

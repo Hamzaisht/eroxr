@@ -39,12 +39,19 @@ export const getPlayableMediaUrl = (item: MediaItem | null | undefined): string 
 
 /**
  * Add cache busting parameters to URLs while preventing recursive additions
+ * IMPORTANT: This function checks if a URL already has cache busting parameters
+ * to avoid adding them multiple times
  */
 export const addCacheBuster = (url: string | null): string | null => {
   if (!url) return null;
   
-  // Check if URL already has cache-busting parameters
-  if (url.includes('t=') || url.includes('r=')) {
+  // Don't add cache busters to blob URLs or data URLs
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  
+  // If URL already has our specific cache-busting parameters, don't add more
+  if (url.includes('t=') && url.includes('r=')) {
     return url;
   }
   

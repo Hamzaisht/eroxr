@@ -31,6 +31,8 @@ export const UniversalMedia = ({
   showWatermark = false,
   onClick
 }: UniversalMediaProps) => {
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
+  
   const {
     isLoading,
     loadError,
@@ -63,6 +65,11 @@ export const UniversalMedia = ({
       onClick();
     }
   };
+  
+  // Enable debug info after multiple retries
+  if (retryCount >= 2 && !showDebugInfo) {
+    setShowDebugInfo(true);
+  }
 
   return (
     <div 
@@ -71,12 +78,12 @@ export const UniversalMedia = ({
     >
       {isLoading && <MediaLoadingState />}
       
-      {loadError && retryCount >= 3 && (
+      {loadError && (
         <MediaErrorState 
           onRetry={handleRetry}
           accessibleUrl={accessibleUrl}
           retryCount={retryCount}
-          hideDebugInfo={false}
+          hideDebugInfo={!showDebugInfo}
         />
       )}
       

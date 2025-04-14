@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getPlayableMediaUrl, addCacheBuster } from '@/utils/media/getPlayableMediaUrl';
 import { debugMediaUrl } from '@/utils/media/debugMediaUtils';
+import { fixUrlContentType, inferContentTypeFromUrl } from '@/utils/media/urlUtils';
 
 interface UseMediaHandlerProps {
   item: any;
@@ -20,7 +21,8 @@ export const useMediaHandler = ({
   const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [accessibleUrl, setAccessibleUrl] = useState<string | null>(null);
-
+  const [fixedUrl, setFixedUrl] = useState<string | null>(null);
+  
   // Determine content type
   const isVideoContent = Boolean(
     item?.video_url || 
@@ -33,15 +35,37 @@ export const useMediaHandler = ({
     // Get the URL safely
     const sourceUrl = getPlayableMediaUrl(item);
     
-    // Apply cache busting only once
-    const urlWithCacheBuster = sourceUrl ? addCacheBuster(sourceUrl) : null;
+    // If we can determine content type, try to infer and fix
+    if (sourceUrl) {
+      const inferredType = inferContentTypeFromUrl(sourceUrl);
+      
+      // If we're dealing with media that might have content-type mismatches
+      const withCacheBuster = addCacheBuster(sourceUrl);
+      setAccessibleUrl(withCacheBuster);
+      
+      // Try to create a blob URL with the correct content type if we can infer it
+      if (inferredType && (isVideoContent || sourceUrl.includes('supabase'))) {
+        fixUrlContentType(withCacheBuster || sourceUrl, inferredType)
+          .then(blobUrl => {
+            setFixedUrl(blobUrl);
+          })
+          .catch(() => {
+            // If fixing fails, continue with normal URL
+            console.log("Failed to create blob URL with correct content type");
+            setFixedUrl(null);
+          });
+      } else {
+        setFixedUrl(null);
+      }
+    } else {
+      setAccessibleUrl(null);
+      setFixedUrl(null);
+    }
     
-    setAccessibleUrl(urlWithCacheBuster);
     setIsLoading(true);
     setLoadError(false);
     setRetryCount(0);
-    
-  }, [item]);
+  }, [item, isVideoContent]);
 
   // Debug URL on error to help diagnose issues
   useEffect(() => {
@@ -55,6 +79,16 @@ export const useMediaHandler = ({
     console.error(`Media loading error for ${isVideoContent ? 'video' : 'image'}: ${accessibleUrl}`);
     setLoadError(true);
     setIsLoading(false);
+    
+    // If we're using a blob URL and it failed, try falling back to the original URL
+    if (fixedUrl && retryCount === 0) {
+      console.log("Blob URL failed, falling back to original URL");
+      setFixedUrl(null); // Will force using accessibleUrl instead
+      setRetryCount(prev => prev + 1);
+      setIsLoading(true);
+      setLoadError(false);
+      return;
+    }
     
     if (retryCount < maxRetries) {
       // Auto retry with increasing delay
@@ -70,11 +104,16 @@ export const useMediaHandler = ({
         const sourceUrl = getPlayableMediaUrl(item);
         const freshUrl = sourceUrl ? addCacheBuster(sourceUrl) : null;
         setAccessibleUrl(freshUrl);
+        
+        // If previously trying with blob URL failed, don't try again
+        if (retryCount === 1 && fixedUrl) {
+          setFixedUrl(null);
+        }
       }, delay);
     } else if (onError) {
       onError();
     }
-  }, [accessibleUrl, isVideoContent, item, maxRetries, onError, retryCount]);
+  }, [accessibleUrl, fixedUrl, isVideoContent, item, maxRetries, onError, retryCount]);
 
   const handleLoad = useCallback(() => {
     setIsLoading(false);
@@ -87,6 +126,7 @@ export const useMediaHandler = ({
     setIsLoading(true);
     setLoadError(false);
     setRetryCount(0);
+    setFixedUrl(null);
     
     // Force reload with new cache buster
     const sourceUrl = getPlayableMediaUrl(item);
@@ -99,7 +139,7 @@ export const useMediaHandler = ({
     loadError,
     retryCount,
     accessibleUrl,
-    effectiveUrl: accessibleUrl, // Use this for rendering
+    effectiveUrl: fixedUrl || accessibleUrl, // Use blob URL if available, otherwise normal URL
     isVideoContent,
     handleLoad,
     handleError,
