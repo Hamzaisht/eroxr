@@ -1,17 +1,17 @@
-
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Story } from '@/integrations/supabase/types/story';
 import { createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { getDisplayableMediaUrl } from '@/utils/media/urlUtils';
 
 interface UseStoriesResult {
   stories: Story[];
   isLoading: boolean;
   error: string | null;
   refreshStories: () => Promise<void>;
-  uploadStory: (file: File, options?: { isVideo?: boolean }) => Promise<{ success: boolean; error?: string }>;
+  uploadStory: (file: File) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useStories = (): UseStoriesResult => {
@@ -58,19 +58,14 @@ export const useStories = (): UseStoriesResult => {
     }
   }, [toast]);
 
-  const refreshStories = useCallback(async () => {
-    await loadStories();
-  }, [loadStories]);
-
-  // Add the uploadStory method
-  const uploadStory = useCallback(async (file: File, options?: { isVideo?: boolean }) => {
+  const uploadStory = useCallback(async (file: File) => {
     if (!session?.user?.id) {
       return { success: false, error: 'User not authenticated' };
     }
 
     try {
-      // Determine media type based on options or file type
-      const isVideo = options?.isVideo || file.type.startsWith('video/');
+      // Determine media type based on file type
+      const isVideo = file.type.startsWith('video/');
       
       // Create unique storage path
       const path = createUniqueFilePath(session.user.id, file);
@@ -88,20 +83,14 @@ export const useStories = (): UseStoriesResult => {
         throw new Error(uploadError.message);
       }
       
-      // Get public URL
+      // Get public URL with cache busting
       const { data: { publicUrl } } = supabase.storage
         .from('stories')
         .getPublicUrl(uploadData.path);
-        
+      
       if (!publicUrl) {
         throw new Error('Failed to get public URL for story media');
       }
-      
-      console.log("Story upload successful:", {
-        publicUrl,
-        isVideo,
-        contentType: file.type
-      });
       
       // Create story entry in database
       const { error: dbError } = await supabase
@@ -121,25 +110,20 @@ export const useStories = (): UseStoriesResult => {
       }
       
       // Refresh stories list
-      await refreshStories();
+      await loadStories();
       
       return { success: true };
     } catch (error: any) {
       console.error('Story upload error:', error);
       return { success: false, error: error.message };
     }
-  }, [session, refreshStories]);
-
-  // Initial load
-  useState(() => {
-    loadStories();
-  }, [loadStories]);
+  }, [session, loadStories]);
 
   return {
     stories,
     isLoading,
     error,
-    refreshStories,
+    refreshStories: loadStories,
     uploadStory
   };
 };

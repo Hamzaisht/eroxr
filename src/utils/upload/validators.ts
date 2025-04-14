@@ -1,3 +1,21 @@
+/**
+ * Supported image file types for upload
+ */
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/jpeg', 
+  'image/png', 
+  'image/gif', 
+  'image/webp'
+];
+
+/**
+ * Supported video file types for upload
+ */
+export const SUPPORTED_VIDEO_TYPES = [
+  'video/mp4', 
+  'video/webm', 
+  'video/quicktime'
+];
 
 /**
  * Checks if the file is an image based on MIME type
