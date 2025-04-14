@@ -6,8 +6,6 @@ import { Story } from "@/integrations/supabase/types/story";
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarImage } from "@/components/ui/avatar";
 import { AvatarFallback } from "@/components/ui/avatar";
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { Skeleton } from "@/components/ui/skeleton";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface StoryItemProps {
@@ -27,7 +25,6 @@ export const StoryItem = ({
 }: StoryItemProps) => {
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
   const [hasMediaError, setHasMediaError] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 640px)");
   
   // Format the timestamp
   const timestamp = new Date(story.created_at);
@@ -35,6 +32,12 @@ export const StoryItem = ({
   const timeDisplay = timeAgo < 60 
     ? `${timeAgo}m` 
     : `${Math.floor(timeAgo / 60)}h`;
+    
+  // Determine if story is a video
+  const isVideo = 
+    story.content_type === "video" || 
+    story.media_type === "video" || 
+    !!story.video_url;
 
   const handleLoad = () => {
     setIsMediaLoaded(true);
@@ -66,8 +69,8 @@ export const StoryItem = ({
       {/* Media thumbnail */}
       <div className="w-full h-full bg-luxury-darker">
         {!isMediaLoaded && !hasMediaError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker/80 z-5">
-            <Skeleton className="h-full w-full bg-luxury-dark/50" />
+          <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker/80 z-5 animate-pulse">
+            <div className="h-full w-full bg-luxury-dark/50" />
           </div>
         )}
         
@@ -88,7 +91,7 @@ export const StoryItem = ({
         )}
         
         {/* Media type indicator */}
-        {(story.content_type === "video" || story.media_type === "video" || story.video_url) && isMediaLoaded && (
+        {isVideo && isMediaLoaded && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-15">
             <PlayCircle className="h-8 w-8 text-white/80" />
           </div>

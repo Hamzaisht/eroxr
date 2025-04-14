@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { StoryContainer } from "./viewer/StoryContainer";
@@ -5,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Story } from "@/integrations/supabase/types/story";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface StoryViewerProps {
   stories: Story[];
@@ -26,12 +26,21 @@ export const StoryViewer = ({
   const session = useSession();
 
   const currentStory = stories[currentIndex];
-  const isVideo = currentStory?.content_type === 'video' || !!currentStory?.video_url;
+  const isVideo = currentStory?.content_type === 'video' || currentStory?.media_type === 'video' || !!currentStory?.video_url;
   const duration = isVideo ? 0 : (currentStory?.duration || 5) * 1000;
   const isOwner = session?.user?.id === currentStory?.creator_id;
 
   useEffect(() => {
     if (!isVideo && !isPaused) {
+      // Clear any existing interval
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+      }
+      
+      // Reset progress
+      setProgress(0);
+      
+      // Set a new interval
       progressInterval.current = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 100) {
@@ -41,6 +50,11 @@ export const StoryViewer = ({
           return prev + (100 / duration) * 100;
         });
       }, 100);
+    } else if (isVideo) {
+      // For videos, don't use progress interval
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+      }
     }
 
     return () => {
@@ -66,12 +80,7 @@ export const StoryViewer = ({
     }
   };
 
-  const handleDelete = async (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleDelete = async () => {
     try {
       const { error } = await supabase
         .from('stories')
@@ -86,7 +95,7 @@ export const StoryViewer = ({
       });
       
       // Update local state and handle deletion
-      window.dispatchEvent(new CustomEvent('story-uploaded'));
+      window.dispatchEvent(new CustomEvent('story-deleted'));
       
       if (stories.length === 1) {
         onClose();
@@ -107,12 +116,7 @@ export const StoryViewer = ({
     }
   };
 
-  const handleEdit = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleEdit = () => {
     toast({
       title: "Coming soon",
       description: "Story editing will be available soon",

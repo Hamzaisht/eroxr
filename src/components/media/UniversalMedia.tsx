@@ -1,11 +1,10 @@
+
 import { useEffect, useState, forwardRef } from "react";
-import { getPlayableMediaUrl } from "@/utils/media/mediaUtils";
 
 // MediaItem type to provide better TypeScript support
 interface MediaItem {
-  media_url?: string | string[];
-  video_url?: string;
-  video_urls?: string[];
+  media_url?: string | null;
+  video_url?: string | null;
   creator_id?: string;
   media_type?: string;
   content_type?: string;
@@ -52,37 +51,48 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
     useEffect(() => {
       const getMediaUrl = () => {
         try {
-          const mediaUrl = getPlayableMediaUrl(item);
+          // Handle when item is a string
+          if (typeof item === 'string') {
+            setUrl(item);
+            setIsVideo(item.includes('.mp4') || item.includes('.webm') || item.includes('.mov'));
+            return;
+          }
+          
+          // Handle when item is an object
+          if (!item) {
+            console.error("No media item provided");
+            return;
+          }
+          
+          // Determine if this is a video
+          const isMediaVideo = 
+            item.media_type === 'video' || 
+            item.content_type === 'video' || 
+            !!item.video_url;
+          
+          setIsVideo(isMediaVideo);
+          
+          // Get the appropriate URL
+          let mediaUrl: string | null = null;
+          
+          if (isMediaVideo && item.video_url) {
+            mediaUrl = item.video_url;
+          } else if (!isMediaVideo && item.media_url) {
+            mediaUrl = typeof item.media_url === 'string' 
+              ? item.media_url 
+              : Array.isArray(item.media_url) && item.media_url.length > 0 
+                ? item.media_url[0]
+                : null;
+          }
           
           // Add cache busting parameter to prevent caching issues
-          const cacheBustedUrl = mediaUrl ? 
-            `${mediaUrl}${mediaUrl.includes('?') ? '&' : '?'}v=${Date.now()}` : null;
-          
-          console.log(`Processing media item:`, { 
-            original: item, 
-            processed: mediaUrl,
-            cacheBusted: cacheBustedUrl 
-          });
-          
-          setUrl(cacheBustedUrl);
-
-          // Determine if this is a video based on various indicators
-          if (typeof item === 'object') {
-            setIsVideo(
-              item?.media_type === 'video' || 
-              item?.content_type === 'video' ||
-              !!item?.video_url ||
-              (Array.isArray(item?.video_urls) && item.video_urls.length > 0)
-            );
-          } else if (typeof item === 'string' && mediaUrl) {
-            const lowerUrl = mediaUrl.toLowerCase();
-            setIsVideo(
-              lowerUrl.includes('.mp4') || 
-              lowerUrl.includes('.webm') || 
-              lowerUrl.includes('.mov') || 
-              lowerUrl.includes('/video/')
-            );
+          if (mediaUrl) {
+            const cacheBuster = `${mediaUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+            mediaUrl = `${mediaUrl}${cacheBuster}`;
+            console.log(`Using media URL: ${mediaUrl}`);
           }
+          
+          setUrl(mediaUrl);
         } catch (error) {
           console.error("Error getting media URL:", error);
           if (onError) onError();

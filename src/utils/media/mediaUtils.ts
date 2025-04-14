@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
  * @returns A unique file path
  */
 export const createUniqueFilePath = (userId: string, file: File): string => {
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 7);
   const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  return `${userId}/${Date.now()}_${sanitizedFileName}`;
+  return `${userId}/${timestamp}_${randomStr}_${sanitizedFileName}`;
 };
 
 /**
@@ -25,7 +27,7 @@ export const uploadFileToStorage = async (
   file: File
 ): Promise<string | null> => {
   try {
-    // Determine content type based on file extension
+    // Determine content type
     const contentType = file.type || inferContentTypeFromExtension(file.name);
     
     console.log(`Uploading to ${bucket}/${path} with content type: ${contentType}`);
@@ -53,7 +55,6 @@ export const uploadFileToStorage = async (
       .from(bucket)
       .getPublicUrl(data.path);
     
-    console.log(`Upload successful. Public URL: ${publicUrl}`);
     return publicUrl;
   } catch (error) {
     console.error(`File upload error for ${bucket}/${path}:`, error);
@@ -96,7 +97,7 @@ export const getContentType = (fileName: string): "video" | "image" => {
 export const getPlayableMediaUrl = (item: any): string | null => {
   // Handle direct string input
   if (typeof item === 'string') {
-    return ensureFullUrl(item);
+    return item;
   }
   
   if (!item) {
@@ -106,69 +107,11 @@ export const getPlayableMediaUrl = (item: any): string | null => {
   
   // Extract URL from object based on available properties
   const url = 
-    item.video_url || 
-    (Array.isArray(item.video_urls) && item.video_urls.length > 0 ? item.video_urls[0] : null) ||
-    item.media_url ||
-    (Array.isArray(item.media_url) && item.media_url.length > 0 ? item.media_url[0] : null) ||
-    item.url ||
-    item.src ||
-    '';
+    (item.media_type === 'video' || item.content_type === 'video') 
+      ? item.video_url 
+      : item.media_url;
   
-  return ensureFullUrl(url);
-};
-
-/**
- * Ensures the URL is a complete, usable URL
- * @param url - The URL to check and possibly modify
- * @returns A complete URL or null
- */
-export const ensureFullUrl = (url: string): string | null => {
-  if (!url) {
-    return null;
-  }
-  
-  // If already a complete URL, return as is
-  if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) {
-    return url;
-  }
-  
-  // If it starts with a slash, remove it
-  const cleanPath = url.startsWith('/') ? url.substring(1) : url;
-  
-  // Determine the bucket from the path if possible
-  let bucket = 'media';
-  const possibleBuckets = ['stories', 'posts', 'videos', 'avatars', 'media', 'shorts'];
-  
-  for (const b of possibleBuckets) {
-    if (cleanPath.startsWith(`${b}/`) || cleanPath.includes(`/${b}/`)) {
-      bucket = b;
-      break;
-    }
-  }
-  
-  // Get the public URL using Supabase
-  try {
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(cleanPath);
-    
-    return data?.publicUrl || null;
-  } catch (error) {
-    console.error(`Failed to get public URL for ${url}:`, error);
-    return null;
-  }
-};
-
-/**
- * Adds a cache buster to a URL to prevent caching issues
- * @param url - The URL to add a cache buster to
- * @returns The URL with cache buster added
- */
-export const addCacheBuster = (url: string): string => {
-  if (!url) return '';
-  const timestamp = Date.now();
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}v=${timestamp}`;
+  return url || null;
 };
 
 /**

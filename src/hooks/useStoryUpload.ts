@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
-import { getContentType, createUniqueFilePath, uploadFileToStorage } from '@/utils/media/mediaUtils';
-import { debugMediaUrl } from '@/utils/media/debugMediaUtils';
+import { createUniqueFilePath } from '@/utils/media/mediaUtils';
 
 interface UploadState {
   isUploading: boolean;
@@ -53,7 +52,7 @@ export const useStoryUpload = () => {
       };
     }
     
-    // Determine media type early
+    // Determine media type early based on file mime type
     const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
     let progressInterval: ReturnType<typeof setInterval>;
     
@@ -73,33 +72,49 @@ export const useStoryUpload = () => {
         }));
       }, 300);
       
-      // Create a unique file path and upload
+      // Create unique storage path for the file
       const path = createUniqueFilePath(session.user.id, file);
-      const url = await uploadFileToStorage('stories', path, file);
       
+      // Upload to Supabase storage
+      const { data, error: uploadError } = await supabase.storage
+        .from('stories')
+        .upload(path, file, {
+          contentType: file.type,
+          upsert: true,
+          cacheControl: '3600'
+        });
+      
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+      
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('stories')
+        .getPublicUrl(data.path);
+        
       clearInterval(progressInterval);
       
-      if (!url) {
-        throw new Error("Failed to upload story media");
+      if (!publicUrl) {
+        throw new Error("Failed to get public URL for story media");
       }
       
       console.log("Story upload successful:", {
-        url,
+        publicUrl,
         mediaType,
-        contentType: file.type
+        contentType: file.type,
+        path: data.path
       });
       
-      // Debug URL after upload
-      await debugMediaUrl(url);
-      
-      // Create story entry in database
+      // Create story entry in database with improved field handling
       const { error: dbError } = await supabase
         .from('stories')
         .insert({
           creator_id: session.user.id,
           media_type: mediaType,
           content_type: mediaType,
-          [mediaType === 'video' ? 'video_url' : 'media_url']: url,
+          media_url: mediaType === 'image' ? publicUrl : null,
+          video_url: mediaType === 'video' ? publicUrl : null,
           is_active: true,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         });
@@ -112,7 +127,7 @@ export const useStoryUpload = () => {
         isUploading: false,
         progress: 100,
         error: null,
-        url,
+        url: publicUrl,
         mediaType
       });
       
@@ -123,7 +138,7 @@ export const useStoryUpload = () => {
       
       return {
         success: true,
-        url,
+        url: publicUrl,
         mediaType,
         error: null
       };

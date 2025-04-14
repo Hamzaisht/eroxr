@@ -1,100 +1,128 @@
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMediaUpload } from "@/hooks/useMediaUpload";
-import { StoryUploadButton } from "./components/StoryUploadButton";
-import { UploadingIndicator } from "./components/UploadingIndicator";
-import { UploadErrorState } from "./components/UploadErrorState";
+import { Plus, Loader2 } from "lucide-react";
+import { useStoryUpload } from "@/hooks/useStoryUpload";
 
 export const StoryUploader = () => {
   const session = useSession();
   const { toast } = useToast();
-  
-  // Use our media upload hook with story-specific options
-  const { 
-    uploadMedia,
-    uploadState: {
-      isUploading,
-      progress,
-      error,
-      success
-    },
-    validateFile
-  } = useMediaUpload({
-    contentCategory: 'story',
-    maxSizeInMB: 100,
-    allowedTypes: [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'
-    ],
-    autoReset: true,
-    resetDelay: 3000
-  });
+  const { uploadStory, reset, state } = useStoryUpload();
+  const { isUploading, progress, error } = state;
+  const [isDragging, setIsDragging] = useState(false);
 
-  const onFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    
+  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !session?.user?.id) return;
-
-    // Validate file
-    const validation = validateFile(file);
-    if (!validation.valid) {
+    
+    // Only allow images and videos
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
       toast({
         title: "Invalid file",
-        description: validation.message || "The selected file cannot be used for stories",
-        variant: "destructive",
+        description: "Please select an image or video file",
+        variant: "destructive"
       });
       return;
     }
-
-    // Upload the file
-    const result = await uploadMedia(file);
     
-    if (result.success && result.url) {
-      // Refresh stories data on successful upload
-      window.dispatchEvent(new CustomEvent('story-uploaded'));
-      
+    // Check file size (max 100MB)
+    if (file.size > 100 * 1024 * 1024) {
       toast({
-        title: "Story uploaded successfully",
-        description: "Your story is now live",
+        title: "File too large",
+        description: "Maximum file size is 100MB",
+        variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Upload failed",
-        description: result.error || "There was a problem uploading your story",
-        variant: "destructive",
-      });
+      return;
     }
-  }, [session?.user?.id, toast, uploadMedia, validateFile]);
+    
+    const result = await uploadStory(file);
+    
+    if (result.success) {
+      // Trigger refresh of stories
+      window.dispatchEvent(new CustomEvent('story-uploaded'));
+    }
+  }, [session?.user?.id, toast, uploadStory]);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer?.files[0];
+    if (!file || !session?.user?.id) return;
+    
+    // Only allow images and videos
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      toast({
+        title: "Invalid file",
+        description: "Please select an image or video file",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    await uploadStory(file);
+  };
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
-      className="relative w-24 h-36 group"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="relative w-24 h-36"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <input
         type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,video/x-msvideo"
-        onChange={onFileSelect}
+        onChange={handleFileSelect}
         className="hidden"
         id="story-upload"
         disabled={isUploading}
+        accept="image/*,video/*"
       />
       <label
         htmlFor="story-upload"
-        className="cursor-pointer w-full h-full flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-luxury-primary/10 to-luxury-accent/10 border-2 border-dashed border-luxury-primary/30 group-hover:border-luxury-accent/50 transition-all duration-300"
+        className={`cursor-pointer w-full h-full flex flex-col items-center justify-center rounded-xl ${
+          isDragging
+            ? "border-2 border-luxury-primary bg-luxury-primary/20"
+            : "border-2 border-dashed border-luxury-primary/30 bg-gradient-to-br from-luxury-primary/10 to-luxury-accent/10"
+        } transition-all duration-300`}
       >
         {isUploading ? (
-          <UploadingIndicator progress={progress} />
-        ) : error ? (
-          <UploadErrorState />
+          <div className="flex flex-col items-center">
+            <Loader2 className="h-6 w-6 text-luxury-primary animate-spin" />
+            <span className="text-xs mt-2 text-luxury-primary">{progress}%</span>
+          </div>
         ) : (
-          <StoryUploadButton />
+          <>
+            <div className="h-8 w-8 rounded-full bg-luxury-primary/20 flex items-center justify-center">
+              <Plus className="h-5 w-5 text-luxury-primary" />
+            </div>
+            <span className="text-[10px] mt-2 text-luxury-primary">Your Story</span>
+          </>
         )}
       </label>
+      
+      {error && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute -bottom-12 left-0 right-0 text-center"
+        >
+          <span className="text-xs text-red-500">Upload failed</span>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
