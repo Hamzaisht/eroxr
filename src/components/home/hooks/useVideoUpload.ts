@@ -76,7 +76,7 @@ export const useVideoUpload = () => {
       
       // Upload to Supabase storage
       const uploadOptions: UploadOptions = {
-        contentCategory: 'shorts'
+        contentCategory: 'short' // Changed from 'shorts' to 'short'
       };
       
       const result = await uploadFileToStorage(

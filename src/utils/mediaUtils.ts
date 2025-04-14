@@ -1,5 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
+import { isImageFile, isVideoFile } from "./upload/validators";
 
 /**
  * Interface for upload options
@@ -9,21 +9,57 @@ export interface UploadOptions {
   onProgress?: (progress: number) => void;
 }
 
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+}
+
 /**
  * Upload a file to Supabase storage
- * @param bucketName - The name of the bucket to upload to
- * @param filePath - The path where the file should be stored
  * @param file - The file to upload
- * @returns The public URL of the uploaded file or null if upload failed
+ * @param userId - User ID for creating path
+ * @param options - Upload options
+ * @returns UploadResult with success status and URL
  */
 export const uploadFileToStorage = async (
-  bucketName: string, 
-  filePath: string, 
-  file: File
-): Promise<string | null> => {
+  file: File,
+  userId: string,
+  options?: UploadOptions
+): Promise<UploadResult> => {
   try {
     // Determine content type based on file extension
     const contentType = file.type || inferContentTypeFromExtension(file.name);
+    
+    // Determine the bucket based on content category
+    const contentCategory = options?.contentCategory || 'generic';
+    let bucketName = 'media';
+    
+    switch (contentCategory) {
+      case 'story':
+        bucketName = 'stories';
+        break;
+      case 'post':
+        bucketName = 'posts';
+        break;
+      case 'message':
+        bucketName = 'messages';
+        break;
+      case 'profile':
+        bucketName = 'avatars';
+        break;
+      case 'short':
+        bucketName = 'shorts';
+        break;
+      case 'avatar':
+        bucketName = 'avatars';
+        break;
+      default:
+        bucketName = 'media';
+    }
+
+    // Create a unique file path
+    const filePath = createUniqueFilePath(userId, file);
 
     const { data, error } = await supabase.storage
       .from(bucketName)
@@ -35,7 +71,10 @@ export const uploadFileToStorage = async (
 
     if (error) {
       console.error('Storage upload error:', error);
-      return null;
+      return {
+        success: false,
+        error: error.message
+      };
     }
 
     // Get the public URL of the file
@@ -43,10 +82,16 @@ export const uploadFileToStorage = async (
       .from(bucketName)
       .getPublicUrl(data?.path || filePath);
 
-    return publicUrl || null;
+    return {
+      success: true,
+      url: publicUrl
+    };
   } catch (error: any) {
     console.error('File upload error:', error);
-    return null;
+    return {
+      success: false,
+      error: error.message || 'Unknown error occurred during upload'
+    };
   }
 };
 
@@ -62,22 +107,6 @@ export const createUniqueFilePath = (userId: string, file: File): string => {
 
 // Add this alias for compatibility with existing code
 export const createUserFilePath = createUniqueFilePath;
-
-/**
- * Get the content type based on file extension
- * @param filename - The filename to check
- * @returns "video" for video files, "image" for image files
- */
-export const getContentType = (filename: string): "video" | "image" => {
-  const extension = filename.split('.').pop()?.toLowerCase();
-  const videoExtensions = ["mp4", "webm", "mov", "avi", "wmv", "flv", "mkv"];
-  
-  if (extension && videoExtensions.includes(extension)) {
-    return "video";
-  }
-  
-  return "image";
-};
 
 /**
  * Infer content type from file extension
@@ -194,3 +223,6 @@ export const addCacheBuster = (url: string): string => {
     ? `${url}&t=${timestamp}&r=${random}` 
     : `${url}?t=${timestamp}&r=${random}`;
 };
+
+// Re-export validator functions from utils/upload/validators
+export { isImageFile, isVideoFile } from "./upload/validators";

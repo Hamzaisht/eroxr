@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { MediaUploader } from "./MediaUploader";
 import { MultiFileUploader } from "./MultiFileUploader";
 import { Upload, Image, FileVideo } from "lucide-react";
@@ -99,8 +98,8 @@ export const FileUploadDialog = ({
             
             <TabsContent value="single" className="mt-4">
               <MediaUploader
-                onUploadComplete={handleSingleUploadComplete}
-                contentCategory={contentCategory}
+                context={contentCategory}
+                onComplete={handleSingleUploadComplete}
                 showPreview={true}
                 autoUpload={true}
               />
@@ -108,8 +107,8 @@ export const FileUploadDialog = ({
             
             <TabsContent value="multiple" className="mt-4">
               <MultiFileUploader 
-                onUploadsComplete={handleMultipleUploadsComplete}
                 contentCategory={contentCategory}
+                onUploadsComplete={handleMultipleUploadsComplete}
                 maxFiles={maxFiles}
                 autoUpload={true}
               />
@@ -118,8 +117,8 @@ export const FileUploadDialog = ({
         ) : (
           <div className="mt-4">
             <MediaUploader
-              onUploadComplete={handleSingleUploadComplete}
-              contentCategory={contentCategory}
+              context={contentCategory}
+              onComplete={handleSingleUploadComplete}
               showPreview={true}
               autoUpload={true}
             />

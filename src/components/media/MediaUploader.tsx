@@ -1,11 +1,10 @@
-
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, FileImage, FileVideo, Loader2 } from 'lucide-react';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { isImageFile, isVideoFile } from '@/utils/mediaUtils';
+import { isImageFile, isVideoFile } from '@/utils/upload/validators';
 
 interface MediaUploaderProps {
   context: 'post' | 'story' | 'message' | 'profile' | 'short';
