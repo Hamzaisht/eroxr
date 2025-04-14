@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@supabase/auth-helpers-react';
+import { useToast } from '@/hooks/use-toast';
 import { useStories } from '@/components/story/hooks/useStories';
 import { isImageFile, isVideoFile } from '@/utils/upload/validators';
 
@@ -104,16 +104,13 @@ export const useStoryUpload = () => {
     setError(null);
 
     try {
-      // Determine if file is video
-      const isVideo = isVideoFile(file);
-      
       // Start progress simulation
       const progressInterval = setInterval(() => {
         setProgress(prev => Math.min(prev + 5, 90));
       }, 200);
       
-      // Upload using the stories hook
-      const result = await uploadStory(file, { isVideo });
+      // Upload using the stories hook - passing only the file parameter
+      const result = await uploadStory(file);
       
       clearInterval(progressInterval);
       
