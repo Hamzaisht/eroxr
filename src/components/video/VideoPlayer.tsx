@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { getDisplayableMediaUrl } from "@/utils/media/urlUtils";
@@ -18,9 +17,9 @@ export interface VideoPlayerProps {
   onLoadedData?: () => void;
   creatorId?: string;
   onClick?: () => void;
-  // Add new props to address TypeScript errors
   playOnHover?: boolean;
   showCloseButton?: boolean;
+  onClose?: () => void;
 }
 
 export const VideoPlayer = ({ 
@@ -37,7 +36,8 @@ export const VideoPlayer = ({
   creatorId,
   onClick,
   playOnHover = false,
-  showCloseButton = false
+  showCloseButton = false,
+  onClose
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(muted);
@@ -48,10 +48,8 @@ export const VideoPlayer = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const stallTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Process URL for optimal playback
   const processedUrl = getDisplayableMediaUrl(url);
 
-  // Handle hover behavior if playOnHover is true
   useEffect(() => {
     if (!playOnHover || !videoRef.current) return;
     
@@ -81,7 +79,6 @@ export const VideoPlayer = ({
     }
   }, [playOnHover]);
 
-  // Video event handlers
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -90,7 +87,6 @@ export const VideoPlayer = ({
       setIsLoading(true);
       setHasError(false);
       
-      // Set a timeout to detect stalled loading
       if (stallTimeoutRef.current) {
         clearTimeout(stallTimeoutRef.current);
       }
@@ -108,7 +104,6 @@ export const VideoPlayer = ({
       
       if (onLoadedData) onLoadedData();
       
-      // Auto-play if specified
       if (autoPlay && video.paused) {
         video.play().catch(e => {
           console.warn("Auto-play prevented:", e);
@@ -146,7 +141,6 @@ export const VideoPlayer = ({
       }
     };
     
-    // Add event listeners
     video.addEventListener("loadstart", handleLoadStart);
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("error", handleError);
@@ -155,7 +149,6 @@ export const VideoPlayer = ({
     video.addEventListener("playing", handlePlaying);
     video.addEventListener("waiting", handleStalled);
     
-    // Clean up
     return () => {
       video.removeEventListener("loadstart", handleLoadStart);
       video.removeEventListener("loadeddata", handleLoadedData);
@@ -171,7 +164,6 @@ export const VideoPlayer = ({
     };
   }, [autoPlay, onError, onEnded, onLoadedData]);
   
-  // Update video when URL changes
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -182,7 +174,6 @@ export const VideoPlayer = ({
     
   }, [processedUrl, retryAttempt]);
   
-  // Toggle play/pause
   const togglePlay = (e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
@@ -204,7 +195,6 @@ export const VideoPlayer = ({
     setIsPlaying(!isPlaying);
   };
   
-  // Toggle mute
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -216,7 +206,6 @@ export const VideoPlayer = ({
     }
   };
   
-  // Retry loading the video
   const handleRetry = () => {
     setIsLoading(true);
     setHasError(false);
@@ -226,7 +215,6 @@ export const VideoPlayer = ({
 
   return (
     <div className={`relative overflow-hidden bg-black ${className}`}>
-      {/* Video element */}
       <video
         ref={videoRef}
         src={processedUrl || undefined}
@@ -238,7 +226,6 @@ export const VideoPlayer = ({
         onClick={onClick || togglePlay}
       />
       
-      {/* Loading indicator */}
       {isLoading && (
         <VideoLoadingState 
           isStalled={isStalled} 
@@ -246,7 +233,6 @@ export const VideoPlayer = ({
         />
       )}
       
-      {/* Error state */}
       {hasError && (
         <VideoErrorState 
           message="Failed to load video" 
@@ -254,7 +240,6 @@ export const VideoPlayer = ({
         />
       )}
       
-      {/* Controls */}
       {controls && !hasError && !isLoading && (
         <div 
           className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
@@ -271,7 +256,6 @@ export const VideoPlayer = ({
             )}
           </button>
           
-          {/* Mute button */}
           <button
             className="absolute bottom-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
             onClick={toggleMute}
@@ -283,13 +267,12 @@ export const VideoPlayer = ({
             )}
           </button>
 
-          {/* Close button (if enabled) */}
-          {showCloseButton && (
+          {showCloseButton && onClose && (
             <button
               className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
-                if (onClick) onClick();
+                if (onClose) onClose();
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/80">
