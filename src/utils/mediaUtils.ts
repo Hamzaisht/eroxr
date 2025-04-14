@@ -140,6 +140,46 @@ export const inferContentTypeFromExtension = (filename: string): string => {
 };
 
 /**
+ * Get content type from a file or URL
+ */
+export const getContentType = (fileOrUrl: File | string): string => {
+  if (typeof fileOrUrl !== 'string') {
+    return fileOrUrl.type;
+  }
+  
+  const url = fileOrUrl.toLowerCase();
+  
+  if (url.endsWith('.jpg') || url.endsWith('.jpeg')) {
+    return 'image/jpeg';
+  } else if (url.endsWith('.png')) {
+    return 'image/png';
+  } else if (url.endsWith('.gif')) {
+    return 'image/gif';
+  } else if (url.endsWith('.webp')) {
+    return 'image/webp';
+  } else if (url.endsWith('.svg')) {
+    return 'image/svg+xml';
+  } else if (url.endsWith('.mp4')) {
+    return 'video/mp4';
+  } else if (url.endsWith('.webm')) {
+    return 'video/webm';
+  } else if (url.endsWith('.mov') || url.endsWith('.qt')) {
+    return 'video/quicktime';
+  } else if (url.endsWith('.avi')) {
+    return 'video/x-msvideo';
+  }
+  
+  // For URLs without file extensions, check for common video and image patterns
+  if (url.includes('/video/') || url.includes('videos/')) {
+    return 'video/mp4';
+  } else if (url.includes('/image/') || url.includes('images/') || url.includes('media/')) {
+    return 'image/jpeg';
+  }
+  
+  return 'application/octet-stream';
+};
+
+/**
  * Get the playable media URL from a media object
  * @param media - Media object with potential URLs
  * @returns The full, playable URL

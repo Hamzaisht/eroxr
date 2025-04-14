@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { uploadFileToStorage, createUniqueFilePath } from "@/utils/mediaUtils";
+import { uploadFileToStorage, createUniqueFilePath, UploadResult } from "@/utils/mediaUtils";
 import { validateFile as validateFileUtil, ValidationResult } from "@/utils/upload/validators";
 
 export interface UploadOptions {
@@ -78,7 +78,7 @@ export const useMediaUpload = (options?: UploadOptions) => {
    * @param uploadOptions - Options for the upload
    * @returns The public URL of the uploaded file
    */
-  const uploadMedia = async (file: File, uploadOptions?: UploadOptions) => {
+  const uploadMedia = async (file: File, uploadOptions?: UploadOptions): Promise<UploadResult> => {
     if (!session?.user?.id) {
       setUploadState({
         isUploading: false,
@@ -89,7 +89,6 @@ export const useMediaUpload = (options?: UploadOptions) => {
       });
       return {
         success: false,
-        url: null,
         error: "User not authenticated"
       };
     }
@@ -147,30 +146,29 @@ export const useMediaUpload = (options?: UploadOptions) => {
         });
       }, 300);
       
-      // Upload the file to storage
-      const url = await uploadFileToStorage(bucketName, filePath, file);
+      // Upload the file to storage - Fix the type issue by using the uploadToBucket function
+      const result = await uploadToBucket(bucketName, file, session.user.id);
       
       clearInterval(progressInterval);
       
-      if (!url) {
+      if (!result.success) {
         setUploadState({
           isUploading: false,
           progress: 0,
           url: null,
-          error: "Failed to upload file",
+          error: result.error || "Failed to upload file",
           success: false
         });
         return {
           success: false,
-          url: null,
-          error: "Failed to upload file"
+          error: result.error || "Failed to upload file"
         };
       }
       
       setUploadState({
         isUploading: false,
         progress: 100,
-        url: url,
+        url: result.url || null,
         error: null,
         success: true
       });
@@ -183,8 +181,8 @@ export const useMediaUpload = (options?: UploadOptions) => {
       }
       
       return {
-        success: true, 
-        url: url,
+        success: true,
+        url: result.url,
         error: null
       };
     } catch (error: any) {
@@ -197,8 +195,31 @@ export const useMediaUpload = (options?: UploadOptions) => {
       });
       return {
         success: false,
-        url: null,
         error: error.message || "Error uploading file"
+      };
+    }
+  };
+
+  // Helper function to use the correct uploadToBucket from storageService
+  const uploadToBucket = async (
+    bucketName: string,
+    file: File,
+    userId: string
+  ): Promise<UploadResult> => {
+    try {
+      const { uploadToBucket } = await import('@/utils/upload/storageService');
+      const result = await uploadToBucket(bucketName, file, userId);
+      
+      return {
+        success: result.success,
+        url: result.url,
+        error: result.error
+      };
+    } catch (error: any) {
+      console.error('Error in uploadToBucket:', error);
+      return {
+        success: false,
+        error: error.message || 'Error uploading to bucket'
       };
     }
   };

@@ -26,7 +26,12 @@ export const StoryReel = () => {
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { stories, loading: isLoading, error, refreshStories } = useStories();
+  const { 
+    stories, 
+    isLoading, 
+    error, 
+    refreshStories 
+  } = useStories();
 
   const handleDeleteStory = async (storyId: string) => {
     try {

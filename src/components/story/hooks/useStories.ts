@@ -3,20 +3,13 @@ import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadFileToStorage, UploadOptions } from '@/utils/mediaUtils';
+import { Story } from '@/integrations/supabase/types/story';
 
-interface Story {
-  id: string;
-  user_id: string;
-  media_url: string;
-  created_at: string;
-  expires_at: string;
-  is_video: boolean;
-}
-
-interface UseStoriesResult {
+export interface UseStoriesResult {
   stories: Story[];
   myStories: Story[];
   isLoading: boolean;
+  error: string | null;
   loadStories: () => Promise<void>;
   loadMoreStories: () => Promise<void>;
   hasMoreStories: boolean;
@@ -36,6 +29,7 @@ export const useStories = (): UseStoriesResult => {
   const [myStories, setMyStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMoreStories, setHasMoreStories] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const session = useSession();
   const { toast } = useToast();
 
@@ -59,6 +53,7 @@ export const useStories = (): UseStoriesResult => {
 
       if (error) {
         console.error('Error fetching stories:', error);
+        setError('Failed to load stories');
         toast({
           title: 'Error',
           description: 'Failed to load stories',
@@ -73,6 +68,7 @@ export const useStories = (): UseStoriesResult => {
       }
     } catch (err) {
       console.error('Error fetching stories:', err);
+      setError('Failed to load stories');
       toast({
         title: 'Error',
         description: 'Failed to load stories',
@@ -103,6 +99,7 @@ export const useStories = (): UseStoriesResult => {
 
       if (error) {
         console.error('Error fetching more stories:', error);
+        setError('Failed to load more stories');
         toast({
           title: 'Error',
           description: 'Failed to load more stories',
@@ -122,6 +119,7 @@ export const useStories = (): UseStoriesResult => {
       }
     } catch (err) {
       console.error('Error fetching more stories:', err);
+      setError('Failed to load more stories');
       toast({
         title: 'Error',
         description: 'Failed to load more stories',
@@ -156,6 +154,7 @@ export const useStories = (): UseStoriesResult => {
 
       if (error) {
         console.error('Error fetching my stories:', error);
+        setError('Failed to load your stories');
         toast({
           title: 'Error',
           description: 'Failed to load your stories',
@@ -167,6 +166,7 @@ export const useStories = (): UseStoriesResult => {
       setMyStories(data);
     } catch (err) {
       console.error('Error fetching my stories:', err);
+      setError('Failed to load your stories');
       toast({
         title: 'Error',
         description: 'Failed to load your stories',
@@ -322,6 +322,7 @@ export const useStories = (): UseStoriesResult => {
     stories,
     myStories,
     isLoading,
+    error,
     loadStories,
     loadMoreStories,
     hasMoreStories,
