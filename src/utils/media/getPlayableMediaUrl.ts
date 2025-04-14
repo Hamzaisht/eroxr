@@ -1,5 +1,5 @@
 
-import { addCacheBuster } from "./urlUtils";
+import { addCacheBuster as addCacheBusterUtil } from "./urlUtils";
 
 interface MediaItem {
   media_url?: string;
@@ -48,7 +48,8 @@ export const addCacheBuster = (url: string | null): string | null => {
     return url;
   }
   
-  return addCacheBuster(url);
+  // Use the imported utility function instead of calling itself recursively
+  return addCacheBusterUtil(url);
 };
 
 /**
