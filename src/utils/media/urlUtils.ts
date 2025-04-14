@@ -1,3 +1,4 @@
+
 /**
  * Add cache busting parameter to URL to prevent browser caching
  */
@@ -112,10 +113,11 @@ export const inferContentTypeFromUrl = (url: string): string => {
 export const fixUrlContentType = async (url: string): Promise<string> => {
   if (!url) return '';
   
-  const actualContentType = await checkUrlContentType(url);
+  const contentInfoResult = await checkUrlContentType(url);
   const inferredContentType = inferContentTypeFromUrl(url);
   
-  if (!actualContentType || actualContentType === 'application/octet-stream') {
+  // If content type is missing or is generic octet-stream, use inferred type
+  if (!contentInfoResult.isValid || !contentInfoResult.contentType || contentInfoResult.contentType === 'application/octet-stream') {
     // Try to add the correct content type as a query parameter
     if (inferredContentType !== 'application/octet-stream') {
       return url.includes('?') 
