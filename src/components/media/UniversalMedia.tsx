@@ -28,7 +28,7 @@ interface UniversalMediaProps {
   onLoadedData?: () => void;
   autoPlay?: boolean;
   controls?: boolean;
-  showWatermark?: boolean;
+  showWatermark?: boolean; // Property kept but ignored
   onClick?: () => void;
 }
 
@@ -41,7 +41,7 @@ export const UniversalMedia = ({
   onLoadedData,
   autoPlay = false,
   controls = true,
-  showWatermark = false,
+  showWatermark = false, // Property kept but ignored
   onClick
 }: UniversalMediaProps) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -179,8 +179,6 @@ export const UniversalMedia = ({
           className="w-full h-full"
           onLoad={handleLoad}
           onError={handleError}
-          showWatermark={showWatermark}
-          creatorId={creatorId}
           onClick={onClick}
         />
       )}

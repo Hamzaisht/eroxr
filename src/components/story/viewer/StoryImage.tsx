@@ -1,8 +1,6 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { getUsernameForWatermark } from "@/utils/watermarkUtils";
-import '../../../styles/watermark.css';
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 
@@ -15,7 +13,6 @@ interface StoryImageProps {
 }
 
 export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }: StoryImageProps) => {
-  const [watermarkUsername, setWatermarkUsername] = useState<string>(username);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   
@@ -28,11 +25,6 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   useEffect(() => {
     setIsLoading(true);
     setLoadError(false);
-    getUsernameForWatermark(creatorId).then(name => {
-      setWatermarkUsername(name);
-    }).catch(error => {
-      console.error("Error fetching watermark username:", error);
-    });
   }, [creatorId, mediaUrl]);
   
   const handleLoad = () => {
@@ -83,14 +75,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
         className="w-full h-full object-contain max-h-[100vh]"
         onLoad={handleLoad}
         onError={handleError}
-        showWatermark={true}
       />
-      
-      {!isLoading && !loadError && (
-        <div className="watermark-overlay">
-          www.eroxr.com/@{watermarkUsername}
-        </div>
-      )}
     </motion.div>
   );
 };

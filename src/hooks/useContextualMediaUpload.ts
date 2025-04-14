@@ -14,24 +14,6 @@ export const useContextualMediaUpload = (context: MediaContext) => {
   const session = useSession();
   const { toast } = useToast();
 
-  // Map context to bucket name
-  const getBucketName = (context: MediaContext): string => {
-    switch (context) {
-      case 'post':
-        return 'posts';
-      case 'story':
-        return 'stories';
-      case 'message':
-        return 'messages';
-      case 'short':
-        return 'shorts';
-      case 'avatar':
-        return 'avatars';
-      default:
-        return 'media';
-    }
-  };
-
   /**
    * Upload a media file in the given context
    */

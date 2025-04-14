@@ -1,10 +1,8 @@
 
 import { useEffect, useRef, forwardRef, useState } from "react";
 import { motion } from "framer-motion";
-import { getUsernameForWatermark } from "@/utils/watermarkUtils";
-import '../../../styles/watermark.css';
-import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { Loader2, AlertCircle, RefreshCw, VolumeX } from "lucide-react";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -18,21 +16,12 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
   ({ videoUrl, onEnded, isPaused, creatorId, onError }, ref) => {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
-    const [watermarkUsername, setWatermarkUsername] = useState<string>("");
     
     const mediaItem = {
       video_url: videoUrl,
       creator_id: creatorId,
       media_type: "video"
     };
-    
-    useEffect(() => {
-      getUsernameForWatermark(creatorId).then(name => {
-        setWatermarkUsername(name);
-      }).catch(error => {
-        console.error("Error fetching watermark username:", error);
-      });
-    }, [creatorId]);
     
     const handleError = () => {
       setLoadError(true);
@@ -85,18 +74,11 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
           onLoad={handleLoad}
           onEnded={onEnded}
           onLoadedData={handleLoad}
-          showWatermark={true}
         />
         
         {!isLoading && !loadError && (
           <div className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
             <VolumeX className="h-5 w-5 text-white" />
-          </div>
-        )}
-        
-        {!isLoading && !loadError && watermarkUsername && (
-          <div className="watermark-overlay">
-            www.eroxr.com/@{watermarkUsername}
           </div>
         )}
       </div>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { WatermarkOverlay } from "@/components/media/WatermarkOverlay";
 import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 import { addCacheBuster } from "@/utils/media/urlUtils";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
@@ -145,7 +144,6 @@ export const PostContent = ({
                               item={mediaItem}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               onError={() => handleMediaError(url)}
-                              showWatermark={true}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </motion.div>
