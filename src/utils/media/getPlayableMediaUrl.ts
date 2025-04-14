@@ -1,75 +1,54 @@
 
-import { addCacheBuster as addCacheBusterUtil } from "./urlUtils";
+import { addCacheBuster } from './urlUtils';
 
-interface MediaItem {
-  media_url?: string;
-  video_url?: string;
-  poster_url?: string;
-  media_type?: string;
-  content_type?: string;
-  creator_id?: string;
-  [key: string]: any;
+interface MediaSource {
+  media_url?: string | string[] | null;
+  video_url?: string | null;
+  video_urls?: string[] | null;
+  url?: string | null;
+  src?: string | null;
 }
 
 /**
- * Get a playable media URL from various item formats
- * This function handles different property names and formats
- * to ensure we get a valid URL
+ * Extract and format media URL from various source objects
+ * This function handles all the different ways media URLs might be stored
  */
-export const getPlayableMediaUrl = (item: MediaItem | null | undefined): string | null => {
-  if (!item) return null;
-  
-  // Try different property names to find a valid URL
-  let url = item.media_url || item.video_url || null;
-  
-  // For backward compatibility
-  if (!url && 'url' in item) {
-    url = item.url;
+export const getPlayableMediaUrl = (source: MediaSource | string | null | undefined): string => {
+  // Handle direct string URLs
+  if (typeof source === 'string') {
+    return addCacheBuster(source);
   }
   
-  if (!url) return null;
+  // Handle null/undefined cases
+  if (!source) return '';
   
-  // For arrays, take the first item
-  if (Array.isArray(url) && url.length > 0) {
-    url = url[0];
+  // Extract URL from source object based on available properties
+  let mediaUrl: string | null = null;
+  
+  // Handle media_url which could be an array or string
+  if (source.media_url) {
+    if (Array.isArray(source.media_url) && source.media_url.length > 0) {
+      mediaUrl = source.media_url[0];
+    } else if (typeof source.media_url === 'string') {
+      mediaUrl = source.media_url;
+    }
   }
   
-  return url;
-};
-
-/**
- * Add cache busting parameters to URLs while preventing recursive additions
- * IMPORTANT: This function checks if a URL already has cache busting parameters
- * to avoid adding them multiple times
- */
-export const addCacheBuster = (url: string | null): string | null => {
-  if (!url) return null;
-  
-  // Don't add cache busters to blob URLs or data URLs
-  if (url.startsWith('blob:') || url.startsWith('data:')) {
-    return url;
+  // If no media_url, try video_url
+  if (!mediaUrl && source.video_url) {
+    mediaUrl = source.video_url;
   }
   
-  // If URL already has our specific cache-busting parameters, don't add more
-  if (url.includes('t=') && url.includes('r=')) {
-    return url;
+  // If no video_url, try video_urls array
+  if (!mediaUrl && source.video_urls && Array.isArray(source.video_urls) && source.video_urls.length > 0) {
+    mediaUrl = source.video_urls[0];
   }
   
-  // Generate a timestamp and a unique identifier
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 10000);
+  // Try generic url or src properties
+  if (!mediaUrl) {
+    mediaUrl = source.url || source.src || '';
+  }
   
-  // Add the cache busting parameters
-  return url.includes('?') ? 
-    `${url}&t=${timestamp}&r=${random}` : 
-    `${url}?t=${timestamp}&r=${random}`;
-};
-
-/**
- * Get the poster URL for a video
- */
-export const getPosterUrl = (item: MediaItem | null): string | null => {
-  if (!item) return null;
-  
-  return item.poster_url || null;
+  // Apply cache busting to prevent stale content
+  return addCacheBuster(mediaUrl);
 };

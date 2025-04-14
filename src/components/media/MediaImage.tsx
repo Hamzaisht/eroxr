@@ -4,7 +4,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { WatermarkOverlay } from "./WatermarkOverlay";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { addCacheBuster } from "@/utils/mediaUtils";
+import { getDisplayableMediaUrl } from "@/utils/media/urlUtils";
+import { AlertCircle, RefreshCw } from "lucide-react"; 
 
 interface MediaImageProps {
   url: string | null;
@@ -31,99 +32,95 @@ export const MediaImage = ({
   const [error, setError] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [retryUrl, setRetryUrl] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const [displayUrl, setDisplayUrl] = useState<string>("");
 
+  // Prepare the media URL and load watermark username
   useEffect(() => {
-    // Reset state when URL changes
+    // Reset states when URL changes
     setLoaded(false);
     setError(false);
-    setRetryUrl(null);
-    setRetryCount(0);
     
+    if (!url) return;
+    
+    // Generate a display URL with cache busting
+    setDisplayUrl(getDisplayableMediaUrl(url));
+    
+    // Try to get watermark username if needed
     if (showWatermark && creatorId) {
       getUsernameForWatermark(creatorId)
         .then(name => setUsername(name))
         .catch(() => setUsername(null));
     }
-  }, [url, showWatermark, creatorId]);
+  }, [url, showWatermark, creatorId, retryAttempt]);
 
+  // Handle successful image load
   const handleLoad = () => {
     setLoaded(true);
     setError(false);
     if (onLoad) onLoad();
   };
 
+  // Handle image loading error
   const handleError = () => {
-    // If we're already at retry URL and still failing
-    if (retryUrl === url) {
-      setError(true);
-      setLoaded(false);
-      if (onError) onError();
-      return;
-    }
-    
-    // If we have a URL that failed, try to diagnose the issue
-    if (url) {
-      console.error(`Failed to load image from URL: ${url}`);
-      
-      // Try to load the image again with a new cache buster
-      // Make sure we're not adding cache busters recursively
-      const newRetryUrl = addCacheBuster(url);
-      setRetryUrl(newRetryUrl);
-      setRetryCount(prev => prev + 1);
-      
-      // Create and test a new image element
-      const testImg = new Image();
-      testImg.onload = () => {
-        console.log("Image loaded successfully on retry with direct element");
-        // Update our state to use the successful URL
-        setError(false);
-        setLoaded(true);
-        if (onLoad) onLoad();
-      };
-      testImg.onerror = () => {
-        console.error("Image failed to load even on retry with direct element");
-        setError(true);
-        setLoaded(false);
-        if (onError) onError();
-      };
-      testImg.src = newRetryUrl;
-    } else {
-      setError(true);
-      setLoaded(false);
-      if (onError) onError();
-    }
+    // Only show error after we've tried once already
+    setError(true);
+    setLoaded(false);
+    if (onError) onError();
+  };
+  
+  // Retry loading the image with a new cache buster
+  const handleRetry = () => {
+    setError(false);
+    setLoaded(false);
+    setRetryAttempt(prev => prev + 1);
   };
 
-  if (!url && !retryUrl) {
-    return (
-      <Skeleton className={`w-full h-full ${className}`} />
-    );
+  // If no URL is provided, show skeleton
+  if (!url) {
+    return <Skeleton className={`w-full h-full ${className}`} />;
   }
-
-  const effectiveUrl = retryUrl || url;
 
   return (
     <div
       className={`relative ${className} overflow-hidden bg-black/20 ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
+      {/* Loading skeleton */}
       {!loaded && !error && (
         <div className="absolute inset-0 flex items-center justify-center">
           <Skeleton className="w-full h-full" />
         </div>
       )}
       
+      {/* Error state with retry button */}
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+          <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
+          <p className="text-sm text-gray-200 mb-3">Failed to load image</p>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRetry();
+            }}
+            className="flex items-center gap-1 px-3 py-1 bg-black/50 hover:bg-black/70 text-white rounded-md"
+          >
+            <RefreshCw className="h-3 w-3" /> Retry
+          </button>
+        </div>
+      )}
+      
+      {/* Actual image */}
       <img
-        src={effectiveUrl}
+        src={displayUrl}
         alt={alt}
-        className={`w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        className={`w-full h-full object-cover ${loaded && !error ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
         onLoad={handleLoad}
         onError={handleError}
         loading="eager"
       />
       
+      {/* Watermark */}
       {showWatermark && loaded && !error && username && (
         <WatermarkOverlay
           className={isMobile ? 'text-xs' : 'text-sm'}

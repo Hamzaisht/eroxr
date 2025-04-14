@@ -5,7 +5,7 @@
 export const addCacheBuster = (url: string): string => {
   if (!url) return '';
   
-  // Prevent recursive cache busting by checking for existing timestamp
+  // Don't add cache busters to URLs that already have one
   if (url.includes('t=') && url.includes('&r=')) {
     return url;
   }
@@ -31,7 +31,12 @@ export interface UrlContentInfo {
 export const checkUrlContentType = async (url: string): Promise<UrlContentInfo> => {
   try {
     // First try with HEAD request which is more efficient
-    const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+    const response = await fetch(url, { 
+      method: 'HEAD', 
+      cache: 'no-store',
+      mode: 'cors',
+      credentials: 'omit' // Don't send cookies for cross-origin requests
+    });
     
     if (response.ok) {
       const contentType = response.headers.get('content-type');
@@ -52,7 +57,9 @@ export const checkUrlContentType = async (url: string): Promise<UrlContentInfo> 
     // If HEAD failed or no content-type, try with a small range GET request
     const rangeResponse = await fetch(url, { 
       headers: { Range: 'bytes=0-1024' },
-      cache: 'no-store'
+      cache: 'no-store',
+      mode: 'cors',
+      credentials: 'omit'
     });
     
     const headers: Record<string, string> = {};
@@ -82,6 +89,8 @@ export const checkUrlContentType = async (url: string): Promise<UrlContentInfo> 
  * Infer content type from URL extension
  */
 export const inferContentTypeFromUrl = (url: string): string => {
+  if (!url) return 'application/octet-stream';
+  
   const lowercaseUrl = url.toLowerCase();
   
   if (lowercaseUrl.endsWith('.jpg') || lowercaseUrl.endsWith('.jpeg')) {
@@ -108,17 +117,27 @@ export const inferContentTypeFromUrl = (url: string): string => {
 };
 
 /**
+ * Get a clean version of a URL without query parameters
+ */
+export const getCleanUrl = (url: string): string => {
+  if (!url) return '';
+  return url.split('?')[0];
+};
+
+/**
  * Fix URLs with incorrect or missing content type
  */
 export const fixUrlContentType = async (url: string): Promise<string> => {
   if (!url) return '';
   
+  // Get content info from the URL
   const contentInfoResult = await checkUrlContentType(url);
-  const inferredContentType = inferContentTypeFromUrl(url);
   
-  // If content type is missing or is generic octet-stream, use inferred type
-  if (!contentInfoResult.isValid || !contentInfoResult.contentType || contentInfoResult.contentType === 'application/octet-stream') {
-    // Try to add the correct content type as a query parameter
+  // If not valid or no content type, try to infer from the URL
+  if (!contentInfoResult.isValid || !contentInfoResult.contentType) {
+    const inferredContentType = inferContentTypeFromUrl(url);
+    
+    // Add the inferred content type as a query parameter
     if (inferredContentType !== 'application/octet-stream') {
       return url.includes('?') 
         ? `${url}&contentType=${encodeURIComponent(inferredContentType)}` 
@@ -146,6 +165,7 @@ export const checkUrlAccessibility = async (url: string): Promise<boolean> => {
     const response = await fetch(url, { 
       method: 'HEAD',
       cache: 'no-store',
+      mode: 'cors',
       credentials: 'omit'
     });
     
@@ -154,4 +174,20 @@ export const checkUrlAccessibility = async (url: string): Promise<boolean> => {
     console.error('Error checking URL accessibility:', error);
     return false;
   }
+};
+
+/**
+ * Get a media URL that works reliably for display
+ * This is our main function for getting a media URL ready for display
+ */
+export const getDisplayableMediaUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  
+  // Check for special URLs that don't need processing
+  if (url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+  
+  // Add cache busting parameters to ensure fresh content loading
+  return addCacheBuster(url);
 };

@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { getUrlWithCacheBuster, createUserFilePath } from '@/utils/mediaUtils';
+import { getDisplayableMediaUrl } from '@/utils/media/urlUtils';
+import { createUserFilePath } from '@/utils/mediaUtils';
 
 export const useStorageService = () => {
   /**
@@ -96,7 +97,7 @@ export const useStorageService = () => {
       console.log("Public URL:", publicUrl);
       
       // Add cache busting to ensure fresh content delivery
-      const cacheBustedUrl = getUrlWithCacheBuster(publicUrl);
+      const cacheBustedUrl = getDisplayableMediaUrl(publicUrl);
       
       return { 
         success: true, 

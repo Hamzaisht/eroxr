@@ -1,19 +1,22 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { addCacheBuster, checkUrlAccessibility, fixUrlContentType } from '@/utils/mediaUtils';
+import { addCacheBuster, checkUrlAccessibility } from '@/utils/mediaUtils';
+import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
 
 interface MediaHandlerOptions {
   item: any; // The data item containing the media URL
   onLoad?: () => void;
   onError?: () => void;
   maxRetries?: number;
+  initialDelay?: number;
 }
 
 export const useMediaHandler = ({
   item,
   onLoad,
   onError,
-  maxRetries = 2
+  maxRetries = 3,
+  initialDelay = 500
 }: MediaHandlerOptions) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -22,41 +25,55 @@ export const useMediaHandler = ({
   const [effectiveUrl, setEffectiveUrl] = useState<string | null>(null);
   const [isVideoContent, setIsVideoContent] = useState(false);
 
-  // Determine the URL to use
+  // Determine the URL to use and detect media type
   useEffect(() => {
-    const determineUrl = async () => {
+    const determineMedia = async () => {
       setIsLoading(true);
       setLoadError(false);
       
-      const mediaUrl = item?.media_url?.[0] || item?.media_url || 
-                    item?.video_url || item?.video_urls?.[0] || 
-                    item?.url || item?.src || null;
-      
-      if (!mediaUrl) {
-        setAccessibleUrl(null);
-        setEffectiveUrl(null);
-        setIsLoading(false);
-        return;
+      try {
+        // Get the URL from various possible properties
+        const mediaUrl = getPlayableMediaUrl(item);
+        
+        if (!mediaUrl) {
+          setAccessibleUrl(null);
+          setEffectiveUrl(null);
+          setIsLoading(false);
+          setLoadError(true);
+          return;
+        }
+        
+        // Determine if it's a video based on URL or content_type/media_type
+        const url = mediaUrl.toLowerCase();
+        const isVideo = url.includes('videos/') || url.includes('video/') ||
+                       url.endsWith('.mp4') || url.endsWith('.webm') || 
+                       url.endsWith('.mov') || url.includes('/shorts/') ||
+                       item?.content_type === 'video' || 
+                       item?.media_type === 'video';
+        
+        setIsVideoContent(isVideo);
+        setAccessibleUrl(mediaUrl);
+        setEffectiveUrl(mediaUrl);
+        
+        // If we're already at max retries, don't delay loading
+        if (retryCount >= maxRetries) {
+          return;
+        }
+        
+        // For small random delay to prevent thundering herd problem
+        // This helps when many media items are loaded simultaneously
+        if (initialDelay > 0) {
+          const randomDelay = Math.floor(Math.random() * initialDelay);
+          await new Promise(resolve => setTimeout(resolve, randomDelay));
+        }
+      } catch (error) {
+        console.error("Error determining media source:", error);
+        setLoadError(true);
       }
-      
-      // Determine if it's a video
-      const url = mediaUrl.toLowerCase();
-      const isVideo = url.includes('videos/') || url.includes('video/') ||
-                     url.endsWith('.mp4') || url.endsWith('.webm') || 
-                     url.endsWith('.mov') || url.includes('/shorts/') ||
-                     item?.content_type === 'video' || 
-                     item?.media_type === 'video';
-      
-      setIsVideoContent(isVideo);
-      
-      // Add cache buster to URL
-      const urlWithCacheBuster = addCacheBuster(mediaUrl);
-      setAccessibleUrl(urlWithCacheBuster);
-      setEffectiveUrl(urlWithCacheBuster);
     };
     
-    determineUrl();
-  }, [item]);
+    determineMedia();
+  }, [item, retryCount, maxRetries, initialDelay]);
 
   // Handle successful loading
   const handleLoad = useCallback(() => {
@@ -70,7 +87,7 @@ export const useMediaHandler = ({
     console.error(`Media loading error for ${isVideoContent ? 'video' : 'image'}: ${accessibleUrl}`);
     
     if (retryCount < maxRetries) {
-      // Try again with a new cache buster
+      // Add cache busting and retry with exponential backoff
       const newUrl = addCacheBuster(`${accessibleUrl}`);
       setRetryCount(prev => prev + 1);
       setEffectiveUrl(newUrl);
@@ -93,7 +110,7 @@ export const useMediaHandler = ({
     const baseUrl = accessibleUrl?.split('?')[0] || '';
     const newUrl = `${baseUrl}?cache=${timestamp}-${random}`;
     
-    setRetryCount(prev => prev + 1);
+    setRetryCount(0); // Reset retry count for new attempt
     setEffectiveUrl(newUrl);
   }, [accessibleUrl]);
 

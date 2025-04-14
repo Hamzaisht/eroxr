@@ -1,5 +1,10 @@
 
-import { checkUrlContentType, UrlContentInfo, inferContentTypeFromUrl } from './urlUtils';
+import { 
+  checkUrlContentType, 
+  UrlContentInfo, 
+  inferContentTypeFromUrl,
+  getDisplayableMediaUrl
+} from './urlUtils';
 
 /**
  * Debug utility to check media URLs for issues
@@ -46,17 +51,7 @@ export async function debugMediaUrl(url: string): Promise<{
     }
     
     // Network check
-    let networkCheck: UrlContentInfo;
-    try {
-      networkCheck = await checkUrlContentType(url);
-    } catch (error) {
-      networkCheck = {
-        isValid: false,
-        contentType: null,
-        status: 0,
-        headers: {}
-      };
-    }
+    const networkCheck: UrlContentInfo = await checkUrlContentType(url);
     
     // Infer details from URL
     const inferredType = inferContentTypeFromUrl(url);
@@ -118,6 +113,7 @@ export function debugImageLoading(url: string): Promise<{ success: boolean, mess
       });
     };
     
-    img.src = url;
+    // Add cache-busting to the URL for accurate testing
+    img.src = getDisplayableMediaUrl(url);
   });
 }
