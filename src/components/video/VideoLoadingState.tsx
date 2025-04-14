@@ -1,6 +1,5 @@
 
-import { Loader2, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2, RefreshCw } from "lucide-react";
 
 interface VideoLoadingStateProps {
   isStalled?: boolean;
@@ -9,24 +8,22 @@ interface VideoLoadingStateProps {
 
 export const VideoLoadingState = ({ isStalled, onRetry }: VideoLoadingStateProps) => {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20">
+    <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
       {isStalled ? (
-        <div className="flex flex-col items-center gap-2">
-          <AlertCircle className="h-8 w-8 text-yellow-500" />
-          <p className="text-sm text-white/80">Video is taking longer than usual...</p>
+        <div className="flex flex-col items-center">
+          <p className="text-white/80 text-sm mb-2">Video loading is taking longer than expected</p>
           {onRetry && (
-            <Button 
+            <button 
               onClick={onRetry}
-              className="mt-2 px-3 py-1.5 bg-luxury-primary/80 hover:bg-luxury-primary rounded-md"
-              variant="default"
-              size="sm"
+              className="flex items-center gap-2 px-4 py-2 bg-black/50 hover:bg-black/70 text-white rounded-md transition-colors"
             >
-              Retry
-            </Button>
+              <RefreshCw className="h-4 w-4" />
+              <span>Retry</span>
+            </button>
           )}
         </div>
       ) : (
-        <Loader2 className="h-8 w-8 text-white animate-spin" />
+        <Loader2 className="h-8 w-8 animate-spin text-white/80" />
       )}
     </div>
   );

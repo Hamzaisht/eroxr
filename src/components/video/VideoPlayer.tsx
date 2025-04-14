@@ -5,7 +5,7 @@ import { getDisplayableMediaUrl } from "@/utils/media/urlUtils";
 import { VideoLoadingState } from "./VideoLoadingState";
 import { VideoErrorState } from "./VideoErrorState";
 
-interface VideoPlayerProps {
+export interface VideoPlayerProps {
   url: string;
   className?: string;
   poster?: string;
@@ -18,6 +18,9 @@ interface VideoPlayerProps {
   onLoadedData?: () => void;
   creatorId?: string;
   onClick?: () => void;
+  // Add new props to address TypeScript errors
+  playOnHover?: boolean;
+  showCloseButton?: boolean;
 }
 
 export const VideoPlayer = ({ 
@@ -32,7 +35,9 @@ export const VideoPlayer = ({
   onEnded,
   onLoadedData,
   creatorId,
-  onClick
+  onClick,
+  playOnHover = false,
+  showCloseButton = false
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(muted);
@@ -45,6 +50,36 @@ export const VideoPlayer = ({
   
   // Process URL for optimal playback
   const processedUrl = getDisplayableMediaUrl(url);
+
+  // Handle hover behavior if playOnHover is true
+  useEffect(() => {
+    if (!playOnHover || !videoRef.current) return;
+    
+    const handleMouseEnter = () => {
+      if (videoRef.current && videoRef.current.paused) {
+        videoRef.current.play().catch(e => {
+          console.warn("Auto-play on hover prevented:", e);
+        });
+      }
+    };
+    
+    const handleMouseLeave = () => {
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause();
+      }
+    };
+    
+    const videoElement = videoRef.current;
+    if (videoElement && videoElement.parentElement) {
+      videoElement.parentElement.addEventListener('mouseenter', handleMouseEnter);
+      videoElement.parentElement.addEventListener('mouseleave', handleMouseLeave);
+      
+      return () => {
+        videoElement.parentElement?.removeEventListener('mouseenter', handleMouseEnter);
+        videoElement.parentElement?.removeEventListener('mouseleave', handleMouseLeave);
+      };
+    }
+  }, [playOnHover]);
 
   // Video event handlers
   useEffect(() => {
@@ -247,6 +282,22 @@ export const VideoPlayer = ({
               <Volume2 className="w-4 h-4 text-white/80" />
             )}
           </button>
+
+          {/* Close button (if enabled) */}
+          {showCloseButton && (
+            <button
+              className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onClick) onClick();
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/80">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          )}
         </div>
       )}
     </div>

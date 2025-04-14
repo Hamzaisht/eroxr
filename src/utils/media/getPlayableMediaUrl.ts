@@ -52,3 +52,6 @@ export const getPlayableMediaUrl = (source: MediaSource | string | null | undefi
   // Apply cache busting to prevent stale content
   return addCacheBuster(mediaUrl);
 };
+
+// Export addCacheBuster from this file as well for better compatibility
+export { addCacheBuster } from './urlUtils';

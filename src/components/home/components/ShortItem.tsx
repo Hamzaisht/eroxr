@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -11,8 +12,7 @@ import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { Short } from "../types/short";
 import { useShortActions } from "../hooks/actions";
 import { useToast } from "@/hooks/use-toast";
-import { getUrlWithCacheBuster } from "@/utils/mediaUtils";
-import { getPlayableMediaUrl, addCacheBuster } from "@/utils/media/getPlayableMediaUrl";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
 
 interface ShortItemProps {
@@ -64,10 +64,6 @@ export const ShortItem = ({
       setIsMediaAvailable(true);
     }
   }, [short?.id, videoUrl, hasThumbnail]);
-
-  // Add cache busting to URLs
-  const videoUrlWithCacheBuster = videoUrl ? addCacheBuster(videoUrl) : null;
-  const thumbnailUrlWithCacheBuster = thumbnailUrl ? addCacheBuster(thumbnailUrl) : undefined;
   
   // Reset video error state when short changes
   useEffect(() => {
@@ -186,9 +182,9 @@ export const ShortItem = ({
     console.error("Video error for short:", short?.id, videoUrl);
     
     // Debug the URL when error occurs
-    if (videoUrlWithCacheBuster) {
-      debugMediaUrl(videoUrlWithCacheBuster);
-      console.log("Debugging video URL:", videoUrlWithCacheBuster);
+    if (videoUrl) {
+      debugMediaUrl(videoUrl);
+      console.log("Debugging video URL:", videoUrl);
     }
     
     setVideoError(true);
@@ -244,14 +240,14 @@ export const ShortItem = ({
         <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
           <p className="text-luxury-neutral/70">This video is not available</p>
         </div>
-      ) : !videoUrlWithCacheBuster ? (
+      ) : !videoUrl ? (
         <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
           <p className="text-luxury-neutral/70">This video is not available</p>
         </div>
       ) : (
         <VideoPlayer
-          url={videoUrlWithCacheBuster}
-          poster={thumbnailUrlWithCacheBuster}
+          url={videoUrl}
+          poster={thumbnailUrl}
           className="h-full w-full object-cover"
           autoPlay={index === currentVideoIndex}
           onError={handleVideoError}

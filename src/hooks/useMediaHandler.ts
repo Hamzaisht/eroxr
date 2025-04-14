@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { addCacheBuster, checkUrlAccessibility } from '@/utils/mediaUtils';
+import { addCacheBuster } from '@/utils/media/getPlayableMediaUrl';
 import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
 
 interface MediaHandlerOptions {
