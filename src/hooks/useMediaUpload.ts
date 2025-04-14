@@ -99,7 +99,8 @@ export const useMediaUpload = (defaultOptions: Partial<UploadOptions> = {}) => {
       });
       
       // Simulate upload progress
-      const progressInterval = setInterval(() => {
+      let progressInterval: ReturnType<typeof setInterval>;
+      progressInterval = setInterval(() => {
         setUploadState(prev => {
           const newProgress = Math.min(prev.progress + Math.random() * 10, 90);
           
@@ -165,7 +166,10 @@ export const useMediaUpload = (defaultOptions: Partial<UploadOptions> = {}) => {
       
       return { success: true, url };
     } catch (error: any) {
-      clearInterval?.(progressInterval);
+      // Clear interval if it exists
+      if (typeof progressInterval !== 'undefined') {
+        clearInterval(progressInterval);
+      }
       
       const errorMessage = error.message || "An error occurred during upload";
       

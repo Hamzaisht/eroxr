@@ -29,7 +29,7 @@ export const StoryUploader = () => {
       'image/jpeg', 'image/png', 'image/gif', 'image/webp',
       'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'
     ],
-    autoResetOnCompletion: true,
+    autoReset: true,
     resetDelay: 3000
   });
 

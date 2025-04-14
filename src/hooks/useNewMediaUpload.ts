@@ -56,7 +56,8 @@ export const useNewMediaUpload = () => {
       });
       
       // Start progress simulation
-      const progressInterval = setInterval(() => {
+      let progressInterval: ReturnType<typeof setInterval>;
+      progressInterval = setInterval(() => {
         setState(prev => {
           const newProgress = Math.min(prev.progress + 5, 90);
           
@@ -112,7 +113,9 @@ export const useNewMediaUpload = () => {
       
       return { success: true, url, error: null };
     } catch (error: any) {
-      clearInterval?.progressInterval;
+      if (typeof progressInterval !== 'undefined') {
+        clearInterval(progressInterval);
+      }
       
       const errorMessage = error.message || "An unknown error occurred";
       
