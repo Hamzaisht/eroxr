@@ -146,7 +146,9 @@ export const useMediaUpload = (defaultOptions: Partial<UploadOptions> = {}) => {
       // Upload file
       const url = await uploadFileToStorage(bucket, path, file);
       
-      clearInterval(progressInterval);
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
       
       if (!url) {
         throw new Error("Failed to upload media");

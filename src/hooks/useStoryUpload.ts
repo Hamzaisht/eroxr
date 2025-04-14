@@ -71,7 +71,8 @@ export const useStoryUpload = () => {
       }, 300);
       
       // Determine media type
-      const mediaType = getContentType(file.name) as 'image' | 'video';
+      const fileType = file.type;
+      const mediaType = fileType.startsWith('video/') ? 'video' : 'image';
       
       // Create a unique file path
       const path = createUniqueFilePath(session.user.id, file);
@@ -98,17 +99,31 @@ export const useStoryUpload = () => {
         };
       }
       
+      console.log("Story uploaded successfully, saving to database:", {
+        url,
+        mediaType,
+        userId: session.user.id
+      });
+      
       // After successful upload, create story entry in database
+      const storyData = {
+        creator_id: session.user.id,
+        media_type: mediaType,
+        is_active: true,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        content_type: mediaType
+      };
+      
+      // Set the appropriate URL field based on media type
+      if (mediaType === 'video') {
+        Object.assign(storyData, { video_url: url });
+      } else {
+        Object.assign(storyData, { media_url: url });
+      }
+      
       const { error: dbError } = await supabase
         .from('stories')
-        .insert({
-          creator_id: session.user.id,
-          media_url: url,
-          media_type: mediaType,
-          is_active: true,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          content_type: mediaType
-        });
+        .insert(storyData);
       
       if (dbError) {
         console.error("Error saving story to database:", dbError);

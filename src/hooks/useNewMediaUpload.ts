@@ -81,7 +81,9 @@ export const useNewMediaUpload = () => {
       // Upload the file
       const url = await uploadFileToStorage(bucket, path, file);
       
-      clearInterval(progressInterval);
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
       
       if (!url) {
         const error = "Failed to upload file";

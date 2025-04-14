@@ -48,12 +48,24 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
     const [url, setUrl] = useState<string | null>(null);
     const [isVideo, setIsVideo] = useState<boolean>(false);
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
+    const [retryCount, setRetryCount] = useState(0);
 
     useEffect(() => {
       const getMediaUrl = () => {
         try {
           const mediaUrl = getPlayableMediaUrl(item);
-          setUrl(mediaUrl);
+          
+          // Add cache busting parameter to prevent caching issues
+          const cacheBustedUrl = mediaUrl ? 
+            `${mediaUrl}${mediaUrl.includes('?') ? '&' : '?'}v=${Date.now()}` : null;
+          
+          console.log(`Processing media item:`, { 
+            original: item, 
+            processed: mediaUrl,
+            cacheBusted: cacheBustedUrl 
+          });
+          
+          setUrl(cacheBustedUrl);
 
           // Determine if this is a video
           if (typeof item === 'object') {
@@ -80,9 +92,10 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
       };
 
       getMediaUrl();
-    }, [item]);
+    }, [item, retryCount]);
 
     const handleLoad = () => {
+      console.log("Media loaded successfully:", url);
       setIsLoaded(true);
       if (onLoad) onLoad();
     };
@@ -91,9 +104,26 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
       console.error(`Media load error for URL: ${url}`);
       if (onError) onError();
     };
+    
+    const handleRetry = () => {
+      console.log("Retrying media load...");
+      setRetryCount(prev => prev + 1);
+    };
 
-    // If no URL, don't render anything
-    if (!url) return null;
+    // If no URL, render error with retry button
+    if (!url) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full w-full bg-gray-900 text-white">
+          <p className="mb-4">Failed to load media</p>
+          <button 
+            onClick={handleRetry}
+            className="px-4 py-2 bg-luxury-primary rounded-md hover:bg-luxury-primary/80 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
 
     if (isVideo) {
       return (

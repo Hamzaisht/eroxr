@@ -8,7 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
  * @returns A unique file path
  */
 export const createUniqueFilePath = (userId: string, file: File): string => {
-  return `${userId}/${Date.now()}_${file.name}`;
+  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  return `${userId}/${Date.now()}_${sanitizedFileName}`;
 };
 
 /**
@@ -66,6 +67,8 @@ export const uploadFileToStorage = async (
  * @returns Either "video" or "image"
  */
 export const getContentType = (fileName: string): "video" | "image" => {
+  if (!fileName) return "image"; // Default to image if no filename
+  
   const lowerFileName = fileName.toLowerCase();
   
   // Check for video file extensions
@@ -154,6 +157,18 @@ export const ensureFullUrl = (url: string): string | null => {
     console.error(`Failed to get public URL for ${url}:`, error);
     return null;
   }
+};
+
+/**
+ * Adds a cache buster to a URL to prevent caching issues
+ * @param url - The URL to add a cache buster to
+ * @returns The URL with cache buster added
+ */
+export const addCacheBuster = (url: string): string => {
+  if (!url) return '';
+  const timestamp = Date.now();
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}v=${timestamp}`;
 };
 
 /**
