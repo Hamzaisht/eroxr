@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Download, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import { UniversalMedia } from "./UniversalMedia";
 
 interface MediaViewerProps {
@@ -16,7 +15,6 @@ interface MediaViewerProps {
 export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [watermarkUsername, setWatermarkUsername] = useState<string | null>(null);
   
   // Determine media type
   const isVideo = media ? 
@@ -30,15 +28,6 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
     creator_id: creatorId,
     media_type: isVideo ? "video" : "image"
   };
-  
-  // Get watermark username if creatorId is provided
-  useEffect(() => {
-    if (creatorId) {
-      getUsernameForWatermark(creatorId)
-        .then(username => setWatermarkUsername(username))
-        .catch(err => console.error("Error getting watermark username:", err));
-    }
-  }, [creatorId]);
   
   const handleDownload = () => {
     if (!media) return;
@@ -98,12 +87,6 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
                   autoPlay={isVideo}
                   controls={isVideo}
                 />
-                
-                {watermarkUsername && (
-                  <div className="absolute bottom-4 right-4 text-xs text-white/60 bg-black/30 px-2 py-1 rounded z-20">
-                    @{watermarkUsername}
-                  </div>
-                )}
               </motion.div>
             )}
           </AnimatePresence>

@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { useDbService } from './useDbService';
-import { getUsernameForWatermark } from '@/utils/watermarkUtils';
 
 export const usePostService = () => {
   const { checkColumnExists } = useDbService();
@@ -23,9 +22,6 @@ export const usePostService = () => {
       if (!userId) {
         throw new Error('User not authenticated');
       }
-
-      // Get username for watermark
-      const username = await getUsernameForWatermark(userId);
       
       if (isShortStory) {
         // Check if optional columns exist in stories table

@@ -1,9 +1,9 @@
+
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
 import { Loader2, X, Maximize2, Minimize2, AlertCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { WatermarkOverlay } from "./WatermarkOverlay";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { MediaControls } from "./MediaControls";
 import { MediaViewer } from "./MediaViewer";
@@ -244,7 +244,11 @@ export const MediaContent = ({
                   draggable="false"
                 />
                 
-                <WatermarkOverlay creatorId={creatorId} username={username} />
+                {username && (
+                  <div className="absolute bottom-4 right-4 text-xs text-white/60 bg-black/30 px-2 py-1 rounded z-20">
+                    @{username}
+                  </div>
+                )}
               </motion.div>
             )
           )}

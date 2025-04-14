@@ -1,6 +1,6 @@
 
 import { useMediaPlayer } from '@/hooks/useMediaPlayer';
-import { Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Loader2, RefreshCw, AlertCircle, X } from 'lucide-react';
 
 interface VideoPlayerProps {
   url: string;
@@ -10,10 +10,13 @@ interface VideoPlayerProps {
   controls?: boolean;
   muted?: boolean;
   loop?: boolean;
+  playOnHover?: boolean;
+  showCloseButton?: boolean;
   onClick?: () => void;
   onError?: () => void;
   onEnded?: () => void;
   onLoadedData?: () => void;
+  onClose?: () => void;
   creatorId?: string;
 }
 
@@ -25,10 +28,13 @@ export const VideoPlayer = ({
   controls = true,
   muted = false,
   loop = true,
+  playOnHover = false,
+  showCloseButton = false,
   onClick,
   onError,
   onEnded,
   onLoadedData,
+  onClose,
   creatorId
 }: VideoPlayerProps) => {
   const {
@@ -79,6 +85,16 @@ export const VideoPlayer = ({
             <span className="text-white text-sm">Retry</span>
           </button>
         </div>
+      )}
+
+      {showCloseButton && onClose && (
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 p-1 rounded-full bg-black/50 text-white hover:bg-black/70 z-20"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
       )}
 
       <video
