@@ -2,7 +2,6 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@supabase/auth-helpers-react';
-import { uploadFileToStorage } from '@/utils/mediaUtils';
 import { useStories } from '@/components/story/hooks/useStories';
 import { isImageFile, isVideoFile } from '@/utils/upload/validators';
 
@@ -54,8 +53,6 @@ export const useStoryUpload = () => {
         message: `File is too large. Maximum size is 100MB` 
       };
     }
-    
-    // If video, check duration (can't do synchronously)
     
     return { valid: true };
   }, []);

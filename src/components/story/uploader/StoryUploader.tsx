@@ -4,56 +4,34 @@ import { motion } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Loader2 } from "lucide-react";
-import { useStoryUpload } from "@/hooks/useStoryUpload";
+import { useStoryUpload } from "./hooks/useStoryUpload";
+import { UploadProgress } from "@/components/ui/UploadProgress";
 
 export const StoryUploader = () => {
   const session = useSession();
   const { toast } = useToast();
-  const { uploadStory, reset, state } = useStoryUpload();
-  const { isUploading, progress, error } = state;
+  const { 
+    isUploading, 
+    progress, 
+    error, 
+    previewUrl, 
+    handleFileSelect,
+    uploadFile
+  } = useStoryUpload();
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !session?.user?.id) return;
     
-    // Only allow images and videos
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-      toast({
-        title: "Invalid file",
-        description: "Please select an image or video file",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Check file size (max 100MB)
-    if (file.size > 100 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Maximum file size is 100MB",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    console.log("Uploading story file:", {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    });
-    
-    const result = await uploadStory(file);
-    
-    if (result.success) {
-      toast({
-        title: "Success",
-        description: "Story uploaded successfully"
-      });
+    const isValid = await handleFileSelect(file);
+    if (isValid) {
+      await uploadFile(file);
+      
       // Trigger refresh of stories
       window.dispatchEvent(new CustomEvent('story-uploaded'));
     }
-  }, [session?.user?.id, toast, uploadStory]);
+  }, [session?.user?.id, handleFileSelect, uploadFile]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -71,17 +49,10 @@ export const StoryUploader = () => {
     const file = e.dataTransfer?.files[0];
     if (!file || !session?.user?.id) return;
     
-    // Only allow images and videos
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-      toast({
-        title: "Invalid file",
-        description: "Please select an image or video file",
-        variant: "destructive"
-      });
-      return;
+    const isValid = await handleFileSelect(file);
+    if (isValid) {
+      await uploadFile(file);
     }
-    
-    await uploadStory(file);
   };
 
   return (
@@ -95,7 +66,7 @@ export const StoryUploader = () => {
     >
       <input
         type="file"
-        onChange={handleFileSelect}
+        onChange={handleFileInputChange}
         className="hidden"
         id="story-upload"
         disabled={isUploading}
@@ -109,10 +80,18 @@ export const StoryUploader = () => {
             : "border-2 border-dashed border-luxury-primary/30 bg-gradient-to-br from-luxury-primary/10 to-luxury-accent/10"
         } transition-all duration-300`}
       >
-        {isUploading ? (
-          <div className="flex flex-col items-center">
-            <Loader2 className="h-6 w-6 text-luxury-primary animate-spin" />
-            <span className="text-xs mt-2 text-luxury-primary">{progress}%</span>
+        {previewUrl ? (
+          <div className="w-full h-full relative rounded-xl overflow-hidden">
+            <img 
+              src={previewUrl} 
+              alt="Preview" 
+              className="w-full h-full object-cover"
+            />
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <Loader2 className="h-6 w-6 text-white animate-spin" />
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -124,14 +103,17 @@ export const StoryUploader = () => {
         )}
       </label>
       
-      {error && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute -bottom-12 left-0 right-0 text-center"
-        >
-          <span className="text-xs text-red-500">{error}</span>
-        </motion.div>
+      {(isUploading || error) && (
+        <div className="absolute -bottom-16 left-0 right-0 w-24">
+          <UploadProgress
+            isUploading={isUploading}
+            progress={progress}
+            isComplete={progress === 100}
+            isError={!!error}
+            errorMessage={error}
+            onRetry={() => {}}
+          />
+        </div>
       )}
     </motion.div>
   );
