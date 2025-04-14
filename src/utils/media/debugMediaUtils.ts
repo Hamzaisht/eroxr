@@ -159,11 +159,53 @@ export const extractDirectImagePath = (url: string): string | null => {
   }
 };
 
-// Export only relevant functions
-export {
-  debugMediaUrl,
-  inferContentTypeFromUrl,
-  fetchImageAsBlob,
-  attemptImageCorsWorkaround,
-  extractDirectImagePath
+/**
+ * Check URL content type 
+ */
+export const checkUrlContentType = async (url: string): Promise<string | null> => {
+  try {
+    // Try HEAD request first
+    const response = await fetch(url, {
+      method: 'HEAD',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    
+    if (response.ok) {
+      return response.headers.get('content-type');
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('Failed to check URL content type:', error);
+    return null;
+  }
 };
+
+/**
+ * Fix URL content type by adding proper extension
+ */
+export const fixUrlContentType = (url: string, contentType: string): string => {
+  if (!url || !contentType) return url;
+  
+  const extensionMap: Record<string, string> = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+    'video/mp4': '.mp4',
+    'video/quicktime': '.mov',
+    'video/webm': '.webm'
+  };
+  
+  const extension = extensionMap[contentType];
+  if (!extension) return url;
+  
+  // Check if URL already has correct extension
+  if (url.toLowerCase().endsWith(extension)) return url;
+  
+  // Remove query params, add extension, then add params back
+  const [baseUrl, params] = url.split('?');
+  const newBaseUrl = baseUrl + extension;
+  return params ? `${newBaseUrl}?${params}` : newBaseUrl;
+};
+
+// No duplicate exports - removed the redundant export block at the end

@@ -98,6 +98,7 @@ export const PostContent = ({
                           >
                             <MediaImage
                               url={url}
+                              alt={`Media content ${index + 1}`} // Add the required alt attribute
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               onError={() => handleMediaError(url)}
                               showWatermark={true}

@@ -5,12 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface WatermarkOverlayProps {
   creatorId: string;
+  username?: string; // Make username optional
 }
 
-export const WatermarkOverlay = ({ creatorId }: WatermarkOverlayProps) => {
-  const [username, setUsername] = useState<string>("");
+export const WatermarkOverlay = ({ creatorId, username: providedUsername }: WatermarkOverlayProps) => {
+  const [username, setUsername] = useState<string>(providedUsername || "");
   
   useEffect(() => {
+    // If username is already provided, don't fetch it
+    if (providedUsername) return;
+    
     const fetchUsername = async () => {
       try {
         const { data, error } = await supabase
@@ -27,10 +31,10 @@ export const WatermarkOverlay = ({ creatorId }: WatermarkOverlayProps) => {
       }
     };
     
-    if (creatorId) {
+    if (creatorId && !providedUsername) {
       fetchUsername();
     }
-  }, [creatorId]);
+  }, [creatorId, providedUsername]);
   
   if (!username) return null;
   

@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
@@ -41,18 +40,15 @@ export const MediaContent = ({
   const [publicUrl, setPublicUrl] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Function to get the public URL
   useEffect(() => {
     const getPublicUrl = async () => {
       try {
-        // If it's already a full URL, use it directly
         if (url.startsWith('http')) {
           console.log("Using direct URL:", url);
           setPublicUrl(url);
           return;
         }
         
-        // Check if it's a storage path
         if (url.includes('/')) {
           const parts = url.split('/');
           const bucket = parts[0];
@@ -66,18 +62,16 @@ export const MediaContent = ({
             console.log("Retrieved public URL:", data.publicUrl);
             setPublicUrl(data.publicUrl);
           } else {
-            // If no public URL was retrieved, fallback to the original URL
             console.warn("Could not get public URL, using original:", url);
             setPublicUrl(url);
           }
         } else {
-          // If it's not a clear storage path, just use as is
           console.log("Using raw URL (not a storage path):", url);
           setPublicUrl(url);
         }
       } catch (error) {
         console.error("Error getting public URL:", error);
-        setPublicUrl(url); // Fallback to original URL
+        setPublicUrl(url);
       }
     };
     
@@ -98,7 +92,6 @@ export const MediaContent = ({
     }
   };
 
-  // Add cache busting to URL to prevent stale responses
   const getUrlWithCacheBuster = (baseUrl: string | null) => {
     if (!baseUrl) return '';
     const timestamp = Date.now();
@@ -106,10 +99,8 @@ export const MediaContent = ({
     return `${baseUrl}${separator}t=${timestamp}&r=${Math.random().toString(36).substring(2, 9)}`;
   };
 
-  // Apply cache buster to url
   const mediaUrlWithCacheBuster = getUrlWithCacheBuster(publicUrl);
 
-  // Function to handle image load errors
   const handleImageError = () => {
     console.error("Failed to load image:", url);
     setIsImageError(true);
@@ -120,21 +111,17 @@ export const MediaContent = ({
     if (onMediaClick) {
       onMediaClick();
     } else if (isVideo) {
-      // For videos, we show them in the MediaViewer
       setShowEnlargedMedia(true);
     } else {
-      // For images, we toggle zoom if not using MediaViewer
       setIsZoomed(!isZoomed);
     }
   };
 
-  // Handle video load success
   const handleVideoLoaded = () => {
     console.log("Video loaded successfully:", url);
     setIsLoading(false);
   };
 
-  // Handle video load error
   const handleVideoError = () => {
     console.error("Video loading error:", url);
     setIsImageError(true);
@@ -150,7 +137,6 @@ export const MediaContent = ({
       className="w-full h-full flex flex-col bg-black/95 rounded-lg overflow-hidden"
       onContextMenu={(e) => e.preventDefault()}
     >
-      {/* Header with close button and fullscreen controls */}
       <div className="flex items-center justify-end p-2 bg-black/80 z-10">
         {!isFullscreen && (
           <button 
@@ -183,14 +169,12 @@ export const MediaContent = ({
         )}
       </div>
       
-      {/* Media navigation controls */}
       <MediaControls 
         showControls={!!showControls && !!onNext && !!onPrevious} 
         onNext={onNext || (() => {})} 
         onPrevious={onPrevious || (() => {})} 
       />
       
-      {/* Media content container */}
       <div 
         className={cn(
           "flex-1 flex items-center justify-center relative bg-black/75",
@@ -209,7 +193,6 @@ export const MediaContent = ({
           </div>
         )}
         
-        {/* Video or Image content */}
         <div className={cn(
           "relative max-w-full max-h-[80vh] flex items-center justify-center",
           isZoomed ? "scale-150 transition-transform duration-300" : "transition-transform duration-300"
@@ -261,15 +244,13 @@ export const MediaContent = ({
                   draggable="false"
                 />
                 
-                {/* Watermark overlay */}
-                <WatermarkOverlay username={username || ''} creatorId={creatorId} />
+                <WatermarkOverlay creatorId={creatorId} username={username} />
               </motion.div>
             )
           )}
         </div>
       </div>
 
-      {/* Media Viewer for enlarged display */}
       {showEnlargedMedia && (
         <MediaViewer
           media={mediaUrlWithCacheBuster}
