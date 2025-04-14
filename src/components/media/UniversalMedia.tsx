@@ -44,7 +44,8 @@ export const UniversalMedia = ({
   } = useMediaHandler({
     item,
     onError,
-    onLoad
+    onLoad,
+    maxRetries: 3
   });
 
   if (!effectiveUrl) {
@@ -58,6 +59,7 @@ export const UniversalMedia = ({
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
       e.preventDefault();
+      e.stopPropagation();
       onClick();
     }
   };
@@ -74,6 +76,7 @@ export const UniversalMedia = ({
           onRetry={handleRetry}
           accessibleUrl={accessibleUrl}
           retryCount={retryCount}
+          hideDebugInfo={false}
         />
       )}
       

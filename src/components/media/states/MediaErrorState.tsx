@@ -41,7 +41,7 @@ export const MediaErrorState = ({
       
       {!hideDebugInfo && accessibleUrl && (
         <div className="mt-4 px-3 py-2 bg-black/40 rounded text-xs text-white/50 max-w-full overflow-hidden text-ellipsis">
-          <code className="break-all">{accessibleUrl.substring(0, 50)}...</code>
+          <code className="break-all">{accessibleUrl.substring(0, 100)}...</code>
         </div>
       )}
     </div>

@@ -14,7 +14,7 @@ export const useMediaHandler = ({
   item, 
   onError, 
   onLoad,
-  maxRetries = 2
+  maxRetries = 3
 }: UseMediaHandlerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -28,20 +28,15 @@ export const useMediaHandler = ({
     item?.content_type === 'video'
   );
 
-  // Create a reliable URL once on mount
+  // Create a reliable URL once on mount or when item changes
   useEffect(() => {
     // Get the URL safely
-    let urlToUse = getPlayableMediaUrl(item);
+    const sourceUrl = getPlayableMediaUrl(item);
     
-    // Only add a single cache buster to avoid excessive refreshing
-    if (urlToUse && !urlToUse.includes('t=') && !urlToUse.includes('r=')) {
-      const timestamp = Date.now();
-      urlToUse = urlToUse.includes('?') 
-        ? `${urlToUse}&t=${timestamp}` 
-        : `${urlToUse}?t=${timestamp}`;
-    }
+    // Apply cache busting only once
+    const urlWithCacheBuster = sourceUrl ? addCacheBuster(sourceUrl) : null;
     
-    setAccessibleUrl(urlToUse);
+    setAccessibleUrl(urlWithCacheBuster);
     setIsLoading(true);
     setLoadError(false);
     setRetryCount(0);
@@ -72,18 +67,14 @@ export const useMediaHandler = ({
         setLoadError(false);
         
         // Generate a new URL with fresh cache busting
-        if (accessibleUrl) {
-          const timestamp = Date.now();
-          const freshUrl = accessibleUrl.includes('?') 
-            ? accessibleUrl.replace(/[?&]t=\d+/, '') + `&t=${timestamp}` 
-            : `${accessibleUrl}?t=${timestamp}`;
-          setAccessibleUrl(freshUrl);
-        }
+        const sourceUrl = getPlayableMediaUrl(item);
+        const freshUrl = sourceUrl ? addCacheBuster(sourceUrl) : null;
+        setAccessibleUrl(freshUrl);
       }, delay);
     } else if (onError) {
       onError();
     }
-  }, [accessibleUrl, isVideoContent, maxRetries, onError, retryCount]);
+  }, [accessibleUrl, isVideoContent, item, maxRetries, onError, retryCount]);
 
   const handleLoad = useCallback(() => {
     setIsLoading(false);
@@ -98,21 +89,17 @@ export const useMediaHandler = ({
     setRetryCount(0);
     
     // Force reload with new cache buster
-    if (accessibleUrl) {
-      const timestamp = Date.now();
-      const freshUrl = accessibleUrl.includes('?') 
-        ? accessibleUrl.replace(/[?&]t=\d+/, '') + `&t=${timestamp}` 
-        : `${accessibleUrl}?t=${timestamp}`;
-      setAccessibleUrl(freshUrl);
-    }
-  }, [accessibleUrl]);
+    const sourceUrl = getPlayableMediaUrl(item);
+    const freshUrl = sourceUrl ? addCacheBuster(sourceUrl) : null;
+    setAccessibleUrl(freshUrl);
+  }, [item]);
 
   return {
     isLoading,
     loadError,
     retryCount,
     accessibleUrl,
-    effectiveUrl: accessibleUrl,
+    effectiveUrl: accessibleUrl, // Use this for rendering
     isVideoContent,
     handleLoad,
     handleError,

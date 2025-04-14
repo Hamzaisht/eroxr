@@ -38,7 +38,7 @@ export const getPlayableMediaUrl = (item: MediaItem | null | undefined): string 
 };
 
 /**
- * Add cache busting parameters to URLs while avoiding multiple cache busters
+ * Add cache busting parameters to URLs while preventing recursive additions
  */
 export const addCacheBuster = (url: string | null): string | null => {
   if (!url) return null;
@@ -48,8 +48,14 @@ export const addCacheBuster = (url: string | null): string | null => {
     return url;
   }
   
-  // Use the imported utility function instead of calling itself recursively
-  return addCacheBusterUtil(url);
+  // Generate a timestamp and a unique identifier
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  
+  // Add the cache busting parameters
+  return url.includes('?') ? 
+    `${url}&t=${timestamp}&r=${random}` : 
+    `${url}?t=${timestamp}&r=${random}`;
 };
 
 /**

@@ -16,7 +16,7 @@ export const addCacheBuster = (url: string): string => {
   }
   
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
+  const random = Math.floor(Math.random() * 10000);
   
   // Use both timestamp and random string for effective cache busting
   return url.includes('?') 
@@ -77,7 +77,6 @@ export const checkUrlContentType = async (url: string): Promise<{
     // Special handling for Supabase URLs that might have CORS issues
     if (url.includes('supabase') && url.includes('/storage/v1/object/')) {
       // For Supabase, we'll make an assumption based on file extension
-      const extension = url.split('.').pop()?.split('?')[0].toLowerCase();
       const contentType = inferContentTypeFromUrl(url);
       
       return {
@@ -111,10 +110,6 @@ export const checkUrlContentType = async (url: string): Promise<{
       contentType.startsWith('audio/')
     );
     
-    if (!isValid) {
-      console.warn('Invalid content type detected:', headersObj);
-    }
-    
     return {
       isValid,
       contentType,
@@ -132,6 +127,39 @@ export const checkUrlContentType = async (url: string): Promise<{
       headers: {},
       status: 0
     };
+  }
+};
+
+/**
+ * Infer content type from file extension
+ */
+export const inferContentTypeFromUrl = (url: string): string | null => {
+  try {
+    // Remove query parameters and get the path
+    const urlPath = url.split('?')[0];
+    // Get the extension
+    const extension = urlPath.split('.').pop()?.toLowerCase();
+    
+    if (!extension) return null;
+    
+    // Map extensions to content types
+    const contentTypeMap: Record<string, string> = {
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'webp': 'image/webp',
+      'svg': 'image/svg+xml',
+      'mp4': 'video/mp4',
+      'mov': 'video/quicktime',
+      'webm': 'video/webm',
+      'avi': 'video/x-msvideo'
+    };
+    
+    return contentTypeMap[extension] || null;
+  } catch (error) {
+    console.warn('Failed to infer content type:', error);
+    return null;
   }
 };
 
@@ -166,38 +194,5 @@ export const fixUrlContentType = async (url: string, expectedType: string): Prom
   } catch (error) {
     console.error('Failed to fix content type:', error);
     return url; // Return original URL if fixing failed
-  }
-};
-
-/**
- * Infer content type from file extension
- */
-export const inferContentTypeFromUrl = (url: string): string | null => {
-  try {
-    // Remove query parameters and get the path
-    const urlPath = url.split('?')[0];
-    // Get the extension
-    const extension = urlPath.split('.').pop()?.toLowerCase();
-    
-    if (!extension) return null;
-    
-    // Map extensions to content types
-    const contentTypeMap: Record<string, string> = {
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'webp': 'image/webp',
-      'svg': 'image/svg+xml',
-      'mp4': 'video/mp4',
-      'mov': 'video/quicktime',
-      'webm': 'video/webm',
-      'avi': 'video/x-msvideo'
-    };
-    
-    return contentTypeMap[extension] || null;
-  } catch (error) {
-    console.warn('Failed to infer content type:', error);
-    return null;
   }
 };
