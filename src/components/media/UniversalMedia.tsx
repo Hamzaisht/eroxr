@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { MediaLoadingState } from "@/components/media/states/MediaLoadingState";
-import { MediaErrorState } from "@/components/media/states/MediaErrorState";
+import { MediaLoading } from "./MediaLoading";
+import { MediaError } from "./MediaError";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
-import { MediaImage } from "@/components/media/MediaImage";
-import { getPlayableMediaUrl, isVideoContent } from "@/utils/media/getPlayableMediaUrl";
+import { MediaImage } from "./MediaImage";
+import { isVideoUrl } from "@/utils/media/mediaTypeUtils";
+import { addCacheBuster, checkUrlContentType } from "@/utils/media/urlUtils";
 import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
 
 export interface MediaItem {
@@ -25,7 +26,6 @@ interface UniversalMediaProps {
   onError?: () => void;
   onLoad?: () => void;
   onEnded?: () => void;
-  onLoadedData?: () => void;
   autoPlay?: boolean;
   controls?: boolean;
   showWatermark?: boolean;
@@ -38,7 +38,6 @@ export const UniversalMedia = ({
   onError,
   onLoad,
   onEnded,
-  onLoadedData,
   autoPlay = false,
   controls = true,
   showWatermark = false,
@@ -50,133 +49,116 @@ export const UniversalMedia = ({
   const [retryCount, setRetryCount] = useState(0);
   const [isVideoType, setIsVideoType] = useState(false);
 
-  // Process media source to get proper URL and determine media type
+  // Process media source
   useEffect(() => {
-    setIsLoading(true);
-    setHasError(false);
-    
-    try {
-      // Handle direct string URL
-      if (typeof item === 'string') {
-        const url = getPlayableMediaUrl(item);
-        setMediaUrl(url);
-        setIsVideoType(isVideoContent(item));
-        return;
-      }
+    const processMediaSource = async () => {
+      setIsLoading(true);
+      setHasError(false);
       
-      if (!item) {
-        console.error("No media item provided");
+      try {
+        // Handle direct string URL
+        let url = typeof item === 'string' ? item : '';
+        
+        // Extract URL from object
+        if (typeof item === 'object' && item !== null) {
+          url = item.video_url || 
+                (Array.isArray(item.video_urls) ? item.video_urls[0] : '') ||
+                (typeof item.media_url === 'string' ? item.media_url : '') ||
+                (Array.isArray(item.media_url) ? item.media_url[0] : '') ||
+                item.url || '';
+        }
+        
+        if (!url) {
+          throw new Error("No valid media URL found");
+        }
+
+        // Add cache buster and check content type
+        const processedUrl = addCacheBuster(url);
+        const { isValid, contentType } = await checkUrlContentType(processedUrl);
+        
+        if (!isValid) {
+          throw new Error("Invalid media URL");
+        }
+        
+        setMediaUrl(processedUrl);
+        setIsVideoType(isVideoUrl(url) || contentType?.startsWith('video/') || false);
+        
+      } catch (error) {
+        console.error("Error processing media:", error);
         setHasError(true);
-        setIsLoading(false);
-        return;
+        if (onError) onError();
       }
       
-      // Get playable URL from the item
-      const url = getPlayableMediaUrl(item);
-      
-      // If no URL found, show error
-      if (!url) {
-        console.error("No valid media URL found in item:", item);
-        setHasError(true);
-        setIsLoading(false);
-        return;
-      }
-      
-      setMediaUrl(url);
-      
-      // Determine if this is video content
-      setIsVideoType(isVideoContent(item));
-      
-      // Log the URL for debugging
-      console.log(`Media URL (${isVideoType ? 'video' : 'image'}):`, url);
-    } catch (error) {
-      console.error("Error processing media item:", error);
-      setHasError(true);
       setIsLoading(false);
-    }
+    };
+
+    processMediaSource();
   }, [item, retryCount]);
 
-  // Handle media load success
+  // Handle load success
   const handleLoad = () => {
     setIsLoading(false);
     setHasError(false);
     if (onLoad) onLoad();
   };
 
-  // Handle media load error
+  // Handle media error
   const handleError = () => {
-    console.error("Media failed to load:", mediaUrl);
-    
     if (mediaUrl) {
       debugMediaUrl(mediaUrl);
     }
     
-    setIsLoading(false);
     setHasError(true);
+    setIsLoading(false);
     if (onError) onError();
   };
 
-  // Handle retry after error
+  // Handle retry
   const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
     setIsLoading(true);
     setHasError(false);
-    setRetryCount(prev => prev + 1);
   };
 
   if (!mediaUrl) {
     return (
-      <div className={`flex items-center justify-center bg-black/80 ${className}`}>
-        <p className="text-white/70 py-8">Media unavailable</p>
-      </div>
+      <MediaError 
+        message="Media unavailable" 
+      />
     );
   }
 
-  // Extract creator ID from item if it's an object
-  const creatorId = typeof item === 'object' ? item.creator_id : undefined;
-  
-  // Extract alt text from item if it's an object
-  const altText = typeof item === 'object' ? (item.alt_text || "Media content") : "Media content";
-
-  // Extract poster URL for videos if available
-  const posterUrl = typeof item === 'object' ? item.poster_url : undefined;
-
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {isLoading && <MediaLoadingState />}
+      {isLoading && <MediaLoading />}
       
       {hasError && (
-        <MediaErrorState 
-          onRetry={handleRetry}
-          accessibleUrl={mediaUrl}
-          retryCount={retryCount}
+        <MediaError 
+          onRetry={retryCount < 3 ? handleRetry : undefined}
+          message={retryCount >= 3 ? "Failed to load media after multiple attempts" : "Failed to load media"}
         />
       )}
       
-      {isVideoType ? (
-        <VideoPlayer
-          url={mediaUrl}
-          poster={posterUrl}
-          autoPlay={autoPlay}
-          className="w-full h-full"
-          onError={handleError}
-          onEnded={onEnded}
-          onLoadedData={() => {
-            handleLoad();
-            if (onLoadedData) onLoadedData();
-          }}
-          creatorId={creatorId}
-          controls={controls}
-          onClick={onClick}
-        />
-      ) : (
-        <MediaImage
-          url={mediaUrl}
-          alt={altText}
-          className="w-full h-full"
-          onLoad={handleLoad}
-          onError={handleError}
-          onClick={onClick}
-        />
+      {!hasError && !isLoading && (
+        isVideoType ? (
+          <VideoPlayer
+            url={mediaUrl}
+            poster={typeof item === 'object' ? item.poster_url : undefined}
+            autoPlay={autoPlay}
+            onError={handleError}
+            onEnded={onEnded}
+            controls={controls}
+            onClick={onClick}
+          />
+        ) : (
+          <MediaImage
+            url={mediaUrl}
+            alt={typeof item === 'object' ? item.alt_text || "Media content" : "Media content"}
+            onLoad={handleLoad}
+            onError={handleError}
+            onClick={onClick}
+          />
+        )
       )}
     </div>
   );

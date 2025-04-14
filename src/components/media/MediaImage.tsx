@@ -1,5 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { MediaError } from "./MediaError";
+import { MediaLoading } from "./MediaLoading";
 
 interface MediaImageProps {
   url: string;
@@ -18,36 +20,53 @@ export const MediaImage = ({
   onError,
   onClick
 }: MediaImageProps) => {
-  const [showFallback, setShowFallback] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
-  const handleImageError = () => {
-    setShowFallback(true);
-    if (onError) onError();
-  };
+  useEffect(() => {
+    setIsLoading(true);
+    setHasError(false);
+  }, [url]);
 
   const handleImageLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
     if (onLoad) onLoad();
   };
 
-  if (showFallback) {
+  const handleImageError = () => {
+    setIsLoading(false);
+    setHasError(true);
+    if (onError) onError();
+  };
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    setIsLoading(true);
+    setHasError(false);
+  };
+
+  if (hasError) {
     return (
-      <div 
-        className={`bg-gray-900 flex items-center justify-center ${className}`}
-        onClick={onClick}
-      >
-        <p className="text-gray-400 text-sm">Image unavailable</p>
-      </div>
+      <MediaError 
+        message="Failed to load image"
+        onRetry={retryCount < 3 ? handleRetry : undefined}
+      />
     );
   }
 
   return (
-    <img
-      src={url}
-      alt={alt}
-      className={className}
-      onLoad={handleImageLoad}
-      onError={handleImageError}
-      onClick={onClick}
-    />
+    <div className={`relative ${className}`}>
+      {isLoading && <MediaLoading />}
+      <img
+        src={url}
+        alt={alt}
+        className={`${className} ${isLoading ? 'invisible' : 'visible'}`}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
+        onClick={onClick}
+      />
+    </div>
   );
 };
