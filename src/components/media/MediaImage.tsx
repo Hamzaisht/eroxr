@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { WatermarkOverlay } from "./WatermarkOverlay";
 import { getUsernameForWatermark } from "@/utils/watermarkUtils";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { addCacheBuster } from "@/utils/mediaUtils";
 
 interface MediaImageProps {
   url: string | null;
@@ -30,11 +31,15 @@ export const MediaImage = ({
   const [error, setError] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const [retryUrl, setRetryUrl] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     // Reset state when URL changes
     setLoaded(false);
     setError(false);
+    setRetryUrl(null);
+    setRetryCount(0);
     
     if (showWatermark && creatorId) {
       getUsernameForWatermark(creatorId)
@@ -50,40 +55,54 @@ export const MediaImage = ({
   };
 
   const handleError = () => {
-    setError(true);
-    setLoaded(false);
+    // If we're already at retry URL and still failing
+    if (retryUrl === url) {
+      setError(true);
+      setLoaded(false);
+      if (onError) onError();
+      return;
+    }
     
     // If we have a URL that failed, try to diagnose the issue
     if (url) {
       console.error(`Failed to load image from URL: ${url}`);
       
       // Try to load the image again with a new cache buster
-      const retryUrl = `${url}${url.includes('?') ? '&' : '?'}retry=${Date.now()}`;
+      // Make sure we're not adding cache busters recursively
+      const newRetryUrl = addCacheBuster(url);
+      setRetryUrl(newRetryUrl);
+      setRetryCount(prev => prev + 1);
       
       // Create and test a new image element
       const testImg = new Image();
       testImg.onload = () => {
         console.log("Image loaded successfully on retry with direct element");
-        // Update the src with the retry URL in case it helps
-        const imgElements = document.querySelectorAll(`img[src='${url}']`);
-        imgElements.forEach(img => {
-          (img as HTMLImageElement).src = retryUrl;
-        });
+        // Update our state to use the successful URL
+        setError(false);
+        setLoaded(true);
+        if (onLoad) onLoad();
       };
       testImg.onerror = () => {
         console.error("Image failed to load even on retry with direct element");
+        setError(true);
+        setLoaded(false);
+        if (onError) onError();
       };
-      testImg.src = retryUrl;
+      testImg.src = newRetryUrl;
+    } else {
+      setError(true);
+      setLoaded(false);
+      if (onError) onError();
     }
-    
-    if (onError) onError();
   };
 
-  if (!url) {
+  if (!url && !retryUrl) {
     return (
       <Skeleton className={`w-full h-full ${className}`} />
     );
   }
+
+  const effectiveUrl = retryUrl || url;
 
   return (
     <div
@@ -97,7 +116,7 @@ export const MediaImage = ({
       )}
       
       <img
-        src={url}
+        src={effectiveUrl}
         alt={alt}
         className={`w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
         onLoad={handleLoad}

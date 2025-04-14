@@ -1,276 +1,175 @@
 
 import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { createUniqueFilePath, validateMediaFile } from '@/utils/mediaUtils';
-import { addCacheBuster } from '@/utils/media/urlUtils';
-import { getStoragePublicUrl, ensureBucketExists } from '@/utils/media/storageUtils';
 import { useSession } from '@supabase/auth-helpers-react';
+import { 
+  uploadFileToStorage, 
+  validateMediaFile, 
+  createFilePreview, 
+  revokeFilePreview
+} from '@/utils/mediaUtils';
+import { useToast } from '@/hooks/use-toast';
 
 export interface MediaUploadOptions {
-  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
+  contentCategory?: string;
   maxSizeInMB?: number;
   allowedTypes?: string[];
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
+  onProgress?: (progress: number) => void;
 }
 
-export interface UploadState {
+export interface MediaUploadState {
   isUploading: boolean;
   progress: number;
   error: string | null;
   success: boolean;
-  url: string | null;
-  filePath: string | null;
-  isComplete?: boolean; // Add this property to fix the type error
+  previewUrl: string | null;
 }
 
 export const useMediaUpload = (options: MediaUploadOptions = {}) => {
-  const {
-    contentCategory = 'generic',
-    maxSizeInMB = 100,
-    allowedTypes = ['image/*', 'video/*'],
-    autoResetOnCompletion = false,
-    resetDelay = 3000,
-  } = options;
-
-  const [state, setState] = useState<UploadState>({
+  const [state, setState] = useState<MediaUploadState>({
     isUploading: false,
     progress: 0,
     error: null,
     success: false,
-    url: null,
-    filePath: null,
-    isComplete: false, // Initialize this property
+    previewUrl: null
   });
   
-  const { toast } = useToast();
   const session = useSession();
-  
-  const userId = session?.user?.id;
+  const { toast } = useToast();
 
-  // Function to validate a file before upload
-  const validateFile = useCallback((file: File) => {
-    // Check if file exists
-    if (!file) {
-      return { valid: false, message: 'No file selected' };
-    }
-    
-    // Check file size
-    const fileSizeInMB = file.size / (1024 * 1024);
-    if (fileSizeInMB > maxSizeInMB) {
-      return { 
-        valid: false, 
-        message: `File size exceeds ${maxSizeInMB}MB limit` 
-      };
-    }
-    
-    // Check file type
-    if (allowedTypes.length > 0) {
-      const fileType = file.type;
-      const isAllowedType = allowedTypes.some(type => {
-        if (type.endsWith('/*')) {
-          // Handle wildcards like 'image/*'
-          const typePrefix = type.split('/*')[0];
-          return fileType.startsWith(`${typePrefix}/`);
-        }
-        return fileType === type;
-      });
-      
-      if (!isAllowedType) {
-        return { 
-          valid: false, 
-          message: `File type not allowed. Please use: ${allowedTypes.join(', ')}` 
-        };
-      }
-    }
-    
-    return { valid: true, message: 'File is valid' };
-  }, [allowedTypes, maxSizeInMB]);
-
-  // Reset the state to initial values
   const resetState = useCallback(() => {
+    if (state.previewUrl) {
+      revokeFilePreview(state.previewUrl);
+    }
+    
     setState({
       isUploading: false,
       progress: 0,
       error: null,
       success: false,
-      url: null,
-      filePath: null,
-      isComplete: false,
+      previewUrl: null
     });
-  }, []);
-  
-  // Alias for resetState to match expected API
-  const resetUploadState = resetState;
+  }, [state.previewUrl]);
 
-  // Determine which bucket to use based on content category
-  const getBucketName = useCallback((category: string): string => {
-    switch (category) {
-      case 'story': return 'stories';
-      case 'post': return 'posts';
-      case 'profile': return 'avatars';
-      case 'short': return 'shorts';
-      case 'message': return 'messages';
-      default: return 'media';
-    }
-  }, []);
+  const validateFile = useCallback((file: File) => {
+    return validateMediaFile(file, {
+      maxSizeInMB: options.maxSizeInMB || 100,
+      allowedTypes: options.allowedTypes
+    });
+  }, [options.maxSizeInMB, options.allowedTypes]);
 
-  // Main upload function
-  const uploadMedia = useCallback(async (file: File): Promise<{
-    success: boolean;
-    url?: string;
-    error?: string;
-    filePath?: string;
-  }> => {
-    if (!userId) {
-      const errorMsg = "You must be signed in to upload files";
-      setState(prev => ({ ...prev, error: errorMsg }));
-      toast({
-        title: "Authentication required",
-        description: errorMsg,
-        variant: "destructive"
-      });
-      return { success: false, error: errorMsg };
+  const uploadMedia = useCallback(async (file: File) => {
+    if (!session?.user?.id) {
+      const error = 'User must be authenticated to upload files';
+      setState(prev => ({ ...prev, error }));
+      return { success: false, error };
     }
 
-    // Validate the file first
-    const validation = validateFile(file);
-    if (!validation.valid) {
-      setState(prev => ({ ...prev, error: validation.message }));
-      toast({
-        title: "Invalid file",
-        description: validation.message,
-        variant: "destructive"
-      });
-      return { success: false, error: validation.message };
-    }
-
-    // Reset any previous state
-    setState(prev => ({
-      ...prev,
-      isUploading: true,
-      progress: 0,
-      error: null,
-      success: false,
-      url: null,
-      isComplete: false
-    }));
-
-    // Create a unique file path
-    const bucketName = getBucketName(contentCategory);
-    
-    // Ensure the bucket exists before uploading
     try {
-      const bucketExists = await ensureBucketExists(bucketName);
-      if (!bucketExists) {
-        throw new Error(`Failed to create/access bucket: ${bucketName}`);
-      }
-    } catch (error: any) {
-      const errorMsg = `Storage bucket error: ${error.message || "Unknown error"}`;
-      setState(prev => ({ 
-        ...prev, 
-        isUploading: false, 
-        error: errorMsg,
-        progress: 0 
+      setState(prev => ({
+        ...prev,
+        isUploading: true,
+        progress: 0,
+        error: null,
+        success: false
       }));
-      toast({
-        title: "Storage error",
-        description: errorMsg,
-        variant: "destructive"
-      });
-      return { success: false, error: errorMsg };
-    }
-    
-    // Using the renamed function from mediaUtils
-    const filePath = createUniqueFilePath(userId, file.name);
-    
-    try {
-      // Upload the file with progress tracking
-      const { error: uploadError, data } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: file.type // Explicitly set content type
+
+      // Generate preview if not already set
+      if (!state.previewUrl) {
+        const previewUrl = createFilePreview(file);
+        setState(prev => ({ ...prev, previewUrl }));
+      }
+
+      // Simulate initial progress to provide immediate feedback
+      setState(prev => ({ ...prev, progress: 5 }));
+      
+      // Progress simulation interval
+      const progressInterval = setInterval(() => {
+        setState(prev => {
+          if (prev.progress >= 95) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          const incrementAmount = Math.random() * 8 + 2; // Random increment between 2-10
+          const newProgress = Math.min(prev.progress + incrementAmount, 95);
+          
+          if (options.onProgress) {
+            options.onProgress(newProgress);
+          }
+          
+          return { ...prev, progress: newProgress };
         });
+      }, 300);
 
-      if (uploadError) {
-        throw uploadError;
+      // Upload file to storage
+      const result = await uploadFileToStorage(file, session.user.id, {
+        contentCategory: options.contentCategory,
+        onProgress: (progress) => {
+          // Only use real progress if it's higher than our simulation
+          if (progress > state.progress) {
+            setState(prev => ({ ...prev, progress }));
+            if (options.onProgress) {
+              options.onProgress(progress);
+            }
+          }
+        }
+      });
+
+      clearInterval(progressInterval);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
       }
 
-      // Get the URL for the uploaded file
-      const fileUrl = getStoragePublicUrl(`${bucketName}/${filePath}`);
-      
-      if (!fileUrl) {
-        throw new Error("Failed to get URL for uploaded file");
-      }
-      
-      // Add cache buster to ensure fresh content
-      const cacheBustedUrl = addCacheBuster(fileUrl);
-      
-      // Update state with success
       setState(prev => ({
         ...prev,
         isUploading: false,
         progress: 100,
         success: true,
-        isComplete: true,
-        url: cacheBustedUrl,
-        filePath: `${bucketName}/${filePath}`
+        error: null
       }));
 
-      toast({
-        title: "Upload successful",
-        description: "Your file has been uploaded",
-      });
-
-      // Auto reset if enabled
-      if (autoResetOnCompletion) {
-        setTimeout(resetState, resetDelay);
+      // Auto-reset state if option is enabled
+      if (options.autoResetOnCompletion) {
+        setTimeout(() => {
+          resetState();
+        }, options.resetDelay || 3000);
       }
 
-      return { 
-        success: true, 
-        url: cacheBustedUrl,
-        filePath: `${bucketName}/${filePath}`
+      return {
+        success: true,
+        url: result.url,
+        path: result.path
       };
     } catch (error: any) {
-      console.error("Upload error:", error);
-      
-      const errorMsg = error.message || "Failed to upload file";
+      console.error('Media upload error:', error);
       
       setState(prev => ({
         ...prev,
         isUploading: false,
-        error: errorMsg,
-        progress: 0
+        progress: 0,
+        error: error.message || 'An unexpected error occurred during upload',
+        success: false
       }));
-
-      toast({
-        title: "Upload failed",
-        description: errorMsg,
-        variant: "destructive"
-      });
-
-      return { success: false, error: errorMsg };
+      
+      return {
+        success: false,
+        error: error.message || 'Upload failed'
+      };
     }
-  }, [
-    userId,
-    validateFile,
-    contentCategory,
-    getBucketName,
-    toast,
-    autoResetOnCompletion,
-    resetDelay,
-    resetState
-  ]);
+  }, [session, state.previewUrl, options, resetState]);
 
+  // Return the hook interface
   return {
     state,
     uploadMedia,
+    validateFile,
     resetState,
-    resetUploadState, // Add this alias for compatibility
-    validateFile
+    createPreview: (file: File) => {
+      const previewUrl = createFilePreview(file);
+      setState(prev => ({ ...prev, previewUrl }));
+      return previewUrl;
+    }
   };
 };

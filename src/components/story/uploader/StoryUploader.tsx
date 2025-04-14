@@ -12,7 +12,7 @@ export const StoryUploader = () => {
   const session = useSession();
   const { toast } = useToast();
   
-  // Use our new media upload hook with story-specific options
+  // Use our media upload hook with story-specific options
   const { 
     state: {
       isUploading,

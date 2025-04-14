@@ -16,7 +16,7 @@ export {
 } from './media/mediaTypeUtils';
 
 export {
-  createUserFilePath as createUniqueFilePath, 
+  createUserFilePath, 
   generateUniqueFileName, 
   formatFileSize,
   createFilePreview,

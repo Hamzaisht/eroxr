@@ -52,12 +52,11 @@ export const uploadFile = async (
     
     console.log(`Uploading file to ${bucketName}/${filePath} with type ${file.type}`);
     
-    // Make sure we have the correct content type
-    // This is critical to ensure the file is served with the correct Content-Type header
+    // Ensure the file has the correct content type
     let contentType = processedOptions.contentType || file.type;
     
     // Fallback to determining content type from file extension if not set or generic
-    if (!contentType || contentType === 'application/octet-stream' || contentType === 'application/json') {
+    if (!contentType || contentType === 'application/octet-stream') {
       const extension = file.name.split('.').pop()?.toLowerCase();
       if (extension) {
         // Map common extensions to MIME types
@@ -74,7 +73,7 @@ export const uploadFile = async (
           'mp3': 'audio/mpeg',
           'wav': 'audio/wav',
         };
-        contentType = mimeMap[extension] || contentType || 'application/octet-stream';
+        contentType = mimeMap[extension] || 'application/octet-stream';
       }
     }
     
@@ -84,17 +83,48 @@ export const uploadFile = async (
     const uploadOptions = {
       cacheControl: processedOptions.cacheControl || '3600',
       upsert: processedOptions.upsert !== undefined ? processedOptions.upsert : true,
-      contentType: contentType
+      contentType
     };
     
-    // Upload the file
+    // Attempt upload
     const { data, error } = await supabase.storage
       .from(bucketName)
       .upload(filePath, file, uploadOptions);
     
-    // Handle upload error
+    // Handle upload error with retry
     if (error) {
       console.error("Storage upload error:", error);
+      
+      // If the bucket doesn't exist, we need to handle it
+      if (error.message?.includes("The resource was not found") || 
+          error.message?.includes("does not exist")) {
+        
+        // Try using a default 'media' bucket as fallback
+        const { data: fallbackData, error: fallbackError } = await supabase.storage
+          .from('media')
+          .upload(filePath, file, uploadOptions);
+        
+        if (fallbackError) {
+          return {
+            success: false,
+            error: `Upload failed: ${fallbackError.message}. The required storage bucket '${bucketName}' may not exist.`
+          };
+        }
+        
+        console.log(`Fallback upload successful using 'media' bucket`);
+        
+        // Get the public URL from the fallback bucket
+        const { data: publicUrlData } = supabase.storage
+          .from('media')
+          .getPublicUrl(fallbackData?.path || filePath);
+        
+        return {
+          success: true,
+          path: fallbackData?.path || filePath,
+          url: publicUrlData?.publicUrl ? addCacheBuster(publicUrlData.publicUrl) : undefined
+        };
+      }
+      
       return {
         success: false,
         error: error.message || "Error uploading file"
@@ -128,6 +158,11 @@ export const uploadFile = async (
  */
 export const addCacheBuster = (url: string): string => {
   if (!url) return '';
+  
+  // Prevent recursive cache busting by checking for existing timestamp
+  if (url.includes('t=') && url.includes('&r=')) {
+    return url;
+  }
   
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
