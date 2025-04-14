@@ -1,119 +1,62 @@
 
-import { 
-  checkUrlContentType, 
-  UrlContentInfo, 
-  inferContentTypeFromUrl,
-  getDisplayableMediaUrl
-} from './urlUtils';
+import { checkUrlContentType, addCacheBuster } from './urlUtils';
 
 /**
- * Debug utility to check media URLs for issues
+ * Utility for debugging media URLs and connections
  */
-export async function debugMediaUrl(url: string): Promise<{
-  success: boolean;
-  diagnostics: Record<string, any>;
-}> {
+export const debugMediaUrl = async (url: string): Promise<void> => {
   if (!url) {
-    return {
-      success: false,
-      diagnostics: {
-        error: 'Empty URL provided',
-        url: null,
-        timestamp: Date.now()
-      }
-    };
+    console.error('debugMediaUrl: Empty URL provided');
+    return;
   }
+  
+  console.group('Media URL Debug Information');
+  console.log('URL:', url);
 
   try {
-    // Basic URL validation
-    let isValid = true;
-    let reason = '';
+    // Check if URL has cache busting parameters
+    const hasCacheBuster = url.includes('?t=') || url.includes('&t=');
+    console.log('Has cache busting:', hasCacheBuster);
     
+    // Log URL parts
     try {
-      new URL(url);
+      const parsedUrl = new URL(url);
+      console.log('Protocol:', parsedUrl.protocol);
+      console.log('Host:', parsedUrl.host);
+      console.log('Path:', parsedUrl.pathname);
+      console.log('Query:', parsedUrl.search);
     } catch (e) {
-      isValid = false;
-      reason = 'Invalid URL format';
+      console.log('URL is not parseable as a standard URL');
     }
     
-    // Special URL handling
-    if (url.startsWith('blob:') || url.startsWith('data:')) {
-      return {
-        success: true,
-        diagnostics: {
-          url_type: url.startsWith('blob:') ? 'blob' : 'data',
-          url: url.substring(0, 50) + '...',
-          isValid,
-          message: 'Local URL, likely valid',
-          timestamp: Date.now()
-        }
-      };
+    // Try to fetch content type and headers
+    try {
+      const contentInfo = await checkUrlContentType(url);
+      console.log('Content accessible:', contentInfo.isValid);
+      console.log('Content type:', contentInfo.contentType);
+      console.log('Status code:', contentInfo.status);
+      console.log('Headers:', contentInfo.headers);
+    } catch (e) {
+      console.error('Error checking content type:', e);
     }
-    
-    // Network check
-    const networkCheck: UrlContentInfo = await checkUrlContentType(url);
-    
-    // Infer details from URL
-    const inferredType = inferContentTypeFromUrl(url);
-    
-    return {
-      success: networkCheck.isValid,
-      diagnostics: {
-        url: url,
-        url_accessible: networkCheck.isValid,
-        http_status: networkCheck.status,
-        content_type: networkCheck.contentType,
-        headers: networkCheck.headers,
-        inferred_type: inferredType,
-        timestamp: Date.now()
-      }
-    };
-    
-  } catch (error) {
-    return {
-      success: false,
-      diagnostics: {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        url,
-        timestamp: Date.now()
-      }
-    };
-  }
-}
 
-/**
- * Debug utility to test image loading
- */
-export function debugImageLoading(url: string): Promise<{ success: boolean, message: string }> {
-  return new Promise((resolve) => {
-    if (!url) {
-      resolve({ success: false, message: 'Empty URL provided' });
-      return;
+    // Create and test a fresh cache-busted URL
+    const freshUrl = addCacheBuster(url.split('?')[0]);
+    console.log('Fresh URL for testing:', freshUrl);
+    
+    // Provide recommendations
+    console.log('Recommendations:');
+    if (!hasCacheBuster) {
+      console.log('- Add cache busting parameters to prevent browser caching');
     }
     
-    const img = new Image();
-    
-    const timeoutId = setTimeout(() => {
-      resolve({ success: false, message: 'Image loading timed out' });
-    }, 10000);
-    
-    img.onload = () => {
-      clearTimeout(timeoutId);
-      resolve({ 
-        success: true, 
-        message: `Image loaded successfully: ${img.width}x${img.height}`
-      });
-    };
-    
-    img.onerror = (error) => {
-      clearTimeout(timeoutId);
-      resolve({ 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Image loading failed'
-      });
-    };
-    
-    // Add cache-busting to the URL for accurate testing
-    img.src = getDisplayableMediaUrl(url);
-  });
-}
+    console.log('- Check browser console network tab for detailed request info');
+    console.log('- Verify CORS settings if applicable');
+    console.log('- Check if the content exists at the specified path');
+
+  } catch (e) {
+    console.error('Error during URL debugging:', e);
+  } finally {
+    console.groupEnd();
+  }
+};

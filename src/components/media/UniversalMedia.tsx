@@ -6,6 +6,7 @@ import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { MediaImage } from "@/components/media/MediaImage";
 import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 import { isVideo } from "@/utils/media/mediaTypeUtils";
+import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
 
 interface UniversalMediaProps {
   item: any;
@@ -44,18 +45,53 @@ export const UniversalMedia = ({
     setHasError(false);
     
     try {
-      // Get playable media URL from the item
-      const url = getPlayableMediaUrl(item);
-      setMediaUrl(url);
+      // Get URL from the item
+      let url: string | null = null;
       
-      // Determine if it's a video
-      const videoCheck = isVideo(item) || 
-        (typeof item === 'object' && 
-         (item?.media_type === 'video' || 
-          item?.content_type === 'video' || 
-          item?.video_url));
-          
-      setIsVideoContent(videoCheck);
+      // Handle different property names
+      if (typeof item === 'string') {
+        url = item;
+      } else if (item?.video_url) {
+        url = item.video_url;
+        setIsVideoContent(true);
+      } else if (item?.media_url) {
+        const mediaUrl = Array.isArray(item.media_url) 
+          ? item.media_url[0] 
+          : item.media_url;
+        url = mediaUrl;
+        setIsVideoContent(item?.media_type === 'video' || item?.content_type === 'video');
+      } else if (item?.video_urls && Array.isArray(item.video_urls) && item.video_urls.length > 0) {
+        url = item.video_urls[0];
+        setIsVideoContent(true);
+      } else if (item?.url) {
+        url = item.url;
+      }
+      
+      // If no URL found, show error
+      if (!url) {
+        console.error("No valid media URL found in item:", item);
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Process URL for display
+      const processedUrl = getPlayableMediaUrl(url);
+      setMediaUrl(processedUrl);
+      
+      // Log the URL for debugging
+      console.log(`Media URL (${isVideoContent ? 'video' : 'image'}):`, processedUrl);
+      
+      // Auto-detect video content by URL if not already determined
+      if (!isVideoContent && typeof url === 'string') {
+        const urlLower = url.toLowerCase();
+        if (urlLower.includes('.mp4') || 
+            urlLower.includes('.webm') || 
+            urlLower.includes('.mov') || 
+            urlLower.includes('video')) {
+          setIsVideoContent(true);
+        }
+      }
     } catch (error) {
       console.error("Error processing media item:", error);
       setHasError(true);
@@ -72,7 +108,12 @@ export const UniversalMedia = ({
 
   // Handle media load error
   const handleError = () => {
-    console.error("Media failed to load:", item);
+    console.error("Media failed to load:", mediaUrl);
+    
+    if (mediaUrl) {
+      debugMediaUrl(mediaUrl);
+    }
+    
     setIsLoading(false);
     setHasError(true);
     if (onError) onError();
@@ -85,29 +126,16 @@ export const UniversalMedia = ({
     setRetryCount(prev => prev + 1);
   };
 
-  // Handle custom click
-  const handleClick = (e: React.MouseEvent) => {
-    if (onClick) {
-      e.preventDefault();
-      e.stopPropagation();
-      onClick();
-    }
-  };
-
-  // If no media URL, show empty state
   if (!mediaUrl) {
     return (
-      <div className={`flex items-center justify-center bg-luxury-darker/80 ${className}`}>
-        <p className="text-luxury-neutral py-8">Media unavailable</p>
+      <div className={`flex items-center justify-center bg-black/80 ${className}`}>
+        <p className="text-white/70 py-8">Media unavailable</p>
       </div>
     );
   }
 
   return (
-    <div 
-      className={`relative overflow-hidden ${className}`}
-      onClick={handleClick}
-    >
+    <div className={`relative overflow-hidden ${className}`}>
       {isLoading && <MediaLoadingState />}
       
       {hasError && (
