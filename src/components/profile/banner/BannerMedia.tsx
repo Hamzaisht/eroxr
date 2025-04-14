@@ -1,5 +1,6 @@
 
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface BannerMediaProps {
@@ -9,17 +10,30 @@ interface BannerMediaProps {
 }
 
 export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProps) => {
-  if (!mediaUrl) return null;
-
-  const mediaItem = {
-    media_url: mediaType === 'image' || mediaType === 'gif' ? mediaUrl : null,
-    video_url: mediaType === 'video' ? mediaUrl : null,
-    media_type: mediaType,
-  };
+  // Store processed URL to prevent unnecessary re-processing
+  const [finalMediaItem, setFinalMediaItem] = useState<any>(null);
+  
+  // Process the media item only when mediaUrl changes
+  useEffect(() => {
+    if (!mediaUrl) {
+      setFinalMediaItem(null);
+      return;
+    }
+    
+    const item = {
+      media_url: mediaType === 'image' || mediaType === 'gif' ? mediaUrl : null,
+      video_url: mediaType === 'video' ? mediaUrl : null,
+      media_type: mediaType,
+    };
+    
+    setFinalMediaItem(item);
+  }, [mediaUrl, mediaType]);
+  
+  if (!mediaUrl || !finalMediaItem) return null;
 
   return (
     <UniversalMedia
-      item={mediaItem}
+      item={finalMediaItem}
       className="w-full h-full object-cover"
       autoPlay={isHovering || mediaType === 'video'}
       controls={false}

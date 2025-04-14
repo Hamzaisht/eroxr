@@ -96,13 +96,13 @@ export const useStorageService = () => {
         
       console.log("Public URL:", publicUrl);
       
-      // Add cache busting to ensure fresh content delivery
-      const cacheBustedUrl = getDisplayableMediaUrl(publicUrl);
+      // Use our utility to add cache busting as needed
+      const processedUrl = getDisplayableMediaUrl(publicUrl);
       
       return { 
         success: true, 
         path: uploadData.path,
-        url: cacheBustedUrl
+        url: processedUrl
       };
     } catch (error: any) {
       console.error("Storage upload error:", error);

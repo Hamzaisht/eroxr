@@ -3,6 +3,7 @@ import { useEffect, useRef, forwardRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2, AlertCircle, RefreshCw, VolumeX } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -24,17 +25,20 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     };
     
     const handleError = () => {
+      console.error(`Story video loading error: ${videoUrl}`);
       setLoadError(true);
       setIsLoading(false);
       if (onError) onError();
     };
     
     const handleLoad = () => {
+      console.log(`Story video loaded: ${videoUrl}`);
       setIsLoading(false);
       setLoadError(false);
     };
     
     const handleRetry = () => {
+      console.log(`Retrying video load: ${videoUrl}`);
       setIsLoading(true);
       setLoadError(false);
     };

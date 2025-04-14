@@ -1,12 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MediaLoading } from "./MediaLoading";
 import { MediaError } from "./MediaError";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { MediaImage } from "./MediaImage";
 import { isVideoUrl } from "@/utils/media/mediaTypeUtils";
-import { addCacheBuster, checkUrlContentType } from "@/utils/media/urlUtils";
-import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
+import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 export interface MediaItem {
   media_url?: string | string[] | null;
@@ -48,10 +47,11 @@ export const UniversalMedia = ({
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isVideoType, setIsVideoType] = useState(false);
+  const processedUrlRef = useRef<string | null>(null);
 
-  // Process media source
+  // Process media source only once on mount or when item changes
   useEffect(() => {
-    const processMediaSource = async () => {
+    const processMediaSource = () => {
       setIsLoading(true);
       setHasError(false);
       
@@ -72,24 +72,23 @@ export const UniversalMedia = ({
           throw new Error("No valid media URL found");
         }
 
-        // Add cache buster and check content type
-        const processedUrl = addCacheBuster(url);
-        const { isValid, contentType } = await checkUrlContentType(processedUrl);
-        
-        if (!isValid) {
-          throw new Error("Invalid media URL");
-        }
-        
+        // Only process the URL once and store the result
+        const processedUrl = getPlayableMediaUrl(url);
+        processedUrlRef.current = processedUrl;
         setMediaUrl(processedUrl);
-        setIsVideoType(isVideoUrl(url) || contentType?.startsWith('video/') || false);
+        
+        // Determine if it's a video by URL pattern
+        setIsVideoType(isVideoUrl(url) || 
+          (typeof item === 'object' && 
+            (item.media_type === 'video' || item.content_type === 'video')));
         
       } catch (error) {
         console.error("Error processing media:", error);
         setHasError(true);
         if (onError) onError();
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
 
     processMediaSource();
@@ -104,20 +103,22 @@ export const UniversalMedia = ({
 
   // Handle media error
   const handleError = () => {
-    if (mediaUrl) {
-      debugMediaUrl(mediaUrl);
-    }
-    
+    console.error("Media loading error for:", mediaUrl);
     setHasError(true);
     setIsLoading(false);
     if (onError) onError();
   };
 
-  // Handle retry
+  // Handle retry with counter to prevent infinite loops
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
-    setIsLoading(true);
-    setHasError(false);
+    if (retryCount < 2) {
+      console.log("Retrying media load, attempt:", retryCount + 1);
+      setRetryCount(prev => prev + 1);
+      setIsLoading(true);
+      setHasError(false);
+    } else {
+      console.error("Max retry attempts reached for media:", mediaUrl);
+    }
   };
 
   if (!mediaUrl) {
@@ -134,8 +135,8 @@ export const UniversalMedia = ({
       
       {hasError && (
         <MediaError 
-          onRetry={retryCount < 3 ? handleRetry : undefined}
-          message={retryCount >= 3 ? "Failed to load media after multiple attempts" : "Failed to load media"}
+          onRetry={retryCount < 2 ? handleRetry : undefined}
+          message={retryCount >= 2 ? "Failed to load media after multiple attempts" : "Failed to load media"}
         />
       )}
       

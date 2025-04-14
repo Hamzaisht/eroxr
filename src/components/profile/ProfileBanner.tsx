@@ -1,5 +1,6 @@
+
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Profile } from "@/integrations/supabase/types/profile";
 import { BannerMedia } from "./banner/BannerMedia";
 import { BannerEditButton } from "./banner/BannerEditButton";
@@ -18,15 +19,21 @@ export const ProfileBanner = ({ profile, getMediaType, isOwnProfile }: ProfileBa
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [currentBannerUrl, setCurrentBannerUrl] = useState<string | null>(null);
+  const hasSetBanner = useRef(false);
 
-  // Update currentBannerUrl when profile changes
+  // Update currentBannerUrl when profile changes, but only once to prevent re-renders
   useEffect(() => {
-    setCurrentBannerUrl(profile?.banner_url);
+    if (profile?.banner_url && !hasSetBanner.current) {
+      setCurrentBannerUrl(profile.banner_url);
+      hasSetBanner.current = true;
+    }
   }, [profile?.banner_url]);
 
   const { isUploading, handleFileChange } = useBannerUpload(profile, (url) => {
     setCurrentBannerUrl(url);
     setShowUploadModal(false);
+    // Reset the flag so that a new banner can be set
+    hasSetBanner.current = true;
   });
 
   const defaultVideoUrl = "https://cdn.pixabay.com/vimeo/505772711/fashion-66214.mp4?width=1280&hash=4adbad56c39a522787b3563a2b65439c2c8b3766";
