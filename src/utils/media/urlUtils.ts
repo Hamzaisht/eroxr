@@ -23,6 +23,7 @@ export interface UrlContentInfo {
   contentType: string | null;
   status: number;
   headers: Record<string, string>;
+  errorBody?: string;
 }
 
 /**
@@ -67,11 +68,21 @@ export const checkUrlContentType = async (url: string): Promise<UrlContentInfo> 
       headers[key] = value;
     });
     
+    let errorBody;
+    if (!rangeResponse.ok) {
+      try {
+        errorBody = await rangeResponse.text();
+      } catch (e) {
+        // Unable to get error body, ignore
+      }
+    }
+    
     return {
       isValid: rangeResponse.ok || rangeResponse.status === 206,
       contentType: rangeResponse.headers.get('content-type'),
       status: rangeResponse.status,
-      headers
+      headers,
+      errorBody
     };
     
   } catch (error) {
@@ -80,7 +91,8 @@ export const checkUrlContentType = async (url: string): Promise<UrlContentInfo> 
       isValid: false,
       contentType: null,
       status: 0,
-      headers: {}
+      headers: {},
+      errorBody: error instanceof Error ? error.message : String(error)
     };
   }
 };
@@ -191,3 +203,4 @@ export const getDisplayableMediaUrl = (url: string | null | undefined): string =
   // Add cache busting parameters to ensure fresh content loading
   return addCacheBuster(url);
 };
+

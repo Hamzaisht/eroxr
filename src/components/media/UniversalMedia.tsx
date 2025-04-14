@@ -4,12 +4,22 @@ import { MediaLoadingState } from "@/components/media/states/MediaLoadingState";
 import { MediaErrorState } from "@/components/media/states/MediaErrorState";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { MediaImage } from "@/components/media/MediaImage";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
-import { isVideo } from "@/utils/media/mediaTypeUtils";
-import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
+import { getPlayableMediaUrl, isVideoContent } from "@/utils/media/getPlayableMediaUrl";
+import { debugMediaUrl, getMediaErrorInfo } from "@/utils/media/debugMediaUtils";
+
+export interface MediaItem {
+  media_url?: string | string[] | null;
+  video_url?: string | null;
+  video_urls?: string[] | null;
+  url?: string | null;
+  media_type?: string;
+  content_type?: string;
+  creator_id?: string;
+  alt_text?: string;
+}
 
 interface UniversalMediaProps {
-  item: any;
+  item: MediaItem | string;
   className?: string;
   onError?: () => void;
   onLoad?: () => void;
@@ -45,27 +55,23 @@ export const UniversalMedia = ({
     setHasError(false);
     
     try {
-      // Get URL from the item
-      let url: string | null = null;
-      
-      // Handle different property names
+      // Handle direct string URL
       if (typeof item === 'string') {
-        url = item;
-      } else if (item?.video_url) {
-        url = item.video_url;
-        setIsVideoContent(true);
-      } else if (item?.media_url) {
-        const mediaUrl = Array.isArray(item.media_url) 
-          ? item.media_url[0] 
-          : item.media_url;
-        url = mediaUrl;
-        setIsVideoContent(item?.media_type === 'video' || item?.content_type === 'video');
-      } else if (item?.video_urls && Array.isArray(item.video_urls) && item.video_urls.length > 0) {
-        url = item.video_urls[0];
-        setIsVideoContent(true);
-      } else if (item?.url) {
-        url = item.url;
+        const url = getPlayableMediaUrl(item);
+        setMediaUrl(url);
+        setIsVideoContent(isVideoContent(item));
+        return;
       }
+      
+      if (!item) {
+        console.error("No media item provided");
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get playable URL from the item
+      const url = getPlayableMediaUrl(item);
       
       // If no URL found, show error
       if (!url) {
@@ -75,23 +81,13 @@ export const UniversalMedia = ({
         return;
       }
       
-      // Process URL for display
-      const processedUrl = getPlayableMediaUrl(url);
-      setMediaUrl(processedUrl);
+      setMediaUrl(url);
+      
+      // Determine if this is video content
+      setIsVideoContent(isVideoContent(item));
       
       // Log the URL for debugging
-      console.log(`Media URL (${isVideoContent ? 'video' : 'image'}):`, processedUrl);
-      
-      // Auto-detect video content by URL if not already determined
-      if (!isVideoContent && typeof url === 'string') {
-        const urlLower = url.toLowerCase();
-        if (urlLower.includes('.mp4') || 
-            urlLower.includes('.webm') || 
-            urlLower.includes('.mov') || 
-            urlLower.includes('video')) {
-          setIsVideoContent(true);
-        }
-      }
+      console.log(`Media URL (${isVideoContent ? 'video' : 'image'}):`, url);
     } catch (error) {
       console.error("Error processing media item:", error);
       setHasError(true);
@@ -112,6 +108,10 @@ export const UniversalMedia = ({
     
     if (mediaUrl) {
       debugMediaUrl(mediaUrl);
+      
+      // Log detailed error info
+      const errorInfo = getMediaErrorInfo(mediaUrl);
+      console.error(errorInfo);
     }
     
     setIsLoading(false);
@@ -133,6 +133,12 @@ export const UniversalMedia = ({
       </div>
     );
   }
+
+  // Extract creator ID from item if it's an object
+  const creatorId = typeof item === 'object' ? item.creator_id : undefined;
+  
+  // Extract alt text from item if it's an object
+  const altText = typeof item === 'object' ? (item.alt_text || "Media content") : "Media content";
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
@@ -157,22 +163,23 @@ export const UniversalMedia = ({
             handleLoad();
             if (onLoadedData) onLoadedData();
           }}
-          creatorId={item?.creator_id}
+          creatorId={creatorId}
           controls={controls}
           onClick={onClick}
         />
       ) : (
         <MediaImage
           url={mediaUrl}
-          alt={item?.alt_text || "Media content"}
+          alt={altText}
           className="w-full h-full"
           onLoad={handleLoad}
           onError={handleError}
           showWatermark={showWatermark}
-          creatorId={item?.creator_id}
+          creatorId={creatorId}
           onClick={onClick}
         />
       )}
     </div>
   );
 };
+

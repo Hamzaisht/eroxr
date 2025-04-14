@@ -1,12 +1,17 @@
 
 import { addCacheBuster } from './urlUtils';
 
-interface MediaSource {
+/**
+ * A union type representing the different formats media URL can be stored in
+ */
+export interface MediaSource {
   media_url?: string | string[] | null;
   video_url?: string | null;
   video_urls?: string[] | null;
   url?: string | null;
   src?: string | null;
+  content_type?: string; 
+  media_type?: string;
 }
 
 /**
@@ -50,8 +55,51 @@ export const getPlayableMediaUrl = (source: MediaSource | string | null | undefi
   }
   
   // Apply cache busting to prevent stale content
-  return addCacheBuster(mediaUrl);
+  return addCacheBuster(mediaUrl || '');
+};
+
+/**
+ * Determine if media source is likely a video based on URL or content type
+ */
+export const isVideoContent = (source: MediaSource | string | null | undefined): boolean => {
+  // Handle string URLs
+  if (typeof source === 'string') {
+    const url = source.toLowerCase();
+    return url.includes('.mp4') || 
+           url.includes('.webm') || 
+           url.includes('.mov') || 
+           url.includes('video');
+  }
+  
+  // Handle null/undefined
+  if (!source) return false;
+  
+  // Check explicit content/media type properties
+  if (source.content_type === 'video' || source.media_type === 'video') {
+    return true;
+  }
+  
+  // Check for video_url or video_urls properties
+  if (source.video_url || (source.video_urls && source.video_urls.length > 0)) {
+    return true;
+  }
+  
+  // Check URL extensions for media_url
+  if (source.media_url) {
+    const url = Array.isArray(source.media_url) 
+      ? source.media_url[0] || '' 
+      : source.media_url || '';
+    
+    const lowercaseUrl = url.toLowerCase();
+    return lowercaseUrl.includes('.mp4') || 
+           lowercaseUrl.includes('.webm') || 
+           lowercaseUrl.includes('.mov') || 
+           lowercaseUrl.includes('video');
+  }
+  
+  return false;
 };
 
 // Export addCacheBuster from this file as well for better compatibility
 export { addCacheBuster } from './urlUtils';
+
