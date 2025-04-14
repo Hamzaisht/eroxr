@@ -1,10 +1,10 @@
 
-import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { ProtectedMedia } from "@/components/security/ProtectedMedia";
+import { NewMediaRenderer } from "@/components/media/NewMediaRenderer";
 
 interface PostContentProps {
   content: string;
@@ -94,12 +94,6 @@ export const PostContent = ({
                         if (!url) return <ErrorFallback key={`video-error-${index}`} message="Video not available" />;
                         if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`video-error-${index}`} message="Failed to load video" url={url} />;
                         
-                        const mediaItem = { 
-                          video_url: url, 
-                          creator_id: creatorId,
-                          alt_text: `Video content ${index + 1}`
-                        };
-                        
                         return (
                           <motion.div
                             key={`video-${index}-${retries[url] || 0}`}
@@ -109,8 +103,8 @@ export const PostContent = ({
                             className="relative aspect-video w-full cursor-pointer"
                             onClick={() => onMediaClick(url)}
                           >
-                            <UniversalMedia
-                              item={mediaItem}
+                            <NewMediaRenderer
+                              item={{ video_url: url, creator_id: creatorId }}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
                               controls={true}
@@ -128,12 +122,6 @@ export const PostContent = ({
                         if (!url) return <ErrorFallback key={`image-error-${index}`} message="Image not available" />;
                         if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`image-error-${index}`} message="Failed to load image" url={url} />;
                         
-                        const mediaItem = { 
-                          media_url: url,
-                          creator_id: creatorId,
-                          alt_text: `Media content ${index + 1}`
-                        };
-                        
                         return (
                           <motion.div
                             key={`image-${index}-${retries[url] || 0}`}
@@ -143,11 +131,10 @@ export const PostContent = ({
                             className="relative aspect-[4/3] cursor-pointer group"
                             onClick={() => onMediaClick(url)}
                           >
-                            <UniversalMedia
-                              item={mediaItem}
+                            <NewMediaRenderer
+                              item={{ media_url: url, creator_id: creatorId }}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               onError={() => handleMediaError(url)}
-                              showWatermark={true}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </motion.div>
