@@ -47,6 +47,9 @@ export const useNewMediaUpload = () => {
       return { success: false, url: null, error };
     }
     
+    // Declare progressInterval at this level so it's accessible in both try and catch blocks
+    let progressInterval: ReturnType<typeof setInterval> | undefined;
+    
     try {
       setState({
         isUploading: true,
@@ -54,9 +57,6 @@ export const useNewMediaUpload = () => {
         error: null,
         url: null
       });
-      
-      // Declare progressInterval here to ensure it's in scope
-      let progressInterval: ReturnType<typeof setInterval> | undefined;
       
       // Start progress simulation
       progressInterval = setInterval(() => {
@@ -117,8 +117,8 @@ export const useNewMediaUpload = () => {
       
       return { success: true, url, error: null };
     } catch (error: any) {
-      // Using the local progressInterval variable
-      if (typeof progressInterval !== 'undefined') {
+      // Clear the interval using the local progressInterval variable
+      if (progressInterval) {
         clearInterval(progressInterval);
       }
       

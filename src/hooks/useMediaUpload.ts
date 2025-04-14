@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { createUniqueFilePath, uploadFileToStorage } from '@/utils/media/mediaUtils';
@@ -90,6 +89,9 @@ export const useMediaUpload = (defaultOptions: Partial<UploadOptions> = {}) => {
     
     const mergedOptions = { ...defaultOptions, ...options };
     
+    // Declare progressInterval at this level so it's accessible in both try and catch blocks
+    let progressInterval: ReturnType<typeof setInterval> | undefined;
+    
     try {
       setUploadState({
         isUploading: true,
@@ -97,9 +99,6 @@ export const useMediaUpload = (defaultOptions: Partial<UploadOptions> = {}) => {
         error: null,
         success: false
       });
-      
-      // Declare progressInterval here to ensure it's in scope
-      let progressInterval: ReturnType<typeof setInterval> | undefined;
       
       // Simulate upload progress
       progressInterval = setInterval(() => {
@@ -171,7 +170,7 @@ export const useMediaUpload = (defaultOptions: Partial<UploadOptions> = {}) => {
       return { success: true, url };
     } catch (error: any) {
       // Clear interval if it exists - using the local variable
-      if (typeof progressInterval !== 'undefined') {
+      if (progressInterval) {
         clearInterval(progressInterval);
       }
       
