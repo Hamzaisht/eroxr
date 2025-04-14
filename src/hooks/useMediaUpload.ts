@@ -98,8 +98,10 @@ export const useMediaUpload = (defaultOptions: Partial<UploadOptions> = {}) => {
         success: false
       });
       
+      // Declare progressInterval here to ensure it's in scope
+      let progressInterval: ReturnType<typeof setInterval> | undefined;
+      
       // Simulate upload progress
-      let progressInterval: ReturnType<typeof setInterval>;
       progressInterval = setInterval(() => {
         setUploadState(prev => {
           const newProgress = Math.min(prev.progress + Math.random() * 10, 90);
@@ -168,7 +170,7 @@ export const useMediaUpload = (defaultOptions: Partial<UploadOptions> = {}) => {
       
       return { success: true, url };
     } catch (error: any) {
-      // Clear interval if it exists
+      // Clear interval if it exists - using the local variable
       if (typeof progressInterval !== 'undefined') {
         clearInterval(progressInterval);
       }

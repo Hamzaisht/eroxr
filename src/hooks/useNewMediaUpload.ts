@@ -55,8 +55,10 @@ export const useNewMediaUpload = () => {
         url: null
       });
       
+      // Declare progressInterval here to ensure it's in scope
+      let progressInterval: ReturnType<typeof setInterval> | undefined;
+      
       // Start progress simulation
-      let progressInterval: ReturnType<typeof setInterval>;
       progressInterval = setInterval(() => {
         setState(prev => {
           const newProgress = Math.min(prev.progress + 5, 90);
@@ -115,6 +117,7 @@ export const useNewMediaUpload = () => {
       
       return { success: true, url, error: null };
     } catch (error: any) {
+      // Using the local progressInterval variable
       if (typeof progressInterval !== 'undefined') {
         clearInterval(progressInterval);
       }
