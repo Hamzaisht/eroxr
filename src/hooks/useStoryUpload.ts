@@ -1,136 +1,172 @@
 
-import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { uploadFileToStorage } from '@/utils/mediaUtils';
-import { useStories } from '@/components/story/hooks/useStories';
-import { isImageFile, isVideoFile } from '@/utils/upload/validators';
-import { useMediaUpload } from '@/hooks/useMediaUpload';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
+import { createUniqueFilePath, uploadFileToStorage, getContentType } from '@/utils/media/mediaUtils';
+
+interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  url: string | null;
+  mediaType: 'image' | 'video' | null;
+}
 
 export const useStoryUpload = () => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const { toast } = useToast();
-  const session = useSession();
-  const { uploadStory } = useStories();
-
-  const { 
-    uploadMedia, 
-    uploadState: { isUploading, progress, error },
-    validateFile,
-    resetState 
-  } = useMediaUpload({
-    contentCategory: 'story',
-    maxSizeInMB: 100,
-    allowedTypes: [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'
-    ],
-    autoResetOnCompletion: true,
-    resetDelay: 1500
+  const [state, setState] = useState<UploadState>({
+    isUploading: false,
+    progress: 0,
+    error: null,
+    url: null,
+    mediaType: null
   });
-
-  // Clear state and preview
-  const resetStateHandler = useCallback(() => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    setPreviewUrl(null);
-    resetState();
-  }, [previewUrl, resetState]);
-
-  // Create preview for selected file
-  const createPreview = useCallback((file: File): string => {
-    try {
-      return URL.createObjectURL(file);
-    } catch (err) {
-      console.error('Error creating preview:', err);
-      return '';
-    }
-  }, []);
-
-  // Handle file selection
-  const handleFileSelect = useCallback(async (file: File) => {
-    try {
-      // Reset any previous state
-      resetStateHandler();
-      
-      // Validate file
-      const validationResult = validateFile(file);
-      if (!validationResult.valid) {
-        toast({
-          title: 'Invalid file',
-          description: validationResult.message || 'The selected file cannot be used for stories',
-          variant: 'destructive',
-        });
-        return false;
-      }
-      
-      // Create preview
-      const preview = createPreview(file);
-      setPreviewUrl(preview);
-      
-      return true;
-    } catch (err) {
-      console.error('Error processing file:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to process the selected file',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, [resetStateHandler, validateFile, createPreview, toast]);
-
-  // Upload story
-  const uploadFile = useCallback(async (file: File) => {
+  
+  const session = useSession();
+  const { toast } = useToast();
+  
+  const reset = () => {
+    setState({
+      isUploading: false,
+      progress: 0,
+      error: null,
+      url: null,
+      mediaType: null
+    });
+  };
+  
+  const uploadStory = async (file: File): Promise<{
+    success: boolean;
+    url: string | null;
+    mediaType: 'image' | 'video' | null;
+    error: string | null;
+  }> => {
+    // Check if user is logged in
     if (!session?.user?.id) {
-      toast({
-        title: 'Authentication required',
-        description: 'You need to be logged in to upload stories',
-        variant: 'destructive',
-      });
-      return { success: false, error: 'Authentication required' };
+      const error = "You must be logged in to upload stories";
+      setState(prev => ({ ...prev, error }));
+      return { 
+        success: false, 
+        url: null, 
+        mediaType: null, 
+        error 
+      };
     }
-
+    
     try {
-      // Determine if file is video
-      const isVideo = isVideoFile(file);
+      setState({
+        isUploading: true,
+        progress: 0,
+        error: null,
+        url: null,
+        mediaType: null
+      });
       
-      // Upload using the stories hook
-      const result = await uploadStory(file, { isVideo });
+      // Start progress simulation
+      const progressInterval = setInterval(() => {
+        setState(prev => ({
+          ...prev,
+          progress: Math.min(prev.progress + 5, 90)
+        }));
+      }, 300);
       
-      if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
+      // Determine media type
+      const mediaType = getContentType(file.name) as 'image' | 'video';
+      
+      // Create a unique file path
+      const path = createUniqueFilePath(session.user.id, file);
+      
+      // Upload the file to storage
+      const url = await uploadFileToStorage('stories', path, file);
+      
+      clearInterval(progressInterval);
+      
+      if (!url) {
+        const error = "Failed to upload story";
+        setState({
+          isUploading: false,
+          progress: 0,
+          error,
+          url: null,
+          mediaType: null
+        });
+        return { 
+          success: false, 
+          url: null, 
+          mediaType: null, 
+          error
+        };
       }
       
-      toast({
-        title: 'Story uploaded',
-        description: 'Your story has been uploaded successfully',
+      // After successful upload, create story entry in database
+      const { error: dbError } = await supabase
+        .from('stories')
+        .insert({
+          creator_id: session.user.id,
+          media_url: url,
+          media_type: mediaType,
+          is_active: true,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          content_type: mediaType
+        });
+      
+      if (dbError) {
+        console.error("Error saving story to database:", dbError);
+        setState({
+          isUploading: false,
+          progress: 0,
+          error: dbError.message,
+          url: null,
+          mediaType: null
+        });
+        return { 
+          success: false, 
+          url: null, 
+          mediaType: null,
+          error: dbError.message
+        };
+      }
+      
+      // Success
+      setState({
+        isUploading: false,
+        progress: 100,
+        error: null,
+        url,
+        mediaType
       });
       
-      setTimeout(resetStateHandler, 1500);
+      return {
+        success: true,
+        url,
+        mediaType,
+        error: null
+      };
       
-      return result;
-    } catch (err: any) {
-      console.error('Story upload error:', err);
+    } catch (error: any) {
+      console.error("Story upload error:", error);
       
-      toast({
-        title: 'Upload failed',
-        description: err.message || 'There was a problem uploading your story',
-        variant: 'destructive',
+      const errorMessage = error.message || "An unknown error occurred";
+      setState({
+        isUploading: false,
+        progress: 0,
+        error: errorMessage,
+        url: null,
+        mediaType: null
       });
       
-      return { success: false, error: err.message };
+      return { 
+        success: false, 
+        url: null,
+        mediaType: null, 
+        error: errorMessage
+      };
     }
-  }, [session, toast, resetStateHandler, uploadStory]);
-
+  };
+  
   return {
-    isUploading,
-    progress,
-    error,
-    previewUrl,
-    handleFileSelect,
-    uploadFile,
-    resetState: resetStateHandler
+    uploadStory,
+    reset,
+    state
   };
 };

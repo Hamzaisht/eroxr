@@ -3,7 +3,6 @@ import { useEffect, useRef, forwardRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2, AlertCircle, RefreshCw, VolumeX } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -70,6 +69,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         )}
         
         <UniversalMedia
+          ref={ref}
           item={mediaItem}
           className="w-full h-full object-contain"
           autoPlay={!isPaused && !isLoading && !loadError}

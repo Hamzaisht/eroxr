@@ -4,8 +4,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
-import { addCacheBuster } from "@/utils/media/urlUtils";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface PostContentProps {
@@ -96,7 +94,11 @@ export const PostContent = ({
                         if (!url) return <ErrorFallback key={`video-error-${index}`} message="Video not available" />;
                         if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`video-error-${index}`} message="Failed to load video" url={url} />;
                         
-                        const mediaItem = { video_url: url, creator_id: creatorId };
+                        const mediaItem = { 
+                          video_url: url, 
+                          creator_id: creatorId,
+                          media_type: "video"
+                        };
                         
                         return (
                           <motion.div
@@ -128,7 +130,8 @@ export const PostContent = ({
                         
                         const mediaItem = { 
                           media_url: url,
-                          creator_id: creatorId
+                          creator_id: creatorId,
+                          media_type: "image"
                         };
                         
                         return (

@@ -1,174 +1,152 @@
-import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Upload, FileImage, FileVideo, Loader2 } from 'lucide-react';
-import { useMediaUpload } from '@/hooks/useMediaUpload';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useToast } from '@/hooks/use-toast';
-import { isImageFile, isVideoFile } from '@/utils/upload/validators';
+
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Upload, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useNewMediaUpload } from "@/hooks/useNewMediaUpload";
 
 interface MediaUploaderProps {
-  context: 'post' | 'story' | 'message' | 'profile' | 'short';
+  context: "post" | "story" | "message" | "short" | "profile" | "avatar";
   onComplete: (url: string) => void;
-  onError?: (error: string) => void;
-  accept?: string;
+  acceptTypes?: string;
+  buttonText?: string;
   maxSizeMB?: number;
 }
 
 export const MediaUploader: React.FC<MediaUploaderProps> = ({
   context,
   onComplete,
-  onError,
-  accept = 'image/*,video/*',
-  maxSizeMB = 50
+  acceptTypes = "image/*,video/*",
+  buttonText = "Upload Media",
+  maxSizeMB = 100
 }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const session = useSession();
   const { toast } = useToast();
+  const { uploadMedia, state } = useNewMediaUpload();
   
-  const { uploadMedia, uploadState, validateFile } = useMediaUpload({
-    contentCategory: context,
-    maxSizeInMB: maxSizeMB,
-    allowedTypes: accept.split(',')
-  });
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Validate file
-    const validation = validateFile(file);
-    if (!validation.valid) {
+    // Check file size
+    const maxSize = maxSizeMB * 1024 * 1024;
+    if (file.size > maxSize) {
       toast({
-        title: "Invalid file",
-        description: validation.message || "File not supported",
+        title: "File too large",
+        description: `File size must be less than ${maxSizeMB}MB`,
         variant: "destructive"
       });
-      if (onError) onError(validation.message || "Invalid file");
       return;
     }
-    
-    setSelectedFile(file);
     
     // Create preview
+    setIsPreviewLoading(true);
     try {
-      const url = URL.createObjectURL(file);
-      setPreview(url);
-    } catch (error) {
-      console.error("Failed to create preview", error);
-    }
-    
-    // Auto upload
-    handleUpload(file);
-  };
-  
-  const handleUpload = async (file: File) => {
-    if (!session?.user) {
-      toast({
-        title: "Authentication required",
-        description: "You need to be signed in to upload media",
-        variant: "destructive"
-      });
-      if (onError) onError("Authentication required");
-      return;
-    }
-    
-    try {
-      const result = await uploadMedia(file, { contentCategory: context });
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
       
-      if (result.success && result.url) {
-        onComplete(result.url);
-      } else {
-        if (onError) onError(result.error || "Upload failed");
-        toast({
-          title: "Upload failed",
-          description: result.error || "Failed to upload media",
-          variant: "destructive"
-        });
+      // Upload to storage
+      const result = await uploadMedia(file, {
+        bucket: context,
+        onSuccess: (url) => {
+          onComplete(url);
+        }
+      });
+      
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
     } catch (error: any) {
-      if (onError) onError(error.message || "Upload failed");
       toast({
         title: "Upload error",
-        description: error.message || "An error occurred during upload",
+        description: error.message || "Failed to upload media",
         variant: "destructive"
       });
+    } finally {
+      setIsPreviewLoading(false);
     }
   };
   
-  const renderPreview = () => {
-    if (!selectedFile || !preview) return null;
-    
-    if (isImageFile(selectedFile)) {
-      return <img src={preview} alt="Preview" className="w-full h-auto max-h-48 object-contain" />;
-    } else if (isVideoFile(selectedFile)) {
-      return <video src={preview} className="w-full h-auto max-h-48 object-contain" controls />;
+  const clearPreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
     }
-    
-    return null;
-  };
-  
-  const resetSelection = () => {
-    if (preview) URL.revokeObjectURL(preview);
-    setSelectedFile(null);
-    setPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
-    <div className="space-y-4">
-      {preview && (
-        <div className="border rounded-md p-2 bg-black/5">
-          {renderPreview()}
-        </div>
-      )}
-      
+    <div>
       <input
         type="file"
+        accept={acceptTypes}
         ref={fileInputRef}
-        accept={accept}
-        onChange={handleFileChange}
         className="hidden"
-        disabled={uploadState.isUploading}
+        onChange={handleFileSelect}
+        disabled={state.isUploading}
       />
       
-      {!selectedFile ? (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full h-20 flex flex-col gap-2"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploadState.isUploading}
-        >
-          <Upload className="h-5 w-5" />
-          <span>Select Media to Upload</span>
-        </Button>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            {isImageFile(selectedFile) ? (
-              <FileImage className="h-4 w-4" />
-            ) : (
-              <FileVideo className="h-4 w-4" />
-            )}
-            <span className="flex-1 truncate">{selectedFile.name}</span>
-            <span className="text-xs text-muted-foreground">
-              {Math.round(selectedFile.size / 1024)}KB
-            </span>
-          </div>
-          
-          {uploadState.isUploading && (
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">{Math.round(uploadState.progress)}%</span>
+      {previewUrl && (
+        <div className="relative mb-4">
+          {state.isUploading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-md z-10">
+              <Loader2 className="h-8 w-8 animate-spin text-white" />
+              <p className="text-white mt-2">{state.progress}%</p>
             </div>
+          )}
+          
+          {state.error && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-md z-10">
+              <p className="text-red-400">{state.error}</p>
+              <Button variant="destructive" onClick={clearPreview} className="mt-2">
+                Try Again
+              </Button>
+            </div>
+          )}
+          
+          <Button
+            variant="destructive"
+            size="icon"
+            className="absolute top-2 right-2 z-20"
+            onClick={clearPreview}
+            disabled={state.isUploading}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          
+          {previewUrl.endsWith(".mp4") || previewUrl.endsWith(".webm") || previewUrl.endsWith(".mov") ? (
+            <video
+              src={previewUrl}
+              className="w-full h-48 object-contain bg-black rounded-md"
+              controls
+            />
+          ) : (
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="w-full h-48 object-contain bg-black rounded-md"
+            />
           )}
         </div>
       )}
       
-      {uploadState.error && (
-        <p className="text-destructive text-sm">{uploadState.error}</p>
+      {!previewUrl && (
+        <Button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={state.isUploading}
+        >
+          {state.isUploading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Upload className="h-4 w-4 mr-2" />
+          )}
+          {buttonText}
+        </Button>
       )}
     </div>
   );

@@ -1,23 +1,5 @@
 
-import { getDisplayableMediaUrl } from "./urlUtils";
+import { getPlayableMediaUrl as getMediaUrl } from './mediaUtils';
 
-/**
- * Get a playable media URL for the given item
- * This is a wrapper around getDisplayableMediaUrl that accepts different input types
- */
-export const getPlayableMediaUrl = (
-  item: string | { 
-    video_url?: string | null; 
-    media_url?: string | null;
-    url?: string | null;
-  }
-): string => {
-  // Handle direct string input
-  if (typeof item === 'string') {
-    return getDisplayableMediaUrl(item);
-  }
-  
-  // Extract URL from object based on common properties
-  const url = item.video_url || item.media_url || item.url || '';
-  return getDisplayableMediaUrl(url);
-};
+// Re-export for backward compatibility
+export const getPlayableMediaUrl = getMediaUrl;

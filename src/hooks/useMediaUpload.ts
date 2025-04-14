@@ -1,246 +1,189 @@
 
-import { useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { uploadFileToStorage, createUniqueFilePath, UploadResult } from "@/utils/mediaUtils";
-import { validateFile as validateFileUtil, ValidationResult } from "@/utils/upload/validators";
+import { useState } from 'react';
+import { useSession } from '@supabase/auth-helpers-react';
+import { createUniqueFilePath, uploadFileToStorage } from '@/utils/media/mediaUtils';
 
-export interface UploadOptions {
-  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic' | 'avatar';
-  maxSizeInMB?: number;
-  allowedTypes?: string[];
-  autoResetOnCompletion?: boolean;
-  resetDelay?: number;
-  onProgress?: (progress: number) => void;
-}
-
-export interface UploadState {
+interface UploadState {
   isUploading: boolean;
   progress: number;
-  url: string | null;
   error: string | null;
   success: boolean;
 }
 
+interface UploadOptions {
+  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic' | 'avatar';
+  onProgress?: (progress: number) => void;
+  autoReset?: boolean;
+  resetDelay?: number;
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
+}
+
+interface ValidationResult {
+  valid: boolean;
+  message?: string;
+}
+
 /**
- * Hook for handling media uploads to Supabase storage
+ * Hook for handling media uploads
  */
-export const useMediaUpload = (options?: UploadOptions) => {
+export const useMediaUpload = (defaultOptions: Partial<UploadOptions> = {}) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
-    url: null,
     error: null,
     success: false
   });
   
   const session = useSession();
-
+  
+  const resetUploadState = () => {
+    setUploadState({
+      isUploading: false,
+      progress: 0,
+      error: null,
+      success: false
+    });
+  };
+  
   /**
-   * Validate a file before upload
+   * Validates a file before upload
    */
   const validateFile = (file: File): ValidationResult => {
-    // Check file size if maxSize is provided
-    if (options?.maxSizeInMB) {
-      const maxSizeBytes = options.maxSizeInMB * 1024 * 1024;
+    // Check file size if specified
+    if (defaultOptions.maxSizeInMB) {
+      const maxSizeBytes = defaultOptions.maxSizeInMB * 1024 * 1024;
       if (file.size > maxSizeBytes) {
         return {
           valid: false,
-          message: `File size exceeds ${options.maxSizeInMB}MB limit`
+          message: `File size exceeds maximum allowed (${defaultOptions.maxSizeInMB}MB).`
         };
       }
     }
-
-    // Check file type if allowedTypes is provided
-    if (options?.allowedTypes && options.allowedTypes.length > 0) {
-      const isAllowedType = options.allowedTypes.some(type => {
-        // Handle wildcards like "image/*"
-        if (type.endsWith('/*')) {
-          const category = type.split('/')[0];
-          return file.type.startsWith(category + '/');
-        }
-        return file.type === type;
-      });
-
-      if (!isAllowedType) {
+    
+    // Check file type if specified
+    if (defaultOptions.allowedTypes && defaultOptions.allowedTypes.length > 0) {
+      const fileType = file.type;
+      if (!defaultOptions.allowedTypes.some(type => fileType.match(type))) {
         return {
           valid: false,
-          message: `File type not allowed. Allowed types: ${options.allowedTypes.join(', ')}`
+          message: `File type not allowed. Accepted types: ${defaultOptions.allowedTypes.join(', ')}`
         };
       }
     }
-
+    
     return { valid: true };
   };
 
   /**
-   * Upload a file to storage
-   * @param file - The file to upload
-   * @param uploadOptions - Options for the upload
-   * @returns The public URL of the uploaded file
+   * Uploads media file
    */
-  const uploadMedia = async (file: File, uploadOptions?: UploadOptions): Promise<UploadResult> => {
+  const uploadMedia = async (
+    file: File,
+    options: Partial<UploadOptions> = {}
+  ) => {
     if (!session?.user?.id) {
-      setUploadState({
-        isUploading: false,
-        progress: 0,
-        url: null,
-        error: "User not authenticated",
-        success: false
-      });
-      return {
-        success: false,
-        error: "User not authenticated"
-      };
+      const error = "Authentication required to upload media";
+      setUploadState(prev => ({ ...prev, error }));
+      return { success: false, error };
     }
-
+    
+    const mergedOptions = { ...defaultOptions, ...options };
+    
     try {
       setUploadState({
         isUploading: true,
         progress: 0,
-        url: null,
         error: null,
         success: false
       });
       
-      // Create a unique file path
-      const filePath = createUniqueFilePath(session.user.id, file);
-      
-      // Determine the bucket name based on content category
-      const contentCategory = uploadOptions?.contentCategory || options?.contentCategory || 'generic';
-      let bucketName = 'media';
-      
-      switch (contentCategory) {
-        case 'story':
-          bucketName = 'stories';
-          break;
-        case 'post':
-          bucketName = 'posts';
-          break;
-        case 'message':
-          bucketName = 'messages';
-          break;
-        case 'profile':
-          bucketName = 'avatars';
-          break;
-        case 'short':
-          bucketName = 'shorts';
-          break;
-        case 'avatar':
-          bucketName = 'avatars';
-          break;
-        default:
-          bucketName = 'media';
-      }
-      
-      // Simulate progress updates (Supabase doesn't support upload progress yet)
+      // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadState(prev => {
           const newProgress = Math.min(prev.progress + Math.random() * 10, 90);
-          if (uploadOptions?.onProgress) {
-            uploadOptions.onProgress(newProgress);
+          
+          if (mergedOptions.onProgress) {
+            mergedOptions.onProgress(newProgress);
           }
+          
           return {
             ...prev,
             progress: newProgress
           };
         });
-      }, 300);
+      }, 200);
       
-      // Upload the file to storage - Fix the type issue by using the uploadToBucket function
-      const result = await uploadToBucket(bucketName, file, session.user.id);
+      // Determine bucket based on content category
+      const contentCategory = mergedOptions.contentCategory || 'generic';
+      
+      let bucket: string;
+      switch (contentCategory) {
+        case 'story':
+          bucket = 'stories';
+          break;
+        case 'post':
+          bucket = 'posts';
+          break;
+        case 'message':
+          bucket = 'messages';
+          break;
+        case 'profile':
+        case 'avatar':
+          bucket = 'avatars';
+          break;
+        case 'short':
+          bucket = 'shorts';
+          break;
+        default:
+          bucket = 'media';
+      }
+      
+      // Create unique file path
+      const path = createUniqueFilePath(session.user.id, file);
+      
+      // Upload file
+      const url = await uploadFileToStorage(bucket, path, file);
       
       clearInterval(progressInterval);
       
-      if (!result.success) {
-        setUploadState({
-          isUploading: false,
-          progress: 0,
-          url: null,
-          error: result.error || "Failed to upload file",
-          success: false
-        });
-        return {
-          success: false,
-          error: result.error || "Failed to upload file"
-        };
+      if (!url) {
+        throw new Error("Failed to upload media");
       }
       
       setUploadState({
         isUploading: false,
         progress: 100,
-        url: result.url || null,
         error: null,
         success: true
       });
       
-      // Auto reset state after success if configured
-      if (options?.autoResetOnCompletion) {
-        setTimeout(() => {
-          resetState();
-        }, options.resetDelay || 3000);
+      // Auto-reset state if configured
+      if (mergedOptions.autoReset) {
+        setTimeout(resetUploadState, mergedOptions.resetDelay || 3000);
       }
       
-      return {
-        success: true,
-        url: result.url,
-        error: null
-      };
+      return { success: true, url };
     } catch (error: any) {
+      clearInterval?.(progressInterval);
+      
+      const errorMessage = error.message || "An error occurred during upload";
+      
       setUploadState({
         isUploading: false,
         progress: 0,
-        url: null,
-        error: error.message || "Error uploading file",
+        error: errorMessage,
         success: false
       });
-      return {
-        success: false,
-        error: error.message || "Error uploading file"
-      };
-    }
-  };
-
-  // Helper function to use the correct uploadToBucket from storageService
-  const uploadToBucket = async (
-    bucketName: string,
-    file: File,
-    userId: string
-  ): Promise<UploadResult> => {
-    try {
-      const { uploadToBucket } = await import('@/utils/upload/storageService');
-      const result = await uploadToBucket(bucketName, file, userId);
       
-      return {
-        success: result.success,
-        url: result.url,
-        error: result.error
-      };
-    } catch (error: any) {
-      console.error('Error in uploadToBucket:', error);
-      return {
-        success: false,
-        error: error.message || 'Error uploading to bucket'
-      };
+      return { success: false, error: errorMessage };
     }
-  };
-  
-  /**
-   * Reset upload state
-   */
-  const resetState = () => {
-    setUploadState({
-      isUploading: false,
-      progress: 0,
-      url: null,
-      error: null,
-      success: false
-    });
   };
 
   return {
     uploadMedia,
     uploadState,
-    resetState,
+    resetUploadState,
     validateFile
   };
 };

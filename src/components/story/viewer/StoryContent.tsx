@@ -55,12 +55,12 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
           <ErrorFallback message="Media could not be loaded" />
         ) : (
           <UniversalMedia
+            ref={videoRef}
             item={story}
             className="w-full h-full"
             onError={handleMediaError}
             autoPlay={!isPaused}
             controls={false}
-            showWatermark={true}
             onClick={onNext}
           />
         )}

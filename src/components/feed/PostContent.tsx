@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { NewMediaRenderer } from "@/components/media/NewMediaRenderer";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface PostContentProps {
   content: string;
@@ -103,7 +103,7 @@ export const PostContent = ({
                             className="relative aspect-video w-full cursor-pointer"
                             onClick={() => onMediaClick(url)}
                           >
-                            <NewMediaRenderer
+                            <UniversalMedia
                               item={{ video_url: url, creator_id: creatorId }}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
@@ -131,7 +131,7 @@ export const PostContent = ({
                             className="relative aspect-[4/3] cursor-pointer group"
                             onClick={() => onMediaClick(url)}
                           >
-                            <NewMediaRenderer
+                            <UniversalMedia
                               item={{ media_url: url, creator_id: creatorId }}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               onError={() => handleMediaError(url)}

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { MediaUploader } from "@/components/media/MediaUploader";
-import { NewMediaRenderer } from "@/components/media/NewMediaRenderer";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
@@ -34,7 +34,7 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {mediaUrls.map((url, index) => (
             <div key={index} className="relative group">
-              <NewMediaRenderer
+              <UniversalMedia
                 item={url}
                 className="w-full h-48 rounded-md overflow-hidden"
               />

@@ -37,6 +37,8 @@ export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProp
       className="w-full h-full object-cover"
       autoPlay={isHovering || mediaType === 'video'}
       controls={false}
+      muted={true}
+      loop={true}
     />
   );
 };
