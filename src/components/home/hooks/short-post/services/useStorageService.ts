@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { getUrlWithCacheBuster, createUniqueFilePath } from '@/utils/mediaUtils';
+import { getUrlWithCacheBuster, createUserFilePath } from '@/utils/mediaUtils';
 
 export const useStorageService = () => {
   /**
@@ -25,7 +25,7 @@ export const useStorageService = () => {
   ): Promise<{ success: boolean; path?: string; url?: string; error?: string }> => {
     try {
       // Use utility function to create a unique file path
-      const filePath = createUniqueFilePath(userId, videoFile.name);
+      const filePath = createUserFilePath(userId, videoFile.name);
       const bucketName = 'shorts';
 
       console.log("Uploading to path:", filePath, "in bucket:", bucketName);
@@ -51,7 +51,7 @@ export const useStorageService = () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // Use utility function to create a unique retry file path
-        const retryFilePath = createUniqueFilePath(userId, `retry_${videoFile.name}`);
+        const retryFilePath = createUserFilePath(userId, `retry_${videoFile.name}`);
         
         console.log("Retrying upload with path:", retryFilePath);
         console.log("Retry with content type:", videoFile.type);

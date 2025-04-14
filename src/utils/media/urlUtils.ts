@@ -1,4 +1,3 @@
-
 /**
  * Add cache busting parameter to URL to prevent browser caching
  */
@@ -18,18 +17,35 @@ export const addCacheBuster = (url: string): string => {
     : `${url}?t=${timestamp}&r=${random}`;
 };
 
+export interface UrlContentInfo {
+  isValid: boolean;
+  contentType: string | null;
+  status: number;
+  headers: Record<string, string>;
+}
+
 /**
  * Check content type of a remote URL
  */
-export const checkUrlContentType = async (url: string): Promise<string | null> => {
+export const checkUrlContentType = async (url: string): Promise<UrlContentInfo> => {
   try {
     // First try with HEAD request which is more efficient
     const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+    
     if (response.ok) {
       const contentType = response.headers.get('content-type');
-      if (contentType) {
-        return contentType;
-      }
+      const headers: Record<string, string> = {};
+      
+      response.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+      
+      return {
+        isValid: true,
+        contentType,
+        status: response.status,
+        headers
+      };
     }
     
     // If HEAD failed or no content-type, try with a small range GET request
@@ -38,15 +54,26 @@ export const checkUrlContentType = async (url: string): Promise<string | null> =
       cache: 'no-store'
     });
     
-    if (rangeResponse.ok || rangeResponse.status === 206) {
-      const contentType = rangeResponse.headers.get('content-type');
-      return contentType;
-    }
+    const headers: Record<string, string> = {};
+    rangeResponse.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
     
-    return null;
+    return {
+      isValid: rangeResponse.ok || rangeResponse.status === 206,
+      contentType: rangeResponse.headers.get('content-type'),
+      status: rangeResponse.status,
+      headers
+    };
+    
   } catch (error) {
     console.error('Error checking URL content type:', error);
-    return null;
+    return {
+      isValid: false,
+      contentType: null,
+      status: 0,
+      headers: {}
+    };
   }
 };
 
