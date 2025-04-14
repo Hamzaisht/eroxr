@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import ReactCrop, { type Crop } from 'react-image-crop';
 import { useState, useRef } from 'react';
-import 'react-image-crop/dist/ReactCrop.css';
+import 'react-image-crop/crop.css';
 
 interface ImageCropDialogProps {
   isOpen: boolean;
