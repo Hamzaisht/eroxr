@@ -27,9 +27,6 @@ export const MediaImage = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   
-  // Log URL for debugging
-  console.log("MediaImage - original URL:", url);
-  
   // Reset state when URL changes
   useEffect(() => {
     setIsLoaded(false);
@@ -77,6 +74,7 @@ export const MediaImage = ({
         onError={handleError}
         onClick={onClick}
         style={{ cursor: onClick ? "pointer" : "default" }}
+        loading="lazy"
       />
       
       {showWatermark && isLoaded && creatorId && (

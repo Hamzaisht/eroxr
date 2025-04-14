@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getPlayableMediaUrl, addCacheBuster } from '@/utils/media/getPlayableMediaUrl';
 import { debugMediaUrl } from '@/utils/media/debugMediaUtils';
 
@@ -7,12 +7,14 @@ interface UseMediaHandlerProps {
   item: any;
   onError?: () => void;
   onLoad?: () => void;
+  maxRetries?: number;
 }
 
 export const useMediaHandler = ({ 
   item, 
   onError, 
-  onLoad 
+  onLoad,
+  maxRetries = 2
 }: UseMediaHandlerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -31,23 +33,20 @@ export const useMediaHandler = ({
     // Get the URL safely
     let urlToUse = getPlayableMediaUrl(item);
     
-    // Add a single cache buster to avoid excessive refreshing
-    if (urlToUse) {
-      urlToUse = addCacheBuster(urlToUse);
+    // Only add a single cache buster to avoid excessive refreshing
+    if (urlToUse && !urlToUse.includes('t=') && !urlToUse.includes('r=')) {
+      const timestamp = Date.now();
+      urlToUse = urlToUse.includes('?') 
+        ? `${urlToUse}&t=${timestamp}` 
+        : `${urlToUse}?t=${timestamp}`;
     }
     
-    console.log(`Media URL for ${isVideoContent ? 'video' : 'image'}: ${urlToUse}`);
     setAccessibleUrl(urlToUse);
+    setIsLoading(true);
+    setLoadError(false);
+    setRetryCount(0);
     
-  }, [item, isVideoContent]);
-
-  // Handle loading state reset
-  useEffect(() => {
-    if (accessibleUrl) {
-      setIsLoading(true);
-      setLoadError(false);
-    }
-  }, [accessibleUrl]);
+  }, [item]);
 
   // Debug URL on error to help diagnose issues
   useEffect(() => {
@@ -57,32 +56,56 @@ export const useMediaHandler = ({
     }
   }, [loadError, accessibleUrl]);
 
-  const handleError = () => {
+  const handleError = useCallback(() => {
     console.error(`Media loading error for ${isVideoContent ? 'video' : 'image'}: ${accessibleUrl}`);
     setLoadError(true);
     setIsLoading(false);
-    setRetryCount(prev => prev + 1);
     
-    if (onError) onError();
-  };
+    if (retryCount < maxRetries) {
+      // Auto retry with increasing delay
+      const delay = Math.min(1000 * (retryCount + 1), 3000);
+      console.log(`Will retry in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      
+      setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+        setIsLoading(true);
+        setLoadError(false);
+        
+        // Generate a new URL with fresh cache busting
+        if (accessibleUrl) {
+          const timestamp = Date.now();
+          const freshUrl = accessibleUrl.includes('?') 
+            ? accessibleUrl.replace(/[?&]t=\d+/, '') + `&t=${timestamp}` 
+            : `${accessibleUrl}?t=${timestamp}`;
+          setAccessibleUrl(freshUrl);
+        }
+      }, delay);
+    } else if (onError) {
+      onError();
+    }
+  }, [accessibleUrl, isVideoContent, maxRetries, onError, retryCount]);
 
-  const handleLoad = () => {
+  const handleLoad = useCallback(() => {
     setIsLoading(false);
     setLoadError(false);
     
     if (onLoad) onLoad();
-  };
+  }, [onLoad]);
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     setIsLoading(true);
     setLoadError(false);
-    setRetryCount(prev => prev + 1);
+    setRetryCount(0);
     
     // Force reload with new cache buster
     if (accessibleUrl) {
-      setAccessibleUrl(addCacheBuster(accessibleUrl));
+      const timestamp = Date.now();
+      const freshUrl = accessibleUrl.includes('?') 
+        ? accessibleUrl.replace(/[?&]t=\d+/, '') + `&t=${timestamp}` 
+        : `${accessibleUrl}?t=${timestamp}`;
+      setAccessibleUrl(freshUrl);
     }
-  };
+  }, [accessibleUrl]);
 
   return {
     isLoading,

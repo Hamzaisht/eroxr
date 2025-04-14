@@ -207,5 +207,3 @@ export const fixUrlContentType = (url: string, contentType: string): string => {
   const newBaseUrl = baseUrl + extension;
   return params ? `${newBaseUrl}?${params}` : newBaseUrl;
 };
-
-// No duplicate exports - removed the redundant export block at the end

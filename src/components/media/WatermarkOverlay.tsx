@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface WatermarkOverlayProps {
   creatorId: string;
-  username?: string; // Make username optional
+  username?: string; // Username is optional
 }
 
 export const WatermarkOverlay = ({ creatorId, username: providedUsername }: WatermarkOverlayProps) => {

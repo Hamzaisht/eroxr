@@ -1,70 +1,61 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { addCacheBuster } from "./urlUtils";
+
+interface MediaItem {
+  media_url?: string;
+  video_url?: string;
+  poster_url?: string;
+  media_type?: string;
+  content_type?: string;
+  creator_id?: string;
+  [key: string]: any;
+}
 
 /**
- * Generate a playable media URL from an item record.
- * This function handles several different data structures and returns a usable URL.
+ * Get a playable media URL from various item formats
+ * This function handles different property names and formats
+ * to ensure we get a valid URL
  */
-export const getPlayableMediaUrl = (item: any): string | null => {
-  // Handle null or undefined input
+export const getPlayableMediaUrl = (item: MediaItem | null | undefined): string | null => {
   if (!item) return null;
-
-  // Handle array of URLs (return first valid one)
-  if (item?.media_url && Array.isArray(item.media_url) && item.media_url.length > 0) {
-    return item.media_url[0];
+  
+  // Try different property names to find a valid URL
+  let url = item.media_url || item.video_url || null;
+  
+  // For backward compatibility
+  if (!url && 'url' in item) {
+    url = item.url;
   }
   
-  if (item?.media_urls && Array.isArray(item.media_urls) && item.media_urls.length > 0) {
-    return item.media_urls[0];
+  if (!url) return null;
+  
+  // For arrays, take the first item
+  if (Array.isArray(url) && url.length > 0) {
+    url = url[0];
   }
   
-  if (item?.video_urls && Array.isArray(item.video_urls) && item.video_urls.length > 0) {
-    return item.video_urls[0];
-  }
-  
-  // Check for direct URL properties
-  const videoUrl = item?.video_url;
-  const mediaUrl = item?.media_url;
-  const url = item?.url;
-  
-  // Return the first available URL
-  return videoUrl || mediaUrl || url || null;
+  return url;
 };
 
 /**
- * Add cache busting parameters to a URL
- * Use sparingly to avoid excessive cache busting
+ * Add cache busting parameters to URLs while avoiding multiple cache busters
  */
-export const addCacheBuster = (url: string): string => {
-  if (!url) return '';
+export const addCacheBuster = (url: string | null): string | null => {
+  if (!url) return null;
   
-  // If URL already has parameters, add to them
-  const timestamp = Date.now();
+  // Check if URL already has cache-busting parameters
+  if (url.includes('t=') || url.includes('r=')) {
+    return url;
+  }
   
-  return url.includes('?') 
-    ? `${url}&t=${timestamp}` 
-    : `${url}?t=${timestamp}`;
+  return addCacheBuster(url);
 };
 
 /**
- * Check if a URL is accessible
+ * Get the poster URL for a video
  */
-export const checkUrlAccessibility = async (url: string): Promise<boolean> => {
-  if (!url) return false;
+export const getPosterUrl = (item: MediaItem | null): string | null => {
+  if (!item) return null;
   
-  try {
-    // Use a HEAD request to check if resource exists
-    const response = await fetch(url, {
-      method: 'HEAD',
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
-      cache: 'no-store',
-    });
-    
-    return response.ok;
-  } catch (error) {
-    console.warn('URL accessibility check failed:', error);
-    return false;
-  }
+  return item.poster_url || null;
 };
