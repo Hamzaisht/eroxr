@@ -36,7 +36,7 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
     setRetryCount(prev => prev + 1);
   };
 
-  // Determine media URL based on type
+  // Determine media URL and type
   const mediaItem = {
     media_url: story.media_url,
     video_url: story.video_url,
@@ -58,16 +58,16 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="w-full h-full flex items-center justify-center bg-black"
+      className="relative w-full h-full flex items-center justify-center bg-black"
     >
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center z-10">
+        <div className="absolute inset-0 flex items-center justify-center z-30 bg-black bg-opacity-50">
           <Loader2 className="h-12 w-12 text-white animate-spin" />
         </div>
       )}
       
       {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-gray-900/90">
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-30 bg-black bg-opacity-90">
           <AlertCircle className="h-12 w-12 text-red-500 mb-2" />
           <p className="text-white mb-4">Failed to load story</p>
           <button
@@ -80,18 +80,20 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
         </div>
       )}
       
-      <UniversalMedia
-        ref={videoRef}
-        item={mediaItem}
-        className="w-full h-full object-contain"
-        autoPlay={!isPaused}
-        controls={false}
-        muted={true}
-        loop={false}
-        onLoad={handleMediaLoad}
-        onError={handleMediaError}
-        onEnded={onNext}
-      />
+      <div className="relative w-full h-full z-20">
+        <UniversalMedia
+          ref={videoRef}
+          item={mediaItem}
+          className="w-full h-full object-contain"
+          autoPlay={!isPaused}
+          controls={false}
+          muted={true}
+          loop={false}
+          onLoad={handleMediaLoad}
+          onError={handleMediaError}
+          onEnded={onNext}
+        />
+      </div>
     </motion.div>
   );
 };

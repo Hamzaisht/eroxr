@@ -1,9 +1,10 @@
 
 import { useEffect, useState, forwardRef } from "react";
+import { getPlayableMediaUrl } from '@/utils/media/mediaUtils';
+import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 
-// MediaItem type to provide better TypeScript support
 interface MediaItem {
-  media_url?: string | null | string[];  // Updated to explicitly allow string array
+  media_url?: string | null | string[];
   video_url?: string | null;
   creator_id?: string;
   media_type?: string;
@@ -36,7 +37,6 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
     muted = true,
     loop = false,
     poster,
-    showWatermark = false,
     onClick,
     onLoad,
     onError,
@@ -45,20 +45,20 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
   }, ref) => {
     const [url, setUrl] = useState<string | null>(null);
     const [isVideo, setIsVideo] = useState<boolean>(false);
-    const [isLoaded, setIsLoaded] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
     const [retryCount, setRetryCount] = useState(0);
 
     useEffect(() => {
       const getMediaUrl = () => {
         try {
-          // Handle when item is a string
+          // Handle direct string input
           if (typeof item === 'string') {
             setUrl(item);
             setIsVideo(item.includes('.mp4') || item.includes('.webm') || item.includes('.mov'));
             return;
           }
           
-          // Handle when item is an object
           if (!item) {
             console.error("No media item provided");
             return;
@@ -78,7 +78,6 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
           if (isMediaVideo && item.video_url) {
             mediaUrl = item.video_url;
           } else if (!isMediaVideo && item.media_url) {
-            // Fix for TypeScript error - properly handle different types of media_url
             if (typeof item.media_url === 'string') {
               mediaUrl = item.media_url;
             } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
@@ -86,10 +85,7 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
             }
           }
           
-          // Add cache busting parameter to prevent caching issues
           if (mediaUrl) {
-            const cacheBuster = `${mediaUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
-            mediaUrl = `${mediaUrl}${cacheBuster}`;
             console.log(`Using media URL: ${mediaUrl}`);
           }
           
@@ -105,21 +101,22 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
 
     const handleLoad = () => {
       console.log("Media loaded successfully:", url);
-      setIsLoaded(true);
+      setIsLoading(false);
       if (onLoad) onLoad();
     };
 
     const handleError = () => {
-      console.error(`Media load error for URL: ${url}`);
+      console.error(`Media load error: ${url}`);
       if (onError) onError();
     };
     
     const handleRetry = () => {
       console.log("Retrying media load...");
+      setIsLoading(true);
+      setError(null);
       setRetryCount(prev => prev + 1);
     };
 
-    // If no URL, render error with retry button
     if (!url) {
       return (
         <div className="flex flex-col items-center justify-center h-full w-full bg-gray-900 text-white">

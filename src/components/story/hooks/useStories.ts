@@ -70,20 +70,26 @@ export const useStories = (): UseStoriesResult => {
       // Create unique storage path
       const path = createUniqueFilePath(session.user.id, file);
       
+      console.log('Uploading story:', {
+        isVideo,
+        fileType: file.type,
+        path
+      });
+      
       // Upload file to Supabase storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('stories')
         .upload(path, file, {
           contentType: file.type,
-          upsert: true,
-          cacheControl: '3600'
+          upsert: true
         });
       
       if (uploadError) {
+        console.error('Storage upload error:', uploadError);
         throw new Error(uploadError.message);
       }
       
-      // Get public URL with cache busting
+      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('stories')
         .getPublicUrl(uploadData.path);
@@ -108,6 +114,11 @@ export const useStories = (): UseStoriesResult => {
       if (dbError) {
         throw new Error(dbError.message);
       }
+      
+      console.log('Story uploaded successfully:', {
+        isVideo,
+        publicUrl
+      });
       
       // Refresh stories list
       await loadStories();
