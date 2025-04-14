@@ -1,105 +1,90 @@
 
-import { addCacheBuster } from './urlUtils';
+import { supabase } from "@/integrations/supabase/client";
 
 /**
- * A union type representing the different formats media URL can be stored in
+ * Get the playable media URL from various sources
+ * @param media A media item (object or string URL)
+ * @returns The fully qualified URL
  */
-export interface MediaSource {
-  media_url?: string | string[] | null;
-  video_url?: string | null;
-  video_urls?: string[] | null;
-  url?: string | null;
-  src?: string | null;
-  content_type?: string; 
-  media_type?: string;
-  poster_url?: string | null;
+export function getPlayableMediaUrl(media: any): string {
+  if (!media) return '';
+
+  // If it's already a string URL
+  if (typeof media === 'string') {
+    return ensureFullUrl(media);
+  }
+
+  // Extract URL from object based on common properties
+  const url = 
+    media.video_url || 
+    (Array.isArray(media.video_urls) && media.video_urls.length > 0 ? media.video_urls[0] : null) ||
+    (typeof media.media_url === 'string' ? media.media_url : null) ||
+    (Array.isArray(media.media_url) && media.media_url.length > 0 ? media.media_url[0] : null) ||
+    media.url ||
+    '';
+
+  return ensureFullUrl(url);
 }
 
 /**
- * Extract and format media URL from various source objects
- * This function handles all the different ways media URLs might be stored
+ * Ensure the URL is a complete, usable URL
  */
-export const getPlayableMediaUrl = (source: MediaSource | string | null | undefined): string => {
-  // Handle direct string URLs
-  if (typeof source === 'string') {
-    return addCacheBuster(source);
+export function ensureFullUrl(url: string): string {
+  if (!url) return '';
+  
+  // If already a complete URL or a data/blob URL, return as is
+  if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
   }
   
-  // Handle null/undefined cases
-  if (!source) return '';
+  // If it starts with a slash, remove it
+  const cleanPath = url.startsWith('/') ? url.substring(1) : url;
   
-  // Extract URL from source object based on available properties
-  let mediaUrl: string | null = null;
+  // Try to determine the bucket from the path
+  let bucket = 'media';
+  const possibleBuckets = ['stories', 'posts', 'videos', 'avatars', 'media', 'shorts'];
   
-  // Handle media_url which could be an array or string
-  if (source.media_url) {
-    if (Array.isArray(source.media_url) && source.media_url.length > 0) {
-      mediaUrl = source.media_url[0];
-    } else if (typeof source.media_url === 'string') {
-      mediaUrl = source.media_url;
+  for (const b of possibleBuckets) {
+    if (cleanPath.startsWith(`${b}/`) || cleanPath.includes(`/${b}/`)) {
+      bucket = b;
+      break;
     }
   }
   
-  // If no media_url, try video_url
-  if (!mediaUrl && source.video_url) {
-    mediaUrl = source.video_url;
+  // Get the public URL using Supabase
+  try {
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(cleanPath);
+    
+    return data?.publicUrl || '';
+  } catch (error) {
+    console.error(`Failed to get public URL for ${url}:`, error);
+    return '';
   }
-  
-  // If no video_url, try video_urls array
-  if (!mediaUrl && source.video_urls && Array.isArray(source.video_urls) && source.video_urls.length > 0) {
-    mediaUrl = source.video_urls[0];
-  }
-  
-  // Try generic url or src properties
-  if (!mediaUrl) {
-    mediaUrl = source.url || source.src || '';
-  }
-  
-  // Apply cache busting to prevent stale content
-  return addCacheBuster(mediaUrl || '');
-};
+}
 
 /**
- * Determine if media source is likely a video based on URL or content type
+ * Determine if a media item is video content
  */
-export const isVideoContent = (source: MediaSource | string | null | undefined): boolean => {
-  // Handle string URLs
-  if (typeof source === 'string') {
-    const url = source.toLowerCase();
-    return url.includes('.mp4') || 
-           url.includes('.webm') || 
-           url.includes('.mov') || 
-           url.includes('video');
+export function isVideoContent(item: any): boolean {
+  // Check direct video properties
+  if (typeof item === 'object') {
+    if (item.video_url || item.video_urls || item.content_type === 'video' || 
+        item.media_type === 'video') {
+      return true;
+    }
   }
   
-  // Handle null/undefined
-  if (!source) return false;
-  
-  // Check explicit content/media type properties
-  if (source.content_type === 'video' || source.media_type === 'video') {
-    return true;
-  }
-  
-  // Check for video_url or video_urls properties
-  if (source.video_url || (source.video_urls && source.video_urls.length > 0)) {
-    return true;
-  }
-  
-  // Check URL extensions for media_url
-  if (source.media_url) {
-    const url = Array.isArray(source.media_url) 
-      ? source.media_url[0] || '' 
-      : source.media_url || '';
-    
-    const lowercaseUrl = url.toLowerCase();
-    return lowercaseUrl.includes('.mp4') || 
-           lowercaseUrl.includes('.webm') || 
-           lowercaseUrl.includes('.mov') || 
-           lowercaseUrl.includes('video');
+  // Check by file extension for string URLs
+  const url = typeof item === 'string' ? item : 
+              (item?.media_url || item?.url || '');
+              
+  if (typeof url === 'string') {
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    const videoExtensions = ['mp4', 'webm', 'mov', 'avi', 'wmv', 'flv', 'mkv'];
+    return videoExtensions.includes(extension);
   }
   
   return false;
-};
-
-// Export addCacheBuster from this file as well for better compatibility
-export { addCacheBuster } from './urlUtils';
+}

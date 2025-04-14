@@ -2,6 +2,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
+ * Interface for upload options
+ */
+export interface UploadOptions {
+  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
+  onProgress?: (progress: number) => void;
+}
+
+/**
  * Upload a file to Supabase storage
  * @param bucketName - The name of the bucket to upload to
  * @param filePath - The path where the file should be stored
@@ -12,7 +20,11 @@ export const uploadFileToStorage = async (
   bucketName: string, 
   filePath: string, 
   file: File
-): Promise<string | null> => {
+): Promise<{
+  success: boolean;
+  url: string | null;
+  error: string | null;
+}> => {
   try {
     // Determine content type based on file extension
     const contentType = file.type || inferContentTypeFromExtension(file.name);
@@ -27,7 +39,11 @@ export const uploadFileToStorage = async (
 
     if (error) {
       console.error('Storage upload error:', error);
-      return null;
+      return { 
+        success: false,
+        url: null,
+        error: error.message
+      };
     }
 
     // Get the public URL of the file
@@ -35,10 +51,18 @@ export const uploadFileToStorage = async (
       .from(bucketName)
       .getPublicUrl(data?.path || filePath);
 
-    return publicUrl;
-  } catch (error) {
+    return {
+      success: true,
+      url: publicUrl,
+      error: null
+    };
+  } catch (error: any) {
     console.error('File upload error:', error);
-    return null;
+    return {
+      success: false,
+      url: null,
+      error: error.message || 'Unknown error'
+    };
   }
 };
 
@@ -51,6 +75,9 @@ export const uploadFileToStorage = async (
 export const createUniqueFilePath = (userId: string, file: File): string => {
   return `${userId}/${Date.now()}_${file.name}`;
 };
+
+// Add this alias for compatibility with existing code
+export const createUserFilePath = createUniqueFilePath;
 
 /**
  * Get the content type based on file extension
@@ -97,6 +124,20 @@ export const inferContentTypeFromExtension = (filename: string): string => {
     default:
       return 'application/octet-stream';
   }
+};
+
+/**
+ * Check if a file is an image
+ */
+export const isImageFile = (file: File): boolean => {
+  return file.type.startsWith('image/');
+};
+
+/**
+ * Check if a file is a video
+ */
+export const isVideoFile = (file: File): boolean => {
+  return file.type.startsWith('video/');
 };
 
 /**

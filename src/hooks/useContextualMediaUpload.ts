@@ -53,15 +53,15 @@ export const useContextualMediaUpload = (context: MediaContext) => {
     const bucketName = getBucketName(context);
     
     try {
-      const url = await uploadMedia(file, { bucketName });
+      const result = await uploadMedia(file, { contentCategory: context });
       
-      if (!url) {
+      if (!result.success) {
         toast({
           title: "Upload Failed",
           description: "Could not upload your media file.",
           variant: "destructive"
         });
-        return { success: false, url: null, error: "Upload failed" };
+        return result;
       }
       
       toast({
@@ -69,7 +69,7 @@ export const useContextualMediaUpload = (context: MediaContext) => {
         description: "Your media has been uploaded successfully."
       });
       
-      return { success: true, url, error: null };
+      return result;
     } catch (error: any) {
       toast({
         title: "Upload Error",
