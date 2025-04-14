@@ -108,8 +108,8 @@ export const MediaImage = ({
       {showWatermark && loaded && !error && username && (
         <WatermarkOverlay
           className={isMobile ? 'text-xs' : 'text-sm'}
-          creatorId={creatorId}
           username={username}
+          creatorId={creatorId}
         />
       )}
     </div>

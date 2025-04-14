@@ -5,7 +5,7 @@ import { useSession } from '@supabase/auth-helpers-react';
 import { uploadFileToStorage } from '@/utils/mediaUtils';
 import { useStories } from '@/components/story/hooks/useStories';
 import { isImageFile, isVideoFile } from '@/utils/mediaUtils';
-import { useMediaUpload, MediaUploadState } from '@/hooks/useMediaUpload';
+import { useMediaUpload } from '@/hooks/useMediaUpload';
 
 export const useStoryUpload = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -17,7 +17,7 @@ export const useStoryUpload = () => {
     state: uploadState, 
     uploadMedia, 
     validateFile,
-    resetUploadState 
+    resetState 
   } = useMediaUpload({
     contentCategory: 'story',
     maxSizeInMB: 100,
@@ -30,13 +30,13 @@ export const useStoryUpload = () => {
   });
 
   // Clear state and preview
-  const resetState = useCallback(() => {
+  const resetStateHandler = useCallback(() => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
     setPreviewUrl(null);
-    resetUploadState();
-  }, [previewUrl, resetUploadState]);
+    resetState();
+  }, [previewUrl, resetState]);
 
   // Create preview for selected file
   const createPreview = useCallback((file: File): string => {
@@ -52,7 +52,7 @@ export const useStoryUpload = () => {
   const handleFileSelect = useCallback(async (file: File) => {
     try {
       // Reset any previous state
-      resetState();
+      resetStateHandler();
       
       // Validate file
       const validationResult = validateFile(file);
@@ -79,7 +79,7 @@ export const useStoryUpload = () => {
       });
       return false;
     }
-  }, [resetState, validateFile, createPreview, toast]);
+  }, [resetStateHandler, validateFile, createPreview, toast]);
 
   // Upload story
   const uploadFile = useCallback(async (file: File) => {
@@ -108,7 +108,7 @@ export const useStoryUpload = () => {
         description: 'Your story has been uploaded successfully',
       });
       
-      setTimeout(resetState, 1500);
+      setTimeout(resetStateHandler, 1500);
       
       return result;
     } catch (err: any) {
@@ -122,7 +122,7 @@ export const useStoryUpload = () => {
       
       return { success: false, error: err.message };
     }
-  }, [session, toast, resetState, uploadStory]);
+  }, [session, toast, resetStateHandler, uploadStory]);
 
   return {
     isUploading: uploadState.isUploading,
@@ -131,6 +131,6 @@ export const useStoryUpload = () => {
     previewUrl,
     handleFileSelect,
     uploadFile,
-    resetState
+    resetState: resetStateHandler
   };
 };

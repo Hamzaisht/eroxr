@@ -18,7 +18,7 @@ export const StoryUploader = () => {
       isUploading,
       progress,
       error,
-      isComplete
+      success
     },
     uploadMedia,
     validateFile

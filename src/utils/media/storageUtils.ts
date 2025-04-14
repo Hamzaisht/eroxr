@@ -173,8 +173,7 @@ export const ensureBucketExists = async (
     }
     
     // Create bucket if it doesn't exist
-    const { error } = await supabase.storage.createBucket({
-      name: bucketName,
+    const { error } = await supabase.storage.createBucket(bucketName, {
       public: isPublic,
       fileSizeLimit: 100 * 1024 * 1024 // 100MB
     });

@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { createUserFilePath, validateMediaFile } from '@/utils/mediaUtils';
+import { createUniqueFilePath, validateMediaFile } from '@/utils/mediaUtils';
 import { addCacheBuster } from '@/utils/media/urlUtils';
 import { getStoragePublicUrl, ensureBucketExists } from '@/utils/media/storageUtils';
 import { useSession } from '@supabase/auth-helpers-react';
@@ -15,13 +15,14 @@ export interface MediaUploadOptions {
   resetDelay?: number;
 }
 
-interface UploadState {
+export interface UploadState {
   isUploading: boolean;
   progress: number;
   error: string | null;
   success: boolean;
   url: string | null;
   filePath: string | null;
+  isComplete?: boolean; // Add this property to fix the type error
 }
 
 export const useMediaUpload = (options: MediaUploadOptions = {}) => {
@@ -40,6 +41,7 @@ export const useMediaUpload = (options: MediaUploadOptions = {}) => {
     success: false,
     url: null,
     filePath: null,
+    isComplete: false, // Initialize this property
   });
   
   const { toast } = useToast();
@@ -95,8 +97,12 @@ export const useMediaUpload = (options: MediaUploadOptions = {}) => {
       success: false,
       url: null,
       filePath: null,
+      isComplete: false,
     });
   }, []);
+  
+  // Alias for resetState to match expected API
+  const resetUploadState = resetState;
 
   // Determine which bucket to use based on content category
   const getBucketName = useCallback((category: string): string => {
@@ -147,7 +153,8 @@ export const useMediaUpload = (options: MediaUploadOptions = {}) => {
       progress: 0,
       error: null,
       success: false,
-      url: null
+      url: null,
+      isComplete: false
     }));
 
     // Create a unique file path
@@ -175,7 +182,8 @@ export const useMediaUpload = (options: MediaUploadOptions = {}) => {
       return { success: false, error: errorMsg };
     }
     
-    const filePath = createUserFilePath(userId, file.name);
+    // Using the renamed function from mediaUtils
+    const filePath = createUniqueFilePath(userId, file.name);
     
     try {
       // Upload the file with progress tracking
@@ -207,6 +215,7 @@ export const useMediaUpload = (options: MediaUploadOptions = {}) => {
         isUploading: false,
         progress: 100,
         success: true,
+        isComplete: true,
         url: cacheBustedUrl,
         filePath: `${bucketName}/${filePath}`
       }));
@@ -253,13 +262,15 @@ export const useMediaUpload = (options: MediaUploadOptions = {}) => {
     getBucketName,
     toast,
     autoResetOnCompletion,
-    resetDelay
+    resetDelay,
+    resetState
   ]);
 
   return {
     state,
     uploadMedia,
     resetState,
+    resetUploadState, // Add this alias for compatibility
     validateFile
   };
 };
