@@ -37,9 +37,19 @@ export const StoryUploader = () => {
       return;
     }
     
+    console.log("Uploading story file:", {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+    
     const result = await uploadStory(file);
     
     if (result.success) {
+      toast({
+        title: "Success",
+        description: "Story uploaded successfully"
+      });
       // Trigger refresh of stories
       window.dispatchEvent(new CustomEvent('story-uploaded'));
     }
@@ -120,7 +130,7 @@ export const StoryUploader = () => {
           animate={{ opacity: 1, y: 0 }}
           className="absolute -bottom-12 left-0 right-0 text-center"
         >
-          <span className="text-xs text-red-500">Upload failed</span>
+          <span className="text-xs text-red-500">{error}</span>
         </motion.div>
       )}
     </motion.div>

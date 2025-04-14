@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { motion } from "framer-motion";
@@ -63,8 +62,8 @@ export const StoryReel = () => {
     setSelectedStoryIndex(null);
   };
 
-  const groupStoriesByCreator = (stories: Story[]): GroupedStories => {
-    return stories.reduce((acc: GroupedStories, story) => {
+  const groupStoriesByCreator = (stories: Story[]): Record<string, Story[]> => {
+    return stories.reduce((acc: Record<string, Story[]>, story) => {
       if (!acc[story.creator_id]) {
         acc[story.creator_id] = [];
       }

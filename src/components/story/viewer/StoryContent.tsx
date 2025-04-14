@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, useState } from "react";
-import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 
 interface StoryContentProps {
@@ -30,18 +30,19 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   };
 
   const handleRetry = () => {
+    console.log("Retrying story load:", story.id);
     setIsLoading(true);
     setHasError(false);
     setRetryCount(prev => prev + 1);
   };
 
-  // Use the appropriate URL based on media type
+  // Determine media URL based on type
   const mediaItem = {
-    ...story,
     media_url: story.media_url,
     video_url: story.video_url,
     content_type: story.content_type || story.media_type,
-    media_type: story.media_type || story.content_type
+    media_type: story.media_type || story.content_type,
+    creator_id: story.creator_id
   };
 
   console.log("Rendering story content:", {
