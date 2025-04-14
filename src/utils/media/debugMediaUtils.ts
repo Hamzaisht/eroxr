@@ -1,46 +1,48 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 /**
- * Utility function to help debug media URLs
+ * Debug a media URL to help diagnose loading issues
  */
-export const debugMediaUrl = (url: string): void => {
-  console.group('Media URL Debug Info:');
-  console.log('URL:', url);
+export const debugMediaUrl = async (url: string | null) => {
+  if (!url) {
+    console.error("Debug media: URL is null or undefined");
+    return;
+  }
+
+  console.log("Debug media URL:", url);
   
-  // Log URL parts
   try {
-    const urlObject = new URL(url);
-    console.log('Protocol:', urlObject.protocol);
-    console.log('Host:', urlObject.host);
-    console.log('Pathname:', urlObject.pathname);
-    console.log('Search params:', Object.fromEntries(urlObject.searchParams));
+    // Check if URL is accessible
+    const response = await fetch(url, { method: 'HEAD' });
+    console.log("URL status:", response.status);
+    console.log("Content type:", response.headers.get('content-type'));
     
-    // Check for common issues
-    if (urlObject.protocol === 'http:' && window.location.protocol === 'https:') {
-      console.warn('Mixed content warning: Loading HTTP content on an HTTPS page');
-    }
-    
-    // Try to determine media type from URL
-    const extension = urlObject.pathname.split('.').pop()?.toLowerCase();
-    if (extension) {
-      console.log('File extension:', extension);
+    // If it's a Supabase storage URL, check bucket and path
+    if (url.includes('storage.googleapis') || url.includes('/storage/v1/')) {
+      const urlParts = url.split('/');
+      const bucketIndex = urlParts.findIndex(part => part === 'bucket');
       
-      const videoExtensions = ['mp4', 'webm', 'mov', 'avi'];
-      const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-      
-      if (videoExtensions.includes(extension)) {
-        console.log('Media type (based on extension): Video');
-      } else if (imageExtensions.includes(extension)) {
-        console.log('Media type (based on extension): Image');
+      if (bucketIndex > -1) {
+        const bucket = urlParts[bucketIndex + 1];
+        const path = urlParts.slice(bucketIndex + 2).join('/').split('?')[0];
+        
+        console.log("Storage bucket:", bucket);
+        console.log("Storage path:", path);
+        
+        // Check if object exists in storage
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .download(path);
+          
+        if (error) {
+          console.error("Storage error:", error);
+        } else {
+          console.log("Storage object exists, size:", data.size);
+        }
       }
     }
   } catch (error) {
-    console.error('Failed to parse URL:', error);
+    console.error("Debug media error:", error);
   }
-  
-  // Attempt to fetch headers
-  fetch(url, { method: 'HEAD', mode: 'no-cors' })
-    .then(() => console.log('HEAD request succeeded (no response details in no-cors)'))
-    .catch(error => console.error('HEAD request failed:', error));
-  
-  console.groupEnd();
 };

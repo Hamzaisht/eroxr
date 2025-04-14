@@ -1,4 +1,3 @@
-
 import { useEffect, useState, forwardRef } from "react";
 import { getPlayableMediaUrl } from "@/utils/media/mediaUtils";
 
@@ -67,7 +66,7 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
           
           setUrl(cacheBustedUrl);
 
-          // Determine if this is a video
+          // Determine if this is a video based on various indicators
           if (typeof item === 'object') {
             setIsVideo(
               item?.media_type === 'video' || 
@@ -76,7 +75,6 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
               (Array.isArray(item?.video_urls) && item.video_urls.length > 0)
             );
           } else if (typeof item === 'string' && mediaUrl) {
-            // Check URL for video file extensions
             const lowerUrl = mediaUrl.toLowerCase();
             setIsVideo(
               lowerUrl.includes('.mp4') || 
