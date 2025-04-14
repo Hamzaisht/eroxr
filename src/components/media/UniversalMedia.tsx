@@ -78,11 +78,12 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
           if (isMediaVideo && item.video_url) {
             mediaUrl = item.video_url;
           } else if (!isMediaVideo && item.media_url) {
-            mediaUrl = typeof item.media_url === 'string' 
-              ? item.media_url 
-              : Array.isArray(item.media_url) && item.media_url.length > 0 
-                ? item.media_url[0]
-                : null;
+            // Fix for TypeScript error - properly handle different types of media_url
+            if (typeof item.media_url === 'string') {
+              mediaUrl = item.media_url;
+            } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
+              mediaUrl = item.media_url[0];
+            }
           }
           
           // Add cache busting parameter to prevent caching issues
