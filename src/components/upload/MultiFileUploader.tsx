@@ -1,8 +1,9 @@
+
 import { useState, useRef } from 'react';
 import { Upload, X, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useMediaUpload, MediaUploadOptions } from '@/hooks/useMediaUpload';
+import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { isVideoFile, isImageFile } from '@/utils/upload/validators';
 import { createFilePreview, revokeFilePreview, formatFileSize } from '@/utils/upload/fileUtils';
 
@@ -76,15 +77,15 @@ export const MultiFileUploader = ({
     return 'image/*,video/*';
   })();
   
-  const uploadOptions: MediaUploadOptions = {
+  const uploadOptions = {
     contentCategory,
     maxSizeInMB,
     autoResetOnCompletion: true
   };
   
   const { 
-    state: uploadState, 
     uploadMedia, 
+    uploadState: { isUploading, progress, error },
     validateFile 
   } = useMediaUpload(uploadOptions);
   
@@ -199,13 +200,13 @@ export const MultiFileUploader = ({
         accept={allowedTypes}
         onChange={handleFileSelect}
         multiple
-        disabled={uploadState.isUploading || selectedFiles.length >= maxFiles}
+        disabled={isUploading || selectedFiles.length >= maxFiles}
       />
       
       <Button
         variant="outline"
         onClick={() => fileInputRef.current?.click()}
-        disabled={uploadState.isUploading || selectedFiles.length >= maxFiles}
+        disabled={isUploading || selectedFiles.length >= maxFiles}
         className="w-full h-16"
       >
         <div className="flex flex-col items-center">
@@ -225,7 +226,7 @@ export const MultiFileUploader = ({
               variant="ghost"
               size="sm"
               onClick={handleClearAll}
-              disabled={uploadState.isUploading}
+              disabled={isUploading}
             >
               <Trash2 className="h-3.5 w-3.5 mr-1" />
               Clear All
@@ -276,7 +277,7 @@ export const MultiFileUploader = ({
                   size="icon"
                   className="h-8 w-8"
                   onClick={() => handleRemoveFile(index)}
-                  disabled={uploadState.isUploading}
+                  disabled={isUploading}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -290,7 +291,7 @@ export const MultiFileUploader = ({
         <Button
           variant="default"
           onClick={() => handleUploadAll()}
-          disabled={uploadState.isUploading || selectedFiles.length === 0}
+          disabled={isUploading || selectedFiles.length === 0}
           className="w-full"
         >
           <Upload className="h-4 w-4 mr-2" />
@@ -298,24 +299,24 @@ export const MultiFileUploader = ({
         </Button>
       )}
       
-      {uploadState.isUploading && (
+      {isUploading && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               Uploading {uploadedUrls.length + 1}/{selectedFiles.length}...
             </span>
             <span className="text-sm font-medium">
-              {Math.round(uploadState.progress)}%
+              {Math.round(progress)}%
             </span>
           </div>
-          <Progress value={uploadState.progress} />
+          <Progress value={progress} />
         </div>
       )}
       
-      {uploadState.error && (
+      {error && (
         <div className="flex items-center gap-2 text-destructive text-sm p-2 bg-destructive/10 rounded-md">
           <AlertCircle className="h-4 w-4" />
-          <span>{uploadState.error}</span>
+          <span>{error}</span>
         </div>
       )}
     </div>

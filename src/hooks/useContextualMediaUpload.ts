@@ -49,11 +49,9 @@ export const useContextualMediaUpload = (context: MediaContext) => {
       });
       return { success: false, url: null, error: "Not authenticated" };
     }
-
-    const bucketName = getBucketName(context);
     
     try {
-      const result = await uploadMedia(file, { contentCategory: context });
+      const result = await uploadMedia(file, { contentCategory: context as any });
       
       if (!result.success) {
         toast({

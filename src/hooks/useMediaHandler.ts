@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { addCacheBuster } from '@/utils/media/getPlayableMediaUrl';
-import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
+import { getPlayableMediaUrl, addCacheBuster } from '@/utils/mediaUtils';
 
 interface MediaHandlerOptions {
   item: any; // The data item containing the media URL

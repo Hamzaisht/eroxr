@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
  * Interface for upload options
  */
 export interface UploadOptions {
-  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
+  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic' | 'avatar';
   onProgress?: (progress: number) => void;
 }
 
@@ -20,11 +20,7 @@ export const uploadFileToStorage = async (
   bucketName: string, 
   filePath: string, 
   file: File
-): Promise<{
-  success: boolean;
-  url: string | null;
-  error: string | null;
-}> => {
+): Promise<string | null> => {
   try {
     // Determine content type based on file extension
     const contentType = file.type || inferContentTypeFromExtension(file.name);
@@ -39,11 +35,7 @@ export const uploadFileToStorage = async (
 
     if (error) {
       console.error('Storage upload error:', error);
-      return { 
-        success: false,
-        url: null,
-        error: error.message
-      };
+      return null;
     }
 
     // Get the public URL of the file
@@ -51,18 +43,10 @@ export const uploadFileToStorage = async (
       .from(bucketName)
       .getPublicUrl(data?.path || filePath);
 
-    return {
-      success: true,
-      url: publicUrl,
-      error: null
-    };
+    return publicUrl || null;
   } catch (error: any) {
     console.error('File upload error:', error);
-    return {
-      success: false,
-      url: null,
-      error: error.message || 'Unknown error'
-    };
+    return null;
   }
 };
 
@@ -124,20 +108,6 @@ export const inferContentTypeFromExtension = (filename: string): string => {
     default:
       return 'application/octet-stream';
   }
-};
-
-/**
- * Check if a file is an image
- */
-export const isImageFile = (file: File): boolean => {
-  return file.type.startsWith('image/');
-};
-
-/**
- * Check if a file is a video
- */
-export const isVideoFile = (file: File): boolean => {
-  return file.type.startsWith('video/');
 };
 
 /**
@@ -204,4 +174,23 @@ export const ensureFullUrl = (url: string): string => {
     console.error(`Failed to get public URL for ${url}:`, error);
     return '';
   }
+};
+
+/**
+ * Add cache busting parameter to URL
+ */
+export const addCacheBuster = (url: string): string => {
+  if (!url) return '';
+  
+  // Prevent recursive cache busting by checking for existing timestamp
+  if (url.includes('t=') && url.includes('&r=')) {
+    return url;
+  }
+  
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  
+  return url.includes('?') 
+    ? `${url}&t=${timestamp}&r=${random}` 
+    : `${url}?t=${timestamp}&r=${random}`;
 };

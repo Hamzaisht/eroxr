@@ -32,3 +32,42 @@ export const formatFileSize = (bytes: number): string => {
 export const getFileExtension = (filename: string): string => {
   return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2);
 };
+
+/**
+ * Create a unique file path for a user's file
+ */
+export const createUserFilePath = (userId: string, fileName: string): string => {
+  return `${userId}/${Date.now()}_${fileName}`;
+};
+
+/**
+ * Get appropriate bucket name for file type and context
+ */
+export const getBucketForFileType = (file: File, context?: string): string => {
+  if (context) {
+    switch (context) {
+      case 'story':
+        return 'stories';
+      case 'post':
+        return 'posts';
+      case 'message':
+        return 'messages';
+      case 'profile':
+      case 'avatar':
+        return 'avatars';
+      case 'short':
+        return 'shorts';
+      default:
+        break;
+    }
+  }
+
+  // If no context or unrecognized context, determine by file type
+  if (file.type.startsWith('image/')) {
+    return 'media';
+  } else if (file.type.startsWith('video/')) {
+    return 'shorts';
+  } else {
+    return 'media';
+  }
+};

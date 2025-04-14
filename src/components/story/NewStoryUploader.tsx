@@ -4,7 +4,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { MediaUploader } from "@/components/media/MediaUploader";
+import { MediaUploader } from "@/components/upload/MediaUploader";
 import { NewMediaRenderer } from "@/components/media/NewMediaRenderer";
 import { getContentType } from "@/utils/mediaUtils";
 import { Loader2, X } from "lucide-react";

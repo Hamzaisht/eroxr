@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@supabase/auth-helpers-react';
 import { uploadFileToStorage } from '@/utils/mediaUtils';
 import { useStories } from '@/components/story/hooks/useStories';
-import { isImageFile, isVideoFile } from '@/utils/mediaUtils';
+import { isImageFile, isVideoFile } from '@/utils/upload/validators';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 
 export const useStoryUpload = () => {
@@ -14,8 +14,8 @@ export const useStoryUpload = () => {
   const { uploadStory } = useStories();
 
   const { 
-    state: uploadState, 
     uploadMedia, 
+    uploadState: { isUploading, progress, error },
     validateFile,
     resetState 
   } = useMediaUpload({
@@ -125,9 +125,9 @@ export const useStoryUpload = () => {
   }, [session, toast, resetStateHandler, uploadStory]);
 
   return {
-    isUploading: uploadState.isUploading,
-    progress: uploadState.progress,
-    error: uploadState.error,
+    isUploading,
+    progress,
+    error,
     previewUrl,
     handleFileSelect,
     uploadFile,

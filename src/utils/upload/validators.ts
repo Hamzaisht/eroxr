@@ -57,7 +57,7 @@ export const validateFile = (
     maxSizeMB?: number;
     allowedTypes?: string[];
   } = {}
-): { valid: boolean; message?: string } => {
+): ValidationResult => {
   // Check file size
   if (options.maxSizeMB && !isFileSizeValid(file, options.maxSizeMB)) {
     return {
@@ -87,3 +87,8 @@ export const validateFile = (
 
   return { valid: true };
 };
+
+export interface ValidationResult {
+  valid: boolean;
+  message?: string;
+}

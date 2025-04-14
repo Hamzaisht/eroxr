@@ -1,13 +1,16 @@
 
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { uploadFileToStorage, createUniqueFilePath, UploadOptions } from "@/utils/mediaUtils";
+import { uploadFileToStorage, createUniqueFilePath } from "@/utils/mediaUtils";
+import { validateFile as validateFileUtil, ValidationResult } from "@/utils/upload/validators";
 
-export interface MediaUploadOptions extends UploadOptions {
+export interface UploadOptions {
+  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic' | 'avatar';
   maxSizeInMB?: number;
   allowedTypes?: string[];
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
+  onProgress?: (progress: number) => void;
 }
 
 export interface UploadState {
@@ -18,15 +21,10 @@ export interface UploadState {
   success: boolean;
 }
 
-export interface ValidationResult {
-  valid: boolean;
-  message?: string;
-}
-
 /**
  * Hook for handling media uploads to Supabase storage
  */
-export const useMediaUpload = (options?: MediaUploadOptions) => {
+export const useMediaUpload = (options?: UploadOptions) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
@@ -128,6 +126,9 @@ export const useMediaUpload = (options?: MediaUploadOptions) => {
         case 'short':
           bucketName = 'shorts';
           break;
+        case 'avatar':
+          bucketName = 'avatars';
+          break;
         default:
           bucketName = 'media';
       }
@@ -147,25 +148,29 @@ export const useMediaUpload = (options?: MediaUploadOptions) => {
       }, 300);
       
       // Upload the file to storage
-      const result = await uploadFileToStorage(bucketName, filePath, file);
+      const url = await uploadFileToStorage(bucketName, filePath, file);
       
       clearInterval(progressInterval);
       
-      if (!result.success) {
+      if (!url) {
         setUploadState({
           isUploading: false,
           progress: 0,
           url: null,
-          error: result.error || "Failed to upload file",
+          error: "Failed to upload file",
           success: false
         });
-        return result;
+        return {
+          success: false,
+          url: null,
+          error: "Failed to upload file"
+        };
       }
       
       setUploadState({
         isUploading: false,
         progress: 100,
-        url: result.url,
+        url: url,
         error: null,
         success: true
       });
@@ -177,7 +182,11 @@ export const useMediaUpload = (options?: MediaUploadOptions) => {
         }, options.resetDelay || 3000);
       }
       
-      return result;
+      return {
+        success: true, 
+        url: url,
+        error: null
+      };
     } catch (error: any) {
       setUploadState({
         isUploading: false,

@@ -1,8 +1,9 @@
+
 import { useState, useRef } from 'react';
 import { Upload, X, AlertCircle, Image, FileVideo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useMediaUpload, MediaUploadOptions } from '@/hooks/useMediaUpload';
+import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { useFilePreview } from '@/hooks/useFilePreview';
 import { isVideoFile, isImageFile, SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '@/utils/upload/validators';
 
@@ -10,17 +11,17 @@ export interface MediaUploaderProps {
   /**
    * Function called when upload completes successfully
    */
-  onUploadComplete?: (url: string) => void;
+  onComplete?: (url: string) => void;
   
   /**
    * Function called when upload fails
    */
-  onUploadError?: (error: string) => void;
+  onError?: (error: string) => void;
   
   /**
    * Content type category ('story', 'post', etc)
    */
-  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
+  context?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
   
   /**
    * Maximum file size in MB
@@ -59,9 +60,9 @@ export interface MediaUploaderProps {
 }
 
 export const MediaUploader = ({
-  onUploadComplete,
-  onUploadError,
-  contentCategory = 'generic',
+  onComplete,
+  onError,
+  context = 'generic',
   maxSizeInMB = 100,
   mediaTypes = 'both',
   buttonText = 'Upload Media',
@@ -79,8 +80,8 @@ export const MediaUploader = ({
     return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
   })();
   
-  const uploadOptions: MediaUploadOptions = {
-    contentCategory,
+  const uploadOptions = {
+    contentCategory: context,
     maxSizeInMB,
     allowedTypes,
     autoResetOnCompletion: true,
@@ -88,8 +89,8 @@ export const MediaUploader = ({
   };
   
   const { 
-    state: uploadState, 
     uploadMedia, 
+    uploadState: { isUploading, progress, error, success },
     validateFile 
   } = useMediaUpload(uploadOptions);
   
@@ -106,7 +107,7 @@ export const MediaUploader = ({
     
     const validation = validateFile(file);
     if (!validation.valid) {
-      if (onUploadError) onUploadError(validation.message || "Invalid file");
+      if (onError) onError(validation.message || "Invalid file");
       return;
     }
     
@@ -127,9 +128,9 @@ export const MediaUploader = ({
     const result = await uploadMedia(file);
     
     if (result.success && result.url) {
-      if (onUploadComplete) onUploadComplete(result.url);
+      if (onComplete) onComplete(result.url);
     } else {
-      if (onUploadError) onUploadError(result.error || "Upload failed");
+      if (onError) onError(result.error || "Upload failed");
     }
   };
   
@@ -151,7 +152,7 @@ export const MediaUploader = ({
         className="hidden"
         accept={allowedTypes.join(',')}
         onChange={handleFileSelect}
-        disabled={uploadState.isUploading}
+        disabled={isUploading}
       />
       
       {showPreview && selectedFile && previewUrl && (
@@ -161,7 +162,7 @@ export const MediaUploader = ({
             size="icon"
             className="absolute top-2 right-2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full"
             onClick={handleClear}
-            disabled={uploadState.isUploading}
+            disabled={isUploading}
           >
             <X size={16} />
           </Button>
@@ -192,7 +193,7 @@ export const MediaUploader = ({
         <Button
           variant={buttonVariant}
           onClick={() => fileInputRef.current?.click()}
-          disabled={uploadState.isUploading}
+          disabled={isUploading}
           className="w-full h-16"
         >
           <div className="flex flex-col items-center justify-center">
@@ -206,11 +207,11 @@ export const MediaUploader = ({
             </span>
           </div>
         </Button>
-      ) : !autoUpload && !uploadState.isUploading ? (
+      ) : !autoUpload && !isUploading ? (
         <Button
           variant="default"
           onClick={handleUploadClick}
-          disabled={uploadState.isUploading}
+          disabled={isUploading}
           className="w-full"
         >
           <Upload className="h-4 w-4 mr-2" />
@@ -218,24 +219,24 @@ export const MediaUploader = ({
         </Button>
       ) : null}
       
-      {uploadState.isUploading && (
+      {isUploading && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               Uploading...
             </span>
             <span className="text-sm font-medium">
-              {Math.round(uploadState.progress)}%
+              {Math.round(progress)}%
             </span>
           </div>
-          <Progress value={uploadState.progress} />
+          <Progress value={progress} />
         </div>
       )}
       
-      {uploadState.error && (
+      {error && (
         <div className="flex items-center gap-2 text-destructive text-sm p-2 bg-destructive/10 rounded-md">
           <AlertCircle className="h-4 w-4" />
-          <span>{uploadState.error}</span>
+          <span>{error}</span>
         </div>
       )}
     </div>

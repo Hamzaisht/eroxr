@@ -14,13 +14,13 @@ export const StoryUploader = () => {
   
   // Use our media upload hook with story-specific options
   const { 
-    state: {
+    uploadMedia,
+    uploadState: {
       isUploading,
       progress,
       error,
       success
     },
-    uploadMedia,
     validateFile
   } = useMediaUpload({
     contentCategory: 'story',
