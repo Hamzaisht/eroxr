@@ -1,7 +1,7 @@
 
 import { motion } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 
@@ -16,6 +16,12 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  
+  useEffect(() => {
+    // Reset states when story changes
+    setIsLoading(true);
+    setHasError(false);
+  }, [story.id]);
   
   const handleMediaLoad = () => {
     console.log("Story media loaded:", story.id);
@@ -45,13 +51,6 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
     creator_id: story.creator_id
   };
 
-  console.log("Rendering story content:", {
-    id: story.id,
-    mediaType: story.media_type || story.content_type,
-    mediaUrl: story.media_url,
-    videoUrl: story.video_url,
-  });
-
   return (
     <motion.div
       key={`${story.id}-${retryCount}`}
@@ -61,13 +60,13 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
       className="relative w-full h-full flex items-center justify-center bg-black"
     >
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center z-30 bg-black bg-opacity-50">
+        <div className="absolute inset-0 flex items-center justify-center z-30">
           <Loader2 className="h-12 w-12 text-white animate-spin" />
         </div>
       )}
       
       {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-30 bg-black bg-opacity-90">
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-30">
           <AlertCircle className="h-12 w-12 text-red-500 mb-2" />
           <p className="text-white mb-4">Failed to load story</p>
           <button
@@ -80,7 +79,7 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
         </div>
       )}
       
-      <div className="relative w-full h-full z-20">
+      <div className="relative w-full h-full">
         <UniversalMedia
           ref={videoRef}
           item={mediaItem}

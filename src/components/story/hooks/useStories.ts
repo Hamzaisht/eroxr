@@ -1,10 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Story } from '@/integrations/supabase/types/story';
 import { createUniqueFilePath } from '@/utils/media/mediaUtils';
-import { getDisplayableMediaUrl } from '@/utils/media/urlUtils';
 
 interface UseStoriesResult {
   stories: Story[];
@@ -16,16 +15,14 @@ interface UseStoriesResult {
 
 export const useStories = (): UseStoriesResult => {
   const [stories, setStories] = useState<Story[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const session = useSession();
 
   const loadStories = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
     try {
+      console.log('Loading stories...');
       const { data, error: queryError } = await supabase
         .from('stories')
         .select(`
@@ -45,6 +42,7 @@ export const useStories = (): UseStoriesResult => {
 
       console.log("Fetched stories:", data);
       setStories(data || []);
+      setError(null);
     } catch (err) {
       console.error('Error loading stories:', err);
       setError('Failed to load stories');
@@ -57,6 +55,10 @@ export const useStories = (): UseStoriesResult => {
       setIsLoading(false);
     }
   }, [toast]);
+
+  useEffect(() => {
+    loadStories();
+  }, [loadStories]);
 
   const uploadStory = useCallback(async (file: File) => {
     if (!session?.user?.id) {

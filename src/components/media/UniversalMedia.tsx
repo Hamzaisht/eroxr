@@ -50,68 +50,66 @@ export const UniversalMedia = forwardRef<HTMLVideoElement | HTMLImageElement, Un
     const [retryCount, setRetryCount] = useState(0);
 
     useEffect(() => {
-      const getMediaUrl = () => {
-        try {
-          // Handle direct string input
-          if (typeof item === 'string') {
-            setUrl(item);
-            setIsVideo(item.includes('.mp4') || item.includes('.webm') || item.includes('.mov'));
-            return;
-          }
-          
-          if (!item) {
-            console.error("No media item provided");
-            return;
-          }
-          
-          // Determine if this is a video
-          const isMediaVideo = 
-            item.media_type === 'video' || 
-            item.content_type === 'video' || 
-            !!item.video_url;
-          
-          setIsVideo(isMediaVideo);
-          
-          // Get the appropriate URL
-          let mediaUrl: string | null = null;
-          
-          if (isMediaVideo && item.video_url) {
-            mediaUrl = item.video_url;
-          } else if (!isMediaVideo && item.media_url) {
-            if (typeof item.media_url === 'string') {
-              mediaUrl = item.media_url;
-            } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
-              mediaUrl = item.media_url[0];
-            }
-          }
-          
-          if (mediaUrl) {
-            console.log(`Using media URL: ${mediaUrl}`);
-          }
-          
-          setUrl(mediaUrl);
-        } catch (error) {
-          console.error("Error getting media URL:", error);
-          if (onError) onError();
+      try {
+        // Handle direct string input
+        if (typeof item === 'string') {
+          setUrl(item);
+          setIsVideo(item.includes('.mp4') || item.includes('.webm') || item.includes('.mov'));
+          return;
         }
-      };
-
-      getMediaUrl();
+        
+        if (!item) {
+          console.error("No media item provided");
+          return;
+        }
+        
+        // Determine if this is a video
+        const isMediaVideo = 
+          item.media_type === 'video' || 
+          item.content_type === 'video' || 
+          !!item.video_url;
+        
+        setIsVideo(isMediaVideo);
+        
+        // Get the appropriate URL
+        let mediaUrl: string | null = null;
+        
+        if (isMediaVideo && item.video_url) {
+          mediaUrl = item.video_url;
+        } else if (!isMediaVideo && item.media_url) {
+          if (typeof item.media_url === 'string') {
+            mediaUrl = item.media_url;
+          } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
+            mediaUrl = item.media_url[0];
+          }
+        }
+        
+        console.log(`Setting media URL: ${mediaUrl} (isVideo: ${isMediaVideo})`);
+        setUrl(mediaUrl);
+        setIsLoading(true);
+        setError(null);
+      } catch (error) {
+        console.error("Error processing media item:", error);
+        setError(error instanceof Error ? error.message : 'Failed to process media');
+        if (onError) onError();
+      }
     }, [item, retryCount]);
 
     const handleLoad = () => {
       console.log("Media loaded successfully:", url);
       setIsLoading(false);
+      setError(null);
       if (onLoad) onLoad();
     };
 
     const handleError = () => {
       console.error(`Media load error: ${url}`);
+      setIsLoading(false);
+      setError(`Failed to load ${isVideo ? 'video' : 'image'}`);
       if (onError) onError();
     };
-    
+
     const handleRetry = () => {
-      console.log("Retrying media load...");
       setIsLoading(true);
       setError(null);
       setRetryCount(prev => prev + 1);
