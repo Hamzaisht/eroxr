@@ -24,6 +24,15 @@ export const addCacheBuster = (url: string): string => {
 };
 
 /**
+ * Get displayable media URL with cache busting
+ * This is the main function for getting URLs that will work in media components
+ */
+export const getDisplayableMediaUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  return addCacheBuster(getCleanUrl(url));
+};
+
+/**
  * Check if URL is accessible and get content type
  */
 export const checkUrlContentType = async (url: string): Promise<{ 
