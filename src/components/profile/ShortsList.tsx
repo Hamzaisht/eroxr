@@ -201,6 +201,7 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
                 url={getPlayableMediaUrl({video_url: selectedVideo.video_urls?.[0] || ""})} 
                 poster={selectedVideo.video_thumbnail_url || undefined}
                 autoPlay
+                showCloseButton
                 onClose={() => setSelectedVideo(null)}
               />
             </div>
@@ -223,7 +224,7 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </Dialog>
+      </AlertDialog>
     </>
   );
 };
