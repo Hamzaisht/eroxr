@@ -5,16 +5,16 @@
 
 /**
  * Add cache busting parameter to URL to prevent browser caching
+ * This is simpler than previous versions to avoid URL corruption
  */
 export const addCacheBuster = (url: string): string => {
   if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
   
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  
   return url.includes('?') 
-    ? `${url}&t=${timestamp}&r=${random}` 
-    : `${url}?t=${timestamp}&r=${random}`;
+    ? `${url}&t=${timestamp}` 
+    : `${url}?t=${timestamp}`;
 };
 
 /**
@@ -82,7 +82,8 @@ export const extractMediaUrl = (media: any): string => {
 };
 
 /**
- * Diagnostic function to check if a URL is accessible
+ * Simple implementation to check URL accessibility
+ * Returns whether the URL can be accessed and what its content type is
  */
 export const checkUrlAccessibility = async (url: string): Promise<{ 
   accessible: boolean; 
@@ -93,13 +94,12 @@ export const checkUrlAccessibility = async (url: string): Promise<{
   try {
     if (!url) return { accessible: false, error: 'No URL provided' };
     
-    // If it's a blob URL, it's likely accessible
-    if (url.startsWith('blob:')) return { accessible: true };
+    // If it's a blob or data URL, assume it's accessible
+    if (url.startsWith('blob:') || url.startsWith('data:')) {
+      return { accessible: true };
+    }
     
-    // If it's a data URL, it's accessible
-    if (url.startsWith('data:')) return { accessible: true };
-    
-    // Try fetch with HEAD request
+    // Try fetch with HEAD request to avoid downloading the full resource
     const response = await fetch(url, { 
       method: 'HEAD',
       cache: 'no-store',
@@ -121,7 +121,7 @@ export const checkUrlAccessibility = async (url: string): Promise<{
 };
 
 /**
- * Attempt to repair broken URLs by trying common variations
+ * Create variations of a URL to try for repair
  */
 export const tryRepairUrl = (url: string): string[] => {
   if (!url) return [];
@@ -131,7 +131,7 @@ export const tryRepairUrl = (url: string): string[] => {
     addCacheBuster(url)
   ];
   
-  // If URL contains the string "public", try without "public"
+  // Try without "public" if present
   if (url.includes('/public/')) {
     const withoutPublic = url.replace('/public/', '/');
     variations.push(withoutPublic);

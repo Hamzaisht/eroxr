@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2, RefreshCw, AlertCircle, X, Volume2, VolumeX } from 'lucide-react';
 import { VideoErrorState } from './VideoErrorState';
 import { VideoLoadingState } from './VideoLoadingState';
+import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
 
 interface VideoPlayerProps {
   url: string;
@@ -46,46 +47,24 @@ export const VideoPlayer = ({
   const [hasError, setHasError] = useState(false);
   const [isStalled, setIsStalled] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [debugInfo, setDebugInfo] = useState<{url: string; status: string}>({
-    url: url || '',
-    status: 'initial'
-  });
   
-  // Process URL to ensure it's directly usable
-  const processedUrl = url ? ensureDirectUrl(url) : '';
+  // Process URL to ensure it's directly usable - simplify URL processing
+  const processedUrl = url ? url : '';
 
-  // Helper function for ensuring direct URL access
-  function ensureDirectUrl(sourceUrl: string): string {
-    // If already a blob or data URL, use directly
-    if (sourceUrl.startsWith('blob:') || sourceUrl.startsWith('data:')) {
-      return sourceUrl;
-    }
-    
-    // Add cache busting for regular URLs
-    const cacheBuster = `t=${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    return sourceUrl.includes('?') ? 
-      `${sourceUrl}&${cacheBuster}` : 
-      `${sourceUrl}?${cacheBuster}`;
-  }
-
-  // Handle video events
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     
-    setDebugInfo(prev => ({ ...prev, url: processedUrl, status: 'loading' }));
     console.log(`Loading video: ${processedUrl}`);
     
     const handleLoadStart = () => {
       setIsLoading(true);
       setIsStalled(false);
-      setDebugInfo(prev => ({ ...prev, status: 'loadstart' }));
     };
     
     const handleLoadedData = () => {
       setIsLoading(false);
       setIsStalled(false);
-      setDebugInfo(prev => ({ ...prev, status: 'loaded' }));
       console.log(`Video loaded successfully: ${processedUrl}`);
       
       if (onLoadedData) onLoadedData();
@@ -100,7 +79,6 @@ export const VideoPlayer = ({
     const handleError = (e: Event) => {
       console.error("Video error:", e);
       console.error("Video error source:", processedUrl);
-      setDebugInfo(prev => ({ ...prev, status: 'error' }));
       setIsLoading(false);
       setHasError(true);
       
@@ -109,13 +87,11 @@ export const VideoPlayer = ({
     
     const handleEnd = () => {
       setIsPlaying(false);
-      setDebugInfo(prev => ({ ...prev, status: 'ended' }));
       if (onEnded) onEnded();
     };
     
     const handleStalled = () => {
       setIsStalled(true);
-      setDebugInfo(prev => ({ ...prev, status: 'stalled' }));
       console.warn(`Video stalled: ${processedUrl}`);
     };
     
@@ -123,12 +99,10 @@ export const VideoPlayer = ({
       setIsPlaying(true);
       setIsLoading(false);
       setIsStalled(false);
-      setDebugInfo(prev => ({ ...prev, status: 'playing' }));
     };
 
     const handlePause = () => {
       setIsPlaying(false);
-      setDebugInfo(prev => ({ ...prev, status: 'paused' }));
     };
     
     // Set up all event listeners
@@ -193,11 +167,11 @@ export const VideoPlayer = ({
     setIsStalled(false);
     setRetryCount(prev => prev + 1);
     
-    // Generate a completely new cache-busted URL
-    const freshUrl = ensureDirectUrl(url);
+    // Add a cache-busting parameter
+    const timestamp = Date.now();
+    const freshUrl = `${url.split('?')[0]}?t=${timestamp}`;
     
     console.log(`Retrying video with fresh URL: ${freshUrl}`);
-    setDebugInfo(prev => ({ ...prev, url: freshUrl, status: 'retrying' }));
     
     // Set the new URL and reload
     video.src = freshUrl;
@@ -266,7 +240,7 @@ export const VideoPlayer = ({
       {/* Debug info in development mode */}
       {process.env.NODE_ENV === 'development' && (
         <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-xs text-white/70 px-2 py-0.5">
-          Status: {debugInfo.status}
+          Status: {isLoading ? 'loading' : hasError ? 'error' : isPlaying ? 'playing' : 'paused'}
         </div>
       )}
     </div>

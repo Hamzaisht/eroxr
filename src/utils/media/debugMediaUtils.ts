@@ -1,50 +1,93 @@
 
 /**
- * Debug a media URL by fetching its headers
+ * Utility functions for debugging media URLs and content loading issues
  */
-export async function debugMediaUrl(url: string): Promise<void> {
-  try {
-    // Only try to fetch if it's an HTTP URL
-    if (url.startsWith('http')) {
-      const response = await fetch(url, { method: 'HEAD' });
-      console.group(`Media URL Debug: ${url}`);
-      console.log('Status:', response.status, response.statusText);
-      console.log('Content-Type:', response.headers.get('content-type'));
-      console.log('Content-Length:', response.headers.get('content-length'));
-      console.groupEnd();
-    } else {
-      console.warn('Cannot debug non-HTTP URL:', url);
-    }
-  } catch (error) {
-    console.error('Error debugging media URL:', url, error);
-  }
-}
 
 /**
- * Get detailed error information for a media URL
+ * Log detailed information about a media URL for debugging purposes
  */
-export function getMediaErrorInfo(url: string): string {
+export const debugMediaUrl = async (url: string) => {
   if (!url) {
-    return 'No URL provided';
+    console.error('Cannot debug empty URL');
+    return;
   }
-
-  if (url.startsWith('data:') || url.startsWith('blob:')) {
-    return 'Cannot debug in-memory URLs (data: or blob: schemes)';
+  
+  console.group(`Debug Media URL: ${url}`);
+  
+  // Basic URL information
+  console.log('Protocol:', url.split('://')[0] || 'none');
+  console.log('Domain:', new URL(url).hostname || 'N/A');
+  console.log('Path:', new URL(url).pathname || 'N/A');
+  console.log('Query parameters:', new URL(url).search || 'none');
+  
+  // Attempt a HEAD request to get metadata without downloading content
+  try {
+    const headResponse = await fetch(url, { 
+      method: 'HEAD',
+      mode: 'cors',
+      cache: 'no-store' 
+    });
+    
+    console.log('Status code:', headResponse.status, headResponse.statusText);
+    console.log('Content type:', headResponse.headers.get('content-type') || 'unknown');
+    console.log('Content length:', headResponse.headers.get('content-length') || 'unknown');
+    console.log('CORS headers:', {
+      'Access-Control-Allow-Origin': headResponse.headers.get('access-control-allow-origin') || 'none',
+      'Access-Control-Allow-Methods': headResponse.headers.get('access-control-allow-methods') || 'none'
+    });
+  } catch (error) {
+    console.error('HEAD request failed:', error);
+    
+    // Try a regular GET request with no-cors mode as fallback
+    try {
+      console.log('Trying fallback GET request...');
+      const getResponse = await fetch(url, { 
+        mode: 'no-cors',
+        cache: 'no-store' 
+      });
+      console.log('GET request succeeded with opaque response');
+    } catch (fallbackError) {
+      console.error('All requests failed:', fallbackError);
+    }
   }
+  
+  console.groupEnd();
+};
 
-  if (!url.startsWith('http')) {
-    return `URL does not have a recognized scheme: ${url}`;
+/**
+ * Get detailed error info for a media URL
+ */
+export const getMediaErrorInfo = (url: string): string => {
+  // Check for common issues in the URL
+  let issues = [];
+  
+  if (!url) {
+    return 'Empty URL provided';
   }
-
-  // Check for common issues
-  if (url.includes('localhost') || url.includes('127.0.0.1')) {
-    return 'URL references localhost which is not accessible from external clients';
+  
+  // Check protocol
+  if (!url.startsWith('http') && !url.startsWith('data:') && !url.startsWith('blob:')) {
+    issues.push('Missing or invalid protocol (should start with http, https, data:, or blob:)');
   }
-
-  // For relative URLs that might have been mishandled
-  if (url.startsWith('/')) {
-    return 'URL is relative and missing the domain';
+  
+  // Check for malformed URLs
+  try {
+    new URL(url);
+  } catch (e) {
+    issues.push('Malformed URL - cannot be parsed');
   }
-
-  return `Unknown issue with URL: ${url}. Check browser network tab for details.`;
-}
+  
+  // Check for spaces or invalid characters
+  if (url.includes(' ') || /[^\x00-\x7F]/.test(url)) {
+    issues.push('URL contains spaces or non-ASCII characters');
+  }
+  
+  // Check for excessive query parameters (possible corruption)
+  if ((url.match(/\?/g) || []).length > 1) {
+    issues.push('Multiple question marks in URL - possible corruption');
+  }
+  
+  return issues.length > 0 
+    ? `Media URL issues: ${issues.join('; ')}` 
+    : 'No apparent issues with URL format';
+};

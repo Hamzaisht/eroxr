@@ -5,7 +5,7 @@ import { MediaErrorState } from "@/components/media/states/MediaErrorState";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { MediaImage } from "@/components/media/MediaImage";
 import { getPlayableMediaUrl, isVideoContent } from "@/utils/media/getPlayableMediaUrl";
-import { debugMediaUrl, getMediaErrorInfo } from "@/utils/media/debugMediaUtils";
+import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
 
 export interface MediaItem {
   media_url?: string | string[] | null;
@@ -28,7 +28,7 @@ interface UniversalMediaProps {
   onLoadedData?: () => void;
   autoPlay?: boolean;
   controls?: boolean;
-  showWatermark?: boolean; // Property kept but ignored
+  showWatermark?: boolean;
   onClick?: () => void;
 }
 
@@ -41,7 +41,7 @@ export const UniversalMedia = ({
   onLoadedData,
   autoPlay = false,
   controls = true,
-  showWatermark = false, // Property kept but ignored
+  showWatermark = false,
   onClick
 }: UniversalMediaProps) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -109,10 +109,6 @@ export const UniversalMedia = ({
     
     if (mediaUrl) {
       debugMediaUrl(mediaUrl);
-      
-      // Log detailed error info
-      const errorInfo = getMediaErrorInfo(mediaUrl);
-      console.error(errorInfo);
     }
     
     setIsLoading(false);

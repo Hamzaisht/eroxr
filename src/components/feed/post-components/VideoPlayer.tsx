@@ -15,8 +15,10 @@ export const VideoPlayer = ({ url, poster, onError, onEnded }: VideoPlayerProps)
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  // Process the URL correctly using the appropriate parameter structure
-  const processedUrl = getPlayableMediaUrl({media_url: url});
+  // Process the URL
+  const processedUrl = getPlayableMediaUrl(url);
+  
+  console.log("Feed VideoPlayer URL:", processedUrl);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -51,7 +53,10 @@ export const VideoPlayer = ({ url, poster, onError, onEnded }: VideoPlayerProps)
         className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
         playsInline
         loop
-        onError={onError}
+        onError={() => {
+          console.error("Video error in feed player:", processedUrl);
+          onError();
+        }}
         onEnded={handleEnded}
       />
       <div 

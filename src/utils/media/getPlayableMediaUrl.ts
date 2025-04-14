@@ -1,49 +1,46 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { extractMediaUrl, getDirectMediaUrl, addCacheBuster } from "./mediaUrlUtils";
 
 /**
- * Get the playable media URL from various sources
- * @param media A media item (object or string URL)
- * @returns The fully qualified URL
+ * Extract a usable URL from various media object formats or string
  */
 export function getPlayableMediaUrl(media: any): string {
+  // If null or undefined, return empty string
   if (!media) return '';
-
-  // Extract the basic URL
-  let url = '';
   
   // If it's already a string URL
   if (typeof media === 'string') {
-    url = media;
-  } else {
-    // Extract URL from object based on common properties (video_url, video_urls, media_url, etc.)
-    url = media.video_url || 
-      (Array.isArray(media.video_urls) && media.video_urls.length > 0 ? media.video_urls[0] : null) ||
-      (typeof media.media_url === 'string' ? media.media_url : null) ||
-      (Array.isArray(media.media_url) && media.media_url.length > 0 ? media.media_url[0] : null) ||
-      media.url ||
-      '';
+    return ensureFullUrl(media);
   }
-
+  
+  // Extract URL from object based on common properties
+  const url = 
+    media.video_url || 
+    (Array.isArray(media.video_urls) && media.video_urls.length > 0 ? media.video_urls[0] : null) ||
+    media.media_url ||
+    (Array.isArray(media.media_url) && media.media_url.length > 0 ? media.media_url[0] : null) ||
+    media.url ||
+    '';
+  
   return ensureFullUrl(url);
 }
 
 /**
- * Ensure the URL is a complete, usable URL
+ * Process a partial URL into a full, playable URL
+ * Handles Supabase Storage URLs, external URLs, and relative paths
  */
 export function ensureFullUrl(url: string): string {
   if (!url) return '';
   
-  // If already a complete URL or a data/blob URL, return with cache busting
+  // Already a complete URL or data URL - return as is
   if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) {
-    return url.startsWith('data:') || url.startsWith('blob:') ? url : addCacheBuster(url);
+    return url;
   }
   
-  // If it starts with a slash, remove it
+  // Remove leading slash if present
   const cleanPath = url.startsWith('/') ? url.substring(1) : url;
   
-  // Try to determine the bucket from the path
+  // Determine the bucket from the path
   let bucket = 'media';
   const possibleBuckets = ['stories', 'posts', 'videos', 'avatars', 'media', 'shorts'];
   
@@ -54,34 +51,27 @@ export function ensureFullUrl(url: string): string {
     }
   }
   
-  // Get the public URL using Supabase
   try {
-    console.log(`Getting public URL for ${bucket}/${cleanPath}`);
+    // Get public URL from Supabase storage
     const { data } = supabase.storage
       .from(bucket)
       .getPublicUrl(cleanPath);
     
-    const publicUrl = data?.publicUrl || '';
-    
-    if (publicUrl) {
-      const finalUrl = addCacheBuster(publicUrl);
-      console.log(`Generated URL: ${finalUrl}`);
-      return finalUrl;
-    }
-    
-    return '';
+    return data?.publicUrl || '';
   } catch (error) {
-    console.error(`Failed to get public URL for ${url}:`, error);
+    console.error(`Failed to get URL for ${url}:`, error);
     
-    // Try all buckets as a last resort
+    // Try all buckets as fallback
     for (const fallbackBucket of possibleBuckets) {
-      if (fallbackBucket === bucket) continue; // Skip the one we already tried
+      if (fallbackBucket === bucket) continue;
       
       try {
-        console.log(`Trying fallback bucket ${fallbackBucket} for ${cleanPath}`);
-        const { data } = supabase.storage.from(fallbackBucket).getPublicUrl(cleanPath);
+        const { data } = supabase.storage
+          .from(fallbackBucket)
+          .getPublicUrl(cleanPath);
+        
         if (data?.publicUrl) {
-          return addCacheBuster(data.publicUrl);
+          return data.publicUrl;
         }
       } catch (fallbackError) {
         // Ignore fallback errors
