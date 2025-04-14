@@ -16,6 +16,7 @@ export interface MediaItem {
   content_type?: string;
   creator_id?: string;
   alt_text?: string;
+  poster_url?: string | null;
 }
 
 interface UniversalMediaProps {
@@ -47,7 +48,7 @@ export const UniversalMedia = ({
   const [hasError, setHasError] = useState(false);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [isVideoContent, setIsVideoContent] = useState(false);
+  const [isVideoType, setIsVideoType] = useState(false);
 
   // Process media source to get proper URL and determine media type
   useEffect(() => {
@@ -59,7 +60,7 @@ export const UniversalMedia = ({
       if (typeof item === 'string') {
         const url = getPlayableMediaUrl(item);
         setMediaUrl(url);
-        setIsVideoContent(isVideoContent(item));
+        setIsVideoType(isVideoContent(item));
         return;
       }
       
@@ -84,10 +85,10 @@ export const UniversalMedia = ({
       setMediaUrl(url);
       
       // Determine if this is video content
-      setIsVideoContent(isVideoContent(item));
+      setIsVideoType(isVideoContent(item));
       
       // Log the URL for debugging
-      console.log(`Media URL (${isVideoContent ? 'video' : 'image'}):`, url);
+      console.log(`Media URL (${isVideoType ? 'video' : 'image'}):`, url);
     } catch (error) {
       console.error("Error processing media item:", error);
       setHasError(true);
@@ -140,6 +141,9 @@ export const UniversalMedia = ({
   // Extract alt text from item if it's an object
   const altText = typeof item === 'object' ? (item.alt_text || "Media content") : "Media content";
 
+  // Extract poster URL for videos if available
+  const posterUrl = typeof item === 'object' ? item.poster_url : undefined;
+
   return (
     <div className={`relative overflow-hidden ${className}`}>
       {isLoading && <MediaLoadingState />}
@@ -152,9 +156,10 @@ export const UniversalMedia = ({
         />
       )}
       
-      {isVideoContent ? (
+      {isVideoType ? (
         <VideoPlayer
           url={mediaUrl}
+          poster={posterUrl}
           autoPlay={autoPlay}
           className="w-full h-full"
           onError={handleError}
@@ -182,4 +187,3 @@ export const UniversalMedia = ({
     </div>
   );
 };
-

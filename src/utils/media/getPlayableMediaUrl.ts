@@ -12,6 +12,7 @@ export interface MediaSource {
   src?: string | null;
   content_type?: string; 
   media_type?: string;
+  poster_url?: string | null;
 }
 
 /**
@@ -102,4 +103,3 @@ export const isVideoContent = (source: MediaSource | string | null | undefined):
 
 // Export addCacheBuster from this file as well for better compatibility
 export { addCacheBuster } from './urlUtils';
-
