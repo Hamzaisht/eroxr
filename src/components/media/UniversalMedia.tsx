@@ -3,7 +3,7 @@ import { useEffect, useState, forwardRef } from "react";
 
 // MediaItem type to provide better TypeScript support
 interface MediaItem {
-  media_url?: string | null;
+  media_url?: string | null | string[];  // Updated to explicitly allow string array
   video_url?: string | null;
   creator_id?: string;
   media_type?: string;
