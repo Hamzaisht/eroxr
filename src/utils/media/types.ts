@@ -23,6 +23,7 @@ export interface MediaSource {
   creator_id?: string | null;
   media_type?: string | null;
   content_type?: string | null;
+  poster_url?: string | null; // Add missing poster_url property
 }
 
 /**
@@ -74,4 +75,21 @@ export interface UploadResult {
 export interface FileValidationResult {
   valid: boolean;
   message?: string;
+}
+
+/**
+ * Media options interface for video/image components
+ */
+export interface MediaOptions {
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: () => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (event: React.SyntheticEvent<HTMLVideoElement>) => void;
 }

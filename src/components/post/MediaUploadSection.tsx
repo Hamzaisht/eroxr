@@ -1,9 +1,10 @@
+
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
-import { uploadFileToStorage, UploadOptions } from "@/utils/mediaUtils";
+import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
 
 interface MediaUploadSectionProps {
   onMediaSelect: (urls: string[]) => void;
@@ -30,15 +31,8 @@ export const MediaUploadSection = ({ onMediaSelect, isUploading }: MediaUploadSe
         }
 
         // Upload to Supabase storage
-        const uploadOptions: UploadOptions = {
-          contentCategory: 'post'
-        };
-        
-        const result = await uploadFileToStorage(
-          fileToUpload,
-          session.user.id,
-          uploadOptions
-        );
+        const path = createUniqueFilePath(session.user.id, fileToUpload);
+        const result = await uploadFileToStorage('posts', path, fileToUpload);
         
         if (!result.success || !result.url) {
           throw new Error(result.error || "Failed to upload file");

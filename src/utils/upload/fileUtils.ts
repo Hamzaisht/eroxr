@@ -87,3 +87,6 @@ export const formatFileSize = (bytes: number): string => {
   
   return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
+// Export for backward compatibility
+export { formatFileSize as calculateFileSize };

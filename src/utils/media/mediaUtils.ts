@@ -4,7 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { MediaType, MediaSource, MediaResult } from "./types";
+import { MediaType, MediaSource, MediaResult, UploadResult } from "./types";
 
 // Export all from our specialized modules
 export * from "./types";
@@ -44,8 +44,15 @@ export function inferContentTypeFromExtension(filename: string): string {
 
 /**
  * Upload a file to Supabase storage
+ * @param file The file to upload
+ * @param userId The user ID
+ * @param options Upload options
  */
-export async function uploadFileToStorage(bucket: string, path: string, file: File): Promise<string | null> {
+export async function uploadFileToStorage(
+  bucket: string, 
+  path: string, 
+  file: File
+): Promise<UploadResult> {
   try {
     // Determine content type based on file extension
     const contentType = file.type || inferContentTypeFromExtension(file.name);
@@ -60,7 +67,10 @@ export async function uploadFileToStorage(bucket: string, path: string, file: Fi
 
     if (error) {
       console.error('Storage upload error:', error);
-      return null;
+      return {
+        success: false,
+        error: error.message
+      };
     }
 
     // Get the public URL of the file
@@ -68,10 +78,16 @@ export async function uploadFileToStorage(bucket: string, path: string, file: Fi
       .from(bucket)
       .getPublicUrl(data?.path || path);
 
-    return publicUrl;
+    return {
+      success: true,
+      url: publicUrl
+    };
   } catch (error: any) {
     console.error('File upload error:', error);
-    return null;
+    return {
+      success: false,
+      error: error.message || 'Unknown upload error'
+    };
   }
 }
 
