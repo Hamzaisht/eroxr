@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { DatingAd } from "../types/dating";
 import { FullscreenAdViewer } from "../video-profile/FullscreenAdViewer";
 import { LoadingGrid } from "./components/LoadingGrid";
 import { GridItem } from "./components/GridItem";

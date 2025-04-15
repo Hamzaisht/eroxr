@@ -7,6 +7,7 @@ import { AdActions } from "../../video-profile-card/AdActions";
 import { MapPin, MessageCircle, Eye } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { VideoThumbnail } from "./VideoThumbnail"; // Add this import
 import type { GridItemProps } from "../types";
 
 export const GridItem = ({ 
