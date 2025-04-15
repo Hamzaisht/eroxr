@@ -1,21 +1,17 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { getPlayableMediaUrl, determineMediaType, MediaType, checkUrlAccessibility } from '@/utils/media/mediaUtils';
+import { 
+  getPlayableMediaUrl, 
+  determineMediaType, 
+  MediaType, 
+  checkUrlAccessibility,
+  extractMediaUrl,
+  MediaResult
+} from '@/utils/media/mediaUtils';
 
 interface UseMediaOptions {
   autoLoad?: boolean;
   maxRetries?: number;
-}
-
-interface UseMediaResult {
-  url: string | null;
-  isLoading: boolean;
-  isError: boolean;
-  error: string | null;
-  mediaType: MediaType;
-  retry: () => void;
-  retryCount: number;
-  isAccessible: boolean;
 }
 
 /**
@@ -24,7 +20,7 @@ interface UseMediaResult {
 export const useMedia = (
   mediaItem: any,
   { autoLoad = true, maxRetries = 2 }: UseMediaOptions = {}
-): UseMediaResult => {
+): MediaResult & { retry: () => void; retryCount: number; isAccessible: boolean } => {
   const [url, setUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -39,8 +35,14 @@ export const useMedia = (
       setIsError(false);
       setError(null);
 
+      // Extract media URL from the item
+      const rawUrl = extractMediaUrl(mediaItem);
+      if (!rawUrl) {
+        throw new Error('Could not extract media URL');
+      }
+
       // Get the playable URL
-      const processedUrl = getPlayableMediaUrl(mediaItem);
+      const processedUrl = getPlayableMediaUrl(rawUrl);
       
       if (!processedUrl) {
         throw new Error('Could not get media URL');

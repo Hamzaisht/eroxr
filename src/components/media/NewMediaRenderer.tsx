@@ -1,6 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { getPlayableMediaUrl, getContentType } from '@/utils/media/mediaUtils';
+import { 
+  getPlayableMediaUrl, 
+  getContentType, 
+  MediaType,
+  determineMediaType,
+  extractMediaUrl
+} from '@/utils/media/mediaUtils';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 interface NewMediaRendererProps {
@@ -49,8 +55,8 @@ export const NewMediaRenderer = ({
     }
     
     try {
-      // Get the media URL
-      const mediaUrl = getPlayableMediaUrl(item);
+      // Extract the media URL from the item
+      const mediaUrl = extractMediaUrl(item);
       
       if (!mediaUrl) {
         setUrl(null);
@@ -59,28 +65,28 @@ export const NewMediaRenderer = ({
         return;
       }
       
+      // Get the playable URL
+      const processedUrl = getPlayableMediaUrl(mediaUrl);
+      
+      if (!processedUrl) {
+        setUrl(null);
+        setError("Failed to process media URL");
+        setIsLoading(false);
+        return;
+      }
+      
       // Determine if the media is a video
-      let mediaType: "video" | "image" = "image";
+      const mediaType = determineMediaType(item);
       
-      if (typeof item === 'object') {
-        // Check if content_type or media_type is specified in the item
-        if (item.content_type === 'video' || item.media_type === 'video') {
-          mediaType = "video";
-        } else if (item.video_url || (item.video_urls && item.video_urls.length > 0)) {
-          mediaType = "video";
-        }
+      // If the mediaType is indeterminate, check content type from URL
+      if (mediaType === MediaType.UNKNOWN) {
+        const contentType = getContentType(processedUrl);
+        setIsVideo(contentType.startsWith('video/'));
+      } else {
+        setIsVideo(mediaType === MediaType.VIDEO);
       }
       
-      if (mediaType === "image") {
-        // Try to determine type from URL if not specified in item
-        const contentType = getContentType(mediaUrl);
-        if (contentType.startsWith('video/')) {
-          mediaType = "video";
-        }
-      }
-      
-      setIsVideo(mediaType === "video");
-      setUrl(mediaUrl);
+      setUrl(processedUrl);
     } catch (error: any) {
       console.error('Error processing media item:', error);
       setUrl(null);

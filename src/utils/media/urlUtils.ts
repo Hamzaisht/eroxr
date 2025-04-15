@@ -2,7 +2,92 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Get a clean version of a URL without query parameters
+ * Get the playable media URL from a media object
+ * @param media - Media object with potential URLs
+ * @returns The full, playable URL
+ */
+export const getPlayableMediaUrl = (media: any): string => {
+  if (!media) return '';
+  
+  // Handle direct string input
+  if (typeof media === 'string') {
+    return ensureFullUrl(media);
+  }
+  
+  // Extract URL from object based on available properties
+  const url = 
+    media.video_url || 
+    (Array.isArray(media.video_urls) && media.video_urls.length > 0 ? media.video_urls[0] : null) ||
+    (typeof media.media_url === 'string' ? media.media_url : null) ||
+    (Array.isArray(media.media_url) && media.media_url.length > 0 ? media.media_url[0] : null) ||
+    media.url ||
+    media.src ||
+    '';
+  
+  return ensureFullUrl(url || '');
+};
+
+/**
+ * Ensure the URL is a complete, usable URL
+ * @param url - The URL to check and possibly modify
+ * @returns A complete URL
+ */
+export const ensureFullUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // If already a complete URL or a data/blob URL, return as is
+  if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+  
+  // If it starts with a slash, remove it
+  const cleanPath = url.startsWith('/') ? url.substring(1) : url;
+  
+  // Determine the bucket from the path if possible
+  let bucket = 'media';
+  const possibleBuckets = ['stories', 'posts', 'videos', 'avatars', 'media', 'shorts'];
+  
+  for (const b of possibleBuckets) {
+    if (cleanPath.startsWith(`${b}/`) || cleanPath.includes(`/${b}/`)) {
+      bucket = b;
+      break;
+    }
+  }
+  
+  // Get the public URL using Supabase
+  try {
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(cleanPath);
+    
+    return data?.publicUrl || '';
+  } catch (error) {
+    console.error(`Failed to get public URL for ${url}:`, error);
+    return '';
+  }
+};
+
+/**
+ * Add cache busting parameter to URL
+ */
+export const addCacheBuster = (url: string): string => {
+  if (!url) return '';
+  
+  // Prevent recursive cache busting by checking for existing timestamp
+  if (url.includes('t=') && url.includes('&r=')) {
+    return url;
+  }
+  
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  
+  return url.includes('?') 
+    ? `${url}&t=${timestamp}&r=${random}` 
+    : `${url}?t=${timestamp}&r=${random}`;
+};
+
+/**
+ * Get clean URL by removing query parameters
  */
 export const getCleanUrl = (url: string): string => {
   if (!url) return '';
@@ -10,68 +95,17 @@ export const getCleanUrl = (url: string): string => {
 };
 
 /**
- * Add cache busting parameter to URL, but only if not already present
- * Uses a simpler approach to avoid URL corruption
+ * Check if a URL is accessible
  */
-export const addCacheBuster = (url: string): string => {
-  if (!url) return '';
-  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
-  
-  // If URL already has a cache buster, don't add another one
-  if (url.includes('v=') || url.includes('t=')) return url;
-  
-  const timestamp = Date.now();
-  const separator = url.includes('?') ? '&' : '?';
-  
-  return `${url}${separator}v=${timestamp}`;
-};
-
-/**
- * Get displayable media URL with cache busting
- * This is the main function for getting URLs that will work in media components
- */
-export const getDisplayableMediaUrl = (url: string | null | undefined): string => {
-  if (!url) return '';
-  
-  // If it's already a full URL (http, https, data, blob), just clean and return
-  if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) {
-    return addCacheBuster(getCleanUrl(url));
-  }
-  
-  // If it's a storage path, get the public URL
-  try {
-    // Determine bucket from path
-    let bucket = 'media';
-    if (url.includes('/posts/')) bucket = 'posts';
-    else if (url.includes('/stories/')) bucket = 'stories';
-    else if (url.includes('/avatars/')) bucket = 'avatars';
-    
-    console.log(`Getting storage URL for path: ${url} in bucket: ${bucket}`);
-    
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(url);
-      
-    return data?.publicUrl ? addCacheBuster(data.publicUrl) : '';
-  } catch (error) {
-    console.error('Failed to get storage URL:', error);
-    return '';
-  }
-};
-
-/**
- * Check if URL is accessible and get content type
- * Now with graceful fallback for CORS issues
- */
-export const checkUrlContentType = async (url: string): Promise<{ 
-  isValid: boolean;
-  contentType: string | null;
+export async function checkUrlAccessibility(url: string): Promise<{ 
+  accessible: boolean; 
+  contentType?: string;
   error?: string;
-}> => {
+}> {
   try {
     // For blob: and data: URLs, assume they're valid
     if (url.startsWith('blob:') || url.startsWith('data:')) {
-      return { isValid: true, contentType: null };
+      return { accessible: true };
     }
     
     // Perform a HEAD request to check validity
@@ -80,39 +114,16 @@ export const checkUrlContentType = async (url: string): Promise<{
       cache: 'no-store'
     });
     
-    // Even if content-type is missing, consider URL valid if status is OK
     return {
-      isValid: response.ok,
-      contentType: response.headers.get('content-type')
+      accessible: response.ok,
+      contentType: response.headers.get('content-type') || undefined
     };
   } catch (error) {
     console.warn('URL check failed, but will continue anyway:', url);
-    console.error(error);
-    
-    // Important: Return valid=true even if the check failed
-    // This allows content to load despite CORS issues with HEAD requests
+    // Return valid=true even if the check failed due to CORS issues
     return {
-      isValid: true,  // Assume valid despite error
-      contentType: null,
+      accessible: true, 
       error: error instanceof Error ? error.message : String(error)
     };
   }
-};
-
-/**
- * Get media URL from Supabase storage
- */
-export const getStorageUrl = async (path: string, bucket = 'media'): Promise<string | null> => {
-  if (!path) return null;
-  
-  try {
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
-      
-    return data?.publicUrl || null;
-  } catch (error) {
-    console.error('Failed to get storage URL:', error);
-    return null;
-  }
-};
+}
