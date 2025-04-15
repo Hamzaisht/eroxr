@@ -80,15 +80,15 @@ export const useNewMediaUpload = () => {
       // Create a unique path for the file
       const path = createUniqueFilePath(session.user.id, file);
       
-      // Upload the file
-      const url = await uploadFileToStorage(bucket, path, file);
+      // Upload the file - this returns UploadResult, not just a URL string
+      const result = await uploadFileToStorage(bucket, path, file);
       
       if (progressInterval) {
         clearInterval(progressInterval);
       }
       
-      if (!url) {
-        const error = "Failed to upload file";
+      if (!result.success || !result.url) {
+        const error = result.error || "Failed to upload file";
         setState({
           isUploading: false,
           progress: 0,
@@ -103,19 +103,20 @@ export const useNewMediaUpload = () => {
         return { success: false, url: null, error };
       }
       
-      // Upload successful
+      // Upload successful - extract the URL from the result
+      const uploadedUrl = result.url;
       setState({
         isUploading: false,
         progress: 100,
         error: null,
-        url
+        url: uploadedUrl
       });
       
       if (options.onSuccess) {
-        options.onSuccess(url);
+        options.onSuccess(uploadedUrl);
       }
       
-      return { success: true, url, error: null };
+      return { success: true, url: uploadedUrl, error: null };
     } catch (error: any) {
       // Clear the interval using the local progressInterval variable
       if (progressInterval) {

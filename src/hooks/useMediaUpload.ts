@@ -118,8 +118,8 @@ export const useMediaUpload = (defaultOptions: UploadOptions = {}): MediaUploadH
         }, 300);
       }
 
-      // Upload the file
-      const url = await uploadFileToStorage(bucket, filePath, file);
+      // Upload the file - this now returns UploadResult, not just a string
+      const result = await uploadFileToStorage(bucket, filePath, file);
 
       // Clear progress interval
       if (progressInterval) {
@@ -127,7 +127,7 @@ export const useMediaUpload = (defaultOptions: UploadOptions = {}): MediaUploadH
       }
 
       // Handle success
-      if (url) {
+      if (result.success && result.url) {
         setUploadState({
           isUploading: false,
           progress: 100,
@@ -141,19 +141,19 @@ export const useMediaUpload = (defaultOptions: UploadOptions = {}): MediaUploadH
           setTimeout(() => resetState(), mergedOptions.resetDelay || 3000);
         }
         
-        return { success: true, url };
+        return result;
       }
 
       // Handle failure
       setUploadState({
         isUploading: false,
         progress: 0,
-        error: 'Failed to upload file',
+        error: result.error || 'Failed to upload file',
         success: false,
         file: file
       });
       
-      return { success: false, error: 'Failed to upload file' };
+      return { success: false, error: result.error || 'Failed to upload file' };
     } catch (error: any) {
       // Handle error
       setUploadState({

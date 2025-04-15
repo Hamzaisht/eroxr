@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { createUniqueFilePath, uploadFileToStorage } from '@/utils/media/mediaUtils';
 
 interface UploadState {
@@ -57,14 +56,14 @@ export const usePostMediaUpload = () => {
         // Create unique path
         const path = createUniqueFilePath(session.user.id, file);
         
-        // Upload to storage
-        const url = await uploadFileToStorage('posts', path, file);
+        // Upload to storage - this returns UploadResult, not just a URL string
+        const result = await uploadFileToStorage('posts', path, file);
         
-        if (!url) {
+        if (!result.success || !result.url) {
           throw new Error(`Failed to upload file: ${file.name}`);
         }
         
-        uploadedUrls.push(url);
+        uploadedUrls.push(result.url);
       }
       
       // Success
