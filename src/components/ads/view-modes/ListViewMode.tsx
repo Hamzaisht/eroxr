@@ -91,6 +91,18 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
     }));
   };
 
+  const handleMediaClick = (media: string | MediaSource) => {
+    const url = typeof media === 'string' ? media : (
+      media.media_url || 
+      (media.media_urls && media.media_urls[0]) || 
+      media.video_url || 
+      (media.video_urls && media.video_urls[0]) || 
+      media.url || 
+      media.src
+    );
+    if (url) onMediaClick?.(url);
+  };
+
   useEffect(() => {
     return () => setHoveredAdId(null);
   }, [ads]);

@@ -19,9 +19,10 @@ import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 interface GridViewModeProps {
   ads: DatingAd[];
   isLoading?: boolean;
+  onMediaClick?: (url: string) => void;
 }
 
-export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
+export const GridViewMode = ({ ads, isLoading = false, onMediaClick }: GridViewModeProps) => {
   const [selectedAd, setSelectedAd] = useState<DatingAd | null>(null);
   const [hoveredAdId, setHoveredAdId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,6 +34,18 @@ export const GridViewMode = ({ ads, isLoading = false }: GridViewModeProps) => {
     if (ad.onTagClick) {
       ad.onTagClick(tag);
     }
+  };
+
+  const handleMediaClick = (media: string | MediaSource) => {
+    const url = typeof media === 'string' ? media : (
+      media.media_url || 
+      (media.media_urls && media.media_urls[0]) || 
+      media.video_url || 
+      (media.video_urls && media.video_urls[0]) || 
+      media.url || 
+      media.src
+    );
+    if (url) onMediaClick?.(url);
   };
 
   useEffect(() => {

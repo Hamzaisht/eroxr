@@ -1,433 +1,97 @@
-import { useState, useEffect } from "react";
-import { Lock, Trash2 } from "lucide-react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { MediaViewer } from "@/components/media/MediaViewer";
-import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import type { Post } from "@/integrations/supabase/types/post";
-import { DeleteConfirmDialog } from "@/components/feed/DeleteConfirmDialog";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import React, { useState, useCallback } from 'react';
+import { Masonry } from '@mui/lab';
+import { MediaSource } from '@/utils/media/types';
 
 interface MediaGridProps {
-  onImageClick: (url: string) => void;
+  media: (string | MediaSource)[];
+  onMediaClick?: (url: string) => void;
 }
 
-type MediaItem = {
-  id: string;
-  type: 'video' | 'image';
-  url: string;
-  isPremium: boolean;
-  width: number;
-  height: number;
-  creator_id: string;
-}
+const MediaGrid = ({ media, onMediaClick }: MediaGridProps) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-export const MediaGrid = ({ onImageClick }: MediaGridProps) => {
-  const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
-  const [deletePostId, setDeletePostId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const session = useSession();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const handleMouseEnter = useCallback((index: number) => {
+    setHoveredIndex(index);
+  }, []);
 
-  console.log('MediaGrid - User ID:', session?.user?.id);
+  const handleMouseLeave = useCallback(() => {
+    setHoveredIndex(null);
+  }, []);
 
-  useEffect(() => {
-    if (!session?.user?.id) return;
-
-    const channel = supabase
-      .channel('posts-channel')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'posts',
-          filter: `creator_id=eq.${session.user.id}`
-        },
-        (payload) => {
-          console.log('Realtime update received:', payload);
-          queryClient.invalidateQueries({ queryKey: ["profile-media", session.user.id] });
-          queryClient.invalidateQueries({ queryKey: ["posts"] });
-        }
-      )
-      .subscribe();
-
-    console.log('Subscribed to posts channel');
-
-    return () => {
-      console.log('Unsubscribing from posts channel');
-      supabase.removeChannel(channel);
-    };
-  }, [session?.user?.id, queryClient]);
-
-  const { data: mediaItems, isLoading, error } = useQuery<MediaItem[], Error>({
-    queryKey: ["profile-media", session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) throw new Error("No user ID");
-
-      console.log('Fetching media for user:', session.user.id);
-
-      const { data: posts, error } = await supabase
-        .from("posts")
-        .select(`
-          id,
-          media_url,
-          video_urls,
-          is_ppv,
-          created_at,
-          creator_id
-        `)
-        .eq("creator_id", session.user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching media:", error);
-        throw error;
-      }
-
-      console.log('Fetched posts:', posts);
-
-      if (!posts) return [];
-
-      const media = posts.flatMap((post: Post) => {
-        const mediaUrls = [
-          ...(post.media_url || []), 
-          ...(post.video_urls || [])
-        ].filter(Boolean);
-
-        return mediaUrls.map(url => ({
-          id: post.id,
-          type: url.toLowerCase().endsWith('.mp4') ? 'video' as const : 'image' as const,
-          url: url,
-          isPremium: post.is_ppv,
-          width: 1080,
-          height: 1350,
-          creator_id: post.creator_id
-        }));
-      });
-
-      console.log('Processed media items:', media);
-      return media;
-    },
-    enabled: !!session?.user?.id,
-    staleTime: 0,
-    gcTime: 0,
-    initialData: [] as MediaItem[],
-  });
-
-  const handleDelete = async (postId: string) => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to delete posts",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsDeleting(true);
-      setDeleteError(null);
-      console.log('Attempting to delete post:', postId);
-      
-      const { error: deleteError } = await supabase
-        .from('posts')
-        .delete()
-        .eq('id', postId)
-        .eq('creator_id', session.user.id);
-
-      if (deleteError) throw deleteError;
-
-      console.log('Post deleted successfully');
-
-      toast({
-        title: "Success",
-        description: "Post deleted successfully",
-      });
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["profile-media", session.user.id] }),
-        queryClient.invalidateQueries({ queryKey: ["posts"] }),
-        queryClient.invalidateQueries({ queryKey: ["eros"] }),
-        queryClient.invalidateQueries({ queryKey: ["eroboard"] })
-      ]);
-    } catch (err) {
-      console.error('Delete error:', err);
-      setDeleteError("Failed to delete post. Please try again.");
-      toast({
-        title: "Error",
-        description: "Failed to delete post",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
+  const handleVideoThumbnailClick = (videoUrl: string | MediaSource) => {
+    if (typeof videoUrl === 'string') {
+      onMediaClick?.(videoUrl);
+    } else {
+      const url = videoUrl.video_url || 
+        (videoUrl.video_urls && videoUrl.video_urls[0]) || 
+        videoUrl.media_url || 
+        (videoUrl.media_urls && videoUrl.media_urls[0]) || 
+        videoUrl.url || 
+        videoUrl.src;
+      if (url) onMediaClick?.(url);
     }
   };
-
-  const handleRetryDelete = () => {
-    if (deletePostId) {
-      setDeleteError(null);
-      handleDelete(deletePostId);
-    }
-  };
-
-  if (error) {
-    console.error("Media fetch error:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load media content. Please try again.",
-      variant: "destructive",
-    });
-    return (
-      <div className="text-center text-red-500 p-6">
-        Failed to load media content. Please try again later.
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-4">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-          <Skeleton key={i} className="aspect-[4/5] rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-
-  if (!mediaItems?.length) {
-    return (
-      <div className="text-center text-muted-foreground p-6 sm:p-12">
-        No media content yet
-      </div>
-    );
-  }
-
-  const bdMediaItems = mediaItems.filter(item => item.url.includes('dating-ads') || item.url.includes('dating-videos'));
-  const regularMediaItems = mediaItems.filter(item => !item.url.includes('dating-ads') && !item.url.includes('dating-videos'));
 
   return (
-    <>
-      {bdMediaItems.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4 px-4 bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
-            Body Contact Media
-          </h3>
-          <motion.div
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: { staggerChildren: 0.1 }
-              }
-            }}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-4"
+    <Masonry columns={{ xs: 2, sm: 3, md: 4 }} spacing={1}>
+      {media.map((item, index) => {
+        const isVideo = typeof item === 'string' ? 
+          item.toLowerCase().endsWith('.mp4') || item.toLowerCase().endsWith('.webm') :
+          item.media_type === 'video' || item.content_type === 'video';
+
+        const thumbnailUrl = typeof item === 'string' ? item :
+          item.media_url || (item.media_urls && item.media_urls[0]) ||
+          item.video_url || (item.video_urls && item.video_urls[0]) ||
+          item.url || item.src;
+
+        return (
+          <div
+            key={index}
+            className="relative"
+            onMouseEnter={() => handleMouseEnter(index)}
+            onMouseLeave={handleMouseLeave}
           >
-            {bdMediaItems.map((mediaItem, index) => {
-              const isOwner = session?.user?.id === mediaItem.creator_id;
-              
-              return (
-                <motion.div
-                  key={`bd-${mediaItem.id}-${index}`}
-                  variants={{
-                    hidden: { y: 20, opacity: 0 },
-                    show: { y: 0, opacity: 1 }
-                  }}
-                  className="relative aspect-[4/5] rounded-lg overflow-hidden group cursor-pointer"
-                >
-                  {isOwner && (
-                    <div 
-                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeletePostId(mediaItem.id);
-                      }}
-                    >
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-8 w-8 shadow-lg"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+            {isVideo ? (
+              <div
+                className="aspect-w-16 aspect-h-9 cursor-pointer"
+                onClick={() => handleVideoThumbnailClick(item)}
+              >
+                <img
+                  src={thumbnailUrl || undefined}
+                  alt={`Video thumbnail ${index + 1}`}
+                  className="object-cover rounded-lg"
+                />
+              </div>
+            ) : (
+              <div
+                className="aspect-w-1 aspect-h-1 cursor-pointer"
+                onClick={() => {
+                  if (typeof item === 'string') {
+                    onMediaClick?.(item);
+                  } else {
+                    const url = item.media_url || (item.media_urls && item.media_urls[0]) || item.url || item.src;
+                    if (url) onMediaClick?.(url);
+                  }
+                }}
+              >
+                <img
+                  src={thumbnailUrl || undefined}
+                  alt={`Image ${index + 1}`}
+                  className="object-cover rounded-lg"
+                />
+              </div>
+            )}
 
-                  <div 
-                    onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
-                    className="w-full h-full"
-                  >
-                    {mediaItem.type === 'video' ? (
-                      <video
-                        src={getPlayableMediaUrl({video_url: mediaItem.url})}
-                        className={cn(
-                          "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                          mediaItem.isPremium ? "blur-lg" : ""
-                        )}
-                        muted
-                        playsInline
-                        onError={(e) => {
-                          console.error("Video loading error:", e);
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={mediaItem.url}
-                        alt="Media content"
-                        className={cn(
-                          "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                          mediaItem.isPremium ? "blur-lg" : ""
-                        )}
-                        loading="lazy"
-                        onError={(e) => {
-                          console.error("Image loading error:", e);
-                          e.currentTarget.src = "/placeholder.svg";
-                        }}
-                      />
-                    )}
-                    
-                    {mediaItem.isPremium && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-                        <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
-                        <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
-                        <Button 
-                          size="sm"
-                          variant="secondary"
-                          className="mt-2 text-xs sm:text-sm"
-                        >
-                          Subscribe to Unlock
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </div>
-      )}
-
-      {regularMediaItems.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4 px-4">Regular Media</h3>
-          <motion.div
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: { staggerChildren: 0.1 }
-              }
-            }}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-4"
-          >
-            {regularMediaItems.map((mediaItem, index) => {
-              const isOwner = session?.user?.id === mediaItem.creator_id;
-              
-              return (
-                <motion.div
-                  key={`${mediaItem.id}-${index}`}
-                  variants={{
-                    hidden: { y: 20, opacity: 0 },
-                    show: { y: 0, opacity: 1 }
-                  }}
-                  className="relative aspect-[4/5] rounded-lg overflow-hidden group cursor-pointer"
-                >
-                  {isOwner && (
-                    <div 
-                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeletePostId(mediaItem.id);
-                      }}
-                    >
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-8 w-8 shadow-lg"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-
-                  <div 
-                    onClick={() => !mediaItem.isPremium && onImageClick(mediaItem.url)}
-                    className="w-full h-full"
-                  >
-                    {mediaItem.type === 'video' ? (
-                      <video
-                        src={getPlayableMediaUrl({video_url: mediaItem.url})}
-                        className={cn(
-                          "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                          mediaItem.isPremium ? "blur-lg" : ""
-                        )}
-                        muted
-                        playsInline
-                        onError={(e) => {
-                          console.error("Video loading error:", e);
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={mediaItem.url}
-                        alt="Media content"
-                        className={cn(
-                          "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
-                          mediaItem.isPremium ? "blur-lg" : ""
-                        )}
-                        loading="lazy"
-                        onError={(e) => {
-                          console.error("Image loading error:", e);
-                          e.currentTarget.src = "/placeholder.svg";
-                        }}
-                      />
-                    )}
-                    
-                    {mediaItem.isPremium && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-                        <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
-                        <p className="text-white font-medium text-xs sm:text-sm">Premium Content</p>
-                        <Button 
-                          size="sm"
-                          variant="secondary"
-                          className="mt-2 text-xs sm:text-sm"
-                        >
-                          Subscribe to Unlock
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </div>
-      )}
-
-      <MediaViewer 
-        media={selectedMedia}
-        onClose={() => setSelectedMedia(null)}
-      />
-
-      <DeleteConfirmDialog
-        open={!!deletePostId}
-        onOpenChange={(open) => !open && setDeletePostId(null)}
-        onConfirm={() => deletePostId && handleDelete(deletePostId)}
-        isDeleting={isDeleting}
-        error={deleteError}
-        onRetry={handleRetryDelete}
-      />
-    </>
+            {hoveredIndex === index && (
+              <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                {isVideo ? 'Play Video' : 'View Image'}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </Masonry>
   );
 };
+
+export default MediaGrid;
