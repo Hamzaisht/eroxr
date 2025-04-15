@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { MediaSource } from "@/utils/media/types";
 
 interface GridViewModeProps {
   ads: DatingAd[];
@@ -45,7 +46,7 @@ export const GridViewMode = ({ ads, isLoading = false, onMediaClick }: GridViewM
       media.url || 
       media.src
     );
-    if (url) onMediaClick?.(url);
+    if (url && onMediaClick) onMediaClick(url);
   };
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export const GridViewMode = ({ ads, isLoading = false, onMediaClick }: GridViewM
                       {hoveredAdId !== ad.id && (
                         <div className="absolute inset-0 z-10 bg-black">
                           <img
-                            src={getPlayableMediaUrl({media_url: ad.video_url})}
+                            src={ad.video_url ? getPlayableMediaUrl(ad.video_url) : undefined}
                             alt={ad.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {

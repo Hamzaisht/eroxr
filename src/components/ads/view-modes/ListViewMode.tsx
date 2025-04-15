@@ -14,13 +14,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { MediaSource } from "@/utils/media/types";
 
 interface ListViewModeProps {
   ads: DatingAd[];
   isLoading?: boolean;
+  onMediaClick?: (url: string) => void;
 }
 
-export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
+export const ListViewMode = ({ ads, isLoading = false, onMediaClick }: ListViewModeProps) => {
   const [selectedAd, setSelectedAd] = useState<DatingAd | null>(null);
   const [hoveredAdId, setHoveredAdId] = useState<string | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
@@ -100,7 +102,7 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
       media.url || 
       media.src
     );
-    if (url) onMediaClick?.(url);
+    if (url && onMediaClick) onMediaClick(url);
   };
 
   useEffect(() => {
@@ -165,7 +167,7 @@ export const ListViewMode = ({ ads, isLoading = false }: ListViewModeProps) => {
                         {hoveredAdId !== ad.id && (
                           <div className="absolute inset-0 z-10 bg-black">
                             <img
-                              src={getPlayableMediaUrl({media_url: ad.video_url})}
+                              src={ad.video_url ? getPlayableMediaUrl(ad.video_url) : undefined}
                               alt={ad.title}
                               className="w-full h-full object-cover"
                               onError={(e) => {

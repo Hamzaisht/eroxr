@@ -1,10 +1,9 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Image, Users, CircuitBoard, MessageCircle, Video } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreatorsFeed } from "@/components/CreatorsFeed";
-import { MediaGrid } from "./MediaGrid";
+import MediaGrid from "./MediaGrid";
 import { EmptyState } from "./EmptyState";
 import { useParams } from "react-router-dom";
 import { VideoProfileCarousel } from "@/components/ads/video-profile-carousel";
@@ -23,14 +22,12 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
 
   const isCurrentUserProfile = session?.user?.id === id;
   
-  // Fetch body contact ads for this specific profile - skip moderation status filter
   const { data: profileAds, isLoading: adsLoading } = useAdsQuery({
     userId: id,
     includeMyPendingAds: true,
     skipModeration: true
   });
   
-  // Fetch videos for this user
   const { data: videosData, isLoading: videosLoading } = useFeedQuery(id, 'shorts');
   const hasVideos = videosData?.pages?.[0]?.length > 0;
   
@@ -53,7 +50,7 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
       value: "media",
       label: "Media",
       icon: Image,
-      content: <MediaGrid onImageClick={() => {}} />
+      content: <MediaGrid media={[]} onMediaClick={() => {}} />
     },
     {
       value: "eros",
