@@ -1,4 +1,3 @@
-
 /**
  * Format-related utility functions for media handling
  */
@@ -69,4 +68,35 @@ export function formatRelativeTime(date: Date | string | number): string {
   
   const years = Math.floor(days / 365);
   return `${years} year${years > 1 ? 's' : ''} ago`;
+}
+
+/**
+ * Infer content type from file extension
+ * @param filename - The filename to check
+ * @returns The MIME type for the file
+ */
+export function inferContentTypeFromExtension(filename: string): string {
+  const extension = filename.split('.').pop()?.toLowerCase();
+  
+  switch (extension) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    case 'mp4':
+      return 'video/mp4';
+    case 'webm':
+      return 'video/webm';
+    case 'mov':
+      return 'video/quicktime';
+    case 'avi':
+      return 'video/x-msvideo';
+    default:
+      return 'application/octet-stream';
+  }
 }
