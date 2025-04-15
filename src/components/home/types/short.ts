@@ -1,20 +1,23 @@
 
-export interface Short {
+import { Creator } from '@/integrations/supabase/types/profile';
+
+export type Short = {
   id: string;
-  creator: {
-    username: string;
-    avatar_url: string | null;
-    id?: string;
-  };
-  creator_id?: string;
-  content: string;
-  video_urls: string[];
-  likes_count: number;
-  comments_count: number;
+  creator_id: string;
+  content?: string;
+  description?: string;
+  media_url?: string | null;
+  video_urls?: string[] | null;
+  likes_count: number | null;
+  comments_count: number | null;
+  created_at: string;
+  updated_at?: string;
+  visibility?: 'public' | 'subscribers_only';
   has_liked?: boolean;
   has_saved?: boolean;
-  created_at?: string;
+  has_purchased?: boolean;
   video_thumbnail_url?: string;
   view_count?: number;
-  share_count?: number;
-}
+  video_duration?: number;
+  creator?: Creator;
+};

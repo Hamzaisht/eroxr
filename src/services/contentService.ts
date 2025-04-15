@@ -1,206 +1,184 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Service for handling posts, shorts, and other content
+ * Service for handling content-related operations
  */
-export interface ContentActionResult {
-  success: boolean;
-  data?: any;
-  error?: string;
-}
-
-/**
- * Like a post or short
- */
-export async function likeContent(contentId: string, type = 'post'): Promise<ContentActionResult> {
-  try {
-    // Check if already liked
-    const { data: existingLike } = await supabase
-      .from('post_likes')
-      .select('*')
-      .eq('post_id', contentId)
-      .eq('user_id', supabase.auth.getUser().then(res => res.data.user?.id))
-      .single();
+export const ContentService = {
+  /**
+   * Track a view for a specific content item
+   */
+  async trackView(contentId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.rpc('increment_view_count', {
+        content_id: contentId
+      });
       
-    if (existingLike) {
-      // Unlike
-      const { error } = await supabase
-        .from('post_likes')
-        .delete()
-        .eq('id', existingLike.id);
-        
-      if (error) throw error;
+      if (error) {
+        console.error('Error tracking view:', error);
+        return false;
+      }
       
-      return { success: true, data: { liked: false } };
-    } else {
-      // Like
-      const { error } = await supabase
-        .from('post_likes')
-        .insert({ post_id: contentId });
-        
-      if (error) throw error;
-      
-      return { success: true, data: { liked: true } };
+      return true;
+    } catch (error) {
+      console.error('Error tracking view:', error);
+      return false;
     }
-  } catch (error: any) {
-    console.error(`Error ${existingLike ? 'unliking' : 'liking'} content:`, error);
-    return { 
-      success: false, 
-      error: error.message || `Failed to ${existingLike ? 'unlike' : 'like'} content` 
-    };
-  }
-}
-
-/**
- * Save a post or short
- */
-export async function saveContent(contentId: string, type = 'post'): Promise<ContentActionResult> {
-  try {
-    // Check if already saved
-    const { data: existingSave } = await supabase
-      .from('post_saves')
-      .select('*')
-      .eq('post_id', contentId)
-      .eq('user_id', supabase.auth.getUser().then(res => res.data.user?.id))
-      .single();
+  },
+  
+  /**
+   * Toggle like for a content item
+   */
+  async toggleLike(contentId: string, userId: string): Promise<{
+    success: boolean;
+    liked: boolean;
+    likesCount: number;
+  }> {
+    try {
+      // Check if the user has already liked this post
+      const { data: likeData, error: likeCheckError } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('post_id', contentId)
+        .eq('user_id', userId)
+        .single();
       
-    if (existingSave) {
-      // Unsave
-      const { error } = await supabase
-        .from('post_saves')
-        .delete()
-        .eq('id', existingSave.id);
+      if (likeCheckError && likeCheckError.code !== 'PGRST116') {
+        console.error('Error checking like status:', likeCheckError);
+        throw likeCheckError;
+      }
+      
+      const existingLike = likeData?.id;
+      
+      if (existingLike) {
+        // Unlike
+        const { error: deleteError } = await supabase
+          .from('likes')
+          .delete()
+          .eq('id', existingLike);
+          
+        if (deleteError) {
+          throw deleteError;
+        }
         
-      if (error) throw error;
-      
-      return { success: true, data: { saved: false } };
-    } else {
-      // Save
-      const { error } = await supabase
-        .from('post_saves')
-        .insert({ post_id: contentId });
+        // Decrement likes count
+        const { data: updateData, error: updateError } = await supabase.rpc(
+          'decrement_likes_count',
+          { post_id: contentId }
+        );
         
-      if (error) throw error;
-      
-      return { success: true, data: { saved: true } };
+        if (updateError) {
+          throw updateError;
+        }
+        
+        return {
+          success: true,
+          liked: false,
+          likesCount: updateData || 0
+        };
+      } else {
+        // Like
+        const { error: insertError } = await supabase
+          .from('likes')
+          .insert({
+            post_id: contentId,
+            user_id: userId
+          });
+          
+        if (insertError) {
+          throw insertError;
+        }
+        
+        // Increment likes count
+        const { data: updateData, error: updateError } = await supabase.rpc(
+          'increment_likes_count',
+          { post_id: contentId }
+        );
+        
+        if (updateError) {
+          throw updateError;
+        }
+        
+        return {
+          success: true,
+          liked: true,
+          likesCount: updateData || 1
+        };
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      return {
+        success: false,
+        liked: false,
+        likesCount: 0
+      };
     }
-  } catch (error: any) {
-    console.error(`Error ${existingSave ? 'unsaving' : 'saving'} content:`, error);
-    return { 
-      success: false, 
-      error: error.message || `Failed to ${existingSave ? 'unsave' : 'save'} content` 
-    };
-  }
-}
-
-/**
- * Track a view for a post or short
- */
-export async function trackView(contentId: string, type = 'post'): Promise<ContentActionResult> {
-  try {
-    const { error } = await supabase.rpc('increment_counter', {
-      row_id: contentId,
-      counter_name: 'view_count',
-      table_name: type
-    });
-    
-    if (error) throw error;
-    
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error tracking view:', error);
-    return { success: false, error: error.message || 'Failed to track view' };
-  }
-}
-
-/**
- * Track a share for a post or short
- */
-export async function trackShare(contentId: string, type = 'post'): Promise<ContentActionResult> {
-  try {
-    const { error } = await supabase.rpc('increment_counter', {
-      row_id: contentId,
-      counter_name: 'share_count',
-      table_name: type
-    });
-    
-    if (error) throw error;
-    
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error tracking share:', error);
-    return { success: false, error: error.message || 'Failed to track share' };
-  }
-}
-
-/**
- * Delete content (post or short)
- */
-export async function deleteContent(contentId: string, type = 'post'): Promise<ContentActionResult> {
-  try {
-    const { error } = await supabase
-      .from(type === 'post' ? 'posts' : 'posts') // Using posts table for both types since shorts are in posts
-      .delete()
-      .eq('id', contentId);
+  },
+  
+  /**
+   * Toggle save for a content item
+   */
+  async toggleSave(contentId: string, userId: string): Promise<{
+    success: boolean;
+    saved: boolean;
+  }> {
+    try {
+      // Check if the user has already saved this post
+      const { data: saveData, error: saveCheckError } = await supabase
+        .from('saved_items')
+        .select('id')
+        .eq('post_id', contentId)
+        .eq('user_id', userId)
+        .single();
       
-    if (error) throw error;
-    
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error deleting content:', error);
-    return { success: false, error: error.message || 'Failed to delete content' };
-  }
-}
-
-/**
- * Add a comment to a post or short
- */
-export async function addComment(
-  contentId: string, 
-  content: string, 
-  type = 'post'
-): Promise<ContentActionResult> {
-  try {
-    const { data, error } = await supabase
-      .from('comments')
-      .insert({ 
-        post_id: contentId, 
-        content
-      })
-      .select('*, profiles(username, avatar_url)')
-      .single();
+      if (saveCheckError && saveCheckError.code !== 'PGRST116') {
+        console.error('Error checking save status:', saveCheckError);
+        throw saveCheckError;
+      }
       
-    if (error) throw error;
-    
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error adding comment:', error);
-    return { success: false, error: error.message || 'Failed to add comment' };
-  }
-}
-
-/**
- * Get comments for a post or short
- */
-export async function getComments(
-  contentId: string,
-  type = 'post',
-  options = { limit: 20, page: 0 }
-): Promise<ContentActionResult> {
-  try {
-    const { data, error } = await supabase
-      .from('comments')
-      .select('*, profiles(username, avatar_url)')
-      .eq('post_id', contentId)
-      .order('created_at', { ascending: false })
-      .range(options.page * options.limit, (options.page + 1) * options.limit - 1);
+      const existingSave = saveData?.id;
       
-    if (error) throw error;
-    
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error fetching comments:', error);
-    return { success: false, error: error.message || 'Failed to fetch comments' };
+      if (existingSave) {
+        // Unsave
+        const { error: deleteError } = await supabase
+          .from('saved_items')
+          .delete()
+          .eq('id', existingSave);
+          
+        if (deleteError) {
+          throw deleteError;
+        }
+        
+        return {
+          success: true,
+          saved: false
+        };
+      } else {
+        // Save
+        const { error: insertError } = await supabase
+          .from('saved_items')
+          .insert({
+            post_id: contentId,
+            user_id: userId
+          });
+          
+        if (insertError) {
+          throw insertError;
+        }
+        
+        return {
+          success: true,
+          saved: true
+        };
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      return {
+        success: false,
+        saved: false
+      };
+    }
   }
-}
+};
+
+export default ContentService;
