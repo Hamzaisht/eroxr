@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "./use-toast";
-import * as contentService from "@/services/contentService";
+import { ContentService } from "@/services/contentService";
 
 /**
  * Hook for interacting with posts, shorts, and other content
@@ -31,7 +31,7 @@ export const useContent = (contentType: 'post' | 'short' = 'post') => {
       setIsLoading(true);
       setError(null);
       
-      const result = await contentService.likeContent(contentId, contentType);
+      const result = await ContentService.likeContent(contentId, contentType);
       
       if (!result.success) {
         handleError(result.error || 'Failed to like content', 'liking content');
@@ -55,7 +55,7 @@ export const useContent = (contentType: 'post' | 'short' = 'post') => {
       setIsLoading(true);
       setError(null);
       
-      const result = await contentService.saveContent(contentId, contentType);
+      const result = await ContentService.saveContent(contentId, contentType);
       
       if (!result.success) {
         handleError(result.error || 'Failed to save content', 'saving content');
@@ -78,7 +78,7 @@ export const useContent = (contentType: 'post' | 'short' = 'post') => {
     try {
       setError(null);
       
-      const result = await contentService.trackView(contentId, contentType);
+      const result = await ContentService.trackView(contentId, contentType);
       
       if (!result.success) {
         console.error('Failed to track view:', result.error);
@@ -95,7 +95,7 @@ export const useContent = (contentType: 'post' | 'short' = 'post') => {
     try {
       setError(null);
       
-      const result = await contentService.trackShare(contentId, contentType);
+      const result = await ContentService.trackShare(contentId, contentType);
       
       if (!result.success) {
         console.error('Failed to track share:', result.error);
@@ -113,7 +113,7 @@ export const useContent = (contentType: 'post' | 'short' = 'post') => {
       setIsLoading(true);
       setError(null);
       
-      const result = await contentService.deleteContent(contentId, contentType);
+      const result = await ContentService.deleteContent(contentId, contentType);
       
       if (!result.success) {
         handleError(result.error || 'Failed to delete content', 'deleting content');

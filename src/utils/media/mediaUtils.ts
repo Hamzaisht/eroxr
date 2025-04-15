@@ -1,4 +1,3 @@
-
 /**
  * Comprehensive media utilities for handling URLs, types, and processing
  */
@@ -177,7 +176,7 @@ export async function checkUrlAccessibility(url: string): Promise<{
 /**
  * Get media URL from Supabase storage
  */
-export async function getStorageUrl(path: string, bucket = 'media'): string | null {
+export async function getStorageUrl(path: string, bucket = 'media'): Promise<string | null> {
   if (!path) return null;
   
   try {
@@ -267,7 +266,7 @@ export function inferContentTypeFromExtension(filename: string): string {
 /**
  * Get content type from a file or URL
  */
-export function getContentType(fileOrUrl: File | string): "video" | "image" {
+export function getContentType(fileOrUrl: File | string): string {
   if (typeof fileOrUrl !== 'string') {
     return fileOrUrl.type.startsWith('video/') ? 'video' : 'image';
   }

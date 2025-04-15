@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -176,6 +175,180 @@ export const ContentService = {
       return {
         success: false,
         saved: false
+      };
+    }
+  },
+  
+  /**
+   * Like/unlike a content item with content type
+   */
+  async likeContent(contentId: string, contentType: string = 'post'): Promise<{
+    success: boolean;
+    data?: { liked: boolean; likesCount: number };
+    error?: string;
+  }> {
+    try {
+      // Get current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not authenticated'
+        };
+      }
+      
+      // Use the existing toggle like functionality
+      const result = await this.toggleLike(contentId, user.id);
+      
+      if (!result.success) {
+        return {
+          success: false,
+          error: 'Failed to toggle like status'
+        };
+      }
+      
+      return {
+        success: true,
+        data: {
+          liked: result.liked,
+          likesCount: result.likesCount
+        }
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  },
+  
+  /**
+   * Save/unsave a content item with content type
+   */
+  async saveContent(contentId: string, contentType: string = 'post'): Promise<{
+    success: boolean;
+    data?: { saved: boolean };
+    error?: string;
+  }> {
+    try {
+      // Get current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not authenticated'
+        };
+      }
+      
+      // Use the existing toggle save functionality
+      const result = await this.toggleSave(contentId, user.id);
+      
+      if (!result.success) {
+        return {
+          success: false,
+          error: 'Failed to toggle save status'
+        };
+      }
+      
+      return {
+        success: true,
+        data: {
+          saved: result.saved
+        }
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  },
+  
+  /**
+   * Track a view for a content item with content type
+   */
+  async trackView(contentId: string, contentType: string = 'post'): Promise<{
+    success: boolean;
+    error?: string;
+  }> {
+    try {
+      // Use the existing track view functionality
+      const success = await this.trackView(contentId);
+      
+      return {
+        success
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  },
+  
+  /**
+   * Track a share for a content item with content type
+   */
+  async trackShare(contentId: string, contentType: string = 'post'): Promise<{
+    success: boolean;
+    error?: string;
+  }> {
+    try {
+      // Implement share tracking
+      const { error } = await supabase
+        .from('posts')
+        .update({ 
+          share_count: supabase.rpc('increment', { count: 1 }),
+          last_engagement_at: new Date().toISOString()
+        })
+        .eq('id', contentId);
+        
+      if (error) {
+        throw error;
+      }
+      
+      return {
+        success: true
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  },
+  
+  /**
+   * Delete a content item with content type
+   */
+  async deleteContent(contentId: string, contentType: string = 'post'): Promise<{
+    success: boolean;
+    error?: string;
+  }> {
+    try {
+      const { error } = await supabase
+        .from(contentType === 'post' ? 'posts' : 'posts')
+        .delete()
+        .eq('id', contentId);
+        
+      if (error) {
+        throw error;
+      }
+      
+      return {
+        success: true
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        success: false,
+        error: errorMessage
       };
     }
   }
