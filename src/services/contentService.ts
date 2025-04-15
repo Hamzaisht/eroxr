@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -7,7 +8,7 @@ export const ContentService = {
   /**
    * Track a view for a specific content item
    */
-  async trackView(contentId: string): Promise<boolean> {
+  async trackViewCount(contentId: string): Promise<boolean> {
     try {
       const { error } = await supabase.rpc('increment_view_count', {
         content_id: contentId
@@ -276,8 +277,8 @@ export const ContentService = {
     error?: string;
   }> {
     try {
-      // Use the existing track view functionality
-      const success = await this.trackView(contentId);
+      // Use the trackViewCount functionality
+      const success = await this.trackViewCount(contentId);
       
       return {
         success

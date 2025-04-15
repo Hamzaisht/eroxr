@@ -73,7 +73,10 @@ export const NewMediaRenderer = ({
       
       if (mediaType === "image") {
         // Try to determine type from URL if not specified in item
-        mediaType = getContentType(mediaUrl);
+        const contentType = getContentType(mediaUrl);
+        if (contentType.startsWith('video/')) {
+          mediaType = "video";
+        }
       }
       
       setIsVideo(mediaType === "video");
