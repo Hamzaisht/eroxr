@@ -1,154 +1,137 @@
 
-// Common file types
+/**
+ * File validation utilities
+ */
+
+// Common MIME types for images
 export const SUPPORTED_IMAGE_TYPES = [
   'image/jpeg',
-  'image/jpg',
   'image/png',
   'image/gif',
   'image/webp',
-  'image/svg+xml',
-  'image/avif'
+  'image/heic',
+  'image/heif'
 ];
 
+// Common MIME types for videos
 export const SUPPORTED_VIDEO_TYPES = [
   'video/mp4',
   'video/webm',
   'video/quicktime',
   'video/x-msvideo',
-  'video/x-ms-wmv',
-  'video/mpeg'
+  'video/x-ms-wmv'
 ];
 
+// Common MIME types for audio
 export const SUPPORTED_AUDIO_TYPES = [
   'audio/mpeg',
-  'audio/mp3',
   'audio/wav',
   'audio/ogg',
-  'audio/aac',
-  'audio/webm'
-];
-
-export const SUPPORTED_DOCUMENT_TYPES = [
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'text/plain'
+  'audio/webm',
+  'audio/mp3',
+  'audio/aac'
 ];
 
 /**
- * Check if a file is an image
- * @param file File to check
- * @returns boolean
+ * Check if a file is a valid image
+ * @param file - The file to check
+ * @returns true if the file is a valid image
  */
-export const isImageFile = (file: File): boolean => {
+export function isImageFile(file: File): boolean {
   return SUPPORTED_IMAGE_TYPES.includes(file.type);
-};
+}
 
 /**
- * Check if a file is a video
- * @param file File to check
- * @returns boolean
+ * Check if a file is a valid video
+ * @param file - The file to check
+ * @returns true if the file is a valid video
  */
-export const isVideoFile = (file: File): boolean => {
+export function isVideoFile(file: File): boolean {
   return SUPPORTED_VIDEO_TYPES.includes(file.type);
-};
+}
 
 /**
- * Check if a file is an audio file
- * @param file File to check
- * @returns boolean
+ * Check if a file is a valid audio file
+ * @param file - The file to check
+ * @returns true if the file is a valid audio
  */
-export const isAudioFile = (file: File): boolean => {
+export function isAudioFile(file: File): boolean {
   return SUPPORTED_AUDIO_TYPES.includes(file.type);
-};
-
-/**
- * Check if a file is a document
- * @param file File to check
- * @returns boolean
- */
-export const isDocumentFile = (file: File): boolean => {
-  return SUPPORTED_DOCUMENT_TYPES.includes(file.type);
-};
+}
 
 /**
  * Validate file size
- * @param file File to check
- * @param maxSizeMB Maximum size in MB
- * @returns boolean
+ * @param file - The file to validate
+ * @param maxSizeInMB - Maximum file size in MB
+ * @returns An object with validation result and optional error message
  */
-export const validateFileSize = (file: File, maxSizeMB: number): boolean => {
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
-  return file.size <= maxSizeBytes;
-};
-
-/**
- * Validate file type
- * @param file File to check
- * @param allowedTypes Array of allowed MIME types
- * @returns boolean
- */
-export const validateFileType = (file: File, allowedTypes: string[]): boolean => {
-  return allowedTypes.includes(file.type);
-};
-
-/**
- * Get appropriate error message for validation failures
- * @param file File that failed validation
- * @param maxSizeMB Maximum size in MB
- * @param allowedTypes Array of allowed MIME types
- * @returns Error message string
- */
-export const getValidationErrorMessage = (
-  file: File,
-  maxSizeMB: number,
-  allowedTypes: string[]
-): string => {
-  if (!validateFileSize(file, maxSizeMB)) {
-    return `File too large. Maximum size is ${maxSizeMB}MB.`;
-  }
+export function validateFileSize(file: File, maxSizeInMB: number = 100): {
+  valid: boolean;
+  message?: string;
+} {
+  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
   
-  if (!validateFileType(file, allowedTypes)) {
-    return 'File type not supported.';
-  }
-  
-  return 'Invalid file.';
-};
-
-/**
- * Full file validation with all checks
- * @param file File to validate
- * @param options Validation options
- * @returns Object with validation result and error message
- */
-export const validateFile = (
-  file: File,
-  options: {
-    maxSizeMB: number;
-    allowedTypes: string[];
-  }
-): { valid: boolean; message?: string } => {
-  if (!file) {
-    return { valid: false, message: 'No file provided.' };
-  }
-  
-  if (!validateFileSize(file, options.maxSizeMB)) {
-    return { 
-      valid: false, 
-      message: `File too large. Maximum size is ${options.maxSizeMB}MB.` 
-    };
-  }
-  
-  if (!validateFileType(file, options.allowedTypes)) {
-    return { 
-      valid: false, 
-      message: 'File type not supported.' 
+  if (file.size > maxSizeInBytes) {
+    return {
+      valid: false,
+      message: `File size exceeds the maximum allowed size of ${maxSizeInMB}MB`
     };
   }
   
   return { valid: true };
-};
+}
+
+/**
+ * Validate file type
+ * @param file - The file to validate
+ * @param allowedTypes - Array of allowed MIME types
+ * @returns An object with validation result and optional error message
+ */
+export function validateFileType(file: File, allowedTypes: string[]): {
+  valid: boolean;
+  message?: string;
+} {
+  if (!allowedTypes.includes(file.type)) {
+    return {
+      valid: false,
+      message: `File type not allowed: ${file.type}`
+    };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Comprehensive file validation
+ * @param file - The file to validate
+ * @param options - Validation options
+ * @returns An object with validation result and optional error message
+ */
+export function validateFile(
+  file: File,
+  options: {
+    maxSizeInMB?: number;
+    allowedTypes?: string[];
+  } = {}
+): {
+  valid: boolean;
+  message?: string;
+} {
+  // Check file size
+  if (options.maxSizeInMB) {
+    const sizeValidation = validateFileSize(file, options.maxSizeInMB);
+    if (!sizeValidation.valid) {
+      return sizeValidation;
+    }
+  }
+  
+  // Check file type
+  if (options.allowedTypes && options.allowedTypes.length > 0) {
+    const typeValidation = validateFileType(file, options.allowedTypes);
+    if (!typeValidation.valid) {
+      return typeValidation;
+    }
+  }
+  
+  return { valid: true };
+}

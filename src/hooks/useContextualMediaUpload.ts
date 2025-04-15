@@ -2,7 +2,7 @@
 import { useMediaUpload } from './useMediaUpload';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { UploadResult } from '@/utils/mediaUtils';
+import { UploadResult } from '@/utils/media/mediaUtils';
 
 type MediaContext = 'post' | 'story' | 'message' | 'short' | 'avatar';
 
@@ -24,7 +24,7 @@ export const useContextualMediaUpload = (context: MediaContext) => {
         description: "Please sign in to upload media.",
         variant: "destructive"
       });
-      return { success: false, url: undefined, error: "Not authenticated" };
+      return { success: false, error: "Not authenticated" };
     }
     
     try {
@@ -51,7 +51,7 @@ export const useContextualMediaUpload = (context: MediaContext) => {
         description: error.message || "An error occurred during upload.",
         variant: "destructive"
       });
-      return { success: false, url: undefined, error: error.message || "Unknown error" };
+      return { success: false, error: error.message || "Unknown error" };
     }
   };
 

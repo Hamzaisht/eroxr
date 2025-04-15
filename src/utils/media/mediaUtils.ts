@@ -44,9 +44,9 @@ export function inferContentTypeFromExtension(filename: string): string {
 
 /**
  * Upload a file to Supabase storage
+ * @param bucket The bucket to upload to
+ * @param path The path within the bucket
  * @param file The file to upload
- * @param userId The user ID
- * @param options Upload options
  */
 export async function uploadFileToStorage(
   bucket: string, 

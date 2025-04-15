@@ -1,152 +1,243 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef } from 'react';
+import { Upload, X, AlertCircle, Image, FileVideo } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Upload, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useNewMediaUpload } from "@/hooks/useNewMediaUpload";
+import { Progress } from "@/components/ui/progress";
+import { useMediaUpload } from '@/hooks/useMediaUpload';
+import { useFilePreview } from '@/hooks/useFilePreview';
+import { isVideoFile, isImageFile, SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '@/utils/upload/validators';
 
-interface MediaUploaderProps {
-  context: "post" | "story" | "message" | "short" | "profile" | "avatar";
-  onComplete: (url: string) => void;
-  acceptTypes?: string;
+export interface MediaUploaderProps {
+  /**
+   * Function called when upload completes successfully
+   */
+  onComplete?: (url: string) => void;
+  
+  /**
+   * Function called when upload fails
+   */
+  onError?: (error: string) => void;
+  
+  /**
+   * Content type category ('story', 'post', etc)
+   */
+  context?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
+  
+  /**
+   * Maximum file size in MB
+   */
+  maxSizeInMB?: number;
+  
+  /**
+   * Allow only specific media types
+   */
+  mediaTypes?: 'image' | 'video' | 'both';
+  
+  /**
+   * Custom button text
+   */
   buttonText?: string;
-  maxSizeMB?: number;
+  
+  /**
+   * Button variant
+   */
+  buttonVariant?: 'default' | 'outline' | 'secondary' | 'ghost';
+  
+  /**
+   * Additional CSS class for the container
+   */
+  className?: string;
+
+  /**
+   * Whether to show media preview
+   */
+  showPreview?: boolean;
+
+  /**
+   * Whether to auto-upload on file selection
+   */
+  autoUpload?: boolean;
 }
 
-export const MediaUploader: React.FC<MediaUploaderProps> = ({
-  context,
+export const MediaUploader = ({
   onComplete,
-  acceptTypes = "image/*,video/*",
-  buttonText = "Upload Media",
-  maxSizeMB = 100
-}) => {
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  onError,
+  context = 'generic',
+  maxSizeInMB = 100,
+  mediaTypes = 'both',
+  buttonText = 'Upload Media',
+  buttonVariant = 'default',
+  className = '',
+  showPreview = true,
+  autoUpload = true
+}: MediaUploaderProps) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
-  const { uploadMedia, state } = useNewMediaUpload();
+  
+  const allowedTypes = (() => {
+    if (mediaTypes === 'image') return SUPPORTED_IMAGE_TYPES;
+    if (mediaTypes === 'video') return SUPPORTED_VIDEO_TYPES;
+    return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
+  })();
+  
+  const uploadOptions = {
+    contentCategory: context,
+    maxSizeInMB,
+    allowedTypes,
+    autoResetOnCompletion: true,
+    resetDelay: 3000
+  };
+  
+  const { 
+    uploadMedia, 
+    uploadState: { isUploading, progress, error, success },
+    validateFile 
+  } = useMediaUpload(uploadOptions);
+  
+  const { 
+    previewUrl, 
+    isLoading: previewLoading, 
+    error: previewError,
+    clearPreview
+  } = useFilePreview(selectedFile);
   
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Check file size
-    const maxSize = maxSizeMB * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast({
-        title: "File too large",
-        description: `File size must be less than ${maxSizeMB}MB`,
-        variant: "destructive"
-      });
+    const validation = validateFile(file);
+    if (!validation.valid) {
+      if (onError) onError(validation.message || "Invalid file");
       return;
     }
     
-    // Create preview
-    setIsPreviewLoading(true);
-    try {
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewUrl(objectUrl);
-      
-      // Upload to storage
-      const result = await uploadMedia(file, {
-        bucket: context,
-        onSuccess: (url) => {
-          onComplete(url);
-        }
-      });
-      
-      if (!result.success) {
-        throw new Error(result.error || "Upload failed");
-      }
-    } catch (error: any) {
-      toast({
-        title: "Upload error",
-        description: error.message || "Failed to upload media",
-        variant: "destructive"
-      });
-    } finally {
-      setIsPreviewLoading(false);
+    setSelectedFile(file);
+    
+    if (autoUpload) {
+      handleUpload(file);
     }
   };
   
-  const clearPreview = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const handleUploadClick = async () => {
+    if (selectedFile) {
+      handleUpload(selectedFile);
     }
   };
-
+  
+  const handleUpload = async (file: File) => {
+    const result = await uploadMedia(file);
+    
+    if (result.success && result.url) {
+      if (onComplete) onComplete(result.url);
+    } else {
+      if (onError) onError(result.error || "Upload failed");
+    }
+  };
+  
+  const handleClear = () => {
+    setSelectedFile(null);
+    clearPreview();
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
   return (
-    <div>
+    <div className={`relative space-y-4 ${className}`}>
       <input
-        type="file"
-        accept={acceptTypes}
         ref={fileInputRef}
+        id="media-upload"
+        type="file"
         className="hidden"
+        accept={allowedTypes.join(',')}
         onChange={handleFileSelect}
-        disabled={state.isUploading}
+        disabled={isUploading}
       />
       
-      {previewUrl && (
-        <div className="relative mb-4">
-          {state.isUploading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-md z-10">
-              <Loader2 className="h-8 w-8 animate-spin text-white" />
-              <p className="text-white mt-2">{state.progress}%</p>
-            </div>
-          )}
-          
-          {state.error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-md z-10">
-              <p className="text-red-400">{state.error}</p>
-              <Button variant="destructive" onClick={clearPreview} className="mt-2">
-                Try Again
-              </Button>
-            </div>
-          )}
-          
+      {showPreview && selectedFile && previewUrl && (
+        <div className="relative border rounded-md overflow-hidden bg-black/5">
           <Button
-            variant="destructive"
+            variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 z-20"
-            onClick={clearPreview}
-            disabled={state.isUploading}
+            className="absolute top-2 right-2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full"
+            onClick={handleClear}
+            disabled={isUploading}
           >
-            <X className="h-4 w-4" />
+            <X size={16} />
           </Button>
           
-          {previewUrl.endsWith(".mp4") || previewUrl.endsWith(".webm") || previewUrl.endsWith(".mov") ? (
-            <video
-              src={previewUrl}
-              className="w-full h-48 object-contain bg-black rounded-md"
+          {isImageFile(selectedFile) ? (
+            <img 
+              src={previewUrl} 
+              alt="Preview" 
+              className="w-full h-auto max-h-64 object-contain"
+            />
+          ) : isVideoFile(selectedFile) ? (
+            <video 
+              src={previewUrl} 
+              className="w-full h-auto max-h-64"
               controls
             />
           ) : (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="w-full h-48 object-contain bg-black rounded-md"
-            />
+            <div className="flex items-center justify-center h-32 bg-muted">
+              <p className="text-sm text-muted-foreground">
+                {selectedFile.name}
+              </p>
+            </div>
           )}
         </div>
       )}
       
-      {!previewUrl && (
+      {!selectedFile ? (
         <Button
-          type="button"
+          variant={buttonVariant}
           onClick={() => fileInputRef.current?.click()}
-          disabled={state.isUploading}
+          disabled={isUploading}
+          className="w-full h-16"
         >
-          {state.isUploading ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Upload className="h-4 w-4 mr-2" />
-          )}
-          {buttonText}
+          <div className="flex flex-col items-center justify-center">
+            <Upload className="h-5 w-5 mb-1" />
+            <span className="text-sm">{buttonText}</span>
+            <span className="text-xs text-muted-foreground mt-1">
+              {mediaTypes === 'image' ? 'Images' : 
+               mediaTypes === 'video' ? 'Videos' :
+               'Images and videos'}
+              {` (max ${maxSizeInMB}MB)`}
+            </span>
+          </div>
         </Button>
+      ) : !autoUpload && !isUploading ? (
+        <Button
+          variant="default"
+          onClick={handleUploadClick}
+          disabled={isUploading}
+          className="w-full"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Upload {selectedFile.name}
+        </Button>
+      ) : null}
+      
+      {isUploading && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Uploading...
+            </span>
+            <span className="text-sm font-medium">
+              {Math.round(progress)}%
+            </span>
+          </div>
+          <Progress value={progress} />
+        </div>
+      )}
+      
+      {error && (
+        <div className="flex items-center gap-2 text-destructive text-sm p-2 bg-destructive/10 rounded-md">
+          <AlertCircle className="h-4 w-4" />
+          <span>{error}</span>
+        </div>
       )}
     </div>
   );

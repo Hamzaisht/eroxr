@@ -1,142 +1,72 @@
 
-import { MediaType } from "./types";
+/**
+ * Format-related utility functions for media handling
+ */
 
 /**
- * Determine media type from an item or URL
+ * Format file size in human-readable format
  */
-export function determineMediaType(item: any): MediaType {
-  // Handle direct URL string
-  if (typeof item === 'string') {
-    const url = item.toLowerCase();
-    if (url.match(/\.(mp4|webm|mov|avi)($|\?)/)) return MediaType.VIDEO;
-    if (url.match(/\.(jpe?g|png|gif|webp|avif|svg)($|\?)/)) return MediaType.IMAGE;
-    if (url.match(/\.(mp3|wav|ogg|aac)($|\?)/)) return MediaType.AUDIO;
-    if (url.includes('/videos/') || url.includes('/shorts/')) return MediaType.VIDEO;
-    return MediaType.UNKNOWN;
-  }
-
-  // Handle object
-  if (!item) return MediaType.UNKNOWN;
-
-  // Check explicit media type if available
-  if (item.media_type === 'video' || item.content_type === 'video') {
-    return MediaType.VIDEO;
-  }
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
   
-  if (item.media_type === 'image' || item.content_type === 'image') {
-    return MediaType.IMAGE;
-  }
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
   
-  if (item.media_type === 'audio' || item.content_type === 'audio') {
-    return MediaType.AUDIO;
-  }
-
-  // Check URL presence
-  if (item.video_url) return MediaType.VIDEO;
-  
-  // Check media_url format if it exists
-  if (item.media_url) {
-    if (typeof item.media_url === 'string') {
-      return determineMediaType(item.media_url);
-    } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
-      return determineMediaType(item.media_url[0]);
-    }
-  }
-
-  return MediaType.UNKNOWN;
+  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 /**
- * Extract the appropriate media URL from an item
+ * Format duration in human-readable format
  */
-export function extractMediaUrl(item: any): string | null {
-  // Handle direct string
-  if (typeof item === 'string') return item;
+export function formatDuration(seconds: number): string {
+  if (isNaN(seconds) || seconds < 0) return '0:00';
   
-  if (!item) return null;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
   
-  // Get the appropriate URL based on media type
-  const mediaType = determineMediaType(item);
-  
-  if (mediaType === MediaType.VIDEO && item.video_url) {
-    return item.video_url;
-  }
-  
-  if (item.media_url) {
-    if (typeof item.media_url === 'string') {
-      return item.media_url;
-    } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
-      return item.media_url[0];
-    }
-  }
-  
-  return null;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
 /**
- * Get content type from a file or URL
+ * Format date in relative time (e.g., "2 hours ago")
  */
-export function getContentType(fileOrUrl: File | string): string {
-  if (typeof fileOrUrl !== 'string') {
-    return fileOrUrl.type;
+export function formatRelativeTime(date: Date | string | number): string {
+  const now = new Date();
+  const givenDate = new Date(date);
+  
+  const diffInSeconds = Math.floor((now.getTime() - givenDate.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) {
+    return 'just now';
   }
   
-  const url = fileOrUrl.toLowerCase();
-  
-  if (url.endsWith('.jpg') || url.endsWith('.jpeg')) {
-    return 'image/jpeg';
-  } else if (url.endsWith('.png')) {
-    return 'image/png';
-  } else if (url.endsWith('.gif')) {
-    return 'image/gif';
-  } else if (url.endsWith('.webp')) {
-    return 'image/webp';
-  } else if (url.endsWith('.svg')) {
-    return 'image/svg+xml';
-  } else if (url.endsWith('.mp4')) {
-    return 'video/mp4';
-  } else if (url.endsWith('.webm')) {
-    return 'video/webm';
-  } else if (url.endsWith('.mov') || url.endsWith('.qt')) {
-    return 'video/quicktime';
-  } else if (url.endsWith('.avi')) {
-    return 'video/x-msvideo';
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
   }
   
-  // For URLs without file extensions, check for common video patterns
-  if (url.includes('/video/') || url.includes('videos/')) {
-    return 'video/mp4';
-  } 
-  
-  // Default to image for media URLs
-  return 'image/jpeg';
-}
-
-/**
- * Infer content type from file extension
- */
-export function inferContentTypeFromExtension(filename: string): string {
-  const extension = filename.split('.').pop()?.toLowerCase();
-  
-  switch (extension) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'gif':
-      return 'image/gif';
-    case 'webp':
-      return 'image/webp';
-    case 'mp4':
-      return 'video/mp4';
-    case 'webm':
-      return 'video/webm';
-    case 'mov':
-      return 'video/quicktime';
-    case 'avi':
-      return 'video/x-msvideo';
-    default:
-      return 'application/octet-stream';
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
   }
+  
+  const days = Math.floor(diffInSeconds / 86400);
+  
+  if (days < 7) {
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  }
+  
+  if (days < 30) {
+    const weeks = Math.floor(days / 7);
+    return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+  }
+  
+  const months = Math.floor(days / 30);
+  
+  if (months < 12) {
+    return `${months} month${months > 1 ? 's' : ''} ago`;
+  }
+  
+  const years = Math.floor(days / 365);
+  return `${years} year${years > 1 ? 's' : ''} ago`;
 }

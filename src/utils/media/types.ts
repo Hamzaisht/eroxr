@@ -23,7 +23,7 @@ export interface MediaSource {
   creator_id?: string | null;
   media_type?: string | null;
   content_type?: string | null;
-  poster_url?: string | null; // Add missing poster_url property
+  poster_url?: string | null;
 }
 
 /**
