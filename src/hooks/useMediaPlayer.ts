@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useRef } from 'react';
-import { getDisplayableMediaUrl } from '@/utils/media/urlUtils';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 import { useToast } from '@/hooks/use-toast';
 
 interface MediaPlayerOptions {
@@ -33,7 +32,7 @@ export const useMediaPlayer = ({
   const stallTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   
-  const processedUrl = getDisplayableMediaUrl(url);
+  const processedUrl = getPlayableMediaUrl(url);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -121,7 +120,6 @@ export const useMediaPlayer = ({
     };
   }, [autoPlay, onError, onEnded, onLoadedData, processedUrl]);
   
-  // Reset video when URL changes
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -130,7 +128,6 @@ export const useMediaPlayer = ({
     setHasError(false);
     video.load();
     
-    // Log URL info for debugging
     console.log(`Loading video from: ${processedUrl}`);
     
   }, [processedUrl, retryAttempt]);
@@ -179,10 +176,9 @@ export const useMediaPlayer = ({
     setIsStalled(false);
     setRetryAttempt(prev => prev + 1);
     
-    // Force a new cache-busted URL
     const video = videoRef.current;
     if (video) {
-      const freshUrl = getDisplayableMediaUrl(url.split('?')[0]);
+      const freshUrl = getPlayableMediaUrl(url.split('?')[0]);
       video.src = freshUrl;
       video.load();
     }

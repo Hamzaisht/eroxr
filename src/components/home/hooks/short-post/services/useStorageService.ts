@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { getDisplayableMediaUrl } from '@/utils/media/urlUtils';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 import { createUniqueFilePath } from '@/utils/mediaUtils';
 
 export const useStorageService = () => {
@@ -97,7 +97,7 @@ export const useStorageService = () => {
       console.log("Public URL:", publicUrl);
       
       // Use our utility to add cache busting as needed
-      const processedUrl = getDisplayableMediaUrl(publicUrl);
+      const processedUrl = getPlayableMediaUrl(publicUrl);
       
       return { 
         success: true, 

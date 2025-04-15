@@ -79,7 +79,7 @@ export const getFileExtension = (fileName: string): string => {
  * @param bytes - The file size in bytes
  * @returns A human-readable size string (e.g., "1.5 MB")
  */
-export const getHumanReadableSize = (bytes: number): string => {
+export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -87,3 +87,4 @@ export const getHumanReadableSize = (bytes: number): string => {
   
   return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
