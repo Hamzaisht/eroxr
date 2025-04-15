@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
-import { createUniqueFilePath } from '@/utils/mediaUtils';
+import { createUniqueFilePath } from '@/utils/media/mediaUtils';
 
 export const useStorageService = () => {
   /**

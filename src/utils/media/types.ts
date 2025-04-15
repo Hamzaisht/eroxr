@@ -1,37 +1,33 @@
 
 /**
- * Media types and interfaces for the application
+ * Media type enum
  */
-
 export enum MediaType {
-  IMAGE = "image",
-  VIDEO = "video",
-  AUDIO = "audio",
-  UNKNOWN = "unknown"
+  VIDEO = 'video',
+  IMAGE = 'image',
+  AUDIO = 'audio',
+  DOCUMENT = 'document',
+  UNKNOWN = 'unknown'
 }
 
+/**
+ * Media source interface
+ */
 export interface MediaSource {
-  media_url?: string | null | string[];
+  media_url?: string | null;
+  media_urls?: string[] | null;
   video_url?: string | null;
-  content_type?: string;
-  media_type?: string;
-  creator_id?: string;
-  [key: string]: any;
+  video_urls?: string[] | null;
+  url?: string | null;
+  src?: string | null;
+  creator_id?: string | null;
+  media_type?: string | null;
+  content_type?: string | null;
 }
 
-export interface MediaOptions {
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  poster?: string;
-  className?: string;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: () => void;
-  onEnded?: () => void;
-}
-
+/**
+ * Media result interface
+ */
 export interface MediaResult {
   url: string | null;
   isLoading: boolean;
@@ -40,6 +36,20 @@ export interface MediaResult {
   mediaType: MediaType;
 }
 
+/**
+ * Upload state interface
+ */
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  success: boolean;
+  file: File | null;
+}
+
+/**
+ * Upload options interface
+ */
 export interface UploadOptions {
   contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic' | 'avatar';
   maxSizeInMB?: number;
@@ -49,20 +59,18 @@ export interface UploadOptions {
   resetDelay?: number;
 }
 
+/**
+ * Upload result interface
+ */
 export interface UploadResult {
   success: boolean;
   url?: string;
   error?: string;
 }
 
-export interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
-  success: boolean;
-  file: File | null;
-}
-
+/**
+ * File validation result
+ */
 export interface FileValidationResult {
   valid: boolean;
   message?: string;

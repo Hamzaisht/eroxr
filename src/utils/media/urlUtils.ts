@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { addCacheBuster, getCleanUrl, checkUrlAccessibility } from "./mediaUrlUtils";
 
 /**
  * Get the playable media URL from a media object
@@ -67,63 +68,16 @@ export const ensureFullUrl = (url: string): string => {
   }
 };
 
-/**
- * Add cache busting parameter to URL
- */
-export const addCacheBuster = (url: string): string => {
+// Re-export these utility functions for backward compatibility
+export { addCacheBuster, getCleanUrl, checkUrlAccessibility };
+
+// Add a new function that combines cache busting and URL cleaning
+export const getOptimizedMediaUrl = (url: string, useCacheBuster = true): string => {
   if (!url) return '';
   
-  // Prevent recursive cache busting by checking for existing timestamp
-  if (url.includes('t=') && url.includes('&r=')) {
-    return url;
-  }
+  // Clean the URL first
+  const cleanUrl = getCleanUrl(url);
   
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  
-  return url.includes('?') 
-    ? `${url}&t=${timestamp}&r=${random}` 
-    : `${url}?t=${timestamp}&r=${random}`;
+  // Apply cache busting if needed
+  return useCacheBuster ? addCacheBuster(cleanUrl) : cleanUrl;
 };
-
-/**
- * Get clean URL by removing query parameters
- */
-export const getCleanUrl = (url: string): string => {
-  if (!url) return '';
-  return url.split('?')[0];
-};
-
-/**
- * Check if a URL is accessible
- */
-export async function checkUrlAccessibility(url: string): Promise<{ 
-  accessible: boolean; 
-  contentType?: string;
-  error?: string;
-}> {
-  try {
-    // For blob: and data: URLs, assume they're valid
-    if (url.startsWith('blob:') || url.startsWith('data:')) {
-      return { accessible: true };
-    }
-    
-    // Perform a HEAD request to check validity
-    const response = await fetch(url, { 
-      method: 'HEAD',
-      cache: 'no-store'
-    });
-    
-    return {
-      accessible: response.ok,
-      contentType: response.headers.get('content-type') || undefined
-    };
-  } catch (error) {
-    console.warn('URL check failed, but will continue anyway:', url);
-    // Return valid=true even if the check failed due to CORS issues
-    return {
-      accessible: true, 
-      error: error instanceof Error ? error.message : String(error)
-    };
-  }
-}
