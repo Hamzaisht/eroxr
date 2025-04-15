@@ -1,8 +1,8 @@
 
-import { useState, useEffect, useRef, memo, useCallback } from "react";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
-import { VideoPlayer } from "@/components/video/VideoPlayer";
+import { useState, useEffect, memo, useCallback } from "react";
+import { useMedia } from "@/hooks/useMedia";
 import { useToast } from "@/hooks/use-toast";
+import { VideoPlayer } from "@/components/video/VideoPlayer";
 
 interface ShortVideoPlayerProps {
   videoUrl: string | null;
@@ -21,16 +21,20 @@ export const ShortVideoPlayer = memo(({
   isDeleting, 
   onError 
 }: ShortVideoPlayerProps) => {
-  const [videoError, setVideoError] = useState(false);
   const [loadRetries, setLoadRetries] = useState(0);
   const [isMediaAvailable, setIsMediaAvailable] = useState(true);
-  const retryTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
   
-  // Process video URL once
-  const processedUrl = videoUrl ? getPlayableMediaUrl({ video_url: videoUrl }) : null;
-  const processedThumbnail = thumbnailUrl ? 
-    getPlayableMediaUrl({ media_url: thumbnailUrl }) : undefined;
+  // Process media URLs using our hook
+  const { 
+    url: processedUrl, 
+    isError: videoError,
+    retry: retryVideoLoad
+  } = useMedia(videoUrl ? { video_url: videoUrl } : null);
+  
+  const { 
+    url: processedThumbnail 
+  } = useMedia(thumbnailUrl ? { media_url: thumbnailUrl } : null);
   
   // Check if media is available
   useEffect(() => {
@@ -38,28 +42,17 @@ export const ShortVideoPlayer = memo(({
       setIsMediaAvailable(false);
     } else {
       setIsMediaAvailable(true);
-      setVideoError(false);
       setLoadRetries(0);
     }
-    
-    return () => {
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
-    };
   }, [processedUrl]);
 
   const handleVideoError = useCallback(() => {
     console.error("Video error for short:", videoUrl);
     
-    setVideoError(true);
-    
     if (loadRetries < 2) {
       // Try to reload the video after a short delay
       setLoadRetries(prev => prev + 1);
-      retryTimeoutRef.current = setTimeout(() => {
-        setVideoError(false);
-      }, 2000);
+      retryVideoLoad();
     } else {
       // After multiple retries, show a toast
       toast({
@@ -69,7 +62,7 @@ export const ShortVideoPlayer = memo(({
       });
       onError();
     }
-  }, [videoUrl, loadRetries, toast, onError]);
+  }, [videoUrl, loadRetries, toast, onError, retryVideoLoad]);
 
   if (!isMediaAvailable || !processedUrl) {
     return (
@@ -90,7 +83,7 @@ export const ShortVideoPlayer = memo(({
   return (
     <VideoPlayer
       url={processedUrl}
-      poster={processedThumbnail}
+      poster={processedThumbnail || undefined}
       className="h-full w-full object-cover"
       autoPlay={isCurrentVideo && !videoError}
       onError={handleVideoError}

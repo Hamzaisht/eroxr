@@ -1,41 +1,24 @@
 
+/**
+ * @deprecated Use the consolidated mediaUtils.ts instead
+ * This file is kept for backward compatibility but should be replaced with mediaUtils.ts
+ */
+
+import { getPlayableMediaUrl as getMediaUrl } from "./mediaUtils";
 import { debugMediaUrl } from "./debugMediaUtils";
 
 /**
  * Prepares a URL for playback by handling different URL formats and special cases
  * This is useful for ensuring videos and images load efficiently
+ * @deprecated Use mediaUtils.getPlayableMediaUrl instead
  */
 export const getPlayableMediaUrl = (item: { 
   media_url?: string | null; 
   video_url?: string | null;
 } | string) => {
   try {
-    let url: string | null = null;
-    
-    // Handle string input
-    if (typeof item === 'string') {
-      url = item;
-    }
-    // Handle object input
-    else if (item) {
-      url = item.video_url || item.media_url || null;
-    }
-    
-    // If no URL found, return null
-    if (!url) return null;
-    
-    // If URL already contains a cache-busting parameter, use it as is
-    if (url.includes('?') && (url.includes('t=') || url.includes('v='))) {
-      return url;
-    }
-    
-    // Unsure how this got here, but let's fix it
-    if (url.includes('?generateCacheKey')) {
-      url = url.split('?generateCacheKey')[0];
-    }
-    
-    // Return the clean URL
-    return url;
+    // Forward to the consolidated implementation
+    return getMediaUrl(item);
   } catch (error) {
     console.error("Error in getPlayableMediaUrl:", error);
     

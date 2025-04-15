@@ -1,0 +1,80 @@
+
+import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useMedia } from "./useMedia";
+
+interface UseStoryMediaOptions {
+  onComplete?: () => void;
+  onError?: () => void;
+}
+
+/**
+ * Hook to handle story media loading
+ */
+export const useStoryMedia = (
+  mediaUrl: string | null,
+  mediaType: 'image' | 'video',
+  isPaused: boolean,
+  { onComplete, onError }: UseStoryMediaOptions = {}
+) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const { toast } = useToast();
+  
+  // Process the media URL
+  const { 
+    url,
+    isLoading,
+    isError: mediaError,
+    retry: retryLoad
+  } = useMedia({ 
+    [mediaType === 'image' ? 'media_url' : 'video_url']: mediaUrl 
+  });
+  
+  // Handle media load completion
+  const handleLoad = useCallback(() => {
+    setIsLoaded(true);
+    setHasError(false);
+    if (onComplete) {
+      onComplete();
+    }
+  }, [onComplete]);
+  
+  // Handle media load error
+  const handleError = useCallback(() => {
+    setHasError(true);
+    
+    if (retryCount < 2) {
+      setRetryCount(prev => prev + 1);
+      retryLoad();
+    } else {
+      toast({
+        title: `Failed to load story ${mediaType}`,
+        description: "The media could not be loaded after multiple attempts",
+        variant: "destructive"
+      });
+      
+      if (onError) {
+        onError();
+      }
+    }
+  }, [retryCount, retryLoad, toast, mediaType, onError]);
+  
+  // Reset state when URL changes
+  useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+    setRetryCount(0);
+  }, [mediaUrl]);
+  
+  return {
+    url,
+    isLoaded,
+    isLoading: isLoading && !isLoaded,
+    hasError: hasError || mediaError,
+    retryLoad,
+    handleLoad,
+    handleError
+  };
+};

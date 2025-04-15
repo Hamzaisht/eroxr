@@ -1,9 +1,9 @@
 
 import { motion } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
-import { useRef, useState, useEffect, memo, useCallback } from "react";
+import { useRef, memo, useCallback } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { useStoryMedia } from "@/hooks/useStoryMedia";
 
 interface StoryContentProps {
   story: Story;
@@ -13,61 +13,52 @@ interface StoryContentProps {
 
 export const StoryContent = memo(({ story, onNext, isPaused }: StoryContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   
-  // Reset states when story changes
-  useEffect(() => {
-    setIsLoading(true);
-    setHasError(false);
-  }, [story.id]);
+  // Determine if this is a video or image story
+  const isVideo = !!story.video_url || story.media_type === 'video' || story.content_type === 'video';
+  const mediaUrl = isVideo ? story.video_url : story.media_url;
+  const mediaType = isVideo ? 'video' : 'image';
   
-  const handleMediaLoad = useCallback(() => {
-    setIsLoading(false);
-    setHasError(false);
-  }, []);
-
-  const handleMediaError = useCallback(() => {
-    setHasError(true);
-    setIsLoading(false);
-  }, []);
-
-  const handleRetry = useCallback(() => {
-    setIsLoading(true);
-    setHasError(false);
-    setRetryCount(prev => prev + 1);
-  }, []);
-
-  // Determine media URL and type - memoized to prevent recalculations
-  const mediaItem = {
-    media_url: story.media_url,
-    video_url: story.video_url,
-    content_type: story.content_type || story.media_type,
-    media_type: story.media_type || story.content_type,
-    creator_id: story.creator_id
-  };
+  // Handle story completion
+  const handleMediaEnded = useCallback(() => {
+    onNext();
+  }, [onNext]);
+  
+  // Use our story media hook to handle media loading
+  const {
+    url: processedUrl,
+    isLoading,
+    hasError,
+    handleLoad,
+    handleError,
+    retryLoad
+  } = useStoryMedia(mediaUrl, mediaType as any, isPaused, {
+    onComplete: isVideo ? undefined : handleMediaEnded,
+    onError: () => {}
+  });
 
   return (
     <motion.div
-      key={`${story.id}-${retryCount}`}
+      key={`${story.id}-${processedUrl}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="relative w-full h-full flex items-center justify-center bg-black"
     >
+      {/* Loading state */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center z-30">
           <Loader2 className="h-12 w-12 text-white animate-spin" />
         </div>
       )}
       
+      {/* Error state */}
       {hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-30">
           <AlertCircle className="h-12 w-12 text-red-500 mb-2" />
           <p className="text-white mb-4">Failed to load story</p>
           <button
-            onClick={handleRetry}
+            onClick={retryLoad}
             className="flex items-center gap-2 px-4 py-2 bg-luxury-primary hover:bg-luxury-primary/80 text-white rounded-md"
           >
             <RefreshCw className="h-4 w-4" />
@@ -76,19 +67,30 @@ export const StoryContent = memo(({ story, onNext, isPaused }: StoryContentProps
         </div>
       )}
       
+      {/* Media content */}
       <div className="relative w-full h-full">
-        <UniversalMedia
-          ref={videoRef}
-          item={mediaItem}
-          className="w-full h-full object-contain"
-          autoPlay={!isPaused}
-          controls={false}
-          muted={true}
-          loop={false}
-          onLoad={handleMediaLoad}
-          onError={handleMediaError}
-          onEnded={onNext}
-        />
+        {isVideo ? (
+          <video
+            ref={videoRef}
+            src={processedUrl || undefined}
+            className="w-full h-full object-contain"
+            autoPlay={!isPaused && !isLoading && !hasError}
+            controls={false}
+            onLoadedData={handleLoad}
+            onError={handleError}
+            onEnded={handleMediaEnded}
+            muted={false}
+            playsInline
+          />
+        ) : (
+          <img
+            src={processedUrl || undefined}
+            className="w-full h-full object-contain"
+            onLoad={handleLoad}
+            onError={handleError}
+            alt="Story content"
+          />
+        )}
       </div>
     </motion.div>
   );

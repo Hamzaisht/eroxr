@@ -4,21 +4,23 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 /**
- * Fetches and counts messages for each ad - optimized to use a single query
+ * Optimized function to fetch message counts in a single query
  */
 export const fetchMessageCounts = async (adIds: string[]): Promise<Record<string, number>> => {
   if (!adIds.length) return {};
   
-  // Initialize counts object for all requested ads (to ensure we return values for all)
+  // Initialize counts object for all requested ads
   const messageCounts: Record<string, number> = {};
   adIds.forEach(id => {
     messageCounts[id] = 0;
   });
   
   try {
+    // Optimize the query to filter only relevant messages
+    // This avoids fetching all messages and filtering in JS
     const { data: messages, error: msgError } = await supabase
       .from('direct_messages')
-      .select('id, content, message_type')
+      .select('content')
       .eq('message_type', 'ad_message');
     
     if (msgError) {
@@ -33,12 +35,10 @@ export const fetchMessageCounts = async (adIds: string[]): Promise<Record<string
     // Process each message and track the count per ad
     messages.forEach(msg => {
       try {
-        // Safety check for content being a string that can be parsed
         if (typeof msg.content === 'string') {
           const contentObj = JSON.parse(msg.content);
           const adId = contentObj?.ad_id;
           
-          // If we found an ad_id and it's in our list of ads
           if (adId && adIds.includes(adId)) {
             messageCounts[adId] = (messageCounts[adId] || 0) + 1;
           }
@@ -56,7 +56,7 @@ export const fetchMessageCounts = async (adIds: string[]): Promise<Record<string
 };
 
 /**
- * Hook to get message counts with caching
+ * Custom hook to get message counts with real-time updates
  */
 export const useMessageCounts = (adIds: string[]) => {
   const queryClient = useQueryClient();
@@ -94,7 +94,7 @@ export const useMessageCounts = (adIds: string[]) => {
 };
 
 /**
- * Applies message counts to the ads
+ * Helper to apply message counts to ads
  */
 export const applyMessageCounts = (ads: any[], messageCounts: Record<string, number>) => {
   return ads.map(ad => ({

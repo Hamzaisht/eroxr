@@ -5,13 +5,15 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { ShareDialog } from "@/components/feed/ShareDialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CommentSection } from "@/components/feed/CommentSection";
-import { ShortContent } from "./ShortContent";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { Short } from "../types/short";
 import { useShortActions } from "../hooks/actions";
 import { useToast } from "@/hooks/use-toast";
 import { ShortVideoPlayer } from "./ShortVideoPlayer";
+import { ShortHeader } from "./short/ShortHeader";
+import { ShortActions } from "./short/ShortActions";
+import { ShortDescription } from "./short/ShortDescription";
 
 interface ShortItemProps {
   short: Short;
@@ -67,15 +69,15 @@ export const ShortItem = memo(({
     }
   }, [short?.id, isValidShort]);
 
-  // Handlers
-  const handleShareClick = useCallback((shortId: string) => {
+  // Event handlers
+  const handleShareClick = useCallback(() => {
     if (!isValidShort) return;
     
     setIsShareOpen(true);
     if (handleShareTracking) {
-      handleShareTracking(shortId);
+      handleShareTracking(short.id);
     }
-  }, [isValidShort, handleShareTracking]);
+  }, [isValidShort, short?.id, handleShareTracking]);
 
   const handleCommentClick = useCallback(() => {
     if (!isValidShort) return;
@@ -92,7 +94,7 @@ export const ShortItem = memo(({
     playCommentSound();
   }, [isValidShort, session, toast, playCommentSound]);
 
-  const handleLikeClick = useCallback(async (shortId: string) => {
+  const handleLikeClick = useCallback(async () => {
     if (!isValidShort) return;
     
     if (!session) {
@@ -103,10 +105,10 @@ export const ShortItem = memo(({
       return;
     }
     
-    await handleLike(shortId);
-  }, [isValidShort, session, toast, handleLike]);
+    await handleLike(short.id);
+  }, [isValidShort, session, toast, handleLike, short?.id]);
 
-  const handleSaveClick = useCallback(async (shortId: string) => {
+  const handleSaveClick = useCallback(async () => {
     if (!isValidShort) return;
     
     if (!session) {
@@ -117,17 +119,15 @@ export const ShortItem = memo(({
       return;
     }
     
-    await handleSave(shortId);
-  }, [isValidShort, session, toast, handleSave]);
+    await handleSave(short.id);
+  }, [isValidShort, session, toast, handleSave, short?.id]);
 
-  const handleDeleteClick = useCallback(async (shortId: string) => {
-    if (!isValidShort || !session || session.user.id !== short.creator_id) {
-      return;
-    }
+  const handleDeleteClick = useCallback(async () => {
+    if (!isValidShort) return;
     
     try {
       setIsDeleting(true);
-      await handleDelete(shortId);
+      await handleDelete(short.id);
       toast({
         title: "Short deleted",
         description: "Your short has been successfully deleted",
@@ -141,7 +141,7 @@ export const ShortItem = memo(({
     } finally {
       setIsDeleting(false);
     }
-  }, [isValidShort, session, short?.creator_id, handleDelete, toast]);
+  }, [isValidShort, short?.id, handleDelete, toast]);
 
   const handleVideoError = useCallback(() => {
     console.error("Video playback error in ShortItem");
@@ -178,6 +178,7 @@ export const ShortItem = memo(({
     >
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
       
+      {/* Video Player */}
       <ShortVideoPlayer
         videoUrl={short.video_urls?.length ? short.video_urls[0] : null}
         thumbnailUrl={short.video_thumbnail_url}
@@ -187,27 +188,34 @@ export const ShortItem = memo(({
         onError={handleVideoError}
       />
       
-      <ShortContent
-        short={{
-          ...short,
-          description: short.content || '',
-          likes: short.likes_count || 0,
-          comments: short.comments_count || 0,
-          view_count: short.view_count || 0
-        }}
-        onShare={handleShareClick}
-        onComment={handleCommentClick}
-        handleLike={handleLikeClick}
-        handleSave={handleSaveClick}
-        onDelete={
-          session?.user?.id === short.creator_id 
-            ? () => handleDeleteClick(short.id) 
-            : undefined
-        }
-        isDeleting={isDeleting}
-        isCurrentVideo={isCurrentVideo}
-        className={`absolute bottom-0 left-0 right-0 z-20 p-4 ${isMobile ? 'pb-16' : 'p-6'}`}
-      />
+      {/* Short Content */}
+      <div className={`absolute bottom-0 left-0 right-0 z-20 p-4 ${isMobile ? 'pb-16' : 'p-6'}`}>
+        <div className="flex justify-between">
+          <div className="flex-1 mr-4">
+            <ShortHeader short={short} />
+            
+            <ShortDescription 
+              content={short.description || short.content || ''} 
+              username={short.creator?.username || 'Anonymous'} 
+            />
+          </div>
+          
+          <div>
+            <ShortActions
+              hasLiked={!!short.has_liked}
+              hasSaved={!!short.has_saved}
+              likesCount={short.likes_count || 0}
+              commentsCount={short.comments_count || 0}
+              onLike={() => handleLikeClick()}
+              onComment={handleCommentClick}
+              onShare={handleShareClick}
+              onSave={() => handleSaveClick()}
+              onDelete={session?.user?.id === short.creator_id ? handleDeleteClick : undefined}
+              isDeleting={isDeleting}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Dialogs */}
       {isValidShort && (

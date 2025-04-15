@@ -1,146 +1,193 @@
 
+/**
+ * Comprehensive media utilities for handling URLs, types, and processing
+ */
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Creates a unique file path for storage
- * @param userId - The user ID who is uploading the file
- * @param file - The file to create a path for
- * @returns A unique file path
+ * Media type detection
  */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  const timestamp = Date.now();
-  const randomStr = Math.random().toString(36).substring(2, 7);
-  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  return `${userId}/${timestamp}_${randomStr}_${sanitizedFileName}`;
-};
+export enum MediaType {
+  IMAGE = "image",
+  VIDEO = "video",
+  AUDIO = "audio",
+  UNKNOWN = "unknown"
+}
+
+interface MediaItem {
+  media_url?: string | null | string[];
+  video_url?: string | null;
+  content_type?: string;
+  media_type?: string;
+  [key: string]: any;
+}
 
 /**
- * Uploads a file to Supabase storage
- * @param bucket - The bucket name to upload to
- * @param path - The path within the bucket
- * @param file - The file to upload
- * @returns A promise that resolves to the public URL or null
+ * Determine media type from an item or URL
  */
-export const uploadFileToStorage = async (
-  bucket: string,
-  path: string,
-  file: File
-): Promise<string | null> => {
-  try {
-    // Determine content type
-    const contentType = file.type || inferContentTypeFromExtension(file.name);
-    
-    console.log(`Uploading to ${bucket}/${path} with content type: ${contentType}`);
-    
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        contentType,
-        upsert: true,
-        cacheControl: '3600'
-      });
-    
-    if (error) {
-      console.error(`Storage upload error for ${path}:`, error);
-      return null;
-    }
-    
-    if (!data || !data.path) {
-      console.error(`No data returned from upload for ${path}`);
-      return null;
-    }
-    
-    // Get the public URL using Supabase
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(data.path);
-    
-    return publicUrl;
-  } catch (error) {
-    console.error(`File upload error for ${bucket}/${path}:`, error);
-    return null;
-  }
-};
-
-/**
- * Determines the content type from a file name or URL
- * @param fileName - The file name or URL to check
- * @returns Either "video" or "image"
- */
-export const getContentType = (fileName: string): "video" | "image" => {
-  if (!fileName) return "image"; // Default to image if no filename
-  
-  const lowerFileName = fileName.toLowerCase();
-  
-  // Check for video file extensions
-  if (
-    lowerFileName.endsWith('.mp4') ||
-    lowerFileName.endsWith('.webm') ||
-    lowerFileName.endsWith('.mov') ||
-    lowerFileName.endsWith('.avi') ||
-    lowerFileName.endsWith('.mkv') ||
-    lowerFileName.includes('/video/') ||
-    lowerFileName.includes('/shorts/')
-  ) {
-    return "video";
-  }
-  
-  // Default to image
-  return "image";
-};
-
-/**
- * Gets the playable media URL from a media item
- * @param item - The media item object
- * @returns The full, playable URL or null
- */
-export const getPlayableMediaUrl = (item: any): string | null => {
-  // Handle direct string input
+export function determineMediaType(item: MediaItem | string): MediaType {
+  // Handle direct URL string
   if (typeof item === 'string') {
-    return item;
+    const url = item.toLowerCase();
+    if (url.match(/\.(mp4|webm|mov|avi)($|\?)/)) return MediaType.VIDEO;
+    if (url.match(/\.(jpe?g|png|gif|webp|avif|svg)($|\?)/)) return MediaType.IMAGE;
+    if (url.match(/\.(mp3|wav|ogg|aac)($|\?)/)) return MediaType.AUDIO;
+    if (url.includes('/videos/') || url.includes('/shorts/')) return MediaType.VIDEO;
+    return MediaType.UNKNOWN;
+  }
+
+  // Handle object
+  if (!item) return MediaType.UNKNOWN;
+
+  // Check explicit media type if available
+  if (item.media_type === 'video' || item.content_type === 'video') {
+    return MediaType.VIDEO;
   }
   
-  if (!item) {
-    console.error('Invalid media item: null or undefined');
-    return null;
+  if (item.media_type === 'image' || item.content_type === 'image') {
+    return MediaType.IMAGE;
   }
   
-  // Extract URL from object based on available properties
-  const url = 
-    (item.media_type === 'video' || item.content_type === 'video') 
-      ? item.video_url 
-      : item.media_url;
+  if (item.media_type === 'audio' || item.content_type === 'audio') {
+    return MediaType.AUDIO;
+  }
+
+  // Check URL presence
+  if (item.video_url) return MediaType.VIDEO;
   
-  return url || null;
-};
+  // Check media_url format if it exists
+  if (item.media_url) {
+    if (typeof item.media_url === 'string') {
+      return determineMediaType(item.media_url);
+    } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
+      return determineMediaType(item.media_url[0]);
+    }
+  }
+
+  return MediaType.UNKNOWN;
+}
 
 /**
- * Infer content type from file extension
- * @param filename - The filename to check
- * @returns The MIME type for the file
+ * Extract the appropriate media URL from an item
  */
-export const inferContentTypeFromExtension = (filename: string): string => {
-  const extension = filename.split('.').pop()?.toLowerCase();
+export function extractMediaUrl(item: MediaItem | string): string | null {
+  // Handle direct string
+  if (typeof item === 'string') return item;
   
-  switch (extension) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'gif':
-      return 'image/gif';
-    case 'webp':
-      return 'image/webp';
-    case 'mp4':
-      return 'video/mp4';
-    case 'webm':
-      return 'video/webm';
-    case 'mov':
-      return 'video/quicktime';
-    case 'avi':
-      return 'video/x-msvideo';
-    default:
-      return 'application/octet-stream';
+  if (!item) return null;
+  
+  // Get the appropriate URL based on media type
+  const mediaType = determineMediaType(item);
+  
+  if (mediaType === MediaType.VIDEO && item.video_url) {
+    return item.video_url;
   }
-};
+  
+  if (item.media_url) {
+    if (typeof item.media_url === 'string') {
+      return item.media_url;
+    } else if (Array.isArray(item.media_url) && item.media_url.length > 0) {
+      return item.media_url[0];
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Add cache busting parameter to a URL
+ */
+export function addCacheBuster(url: string): string {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  
+  // If URL already has a cache buster, don't add another one
+  if (url.includes('?') && (url.includes('t=') || url.includes('v='))) {
+    return url;
+  }
+  
+  const timestamp = Date.now();
+  const separator = url.includes('?') ? '&' : '?';
+  
+  return `${url}${separator}t=${timestamp}`;
+}
+
+/**
+ * Clean a URL by removing query parameters
+ */
+export function getCleanUrl(url: string): string {
+  if (!url) return '';
+  return url.split('?')[0];
+}
+
+/**
+ * Get a playable media URL for videos and images
+ * This is the main entry point for getting media URLs
+ */
+export function getPlayableMediaUrl(item: MediaItem | string): string | null {
+  try {
+    const url = extractMediaUrl(item);
+    
+    if (!url) return null;
+    
+    // Clean the URL and add cache buster
+    const cleanUrl = getCleanUrl(url);
+    return addCacheBuster(cleanUrl);
+  } catch (error) {
+    console.error("Error in getPlayableMediaUrl:", error);
+    return null;
+  }
+}
+
+/**
+ * Check if a URL is accessible
+ */
+export async function checkUrlAccessibility(url: string): Promise<{ 
+  accessible: boolean; 
+  contentType?: string;
+  error?: string;
+}> {
+  try {
+    // For blob: and data: URLs, assume they're valid
+    if (url.startsWith('blob:') || url.startsWith('data:')) {
+      return { accessible: true };
+    }
+    
+    // Perform a HEAD request to check validity
+    const response = await fetch(url, { 
+      method: 'HEAD',
+      cache: 'no-store'
+    });
+    
+    return {
+      accessible: response.ok,
+      contentType: response.headers.get('content-type') || undefined
+    };
+  } catch (error) {
+    console.warn('URL check failed, but will continue anyway:', url);
+    // Return valid=true even if the check failed due to CORS issues
+    return {
+      accessible: true, 
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
+
+/**
+ * Get media URL from Supabase storage
+ */
+export async function getStorageUrl(path: string, bucket = 'media'): Promise<string | null> {
+  if (!path) return null;
+  
+  try {
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(path);
+      
+    return data?.publicUrl || null;
+  } catch (error) {
+    console.error('Failed to get storage URL:', error);
+    return null;
+  }
+}
