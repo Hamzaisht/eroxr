@@ -1,11 +1,19 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 /**
- * Fetches and counts messages for each ad
+ * Fetches and counts messages for each ad - optimized to use a single query
  */
 export const fetchMessageCounts = async (adIds: string[]): Promise<Record<string, number>> => {
   if (!adIds.length) return {};
+  
+  // Initialize counts object for all requested ads (to ensure we return values for all)
+  const messageCounts: Record<string, number> = {};
+  adIds.forEach(id => {
+    messageCounts[id] = 0;
+  });
   
   try {
     const { data: messages, error: msgError } = await supabase
@@ -15,17 +23,12 @@ export const fetchMessageCounts = async (adIds: string[]): Promise<Record<string
     
     if (msgError) {
       console.error("Error fetching messages:", msgError);
-      return {};
+      return messageCounts;
     }
     
-    if (!messages) {
-      return {};
+    if (!messages || !messages.length) {
+      return messageCounts;
     }
-    
-    console.log("Retrieved messages for counting:", messages.length);
-    
-    // Count messages per ad
-    const messageCounts: Record<string, number> = {};
     
     // Process each message and track the count per ad
     messages.forEach(msg => {
@@ -42,15 +45,52 @@ export const fetchMessageCounts = async (adIds: string[]): Promise<Record<string
         }
       } catch (error) {
         // Silently handle parse errors for individual messages
-        console.log("Failed to parse message content", error);
       }
     });
     
     return messageCounts;
   } catch (error) {
     console.error("Error in message counting process:", error);
-    return {};
+    return messageCounts;
   }
+};
+
+/**
+ * Hook to get message counts with caching
+ */
+export const useMessageCounts = (adIds: string[]) => {
+  const queryClient = useQueryClient();
+  
+  // Setup realtime subscription for messages
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:direct_messages')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: "message_type=eq.ad_message"
+        },
+        () => {
+          // Invalidate the query when messages change
+          queryClient.invalidateQueries({ queryKey: ['message_counts'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  return useQuery({
+    queryKey: ['message_counts', adIds],
+    queryFn: () => fetchMessageCounts(adIds),
+    staleTime: 60000, // 1 minute
+    enabled: adIds.length > 0
+  });
 };
 
 /**

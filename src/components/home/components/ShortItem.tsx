@@ -1,19 +1,17 @@
 
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { ShareDialog } from "@/components/feed/ShareDialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CommentSection } from "@/components/feed/CommentSection";
-import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { ShortContent } from "./ShortContent";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { Short } from "../types/short";
 import { useShortActions } from "../hooks/actions";
 import { useToast } from "@/hooks/use-toast";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
-import { debugMediaUrl } from "@/utils/media/debugMediaUtils";
+import { ShortVideoPlayer } from "./ShortVideoPlayer";
 
 interface ShortItemProps {
   short: Short;
@@ -22,7 +20,7 @@ interface ShortItemProps {
   currentVideoIndex: number;
 }
 
-export const ShortItem = ({ 
+export const ShortItem = memo(({ 
   short, 
   isCurrentVideo, 
   index, 
@@ -33,9 +31,6 @@ export const ShortItem = ({
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [viewTracked, setViewTracked] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const [loadRetries, setLoadRetries] = useState(0);
-  const [isMediaAvailable, setIsMediaAvailable] = useState(true);
   
   // Hooks
   const { handleLike, handleSave, handleDelete, handleShare, handleShareTracking, handleView } = useShortActions();
@@ -47,32 +42,6 @@ export const ShortItem = ({
   // Validate data for rendering
   const isValidShort = !!short && !!short.id;
   
-  // Use our utility to get a playable URL
-  const videoUrl = short?.video_urls?.length ? 
-    getPlayableMediaUrl({ video_url: short.video_urls[0] }) : null;
-  
-  const hasThumbnail = !!short?.video_thumbnail_url;
-  const thumbnailUrl = hasThumbnail ? 
-    getPlayableMediaUrl({ media_url: short.video_thumbnail_url }) : undefined;
-  
-  // Check if media is available
-  useEffect(() => {
-    if (!videoUrl && !hasThumbnail) {
-      console.warn("Short has no video or thumbnail:", short?.id);
-      setIsMediaAvailable(false);
-    } else {
-      setIsMediaAvailable(true);
-    }
-  }, [short?.id, videoUrl, hasThumbnail]);
-  
-  // Reset video error state when short changes
-  useEffect(() => {
-    if (isValidShort) {
-      setVideoError(false);
-      setLoadRetries(0);
-    }
-  }, [short?.id, isValidShort]);
-
   // Track view when this becomes the current video
   useEffect(() => {
     const trackView = async () => {
@@ -80,7 +49,6 @@ export const ShortItem = ({
         try {
           await handleView(short.id);
           setViewTracked(true);
-          console.log(`View tracked for short: ${short.id}`);
         } catch (error) {
           console.error("Failed to track view:", error);
         }
@@ -100,17 +68,16 @@ export const ShortItem = ({
   }, [short?.id, isValidShort]);
 
   // Handlers
-  const handleShareClick = (shortId: string) => {
+  const handleShareClick = useCallback((shortId: string) => {
     if (!isValidShort) return;
     
     setIsShareOpen(true);
-    // Track share action
     if (handleShareTracking) {
       handleShareTracking(shortId);
     }
-  };
+  }, [isValidShort, handleShareTracking]);
 
-  const handleCommentClick = () => {
+  const handleCommentClick = useCallback(() => {
     if (!isValidShort) return;
     
     if (!session) {
@@ -123,9 +90,9 @@ export const ShortItem = ({
     
     setIsCommentsOpen(true);
     playCommentSound();
-  };
+  }, [isValidShort, session, toast, playCommentSound]);
 
-  const handleLikeClick = async (shortId: string) => {
+  const handleLikeClick = useCallback(async (shortId: string) => {
     if (!isValidShort) return;
     
     if (!session) {
@@ -137,9 +104,9 @@ export const ShortItem = ({
     }
     
     await handleLike(shortId);
-  };
+  }, [isValidShort, session, toast, handleLike]);
 
-  const handleSaveClick = async (shortId: string) => {
+  const handleSaveClick = useCallback(async (shortId: string) => {
     if (!isValidShort) return;
     
     if (!session) {
@@ -151,12 +118,10 @@ export const ShortItem = ({
     }
     
     await handleSave(shortId);
-  };
+  }, [isValidShort, session, toast, handleSave]);
 
-  const handleDeleteClick = async (shortId: string) => {
-    if (!isValidShort) return;
-    
-    if (!session || session.user.id !== short.creator_id) {
+  const handleDeleteClick = useCallback(async (shortId: string) => {
+    if (!isValidShort || !session || session.user.id !== short.creator_id) {
       return;
     }
     
@@ -176,34 +141,11 @@ export const ShortItem = ({
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [isValidShort, session, short?.creator_id, handleDelete, toast]);
 
-  const handleVideoError = () => {
-    console.error("Video error for short:", short?.id, videoUrl);
-    
-    // Debug the URL when error occurs
-    if (videoUrl) {
-      debugMediaUrl(videoUrl);
-      console.log("Debugging video URL:", videoUrl);
-    }
-    
-    setVideoError(true);
-    setLoadRetries(prev => prev + 1);
-    
-    if (loadRetries < 2) {
-      // Try to reload the video after a short delay
-      setTimeout(() => {
-        setVideoError(false);
-      }, 2000);
-    } else {
-      // After multiple retries, show a toast
-      toast({
-        title: "Video loading error",
-        description: "Unable to load this video. You may want to try again later.",
-        variant: "destructive"
-      });
-    }
-  };
+  const handleVideoError = useCallback(() => {
+    console.error("Video playback error in ShortItem");
+  }, []);
 
   // If no valid short data, show a placeholder
   if (!isValidShort) {
@@ -236,24 +178,14 @@ export const ShortItem = ({
     >
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
       
-      {!isMediaAvailable ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
-          <p className="text-luxury-neutral/70">This video is not available</p>
-        </div>
-      ) : !videoUrl ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
-          <p className="text-luxury-neutral/70">This video is not available</p>
-        </div>
-      ) : (
-        <VideoPlayer
-          url={videoUrl}
-          poster={thumbnailUrl}
-          className="h-full w-full object-cover"
-          autoPlay={index === currentVideoIndex}
-          onError={handleVideoError}
-          creatorId={short.creator_id}
-        />
-      )}
+      <ShortVideoPlayer
+        videoUrl={short.video_urls?.length ? short.video_urls[0] : null}
+        thumbnailUrl={short.video_thumbnail_url}
+        creatorId={short.creator_id}
+        isCurrentVideo={index === currentVideoIndex}
+        isDeleting={isDeleting}
+        onError={handleVideoError}
+      />
       
       <ShortContent
         short={{
@@ -298,4 +230,6 @@ export const ShortItem = ({
       )}
     </motion.div>
   );
-};
+});
+
+ShortItem.displayName = "ShortItem";

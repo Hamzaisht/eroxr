@@ -2,17 +2,16 @@
 import { useSession } from "@supabase/auth-helpers-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { PostCard } from "./feed/PostCard";
-import { LoadingSkeleton } from "./feed/LoadingSkeleton";
 import { EmptyFeed } from "./feed/EmptyFeed";
 import { useFeedQuery } from "./feed/useFeedQuery";
 import { usePostActions } from "./feed/usePostActions";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
-import { useEffect } from "react";
+import { useEffect, useCallback, memo } from "react";
 import { useInView } from "react-intersection-observer";
 import { useParams } from "react-router-dom";
 import type { Post } from "@/integrations/supabase/types/post";
 import { Loader2, RefreshCw } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
 
@@ -20,14 +19,17 @@ interface CreatorsFeedProps {
   feedType?: 'feed' | 'popular' | 'recent';
 }
 
-export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
+const MemoizedPostCard = memo(PostCard);
+
+export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
   const session = useSession();
   const { handleLike, handleDelete } = usePostActions();
-  const { ref, inView } = useInView();
+  const { ref, inView } = useInView({
+    threshold: 0.5,
+    triggerOnce: false
+  });
   const { id } = useParams();
   const currentUserId = session?.user?.id;
-
-  console.log('CreatorsFeed - currentUserId:', currentUserId);
   
   useRealtimeUpdates('posts');
 
@@ -53,6 +55,14 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
   }, [inView, hasNextPage, fetchNextPage, isFetchingNextPage]);
 
   const posts = data?.pages.flat() || [];
+
+  const handleLikePost = useCallback((postId: string) => {
+    return handleLike(postId);
+  }, [handleLike]);
+
+  const handleDeletePost = useCallback((postId: string, creatorId: string) => {
+    return handleDelete(postId, creatorId);
+  }, [handleDelete]);
 
   if (isLoading) {
     return (
@@ -95,7 +105,7 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
     <div className="w-full mx-auto">
       <ScrollArea className="h-[calc(100vh-20rem)]">
         <div className="space-y-4 max-w-3xl mx-auto">
-          <div className="space-y-4">
+          <AnimatePresence mode="popLayout">
             {posts.map((post) => {
               const typedPost: Post = {
                 ...post,
@@ -112,39 +122,40 @@ export const CreatorsFeed = ({ feedType = 'feed' }: CreatorsFeedProps) => {
                 }
               };
 
-              console.log('CreatorsFeed - post.creator_id:', post.creator_id);
-              console.log('CreatorsFeed - currentUserId:', currentUserId);
-              console.log('CreatorsFeed - isOwner:', post.creator_id === currentUserId);
-
               return (
                 <motion.div
                   key={post.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
+                  layout
                 >
-                  <PostCard
+                  <MemoizedPostCard
                     post={typedPost}
-                    onLike={handleLike}
-                    onDelete={handleDelete}
+                    onLike={handleLikePost}
+                    onDelete={handleDeletePost}
                     currentUserId={currentUserId}
                   />
                 </motion.div>
               );
             })}
-            {hasNextPage && (
-              <div ref={ref} className="h-16 flex items-center justify-center">
-                {isFetchingNextPage && (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-luxury-primary" />
-                    <p className="text-luxury-neutral text-sm">Loading more posts...</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          </AnimatePresence>
+
+          {hasNextPage && (
+            <div ref={ref} className="h-16 flex items-center justify-center">
+              {isFetchingNextPage && (
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="h-6 w-6 animate-spin text-luxury-primary" />
+                  <p className="text-luxury-neutral text-sm">Loading more posts...</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>
   );
-};
+});
+
+CreatorsFeed.displayName = "CreatorsFeed";

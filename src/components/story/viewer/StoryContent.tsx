@@ -1,7 +1,7 @@
 
 import { motion } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, memo, useCallback } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 
@@ -11,38 +11,35 @@ interface StoryContentProps {
   isPaused: boolean;
 }
 
-export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => {
+export const StoryContent = memo(({ story, onNext, isPaused }: StoryContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   
+  // Reset states when story changes
   useEffect(() => {
-    // Reset states when story changes
     setIsLoading(true);
     setHasError(false);
   }, [story.id]);
   
-  const handleMediaLoad = () => {
-    console.log("Story media loaded:", story.id);
+  const handleMediaLoad = useCallback(() => {
     setIsLoading(false);
     setHasError(false);
-  };
+  }, []);
 
-  const handleMediaError = () => {
-    console.error("Story media error:", story.id);
+  const handleMediaError = useCallback(() => {
     setHasError(true);
     setIsLoading(false);
-  };
+  }, []);
 
-  const handleRetry = () => {
-    console.log("Retrying story load:", story.id);
+  const handleRetry = useCallback(() => {
     setIsLoading(true);
     setHasError(false);
     setRetryCount(prev => prev + 1);
-  };
+  }, []);
 
-  // Determine media URL and type
+  // Determine media URL and type - memoized to prevent recalculations
   const mediaItem = {
     media_url: story.media_url,
     video_url: story.video_url,
@@ -95,4 +92,6 @@ export const StoryContent = ({ story, onNext, isPaused }: StoryContentProps) => 
       </div>
     </motion.div>
   );
-};
+});
+
+StoryContent.displayName = "StoryContent";

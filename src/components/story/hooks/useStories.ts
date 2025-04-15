@@ -1,9 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Story } from '@/integrations/supabase/types/story';
 import { createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UseStoriesResult {
   stories: Story[];
@@ -19,10 +21,46 @@ export const useStories = (): UseStoriesResult => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const session = useSession();
+  const queryClient = useQueryClient();
+
+  // Use a stable reference for story query key
+  const storyQueryKey = useMemo(() => ['stories', 'active'], []);
+
+  // Setup realtime subscription for stories
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:stories')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stories',
+          filter: 'is_active=eq.true'
+        },
+        () => {
+          // Just reload stories when changes happen
+          loadStories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const loadStories = useCallback(async () => {
+    // Try to get cached data first
+    const cachedStories = queryClient.getQueryData<Story[]>(storyQueryKey);
+    if (cachedStories && cachedStories.length > 0 && !isLoading) {
+      setStories(cachedStories);
+      return;
+    }
+
     try {
-      console.log('Loading stories...');
+      setIsLoading(true);
+      
       const { data, error: queryError } = await supabase
         .from('stories')
         .select(`
@@ -36,13 +74,15 @@ export const useStories = (): UseStoriesResult => {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (queryError) {
-        throw queryError;
-      }
+      if (queryError) throw queryError;
 
-      console.log("Fetched stories:", data);
-      setStories(data || []);
+      // Set all state updates in a batch to avoid multiple renders
+      const processedData = data || [];
+      setStories(processedData);
       setError(null);
+      
+      // Cache the stories data
+      queryClient.setQueryData(storyQueryKey, processedData);
     } catch (err) {
       console.error('Error loading stories:', err);
       setError('Failed to load stories');
@@ -54,7 +94,7 @@ export const useStories = (): UseStoriesResult => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, queryClient, storyQueryKey, isLoading]);
 
   useEffect(() => {
     loadStories();
@@ -72,12 +112,6 @@ export const useStories = (): UseStoriesResult => {
       // Create unique storage path
       const path = createUniqueFilePath(session.user.id, file);
       
-      console.log('Uploading story:', {
-        isVideo,
-        fileType: file.type,
-        path
-      });
-      
       // Upload file to Supabase storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('stories')
@@ -86,10 +120,7 @@ export const useStories = (): UseStoriesResult => {
           upsert: true
         });
       
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw new Error(uploadError.message);
-      }
+      if (uploadError) throw new Error(uploadError.message);
       
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
@@ -113,14 +144,7 @@ export const useStories = (): UseStoriesResult => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         });
       
-      if (dbError) {
-        throw new Error(dbError.message);
-      }
-      
-      console.log('Story uploaded successfully:', {
-        isVideo,
-        publicUrl
-      });
+      if (dbError) throw new Error(dbError.message);
       
       // Refresh stories list
       await loadStories();
