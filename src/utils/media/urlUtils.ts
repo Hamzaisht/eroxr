@@ -3,8 +3,6 @@
  * URL utilities for media files
  */
 
-import { addCacheBuster } from './mediaUtils';
-
 /**
  * Ensure a URL is a full URL with protocol
  */
@@ -23,6 +21,17 @@ export function ensureFullUrl(url: string): string {
   
   // If it doesn't have a protocol, assume it's https
   return `https://${url}`;
+}
+
+/**
+ * Generate a URL with cache busting to prevent caching issues
+ */
+export function addCacheBuster(url: string): string {
+  if (!url) return url;
+  
+  const separator = url.includes('?') ? '&' : '?';
+  const cacheBuster = `cache=${Date.now()}`;
+  return `${url}${separator}${cacheBuster}`;
 }
 
 /**

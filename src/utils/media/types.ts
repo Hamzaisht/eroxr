@@ -3,6 +3,8 @@
  * Types for media handling
  */
 
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';
+
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
@@ -40,17 +42,38 @@ export interface MediaOptions {
 }
 
 export interface UploadOptions {
-  contentCategory?: 'post' | 'story' | 'avatar' | 'message' | 'ad' | 'cover' | 'generic';
+  contentCategory?: 'post' | 'story' | 'avatar' | 'message' | 'ad' | 'cover' | 'generic' | 'short' | 'profile';
   maxSizeInMB?: number;
   allowedTypes?: string[];
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
+  onProgress?: (progress: number) => void;
+}
+
+export interface FileValidationResult {
+  valid: boolean;
+  message?: string;
+}
+
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  success: boolean;
+  file: File | null;
+}
+
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
 }
 
 export enum AvailabilityStatus {
-  AVAILABLE = 'available',
-  PENDING = 'pending',
-  RESTRICTED = 'restricted',
+  AVAILABLE = 'online',
+  PENDING = 'away',
+  RESTRICTED = 'busy',
   PREMIUM = 'premium',
   DELETED = 'deleted',
 }
+

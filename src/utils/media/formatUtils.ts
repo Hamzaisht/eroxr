@@ -1,4 +1,3 @@
-
 /**
  * Format utilities for media files
  */
@@ -65,4 +64,46 @@ export function isDocumentFile(type: string): boolean {
     'text/plain',
     'application/rtf'
   ].includes(type);
+}
+
+/**
+ * Infer content type from file extension
+ */
+export function inferContentTypeFromExtension(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  
+  const contentTypeMap: Record<string, string> = {
+    // Images
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    
+    // Videos
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    
+    // Audio
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    
+    // Documents
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls': 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    
+    // Other
+    'zip': 'application/zip',
+    'json': 'application/json',
+    'txt': 'text/plain'
+  };
+  
+  return contentTypeMap[ext] || 'application/octet-stream';
 }

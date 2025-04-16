@@ -2,7 +2,13 @@
 import { useMediaUpload } from './useMediaUpload';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { UploadResult, UploadOptions } from '@/utils/media/types';
+import { UploadOptions } from '@/utils/media/types';
+
+interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+}
 
 type MediaContext = UploadOptions['contentCategory'];
 
