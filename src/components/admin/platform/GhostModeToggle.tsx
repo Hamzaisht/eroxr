@@ -1,98 +1,68 @@
 
-import { useGhostMode } from "@/hooks/useGhostMode";
-import { Button } from "@/components/ui/button";
-import { Ghost, Eye, AlertTriangle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { useGhostMode } from "@/hooks/useGhostMode";
+import { useToast } from "@/hooks/use-toast";
 
 export const GhostModeToggle = () => {
-  const { isGhostMode, toggleGhostMode, canUseGhostMode, liveAlerts, isLoading: isGhostModeLoading } = useGhostMode();
+  const { isGhostMode, canUseGhostMode, toggleGhostMode } = useGhostMode();
+  const { toast } = useToast();
   const [isToggling, setIsToggling] = useState(false);
 
-  const handleToggle = async () => {
-    if (!canUseGhostMode || isToggling || isGhostModeLoading) return;
-    
+  const handleToggleGhostMode = async () => {
+    if (!canUseGhostMode) {
+      toast({
+        title: "Ghost Mode Unavailable",
+        description: "You don't have permission to use Ghost Mode.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsToggling(true);
+    
     try {
       await toggleGhostMode();
+      
+      toast({
+        title: isGhostMode ? "Ghost Mode Deactivated" : "Ghost Mode Activated",
+        description: isGhostMode 
+          ? "Your actions are now visible to users." 
+          : "You are now browsing invisibly. Users cannot see your actions.",
+      });
+    } catch (error) {
+      console.error("Error toggling ghost mode:", error);
+      toast({
+        title: "Error",
+        description: "Failed to toggle Ghost Mode. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsToggling(false);
     }
   };
 
-  if (!canUseGhostMode) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-[#161B22]/80 flex items-center gap-2 relative opacity-50"
-              disabled={true}
-            >
-              <AlertTriangle className="h-4 w-4 text-yellow-400" />
-              <span className="hidden sm:inline">Restricted Mode</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>You don't have permission to use Ghost Mode. Super Admin role required.</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  const pendingAlerts = (liveAlerts || []).length;
-  const isLoading = isToggling || isGhostModeLoading;
-
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant={isGhostMode ? "destructive" : "outline"}
-            size="sm"
-            className={`flex items-center gap-2 relative ${
-              isGhostMode 
-                ? "bg-purple-900/30 text-purple-300 border-purple-700/50 hover:bg-purple-800/40 hover:text-purple-200" 
-                : "bg-[#161B22]/80"
-            }`}
-            onClick={handleToggle}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-dotted border-current" />
-            ) : isGhostMode ? (
-              <>
-                <Ghost className="h-4 w-4" />
-                <span className="hidden sm:inline">Ghost Mode</span>
-                {pendingAlerts > 0 && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 p-0">
-                    {pendingAlerts}
-                  </Badge>
-                )}
-              </>
-            ) : (
-              <>
-                <Eye className="h-4 w-4" />
-                <span className="hidden sm:inline">Admin Mode</span>
-              </>
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>
-            {isLoading 
-              ? "Updating ghost mode..."
-              : isGhostMode 
-                ? `Currently browsing invisibly${pendingAlerts > 0 ? ` (${pendingAlerts} alerts)` : ''}`
-                : "Browse invisibly to moderate content"
-            }
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="flex items-center justify-between p-3 bg-black/20 rounded-md mb-6">
+      <div className="flex items-center gap-2">
+        {isGhostMode ? (
+          <EyeOff className="h-5 w-5 text-purple-400" />
+        ) : (
+          <Eye className="h-5 w-5 text-muted-foreground" />
+        )}
+        <span className={isGhostMode ? "text-purple-400 font-medium" : "text-muted-foreground"}>
+          Ghost Mode
+        </span>
+      </div>
+      
+      <Switch
+        checked={isGhostMode}
+        onCheckedChange={handleToggleGhostMode}
+        disabled={isToggling || !canUseGhostMode}
+        className={isGhostMode ? "bg-purple-600" : ""}
+      />
+    </div>
   );
 };

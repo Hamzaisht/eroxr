@@ -1,44 +1,53 @@
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from '@/providers/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { AuthLayout } from '@/components/layout/AuthLayout';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { VideoPlayerProvider } from '@/components/video/VideoPlayerContext';
-import Landing from '@/pages/Landing';
-import Login from '@/pages/Login';
-import Home from '@/pages/Home';
-import Profile from '@/pages/Profile';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { Suspense, lazy } from 'react';
 
-function App() {
+// Layout components
+import Layout from './components/layout/Layout';
+import { AdminRoutes } from './components/admin/routes/AdminRoutes';
+
+// Lazy loaded pages
+const Home = lazy(() => import('./pages/Home'));
+const Shorts = lazy(() => import('./pages/Shorts'));
+const Eros = lazy(() => import('./pages/Eros'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Profile = lazy(() => import('./pages/Profile'));
+
+const App = () => {
   return (
-    <AuthProvider>
-      <VideoPlayerProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public landing page */}
-            <Route element={<AuthLayout requireAuth={false} redirectAuthenticatedTo="/home" />}>
-              <Route path="/" element={<Landing />} />
-            </Route>
-            
-            {/* Public auth routes */}
-            <Route element={<AuthLayout requireAuth={false} redirectAuthenticatedTo="/home" />}>
-              <Route path="/login" element={<Login />} />
-            </Route>
-            
-            {/* Protected routes */}
-            <Route element={<AuthLayout requireAuth={true} redirectUnauthenticatedTo="/login" />}>
-              <Route element={<MainLayout />}>
-                <Route path="/home" element={<Home />} />
+    <ThemeProvider>
+      <BrowserRouter>
+        <ErrorBoundary fallback={<div className="p-8">Something went wrong. Please refresh the page.</div>}>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Routes>
+              {/* Public routes */}
+              <Route element={<Layout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/shorts" element={<Shorts />} />
+                <Route path="/eros" element={<Eros />} />
                 <Route path="/profile/:id" element={<Profile />} />
               </Route>
-            </Route>
-          </Routes>
-          <Toaster />
-        </BrowserRouter>
-      </VideoPlayerProvider>
-    </AuthProvider>
+              
+              {/* Auth routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              
+              {/* Admin routes */}
+              <Route path="/admin/*" element={<AdminRoutes />} />
+              
+              {/* Fallback route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+        <Toaster />
+      </BrowserRouter>
+    </ThemeProvider>
   );
-}
+};
 
 export default App;

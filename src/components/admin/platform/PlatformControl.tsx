@@ -1,5 +1,6 @@
 
 import { useGhostMode } from "@/hooks/useGhostMode";
+import { GhostModeToggle } from "./GhostModeToggle";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -10,7 +11,6 @@ import {
   BarChart, 
   CreditCard
 } from "lucide-react";
-import { GhostModeToggle } from "./GhostModeToggle";
 
 export const PlatformControl = () => {
   const location = useLocation();
@@ -34,7 +34,7 @@ export const PlatformControl = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-luxury-neutral">Platform Control</h1>
+        <h1 className="text-2xl font-bold">Platform Control</h1>
         <GhostModeToggle />
       </div>
       
@@ -68,10 +68,12 @@ export const PlatformControl = () => {
         </TabsList>
       </Tabs>
       
-      {/* Content area */}
+      {/* Content area - this will render the route's component via Outlet */}
       <div className="bg-[#161B22]/50 backdrop-blur-xl border border-white/10 rounded-lg p-4 md:p-6">
         <Outlet />
       </div>
     </div>
   );
 };
+
+export default PlatformControl;

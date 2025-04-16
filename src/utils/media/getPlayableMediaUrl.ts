@@ -1,27 +1,45 @@
 
-import { getDirectMediaUrl, extractMediaUrl } from "./mediaUrlUtils";
-import { getStoragePublicUrl } from "./storageUtils";
-import { MediaSource } from "./types";
+import { MediaSource } from './types';
+import { extractMediaUrl } from './mediaUtils';
 
 /**
- * A unified utility to process media URLs for playback
- * Consolidates functionality from various media utilities
+ * Process a media URL or source object into a playable URL.
+ * Handles various source formats and ensures the URL is valid for display.
  */
-export const getPlayableMediaUrl = (source: MediaSource | string): string => {
-  // First extract a URL from possibly complex media objects
-  let url = typeof source === 'string' ? source : extractMediaUrl(source);
+export function getPlayableMediaUrl(source: MediaSource | string | null | undefined): string {
+  if (!source) return '';
   
-  // If we couldn't get a URL, return empty string
+  // Extract the URL from a source object or use the string directly
+  const url = extractMediaUrl(source);
+  
   if (!url) return '';
   
-  // For storage paths, convert to public URLs
-  if (!url.startsWith('http') && !url.startsWith('blob:') && !url.startsWith('data:')) {
-    const publicUrl = getStoragePublicUrl(url);
-    if (publicUrl) {
-      url = publicUrl;
-    }
+  // Handle special Supabase storage URLs
+  if (url.includes('storage/v1/object/public')) {
+    // The URL is already public and playable
+    return url;
   }
   
-  // Final processing to ensure direct playability
-  return getDirectMediaUrl(url);
-};
+  // Handle YouTube URLs
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    // Convert to embedded format if needed
+    if (url.includes('watch?v=')) {
+      const videoId = url.split('v=')[1].split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return url;
+  }
+  
+  // Handle Vimeo URLs
+  if (url.includes('vimeo.com')) {
+    // Convert to embedded format if needed
+    const vimeoId = url.split('vimeo.com/')[1];
+    if (vimeoId) {
+      return `https://player.vimeo.com/video/${vimeoId}`;
+    }
+    return url;
+  }
+  
+  // Return the processed URL
+  return url;
+}

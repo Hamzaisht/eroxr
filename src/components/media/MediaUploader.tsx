@@ -20,7 +20,7 @@ export interface MediaUploaderProps {
   onError?: (error: string) => void;
   
   /**
-   * Content type category ('story', 'post', etc)
+   * Content type category
    */
   context?: UploadOptions['contentCategory'];
   
