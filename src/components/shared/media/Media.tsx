@@ -3,7 +3,8 @@ import { forwardRef, useState, useEffect, useCallback } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { MediaLoadingState } from '@/components/media/states/MediaLoadingState';
+import { MediaErrorState } from '@/components/media/states/MediaErrorState';
 
 interface MediaProps {
   source: MediaSource | string;
@@ -112,33 +113,21 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
 
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center ${className}`}>
-        <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
+      <div className={`relative ${className}`}>
+        <MediaLoadingState />
       </div>
     );
   }
 
   if (error || !mediaUrl) {
     return (
-      <div className={`flex flex-col items-center justify-center ${className} bg-luxury-darker/50`}>
-        <AlertCircle className="h-8 w-8 text-luxury-neutral/50 mb-2" />
-        <p className="text-sm text-luxury-neutral/70">Media unavailable</p>
-        <button 
-          onClick={handleRetry} 
-          className="mt-2 flex items-center gap-1 px-3 py-1 rounded-md bg-luxury-darker hover:bg-luxury-dark text-luxury-neutral text-sm"
-        >
-          <RefreshCw size={14} className="mr-1" />
-          Retry
-        </button>
-        
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-2 text-xs bg-black/50 text-luxury-neutral/70 rounded max-w-full overflow-auto">
-            <p>URL: {mediaUrl || 'none'}</p>
-            <p>Type: {mediaType}</p>
-            <p>Error: {error}</p>
-            <p>Retries: {retryCount}</p>
-          </div>
-        )}
+      <div className={`relative ${className}`}>
+        <MediaErrorState 
+          message={error || "Media unavailable"}
+          onRetry={handleRetry}
+          accessibleUrl={mediaUrl}
+          retryCount={retryCount}
+        />
       </div>
     );
   }

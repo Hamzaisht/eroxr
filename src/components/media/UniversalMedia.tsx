@@ -1,6 +1,6 @@
 
 import { forwardRef, Ref } from 'react';
-import { Media } from '@/components/media/Media';
+import { Media } from '@/components/shared/media/Media';
 import { MediaSource, MediaOptions } from '@/utils/media/types';
 
 interface UniversalMediaProps extends MediaOptions {
@@ -37,6 +37,7 @@ export const UniversalMedia = forwardRef(({
       muted={muted}
       loop={loop}
       poster={poster}
+      showWatermark={showWatermark}
       onClick={onClick}
       onLoad={onLoad}
       onError={onError}

@@ -1,129 +1,72 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { MediaSource, MediaType } from '@/utils/media/types';
-import { extractMediaUrl, determineMediaType } from '@/utils/mediaUtils';
+import { MediaSource } from '@/utils/media/types';
+import { extractMediaUrl } from '@/utils/media/mediaUtils';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
 interface UseMediaOptions {
   autoLoad?: boolean;
-  onComplete?: () => void;
-  onError?: (error: string) => void;
-  timeout?: number;
+  maxRetries?: number;
 }
 
-interface UseMediaState {
-  url: string | null;
-  mediaType: MediaType | string;
-  isLoading: boolean;
-  isError: boolean;
-  errorMessage: string | null;
-  retryCount: number;
-}
-
-/**
- * A hook for processing and managing media URLs
- */
 export const useMedia = (
-  source: MediaSource | string | null | undefined,
-  options: UseMediaOptions = {}
+  source: MediaSource | string | null,
+  options: UseMediaOptions = { autoLoad: true, maxRetries: 3 }
 ) => {
-  const [state, setState] = useState<UseMediaState>({
-    url: null,
-    mediaType: MediaType.UNKNOWN,
-    isLoading: true,
-    isError: false,
-    errorMessage: null,
-    retryCount: 0
-  });
-
-  // Extract options
-  const { onError, onComplete } = options;
-
-  // Process the media source to extract and validate the URL
-  const processMediaSource = useCallback(async () => {
-    if (!source) {
-      setState(prev => ({
-        ...prev,
-        url: null,
-        isLoading: false,
-        isError: true,
-        errorMessage: 'No media source provided'
-      }));
-      return;
-    }
-
+  const [url, setUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  
+  const loadMedia = useCallback(() => {
+    setIsLoading(true);
+    setIsError(false);
+    
     try {
-      setState(prev => ({ ...prev, isLoading: true, isError: false, errorMessage: null }));
+      if (!source) {
+        setUrl(null);
+        setIsLoading(false);
+        return;
+      }
       
-      // Extract the raw URL from the source
+      // Extract and process the URL
       const rawUrl = extractMediaUrl(source);
       if (!rawUrl) {
-        throw new Error('No URL could be extracted from the source');
+        setUrl(null);
+        setIsError(true);
+        setIsLoading(false);
+        return;
       }
-
-      // Process the URL to make it playable
+      
+      // Add cache busting to avoid caching issues
       const processedUrl = getPlayableMediaUrl(rawUrl);
-      if (!processedUrl) {
-        throw new Error('Failed to process media URL');
-      }
-
-      // Determine the media type
-      const mediaType = determineMediaType(source);
-
-      // Update state with the processed URL and media type
-      setState(prev => ({
-        ...prev,
-        url: processedUrl,
-        mediaType: mediaType as MediaType,
-        isLoading: false,
-        isError: false,
-        errorMessage: null
-      }));
-
-      if (onComplete) onComplete();
-    } catch (error: any) {
-      console.error('Error processing media source:', error);
-      
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        isError: true,
-        errorMessage: error.message || 'Unknown error processing media'
-      }));
-      
-      if (onError) onError(error.message || 'Unknown error processing media');
+      setUrl(processedUrl);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error processing media URL:', error);
+      setIsError(true);
+      setIsLoading(false);
     }
-  }, [source, onComplete, onError]);
-
-  // Process the media source on mount or when source changes
-  useEffect(() => {
-    processMediaSource();
-  }, [processMediaSource]);
-
-  // Function to retry processing the media source
-  const retry = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      retryCount: prev.retryCount + 1,
-      isLoading: true,
-      isError: false,
-      errorMessage: null
-    }));
-    
-    processMediaSource();
-  }, [processMediaSource]);
-
-  return {
-    ...state,
-    retry
-  };
-};
-
-// Function to get a playable media URL, adding cache busters or other processing as needed
-const getPlayableMediaUrl = (url: string): string => {
-  if (!url) return '';
+  }, [source]);
   
-  // Add cache busting to URL to prevent caching issues
-  const cacheBuster = `t=${Date.now()}`;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}${cacheBuster}`;
+  // Automatically load when component mounts or source changes
+  useEffect(() => {
+    if (options.autoLoad) {
+      loadMedia();
+    }
+  }, [source, retryCount, loadMedia, options.autoLoad]);
+  
+  const retry = useCallback(() => {
+    if (retryCount < (options.maxRetries || 3)) {
+      setRetryCount(prev => prev + 1);
+    }
+  }, [retryCount, options.maxRetries]);
+  
+  return {
+    url,
+    isLoading,
+    isError,
+    retry,
+    retryCount
+  };
 };

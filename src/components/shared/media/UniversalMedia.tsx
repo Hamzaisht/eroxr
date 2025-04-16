@@ -37,6 +37,7 @@ export const UniversalMedia = forwardRef(({
       muted={muted}
       loop={loop}
       poster={poster}
+      showWatermark={showWatermark}
       onClick={onClick}
       onLoad={onLoad}
       onError={onError}

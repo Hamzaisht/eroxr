@@ -1,215 +1,198 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { motion } from "framer-motion";
-import { MediaRenderer } from "@/components/media/MediaRenderer";
-import { Loader2, Heart, MessageSquare, Share2 } from "lucide-react";
-import { MediaUploader } from "@/components/upload/MediaUploader";
+import { Loader2 } from "lucide-react";
+import { ErosItem, ErosItemData } from "@/components/eros/ErosItem";
+import { CommentDialog } from "@/components/eros/CommentDialog";
+import { ShareDialog } from "@/components/eros/ShareDialog";
+
+// Mock data for Eros videos
+const mockErosData: ErosItemData[] = [
+  {
+    id: "1",
+    title: "Amazing sunset view",
+    description: "Caught this beautiful sunset at the beach today! #sunset #beach #summer",
+    videoUrl: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+    thumbnailUrl: "https://images.unsplash.com/photo-1498936178812-4b2e558d2937",
+    creator: {
+      id: "creator1",
+      name: "Sarah Johnson",
+      username: "sarahj",
+      avatar: "https://i.pravatar.cc/150?u=sarah"
+    },
+    likes: 256,
+    comments: 14
+  },
+  {
+    id: "2",
+    title: "Mountain hiking",
+    description: "Reached the summit after 3 hours! The view was totally worth it 🏔️ #hiking #mountains #adventure",
+    videoUrl: "https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_1MB.mp4",
+    thumbnailUrl: "https://images.unsplash.com/photo-1454496522488-7a8e488e8606",
+    creator: {
+      id: "creator2",
+      name: "Alex Chen",
+      username: "alexc",
+      avatar: "https://i.pravatar.cc/150?u=alex"
+    },
+    likes: 458,
+    comments: 32
+  },
+  {
+    id: "3",
+    title: "City lights",
+    description: "Night drive through the city. Love these vibes 🌃 #citylife #nightdrive #lights",
+    videoUrl: "https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720p_10s.mp4",
+    thumbnailUrl: "https://images.unsplash.com/photo-1519501025264-65ba15a82390",
+    creator: {
+      id: "creator3",
+      name: "Jordan Taylor",
+      username: "jordant",
+      avatar: "https://i.pravatar.cc/150?u=jordan"
+    },
+    likes: 723,
+    comments: 45
+  }
+];
 
 export default function Eros() {
+  const [erosItems, setErosItems] = useState<ErosItemData[]>([]);
+  const [currentItemIndex, setCurrentItemIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  
   const session = useSession();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    mediaUrl: "",
-    isPremium: false
-  });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Load Eros videos (in a real app, this would be an API call)
   useEffect(() => {
-    // Simulate loading content
-    const timer = setTimeout(() => {
-      setLoading(false);
-      toast({
-        title: "Welcome to Eros",
-        description: "Experience our immersive content platform",
-      });
-    }, 1000);
+    const fetchErosItems = async () => {
+      try {
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setErosItems(mockErosData);
+      } catch (error) {
+        console.error("Error fetching Eros data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load content",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    fetchErosItems();
   }, [toast]);
 
-  const handleMediaUpload = (url: string) => {
-    setFormData(prev => ({ ...prev, mediaUrl: url }));
-    toast({
-      title: "Media uploaded",
-      description: "Your content has been uploaded successfully",
-    });
-  };
+  // Handle scroll to update current item index
+  useEffect(() => {
+    const handleScroll = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+      
+      const scrollTop = container.scrollTop;
+      const itemHeight = window.innerHeight;
+      const newIndex = Math.round(scrollTop / itemHeight);
+      
+      if (newIndex !== currentItemIndex && newIndex >= 0 && newIndex < erosItems.length) {
+        setCurrentItemIndex(newIndex);
+      }
+    };
+    
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [currentItemIndex, erosItems.length]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!session?.user?.id) {
+  const handleLike = (id: string) => {
+    if (!session) {
       toast({
-        title: "Authentication required",
-        description: "Please log in to submit content",
-        variant: "destructive"
+        title: "Sign in required",
+        description: "Please sign in to like videos"
       });
       return;
     }
+    
+    // In a real app, this would be an API call to toggle like
+    console.log("Liking item:", id);
+    
+    setErosItems(prev => 
+      prev.map(item => 
+        item.id === id 
+          ? { 
+              ...item, 
+              hasLiked: !item.hasLiked,
+              likes: item.hasLiked ? item.likes - 1 : item.likes + 1
+            } 
+          : item
+      )
+    );
+  };
 
-    setIsSubmitting(true);
-    try {
-      // Here you would typically make an API call to save the content
-      console.log("Submitting form data:", formData);
-      
-      toast({
-        title: "Content submitted",
-        description: "Your content is now being processed",
-      });
-      
-      // Reset form
-      setFormData({
-        title: "",
-        description: "",
-        mediaUrl: "",
-        isPremium: false
-      });
-    } catch (error) {
-      console.error("Submit error:", error);
-      toast({
-        title: "Submission failed",
-        description: "There was an error submitting your content",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleComment = (id: string) => {
+    setSelectedItemId(id);
+    setCommentDialogOpen(true);
+  };
+
+  const handleShare = (id: string) => {
+    setSelectedItemId(id);
+    setShareDialogOpen(true);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="animate-spin h-10 w-10 text-luxury-primary" />
+      <div className="flex items-center justify-center h-screen bg-luxury-darker">
+        <Loader2 className="h-10 w-10 animate-spin text-luxury-primary" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 min-h-screen">
-      <motion.h1 
-        className="text-4xl font-bold mb-6 bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+    <div className="bg-luxury-darker min-h-screen">
+      {/* Eros Feed */}
+      <div 
+        ref={scrollContainerRef}
+        className="h-screen overflow-y-scroll overflow-x-hidden snap-y snap-mandatory"
       >
-        Create Content
-      </motion.h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Content Creation Form */}
-        <Card className="bg-white/5 backdrop-blur-sm border-luxury-primary/20">
-          <form onSubmit={handleSubmit}>
-            <CardHeader>
-              <CardTitle>New Content</CardTitle>
-              <CardDescription>Share your content with the community</CardDescription>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter a title for your content"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe your content..."
-                  className="min-h-[100px]"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Media Upload</Label>
-                <MediaUploader
-                  onComplete={handleMediaUpload}
-                  context="post"
-                  maxSizeInMB={100}
-                  mediaTypes="both"
-                  buttonText="Upload Media"
-                  showPreview
-                  autoUpload
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="premium">Premium Content</Label>
-                <Switch
-                  id="premium"
-                  checked={formData.isPremium}
-                  onCheckedChange={checked => setFormData(prev => ({ ...prev, isPremium: checked }))}
-                />
-              </div>
-            </CardContent>
-            
-            <CardFooter>
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={isSubmitting || !formData.title}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                {isSubmitting ? "Publishing..." : "Publish Content"}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
-
-        {/* Preview Card */}
-        <Card className="bg-white/5 backdrop-blur-sm border-luxury-primary/20">
-          <CardHeader>
-            <CardTitle>Preview</CardTitle>
-            <CardDescription>How your content will look</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {formData.mediaUrl ? (
-              <MediaRenderer
-                source={formData.mediaUrl}
-                className="w-full rounded-lg overflow-hidden"
-                controls
-              />
-            ) : (
-              <div className="w-full h-48 bg-gray-900/50 rounded-lg flex items-center justify-center">
-                <p className="text-gray-400">Media preview will appear here</p>
-              </div>
-            )}
-            
-            {formData.title && (
-              <h3 className="text-xl font-semibold">{formData.title}</h3>
-            )}
-            
-            {formData.description && (
-              <p className="text-gray-300">{formData.description}</p>
-            )}
-            
-            {formData.isPremium && (
-              <div className="inline-flex items-center px-2 py-1 rounded-full bg-luxury-primary/20 text-luxury-primary text-sm">
-                Premium Content
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {erosItems.map((item, index) => (
+          <ErosItem
+            key={item.id}
+            item={item}
+            isActive={index === currentItemIndex}
+            onLike={handleLike}
+            onComment={handleComment}
+            onShare={handleShare}
+          />
+        ))}
+        
+        {erosItems.length === 0 && !loading && (
+          <div className="flex items-center justify-center h-screen">
+            <p className="text-luxury-neutral">No content available</p>
+          </div>
+        )}
       </div>
+      
+      {/* Dialogs */}
+      <CommentDialog
+        open={commentDialogOpen}
+        onOpenChange={setCommentDialogOpen}
+        erosId={selectedItemId || ""}
+      />
+      
+      <ShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        erosId={selectedItemId || ""}
+      />
     </div>
   );
 }
