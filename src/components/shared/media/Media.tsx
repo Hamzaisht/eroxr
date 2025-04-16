@@ -18,7 +18,7 @@ interface MediaProps {
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
-  onTimeUpdate?: (event: React.SyntheticEvent<HTMLVideoElement>) => void;
+  onTimeUpdate?: (e: React.SyntheticEvent<HTMLVideoElement, Event>) => void;
 }
 
 export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(({

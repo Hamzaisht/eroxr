@@ -4,46 +4,47 @@ import { UploadOptions, UploadResult, UploadState, FileValidationResult } from '
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from './use-toast';
 
-export const useMediaUpload = () => {
+export const useMediaUpload = (options?: UploadOptions) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
     isComplete: false,
-    error: null
+    error: null,
+    success: false
   });
 
   const session = useSession();
   const { toast } = useToast();
 
-  const validateFile = useCallback((file: File, options?: UploadOptions): FileValidationResult => {
+  const validateFile = useCallback((file: File, opts?: UploadOptions): FileValidationResult => {
     if (!file) {
       return { valid: false, message: 'No file selected' };
     }
     
     // Check file size if max size is provided
-    if (options?.maxSizeInMB) {
-      const maxSizeInBytes = options.maxSizeInMB * 1024 * 1024;
+    if (opts?.maxSizeInMB) {
+      const maxSizeInBytes = opts.maxSizeInMB * 1024 * 1024;
       if (file.size > maxSizeInBytes) {
         return {
           valid: false,
-          message: `File is too large. Maximum size is ${options.maxSizeInMB}MB`
+          message: `File is too large. Maximum size is ${opts.maxSizeInMB}MB`
         };
       }
     }
     
     // Check allowed file types if provided
-    if (options?.allowedTypes && options.allowedTypes.length > 0) {
+    if (opts?.allowedTypes && opts.allowedTypes.length > 0) {
       const fileType = file.type.toLowerCase();
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
       
-      const isAllowedType = options.allowedTypes.some(type => {
+      const isAllowedType = opts.allowedTypes.some(type => {
         return fileType.includes(type) || (fileExtension && type.includes(fileExtension));
       });
       
       if (!isAllowedType) {
         return {
           valid: false,
-          message: `Invalid file type. Allowed types: ${options.allowedTypes.join(', ')}`
+          message: `Invalid file type. Allowed types: ${opts.allowedTypes.join(', ')}`
         };
       }
     }
@@ -53,13 +54,16 @@ export const useMediaUpload = () => {
 
   const uploadMedia = useCallback(async (
     file: File,
-    options?: UploadOptions
+    customOptions?: UploadOptions
   ): Promise<UploadResult> => {
     if (!session?.user) {
       return { success: false, error: 'User is not authenticated' };
     }
 
-    const validation = validateFile(file, options);
+    // Merge default options with custom options
+    const mergedOptions = { ...options, ...customOptions };
+
+    const validation = validateFile(file, mergedOptions);
     if (!validation.valid) {
       toast({
         title: 'Invalid file',
@@ -73,7 +77,8 @@ export const useMediaUpload = () => {
       isUploading: true,
       progress: 0,
       isComplete: false,
-      error: null
+      error: null,
+      success: false
     });
 
     try {
@@ -81,8 +86,8 @@ export const useMediaUpload = () => {
       const progressInterval = setInterval(() => {
         setUploadState(prev => {
           const newProgress = Math.min(prev.progress + Math.random() * 10, 90);
-          if (options?.onProgress) {
-            options.onProgress(newProgress);
+          if (mergedOptions?.onProgress) {
+            mergedOptions.onProgress(newProgress);
           }
           return { ...prev, progress: newProgress };
         });
@@ -100,19 +105,21 @@ export const useMediaUpload = () => {
         isUploading: false,
         progress: 100,
         isComplete: true,
-        error: null
+        error: null,
+        success: true
       });
 
       // Auto reset if needed
-      if (options?.autoResetOnCompletion) {
+      if (mergedOptions?.autoResetOnCompletion) {
         setTimeout(() => {
           setUploadState({
             isUploading: false,
             progress: 0,
             isComplete: false,
-            error: null
+            error: null,
+            success: false
           });
-        }, options.resetDelay || 2000);
+        }, mergedOptions.resetDelay || 2000);
       }
 
       return { success: true, url: mockUrl };
@@ -125,7 +132,8 @@ export const useMediaUpload = () => {
         isUploading: false,
         progress: 0,
         isComplete: false,
-        error: errorMessage
+        error: errorMessage,
+        success: false
       });
       
       toast({
@@ -136,14 +144,15 @@ export const useMediaUpload = () => {
       
       return { success: false, error: errorMessage };
     }
-  }, [session, validateFile, toast]);
+  }, [session, validateFile, toast, options]);
 
   const resetUploadState = useCallback(() => {
     setUploadState({
       isUploading: false,
       progress: 0,
       isComplete: false,
-      error: null
+      error: null,
+      success: false
     });
   }, []);
 

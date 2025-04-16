@@ -1,7 +1,7 @@
 
-import { forwardRef, Ref } from "react";
-import { Media } from './Media';
-import { MediaSource, MediaOptions, AvailabilityStatus } from '@/utils/media/types';
+import { forwardRef, Ref } from 'react';
+import { Media } from '@/components/media/Media';
+import { MediaSource, MediaOptions } from '@/utils/media/types';
 
 interface UniversalMediaProps extends MediaOptions {
   item: MediaSource | string;
@@ -36,7 +36,10 @@ export const UniversalMedia = forwardRef(({
       onLoad={onLoad}
       onError={onError}
       onEnded={onEnded}
-      onTimeUpdate={onTimeUpdate}
+      onTimeUpdate={onTimeUpdate ? (e) => {
+        const videoElement = e.target as HTMLVideoElement;
+        onTimeUpdate(videoElement.currentTime);
+      } : undefined}
     />
   );
 });

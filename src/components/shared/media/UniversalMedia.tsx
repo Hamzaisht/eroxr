@@ -36,7 +36,10 @@ export const UniversalMedia = forwardRef(({
       onLoad={onLoad}
       onError={onError}
       onEnded={onEnded}
-      onTimeUpdate={onTimeUpdate}
+      onTimeUpdate={onTimeUpdate ? (e) => {
+        const videoElement = e.target as HTMLVideoElement;
+        onTimeUpdate(videoElement.currentTime);
+      } : undefined}
     />
   );
 });

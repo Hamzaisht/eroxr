@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -91,7 +90,7 @@ export const MediaUploader = ({
   
   const { 
     uploadMedia, 
-    uploadState: { isUploading, progress, error, success },
+    uploadState: { isUploading, progress, error, isComplete },
     validateFile 
   } = useMediaUpload(uploadOptions);
   
@@ -100,7 +99,7 @@ export const MediaUploader = ({
     isLoading: previewLoading, 
     error: previewError,
     clearPreview
-  } = useFilePreview(selectedFile);
+  } = useFilePreview();
   
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Upload, X, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { isVideoFile, isImageFile } from '@/utils/upload/validators';
 import { createFilePreview, revokeFilePreview, formatFileSize } from '@/utils/upload/fileUtils';
 import { UploadOptions } from '@/utils/media/types';
+import { useFilePreview } from '@/hooks/useFilePreview';
 
 export interface MultiFileUploaderProps {
   /**
@@ -89,6 +89,13 @@ export const MultiFileUploader = ({
     uploadState: { isUploading, progress, error },
     validateFile 
   } = useMediaUpload(uploadOptions);
+  
+  const { 
+    previewUrl, 
+    isLoading: previewLoading, 
+    error: previewError,
+    clearPreview
+  } = useFilePreview();
   
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

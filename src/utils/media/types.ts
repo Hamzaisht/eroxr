@@ -61,6 +61,7 @@ export interface UploadState {
   progress: number;
   isComplete: boolean;
   error: string | null;
+  success?: boolean;
 }
 
 export interface FileValidationResult {

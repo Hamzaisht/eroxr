@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Post } from "@/integrations/supabase/types/post";
 import { motion } from "framer-motion";
@@ -208,7 +207,7 @@ export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
           {selectedVideo && (
             <div className="relative w-full aspect-[9/16]">
               <VideoPlayer 
-                url={extractMediaUrl(selectedVideo.video_urls?.[0] || "")} 
+                url={getDirectMediaUrl(selectedVideo.video_urls?.[0] || "")} 
                 poster={selectedVideo.video_thumbnail_url || undefined}
                 autoPlay
                 showCloseButton
