@@ -1,7 +1,8 @@
 
 /**
- * Media type enumeration
+ * Types for media handling
  */
+
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
@@ -10,31 +11,20 @@ export enum MediaType {
   UNKNOWN = 'unknown'
 }
 
-/**
- * Availability status type
- */
-export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';
-
-/**
- * Media source interface - allows for various media source formats
- */
 export interface MediaSource {
   id?: string | number;
   url?: string;
   src?: string;
   media_url?: string;
-  media_urls?: string[];
   video_url?: string;
+  media_urls?: string[];
   video_urls?: string[];
   media_type?: string;
   content_type?: string;
-  creator_id?: string;
+  type?: string;
   [key: string]: any;
 }
 
-/**
- * Media options for rendering
- */
 export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
@@ -49,42 +39,18 @@ export interface MediaOptions {
   onTimeUpdate?: (currentTime: number) => void;
 }
 
-/**
- * Upload result interface
- */
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-}
-
-/**
- * Upload options interface
- */
 export interface UploadOptions {
-  contentCategory?: 'post' | 'story' | 'message' | 'short' | 'avatar' | 'profile' | 'generic';
+  contentCategory?: 'post' | 'story' | 'avatar' | 'message' | 'ad' | 'cover' | 'generic';
   maxSizeInMB?: number;
   allowedTypes?: string[];
-  onProgress?: (progress: number) => void;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
 }
 
-/**
- * Upload state interface
- */
-export interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
-  success: boolean;
-  file: File | null;
-}
-
-/**
- * File validation result
- */
-export interface FileValidationResult {
-  valid: boolean;
-  message?: string;
+export enum AvailabilityStatus {
+  AVAILABLE = 'available',
+  PENDING = 'pending',
+  RESTRICTED = 'restricted',
+  PREMIUM = 'premium',
+  DELETED = 'deleted',
 }

@@ -1,9 +1,9 @@
-
 /**
  * Utility functions for processing media files and URLs
  */
 
 import { MediaSource, MediaType } from './types';
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Extract the main URL from a media source object or string
@@ -151,4 +151,100 @@ export function getContentType(url: string): string {
   
   // Default
   return 'application/octet-stream';
+}
+
+/**
+ * Infer content type from file extension
+ */
+export function inferContentTypeFromExtension(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  
+  const contentTypeMap: Record<string, string> = {
+    // Images
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    
+    // Videos
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    
+    // Audio
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    
+    // Documents
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls': 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    
+    // Other
+    'zip': 'application/zip',
+    'json': 'application/json',
+    'txt': 'text/plain'
+  };
+  
+  return contentTypeMap[ext] || 'application/octet-stream';
+}
+
+/**
+ * Upload file to Supabase storage
+ */
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+}
+
+export async function uploadFileToStorage(
+  bucket: string, 
+  path: string, 
+  file: File
+): Promise<UploadResult> {
+  try {
+    // Determine content type based on file extension if not provided
+    const contentType = file.type || inferContentTypeFromExtension(file.name);
+    
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        contentType,
+        upsert: true
+      });
+
+    if (error) {
+      console.error('Storage upload error:', error);
+      return { success: false, error: error.message };
+    }
+
+    // Get the public URL
+    const url = getStorageUrl(bucket, data?.path || path);
+    
+    return { success: true, url };
+  } catch (error: any) {
+    console.error('File upload error:', error);
+    return { 
+      success: false, 
+      error: error.message || 'An unknown error occurred during upload'
+    };
+  }
+}
+
+/**
+ * Get storage URL for a file
+ */
+export function getStorageUrl(bucket: string, path: string): string {
+  const { data } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(path);
+
+  return data.publicUrl;
 }

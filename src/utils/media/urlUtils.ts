@@ -1,98 +1,84 @@
 
 /**
- * URL-related utility functions for media handling
+ * URL utilities for media files
  */
 
+import { addCacheBuster } from './mediaUtils';
+
 /**
- * Ensure a URL is fully qualified (not a relative path)
+ * Ensure a URL is a full URL with protocol
  */
 export function ensureFullUrl(url: string): string {
   if (!url) return '';
   
-  // Check if the URL is already absolute
-  if (url.startsWith('http://') || url.startsWith('https://')) {
+  // If the URL starts with a protocol, it's already a full URL
+  if (url.match(/^https?:\/\//)) {
     return url;
   }
   
-  // Handle relative URLs that start with /
+  // Check if it's a relative path starting with a slash
   if (url.startsWith('/')) {
     return `${window.location.origin}${url}`;
   }
   
-  // For any other case, assume it's relative to the current path
-  return `${window.location.origin}/${url}`;
+  // If it doesn't have a protocol, assume it's https
+  return `https://${url}`;
 }
 
 /**
- * Add a cache buster to a URL to prevent caching
+ * Get a playable media URL with cache busting if needed
  */
-export function addCacheBuster(url: string): string {
+export function getPlayableMediaUrl(url: string): string {
   if (!url) return '';
   
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}t=${Date.now()}`;
+  // Ensure it's a full URL
+  let fullUrl = ensureFullUrl(url);
+  
+  // Add cache busting to ensure fresh content
+  return addCacheBuster(fullUrl);
 }
 
 /**
- * Get a playable media URL
+ * Check if a URL points to an image based on file extension
  */
-export function getPlayableMediaUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  
-  // Ensure the URL is fully qualified
-  const fullUrl = ensureFullUrl(url);
-  
-  // Handle special cases for different media hosts
-  if (fullUrl.includes('youtube.com') || fullUrl.includes('youtu.be')) {
-    // Convert YouTube URLs to embedded format
-    const videoId = extractYouTubeVideoId(fullUrl);
-    if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&mute=1`;
-    }
-  }
-  
-  return fullUrl;
+export function isImageUrl(url: string): boolean {
+  if (!url) return false;
+  const lowercaseUrl = url.toLowerCase();
+  return /\.(jpg|jpeg|png|gif|webp|svg)$/.test(lowercaseUrl);
 }
 
 /**
- * Extract YouTube video ID from various YouTube URL formats
+ * Check if a URL points to a video based on file extension
  */
-function extractYouTubeVideoId(url: string): string | null {
-  if (!url) return null;
-  
-  // Handle youtu.be URLs
-  if (url.includes('youtu.be')) {
-    const parts = url.split('/');
-    return parts[parts.length - 1].split('?')[0];
-  }
-  
-  // Handle youtube.com URLs
-  const urlParams = new URLSearchParams(url.split('?')[1] || '');
-  return urlParams.get('v');
+export function isVideoUrl(url: string): boolean {
+  if (!url) return false;
+  const lowercaseUrl = url.toLowerCase();
+  return /\.(mp4|webm|ogv|mov|avi)$/.test(lowercaseUrl);
 }
 
 /**
- * Check if a URL is accessible
+ * Check if a URL points to an audio file based on file extension
  */
-export async function checkUrlAccessibility(url: string): Promise<{
-  accessible: boolean;
-  error: string | null;
-}> {
-  try {
-    // Only check for existence, don't download the full resource
-    const response = await fetch(url, { 
-      method: 'HEAD',
-      cache: 'no-store'
-    });
-    
-    return {
-      accessible: response.ok,
-      error: response.ok ? null : `HTTP error ${response.status}`
-    };
-  } catch (error: any) {
-    return {
-      accessible: false,
-      error: error.message || 'Network error checking URL'
-    };
+export function isAudioUrl(url: string): boolean {
+  if (!url) return false;
+  const lowercaseUrl = url.toLowerCase();
+  return /\.(mp3|wav|ogg|flac|aac)$/.test(lowercaseUrl);
+}
+
+/**
+ * Create a thumbnail URL from a video URL if supported platform
+ */
+export function getVideoThumbnailUrl(videoUrl: string): string | null {
+  if (!videoUrl) return null;
+  
+  // YouTube thumbnail
+  const youtubeMatch = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  if (youtubeMatch && youtubeMatch[1]) {
+    return `https://img.youtube.com/vi/${youtubeMatch[1]}/hqdefault.jpg`;
   }
+  
+  // Vimeo thumbnail would require an API call, not possible here
+  
+  // For other videos, we can't generate thumbnails client-side without loading the video
+  return null;
 }

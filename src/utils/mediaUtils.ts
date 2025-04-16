@@ -11,5 +11,14 @@ export * from './media/urlUtils';
 export * from './media/formatUtils';
 
 // Export key functions for backward compatibility
-export { createUniqueFilePath, uploadFileToStorage, getStorageUrl, inferContentTypeFromExtension } from './media/mediaUtils';
-export { getPlayableMediaUrl, ensureFullUrl, addCacheBuster } from './media/urlUtils';
+export { 
+  createUniqueFilePath, 
+  uploadFileToStorage, 
+  getStorageUrl, 
+  inferContentTypeFromExtension 
+} from './media/mediaUtils';
+export { 
+  getPlayableMediaUrl, 
+  ensureFullUrl, 
+  addCacheBuster 
+} from './media/urlUtils';
