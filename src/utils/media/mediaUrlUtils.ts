@@ -1,3 +1,4 @@
+
 /**
  * Utilities for processing and validating media URLs
  */
@@ -70,9 +71,18 @@ export const getDirectMediaUrl = (url: string | null | undefined): string => {
   try {
     // Clean the URL
     const cleanUrl = getCleanUrl(url);
+    console.log(`getDirectMediaUrl - Original: ${url}`);
+    console.log(`getDirectMediaUrl - Cleaned: ${cleanUrl}`);
     
-    // Add cache busting
-    return addCacheBuster(cleanUrl);
+    // Skip cache busting for local preview URLs
+    if (url.startsWith('blob:')) {
+      return cleanUrl;
+    }
+
+    // Add cache busting for remote URLs
+    const finalUrl = addCacheBuster(cleanUrl);
+    console.log(`getDirectMediaUrl - Final: ${finalUrl}`);
+    return finalUrl;
   } catch (error) {
     console.error('Error processing media URL:', error);
     return url;
@@ -92,13 +102,16 @@ export const extractMediaUrl = (source: any): string => {
   }
   
   // Extract from media object with priority order
-  return source.video_url || 
-         (Array.isArray(source.video_urls) && source.video_urls.length > 0 ? source.video_urls[0] : '') ||
-         source.media_url || 
-         (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
-         source.url || 
-         source.src || 
-         '';
+  const extractedUrl = source.video_url || 
+    (Array.isArray(source.video_urls) && source.video_urls.length > 0 ? source.video_urls[0] : '') ||
+    source.media_url || 
+    (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
+    source.url || 
+    source.src || 
+    '';
+    
+  console.log(`extractMediaUrl - Source type: ${typeof source}, Extracted URL: ${extractedUrl}`);
+  return extractedUrl;
 };
 
 /**
@@ -112,16 +125,20 @@ export const checkUrlAccessibility = async (url: string): Promise<{
 }> => {
   if (!url) return { accessible: false, error: 'No URL provided' };
   
-  // Special handling for data and blob URLs
+  // Special handling for data and blob URLs - they are always accessible
   if (url.startsWith('data:') || url.startsWith('blob:')) {
+    console.log(`URL accessibility check - Special URL (${url.substring(0, 20)}...): accessible`);
     return { accessible: true };
   }
+  
+  console.log(`Checking URL accessibility: ${url}`);
   
   // Security measure to ensure we're not sending credentials to other origins
   const requestOptions: RequestInit = {
     method: 'HEAD',
     cache: 'no-store',
     credentials: 'omit', // Don't send credentials for cross-origin requests
+    mode: 'no-cors', // Try with no-cors to avoid CORS issues
   };
   
   try {
@@ -140,10 +157,12 @@ export const checkUrlAccessibility = async (url: string): Promise<{
     
     // Attempt with GET as fallback (some servers don't support HEAD)
     try {
+      console.log(`Trying GET fallback for URL: ${url}`);
       const getResponse = await fetch(url, { 
         method: 'GET', 
         cache: 'no-store',
-        credentials: 'omit'
+        credentials: 'omit',
+        mode: 'no-cors'
       });
       
       return { 
@@ -153,6 +172,14 @@ export const checkUrlAccessibility = async (url: string): Promise<{
       };
     } catch (secondError) {
       console.error('Failed GET fallback check:', url, secondError);
+      
+      // For local development and blob URLs, assume accessible even if fetch fails
+      if (url.startsWith('blob:') || url.startsWith('data:') || 
+          url.includes('localhost') || url.includes('127.0.0.1')) {
+        console.log(`Assuming local/blob URL is accessible: ${url}`);
+        return { accessible: true };
+      }
+      
       return { 
         accessible: false, 
         error: secondError instanceof Error ? secondError.message : String(secondError)

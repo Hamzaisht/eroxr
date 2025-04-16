@@ -1,5 +1,5 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -73,6 +73,7 @@ export const MediaUploader = ({
   autoUpload = true
 }: MediaUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const allowedTypes = (() => {
@@ -100,23 +101,40 @@ export const MediaUploader = ({
   const { 
     previewUrl, 
     isLoading: previewLoading, 
-    error: previewError,
+    error: filePreviewError,
     clearPreview,
     createPreview
   } = useFilePreview();
+  
+  // Capture errors from preview for debugging
+  useEffect(() => {
+    if (filePreviewError) {
+      console.error("File preview error:", filePreviewError);
+      setPreviewError(filePreviewError);
+    } else {
+      setPreviewError(null);
+    }
+  }, [filePreviewError]);
   
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    console.log("File selected:", file.name, file.type, file.size);
+    
     const validation = validateFile(file);
     if (!validation.valid) {
+      console.error("File validation failed:", validation.message);
       if (onError) onError(validation.message || "Invalid file");
       return;
     }
     
     setSelectedFile(file);
-    createPreview(file);
+    
+    // Create preview - this should create a local blob URL for immediate display
+    console.log("Creating preview for file:", file.name);
+    const preview = createPreview(file);
+    console.log("Preview created:", preview ? "success" : "failed");
     
     if (autoUpload) {
       handleUpload(file);
@@ -142,6 +160,7 @@ export const MediaUploader = ({
   const handleClear = () => {
     setSelectedFile(null);
     clearPreview();
+    setPreviewError(null);
     
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -177,12 +196,22 @@ export const MediaUploader = ({
               src={previewUrl} 
               alt="Preview" 
               className="w-full h-auto max-h-64 object-contain"
+              onLoad={() => console.log("Preview image loaded successfully")}
+              onError={(e) => {
+                console.error("Error loading preview image:", e);
+                setPreviewError("Failed to load image preview");
+              }}
             />
           ) : isVideoFile(selectedFile) ? (
             <video 
               src={previewUrl} 
               className="w-full h-auto max-h-64"
               controls
+              onLoadedData={() => console.log("Preview video loaded successfully")}
+              onError={(e) => {
+                console.error("Error loading preview video:", e);
+                setPreviewError("Failed to load video preview");
+              }}
             />
           ) : (
             <div className="flex items-center justify-center h-32 bg-muted">
@@ -191,6 +220,34 @@ export const MediaUploader = ({
               </p>
             </div>
           )}
+          
+          {previewError && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-white p-4">
+              <AlertCircle className="h-8 w-8 mb-2" />
+              <p className="text-sm text-center">{previewError}</p>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Preview loading state */}
+      {showPreview && selectedFile && previewLoading && (
+        <div className="relative border rounded-md overflow-hidden bg-black/5 h-64 flex items-center justify-center">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+            <p className="text-sm text-muted-foreground">Loading preview...</p>
+          </div>
+        </div>
+      )}
+      
+      {/* Debug Info (in development mode) */}
+      {process.env.NODE_ENV === 'development' && selectedFile && (
+        <div className="bg-muted/30 p-2 rounded text-xs font-mono overflow-auto max-h-40">
+          <p>File: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)</p>
+          <p>Type: {selectedFile.type}</p>
+          <p>Preview URL: {previewUrl ? "Created" : "None"}</p>
+          <p>Preview Loading: {previewLoading ? "Yes" : "No"}</p>
+          <p>Preview Error: {previewError || "None"}</p>
         </div>
       )}
       

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createFilePreview, revokeFilePreview } from '@/utils/upload/fileUtils';
 
 interface FilePreviewState {
@@ -54,7 +54,7 @@ export const useFilePreview = (file?: File | null) => {
   }, [file]);
   
   // Method to manually clear preview
-  const clearPreview = () => {
+  const clearPreview = useCallback(() => {
     if (state.previewUrl) {
       revokeFilePreview(state.previewUrl);
     }
@@ -64,16 +64,19 @@ export const useFilePreview = (file?: File | null) => {
       isLoading: false,
       error: null
     });
-  };
+  }, [state.previewUrl]);
   
   // Method to create preview for a specific file
-  const createPreview = (fileToPreview: File) => {
+  const createPreview = useCallback((fileToPreview: File) => {
     if (state.previewUrl) {
       revokeFilePreview(state.previewUrl);
     }
     
     try {
+      console.log("Creating preview for file:", fileToPreview.name, fileToPreview.size);
       const previewUrl = createFilePreview(fileToPreview);
+      console.log("Preview URL created:", previewUrl?.substring(0, 50) + "...");
+      
       setState({
         previewUrl,
         isLoading: false,
@@ -89,7 +92,7 @@ export const useFilePreview = (file?: File | null) => {
       });
       return null;
     }
-  };
+  }, [state.previewUrl]);
   
   return {
     ...state,
