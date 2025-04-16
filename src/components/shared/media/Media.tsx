@@ -1,6 +1,8 @@
+
 import { forwardRef, useState, useEffect, useCallback } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface MediaProps {
@@ -65,18 +67,10 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         return;
       }
       
-      if (url.startsWith('blob:') || url.startsWith('data:')) {
-        console.log('Using direct blob/data URL without processing');
-        setMediaUrl(url);
-        setIsLoading(false);
-        return;
-      }
-
-      const cacheBuster = `t=${Date.now()}`;
-      const separator = url.includes('?') ? '&' : '?';
-      const processedUrl = `${url}${separator}${cacheBuster}`;
+      // Get playable URL with cache busting to avoid caching issues
+      const processedUrl = getPlayableMediaUrl(url);
+      console.log('Processed URL:', processedUrl);
       
-      console.log('Processed URL with cache busting:', processedUrl);
       setMediaUrl(processedUrl);
       setIsLoading(false);
     } catch (err) {
@@ -90,10 +84,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     setIsLoading(true);
     setError(null);
     processMediaSource();
-    
-    return () => {
-      // Clean up any resources if needed
-    };
   }, [source, processMediaSource, retryCount]);
 
   const handleRetry = () => {

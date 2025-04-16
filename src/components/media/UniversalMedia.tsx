@@ -23,6 +23,11 @@ export const UniversalMedia = forwardRef(({
   onEnded,
   onTimeUpdate
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
+  // Handle the onTimeUpdate prop properly
+  const handleTimeUpdate = onTimeUpdate ? (currentTime: number) => {
+    onTimeUpdate(currentTime);
+  } : undefined;
+  
   return (
     <Media
       source={item}
@@ -36,7 +41,7 @@ export const UniversalMedia = forwardRef(({
       onLoad={onLoad}
       onError={onError}
       onEnded={onEnded}
-      onTimeUpdate={onTimeUpdate}
+      onTimeUpdate={handleTimeUpdate}
       ref={ref}
     />
   );
