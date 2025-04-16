@@ -7,7 +7,8 @@ export * from './media/formatUtils';
 // Selectively re-export specific functions to avoid duplicates
 export { 
   createUniqueFilePath, 
-  uploadFileToStorage 
+  uploadFileToStorage,
+  getContentType 
 } from './media/mediaUtils';
 
 export { 
