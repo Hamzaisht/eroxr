@@ -45,6 +45,7 @@ export const UniversalMedia = forwardRef(({
       onError={onError}
       onEnded={onEnded}
       onTimeUpdate={handleTimeUpdate}
+      ref={ref}
     />
   );
 });

@@ -32,6 +32,7 @@ const NavItem = ({ to, icon: Icon, label }: NavItemProps) => {
   );
 };
 
+// Ensure these match routes in App.tsx
 const navItems: NavItemProps[] = [
   { to: "/home", icon: Home, label: "Home" },
   { to: "/dating", icon: Heart, label: "Create a BD" },

@@ -67,41 +67,6 @@ export const useVideoPlayer = (options: UseVideoPlayerOptions) => {
     }
   }, [url, autoPlay, onLoadedData, onError]);
 
-  // Handle auto-play
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video && autoPlay && url) {
-      video.play().then(() => {
-        setIsPlaying(true);
-      }).catch(error => {
-        console.error('Error auto-playing video:', error);
-        
-        // Try muted autoplay as fallback (better browser support)
-        if (!muted) {
-          console.log('Attempting muted autoplay as fallback...');
-          video.muted = true;
-          setIsMuted(true);
-          video.play().then(() => {
-            setIsPlaying(true);
-          }).catch(secondError => {
-            console.error('Error with muted autoplay fallback:', secondError);
-            if (onError) onError();
-          });
-        } else if (onError) {
-          onError();
-        }
-      });
-    }
-  }, [url, autoPlay, muted, onError]);
-
-  // Update muted state when prop changes
-  useEffect(() => {
-    setIsMuted(muted);
-    if (videoRef.current) {
-      videoRef.current.muted = muted;
-    }
-  }, [muted]);
-
   // Toggle play/pause
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
@@ -119,23 +84,23 @@ export const useVideoPlayer = (options: UseVideoPlayerOptions) => {
       setIsPlaying(false);
     }
   }, [onError]);
-  
+
   // Toggle mute
   const toggleMute = useCallback(() => {
-    setIsMuted(prev => {
-      if (videoRef.current) {
-        videoRef.current.muted = !prev;
-      }
-      return !prev;
-    });
+    const video = videoRef.current;
+    if (!video) return;
+    
+    video.muted = !video.muted;
+    setIsMuted(video.muted);
   }, []);
 
   // Seek to specific time
-  const seekTo = useCallback((time: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
+  const seek = useCallback((time: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    video.currentTime = time;
+    setCurrentTime(time);
   }, []);
 
   return {
@@ -143,10 +108,12 @@ export const useVideoPlayer = (options: UseVideoPlayerOptions) => {
     isPlaying,
     isMuted,
     isBuffering,
-    duration,
     currentTime,
+    duration,
     togglePlay,
     toggleMute,
-    seekTo
+    seek
   };
 };
+
+export default useVideoPlayer;

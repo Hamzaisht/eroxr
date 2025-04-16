@@ -25,30 +25,22 @@ export function ensureFullUrl(url: string): string {
 
 /**
  * Generate a URL with cache busting to prevent caching issues
+ * This should only be applied when necessary, not on every render
  */
-export function addCacheBuster(url: string): string {
+export function addCacheBuster(url: string, forceCacheBuster = false): string {
   if (!url) return url;
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
   
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 10000);
-  const separator = url.includes('?') ? '&' : '?';
+  // Only add cache buster if we haven't added one already or if we force a new one
+  if (!url.includes('cache=') || forceCacheBuster) {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000);
+    const separator = url.includes('?') ? '&' : '?';
+    
+    return `${url}${separator}cache=${timestamp}-${random}`;
+  }
   
-  return `${url}${separator}cache=${timestamp}-${random}`;
-}
-
-/**
- * Get a playable media URL with cache busting if needed
- */
-export function getPlayableMediaUrl(url: string): string {
-  if (!url) return '';
-  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
-  
-  // Ensure it's a full URL
-  let fullUrl = ensureFullUrl(url);
-  
-  // Add cache busting to ensure fresh content
-  return addCacheBuster(fullUrl);
+  return url;
 }
 
 /**
@@ -92,4 +84,38 @@ export function getVideoThumbnailUrl(videoUrl: string): string | null {
   
   // For other videos, we can't generate thumbnails client-side without loading the video
   return null;
+}
+
+/**
+ * Get a playable media URL with cache busting if needed
+ */
+export function getPlayableMediaUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  
+  // Ensure it's a full URL
+  let fullUrl = ensureFullUrl(url);
+  
+  // Special YouTube handling
+  if (fullUrl.includes('youtube.com') || fullUrl.includes('youtu.be')) {
+    // Convert to embed format if needed
+    if (fullUrl.includes('watch?v=')) {
+      const videoId = fullUrl.split('v=')[1].split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return fullUrl;
+  }
+  
+  // Special Vimeo handling
+  if (fullUrl.includes('vimeo.com')) {
+    // Convert to embed format if needed
+    const vimeoId = fullUrl.split('vimeo.com/')[1];
+    if (vimeoId) {
+      return `https://player.vimeo.com/video/${vimeoId}`;
+    }
+    return fullUrl;
+  }
+  
+  // Add cache busting to ensure fresh content
+  return addCacheBuster(fullUrl);
 }

@@ -6,30 +6,29 @@ interface VideoLoadingStateProps {
   onRetry?: () => void;
 }
 
-export const VideoLoadingState = ({ isStalled, onRetry }: VideoLoadingStateProps) => {
+export const VideoLoadingState = ({ 
+  isStalled = false,
+  onRetry
+}: VideoLoadingStateProps) => {
   return (
-    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
-      <div className="flex flex-col items-center justify-center p-4 text-white">
-        {isStalled ? (
-          <>
-            <AlertTriangle className="h-8 w-8 mb-2 text-yellow-400 animate-pulse" />
-            <p className="text-center text-sm mb-2">Video playback stalled</p>
-            {onRetry && (
-              <button 
-                onClick={onRetry}
-                className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-md text-sm"
-              >
-                Retry
-              </button>
-            )}
-          </>
-        ) : (
-          <>
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <p className="mt-2 text-sm">Loading video...</p>
-          </>
-        )}
-      </div>
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-white">
+      {isStalled ? (
+        <>
+          <AlertTriangle className="h-10 w-10 text-amber-400 mb-3" />
+          <p className="mb-4">Buffering video...</p>
+          
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="px-4 py-2 bg-luxury-primary/80 hover:bg-luxury-primary text-white rounded-md"
+            >
+              Reload Video
+            </button>
+          )}
+        </>
+      ) : (
+        <Loader2 className="h-10 w-10 animate-spin" />
+      )}
     </div>
   );
 };
