@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
+import { extractMediaUrl, getContentType } from '@/utils/media/mediaUtils';
 import { MediaType, MediaSource } from '@/utils/media/types';
-import { checkUrlAccessibility, tryRepairUrl } from '@/utils/media/mediaUrlUtils';
+import { checkUrlAccessibility } from '@/utils/media/mediaUrlUtils';
 
 interface UseMediaOptions {
   autoLoad?: boolean;
@@ -37,45 +37,25 @@ export const useMedia = (
       setIsLoading(true);
       setIsError(false);
       
-      // Process the URL
-      const processedUrl = getPlayableMediaUrl(mediaSource);
-      console.log(`Processing media URL:`, mediaSource, `-> ${processedUrl}`);
+      // Extract media URL from source
+      const extractedUrl = extractMediaUrl(mediaSource);
       
-      if (!processedUrl) {
+      if (!extractedUrl) {
         throw new Error('Could not process media URL');
       }
       
-      // Check if URL is accessible
-      const accessibility = await checkUrlAccessibility(processedUrl);
+      console.log('Processing media URL:', extractedUrl);
+      
+      // Check URL accessibility
+      const accessibility = await checkUrlAccessibility(extractedUrl);
       
       if (!accessibility.accessible) {
-        console.error(`Media URL is not accessible: ${processedUrl}`, accessibility);
-        
-        // Try alternative URLs if available
-        const alternativeUrls = tryRepairUrl(processedUrl);
-        let foundAccessible = false;
-        
-        for (const altUrl of alternativeUrls) {
-          if (altUrl === processedUrl) continue;
-          
-          const altAccessibility = await checkUrlAccessibility(altUrl);
-          if (altAccessibility.accessible) {
-            console.log(`Found accessible alternative URL: ${altUrl}`);
-            setUrl(altUrl);
-            foundAccessible = true;
-            break;
-          }
-        }
-        
-        if (!foundAccessible) {
-          throw new Error(`Media URL is not accessible: ${processedUrl}`);
-        }
-      } else {
-        // URL is accessible
-        setUrl(processedUrl);
+        throw new Error(`Media URL is not accessible: ${extractedUrl}`);
       }
       
+      setUrl(extractedUrl);
       setIsLoading(false);
+      
     } catch (error) {
       console.error('Error loading media:', error);
       setIsError(true);
@@ -92,7 +72,7 @@ export const useMedia = (
     }
   }, [source, autoLoad, loadMedia, retryCount]);
 
-  // Handle for successful load
+  // Handle successful load
   const handleLoad = useCallback(() => {
     console.log(`Media loaded successfully: ${url}`);
     setIsLoaded(true);
@@ -100,7 +80,7 @@ export const useMedia = (
     if (onComplete) onComplete();
   }, [url, onComplete]);
 
-  // Handle for load error
+  // Handle load error
   const handleError = useCallback(() => {
     console.error(`Error loading media: ${url}`);
     setIsError(true);
