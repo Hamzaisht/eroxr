@@ -1,9 +1,9 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '@/providers/ThemeProvider';
+import { Suspense, lazy } from 'react';
+import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { Suspense, lazy } from 'react';
 
 // Layout components
 import Layout from './components/layout/Layout';
