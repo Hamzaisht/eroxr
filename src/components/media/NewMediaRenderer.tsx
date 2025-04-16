@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  getPlayableMediaUrl, 
-  getContentType, 
-  MediaType,
+  getContentType,
   determineMediaType,
   extractMediaUrl
 } from '@/utils/media/mediaUtils';
+import { MediaType } from '@/utils/media/types';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 interface NewMediaRendererProps {

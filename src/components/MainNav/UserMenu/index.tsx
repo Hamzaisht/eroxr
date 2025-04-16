@@ -61,9 +61,15 @@ export const UserMenu = () => {
     username: profile?.username || null,
     avatar_url: profile?.avatar_url || null,
     status: (profile?.status as AvailabilityStatus) || 'offline',
-    created_at: profile?.created_at || new Date().toISOString(),
-    updated_at: profile?.updated_at || new Date().toISOString(),
   };
+  
+  if (!safeProfile.created_at) {
+    safeProfile.created_at = new Date().toISOString();
+  }
+  
+  if (!safeProfile.updated_at) {
+    safeProfile.updated_at = new Date().toISOString();
+  }
 
   return (
     <div className="flex items-center gap-4">

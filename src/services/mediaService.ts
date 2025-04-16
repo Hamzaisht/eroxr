@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { MediaType } from "@/utils/media/mediaUtils";
+import { MediaType } from "@/utils/media/types";
 
 /**
  * API Service for media operations

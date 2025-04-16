@@ -211,3 +211,14 @@ export const inferContentTypeFromExtension = (fileName: string): string => {
   const extension = fileName.split('.').pop()?.toLowerCase() || '';
   return getContentType(extension);
 };
+
+/**
+ * Get storage URL for a file
+ */
+export const getStorageUrl = (bucket: string, path: string): string => {
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(path);
+  
+  return publicUrl;
+};

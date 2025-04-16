@@ -1,6 +1,7 @@
 
 import { cn } from "@/lib/utils";
-import { AvailabilityStatus } from "@/utils/media/types";
+
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';
 
 export interface AvailabilityIndicatorProps {
   status: AvailabilityStatus;

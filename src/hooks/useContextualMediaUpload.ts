@@ -2,7 +2,7 @@
 import { useMediaUpload } from './useMediaUpload';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { UploadResult } from '@/utils/media/mediaUtils';
+import { UploadResult } from '@/utils/media/types';
 
 type MediaContext = 'post' | 'story' | 'message' | 'short' | 'avatar';
 
