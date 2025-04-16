@@ -1,6 +1,7 @@
 
 import { Profile } from "../types";
-import { AvailabilityStatus } from "@/utils/media/types";
+
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';
 
 export interface PresenceState {
   user_id: string;
