@@ -23,14 +23,6 @@ export const UniversalMedia = forwardRef(({
   onEnded,
   onTimeUpdate
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  // Create a wrapper function that extracts the time and passes only the number
-  const handleTimeUpdate = onTimeUpdate 
-    ? (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-        const videoElement = e.currentTarget;
-        onTimeUpdate(videoElement.currentTime);
-      }
-    : undefined;
-  
   return (
     <Media
       source={item}
@@ -44,7 +36,7 @@ export const UniversalMedia = forwardRef(({
       onLoad={onLoad}
       onError={onError}
       onEnded={onEnded}
-      onTimeUpdate={handleTimeUpdate}
+      onTimeUpdate={onTimeUpdate}
       ref={ref}
     />
   );

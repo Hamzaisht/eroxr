@@ -1,4 +1,3 @@
-
 import { forwardRef, useState, useEffect, useCallback } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
@@ -41,7 +40,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Process media source and extract URL
   const processMediaSource = useCallback(async () => {
     if (!source) {
       setError('No media source provided');
@@ -67,7 +65,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         return;
       }
       
-      // For blob: or data: URLs, use them directly without processing
       if (url.startsWith('blob:') || url.startsWith('data:')) {
         console.log('Using direct blob/data URL without processing');
         setMediaUrl(url);
@@ -75,7 +72,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         return;
       }
 
-      // Add cache busting to URL to prevent caching issues
       const cacheBuster = `t=${Date.now()}`;
       const separator = url.includes('?') ? '&' : '?';
       const processedUrl = `${url}${separator}${cacheBuster}`;
@@ -96,7 +92,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     processMediaSource();
     
     return () => {
-      // Clean up any resources if needed
     };
   }, [source, processMediaSource, retryCount]);
 
@@ -117,7 +112,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     if (onError) onError();
   };
 
-  // Handle time updates for video elements
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
     if (onTimeUpdate) {
       const video = e.currentTarget;
@@ -146,7 +140,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
           Retry
         </button>
         
-        {/* Add debug info in development mode */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-4 p-2 text-xs bg-black/50 text-luxury-neutral/70 rounded max-w-full overflow-auto">
             <p>URL: {mediaUrl || 'none'}</p>
@@ -159,7 +152,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     );
   }
 
-  // Add crossOrigin attribute to handle CORS issues
   if (mediaType === MediaType.VIDEO || mediaType === 'video') {
     return (
       <video
