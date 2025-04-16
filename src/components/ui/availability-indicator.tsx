@@ -1,42 +1,26 @@
+
 import { cn } from "@/lib/utils";
 
-export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'idle' | 'dnd';
 
 export interface AvailabilityIndicatorProps {
   status: AvailabilityStatus;
-  size?: number;
-  onClick?: (e: React.MouseEvent) => void;
+  className?: string;
 }
 
-export const AvailabilityIndicator = ({ 
-  status, 
-  size = 10,
-  onClick 
-}: AvailabilityIndicatorProps) => {
-  const getStatusColor = () => {
-    switch (status) {
-      case 'online':
-        return 'bg-green-500';
-      case 'away':
-        return 'bg-yellow-500';
-      case 'busy':
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
+export function AvailabilityIndicator({ status, className }: AvailabilityIndicatorProps) {
   return (
     <div 
-      onClick={onClick}
       className={cn(
-        "rounded-full border-2 border-white cursor-pointer",
-        getStatusColor()
+        "h-3 w-3 rounded-full",
+        status === 'online' && "bg-green-500",
+        status === 'offline' && "bg-gray-400",
+        status === 'away' && "bg-yellow-500",
+        status === 'busy' && "bg-red-500",
+        status === 'idle' && "bg-yellow-500",
+        status === 'dnd' && "bg-red-500",
+        className
       )}
-      style={{ 
-        width: size, 
-        height: size 
-      }}
     />
   );
-};
+}

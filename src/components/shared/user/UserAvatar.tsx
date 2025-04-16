@@ -83,12 +83,12 @@ export const UserAvatar = ({
           <AvailabilityIndicator status="online" className="mr-2" />
           <span>Online</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onStatusChange('idle')}>
-          <AvailabilityIndicator status="idle" className="mr-2" />
+        <DropdownMenuItem onClick={() => onStatusChange('away')}>
+          <AvailabilityIndicator status="away" className="mr-2" />
           <span>Away</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onStatusChange('dnd')}>
-          <AvailabilityIndicator status="dnd" className="mr-2" />
+        <DropdownMenuItem onClick={() => onStatusChange('busy')}>
+          <AvailabilityIndicator status="busy" className="mr-2" />
           <span>Do Not Disturb</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onStatusChange('offline')}>

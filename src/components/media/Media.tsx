@@ -1,8 +1,8 @@
 
 import { useMemo } from 'react';
-import { MediaType, determineMediaType } from '@/utils/media/mediaUtils';
+import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
+import { determineMediaType } from '@/utils/media/mediaUtils';
 import { MediaDisplay } from './MediaDisplay';
-import { MediaSource, MediaOptions } from '@/utils/media/types';
 
 interface MediaProps extends MediaOptions {
   /**

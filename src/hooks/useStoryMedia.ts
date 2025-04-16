@@ -19,15 +19,15 @@ export const useStoryMedia = (
 ) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  const [localRetryCount, setLocalRetryCount] = useState(0);
   const { toast } = useToast();
   
   // Process the media URL
   const { 
     url,
-    isLoading,
     isError: mediaError,
-    retry: retryLoad
+    retry: retryLoad,
+    isLoading
   } = useMedia({ 
     [mediaType === 'image' ? 'media_url' : 'video_url']: mediaUrl 
   });
@@ -45,8 +45,8 @@ export const useStoryMedia = (
   const handleError = useCallback(() => {
     setHasError(true);
     
-    if (retryCount < 2) {
-      setRetryCount(prev => prev + 1);
+    if (localRetryCount < 2) {
+      setLocalRetryCount(prev => prev + 1);
       retryLoad();
     } else {
       toast({
@@ -59,13 +59,13 @@ export const useStoryMedia = (
         onError();
       }
     }
-  }, [retryCount, retryLoad, toast, mediaType, onError]);
+  }, [localRetryCount, retryLoad, toast, mediaType, onError]);
   
   // Reset state when URL changes
   useEffect(() => {
     setIsLoaded(false);
     setHasError(false);
-    setRetryCount(0);
+    setLocalRetryCount(0);
   }, [mediaUrl]);
   
   return {

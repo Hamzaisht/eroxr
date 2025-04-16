@@ -33,7 +33,10 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
       <DialogContent className="max-w-4xl p-0 bg-black/90 border-luxury-neutral/20">
         <div className="w-full flex items-center justify-center">
           <UniversalMedia
-            item={processedUrl || ''}
+            item={{
+              media_url: processedUrl,
+              creator_id: creatorId
+            }}
             className="max-h-[80vh] w-auto"
             controls={true}
             autoPlay={false}

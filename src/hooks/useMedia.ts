@@ -8,8 +8,17 @@ import {
 } from '@/utils/media/mediaUtils';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
-export function useMedia(source: MediaSource | string | null | undefined): MediaResult & {
+interface UseMediaOptions {
+  autoLoad?: boolean;
+}
+
+export function useMedia(
+  source: MediaSource | string | null | undefined, 
+  options: UseMediaOptions = {}
+): MediaResult & {
   retry: () => void;
+  retryCount: number;
+  isLoading: boolean;
 } {
   const [result, setResult] = useState<MediaResult>({
     url: null,
@@ -17,6 +26,8 @@ export function useMedia(source: MediaSource | string | null | undefined): Media
     contentType: 'application/octet-stream',
     isError: false
   });
+  const [retryCount, setRetryCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const processMedia = useCallback(() => {
     if (!source) {
@@ -26,10 +37,13 @@ export function useMedia(source: MediaSource | string | null | undefined): Media
         contentType: 'application/octet-stream',
         isError: false
       });
+      setIsLoading(false);
       return;
     }
 
     try {
+      setIsLoading(true);
+      
       // Extract URL from source (whether string or object)
       const mediaUrl = typeof source === 'string' 
         ? source 
@@ -43,6 +57,7 @@ export function useMedia(source: MediaSource | string | null | undefined): Media
           isError: true,
           errorMessage: 'No media URL found'
         });
+        setIsLoading(false);
         return;
       }
 
@@ -59,6 +74,7 @@ export function useMedia(source: MediaSource | string | null | undefined): Media
         contentType,
         isError: false
       });
+      setIsLoading(false);
     } catch (error: any) {
       setResult({
         url: null,
@@ -67,6 +83,7 @@ export function useMedia(source: MediaSource | string | null | undefined): Media
         isError: true,
         errorMessage: error.message || 'Error processing media'
       });
+      setIsLoading(false);
     }
   }, [source]);
 
@@ -75,8 +92,15 @@ export function useMedia(source: MediaSource | string | null | undefined): Media
     processMedia();
   }, [source, processMedia]);
 
+  const retry = useCallback(() => {
+    setRetryCount(count => count + 1);
+    processMedia();
+  }, [processMedia]);
+
   return {
     ...result,
-    retry: processMedia
+    retry,
+    retryCount,
+    isLoading
   };
 }

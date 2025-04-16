@@ -1,7 +1,46 @@
 
 import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { uploadFileToStorage, createUniqueFilePath, UploadOptions, UploadResult, UploadState, FileValidationResult } from "@/utils/media/mediaUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { UploadOptions, UploadResult, UploadState, FileValidationResult } from "@/utils/media/types";
+
+// Function to create a unique file path
+const createUniqueFilePath = (userId: string, file: File): string => {
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 10);
+  const extension = file.name.split('.').pop() || '';
+  return `${userId}/${timestamp}-${randomString}.${extension}`;
+};
+
+// Function to upload a file to storage
+const uploadFileToStorage = async (
+  bucket: string, 
+  filePath: string, 
+  file: File
+): Promise<UploadResult> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+    
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+    
+    return { success: true, url: publicUrl };
+  } catch (error: any) {
+    console.error("Storage upload error:", error);
+    return { success: false, error: error.message || "Upload failed" };
+  }
+};
 
 export interface MediaUploadHook {
   uploadMedia: (file: File, options?: UploadOptions) => Promise<UploadResult>;

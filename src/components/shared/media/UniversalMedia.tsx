@@ -1,6 +1,6 @@
 
-import { forwardRef, Ref } from "react";
-import { Media } from './Media';
+import { forwardRef, Ref } from 'react';
+import { Media } from '@/components/media/Media';
 import { MediaSource, MediaOptions } from '@/utils/media/types';
 
 interface UniversalMediaProps extends MediaOptions {
