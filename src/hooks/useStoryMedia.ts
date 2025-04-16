@@ -1,83 +1,101 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useMedia } from "./useMedia";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useMedia } from './useMedia';
 
 interface UseStoryMediaOptions {
   onComplete?: () => void;
-  onError?: () => void;
+  onError?: (error: string) => void;
 }
 
 /**
- * Hook to handle story media loading
+ * Hook specifically for handling story media with auto-progression
  */
 export const useStoryMedia = (
-  mediaUrl: string | null,
+  mediaUrl: string | null | undefined,
   mediaType: 'image' | 'video',
   isPaused: boolean,
-  { onComplete, onError }: UseStoryMediaOptions = {}
+  options: UseStoryMediaOptions = {}
 ) => {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [localRetryCount, setLocalRetryCount] = useState(0);
-  const { toast } = useToast();
-  
-  // Process the media URL using MediaSource object
-  const mediaSource = mediaType === 'image' 
-    ? { media_url: mediaUrl }
-    : { video_url: mediaUrl };
-  
-  // Use our media hook
-  const { 
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [retryAttempts, setRetryAttempts] = useState(0);
+  const autoProgressTimer = useRef<NodeJS.Timeout | null>(null);
+  const { onComplete, onError } = options;
+
+  // Use the base media hook for URL processing
+  const {
     url,
+    isLoading,
     isError: mediaError,
-    retry: retryLoad,
-    isLoading
-  } = useMedia(mediaSource);
-  
-  // Handle media load completion
-  const handleLoad = useCallback(() => {
-    setIsLoaded(true);
-    setHasError(false);
-    if (onComplete) {
-      onComplete();
+    errorMessage,
+    retry: retryMedia
+  } = useMedia(mediaUrl, {
+    onError: (err) => {
+      if (onError) onError(err);
     }
-  }, [onComplete]);
-  
-  // Handle media load error
+  });
+
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoProgressTimer.current) {
+        clearTimeout(autoProgressTimer.current);
+      }
+    };
+  }, []);
+
+  // For images, auto-progress after they've loaded
+  useEffect(() => {
+    // Auto-progression only applies to images
+    if (mediaType === 'image' && hasLoaded && !isPaused && onComplete) {
+      const IMAGE_DISPLAY_TIME = 5000; // 5 seconds
+      autoProgressTimer.current = setTimeout(() => {
+        onComplete();
+      }, IMAGE_DISPLAY_TIME);
+    }
+
+    return () => {
+      if (autoProgressTimer.current) {
+        clearTimeout(autoProgressTimer.current);
+      }
+    };
+  }, [mediaType, hasLoaded, isPaused, onComplete]);
+
+  // Handle media errors
+  useEffect(() => {
+    if (mediaError) {
+      setHasError(true);
+    }
+  }, [mediaError]);
+
+  // Handle load event
+  const handleLoad = useCallback(() => {
+    setHasLoaded(true);
+    setHasError(false);
+  }, []);
+
+  // Handle error event
   const handleError = useCallback(() => {
     setHasError(true);
-    
-    if (localRetryCount < 2) {
-      setLocalRetryCount(prev => prev + 1);
-      retryLoad();
-    } else {
-      toast({
-        title: `Failed to load story ${mediaType}`,
-        description: "The media could not be loaded after multiple attempts",
-        variant: "destructive"
-      });
-      
-      if (onError) {
-        onError();
-      }
-    }
-  }, [localRetryCount, retryLoad, toast, mediaType, onError]);
-  
-  // Reset state when URL changes
-  useEffect(() => {
-    setIsLoaded(false);
+    setHasLoaded(false);
+  }, []);
+
+  // Retry loading
+  const retryLoad = useCallback(() => {
     setHasError(false);
-    setLocalRetryCount(0);
-  }, [mediaUrl]);
-  
+    setHasLoaded(false);
+    setRetryAttempts(prev => prev + 1);
+    retryMedia();
+  }, [retryMedia]);
+
   return {
     url,
-    isLoaded,
-    isLoading: isLoading && !isLoaded,
-    hasError: hasError || mediaError,
-    retryLoad,
+    isLoading,
+    hasError,
+    errorMessage,
     handleLoad,
-    handleError
+    handleError,
+    retryLoad,
+    retryAttempts
   };
 };

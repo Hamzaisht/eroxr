@@ -1,125 +1,189 @@
 
-import { forwardRef, useState, useRef, useEffect } from 'react';
-import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
-import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
+import { forwardRef, useState, useEffect } from 'react';
+import { MediaType, MediaSource } from '@/utils/media/types';
+import { determineMediaType } from '@/utils/media/mediaUtils';
+import { useMedia } from '@/hooks/useMedia';
+import { Loader2, AlertCircle } from 'lucide-react';
 
-interface MediaComponentProps extends MediaOptions {
+interface MediaProps {
   source: MediaSource | string;
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  showWatermark?: boolean;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: () => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (event: React.SyntheticEvent<HTMLVideoElement>) => void;
 }
 
-export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaComponentProps>(({
+export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(({
   source,
   className = "",
   autoPlay = false,
-  controls = false,
+  controls = true,
   muted = true,
   loop = false,
   poster,
+  showWatermark = false,
   onClick,
   onLoad,
   onError,
   onEnded,
   onTimeUpdate
 }, ref) => {
-  const [mediaUrl, setMediaUrl] = useState<string>('');
-  const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [hasError, setHasError] = useState<boolean>(false);
-  
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
-  
+  const [localError, setLocalError] = useState<boolean>(false);
+  const [localLoaded, setLocalLoaded] = useState<boolean>(false);
+
+  const {
+    url: mediaUrl,
+    mediaType,
+    isLoading,
+    isError: mediaError,
+    errorMessage,
+    retry
+  } = useMedia(source, {
+    autoLoad: true,
+    onError: (err) => console.error("Media processing error:", err)
+  });
+
   useEffect(() => {
-    if (source) {
-      try {
-        // Determine the media type
-        const type = determineMediaType(source);
-        setMediaType(type);
-        
-        // Get the media URL
-        const url = getPlayableMediaUrl(source);
-        setMediaUrl(url);
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error processing media source:', error);
-        setHasError(true);
-        setIsLoading(false);
-        if (onError) onError();
-      }
-    }
-  }, [source, onError]);
+    // Reset local state when source changes
+    setLocalError(false);
+    setLocalLoaded(false);
+  }, [source]);
 
   const handleLoad = () => {
+    setLocalLoaded(true);
+    setLocalError(false);
+    console.log(`Media loaded successfully: ${mediaUrl}`);
     if (onLoad) onLoad();
   };
 
   const handleError = () => {
-    console.error('Error loading media:', mediaUrl);
-    setHasError(true);
+    setLocalError(true);
+    setLocalLoaded(false);
+    console.error(`Media render error: ${mediaUrl}`);
     if (onError) onError();
   };
 
-  const handleTimeUpdate = () => {
-    if (onTimeUpdate && videoRef.current) {
-      onTimeUpdate(videoRef.current.currentTime);
-    }
+  const handleRetry = () => {
+    setLocalError(false);
+    retry();
   };
 
-  if (isLoading) {
-    return <div className={`${className} bg-black/10 animate-pulse`} />;
-  }
+  const isError = mediaError || localError;
+  const isReady = !isLoading && !isError && mediaUrl;
 
-  if (hasError) {
+  if (isLoading) {
     return (
-      <div className={`${className} bg-black/10 flex items-center justify-center`}>
-        <span className="text-xs text-muted-foreground">Media error</span>
+      <div className={`flex items-center justify-center ${className || 'h-48 w-full'}`}>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  if (mediaType === MediaType.IMAGE) {
+  if (isError) {
     return (
-      <img
-        ref={imgRef as React.RefObject<HTMLImageElement>}
-        src={mediaUrl}
-        alt="Media content"
-        className={className}
-        onClick={onClick}
-        onLoad={handleLoad}
-        onError={handleError}
-      />
+      <div className={`flex flex-col items-center justify-center ${className || 'h-48 w-full'} bg-black/10 rounded-md`}>
+        <AlertCircle className="h-8 w-8 text-destructive mb-2" />
+        <p className="text-sm text-muted-foreground mb-3">{errorMessage || "Failed to load media"}</p>
+        <button
+          onClick={handleRetry}
+          className="px-3 py-1 text-xs bg-primary hover:bg-primary/90 text-white rounded-md"
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 
-  if (mediaType === MediaType.VIDEO) {
+  if (!mediaUrl) {
     return (
-      <video
-        ref={videoRef as React.RefObject<HTMLVideoElement>}
-        src={mediaUrl}
-        className={className}
-        autoPlay={autoPlay}
-        controls={controls}
-        muted={muted}
-        loop={loop}
-        poster={poster}
-        onClick={onClick}
-        onLoadedData={handleLoad}
-        onError={handleError}
-        onEnded={onEnded}
-        onTimeUpdate={handleTimeUpdate}
-        playsInline
-      />
+      <div className={`flex items-center justify-center ${className || 'h-48 w-full'} bg-black/10 rounded-md`}>
+        <span className="text-sm text-muted-foreground">No media source</span>
+      </div>
     );
   }
 
-  // Fallback for unknown type
-  return (
-    <div className={`${className} bg-black/10 flex items-center justify-center`}>
-      <span className="text-xs text-muted-foreground">Unsupported media</span>
-    </div>
-  );
+  // Render based on media type
+  switch (mediaType) {
+    case MediaType.VIDEO:
+      return (
+        <video
+          ref={ref as React.RefObject<HTMLVideoElement>}
+          src={mediaUrl}
+          className={className}
+          autoPlay={autoPlay}
+          controls={controls}
+          muted={muted}
+          loop={loop}
+          poster={poster}
+          onClick={onClick}
+          onLoadedData={handleLoad}
+          onError={handleError}
+          onEnded={onEnded}
+          onTimeUpdate={onTimeUpdate}
+          playsInline
+        />
+      );
+
+    case MediaType.IMAGE:
+      return (
+        <img
+          ref={ref as React.RefObject<HTMLImageElement>}
+          src={mediaUrl}
+          className={className}
+          onClick={onClick}
+          onLoad={handleLoad}
+          onError={handleError}
+          alt="Media content"
+        />
+      );
+
+    case MediaType.AUDIO:
+      return (
+        <audio
+          src={mediaUrl}
+          className={className}
+          controls={controls}
+          autoPlay={autoPlay}
+          muted={muted}
+          loop={loop}
+          onLoadedData={handleLoad}
+          onError={handleError}
+          onEnded={onEnded}
+        />
+      );
+
+    case MediaType.DOCUMENT:
+      return (
+        <iframe
+          src={mediaUrl}
+          className={className}
+          onLoad={handleLoad}
+          onError={handleError}
+        />
+      );
+
+    default:
+      // Fallback to image rendering for unknown types
+      return (
+        <img
+          ref={ref as React.RefObject<HTMLImageElement>}
+          src={mediaUrl}
+          className={className}
+          onClick={onClick}
+          onLoad={handleLoad}
+          onError={handleError}
+          alt="Media content"
+        />
+      );
+  }
 });
 
 Media.displayName = 'Media';

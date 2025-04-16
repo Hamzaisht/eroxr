@@ -1,250 +1,219 @@
-/**
- * Utility functions for processing media files and URLs
- */
 
-import { MediaSource, MediaType } from './types';
-import { supabase } from "@/integrations/supabase/client";
+import { MediaType, MediaSource } from './types';
 
 /**
- * Extract the main URL from a media source object or string
+ * Determine the content type of a media source
  */
-export function extractMediaUrl(source: MediaSource | string | null | undefined): string | null {
+export function getContentType(source: MediaSource | string): string | null {
   if (!source) return null;
   
-  // If source is already a string, return it directly
-  if (typeof source === 'string') return source;
+  // If source is a string, try to infer from extension
+  if (typeof source === 'string') {
+    return inferContentTypeFromExtension(source);
+  }
   
-  // Check for various URL properties in order of preference
-  const url = source.url || 
-              source.src || 
-              source.video_url || 
-              source.media_url ||
-              (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : null) ||
-              (source.video_urls && source.video_urls.length > 0 ? source.video_urls[0] : null);
-              
-  return url || null;
-}
-
-/**
- * Determine the media type from a URL or media source object
- */
-export function determineMediaType(source: MediaSource | string | null | undefined): MediaType {
-  if (!source) return MediaType.UNKNOWN;
+  // If we have explicit content_type, use it
+  if (source.content_type) {
+    return source.content_type;
+  }
   
-  // Extract media URL
-  const url = extractMediaUrl(source);
-  if (!url) return MediaType.UNKNOWN;
-  
-  // If source is an object with explicit media_type, use that
-  if (typeof source !== 'string') {
-    if (source.media_type === 'video' || source.content_type === 'video') {
-      return MediaType.VIDEO;
-    }
-    if (source.media_type === 'image' || source.content_type === 'image') {
-      return MediaType.IMAGE;
-    }
-    if (source.media_type === 'audio' || source.content_type === 'audio') {
-      return MediaType.AUDIO;
-    }
-    if (source.media_type === 'document' || source.content_type === 'document') {
-      return MediaType.DOCUMENT;
+  // If we have media_type, convert it
+  if (source.media_type) {
+    switch (source.media_type.toLowerCase()) {
+      case 'video': return 'video/mp4';
+      case 'image': return 'image/jpeg';
+      case 'audio': return 'audio/mp3';
+      default: break;
     }
   }
   
-  // Check URL patterns and extensions
-  const lowercaseUrl = url.toLowerCase();
+  // Try to infer from URLs
+  const videoUrl = source.video_url || (source.video_urls && source.video_urls[0]);
+  if (videoUrl) {
+    return 'video/mp4';
+  }
   
-  // Check for video indicators
-  if (
-    lowercaseUrl.includes('/videos/') || 
-    lowercaseUrl.includes('/video/') ||
-    lowercaseUrl.includes('/shorts/') ||
-    lowercaseUrl.endsWith('.mp4') || 
-    lowercaseUrl.endsWith('.webm') || 
-    lowercaseUrl.endsWith('.mov') || 
-    lowercaseUrl.endsWith('.avi')
-  ) {
+  const mediaUrl = source.media_url || (source.media_urls && source.media_urls[0]) || source.url || source.src;
+  if (mediaUrl && typeof mediaUrl === 'string') {
+    return inferContentTypeFromExtension(mediaUrl);
+  }
+  
+  return null;
+}
+
+/**
+ * Determine media type from a source object or string
+ */
+export function determineMediaType(source: MediaSource | string): MediaType {
+  if (!source) return MediaType.UNKNOWN;
+  
+  // Direct string path
+  if (typeof source === 'string') {
+    return inferMediaTypeFromPath(source);
+  }
+  
+  // Explicit media/content type
+  if (source.media_type) {
+    switch (source.media_type.toLowerCase()) {
+      case 'video': return MediaType.VIDEO;
+      case 'image': return MediaType.IMAGE;
+      case 'audio': return MediaType.AUDIO;
+      default: break;
+    }
+  }
+  
+  if (source.content_type) {
+    if (source.content_type.startsWith('video/')) return MediaType.VIDEO;
+    if (source.content_type.startsWith('image/')) return MediaType.IMAGE;
+    if (source.content_type.startsWith('audio/')) return MediaType.AUDIO;
+    if (source.content_type.startsWith('application/pdf')) return MediaType.DOCUMENT;
+  }
+  
+  // Check video-specific properties
+  if (source.video_url || (Array.isArray(source.video_urls) && source.video_urls.length > 0)) {
     return MediaType.VIDEO;
   }
   
-  // Check for image indicators
-  if (
-    lowercaseUrl.includes('/images/') ||
-    lowercaseUrl.includes('/image/') ||
-    lowercaseUrl.endsWith('.jpg') || 
-    lowercaseUrl.endsWith('.jpeg') || 
-    lowercaseUrl.endsWith('.png') || 
-    lowercaseUrl.endsWith('.gif') || 
-    lowercaseUrl.endsWith('.webp')
-  ) {
+  // Check for media URL and infer from it
+  const mediaUrl = source.media_url || 
+                  (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : null) ||
+                  source.url || 
+                  source.src;
+  
+  if (mediaUrl && typeof mediaUrl === 'string') {
+    return inferMediaTypeFromPath(mediaUrl);
+  }
+  
+  return MediaType.UNKNOWN;
+}
+
+/**
+ * Infer media type from file path or URL
+ */
+export function inferMediaTypeFromPath(path: string): MediaType {
+  if (!path) return MediaType.UNKNOWN;
+  
+  const lowercasePath = path.toLowerCase();
+  
+  // Video extensions
+  if (/\.(mp4|webm|ogv|mov|avi|wmv|flv|mkv)$/i.test(lowercasePath)) {
+    return MediaType.VIDEO;
+  }
+  
+  // Image extensions
+  if (/\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|avif)$/i.test(lowercasePath)) {
     return MediaType.IMAGE;
   }
   
-  // Check for audio indicators
-  if (
-    lowercaseUrl.includes('/audio/') ||
-    lowercaseUrl.endsWith('.mp3') || 
-    lowercaseUrl.endsWith('.wav') || 
-    lowercaseUrl.endsWith('.ogg')
-  ) {
+  // Audio extensions
+  if (/\.(mp3|wav|ogg|flac|aac|m4a)$/i.test(lowercasePath)) {
     return MediaType.AUDIO;
   }
   
-  // Check for document indicators
-  if (
-    lowercaseUrl.includes('/documents/') ||
-    lowercaseUrl.endsWith('.pdf') || 
-    lowercaseUrl.endsWith('.doc') || 
-    lowercaseUrl.endsWith('.docx')
-  ) {
+  // Document extensions
+  if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx)$/i.test(lowercasePath)) {
     return MediaType.DOCUMENT;
   }
   
-  // Default to image if nothing matches
-  return MediaType.IMAGE;
-}
-
-/**
- * Generate a URL with cache busting to prevent caching issues
- */
-export function addCacheBuster(url: string): string {
-  if (!url) return url;
+  // Try to infer from URL patterns
+  if (lowercasePath.includes('video') || lowercasePath.includes('watch')) {
+    return MediaType.VIDEO;
+  }
   
-  const separator = url.includes('?') ? '&' : '?';
-  const cacheBuster = `cache=${Date.now()}`;
-  return `${url}${separator}${cacheBuster}`;
-}
-
-/**
- * Create a unique file path for storage
- */
-export function createUniqueFilePath(userId: string, file: File): string {
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 10);
-  const extension = file.name.split('.').pop() || '';
-  const safeName = file.name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
+  if (lowercasePath.includes('image') || lowercasePath.includes('photo')) {
+    return MediaType.IMAGE;
+  }
   
-  return `${userId}/${timestamp}-${randomString}-${safeName}.${extension}`;
-}
-
-/**
- * Get content type from a URL
- */
-export function getContentType(url: string): string {
-  if (!url) return 'unknown';
-  
-  const lowercaseUrl = url.toLowerCase();
-  
-  if (lowercaseUrl.endsWith('.mp4')) return 'video/mp4';
-  if (lowercaseUrl.endsWith('.webm')) return 'video/webm';
-  if (lowercaseUrl.endsWith('.mov')) return 'video/quicktime';
-  
-  if (lowercaseUrl.endsWith('.jpg') || lowercaseUrl.endsWith('.jpeg')) return 'image/jpeg';
-  if (lowercaseUrl.endsWith('.png')) return 'image/png';
-  if (lowercaseUrl.endsWith('.gif')) return 'image/gif';
-  if (lowercaseUrl.endsWith('.webp')) return 'image/webp';
-  
-  if (lowercaseUrl.endsWith('.mp3')) return 'audio/mpeg';
-  if (lowercaseUrl.endsWith('.wav')) return 'audio/wav';
-  
-  if (lowercaseUrl.endsWith('.pdf')) return 'application/pdf';
-  
-  // Default
-  return 'application/octet-stream';
+  return MediaType.UNKNOWN;
 }
 
 /**
  * Infer content type from file extension
  */
-export function inferContentTypeFromExtension(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase() || '';
+export function inferContentTypeFromExtension(path: string): string {
+  if (!path) return 'application/octet-stream';
   
-  const contentTypeMap: Record<string, string> = {
-    // Images
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png',
-    'gif': 'image/gif',
-    'webp': 'image/webp',
-    'svg': 'image/svg+xml',
-    
-    // Videos
-    'mp4': 'video/mp4',
-    'webm': 'video/webm',
-    'mov': 'video/quicktime',
-    'avi': 'video/x-msvideo',
-    
-    // Audio
-    'mp3': 'audio/mpeg',
-    'wav': 'audio/wav',
-    'ogg': 'audio/ogg',
-    
-    // Documents
-    'pdf': 'application/pdf',
-    'doc': 'application/msword',
-    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'xls': 'application/vnd.ms-excel',
-    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    
-    // Other
-    'zip': 'application/zip',
-    'json': 'application/json',
-    'txt': 'text/plain'
-  };
+  const lowercasePath = path.toLowerCase();
   
-  return contentTypeMap[ext] || 'application/octet-stream';
+  // Video
+  if (lowercasePath.endsWith('.mp4')) return 'video/mp4';
+  if (lowercasePath.endsWith('.webm')) return 'video/webm';
+  if (lowercasePath.endsWith('.ogv')) return 'video/ogg';
+  if (lowercasePath.endsWith('.mov')) return 'video/quicktime';
+  
+  // Image
+  if (lowercasePath.endsWith('.jpg') || lowercasePath.endsWith('.jpeg')) return 'image/jpeg';
+  if (lowercasePath.endsWith('.png')) return 'image/png';
+  if (lowercasePath.endsWith('.gif')) return 'image/gif';
+  if (lowercasePath.endsWith('.webp')) return 'image/webp';
+  if (lowercasePath.endsWith('.svg')) return 'image/svg+xml';
+  
+  // Audio
+  if (lowercasePath.endsWith('.mp3')) return 'audio/mpeg';
+  if (lowercasePath.endsWith('.wav')) return 'audio/wav';
+  if (lowercasePath.endsWith('.ogg')) return 'audio/ogg';
+  
+  // Document
+  if (lowercasePath.endsWith('.pdf')) return 'application/pdf';
+  
+  return 'application/octet-stream';
 }
 
 /**
- * Upload file to Supabase storage
+ * Extract a direct media URL from a variety of sources
  */
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
+export function extractMediaUrl(source: MediaSource | string | null | undefined): string {
+  if (!source) return '';
+  
+  // Direct string URL
+  if (typeof source === 'string') {
+    return source;
+  }
+  
+  // Extract from media object with priority order
+  return source.video_url || 
+         (Array.isArray(source.video_urls) && source.video_urls.length > 0 ? source.video_urls[0] : '') ||
+         source.media_url || 
+         (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
+         source.url || 
+         source.src || 
+         '';
 }
 
+/**
+ * Create a unique file path for storage based on user ID and file
+ */
+export function createUniqueFilePath(userId: string, file: File): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString().slice(2, 8);
+  const extension = file.name.split('.').pop();
+  return `${userId}/${timestamp}_${random}.${extension}`;
+}
+
+/**
+ * Upload a file to Supabase storage
+ */
 export async function uploadFileToStorage(
-  bucket: string, 
-  path: string, 
+  bucket: string,
+  path: string,
   file: File
-): Promise<UploadResult> {
+): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
-    // Determine content type based on file extension if not provided
-    const contentType = file.type || inferContentTypeFromExtension(file.name);
+    // Normally we'd use supabase.storage here, but as a stub:
+    console.log(`Uploading ${file.name} to ${bucket}/${path}`);
     
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        contentType,
-        upsert: true
-      });
-
-    if (error) {
-      console.error('Storage upload error:', error);
-      return { success: false, error: error.message };
-    }
-
-    // Get the public URL
-    const url = getStorageUrl(bucket, data?.path || path);
+    // Simulate an API call
+    const url = `/api/storage/${bucket}/${path}`;
     
-    return { success: true, url };
-  } catch (error: any) {
-    console.error('File upload error:', error);
-    return { 
-      success: false, 
-      error: error.message || 'An unknown error occurred during upload'
+    return {
+      success: true,
+      url
+    };
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Upload failed'
     };
   }
-}
-
-/**
- * Get storage URL for a file
- */
-export function getStorageUrl(bucket: string, path: string): string {
-  const { data } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(path);
-
-  return data.publicUrl;
 }

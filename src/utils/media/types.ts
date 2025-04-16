@@ -1,79 +1,55 @@
 
 /**
- * Types for media handling
+ * Media types and interfaces
  */
 
-export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';
-
 export enum MediaType {
-  IMAGE = 'image',
   VIDEO = 'video',
+  IMAGE = 'image',
   AUDIO = 'audio',
   DOCUMENT = 'document',
   UNKNOWN = 'unknown'
 }
 
 export interface MediaSource {
-  id?: string | number;
+  id?: string;
+  video_url?: string;
+  video_urls?: string[];
+  media_url?: string;
+  media_urls?: string[];
   url?: string;
   src?: string;
-  media_url?: string;
-  video_url?: string;
-  media_urls?: string[];
-  video_urls?: string[];
-  media_type?: string;
   content_type?: string;
-  type?: string;
+  media_type?: string;
+  creator_id?: string;
   [key: string]: any;
 }
 
 export interface MediaOptions {
-  className?: string;
   autoPlay?: boolean;
   controls?: boolean;
   muted?: boolean;
   loop?: boolean;
   poster?: string;
+  className?: string;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
-  onTimeUpdate?: (currentTime: number) => void;
+  onTimeUpdate?: (event: React.SyntheticEvent<HTMLVideoElement>) => void;
+}
+
+export enum AvailabilityStatus {
+  AVAILABLE = 'available',
+  UNAUTHORIZED = 'unauthorized',
+  NOT_FOUND = 'not_found',
+  ERROR = 'error'
 }
 
 export interface UploadOptions {
-  contentCategory?: 'post' | 'story' | 'avatar' | 'message' | 'ad' | 'cover' | 'generic' | 'short' | 'profile';
+  contentCategory?: string;
   maxSizeInMB?: number;
   allowedTypes?: string[];
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
-  onProgress?: (progress: number) => void;
-}
-
-export interface FileValidationResult {
-  valid: boolean;
-  message?: string;
-}
-
-export interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
-  success: boolean;
-  file: File | null;
-}
-
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-}
-
-// Use namespace instead of duplicate enum
-export namespace AvailabilityStatusValues {
-  export const AVAILABLE = 'online';
-  export const PENDING = 'away';
-  export const RESTRICTED = 'busy';
-  export const PREMIUM = 'premium';
-  export const DELETED = 'deleted';
 }

@@ -1,42 +1,64 @@
 
 /**
- * A unified utility for processing media URLs to ensure they load correctly
+ * Utilities for processing and validating media URLs
  */
 
 /**
- * Add cache busting parameter to URL to prevent browser caching
+ * Clean up a URL to ensure it's properly formatted
+ */
+export const getCleanUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // Handle special URLs
+  if (url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+  
+  try {
+    const urlObj = new URL(url);
+    return urlObj.toString();
+  } catch (error) {
+    // If URL parsing fails, it might be a relative path
+    console.error('Error cleaning URL:', url, error);
+    
+    // Check if it's a relative path and convert to absolute
+    if (url.startsWith('/')) {
+      return `${window.location.origin}${url}`;
+    }
+
+    // Try prepending https:// if no protocol
+    if (!url.match(/^[a-z]+:\/\//i)) {
+      return `https://${url}`;
+    }
+    
+    return url;
+  }
+};
+
+/**
+ * Add cache busting parameter to prevent browser caching
  */
 export const addCacheBuster = (url: string): string => {
   if (!url) return '';
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
   
-  // Parse the URL to handle query parameters correctly
+  const timestamp = Date.now();
+  
   try {
-    const urlObj = new URL(url);
-    urlObj.searchParams.set('t', Date.now().toString());
+    const urlObj = new URL(getCleanUrl(url));
+    urlObj.searchParams.set('t', timestamp.toString());
     return urlObj.toString();
-  } catch (e) {
-    console.error('Error adding cache buster to URL:', e);
-    return url;
+  } catch (error) {
+    console.error('Error adding cache buster:', error);
+    
+    // Fallback to simpler cache busting
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${timestamp}`;
   }
 };
 
 /**
- * Clean up a URL by removing duplicate query parameters
- */
-export const getCleanUrl = (url: string): string => {
-  if (!url) return '';
-  try {
-    const urlObj = new URL(url);
-    return urlObj.toString();
-  } catch (e) {
-    console.error('Error cleaning URL:', e);
-    return url;
-  }
-};
-
-/**
- * Get a direct playable URL for media that works reliably
+ * Get direct media URL with proper formatting
  */
 export const getDirectMediaUrl = (url: string | null | undefined): string => {
   if (!url) return '';
@@ -50,39 +72,16 @@ export const getDirectMediaUrl = (url: string | null | undefined): string => {
     // Clean the URL
     const cleanUrl = getCleanUrl(url);
     
-    // Add cache busting to ensure fresh content
+    // Add cache busting
     return addCacheBuster(cleanUrl);
-  } catch (e) {
-    console.error('Error processing media URL:', e);
+  } catch (error) {
+    console.error('Error processing media URL:', error);
     return url;
   }
 };
 
 /**
- * Extract URL from a media object or string
- */
-export const extractMediaUrl = (media: any): string => {
-  if (!media) return '';
-  
-  // Handle direct string input
-  if (typeof media === 'string') {
-    return getDirectMediaUrl(media);
-  }
-  
-  // Extract URL from object based on common properties
-  const url = 
-    media.video_url || 
-    (Array.isArray(media.video_urls) && media.video_urls.length > 0 ? media.video_urls[0] : null) ||
-    media.media_url ||
-    (Array.isArray(media.media_urls) && media.media_urls.length > 0 ? media.media_urls[0] : null) ||
-    media.url ||
-    '';
-  
-  return getDirectMediaUrl(url);
-};
-
-/**
- * Check URL accessibility and return detailed information
+ * Check if URL is accessible and return status details
  */
 export const checkUrlAccessibility = async (url: string): Promise<{ 
   accessible: boolean; 
@@ -90,20 +89,25 @@ export const checkUrlAccessibility = async (url: string): Promise<{
   contentType?: string;
   error?: string;
 }> => {
+  if (!url) return { accessible: false, error: 'No URL provided' };
+  
+  // Special handling for data and blob URLs
+  if (url.startsWith('data:') || url.startsWith('blob:')) {
+    return { accessible: true };
+  }
+  
+  // Security measure to ensure we're not sending credentials to other origins
+  const requestOptions: RequestInit = {
+    method: 'HEAD',
+    cache: 'no-store',
+    credentials: 'omit', // Don't send credentials for cross-origin requests
+  };
+  
   try {
-    if (!url) return { accessible: false, error: 'No URL provided' };
+    // First try with HEAD request for efficiency
+    const response = await fetch(url, requestOptions);
     
-    // If it's a blob or data URL, assume it's accessible
-    if (url.startsWith('blob:') || url.startsWith('data:')) {
-      return { accessible: true };
-    }
-    
-    // Try fetch with HEAD request first
-    const response = await fetch(url, { 
-      method: 'HEAD',
-      cache: 'no-store',
-      mode: 'cors'
-    });
+    console.log(`URL accessibility check for ${url}: status ${response.status}`);
     
     return { 
       accessible: response.ok, 
@@ -111,10 +115,27 @@ export const checkUrlAccessibility = async (url: string): Promise<{
       contentType: response.headers.get('content-type') || undefined
     };
   } catch (error) {
-    console.error('Error checking URL accessibility:', error);
-    return { 
-      accessible: false, 
-      error: error instanceof Error ? error.message : String(error)
-    };
+    console.error('Error checking URL accessibility:', url, error);
+    
+    // Attempt with GET as fallback (some servers don't support HEAD)
+    try {
+      const getResponse = await fetch(url, { 
+        method: 'GET', 
+        cache: 'no-store',
+        credentials: 'omit'
+      });
+      
+      return { 
+        accessible: getResponse.ok, 
+        status: getResponse.status,
+        contentType: getResponse.headers.get('content-type') || undefined
+      };
+    } catch (secondError) {
+      console.error('Failed GET fallback check:', url, secondError);
+      return { 
+        accessible: false, 
+        error: secondError instanceof Error ? secondError.message : String(secondError)
+      };
+    }
   }
 };

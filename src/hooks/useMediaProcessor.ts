@@ -1,71 +1,46 @@
 
 import { useState, useEffect, useCallback } from 'react';
+import { useMedia } from './useMedia';
 import { MediaSource, MediaType } from '@/utils/media/types';
-import { determineMediaType, extractMediaUrl, addCacheBuster } from '@/utils/media/mediaUtils';
 
-interface MediaProcessorOptions {
+interface UseMediaProcessorOptions {
   autoLoad?: boolean;
-  maxRetries?: number;
+  onComplete?: () => void;
+  onError?: (error: string) => void;
+  timeout?: number;
 }
 
-export function useMediaProcessor(source: MediaSource | string | null | undefined, options: MediaProcessorOptions = {}) {
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isError, setIsError] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [retryCount, setRetryCount] = useState<number>(0);
+/**
+ * A simplified hook that builds on useMedia to provide
+ * a streamlined API for processing media sources
+ */
+export const useMediaProcessor = (
+  source: MediaSource | string | null | undefined,
+  options: UseMediaProcessorOptions = {}
+) => {
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  
+  // Use the base media hook
+  const {
+    url: mediaUrl,
+    mediaType,
+    isLoading,
+    isError: mediaError,
+    errorMessage: mediaErrorMessage,
+    retry: retryMedia
+  } = useMedia(source, options);
 
-  const { autoLoad = true, maxRetries = 3 } = options;
-
-  const processMedia = useCallback(async () => {
-    if (!source) {
-      setIsError(true);
-      setErrorMessage('No media source provided');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setIsError(false);
-
-      // Determine media type
-      const type = determineMediaType(source);
-      setMediaType(type);
-
-      // Extract URL
-      let url = extractMediaUrl(source);
-      if (!url) {
-        throw new Error('Could not extract media URL');
-      }
-
-      // Add cache buster if retrying
-      if (retryCount > 0) {
-        url = addCacheBuster(url);
-      }
-
-      setMediaUrl(url);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error processing media:', error);
-      setIsError(true);
-      setErrorMessage(error instanceof Error ? error.message : String(error));
-      setIsLoading(false);
-    }
-  }, [source, retryCount]);
-
-  // Process media when source changes or on retry
-  useEffect(() => {
-    if (autoLoad) {
-      processMedia();
-    }
-  }, [processMedia, autoLoad]);
-
-  // Function to manually retry
+  // Expose a simplified retry function
   const retry = useCallback(() => {
-    setRetryCount(prev => prev + 1);
-  }, []);
+    setProcessingError(null);
+    retryMedia();
+  }, [retryMedia]);
+
+  // Combine errors from both media and processing
+  const isError = mediaError || !!processingError;
+  
+  // Combine error messages
+  const errorMessage = processingError || mediaErrorMessage;
 
   return {
     mediaUrl,
@@ -73,8 +48,6 @@ export function useMediaProcessor(source: MediaSource | string | null | undefine
     isLoading,
     isError,
     errorMessage,
-    retry,
-    retryCount,
-    processMedia,
+    retry
   };
-}
+};
