@@ -1,13 +1,13 @@
 
 // Re-export everything from our new modular media utilities
-export * from './media/mediaUtils';
 export * from './media/types';
 export * from './media/urlUtils';
 export * from './media/formatUtils';
 
-// Avoid re-exporting `UploadResult` to prevent type conflict
+// Selectively re-export specific functions to avoid duplicates
 export { 
-  createUniqueFilePath
+  createUniqueFilePath, 
+  uploadFileToStorage 
 } from './media/mediaUtils';
 
 export { 
@@ -19,7 +19,3 @@ export {
 export {
   inferContentTypeFromExtension
 } from './media/formatUtils';
-
-// Re-export these explicitly to avoid ambiguity
-import { uploadFileToStorage, getStorageUrl } from './media/mediaUtils';
-export { uploadFileToStorage, getStorageUrl };
