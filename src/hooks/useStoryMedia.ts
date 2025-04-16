@@ -1,101 +1,110 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useMedia } from './useMedia';
+import { useState, useEffect, useCallback } from 'react';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+import { UseMediaOptions } from '@/utils/media/types';
 
-interface UseStoryMediaOptions {
-  onComplete?: () => void;
-  onError?: (error: string) => void;
+interface UseStoryMediaReturn {
+  url: string | null;
+  isLoading: boolean;
+  hasError: boolean;
+  errorMessage?: string; // Added this property
+  handleLoad: () => void;
+  handleError: () => void;
+  retryLoad: () => void;
+  retryCount: number;
 }
 
-/**
- * Hook specifically for handling story media with auto-progression
- */
 export const useStoryMedia = (
-  mediaUrl: string | null | undefined,
+  url: string | null | undefined,
   mediaType: 'image' | 'video',
   isPaused: boolean,
-  options: UseStoryMediaOptions = {}
-) => {
+  options?: UseMediaOptions
+): UseStoryMediaReturn => {
+  const [processedUrl, setProcessedUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [retryAttempts, setRetryAttempts] = useState(0);
-  const autoProgressTimer = useRef<NodeJS.Timeout | null>(null);
-  const { onComplete, onError } = options;
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [retryCount, setRetryCount] = useState(0);
 
-  // Use the base media hook for URL processing
-  const {
-    url,
-    isLoading,
-    isError: mediaError,
-    errorMessage,
-    retry: retryMedia
-  } = useMedia(mediaUrl, {
-    onError: (err) => {
-      if (onError) onError(err);
-    }
-  });
-
-  // Clear timer on unmount
+  // Process URL and handle initial loading state
   useEffect(() => {
-    return () => {
-      if (autoProgressTimer.current) {
-        clearTimeout(autoProgressTimer.current);
-      }
-    };
-  }, []);
-
-  // For images, auto-progress after they've loaded
-  useEffect(() => {
-    // Auto-progression only applies to images
-    if (mediaType === 'image' && hasLoaded && !isPaused && onComplete) {
-      const IMAGE_DISPLAY_TIME = 5000; // 5 seconds
-      autoProgressTimer.current = setTimeout(() => {
-        onComplete();
-      }, IMAGE_DISPLAY_TIME);
-    }
-
-    return () => {
-      if (autoProgressTimer.current) {
-        clearTimeout(autoProgressTimer.current);
-      }
-    };
-  }, [mediaType, hasLoaded, isPaused, onComplete]);
-
-  // Handle media errors
-  useEffect(() => {
-    if (mediaError) {
+    if (!url) {
+      setProcessedUrl(null);
+      setIsLoading(false);
       setHasError(true);
+      setErrorMessage("No URL provided");
+      
+      // Call onError callback if provided
+      if (options?.onError) {
+        options.onError();
+      }
+      return;
     }
-  }, [mediaError]);
 
-  // Handle load event
+    try {
+      // Process URL (add cache busters, etc)
+      const processed = getPlayableMediaUrl(url);
+      setProcessedUrl(processed);
+      setIsLoading(true);
+      setHasError(false);
+      setErrorMessage(undefined);
+    } catch (error) {
+      console.error(`Failed to process ${mediaType} URL:`, error);
+      setProcessedUrl(null);
+      setIsLoading(false);
+      setHasError(true);
+      setErrorMessage("Failed to process media URL");
+      
+      // Call onError callback if provided
+      if (options?.onError) {
+        options.onError();
+      }
+    }
+  }, [url, mediaType, retryCount, options]);
+
+  // Handle successful load
   const handleLoad = useCallback(() => {
-    setHasLoaded(true);
+    setIsLoading(false);
     setHasError(false);
-  }, []);
 
-  // Handle error event
+    // For images, trigger onComplete immediately
+    // For videos, onComplete is handled by onEnded event in the component
+    if (mediaType === 'image' && options?.onComplete) {
+      options.onComplete();
+    }
+  }, [mediaType, options]);
+
+  // Handle loading error
   const handleError = useCallback(() => {
+    console.error(`Failed to load ${mediaType}:`, url);
+    setIsLoading(false);
     setHasError(true);
-    setHasLoaded(false);
-  }, []);
+    setErrorMessage(`Failed to load ${mediaType}`);
+    
+    // Call onError callback if provided
+    if (options?.onError) {
+      options.onError();
+    }
+  }, [url, mediaType, options]);
 
-  // Retry loading
+  // Retry loading the media
   const retryLoad = useCallback(() => {
+    setIsLoading(true);
     setHasError(false);
-    setHasLoaded(false);
-    setRetryAttempts(prev => prev + 1);
-    retryMedia();
-  }, [retryMedia]);
+    setErrorMessage(undefined);
+    setRetryCount(prev => prev + 1);
+  }, []);
 
   return {
-    url,
+    url: processedUrl,
     isLoading,
     hasError,
     errorMessage,
     handleLoad,
     handleError,
     retryLoad,
-    retryAttempts
+    retryCount
   };
 };
+
+export default useStoryMedia;

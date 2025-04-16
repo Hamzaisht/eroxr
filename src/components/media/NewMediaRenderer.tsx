@@ -78,11 +78,11 @@ export const NewMediaRenderer = ({
       const mediaType = determineMediaType(item);
       
       // If the mediaType is indeterminate, check content type from URL
-      if (mediaType === MediaType.UNKNOWN || mediaType === 'unknown') {
+      if (mediaType === MediaType.UNKNOWN) {
         const fileExtension = processedUrl.split('.').pop()?.toLowerCase() || '';
         setIsVideo(fileExtension.match(/(mp4|webm|mov|avi)$/i) ? true : false);
       } else {
-        setIsVideo(mediaType === MediaType.VIDEO || mediaType === 'video');
+        setIsVideo(mediaType === MediaType.VIDEO);
       }
       
       setUrl(processedUrl);
