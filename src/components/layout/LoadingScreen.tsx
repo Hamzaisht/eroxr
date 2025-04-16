@@ -1,7 +1,8 @@
 
 import { Loader2 } from "lucide-react";
 
-const LoadingScreen = () => {
+// Named export
+export const LoadingScreen = () => {
   return (
     <div className="flex items-center justify-center h-screen w-screen bg-luxury-dark">
       <div className="flex flex-col items-center">
@@ -12,4 +13,5 @@ const LoadingScreen = () => {
   );
 };
 
+// Default export (same as named export)
 export default LoadingScreen;
