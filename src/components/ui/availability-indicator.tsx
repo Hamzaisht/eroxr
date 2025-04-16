@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { AvailabilityStatus } from "@/utils/media/types";
+import type { AvailabilityStatus } from "@/utils/media/types";
 
 export type { AvailabilityStatus };
 
@@ -25,6 +25,7 @@ export function AvailabilityIndicator({
         status === 'offline' && "bg-gray-400",
         status === 'away' && "bg-yellow-500",
         status === 'busy' && "bg-red-500",
+        status === 'invisible' && "bg-gray-400 opacity-50", // Handle invisible status
         className
       )}
       style={{

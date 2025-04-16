@@ -15,7 +15,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
+import type { AvailabilityStatus } from "@/utils/media/types";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -73,18 +74,23 @@ export const UserMenu = () => {
     }
   };
 
+  // Convert AvailabilityStatus to the subset used by the component
   const handleStatusChange = async (newStatus: AvailabilityStatus) => {
+    // Make sure we only use statuses compatible with the profile table
+    const safeStatus: 'online' | 'offline' | 'away' | 'busy' = 
+      newStatus === 'invisible' ? 'offline' : newStatus;
+    
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ status: newStatus })
+        .update({ status: safeStatus })
         .eq('id', session?.user?.id);
 
       if (error) throw error;
 
       toast({
         title: "Status updated",
-        description: `You are now ${newStatus}`,
+        description: `You are now ${safeStatus}`,
       });
     } catch (error) {
       toast({
