@@ -101,7 +101,8 @@ export const MediaUploader = ({
     previewUrl, 
     isLoading: previewLoading, 
     error: previewError,
-    clearPreview
+    clearPreview,
+    createPreview
   } = useFilePreview();
   
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +116,7 @@ export const MediaUploader = ({
     }
     
     setSelectedFile(file);
+    createPreview(file);
     
     if (autoUpload) {
       handleUpload(file);

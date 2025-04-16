@@ -93,9 +93,7 @@ export const MultiFileUploader = ({
   } = useMediaUpload(uploadOptions);
   
   const { 
-    previewUrl, 
-    isLoading: previewLoading, 
-    error: previewError,
+    createPreview,
     clearPreview
   } = useFilePreview();
   
@@ -124,7 +122,7 @@ export const MultiFileUploader = ({
       newFiles.push(file);
       
       try {
-        const previewUrl = createFilePreview(file);
+        const previewUrl = createPreview(file);
         newPreviews[fileId] = previewUrl;
       } catch (error) {
         console.error('Failed to create preview:', error);

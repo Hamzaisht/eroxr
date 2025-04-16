@@ -8,7 +8,7 @@ interface FilePreviewState {
   error: string | null;
 }
 
-export const useFilePreview = (file: File | null) => {
+export const useFilePreview = (file?: File | null) => {
   const [state, setState] = useState<FilePreviewState>({
     previewUrl: null,
     isLoading: false,
@@ -17,17 +17,6 @@ export const useFilePreview = (file: File | null) => {
   
   useEffect(() => {
     if (!file) {
-      // Clear preview if file is null
-      if (state.previewUrl) {
-        revokeFilePreview(state.previewUrl);
-      }
-      
-      setState({
-        previewUrl: null,
-        isLoading: false,
-        error: null
-      });
-      
       return;
     }
     
@@ -77,9 +66,35 @@ export const useFilePreview = (file: File | null) => {
     });
   };
   
+  // Method to create preview for a specific file
+  const createPreview = (fileToPreview: File) => {
+    if (state.previewUrl) {
+      revokeFilePreview(state.previewUrl);
+    }
+    
+    try {
+      const previewUrl = createFilePreview(fileToPreview);
+      setState({
+        previewUrl,
+        isLoading: false,
+        error: null
+      });
+      return previewUrl;
+    } catch (error: any) {
+      console.error("Error creating preview:", error);
+      setState({
+        previewUrl: null,
+        isLoading: false,
+        error: error.message || "Could not create preview"
+      });
+      return null;
+    }
+  };
+  
   return {
     ...state,
-    clearPreview
+    clearPreview,
+    createPreview
   };
 };
 
