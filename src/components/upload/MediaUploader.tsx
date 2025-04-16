@@ -86,12 +86,14 @@ export const MediaUploader = ({
     maxSizeInMB,
     allowedTypes,
     autoResetOnCompletion: true,
-    resetDelay: 3000
+    resetDelay: 3000,
+    // Add an optional onProgress callback
+    onProgress: (progress: number) => {}
   };
   
   const { 
     uploadMedia, 
-    uploadState: { isUploading, progress, error, isComplete, success },
+    uploadState: { isUploading, progress, error, isComplete },
     validateFile 
   } = useMediaUpload(uploadOptions);
   
@@ -126,7 +128,7 @@ export const MediaUploader = ({
   };
   
   const handleUpload = async (file: File) => {
-    const result = await uploadMedia(file);
+    const result = await uploadMedia(file, uploadOptions);
     
     if (result.success && result.url) {
       if (onComplete) onComplete(result.url);

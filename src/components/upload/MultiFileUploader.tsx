@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Upload, X, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -82,7 +81,9 @@ export const MultiFileUploader = ({
   const uploadOptions = {
     contentCategory,
     maxSizeInMB,
-    autoResetOnCompletion: true
+    autoResetOnCompletion: true,
+    resetDelay: 3000,
+    onProgress: (progress: number) => {}
   };
   
   const { 
@@ -144,7 +145,7 @@ export const MultiFileUploader = ({
   };
   
   const handleUploadFile = async (file: File, index: number) => {
-    const result = await uploadMedia(file);
+    const result = await uploadMedia(file, uploadOptions);
     
     if (result.success && result.url) {
       setUploadedUrls(prev => [...prev, result.url!]);
