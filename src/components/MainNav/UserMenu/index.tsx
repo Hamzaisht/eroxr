@@ -12,6 +12,7 @@ import { GuestButtons } from "./GuestButtons";
 import { UserMenuItems } from "./UserMenuItems";
 import { UserAvatar } from "@/components/shared/user/UserAvatar";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
+import type { Profile } from "@/integrations/supabase/types/profile";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -53,10 +54,17 @@ export const UserMenu = () => {
     return <GuestButtons onLogin={handleLogin} onSignUp={handleSignUp} />;
   }
 
+  // Create a partial profile object with required fields if profile is missing them
+  const safeProfile: Partial<Profile> = {
+    ...profile,
+    created_at: profile?.created_at || new Date().toISOString(),
+    updated_at: profile?.updated_at || new Date().toISOString(),
+  };
+
   return (
     <div className="flex items-center gap-4">
       <UserBadge 
-        profile={profile} 
+        profile={safeProfile as Profile} 
         fallbackEmail={user.email} 
       />
       <DropdownMenu>

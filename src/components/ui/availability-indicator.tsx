@@ -6,13 +6,20 @@ export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'idle'
 export interface AvailabilityIndicatorProps {
   status: AvailabilityStatus;
   className?: string;
+  size?: number;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
-export function AvailabilityIndicator({ status, className }: AvailabilityIndicatorProps) {
+export function AvailabilityIndicator({ 
+  status, 
+  className,
+  size,
+  onClick
+}: AvailabilityIndicatorProps) {
   return (
     <div 
       className={cn(
-        "h-3 w-3 rounded-full",
+        "rounded-full",
         status === 'online' && "bg-green-500",
         status === 'offline' && "bg-gray-400",
         status === 'away' && "bg-yellow-500",
@@ -21,6 +28,11 @@ export function AvailabilityIndicator({ status, className }: AvailabilityIndicat
         status === 'dnd' && "bg-red-500",
         className
       )}
+      style={{
+        width: size ? `${size}px` : '12px',
+        height: size ? `${size}px` : '12px',
+      }}
+      onClick={onClick}
     />
   );
 }

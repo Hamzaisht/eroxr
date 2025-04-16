@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { AvatarStatus } from "./avatar/AvatarStatus";
 import { ProfileAvatarImage } from "./avatar/AvatarImage";
@@ -6,6 +7,7 @@ import { useAvatarUpload } from "./avatar/AvatarUpload";
 import { usePresence } from "./avatar/usePresence";
 import { AvatarPreview } from "./avatar/AvatarPreview";
 import type { ProfileAvatarProps } from "./avatar/types";
+import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAvatarProps) => {
   const [showPreview, setShowPreview] = useState(false);
@@ -36,6 +38,11 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
     }
   };
 
+  // Create a wrapper function that ensures the correct type
+  const handleStatusChange = (newStatus: AvailabilityStatus) => {
+    setAvailability(newStatus);
+  };
+
   return (
     <>
       <div className="relative inline-block">
@@ -53,7 +60,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
                 profileId={profile?.id}
                 isOwnProfile={!!isOwnProfile}
                 status={availability}
-                onStatusChange={setAvailability}
+                onStatusChange={handleStatusChange}
               />
             </div>
           )}
