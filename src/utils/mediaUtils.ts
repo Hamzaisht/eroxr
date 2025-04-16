@@ -12,9 +12,7 @@ export * from './media/formatUtils';
 
 // Export key functions for backward compatibility but avoid duplicate exports
 export { 
-  createUniqueFilePath, 
-  uploadFileToStorage, 
-  getStorageUrl 
+  createUniqueFilePath
 } from './media/mediaUtils';
 export { 
   getPlayableMediaUrl, 
@@ -24,3 +22,7 @@ export {
 export {
   inferContentTypeFromExtension
 } from './media/formatUtils';
+
+// Re-export these explicitly to avoid ambiguity
+import { uploadFileToStorage, getStorageUrl } from './media/mediaUtils';
+export { uploadFileToStorage, getStorageUrl };
