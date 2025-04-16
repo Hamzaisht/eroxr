@@ -171,10 +171,14 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         loop={loop}
         poster={poster}
         onClick={onClick}
-        onLoadedData={handleLoad}
-        onError={handleError}
+        onLoadedData={onLoad}
+        onError={onError}
         onEnded={onEnded}
-        onTimeUpdate={handleTimeUpdate}
+        onTimeUpdate={onTimeUpdate ? 
+          (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+            const video = e.currentTarget;
+            onTimeUpdate(video.currentTime);
+          } : undefined}
         playsInline
         crossOrigin="anonymous"
       />
@@ -187,8 +191,8 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
       src={mediaUrl}
       className={className}
       onClick={onClick}
-      onLoad={handleLoad}
-      onError={handleError}
+      onLoad={onLoad}
+      onError={onError}
       alt="Media content"
       crossOrigin="anonymous"
     />

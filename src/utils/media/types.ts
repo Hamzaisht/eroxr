@@ -46,7 +46,31 @@ export interface UploadOptions {
   bucket?: string;
   folder?: string;
   userId?: string;
+  contentCategory?: string;
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
   onProgress?: (progress: number) => void;
   onComplete?: (url: string) => void;
   onError?: (error: Error) => void;
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
+}
+
+export interface FileValidationResult {
+  valid: boolean;
+  message?: string;
+}
+
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+}
+
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  isComplete: boolean;
+  error: string | null;
+  success: boolean;
 }

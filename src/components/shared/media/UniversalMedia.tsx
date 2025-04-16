@@ -23,12 +23,13 @@ export const UniversalMedia = forwardRef(({
   onEnded,
   onTimeUpdate
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  // Create a handler that converts from the Media component's event format to the simpler format expected by onTimeUpdate
-  const handleTimeUpdate = onTimeUpdate 
-    ? (currentTime: number) => {
-        onTimeUpdate(currentTime);
-      } 
-    : undefined;
+  // Handle timeUpdate events
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    if (onTimeUpdate) {
+      const videoElement = e.currentTarget;
+      onTimeUpdate(videoElement.currentTime);
+    }
+  };
   
   return (
     <Media

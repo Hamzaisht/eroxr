@@ -32,6 +32,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
   onClick,
   onLoad,
   onError,
+  onEnded,
   onTimeUpdate
 }, ref) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +41,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
+  // Process media source and extract URL
   const processMediaSource = useCallback(async () => {
     if (!source) {
       setError('No media source provided');

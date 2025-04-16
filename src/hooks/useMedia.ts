@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { MediaSource, MediaType } from '@/utils/media/types';
-import { extractMediaUrl, getPlayableMediaUrl, determineMediaType } from '@/utils/mediaUtils';
+import { extractMediaUrl, determineMediaType } from '@/utils/mediaUtils';
 
 interface UseMediaOptions {
   autoLoad?: boolean;
@@ -12,7 +12,7 @@ interface UseMediaOptions {
 
 interface UseMediaState {
   url: string | null;
-  mediaType: MediaType;
+  mediaType: MediaType | string;
   isLoading: boolean;
   isError: boolean;
   errorMessage: string | null;
@@ -28,7 +28,7 @@ export const useMedia = (
 ) => {
   const [state, setState] = useState<UseMediaState>({
     url: null,
-    mediaType: 'unknown',
+    mediaType: MediaType.UNKNOWN,
     isLoading: true,
     isError: false,
     errorMessage: null,
@@ -73,7 +73,7 @@ export const useMedia = (
       setState(prev => ({
         ...prev,
         url: processedUrl,
-        mediaType,
+        mediaType: mediaType as MediaType,
         isLoading: false,
         isError: false,
         errorMessage: null
@@ -116,4 +116,14 @@ export const useMedia = (
     ...state,
     retry
   };
+};
+
+// Function to get a playable media URL, adding cache busters or other processing as needed
+const getPlayableMediaUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // Add cache busting to URL to prevent caching issues
+  const cacheBuster = `t=${Date.now()}`;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}${cacheBuster}`;
 };

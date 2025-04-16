@@ -107,75 +107,72 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
   }
 
   // Render based on media type
-  switch (mediaType) {
-    case MediaType.VIDEO:
-    case 'video':
-      return (
-        <video
-          ref={ref as React.Ref<HTMLVideoElement>}
-          src={mediaUrl}
-          className={className}
-          autoPlay={autoPlay}
-          controls={controls}
-          muted={muted}
-          loop={loop}
-          poster={poster}
-          onClick={onClick}
-          onLoadedData={handleLoad}
-          onError={handleError}
-          onEnded={onEnded}
-          playsInline
-        />
-      );
-
-    case MediaType.IMAGE:
-    case 'image':
-      return (
-        <img
-          ref={ref as React.Ref<HTMLImageElement>}
-          src={mediaUrl}
-          alt="Media content"
-          className={className}
-          onClick={onClick}
-          onLoad={handleLoad}
-          onError={handleError}
-        />
-      );
-
-    case MediaType.AUDIO:
-    case 'audio':
-      return (
-        <audio
-          src={mediaUrl}
-          className={className}
-          controls={controls}
-          autoPlay={autoPlay}
-          muted={muted}
-          loop={loop}
-          onLoadedData={handleLoad}
-          onError={handleError}
-          onEnded={onEnded}
-        />
-      );
-
-    case MediaType.DOCUMENT:
-    case 'document':
-      return (
-        <iframe
-          src={mediaUrl}
-          className={className}
-          onLoad={handleLoad}
-          onError={handleError}
-        />
-      );
-
-    default:
-      return (
-        <div className={`${className} flex items-center justify-center bg-black/10 rounded`}>
-          <span className="text-muted-foreground text-sm">Unsupported media type</span>
-        </div>
-      );
+  if (mediaType === MediaType.VIDEO || mediaType === 'video') {
+    return (
+      <video
+        ref={ref as React.Ref<HTMLVideoElement>}
+        src={mediaUrl}
+        className={className}
+        autoPlay={autoPlay}
+        controls={controls}
+        muted={muted}
+        loop={loop}
+        poster={poster}
+        onClick={onClick}
+        onLoadedData={handleLoad}
+        onError={handleError}
+        onEnded={onEnded}
+        playsInline
+      />
+    );
   }
+
+  if (mediaType === MediaType.IMAGE || mediaType === 'image') {
+    return (
+      <img
+        ref={ref as React.Ref<HTMLImageElement>}
+        src={mediaUrl}
+        alt="Media content"
+        className={className}
+        onClick={onClick}
+        onLoad={handleLoad}
+        onError={handleError}
+      />
+    );
+  }
+
+  if (mediaType === MediaType.AUDIO || mediaType === 'audio') {
+    return (
+      <audio
+        src={mediaUrl}
+        className={className}
+        controls={controls}
+        autoPlay={autoPlay}
+        muted={muted}
+        loop={loop}
+        onLoadedData={() => handleLoad()}
+        onError={() => handleError()}
+        onEnded={onEnded}
+      />
+    );
+  }
+
+  if (mediaType === MediaType.DOCUMENT || mediaType === 'document') {
+    return (
+      <iframe
+        src={mediaUrl}
+        className={className}
+        onLoad={handleLoad}
+        onError={() => handleError()}
+      />
+    );
+  }
+
+  return (
+    <div className={`${className} flex items-center justify-center bg-black/10 rounded`}>
+      <span className="text-muted-foreground text-sm">Unsupported media type</span>
+    </div>
+  );
 });
 
 MediaRenderer.displayName = "MediaRenderer";
