@@ -1,6 +1,6 @@
 
 import { forwardRef, Ref } from 'react';
-import { Media } from '@/components/media/Media';
+import { Media } from '@/components/shared/media/Media';
 import { MediaSource, MediaOptions } from '@/utils/media/types';
 
 interface UniversalMediaProps extends MediaOptions {
@@ -25,9 +25,8 @@ export const UniversalMedia = forwardRef(({
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
   // Create a handler that converts from the Media component's event format to the simpler format expected by onTimeUpdate
   const handleTimeUpdate = onTimeUpdate 
-    ? (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-        const videoElement = e.target as HTMLVideoElement;
-        onTimeUpdate(videoElement.currentTime);
+    ? (currentTime: number) => {
+        onTimeUpdate(currentTime);
       } 
     : undefined;
   

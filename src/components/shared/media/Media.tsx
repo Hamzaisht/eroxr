@@ -17,7 +17,7 @@ interface MediaProps {
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
-  onTimeUpdate?: (e: React.SyntheticEvent<HTMLVideoElement, Event>) => void;
+  onTimeUpdate?: (currentTime: number) => void;
 }
 
 export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(({
@@ -37,7 +37,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
 }, ref) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
+  const [mediaType, setMediaType] = useState<MediaType | string>(MediaType.UNKNOWN);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -116,6 +116,14 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     if (onError) onError();
   };
 
+  // Handle time updates for video elements
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    if (onTimeUpdate) {
+      const video = e.currentTarget;
+      onTimeUpdate(video.currentTime);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center ${className}`}>
@@ -151,7 +159,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
   }
 
   // Add crossOrigin attribute to handle CORS issues
-  if (mediaType === MediaType.VIDEO) {
+  if (mediaType === MediaType.VIDEO || mediaType === 'video') {
     return (
       <video
         ref={ref as React.RefObject<HTMLVideoElement>}
@@ -166,7 +174,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         onLoadedData={handleLoad}
         onError={handleError}
         onEnded={onEnded}
-        onTimeUpdate={onTimeUpdate}
+        onTimeUpdate={handleTimeUpdate}
         playsInline
         crossOrigin="anonymous"
       />

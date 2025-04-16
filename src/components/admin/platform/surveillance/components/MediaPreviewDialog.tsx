@@ -1,9 +1,11 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LiveSession } from "../types";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface MediaPreviewDialogProps {
   session: LiveSession | null;
@@ -46,11 +48,25 @@ export const MediaPreviewDialog = ({
   // Check if it's a video call or has a video property
   const videoUrl = (session as any).video_url;
   
+  // Determine the media type
+  const determineMediaType = () => {
+    if (session.type === "call" || videoUrl) {
+      return MediaType.VIDEO;
+    }
+    if (session.content_type === "audio") {
+      return MediaType.AUDIO;
+    }
+    if (session.content_type === "video") {
+      return MediaType.VIDEO;
+    }
+    return MediaType.IMAGE;
+  };
+  
   const mediaItem = {
     video_url: videoUrl || (session.type === "call" ? currentMedia : null),
     media_url: session.type !== "call" ? currentMedia : null,
     content_type: session.content_type,
-    media_type: session.content_type || (videoUrl ? "video" : "image")
+    media_type: determineMediaType()
   };
 
   const renderMediaPreview = () => {
@@ -72,8 +88,8 @@ export const MediaPreviewDialog = ({
         <UniversalMedia
           item={mediaItem}
           className="w-full rounded-md max-h-[70vh] object-contain"
-          autoPlay={mediaItem.media_type === "video"}
-          controls={mediaItem.media_type === "video"}
+          autoPlay={mediaItem.media_type === MediaType.VIDEO}
+          controls={mediaItem.media_type === MediaType.VIDEO}
         />
       );
     }

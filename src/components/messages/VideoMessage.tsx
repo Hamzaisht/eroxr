@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { useSession } from "@supabase/auth-helpers-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface VideoMessageProps {
   messageId: string;
@@ -25,7 +26,7 @@ export const VideoMessage = ({ messageId, videoUrl, isViewed, onView }: VideoMes
 
   const mediaItem = { 
     video_url: videoUrl,
-    media_type: 'video'
+    media_type: MediaType.VIDEO
   };
 
   useEffect(() => {

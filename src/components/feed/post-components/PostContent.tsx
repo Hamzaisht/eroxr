@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface PostContentProps {
   content: string;
@@ -97,7 +98,7 @@ export const PostContent = ({
                         const mediaItem = { 
                           video_url: url, 
                           creator_id: creatorId,
-                          media_type: "video"
+                          media_type: MediaType.VIDEO
                         };
                         
                         return (
@@ -131,7 +132,7 @@ export const PostContent = ({
                         const mediaItem = { 
                           media_url: url,
                           creator_id: creatorId,
-                          media_type: "image"
+                          media_type: MediaType.IMAGE
                         };
                         
                         return (

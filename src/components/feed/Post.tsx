@@ -1,4 +1,3 @@
-
 import { Post as PostType } from "./types";
 import { User } from "@supabase/auth-helpers-react";
 import { Creator } from "@/integrations/supabase/types/profile";
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PPVContent } from "./PPVContent";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface PostProps {
   post: PostType;
@@ -104,9 +104,9 @@ export const Post = ({
                     key={`video-${index}`}
                     item={{
                       video_url: url,
-                      media_type: "video",
+                      media_type: MediaType.VIDEO,
                       creator_id: creator.id,
-                      poster_url: post.media_url?.[0]
+                      thumbnail_url: post.media_url?.[0]
                     }}
                     className="w-full aspect-[4/3] sm:aspect-[16/9]"
                   />
@@ -123,7 +123,7 @@ export const Post = ({
                     item={{
                       media_url: url,
                       creator_id: creator.id,
-                      media_type: "image"
+                      media_type: MediaType.IMAGE
                     }}
                     className="w-full object-cover"
                   />
@@ -132,6 +132,9 @@ export const Post = ({
             )}
           </div>
         )}
+        
+        {/* Post Interactions */}
+        
       </div>
     </Card>
   );

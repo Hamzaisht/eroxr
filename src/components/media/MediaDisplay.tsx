@@ -11,7 +11,7 @@ interface MediaDisplayProps extends MediaOptions {
   /**
    * The type of media being displayed
    */
-  mediaType: MediaType;
+  mediaType: MediaType | string;
 }
 
 /**
@@ -33,14 +33,15 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
     onEnded,
     onTimeUpdate
   }, ref) => {
-    if (mediaType === MediaType.VIDEO) {
-      const handleTimeUpdate = onTimeUpdate 
-        ? (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-            const videoElement = e.target as HTMLVideoElement;
-            onTimeUpdate(videoElement.currentTime);
-          } 
-        : undefined;
+    // Create a handler that converts from event to number
+    const handleTimeUpdate = onTimeUpdate 
+      ? (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+          const videoElement = e.currentTarget;
+          onTimeUpdate(videoElement.currentTime);
+        } 
+      : undefined;
         
+    if (mediaType === MediaType.VIDEO || mediaType === 'video') {
       return (
         <video
           ref={ref as React.RefObject<HTMLVideoElement>}
@@ -61,7 +62,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
       );
     }
 
-    if (mediaType === MediaType.IMAGE) {
+    if (mediaType === MediaType.IMAGE || mediaType === 'image') {
       return (
         <img
           ref={ref as React.RefObject<HTMLImageElement>}

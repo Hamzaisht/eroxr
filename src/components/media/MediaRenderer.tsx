@@ -109,6 +109,7 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
   // Render based on media type
   switch (mediaType) {
     case MediaType.VIDEO:
+    case 'video':
       return (
         <video
           ref={ref as React.Ref<HTMLVideoElement>}
@@ -128,6 +129,7 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
       );
 
     case MediaType.IMAGE:
+    case 'image':
       return (
         <img
           ref={ref as React.Ref<HTMLImageElement>}
@@ -141,6 +143,7 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
       );
 
     case MediaType.AUDIO:
+    case 'audio':
       return (
         <audio
           src={mediaUrl}
@@ -156,6 +159,7 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
       );
 
     case MediaType.DOCUMENT:
+    case 'document':
       return (
         <iframe
           src={mediaUrl}

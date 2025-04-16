@@ -39,19 +39,19 @@ export async function uploadFileToStorage(
 /**
  * Get content type from file name
  */
-export function getContentType(fileName: string): MediaType {
-  if (isImageUrl(fileName)) return 'image';
-  if (isVideoUrl(fileName)) return 'video';
-  if (isAudioUrl(fileName)) return 'audio';
-  return 'unknown';
+export function getContentType(fileName: string): MediaType | string {
+  if (isImageUrl(fileName)) return MediaType.IMAGE;
+  if (isVideoUrl(fileName)) return MediaType.VIDEO;
+  if (isAudioUrl(fileName)) return MediaType.AUDIO;
+  return MediaType.UNKNOWN;
 }
 
 /**
  * Determine the type of media from a URL or object
  */
-export function determineMediaType(source: MediaSource | string): MediaType {
+export function determineMediaType(source: MediaSource | string): MediaType | string {
   const url = extractMediaUrl(source);
-  if (!url) return 'unknown';
+  if (!url) return MediaType.UNKNOWN;
   
   // Check explicit media_type if available
   if (typeof source !== 'string' && source.media_type) {
@@ -59,11 +59,11 @@ export function determineMediaType(source: MediaSource | string): MediaType {
   }
   
   // Otherwise infer from URL
-  if (isImageUrl(url)) return 'image';
-  if (isVideoUrl(url)) return 'video';
-  if (isAudioUrl(url)) return 'audio';
+  if (isImageUrl(url)) return MediaType.IMAGE;
+  if (isVideoUrl(url)) return MediaType.VIDEO;
+  if (isAudioUrl(url)) return MediaType.AUDIO;
   
-  return 'unknown';
+  return MediaType.UNKNOWN;
 }
 
 /**
@@ -78,9 +78,9 @@ export function extractMediaUrl(source: MediaSource | string | null | undefined)
   
   // Check for video_url first, then media_url
   return source.video_url || 
-         (Array.isArray(source.video_urls) && source.video_urls.length > 0 ? source.video_urls[0] : '') ||
+         (source.video_urls && source.video_urls.length > 0 ? source.video_urls[0] : '') ||
          source.media_url || 
-         (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
+         (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
          source.url || 
          source.src || 
          '';

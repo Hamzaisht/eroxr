@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { MediaSource } from '@/utils/media/types';
+import { MediaSource, MediaType } from '@/utils/media/types';
 
 interface MediaGridProps {
   media: (string | MediaSource)[];
@@ -18,35 +18,40 @@ const MediaGrid = ({ media, onMediaClick }: MediaGridProps) => {
     setHoveredIndex(null);
   }, []);
 
-  const handleMediaClick = (mediaItem: string | MediaSource) => {
+  const extractUrl = (mediaItem: string | MediaSource): string => {
     if (typeof mediaItem === 'string') {
-      onMediaClick?.(mediaItem);
-    } else {
-      const url = 
-        mediaItem.video_url || 
-        (mediaItem.video_urls && mediaItem.video_urls[0]) || 
-        mediaItem.media_url || 
-        (mediaItem.media_urls && mediaItem.media_urls[0]) || 
-        mediaItem.url || 
-        mediaItem.src;
-      if (url) onMediaClick?.(url);
+      return mediaItem;
     }
+    
+    return mediaItem.video_url || 
+           mediaItem.media_url || 
+           mediaItem.url || 
+           mediaItem.src || 
+           '';
+  };
+
+  const isVideoMedia = (mediaItem: string | MediaSource): boolean => {
+    if (typeof mediaItem === 'string') {
+      return mediaItem.toLowerCase().endsWith('.mp4') || 
+             mediaItem.toLowerCase().endsWith('.webm');
+    }
+    
+    return mediaItem.media_type === MediaType.VIDEO || 
+           mediaItem.media_type === 'video' || 
+           mediaItem.content_type === 'video' ||
+           !!mediaItem.video_url;
+  };
+
+  const handleMediaClick = (mediaItem: string | MediaSource) => {
+    const url = extractUrl(mediaItem);
+    if (url && onMediaClick) onMediaClick(url);
   };
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1">
       {media.map((item, index) => {
-        const isVideo = typeof item === 'string' ? 
-          item.toLowerCase().endsWith('.mp4') || item.toLowerCase().endsWith('.webm') :
-          item.media_type === 'video' || item.content_type === 'video';
-
-        const thumbnailUrl = typeof item === 'string' ? item :
-          item.media_url || 
-          (item.media_urls && item.media_urls[0]) ||
-          item.video_url || 
-          (item.video_urls && item.video_urls[0]) ||
-          item.url || 
-          item.src;
+        const isVideo = isVideoMedia(item);
+        const thumbnailUrl = extractUrl(item);
 
         return (
           <div

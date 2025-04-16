@@ -5,6 +5,7 @@ import { X, Download, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { UniversalMedia } from "./UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface MediaViewerProps {
   media: string | null;
@@ -26,7 +27,7 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
     media_url: !isVideo ? media : null,
     video_url: isVideo ? media : null,
     creator_id: creatorId,
-    media_type: isVideo ? "video" : "image"
+    media_type: isVideo ? MediaType.VIDEO : MediaType.IMAGE
   };
   
   const handleDownload = () => {

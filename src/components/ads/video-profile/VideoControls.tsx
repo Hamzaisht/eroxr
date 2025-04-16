@@ -2,6 +2,7 @@
 import { useRef, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface VideoControlsProps {
   videoUrl: string | null;
@@ -15,7 +16,7 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
   const mediaItem = {
     video_url: videoUrl,
     media_url: avatarUrl,
-    media_type: "video"
+    media_type: MediaType.VIDEO
   };
 
   const handleError = () => {
