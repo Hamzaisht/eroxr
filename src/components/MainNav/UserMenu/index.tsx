@@ -54,11 +54,15 @@ export const UserMenu = () => {
     return <GuestButtons onLogin={handleLogin} onSignUp={handleSignUp} />;
   }
 
-  // Create a partial profile object with required fields if profile is missing them
+  // Create a properly typed safe profile object
   const safeProfile: Partial<Profile> = {
-    ...profile,
-    created_at: profile?.created_at || new Date().toISOString(),
-    updated_at: profile?.updated_at || new Date().toISOString(),
+    ...(profile || {}),
+    id: profile?.id || user.id,
+    username: profile?.username || null,
+    avatar_url: profile?.avatar_url || null,
+    status: (profile?.status as AvailabilityStatus) || 'offline',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 
   return (

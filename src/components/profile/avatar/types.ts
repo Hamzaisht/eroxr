@@ -1,3 +1,4 @@
+
 import { Profile } from "../types";
 
 export type AvailabilityStatus = "online" | "offline" | "away" | "busy";

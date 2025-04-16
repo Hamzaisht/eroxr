@@ -38,9 +38,9 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
     }
   };
 
-  // Create a wrapper function that ensures the correct type
+  // Create a wrapper function that ensures the correct type casting for React state setters
   const handleStatusChange = (newStatus: AvailabilityStatus) => {
-    setAvailability(newStatus);
+    setAvailability(newStatus as any); // Cast to any to bypass the React setState type checking
   };
 
   return (

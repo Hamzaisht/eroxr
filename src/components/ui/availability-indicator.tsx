@@ -1,7 +1,7 @@
 
 import { cn } from "@/lib/utils";
 
-export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'idle' | 'dnd';
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';
 
 export interface AvailabilityIndicatorProps {
   status: AvailabilityStatus;
@@ -24,8 +24,6 @@ export function AvailabilityIndicator({
         status === 'offline' && "bg-gray-400",
         status === 'away' && "bg-yellow-500",
         status === 'busy' && "bg-red-500",
-        status === 'idle' && "bg-yellow-500",
-        status === 'dnd' && "bg-red-500",
         className
       )}
       style={{
