@@ -1,3 +1,4 @@
+
 import { NavLink } from "react-router-dom";
 import { Home, Heart, MessageSquare, Play, Film } from "lucide-react";
 import { motion } from "framer-motion";
@@ -17,6 +18,7 @@ const NavItem = ({ to, icon: Icon, label }: NavItemProps) => {
           isActive ? 'text-luxury-primary bg-luxury-primary/5' : 'text-white/60'
         }`
       }
+      end
     >
       <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
       <motion.span 

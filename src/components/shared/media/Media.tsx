@@ -2,7 +2,6 @@
 import { forwardRef, useState, useEffect, useCallback } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface MediaProps {
@@ -67,8 +66,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         return;
       }
       
-      console.log('Extracted URL:', url);
-
       // For blob: or data: URLs, use them directly without processing
       if (url.startsWith('blob:') || url.startsWith('data:')) {
         console.log('Using direct blob/data URL without processing');
@@ -77,10 +74,13 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         return;
       }
 
-      // Use getPlayableMediaUrl to process remote URLs
-      const playableUrl = getPlayableMediaUrl(url);
-      console.log('Processed to playable URL:', playableUrl);
-      setMediaUrl(playableUrl);
+      // Add cache busting to URL to prevent caching issues
+      const cacheBuster = `t=${Date.now()}`;
+      const separator = url.includes('?') ? '&' : '?';
+      const processedUrl = `${url}${separator}${cacheBuster}`;
+      
+      console.log('Processed URL with cache busting:', processedUrl);
+      setMediaUrl(processedUrl);
       setIsLoading(false);
     } catch (err) {
       console.error('Error processing media:', err);
@@ -150,16 +150,12 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     );
   }
 
-  // Handle special case for direct file/blob URLs which should skip URL processing
-  const finalUrl = mediaUrl.startsWith('blob:') || mediaUrl.startsWith('data:') 
-    ? mediaUrl 
-    : mediaUrl;
-
+  // Add crossOrigin attribute to handle CORS issues
   if (mediaType === MediaType.VIDEO) {
     return (
       <video
         ref={ref as React.RefObject<HTMLVideoElement>}
-        src={finalUrl}
+        src={mediaUrl}
         className={className}
         autoPlay={autoPlay}
         controls={controls}
@@ -172,6 +168,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         onEnded={onEnded}
         onTimeUpdate={onTimeUpdate}
         playsInline
+        crossOrigin="anonymous"
       />
     );
   }
@@ -179,12 +176,13 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
   return (
     <img
       ref={ref as React.RefObject<HTMLImageElement>}
-      src={finalUrl}
+      src={mediaUrl}
       className={className}
       onClick={onClick}
       onLoad={handleLoad}
       onError={handleError}
       alt="Media content"
+      crossOrigin="anonymous"
     />
   );
 });

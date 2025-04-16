@@ -28,8 +28,11 @@ export const useFilePreview = (file?: File | null) => {
     }));
     
     try {
+      console.log(`Creating preview for file: ${file.name} (${file.type}, ${file.size} bytes)`);
+      
       // Create a file preview
       const previewUrl = createFilePreview(file);
+      console.log(`Preview URL created: ${previewUrl?.substring(0, 30)}...`);
       
       setState({
         previewUrl,
@@ -48,6 +51,7 @@ export const useFilePreview = (file?: File | null) => {
     // Cleanup the object URL when component unmounts or file changes
     return () => {
       if (state.previewUrl) {
+        console.log(`Revoking preview URL: ${state.previewUrl.substring(0, 30)}...`);
         revokeFilePreview(state.previewUrl);
       }
     };
@@ -56,6 +60,7 @@ export const useFilePreview = (file?: File | null) => {
   // Method to manually clear preview
   const clearPreview = useCallback(() => {
     if (state.previewUrl) {
+      console.log(`Manually clearing preview: ${state.previewUrl.substring(0, 30)}...`);
       revokeFilePreview(state.previewUrl);
     }
     
@@ -69,13 +74,14 @@ export const useFilePreview = (file?: File | null) => {
   // Method to create preview for a specific file
   const createPreview = useCallback((fileToPreview: File) => {
     if (state.previewUrl) {
+      console.log(`Clearing old preview before creating new one`);
       revokeFilePreview(state.previewUrl);
     }
     
     try {
-      console.log("Creating preview for file:", fileToPreview.name, fileToPreview.size);
+      console.log(`Creating preview for file: ${fileToPreview.name}, type: ${fileToPreview.type}, size: ${fileToPreview.size}`);
       const previewUrl = createFilePreview(fileToPreview);
-      console.log("Preview URL created:", previewUrl?.substring(0, 50) + "...");
+      console.log(`New preview URL created: ${previewUrl?.substring(0, 30)}...`);
       
       setState({
         previewUrl,

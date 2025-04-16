@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Home, Heart, MessageSquare, Play, Film, Menu, X, Shield, Ghost } from "lucide-react";
 import { NavMenuItem } from "./nav/NavMenuItem";
@@ -113,19 +114,20 @@ export const InteractiveNav = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <motion.div
-          className="px-4 mb-8"
-          whileHover={{ scale: 1.05 }}
-          onClick={() => navigate("/")}
-        >
-          <h1 className={cn(
-            "font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary",
-            "bg-clip-text text-transparent cursor-pointer transition-all duration-300",
-            isExpanded ? "text-2xl" : "text-xl text-center"
-          )}>
-            {isExpanded ? "Eroxr" : "E"}
-          </h1>
-        </motion.div>
+        <Link to="/">
+          <motion.div
+            className="px-4 mb-8"
+            whileHover={{ scale: 1.05 }}
+          >
+            <h1 className={cn(
+              "font-bold bg-gradient-to-r from-luxury-primary via-luxury-accent to-luxury-secondary",
+              "bg-clip-text text-transparent cursor-pointer transition-all duration-300",
+              isExpanded ? "text-2xl" : "text-xl text-center"
+            )}>
+              {isExpanded ? "Eroxr" : "E"}
+            </h1>
+          </motion.div>
+        </Link>
 
         <div className="space-y-2 px-4">
           {menuItems.map((item) => (

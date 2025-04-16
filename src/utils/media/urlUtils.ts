@@ -28,10 +28,13 @@ export function ensureFullUrl(url: string): string {
  */
 export function addCacheBuster(url: string): string {
   if (!url) return url;
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
   
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
   const separator = url.includes('?') ? '&' : '?';
-  const cacheBuster = `cache=${Date.now()}`;
-  return `${url}${separator}${cacheBuster}`;
+  
+  return `${url}${separator}cache=${timestamp}-${random}`;
 }
 
 /**
@@ -39,6 +42,7 @@ export function addCacheBuster(url: string): string {
  */
 export function getPlayableMediaUrl(url: string): string {
   if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
   
   // Ensure it's a full URL
   let fullUrl = ensureFullUrl(url);
@@ -48,12 +52,12 @@ export function getPlayableMediaUrl(url: string): string {
 }
 
 /**
- * Check if a URL points to an image based on file extension
+ * Check if a URL points to an image based on file extension or media type
  */
 export function isImageUrl(url: string): boolean {
   if (!url) return false;
   const lowercaseUrl = url.toLowerCase();
-  return /\.(jpg|jpeg|png|gif|webp|svg)$/.test(lowercaseUrl);
+  return /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i.test(lowercaseUrl);
 }
 
 /**
@@ -62,7 +66,7 @@ export function isImageUrl(url: string): boolean {
 export function isVideoUrl(url: string): boolean {
   if (!url) return false;
   const lowercaseUrl = url.toLowerCase();
-  return /\.(mp4|webm|ogv|mov|avi)$/.test(lowercaseUrl);
+  return /\.(mp4|webm|ogv|mov|avi|m4v)$/i.test(lowercaseUrl);
 }
 
 /**
@@ -71,7 +75,7 @@ export function isVideoUrl(url: string): boolean {
 export function isAudioUrl(url: string): boolean {
   if (!url) return false;
   const lowercaseUrl = url.toLowerCase();
-  return /\.(mp3|wav|ogg|flac|aac)$/.test(lowercaseUrl);
+  return /\.(mp3|wav|ogg|flac|aac)$/i.test(lowercaseUrl);
 }
 
 /**
@@ -85,8 +89,6 @@ export function getVideoThumbnailUrl(videoUrl: string): string | null {
   if (youtubeMatch && youtubeMatch[1]) {
     return `https://img.youtube.com/vi/${youtubeMatch[1]}/hqdefault.jpg`;
   }
-  
-  // Vimeo thumbnail would require an API call, not possible here
   
   // For other videos, we can't generate thumbnails client-side without loading the video
   return null;

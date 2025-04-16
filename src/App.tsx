@@ -4,6 +4,7 @@ import { Suspense, lazy } from 'react';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import LoadingScreen from '@/components/layout/LoadingScreen';
 
 // Layout components
 import Layout from './components/layout/Layout';
@@ -11,8 +12,13 @@ import { AdminRoutes } from './components/admin/routes/AdminRoutes';
 
 // Lazy loaded pages
 const Home = lazy(() => import('./pages/Home'));
+const Index = lazy(() => import('./pages/Index'));
 const Shorts = lazy(() => import('./pages/Shorts'));
 const Eros = lazy(() => import('./pages/Eros'));
+const Categories = lazy(() => import('./pages/Categories'));
+const Dating = lazy(() => import('./pages/Dating'));
+const Messages = lazy(() => import('./pages/Messages'));
+const Eroboard = lazy(() => import('./pages/Eroboard'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Profile = lazy(() => import('./pages/Profile'));
@@ -22,13 +28,20 @@ const App = () => {
     <ThemeProvider>
       <BrowserRouter>
         <ErrorBoundary fallback={<div className="p-8">Something went wrong. Please refresh the page.</div>}>
-          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+          <Suspense fallback={<LoadingScreen />}>
             <Routes>
-              {/* Public routes */}
+              {/* Index route */}
+              <Route path="/" element={<Index />} />
+              
+              {/* Main app routes */}
               <Route element={<Layout />}>
-                <Route path="/" element={<Home />} />
+                <Route path="/home" element={<Home />} />
                 <Route path="/shorts" element={<Shorts />} />
                 <Route path="/eros" element={<Eros />} />
+                <Route path="/dating" element={<Dating />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/eroboard" element={<Eroboard />} />
+                <Route path="/categories" element={<Categories />} />
                 <Route path="/profile/:id" element={<Profile />} />
               </Route>
               
