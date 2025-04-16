@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { Upload, X, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,7 @@ export const MultiFileUploader = ({
   
   const { 
     uploadMedia, 
-    uploadState: { isUploading, progress, error },
+    uploadState: { isUploading, progress, error, success },
     validateFile 
   } = useMediaUpload(uploadOptions);
   

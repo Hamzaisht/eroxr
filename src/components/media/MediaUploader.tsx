@@ -90,7 +90,7 @@ export const MediaUploader = ({
   
   const { 
     uploadMedia, 
-    uploadState: { isUploading, progress, error, isComplete },
+    uploadState: { isUploading, progress, error, isComplete, success },
     validateFile 
   } = useMediaUpload(uploadOptions);
   

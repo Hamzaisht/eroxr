@@ -34,6 +34,13 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
     onTimeUpdate
   }, ref) => {
     if (mediaType === MediaType.VIDEO) {
+      const handleTimeUpdate = onTimeUpdate 
+        ? (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+            const videoElement = e.target as HTMLVideoElement;
+            onTimeUpdate(videoElement.currentTime);
+          } 
+        : undefined;
+        
       return (
         <video
           ref={ref as React.RefObject<HTMLVideoElement>}
@@ -48,10 +55,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
           onLoadedData={onLoad}
           onError={onError}
           onEnded={onEnded}
-          onTimeUpdate={onTimeUpdate ? (e) => {
-            const videoElement = e.target as HTMLVideoElement;
-            onTimeUpdate(videoElement.currentTime);
-          } : undefined}
+          onTimeUpdate={handleTimeUpdate}
           playsInline
         />
       );

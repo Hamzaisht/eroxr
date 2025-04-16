@@ -1,7 +1,5 @@
-
 import { useState, useEffect } from 'react';
 import { 
-  getContentType,
   determineMediaType,
   extractMediaUrl
 } from '@/utils/media/mediaUtils';
@@ -80,8 +78,8 @@ export const NewMediaRenderer = ({
       
       // If the mediaType is indeterminate, check content type from URL
       if (mediaType === MediaType.UNKNOWN) {
-        const contentType = getContentType(processedUrl);
-        setIsVideo(contentType.startsWith('video/'));
+        const fileExtension = processedUrl.split('.').pop()?.toLowerCase() || '';
+        setIsVideo(fileExtension.match(/(mp4|webm|mov|avi)$/i) ? true : false);
       } else {
         setIsVideo(mediaType === MediaType.VIDEO);
       }

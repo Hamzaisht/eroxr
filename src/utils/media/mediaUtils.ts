@@ -1,4 +1,3 @@
-
 import { MediaType, MediaSource } from './types';
 
 /**
@@ -126,4 +125,57 @@ export function getPlayableMediaUrl(source: MediaSource | string): string {
   const separator = url.includes('?') ? '&' : '?';
   const cacheBuster = `cache=${Date.now()}`;
   return `${url}${separator}${cacheBuster}`;
+}
+
+/**
+ * Get the content type from a URL or file extension
+ */
+export function getContentType(url: string): string {
+  if (!url) return 'application/octet-stream';
+  
+  const extension = url.split('.').pop()?.toLowerCase() || '';
+  
+  // Map common file extensions to content types
+  switch (extension) {
+    // Images
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    case 'svg':
+      return 'image/svg+xml';
+      
+    // Videos
+    case 'mp4':
+      return 'video/mp4';
+    case 'webm':
+      return 'video/webm';
+    case 'mov':
+      return 'video/quicktime';
+    case 'avi':
+      return 'video/x-msvideo';
+      
+    // Audio
+    case 'mp3':
+      return 'audio/mpeg';
+    case 'wav':
+      return 'audio/wav';
+    case 'ogg':
+      return 'audio/ogg';
+      
+    // Documents
+    case 'pdf':
+      return 'application/pdf';
+    case 'doc':
+    case 'docx':
+      return 'application/msword';
+      
+    default:
+      return 'application/octet-stream';
+  }
 }

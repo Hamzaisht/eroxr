@@ -8,7 +8,9 @@ export * from './media/formatUtils';
 export { 
   createUniqueFilePath, 
   uploadFileToStorage,
-  getContentType 
+  getContentType,
+  determineMediaType,
+  extractMediaUrl 
 } from './media/mediaUtils';
 
 export { 

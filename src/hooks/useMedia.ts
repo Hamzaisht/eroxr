@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { extractMediaUrl, getContentType, determineMediaType } from '@/utils/media/mediaUtils';
+import { extractMediaUrl, determineMediaType } from '@/utils/media/mediaUtils';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { checkUrlAccessibility, getDirectMediaUrl } from '@/utils/media/mediaUrlUtils';
 
