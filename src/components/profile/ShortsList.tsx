@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
-import { extractMediaUrl } from "@/utils/media/mediaUrlUtils";
+import { getDirectMediaUrl } from "@/utils/media/mediaUrlUtils";
 
 export const ShortsList = ({ shorts }: { shorts: Post[] }) => {
   const [selectedVideo, setSelectedVideo] = useState<Post | null>(null);

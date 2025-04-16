@@ -1,4 +1,3 @@
-
 /**
  * Utilities for processing and validating media URLs
  */
@@ -78,6 +77,28 @@ export const getDirectMediaUrl = (url: string | null | undefined): string => {
     console.error('Error processing media URL:', error);
     return url;
   }
+};
+
+/**
+ * Extract a direct media URL from a variety of sources
+ * Used by components to get URLs from various source formats
+ */
+export const extractMediaUrl = (source: any): string => {
+  if (!source) return '';
+  
+  // Direct string URL
+  if (typeof source === 'string') {
+    return source;
+  }
+  
+  // Extract from media object with priority order
+  return source.video_url || 
+         (Array.isArray(source.video_urls) && source.video_urls.length > 0 ? source.video_urls[0] : '') ||
+         source.media_url || 
+         (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
+         source.url || 
+         source.src || 
+         '';
 };
 
 /**

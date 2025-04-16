@@ -11,6 +11,8 @@ export enum MediaType {
   UNKNOWN = 'unknown'
 }
 
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';
+
 export interface MediaSource {
   id?: string;
   video_url?: string;
@@ -36,14 +38,7 @@ export interface MediaOptions {
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
-  onTimeUpdate?: (event: React.SyntheticEvent<HTMLVideoElement>) => void;
-}
-
-export enum AvailabilityStatus {
-  AVAILABLE = 'available',
-  UNAUTHORIZED = 'unauthorized',
-  NOT_FOUND = 'not_found',
-  ERROR = 'error'
+  onTimeUpdate?: (time: number) => void;
 }
 
 export interface UploadOptions {
@@ -52,4 +47,23 @@ export interface UploadOptions {
   allowedTypes?: string[];
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
+  onProgress?: (progress: number) => void;
+}
+
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+}
+
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  isComplete: boolean;
+  error: string | null;
+}
+
+export interface FileValidationResult {
+  valid: boolean;
+  message?: string;
 }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
@@ -34,7 +35,7 @@ export const CreatorCard = ({
   const [subscribers, setSubscribers] = useState(initialSubscribers);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [availability, setAvailability] = useState<AvailabilityStatus>("offline");
+  const [availability, setAvailability] = useState<AvailabilityStatus>('offline');
   const session = useSession();
   const { toast } = useToast();
 
