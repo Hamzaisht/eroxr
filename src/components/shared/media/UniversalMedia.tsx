@@ -23,7 +23,7 @@ export const UniversalMedia = forwardRef(({
   onEnded,
   onTimeUpdate
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  // Modify time update handler to extract current time from the event
+  // Correctly handle time update to pass current time
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
     if (onTimeUpdate) {
       const videoElement = e.currentTarget;
@@ -50,4 +50,4 @@ export const UniversalMedia = forwardRef(({
   );
 });
 
-UniversalMedia.displayName = "UniversalMedia";
+UniversalMedia.displayName = 'UniversalMedia';
