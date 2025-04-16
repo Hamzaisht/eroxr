@@ -18,7 +18,7 @@ export interface MediaSource {
   type?: string;
   media_type?: string;
   content_type?: string;
-  creator_id?: string; // Added creator_id property
+  creator_id?: string;
   poster_url?: string;
 }
 
@@ -28,8 +28,8 @@ export interface MediaResult {
   contentType: string;
   isError: boolean;
   errorMessage?: string;
-  isLoading?: boolean; // Added for the useMedia hook
-  retryCount?: number; // Added for the useMedia hook
+  isLoading?: boolean;
+  retryCount?: number;
 }
 
 export interface UploadResult {
@@ -38,7 +38,7 @@ export interface UploadResult {
   error?: string;
 }
 
-// Add MediaOptions interface for media components
+// Media rendering options
 export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
@@ -76,5 +76,5 @@ export interface FileValidationResult {
   message?: string;
 }
 
-// Define AvailabilityStatus types
-export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'idle' | 'dnd';
+// Define a single source of truth for AvailabilityStatus
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';

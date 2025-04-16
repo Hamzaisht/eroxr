@@ -11,7 +11,7 @@ import { UserBadge } from "./UserBadge";
 import { GuestButtons } from "./GuestButtons";
 import { UserMenuItems } from "./UserMenuItems";
 import { UserAvatar } from "@/components/shared/user/UserAvatar";
-import { AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { AvailabilityStatus } from "@/utils/media/types";
 import type { Profile } from "@/integrations/supabase/types/profile";
 
 export const UserMenu = () => {
@@ -61,8 +61,8 @@ export const UserMenu = () => {
     username: profile?.username || null,
     avatar_url: profile?.avatar_url || null,
     status: (profile?.status as AvailabilityStatus) || 'offline',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: profile?.created_at || new Date().toISOString(),
+    updated_at: profile?.updated_at || new Date().toISOString(),
   };
 
   return (

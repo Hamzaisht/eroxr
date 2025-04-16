@@ -1,22 +1,17 @@
 
-import { useMemo } from 'react';
+import { forwardRef, useState, useEffect } from 'react';
 import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
-import { determineMediaType } from '@/utils/media/mediaUtils';
-import { MediaDisplay } from './MediaDisplay';
+import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface MediaProps extends MediaOptions {
-  /**
-   * The media source (URL string or object containing media_url/video_url)
-   */
   source: MediaSource | string;
 }
 
-/**
- * Universal Media component for displaying images and videos
- */
-export const Media = ({
+export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(({
   source,
-  className = '',
+  className = "",
   autoPlay = false,
   controls = true,
   muted = true,
@@ -25,57 +20,116 @@ export const Media = ({
   onClick,
   onLoad,
   onError,
-  onEnded
-}: MediaProps) => {
-  // Derive media type and URL from the source
-  const { mediaType, mediaUrl } = useMemo(() => {
-    // Handle string source
-    if (typeof source === 'string') {
-      return {
-        mediaType: determineMediaType(source),
-        mediaUrl: source
-      };
+  onEnded,
+  onTimeUpdate
+}, ref) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    if (!source) {
+      setError('No media source provided');
+      setIsLoading(false);
+      return;
     }
 
-    // Handle object source
-    const type = determineMediaType(source);
-    
-    // Extract URL based on determined type
-    let url = null;
-    if (type === MediaType.VIDEO && source.video_url) {
-      url = source.video_url;
-    } else if (source.media_url) {
-      url = Array.isArray(source.media_url) ? source.media_url[0] : source.media_url;
+    try {
+      const type = determineMediaType(source);
+      setMediaType(type);
+
+      const url = typeof source === 'string' 
+        ? source 
+        : extractMediaUrl(source);
+
+      if (!url) {
+        setError('Could not extract media URL');
+        setIsLoading(false);
+        return;
+      }
+
+      const playableUrl = getPlayableMediaUrl(url);
+      setMediaUrl(playableUrl);
+    } catch (err) {
+      console.error('Error processing media:', err);
+      setError('Error processing media');
+    } finally {
+      setIsLoading(false);
     }
+  }, [source, retryCount]);
 
-    return {
-      mediaType: type,
-      mediaUrl: url
-    };
-  }, [source]);
+  const handleLoad = () => {
+    if (onLoad) onLoad();
+  };
 
-  if (!mediaUrl) {
+  const handleError = () => {
+    setError('Failed to load media');
+    if (onError) onError();
+  };
+
+  const handleRetry = () => {
+    setIsLoading(true);
+    setError(null);
+    setRetryCount(prev => prev + 1);
+  };
+
+  if (isLoading) {
     return (
-      <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500 ${className}`}>
-        <p>No media available</p>
+      <div className={`flex items-center justify-center ${className}`}>
+        <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
       </div>
     );
   }
 
+  if (error || !mediaUrl) {
+    return (
+      <div className={`flex flex-col items-center justify-center ${className} bg-luxury-darker/50`}>
+        <AlertCircle className="h-8 w-8 text-luxury-neutral/50 mb-2" />
+        <p className="text-sm text-luxury-neutral/70">Media unavailable</p>
+        <button 
+          onClick={handleRetry}
+          className="mt-2 flex items-center gap-1 px-2 py-1 bg-luxury-primary/80 hover:bg-luxury-primary text-white rounded text-xs"
+        >
+          <RefreshCw className="h-3 w-3" /> Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (mediaType === MediaType.VIDEO) {
+    return (
+      <video
+        ref={ref as React.RefObject<HTMLVideoElement>}
+        src={mediaUrl}
+        className={className}
+        autoPlay={autoPlay}
+        controls={controls}
+        muted={muted}
+        loop={loop}
+        poster={poster}
+        onClick={onClick}
+        onLoadedData={handleLoad}
+        onError={handleError}
+        onEnded={onEnded}
+        onTimeUpdate={onTimeUpdate}
+        playsInline
+      />
+    );
+  }
+
   return (
-    <MediaDisplay 
-      mediaUrl={mediaUrl}
-      mediaType={mediaType}
+    <img
+      ref={ref as React.RefObject<HTMLImageElement>}
+      src={mediaUrl}
       className={className}
-      autoPlay={autoPlay}
-      controls={controls}
-      muted={muted}
-      loop={loop}
-      poster={poster}
       onClick={onClick}
-      onLoad={onLoad}
-      onError={onError}
-      onEnded={onEnded}
+      onLoad={handleLoad}
+      onError={handleError}
+      alt="Media content"
     />
   );
-};
+});
+
+Media.displayName = 'Media';

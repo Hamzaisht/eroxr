@@ -7,7 +7,7 @@ import { useAvatarUpload } from "./avatar/AvatarUpload";
 import { usePresence } from "./avatar/usePresence";
 import { AvatarPreview } from "./avatar/AvatarPreview";
 import type { ProfileAvatarProps } from "./avatar/types";
-import { AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { AvailabilityStatus } from "@/utils/media/types";
 
 export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAvatarProps) => {
   const [showPreview, setShowPreview] = useState(false);
@@ -40,7 +40,7 @@ export const ProfileAvatar = ({ profile, getMediaType, isOwnProfile }: ProfileAv
 
   // Create a wrapper function that ensures the correct type casting for React state setters
   const handleStatusChange = (newStatus: AvailabilityStatus) => {
-    setAvailability(newStatus as any); // Cast to any to bypass the React setState type checking
+    setAvailability(newStatus);
   };
 
   return (

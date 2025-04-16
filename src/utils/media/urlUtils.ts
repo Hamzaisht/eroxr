@@ -1,4 +1,3 @@
-
 /**
  * URL-related utility functions for media handling
  */
