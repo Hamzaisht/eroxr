@@ -57,3 +57,34 @@ export interface UploadResult {
   url?: string;
   error?: string;
 }
+
+/**
+ * Upload options interface
+ */
+export interface UploadOptions {
+  contentCategory?: 'post' | 'story' | 'message' | 'short' | 'avatar' | 'generic';
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
+  onProgress?: (progress: number) => void;
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
+}
+
+/**
+ * Upload state interface
+ */
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  success: boolean;
+  file: File | null;
+}
+
+/**
+ * File validation result
+ */
+export interface FileValidationResult {
+  valid: boolean;
+  message?: string;
+}

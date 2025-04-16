@@ -48,7 +48,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
           onLoadedData={onLoad}
           onError={onError}
           onEnded={onEnded}
-          onTimeUpdate={onTimeUpdate}
+          onTimeUpdate={onTimeUpdate ? (e) => onTimeUpdate((e.target as HTMLVideoElement).currentTime) : undefined}
           playsInline
         />
       );

@@ -22,15 +22,18 @@ export const useStoryMedia = (
   const [localRetryCount, setLocalRetryCount] = useState(0);
   const { toast } = useToast();
   
-  // Process the media URL
+  // Process the media URL using MediaSource object
+  const mediaSource = mediaType === 'image' 
+    ? { media_url: mediaUrl }
+    : { video_url: mediaUrl };
+  
+  // Use our media hook
   const { 
     url,
     isError: mediaError,
     retry: retryLoad,
     isLoading
-  } = useMedia({ 
-    [mediaType === 'image' ? 'media_url' : 'video_url']: mediaUrl 
-  });
+  } = useMedia(mediaSource);
   
   // Handle media load completion
   const handleLoad = useCallback(() => {

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
-import { MediaType } from '@/utils/media/types';
+import { MediaType, MediaSource } from '@/utils/media/types';
 import { checkUrlAccessibility, tryRepairUrl } from '@/utils/media/mediaUrlUtils';
 
 interface UseMediaOptions {
@@ -11,9 +11,7 @@ interface UseMediaOptions {
 }
 
 export const useMedia = (
-  source: string | null | undefined,
-  mediaType: MediaType | string = MediaType.UNKNOWN,
-  isPaused = false,
+  source: MediaSource | string | null | undefined,
   options: UseMediaOptions = {}
 ) => {
   const [url, setUrl] = useState<string>('');
@@ -26,7 +24,7 @@ export const useMedia = (
   const { autoLoad = true, onComplete, onError } = options;
 
   // Function to process and load the media
-  const loadMedia = useCallback(async (mediaSource: string | null | undefined) => {
+  const loadMedia = useCallback(async (mediaSource: MediaSource | string | null | undefined) => {
     if (!mediaSource) {
       setIsError(true);
       setErrorMessage('No media source provided');
@@ -41,7 +39,7 @@ export const useMedia = (
       
       // Process the URL
       const processedUrl = getPlayableMediaUrl(mediaSource);
-      console.log(`Processing media URL: ${mediaSource} -> ${processedUrl}`);
+      console.log(`Processing media URL:`, mediaSource, `-> ${processedUrl}`);
       
       if (!processedUrl) {
         throw new Error('Could not process media URL');
@@ -89,10 +87,10 @@ export const useMedia = (
 
   // Load media when source changes or on retry
   useEffect(() => {
-    if (autoLoad && !isPaused) {
+    if (autoLoad) {
       loadMedia(source);
     }
-  }, [source, autoLoad, isPaused, loadMedia, retryCount]);
+  }, [source, autoLoad, loadMedia, retryCount]);
 
   // Handle for successful load
   const handleLoad = useCallback(() => {

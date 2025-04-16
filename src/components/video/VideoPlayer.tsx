@@ -43,7 +43,7 @@ export const VideoPlayer = ({
 }: VideoPlayerProps) => {
   // Use our media hook to handle media URL processing
   const { url: processedUrl, isLoading: mediaLoading, isError, retry, retryCount } = 
-    useMedia(url, { autoLoad: true });
+    useMedia({ video_url: url });
   
   // Use our video player hook for video functionality
   const {
