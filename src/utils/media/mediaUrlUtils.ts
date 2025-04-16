@@ -5,39 +5,34 @@
 
 /**
  * Add cache busting parameter to URL to prevent browser caching
- * This is simpler than previous versions to avoid URL corruption
  */
 export const addCacheBuster = (url: string): string => {
   if (!url) return '';
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
   
-  const timestamp = Date.now();
-  return url.includes('?') 
-    ? `${url}&t=${timestamp}` 
-    : `${url}?t=${timestamp}`;
+  // Parse the URL to handle query parameters correctly
+  try {
+    const urlObj = new URL(url);
+    urlObj.searchParams.set('t', Date.now().toString());
+    return urlObj.toString();
+  } catch (e) {
+    console.error('Error adding cache buster to URL:', e);
+    return url;
+  }
 };
 
 /**
- * Clean up a URL by removing query parameters
+ * Clean up a URL by removing duplicate query parameters
  */
 export const getCleanUrl = (url: string): string => {
   if (!url) return '';
-  return url.split('?')[0];
-};
-
-/**
- * Determine if a URL points to video content based on extension
- */
-export const isVideoUrl = (url: string): boolean => {
-  if (!url) return false;
-  
-  const cleanUrl = url.toLowerCase();
-  return cleanUrl.endsWith('.mp4') || 
-         cleanUrl.endsWith('.webm') || 
-         cleanUrl.endsWith('.mov') || 
-         cleanUrl.endsWith('.avi') ||
-         cleanUrl.includes('/videos/') ||
-         cleanUrl.includes('/shorts/');
+  try {
+    const urlObj = new URL(url);
+    return urlObj.toString();
+  } catch (e) {
+    console.error('Error cleaning URL:', e);
+    return url;
+  }
 };
 
 /**
@@ -51,11 +46,16 @@ export const getDirectMediaUrl = (url: string | null | undefined): string => {
     return url;
   }
   
-  // Clean the URL
-  const cleanUrl = getCleanUrl(url);
-  
-  // Add cache busting to ensure fresh content
-  return addCacheBuster(cleanUrl);
+  try {
+    // Clean the URL
+    const cleanUrl = getCleanUrl(url);
+    
+    // Add cache busting to ensure fresh content
+    return addCacheBuster(cleanUrl);
+  } catch (e) {
+    console.error('Error processing media URL:', e);
+    return url;
+  }
 };
 
 /**
@@ -74,7 +74,7 @@ export const extractMediaUrl = (media: any): string => {
     media.video_url || 
     (Array.isArray(media.video_urls) && media.video_urls.length > 0 ? media.video_urls[0] : null) ||
     media.media_url ||
-    (Array.isArray(media.media_url) && media.media_url.length > 0 ? media.media_url[0] : null) ||
+    (Array.isArray(media.media_urls) && media.media_urls.length > 0 ? media.media_urls[0] : null) ||
     media.url ||
     '';
   
@@ -82,8 +82,7 @@ export const extractMediaUrl = (media: any): string => {
 };
 
 /**
- * Simple implementation to check URL accessibility
- * Returns whether the URL can be accessed and what its content type is
+ * Check URL accessibility and return detailed information
  */
 export const checkUrlAccessibility = async (url: string): Promise<{ 
   accessible: boolean; 
@@ -99,7 +98,7 @@ export const checkUrlAccessibility = async (url: string): Promise<{
       return { accessible: true };
     }
     
-    // Try fetch with HEAD request to avoid downloading the full resource
+    // Try fetch with HEAD request first
     const response = await fetch(url, { 
       method: 'HEAD',
       cache: 'no-store',
@@ -118,25 +117,4 @@ export const checkUrlAccessibility = async (url: string): Promise<{
       error: error instanceof Error ? error.message : String(error)
     };
   }
-};
-
-/**
- * Create variations of a URL to try for repair
- */
-export const tryRepairUrl = (url: string): string[] => {
-  if (!url) return [];
-  
-  const variations: string[] = [
-    url,
-    addCacheBuster(url)
-  ];
-  
-  // Try without "public" if present
-  if (url.includes('/public/')) {
-    const withoutPublic = url.replace('/public/', '/');
-    variations.push(withoutPublic);
-    variations.push(addCacheBuster(withoutPublic));
-  }
-  
-  return variations;
 };

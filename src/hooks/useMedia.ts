@@ -37,31 +37,39 @@ export const useMedia = (
       setIsLoading(true);
       setIsError(false);
       
-      // Extract media URL from source
-      const extractedUrl = extractMediaUrl(mediaSource);
+      // Extract and process the media URL
+      let processedUrl = extractMediaUrl(mediaSource);
       
-      if (!extractedUrl) {
+      if (!processedUrl) {
+        console.error('Could not extract media URL from source:', mediaSource);
         throw new Error('Could not process media URL');
       }
+
+      // Clean up the URL by removing any duplicate query parameters
+      const urlObj = new URL(processedUrl);
+      processedUrl = urlObj.toString();
       
-      console.log('Processing media URL:', extractedUrl);
+      console.log('Processing media URL:', processedUrl);
       
       // Check URL accessibility
-      const accessibility = await checkUrlAccessibility(extractedUrl);
+      const accessibility = await checkUrlAccessibility(processedUrl);
       
       if (!accessibility.accessible) {
-        throw new Error(`Media URL is not accessible: ${extractedUrl}`);
+        console.error('Media URL not accessible:', processedUrl, accessibility.error);
+        throw new Error(`Media URL is not accessible: ${accessibility.error || 'Unknown error'}`);
       }
       
-      setUrl(extractedUrl);
+      // Set the processed URL
+      setUrl(processedUrl);
       setIsLoading(false);
       
     } catch (error) {
       console.error('Error loading media:', error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
       setIsError(true);
-      setErrorMessage(error instanceof Error ? error.message : String(error));
+      setErrorMessage(errorMsg);
       setIsLoading(false);
-      if (onError) onError(error instanceof Error ? error.message : String(error));
+      if (onError) onError(errorMsg);
     }
   }, [onError]);
 
@@ -90,6 +98,7 @@ export const useMedia = (
 
   // Retry loading
   const retry = useCallback(() => {
+    console.log('Retrying media load...');
     setRetryCount(prev => prev + 1);
     setIsError(false);
     setIsLoading(true);
