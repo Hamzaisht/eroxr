@@ -62,7 +62,7 @@ export interface UploadResult {
  * Upload options interface
  */
 export interface UploadOptions {
-  contentCategory?: 'post' | 'story' | 'message' | 'short' | 'avatar' | 'generic';
+  contentCategory?: 'post' | 'story' | 'message' | 'short' | 'avatar' | 'profile' | 'generic';
   maxSizeInMB?: number;
   allowedTypes?: string[];
   onProgress?: (progress: number) => void;

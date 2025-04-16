@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { MediaUploader } from "./MediaUploader";
 import { MultiFileUploader } from "./MultiFileUploader";
 import { Upload, Image, FileVideo } from "lucide-react";
+import { UploadOptions } from "@/utils/media/types";
 
 export interface FileUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onFileUploaded?: (url: string) => void;
   onMultipleFilesUploaded?: (urls: string[]) => void;
-  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
+  contentCategory?: UploadOptions['contentCategory'];
   title?: string;
   allowMultiple?: boolean;
   defaultTab?: 'single' | 'multiple';

@@ -1,11 +1,12 @@
 
 import { useState, useRef } from 'react';
-import { Upload, X, AlertCircle, Image, FileVideo } from "lucide-react";
+import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { useFilePreview } from '@/hooks/useFilePreview';
 import { isVideoFile, isImageFile, SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '@/utils/upload/validators';
+import { UploadOptions } from '@/utils/media/types';
 
 export interface MediaUploaderProps {
   /**
@@ -21,7 +22,7 @@ export interface MediaUploaderProps {
   /**
    * Content type category ('story', 'post', etc)
    */
-  context?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
+  context?: UploadOptions['contentCategory'];
   
   /**
    * Maximum file size in MB

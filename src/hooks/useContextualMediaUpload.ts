@@ -2,9 +2,9 @@
 import { useMediaUpload } from './useMediaUpload';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { UploadResult } from '@/utils/media/types';
+import { UploadResult, UploadOptions } from '@/utils/media/types';
 
-type MediaContext = 'post' | 'story' | 'message' | 'short' | 'avatar';
+type MediaContext = UploadOptions['contentCategory'];
 
 /**
  * Hook for handling contextual media uploads (posts, stories, etc.)

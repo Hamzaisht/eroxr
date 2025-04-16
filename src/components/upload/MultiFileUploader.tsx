@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { isVideoFile, isImageFile } from '@/utils/upload/validators';
 import { createFilePreview, revokeFilePreview, formatFileSize } from '@/utils/upload/fileUtils';
+import { UploadOptions } from '@/utils/media/types';
 
 export interface MultiFileUploaderProps {
   /**
@@ -26,7 +27,7 @@ export interface MultiFileUploaderProps {
   /**
    * Content type category
    */
-  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'short' | 'generic';
+  contentCategory?: UploadOptions['contentCategory'];
   
   /**
    * Maximum files to upload
