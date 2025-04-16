@@ -45,12 +45,9 @@ export const AuthLayout = ({
     return <LoadingScreen />;
   }
 
-  if (requireAuth && !user) {
-    return null; // Will redirect in useEffect
-  }
-
-  if (!requireAuth && user) {
-    return null; // Will redirect in useEffect
+  // Don't render anything if the user will be redirected
+  if ((requireAuth && !user) || (!requireAuth && user)) {
+    return null;
   }
 
   return <Outlet />;

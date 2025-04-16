@@ -1,31 +1,27 @@
 
-/**
- * @deprecated Use getPlayableMediaUrl from @/utils/media/urlUtils instead
- */
-
-import { getPlayableMediaUrl as getMedia } from './urlUtils';
-import { MediaSource } from './types';
+import { getDirectMediaUrl, extractMediaUrl } from "./mediaUrlUtils";
+import { getStoragePublicUrl } from "./storageUtils";
+import { MediaSource } from "./types";
 
 /**
- * Backward compatibility function for older code
- * Supports both string and MediaSource object parameters
+ * A unified utility to process media URLs for playback
+ * Consolidates functionality from various media utilities
  */
-export function getPlayableMediaUrl(url: string | MediaSource | null | undefined): string | null {
-  if (!url) return null;
+export const getPlayableMediaUrl = (source: MediaSource | string): string => {
+  // First extract a URL from possibly complex media objects
+  let url = typeof source === 'string' ? source : extractMediaUrl(source);
   
-  if (typeof url === 'string') {
-    return getMedia(url);
+  // If we couldn't get a URL, return empty string
+  if (!url) return '';
+  
+  // For storage paths, convert to public URLs
+  if (!url.startsWith('http') && !url.startsWith('blob:') && !url.startsWith('data:')) {
+    const publicUrl = getStoragePublicUrl(url);
+    if (publicUrl) {
+      url = publicUrl;
+    }
   }
   
-  // Extract URL from MediaSource object
-  const mediaUrl = url.video_url || 
-    (Array.isArray(url.video_urls) && url.video_urls.length > 0 ? url.video_urls[0] : null) ||
-    url.media_url ||
-    (Array.isArray(url.media_urls) && url.media_urls.length > 0 ? url.media_urls[0] : null) ||
-    url.url ||
-    url.src;
-  
-  return getMedia(mediaUrl);
-}
-
-export default getPlayableMediaUrl;
+  // Final processing to ensure direct playability
+  return getDirectMediaUrl(url);
+};

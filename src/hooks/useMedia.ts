@@ -1,106 +1,131 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { MediaSource, MediaType, MediaResult } from '@/utils/media/types';
-import { 
-  determineMediaType, 
-  extractMediaUrl, 
-  getContentType 
-} from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
+import { MediaType } from '@/utils/media/types';
+import { checkUrlAccessibility, tryRepairUrl } from '@/utils/media/mediaUrlUtils';
 
 interface UseMediaOptions {
   autoLoad?: boolean;
+  onComplete?: () => void;
+  onError?: (error: string) => void;
 }
 
-export function useMedia(
-  source: MediaSource | string | null | undefined, 
+export const useMedia = (
+  source: string | null | undefined,
+  mediaType: MediaType | string = MediaType.UNKNOWN,
+  isPaused = false,
   options: UseMediaOptions = {}
-): MediaResult & {
-  retry: () => void;
-  retryCount: number;
-  isLoading: boolean;
-} {
-  const [result, setResult] = useState<MediaResult>({
-    url: null,
-    type: MediaType.UNKNOWN,
-    contentType: 'application/octet-stream',
-    isError: false
-  });
-  const [retryCount, setRetryCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+) => {
+  const [url, setUrl] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isError, setIsError] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [retryCount, setRetryCount] = useState<number>(0);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  
+  const { autoLoad = true, onComplete, onError } = options;
 
-  const processMedia = useCallback(() => {
-    if (!source) {
-      setResult({
-        url: null,
-        type: MediaType.UNKNOWN,
-        contentType: 'application/octet-stream',
-        isError: false
-      });
+  // Function to process and load the media
+  const loadMedia = useCallback(async (mediaSource: string | null | undefined) => {
+    if (!mediaSource) {
+      setIsError(true);
+      setErrorMessage('No media source provided');
       setIsLoading(false);
+      if (onError) onError('No media source provided');
       return;
     }
-
+    
     try {
       setIsLoading(true);
+      setIsError(false);
       
-      // Extract URL from source (whether string or object)
-      const mediaUrl = typeof source === 'string' 
-        ? source 
-        : extractMediaUrl(source);
-
-      if (!mediaUrl) {
-        setResult({
-          url: null,
-          type: MediaType.UNKNOWN,
-          contentType: 'application/octet-stream',
-          isError: true,
-          errorMessage: 'No media URL found'
-        });
-        setIsLoading(false);
-        return;
+      // Process the URL
+      const processedUrl = getPlayableMediaUrl(mediaSource);
+      console.log(`Processing media URL: ${mediaSource} -> ${processedUrl}`);
+      
+      if (!processedUrl) {
+        throw new Error('Could not process media URL');
       }
-
-      // Get playable URL
-      const playableUrl = getPlayableMediaUrl(mediaUrl);
       
-      // Determine media type and content type
-      const mediaType = determineMediaType(source);
-      const contentType = getContentType(mediaUrl);
-
-      setResult({
-        url: playableUrl,
-        type: mediaType,
-        contentType,
-        isError: false
-      });
+      // Check if URL is accessible
+      const accessibility = await checkUrlAccessibility(processedUrl);
+      
+      if (!accessibility.accessible) {
+        console.error(`Media URL is not accessible: ${processedUrl}`, accessibility);
+        
+        // Try alternative URLs if available
+        const alternativeUrls = tryRepairUrl(processedUrl);
+        let foundAccessible = false;
+        
+        for (const altUrl of alternativeUrls) {
+          if (altUrl === processedUrl) continue;
+          
+          const altAccessibility = await checkUrlAccessibility(altUrl);
+          if (altAccessibility.accessible) {
+            console.log(`Found accessible alternative URL: ${altUrl}`);
+            setUrl(altUrl);
+            foundAccessible = true;
+            break;
+          }
+        }
+        
+        if (!foundAccessible) {
+          throw new Error(`Media URL is not accessible: ${processedUrl}`);
+        }
+      } else {
+        // URL is accessible
+        setUrl(processedUrl);
+      }
+      
       setIsLoading(false);
-    } catch (error: any) {
-      setResult({
-        url: null,
-        type: MediaType.UNKNOWN,
-        contentType: 'application/octet-stream',
-        isError: true,
-        errorMessage: error.message || 'Error processing media'
-      });
+    } catch (error) {
+      console.error('Error loading media:', error);
+      setIsError(true);
+      setErrorMessage(error instanceof Error ? error.message : String(error));
       setIsLoading(false);
+      if (onError) onError(error instanceof Error ? error.message : String(error));
     }
-  }, [source]);
+  }, [onError]);
 
-  // Process media on mount or when source changes
+  // Load media when source changes or on retry
   useEffect(() => {
-    processMedia();
-  }, [source, processMedia]);
+    if (autoLoad && !isPaused) {
+      loadMedia(source);
+    }
+  }, [source, autoLoad, isPaused, loadMedia, retryCount]);
 
+  // Handle for successful load
+  const handleLoad = useCallback(() => {
+    console.log(`Media loaded successfully: ${url}`);
+    setIsLoaded(true);
+    setIsError(false);
+    if (onComplete) onComplete();
+  }, [url, onComplete]);
+
+  // Handle for load error
+  const handleError = useCallback(() => {
+    console.error(`Error loading media: ${url}`);
+    setIsError(true);
+    setErrorMessage('Failed to load media content');
+    if (onError) onError('Failed to load media content');
+  }, [url, onError]);
+
+  // Retry loading
   const retry = useCallback(() => {
-    setRetryCount(count => count + 1);
-    processMedia();
-  }, [processMedia]);
+    setRetryCount(prev => prev + 1);
+    setIsError(false);
+    setIsLoading(true);
+  }, []);
 
   return {
-    ...result,
-    retry,
+    url,
+    isLoading,
+    isError,
+    errorMessage,
+    isLoaded,
     retryCount,
-    isLoading
+    handleLoad,
+    handleError,
+    retry
   };
-}
+};

@@ -1,4 +1,7 @@
 
+/**
+ * Media type enumeration
+ */
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
@@ -7,38 +10,31 @@ export enum MediaType {
   UNKNOWN = 'unknown'
 }
 
+/**
+ * Availability status type
+ */
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';
+
+/**
+ * Media source interface - allows for various media source formats
+ */
 export interface MediaSource {
-  id?: string;
-  media_url?: string | null;
-  media_urls?: string[] | null;
-  video_url?: string | null;
-  video_urls?: string[] | null;
-  url?: string | null;
-  src?: string | null;
-  type?: string;
+  id?: string | number;
+  url?: string;
+  src?: string;
+  media_url?: string;
+  media_urls?: string[];
+  video_url?: string;
+  video_urls?: string[];
   media_type?: string;
   content_type?: string;
   creator_id?: string;
-  poster_url?: string;
+  [key: string]: any;
 }
 
-export interface MediaResult {
-  url: string | null;
-  type: MediaType;
-  contentType: string;
-  isError: boolean;
-  errorMessage?: string;
-  isLoading?: boolean;
-  retryCount?: number;
-}
-
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-}
-
-// Media rendering options
+/**
+ * Media options for rendering
+ */
 export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
@@ -50,31 +46,14 @@ export interface MediaOptions {
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
-  onTimeUpdate?: (event: React.SyntheticEvent<HTMLVideoElement>) => void;
+  onTimeUpdate?: (currentTime: number) => void;
 }
 
-// Add Upload related types
-export interface UploadOptions {
-  maxSizeInMB?: number;
-  allowedTypes?: string[];
-  contentCategory?: 'story' | 'post' | 'message' | 'profile' | 'avatar' | 'short' | 'generic';
-  onProgress?: (progress: number) => void;
-  autoResetOnCompletion?: boolean;
-  resetDelay?: number;
-}
-
-export interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
+/**
+ * Upload result interface
+ */
+export interface UploadResult {
   success: boolean;
-  file: File | null;
+  url?: string;
+  error?: string;
 }
-
-export interface FileValidationResult {
-  valid: boolean;
-  message?: string;
-}
-
-// Define a single source of truth for AvailabilityStatus
-export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy';

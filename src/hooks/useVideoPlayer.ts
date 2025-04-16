@@ -1,147 +1,152 @@
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
-interface VideoPlayerOptions {
+interface UseVideoPlayerOptions {
   url: string | null;
   autoPlay?: boolean;
   muted?: boolean;
   loop?: boolean;
-  onLoadedData?: () => void;
   onError?: () => void;
   onEnded?: () => void;
+  onLoadedData?: () => void;
 }
 
-export const useVideoPlayer = ({
-  url,
-  autoPlay = false,
-  muted = true,
-  loop = false,
-  onLoadedData,
-  onError,
-  onEnded
-}: VideoPlayerOptions) => {
+export const useVideoPlayer = (options: UseVideoPlayerOptions) => {
+  const {
+    url,
+    autoPlay = false,
+    muted = false,
+    loop = true,
+    onError,
+    onEnded,
+    onLoadedData
+  } = options;
+
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(false);
-  const [isMuted, setIsMuted] = useState(muted);
-  const [hasError, setHasError] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(muted);
+  const [isBuffering, setIsBuffering] = useState<boolean>(false);
+  const [duration, setDuration] = useState<number>(0);
+  const [currentTime, setCurrentTime] = useState<number>(0);
 
-  // Reset state when URL changes
-  useEffect(() => {
-    setHasError(false);
-    setIsBuffering(false);
-    setIsPlaying(false);
-    setProgress(0);
-    setCurrentTime(0);
-  }, [url]);
-
-  // Set up video event handlers
+  // Initialize video with new URL
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !url) return;
+    if (video && url) {
+      video.addEventListener('loadeddata', () => {
+        console.log('Video loaded data:', url);
+        setDuration(video.duration);
+        if (onLoadedData) onLoadedData();
+        
+        if (autoPlay) {
+          video.play().catch(error => {
+            console.error('Error auto-playing video:', error);
+            if (onError) onError();
+          });
+        }
+      });
+      
+      video.addEventListener('waiting', () => {
+        setIsBuffering(true);
+      });
+      
+      video.addEventListener('canplay', () => {
+        setIsBuffering(false);
+      });
+      
+      video.addEventListener('timeupdate', () => {
+        setCurrentTime(video.currentTime);
+      });
 
-    const handleLoadedData = () => {
-      setHasError(false);
-      setDuration(video.duration);
-      if (autoPlay) {
-        video.play().catch(console.error);
+      return () => {
+        video.removeEventListener('loadeddata', () => {});
+        video.removeEventListener('waiting', () => {});
+        video.removeEventListener('canplay', () => {});
+        video.removeEventListener('timeupdate', () => {});
+      };
+    }
+  }, [url, autoPlay, onLoadedData, onError]);
+
+  // Handle auto-play
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && autoPlay && url) {
+      video.play().then(() => {
         setIsPlaying(true);
-      }
-      if (onLoadedData) onLoadedData();
-    };
+      }).catch(error => {
+        console.error('Error auto-playing video:', error);
+        
+        // Try muted autoplay as fallback (better browser support)
+        if (!muted) {
+          console.log('Attempting muted autoplay as fallback...');
+          video.muted = true;
+          setIsMuted(true);
+          video.play().then(() => {
+            setIsPlaying(true);
+          }).catch(secondError => {
+            console.error('Error with muted autoplay fallback:', secondError);
+            if (onError) onError();
+          });
+        } else if (onError) {
+          onError();
+        }
+      });
+    }
+  }, [url, autoPlay, muted, onError]);
 
-    const handleError = () => {
-      console.error('Video error with URL:', url);
-      setHasError(true);
-      setIsPlaying(false);
-      if (onError) onError();
-    };
-
-    const handleEnded = () => {
-      setIsPlaying(false);
-      if (onEnded) onEnded();
-    };
-
-    const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-      setProgress((video.currentTime / video.duration) * 100);
-    };
-
-    const handleWaiting = () => setIsBuffering(true);
-    const handlePlaying = () => setIsBuffering(false);
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-
-    // Add event listeners
-    video.addEventListener('loadeddata', handleLoadedData);
-    video.addEventListener('error', handleError);
-    video.addEventListener('ended', handleEnded);
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('waiting', handleWaiting);
-    video.addEventListener('playing', handlePlaying);
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
-
-    // Apply initial settings
-    video.muted = muted;
-    video.loop = loop;
-
-    // Clean up event listeners
-    return () => {
-      video.removeEventListener('loadeddata', handleLoadedData);
-      video.removeEventListener('error', handleError);
-      video.removeEventListener('ended', handleEnded);
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('waiting', handleWaiting);
-      video.removeEventListener('playing', handlePlaying);
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
-    };
-  }, [url, autoPlay, muted, loop, onLoadedData, onError, onEnded]);
+  // Update muted state when prop changes
+  useEffect(() => {
+    setIsMuted(muted);
+    if (videoRef.current) {
+      videoRef.current.muted = muted;
+    }
+  }, [muted]);
 
   // Toggle play/pause
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-
+    
     if (video.paused) {
-      video.play().catch(console.error);
+      video.play().then(() => {
+        setIsPlaying(true);
+      }).catch(error => {
+        console.error('Error playing video:', error);
+        if (onError) onError();
+      });
     } else {
       video.pause();
+      setIsPlaying(false);
     }
-  };
-
+  }, [onError]);
+  
   // Toggle mute
-  const toggleMute = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.muted = !video.muted;
-    setIsMuted(video.muted);
-  };
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => {
+      if (videoRef.current) {
+        videoRef.current.muted = !prev;
+      }
+      return !prev;
+    });
+  }, []);
 
   // Seek to specific time
-  const seek = (time: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.currentTime = time;
-  };
+  const seekTo = useCallback((time: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+      setCurrentTime(time);
+    }
+  }, []);
 
   return {
     videoRef,
     isPlaying,
     isMuted,
     isBuffering,
-    hasError,
-    progress,
     duration,
     currentTime,
     togglePlay,
     toggleMute,
-    seek,
+    seekTo
   };
 };

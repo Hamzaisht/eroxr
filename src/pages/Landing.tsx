@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from "react";
 import { motion, LazyMotion, domAnimation } from "framer-motion";
 import HeroSection from "@/components/landing/HeroSection";
@@ -111,5 +110,4 @@ const Landing = () => {
   );
 };
 
-export default Landing;  // Changed to default export
-
+export default Landing;

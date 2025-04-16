@@ -1,19 +1,18 @@
 
-import { forwardRef, useState, useEffect } from 'react';
+import { forwardRef, useState, useRef, useEffect } from 'react';
 import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
 
-interface MediaProps extends MediaOptions {
+interface MediaComponentProps extends MediaOptions {
   source: MediaSource | string;
 }
 
-export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(({
+export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaComponentProps>(({
   source,
   className = "",
   autoPlay = false,
-  controls = true,
+  controls = false,
   muted = true,
   loop = false,
   poster,
@@ -23,85 +22,81 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
   onEnded,
   onTimeUpdate
 }, ref) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [mediaUrl, setMediaUrl] = useState<string>('');
   const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  
   useEffect(() => {
-    if (!source) {
-      setError('No media source provided');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const type = determineMediaType(source);
-      setMediaType(type);
-
-      const url = typeof source === 'string' 
-        ? source 
-        : extractMediaUrl(source);
-
-      if (!url) {
-        setError('Could not extract media URL');
+    if (source) {
+      try {
+        // Determine the media type
+        const type = determineMediaType(source);
+        setMediaType(type);
+        
+        // Get the media URL
+        const url = getPlayableMediaUrl(source);
+        setMediaUrl(url);
+        
         setIsLoading(false);
-        return;
+      } catch (error) {
+        console.error('Error processing media source:', error);
+        setHasError(true);
+        setIsLoading(false);
+        if (onError) onError();
       }
-
-      const playableUrl = getPlayableMediaUrl(url);
-      setMediaUrl(playableUrl);
-    } catch (err) {
-      console.error('Error processing media:', err);
-      setError('Error processing media');
-    } finally {
-      setIsLoading(false);
     }
-  }, [source, retryCount]);
+  }, [source, onError]);
 
   const handleLoad = () => {
     if (onLoad) onLoad();
   };
 
   const handleError = () => {
-    setError('Failed to load media');
+    console.error('Error loading media:', mediaUrl);
+    setHasError(true);
     if (onError) onError();
   };
 
-  const handleRetry = () => {
-    setIsLoading(true);
-    setError(null);
-    setRetryCount(prev => prev + 1);
+  const handleTimeUpdate = () => {
+    if (onTimeUpdate && videoRef.current) {
+      onTimeUpdate(videoRef.current.currentTime);
+    }
   };
 
   if (isLoading) {
+    return <div className={`${className} bg-black/10 animate-pulse`} />;
+  }
+
+  if (hasError) {
     return (
-      <div className={`flex items-center justify-center ${className}`}>
-        <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
+      <div className={`${className} bg-black/10 flex items-center justify-center`}>
+        <span className="text-xs text-muted-foreground">Media error</span>
       </div>
     );
   }
 
-  if (error || !mediaUrl) {
+  if (mediaType === MediaType.IMAGE) {
     return (
-      <div className={`flex flex-col items-center justify-center ${className} bg-luxury-darker/50`}>
-        <AlertCircle className="h-8 w-8 text-luxury-neutral/50 mb-2" />
-        <p className="text-sm text-luxury-neutral/70">Media unavailable</p>
-        <button 
-          onClick={handleRetry}
-          className="mt-2 flex items-center gap-1 px-2 py-1 bg-luxury-primary/80 hover:bg-luxury-primary text-white rounded text-xs"
-        >
-          <RefreshCw className="h-3 w-3" /> Retry
-        </button>
-      </div>
+      <img
+        ref={imgRef as React.RefObject<HTMLImageElement>}
+        src={mediaUrl}
+        alt="Media content"
+        className={className}
+        onClick={onClick}
+        onLoad={handleLoad}
+        onError={handleError}
+      />
     );
   }
 
   if (mediaType === MediaType.VIDEO) {
     return (
       <video
-        ref={ref as React.RefObject<HTMLVideoElement>}
+        ref={videoRef as React.RefObject<HTMLVideoElement>}
         src={mediaUrl}
         className={className}
         autoPlay={autoPlay}
@@ -113,22 +108,17 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         onLoadedData={handleLoad}
         onError={handleError}
         onEnded={onEnded}
-        onTimeUpdate={onTimeUpdate}
+        onTimeUpdate={handleTimeUpdate}
         playsInline
       />
     );
   }
 
+  // Fallback for unknown type
   return (
-    <img
-      ref={ref as React.RefObject<HTMLImageElement>}
-      src={mediaUrl}
-      className={className}
-      onClick={onClick}
-      onLoad={handleLoad}
-      onError={handleError}
-      alt="Media content"
-    />
+    <div className={`${className} bg-black/10 flex items-center justify-center`}>
+      <span className="text-xs text-muted-foreground">Unsupported media</span>
+    </div>
   );
 });
 
