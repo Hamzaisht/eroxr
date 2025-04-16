@@ -1,7 +1,7 @@
 
 import { Suspense, lazy } from "react";
 import { motion, LazyMotion, domAnimation } from "framer-motion";
-import { HeroSection } from "@/components/landing/HeroSection";
+import HeroSection from "@/components/landing/HeroSection";
 import Footer from "@/components/landing/Footer";
 
 // Lazy load other sections
@@ -111,4 +111,5 @@ const Landing = () => {
   );
 };
 
-export default Landing;
+export default Landing;  // Changed to default export
+

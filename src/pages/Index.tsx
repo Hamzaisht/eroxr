@@ -2,7 +2,7 @@
 import { useSession } from "@supabase/auth-helpers-react";
 import { Navigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
-import { Landing } from "@/pages/Landing";
+import Landing from "@/pages/Landing";  // Changed import
 
 const Index = () => {
   const session = useSession();
@@ -19,3 +19,4 @@ const Index = () => {
 };
 
 export default Index;
+
