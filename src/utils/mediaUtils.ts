@@ -10,15 +10,17 @@ export * from './media/types';
 export * from './media/urlUtils';
 export * from './media/formatUtils';
 
-// Export key functions for backward compatibility
+// Export key functions for backward compatibility but avoid duplicate exports
 export { 
   createUniqueFilePath, 
   uploadFileToStorage, 
-  getStorageUrl, 
-  inferContentTypeFromExtension 
+  getStorageUrl 
 } from './media/mediaUtils';
 export { 
   getPlayableMediaUrl, 
   ensureFullUrl, 
   addCacheBuster 
 } from './media/urlUtils';
+export {
+  inferContentTypeFromExtension
+} from './media/formatUtils';

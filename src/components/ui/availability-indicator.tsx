@@ -2,6 +2,8 @@
 import { cn } from "@/lib/utils";
 import { AvailabilityStatus } from "@/utils/media/types";
 
+export { AvailabilityStatus };
+
 export interface AvailabilityIndicatorProps {
   status: AvailabilityStatus;
   className?: string;

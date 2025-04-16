@@ -69,11 +69,11 @@ export interface UploadResult {
   error?: string;
 }
 
-export enum AvailabilityStatus {
-  AVAILABLE = 'online',
-  PENDING = 'away',
-  RESTRICTED = 'busy',
-  PREMIUM = 'premium',
-  DELETED = 'deleted',
+// Use namespace instead of duplicate enum
+export namespace AvailabilityStatusValues {
+  export const AVAILABLE = 'online';
+  export const PENDING = 'away';
+  export const RESTRICTED = 'busy';
+  export const PREMIUM = 'premium';
+  export const DELETED = 'deleted';
 }
-
