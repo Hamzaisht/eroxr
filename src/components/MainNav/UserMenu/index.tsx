@@ -1,25 +1,22 @@
 
 import { useNavigate } from "react-router-dom";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 import { UserBadge } from "./UserBadge";
-import { UserAvatar } from "./UserAvatar";
 import { GuestButtons } from "./GuestButtons";
 import { UserMenuItems } from "./UserMenuItems";
+import { UserAvatar } from "@/components/shared/user/UserAvatar";
 import { AvailabilityStatus } from "@/components/ui/availability-indicator";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
-  const session = useSession();
   const { toast } = useToast();
+  const { user, profile, isLoading, signOut, updateStatus } = useAuth();
 
   const handleLogin = () => navigate('/login');
   const handleSignUp = () => {
@@ -30,109 +27,9 @@ export const UserMenu = () => {
     });
   };
 
-  // Set up session refresh handling
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'TOKEN_REFRESHED') {
-        console.log('Token refreshed successfully');
-      } else if (event === 'SIGNED_OUT') {
-        navigate('/login');
-      }
-    });
-
-    // Check session on mount
-    const checkSession = async () => {
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-      if (error || !currentSession) {
-        navigate('/login');
-      }
-    };
-    
-    checkSession();
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile", session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
-      
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .maybeSingle();
-
-        if (profileError) {
-          console.error("Profile fetch error:", profileError);
-          throw profileError;
-        }
-
-        const { data: roleData, error: rolesError } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-
-        if (rolesError && rolesError.code !== 'PGRST116') {
-          console.error("Roles fetch error:", rolesError);
-          throw rolesError;
-        }
-
-        const userRole = roleData?.role || 'user';
-
-        return profileData ? {
-          ...profileData,
-          role: userRole,
-          status: (profileData.status as AvailabilityStatus) || 'offline'
-        } : null;
-      } catch (error: any) {
-        console.error("Error fetching profile:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load profile data",
-          variant: "destructive",
-        });
-        return null;
-      }
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  const handleStatusChange = async (newStatus: AvailabilityStatus) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: newStatus })
-        .eq('id', session?.user?.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Status updated",
-        description: `You are now ${newStatus}`,
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error updating status",
-        description: "Please try again later",
-      });
-    }
-  };
-
   const handleLogout = async () => {
     try {
-      console.log("Attempting to sign out...");
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Logout error:", error);
-        throw error;
-      }
-      console.log("Sign out successful");
+      await signOut();
       navigate('/login');
       toast({
         title: "Signed out successfully",
@@ -148,7 +45,11 @@ export const UserMenu = () => {
     }
   };
 
-  if (!session || isLoading) {
+  const handleStatusChange = async (newStatus: AvailabilityStatus) => {
+    await updateStatus(newStatus);
+  };
+
+  if (!user || isLoading) {
     return <GuestButtons onLogin={handleLogin} onSignUp={handleSignUp} />;
   }
 
@@ -156,15 +57,15 @@ export const UserMenu = () => {
     <div className="flex items-center gap-4">
       <UserBadge 
         profile={profile} 
-        fallbackEmail={session.user.email} 
+        fallbackEmail={user.email} 
       />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <div>
             <UserAvatar 
               avatarUrl={profile?.avatar_url}
-              email={session.user.email}
-              status={profile?.status}
+              email={user.email}
+              status={profile?.status as AvailabilityStatus}
               onStatusChange={handleStatusChange}
             />
           </div>

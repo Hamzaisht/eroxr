@@ -1,98 +1,82 @@
 
 import { useState, useEffect, useCallback } from 'react';
+import { MediaSource, MediaType, MediaResult } from '@/utils/media/types';
 import { 
-  getPlayableMediaUrl, 
   determineMediaType, 
-  MediaType, 
-  checkUrlAccessibility,
-  extractMediaUrl,
-  MediaResult
+  extractMediaUrl, 
+  getContentType 
 } from '@/utils/media/mediaUtils';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
-interface UseMediaOptions {
-  autoLoad?: boolean;
-  maxRetries?: number;
-}
+export function useMedia(source: MediaSource | string | null | undefined): MediaResult & {
+  retry: () => void;
+} {
+  const [result, setResult] = useState<MediaResult>({
+    url: null,
+    type: MediaType.UNKNOWN,
+    contentType: 'application/octet-stream',
+    isError: false
+  });
 
-/**
- * Hook to handle media loading, error states, and retries
- */
-export const useMedia = (
-  mediaItem: any,
-  { autoLoad = true, maxRetries = 2 }: UseMediaOptions = {}
-): MediaResult & { retry: () => void; retryCount: number; isAccessible: boolean } => {
-  const [url, setUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [isAccessible, setIsAccessible] = useState(true);
-  const mediaType = determineMediaType(mediaItem);
-
-  const processMedia = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setIsError(false);
-      setError(null);
-
-      // Extract media URL from the item
-      const rawUrl = extractMediaUrl(mediaItem);
-      if (!rawUrl) {
-        throw new Error('Could not extract media URL');
-      }
-
-      // Get the playable URL
-      const processedUrl = getPlayableMediaUrl(rawUrl);
-      
-      if (!processedUrl) {
-        throw new Error('Could not get media URL');
-      }
-
-      // Check if the URL is accessible
-      if (autoLoad) {
-        const { accessible, error: accessError } = await checkUrlAccessibility(processedUrl);
-        
-        if (!accessible) {
-          setIsAccessible(false);
-          throw new Error(accessError || 'Media source is not accessible');
-        }
-        
-        setIsAccessible(true);
-      }
-
-      setUrl(processedUrl);
-      setIsLoading(false);
-    } catch (err) {
-      console.error('Error processing media:', err);
-      setIsError(true);
-      setError(err instanceof Error ? err.message : 'Unknown error processing media');
-      setIsLoading(false);
+  const processMedia = useCallback(() => {
+    if (!source) {
+      setResult({
+        url: null,
+        type: MediaType.UNKNOWN,
+        contentType: 'application/octet-stream',
+        isError: false
+      });
+      return;
     }
-  }, [mediaItem, autoLoad]);
 
-  // Process media on mount and when media item changes
+    try {
+      // Extract URL from source (whether string or object)
+      const mediaUrl = typeof source === 'string' 
+        ? source 
+        : extractMediaUrl(source);
+
+      if (!mediaUrl) {
+        setResult({
+          url: null,
+          type: MediaType.UNKNOWN,
+          contentType: 'application/octet-stream',
+          isError: true,
+          errorMessage: 'No media URL found'
+        });
+        return;
+      }
+
+      // Get playable URL
+      const playableUrl = getPlayableMediaUrl(mediaUrl);
+      
+      // Determine media type and content type
+      const mediaType = determineMediaType(source);
+      const contentType = getContentType(mediaUrl);
+
+      setResult({
+        url: playableUrl,
+        type: mediaType,
+        contentType,
+        isError: false
+      });
+    } catch (error: any) {
+      setResult({
+        url: null,
+        type: MediaType.UNKNOWN,
+        contentType: 'application/octet-stream',
+        isError: true,
+        errorMessage: error.message || 'Error processing media'
+      });
+    }
+  }, [source]);
+
+  // Process media on mount or when source changes
   useEffect(() => {
     processMedia();
-  }, [processMedia]);
-
-  // Function to retry loading the media
-  const retry = useCallback(() => {
-    if (retryCount < maxRetries) {
-      setRetryCount(prev => prev + 1);
-      processMedia();
-    } else {
-      console.warn('Maximum retry attempts reached');
-    }
-  }, [retryCount, maxRetries, processMedia]);
+  }, [source, processMedia]);
 
   return {
-    url,
-    isLoading,
-    isError,
-    error,
-    mediaType,
-    retry,
-    retryCount,
-    isAccessible
+    ...result,
+    retry: processMedia
   };
-};
+}
