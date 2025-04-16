@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
@@ -10,7 +11,7 @@ export const Hero = () => {
 
   useEffect(() => {
     if (session) {
-      navigate("/"); // Changed from "/home" to "/"
+      navigate("/home");
     }
   }, [session, navigate]);
 
