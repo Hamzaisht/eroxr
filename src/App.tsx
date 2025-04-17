@@ -1,66 +1,68 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { MainLayout } from "@/components/layout/MainLayout";
+import Home from "@/pages/Home";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import Profile from "@/pages/Profile";
+import Settings from "@/pages/Settings";
+import Messages from "@/pages/Messages";
+import Conversation from "@/pages/Conversation";
+import Eroboard from "@/pages/Eroboard";
+import Dating from "@/pages/Dating";
+import Eros from "@/pages/Eros";
+import ErosUpload from "@/pages/ErosUpload";
+import { AuthLayout } from "@/components/layout/AuthLayout";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { ModalProvider } from "@/components/providers/ModalProvider";
+import { AudioProvider } from "@/components/providers/AudioProvider";
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
-import { ThemeProvider } from '@/components/layout/ThemeProvider';
-import { Toaster } from '@/components/ui/toaster';
-import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import LoadingScreen from '@/components/layout/LoadingScreen';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
-// Layout components
-import Layout from './components/layout/Layout';
-import { AdminRoutes } from './components/admin/routes/AdminRoutes';
-
-// Lazy loaded pages
-const Home = lazy(() => import('./pages/Home'));
-const Index = lazy(() => import('./pages/Index'));
-const Shorts = lazy(() => import('./pages/Shorts'));
-const Eros = lazy(() => import('./pages/Eros'));
-const Categories = lazy(() => import('./pages/Categories'));
-const Dating = lazy(() => import('./pages/Dating'));
-const Messages = lazy(() => import('./pages/Messages'));
-const Eroboard = lazy(() => import('./pages/Eroboard'));
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
-const Profile = lazy(() => import('./pages/Profile'));
-
-const App = () => {
+export default function App() {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <ErrorBoundary fallback={<div className="p-8">Something went wrong. Please refresh the page.</div>}>
-          <Suspense fallback={<LoadingScreen />}>
-            <Routes>
-              {/* Index route */}
-              <Route path="/" element={<Index />} />
-              
-              {/* Main app routes */}
-              <Route element={<Layout />}>
-                <Route path="/home" element={<Home />} />
-                <Route path="/shorts" element={<Shorts />} />
-                <Route path="/eros" element={<Eros />} />
-                <Route path="/dating" element={<Dating />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/eroboard" element={<Eroboard />} />
-                <Route path="/categories" element={<Categories />} />
-                <Route path="/profile/:id" element={<Profile />} />
-              </Route>
-              
-              {/* Auth routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-              {/* Admin routes */}
-              <Route path="/admin/*" element={<AdminRoutes />} />
-              
-              {/* Fallback route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
-        <Toaster />
-      </BrowserRouter>
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <AudioProvider>
+              <ModalProvider />
+              <Routes>
+                <Route element={<AuthLayout />}>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                </Route>
+                <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/home" element={<Home />} />
+                  <Route path="/profile/:username" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/messages/:conversationId" element={<Conversation />} />
+                  <Route path="/eroboard" element={<Eroboard />} />
+                  <Route path="/dating" element={<Dating />} />
+                  <Route path="/shorts" element={<Eros />} />
+                  <Route path="/shorts/:videoId" element={<Eros />} />
+                  <Route path="/shorts/upload" element={<ErosUpload />} />
+                </Route>
+              </Routes>
+              <Toaster />
+              <ReactQueryDevtools initialIsOpen={false} />
+            </AudioProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   );
-};
-
-export default App;
+}
