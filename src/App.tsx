@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Home from "@/pages/Home";
@@ -45,7 +46,7 @@ export default function App() {
             <Route path="/dating" element={<Dating />} />
             <Route path="/shorts" element={<Shorts />} />
             <Route path="/shorts/:videoId" element={<Shorts />} />
-            <Route path="/shorts/upload" element={<ShortsUpload />} />
+            <Route path="/shorts/upload" element={<ErosUpload />} />
           </Route>
         </Routes>
         <Toaster />

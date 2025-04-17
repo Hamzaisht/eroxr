@@ -1,11 +1,23 @@
 
 import { useState, useCallback } from 'react';
-import { UploadOptions, UploadResult, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useSession } from '@supabase/auth-helpers-react';
+import { uploadFile } from '@/utils/upload/fileUploadService';
+import { UploadOptions, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useToast } from './use-toast';
-import { useFileUpload } from './useFileUpload';
 
-export const useMediaUpload = (options?: UploadOptions) => {
+// Helper constants for file validation
+const MAX_FILE_SIZE_DEFAULT = 50; // MB
+const DEFAULT_ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime'
+];
+
+export const useMediaUpload = (defaultOptions?: UploadOptions) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
@@ -16,170 +28,8 @@ export const useMediaUpload = (options?: UploadOptions) => {
 
   const session = useSession();
   const { toast } = useToast();
-  const { uploadFileToStorage } = useFileUpload();
 
-  const validateFile = useCallback((file: File, opts?: UploadOptions): FileValidationResult => {
-    if (!file) {
-      return { isValid: false, message: 'No file selected' };
-    }
-    
-    // Check file size if max size is provided
-    if (opts?.maxSizeInMB) {
-      const maxSizeInBytes = opts.maxSizeInMB * 1024 * 1024;
-      if (file.size > maxSizeInBytes) {
-        return {
-          isValid: false,
-          message: `File is too large. Maximum size is ${opts.maxSizeInMB}MB`
-        };
-      }
-    }
-    
-    // Check allowed file types if provided
-    if (opts?.allowedTypes && opts.allowedTypes.length > 0) {
-      const fileType = file.type.toLowerCase();
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
-      
-      const isAllowedType = opts.allowedTypes.some(type => {
-        return fileType.includes(type) || (fileExtension && type.includes(fileExtension));
-      });
-      
-      if (!isAllowedType) {
-        return {
-          isValid: false,
-          message: `Invalid file type. Allowed types: ${opts.allowedTypes.join(', ')}`
-        };
-      }
-    }
-    
-    // Now properly include the message property even for successful validation
-    return { isValid: true, message: '' };
-  }, []);
-
-  const uploadMedia = useCallback(async (
-    file: File,
-    customOptions?: UploadOptions
-  ): Promise<UploadResult> => {
-    if (!session?.user) {
-      return { 
-        url: '',
-        path: '',
-        size: 0,
-        contentType: '',
-        success: false, 
-        error: 'User is not authenticated' 
-      };
-    }
-
-    // Merge default options with custom options
-    const mergedOptions = { ...options, ...customOptions };
-
-    const validation = validateFile(file, mergedOptions);
-    if (!validation.isValid) {
-      toast({
-        title: 'Invalid file',
-        description: validation.message || '',
-        variant: 'destructive',
-      });
-      return { 
-        url: '',
-        path: '',
-        size: 0,
-        contentType: '',
-        success: false, 
-        error: validation.message || 'Invalid file'
-      };
-    }
-
-    setUploadState({
-      isUploading: true,
-      progress: 0,
-      error: null,
-      success: false,
-      isComplete: false
-    });
-
-    try {
-      // Determine content bucket based on content category
-      const bucket = mergedOptions?.contentCategory === 'story' ? 'stories' : 'media';
-      
-      // Track progress
-      const onProgress = (progress: number) => {
-        setUploadState(prev => {
-          if (mergedOptions?.onProgress) {
-            mergedOptions.onProgress(progress);
-          }
-          return { ...prev, progress };
-        });
-      };
-
-      // Use our utility function for the upload
-      const result = await uploadFileToStorage(file, {
-        bucket,
-        onProgress
-      });
-
-      if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
-      }
-
-      setUploadState({
-        isUploading: false,
-        progress: 100,
-        error: null,
-        success: true,
-        isComplete: true
-      });
-
-      // Auto reset if needed
-      if (mergedOptions?.autoResetOnCompletion) {
-        setTimeout(() => {
-          setUploadState({
-            isUploading: false,
-            progress: 0,
-            error: null,
-            success: false,
-            isComplete: false
-          });
-        }, mergedOptions.resetDelay || 2000);
-      }
-
-      return { 
-        url: result.url || '', 
-        path: result.path || '',
-        size: file.size,
-        contentType: file.type,
-        success: true 
-      };
-    } catch (error: any) {
-      console.error("Media upload error:", error);
-      
-      const errorMessage = error.message || "Failed to upload media";
-      
-      setUploadState({
-        isUploading: false,
-        progress: 0,
-        error: errorMessage,
-        success: false,
-        isComplete: false
-      });
-      
-      toast({
-        title: 'Upload Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      
-      return { 
-        url: '',
-        path: '',
-        size: 0,
-        contentType: '',
-        success: false, 
-        error: errorMessage
-      };
-    }
-  }, [session, validateFile, toast, options, uploadFileToStorage]);
-
+  // Reset the upload state
   const resetUploadState = useCallback(() => {
     setUploadState({
       isUploading: false,
@@ -190,10 +40,174 @@ export const useMediaUpload = (options?: UploadOptions) => {
     });
   }, []);
 
+  // Validate file before upload
+  const validateFile = useCallback((
+    file: File,
+    options?: UploadOptions
+  ): FileValidationResult => {
+    if (!file) {
+      return { isValid: false, message: 'No file provided' };
+    }
+
+    const maxSizeMB = options?.maxSizeInMB || defaultOptions?.maxSizeInMB || MAX_FILE_SIZE_DEFAULT;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    
+    if (file.size > maxSizeBytes) {
+      return { 
+        isValid: false, 
+        message: `File size exceeds the ${maxSizeMB}MB limit` 
+      };
+    }
+
+    const allowedTypes = options?.allowedTypes || defaultOptions?.allowedTypes || DEFAULT_ALLOWED_TYPES;
+    
+    if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
+      return { 
+        isValid: false, 
+        message: `File type '${file.type}' is not supported` 
+      };
+    }
+
+    return { isValid: true, message: '' };
+  }, [defaultOptions]);
+
+  // Upload media function
+  const uploadMedia = useCallback(async (
+    file: File,
+    options?: UploadOptions
+  ): Promise<{success: boolean; url?: string; path?: string; error?: string}> => {
+    if (!session?.user?.id) {
+      const errorMessage = 'Authentication required to upload files';
+      
+      toast({
+        title: 'Authentication Required',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      
+      return { success: false, error: errorMessage };
+    }
+
+    const validation = validateFile(file, options);
+    if (!validation.isValid) {
+      toast({
+        title: 'Invalid File',
+        description: validation.message,
+        variant: 'destructive',
+      });
+      
+      return { success: false, error: validation.message };
+    }
+
+    // Begin upload process
+    setUploadState({
+      isUploading: true,
+      progress: 0,
+      error: null,
+      success: false,
+      isComplete: false
+    });
+
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      setUploadState(prev => {
+        // Cap progress at 90% until actual completion
+        const newProgress = Math.min(prev.progress + Math.random() * 10, 90);
+        
+        if (options?.onProgress) {
+          options.onProgress(newProgress);
+        }
+        
+        return {
+          ...prev,
+          progress: newProgress
+        };
+      });
+    }, 300);
+
+    try {
+      const contentCategory = options?.contentCategory || 'media';
+      const bucket = contentCategory === 'shorts' ? 'shorts' : 'media';
+      
+      // Upload the file using the fileUploadService
+      const result = await uploadFile(file, bucket, session.user.id, {
+        contentType: file.type,
+        upsert: true
+      });
+
+      clearInterval(progressInterval);
+
+      if (!result.success) {
+        setUploadState({
+          isUploading: false,
+          progress: 0,
+          error: result.error || 'Upload failed',
+          success: false,
+          isComplete: false
+        });
+        
+        toast({
+          title: 'Upload Failed',
+          description: result.error || 'Failed to upload file',
+          variant: 'destructive',
+        });
+        
+        return { success: false, error: result.error };
+      }
+
+      // Upload successful
+      setUploadState({
+        isUploading: false,
+        progress: 100,
+        error: null,
+        success: true,
+        isComplete: true
+      });
+      
+      // Auto-reset if configured
+      if (options?.autoResetOnCompletion || defaultOptions?.autoResetOnCompletion) {
+        const delay = options?.resetDelay || defaultOptions?.resetDelay || 3000;
+        setTimeout(() => {
+          resetUploadState();
+        }, delay);
+      }
+
+      // Make sure we're returning url and path properties
+      const successResult = {
+        success: true,
+        url: result.url || '',
+        path: result.path || ''
+      };
+      
+      return successResult;
+    } catch (error: any) {
+      clearInterval(progressInterval);
+      console.error('Upload error:', error);
+      
+      const errorMessage = error.message || 'An unknown error occurred';
+      
+      setUploadState({
+        isUploading: false,
+        progress: 0,
+        error: errorMessage,
+        success: false,
+        isComplete: false
+      });
+      
+      toast({
+        title: 'Upload Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      
+      return { success: false, error: errorMessage };
+    }
+  }, [session, toast, validateFile, resetUploadState, defaultOptions]);
+
   return {
-    uploadState,
     uploadMedia,
-    resetUploadState,
-    validateFile
+    uploadState,
+    validateFile,
+    resetUploadState
   };
 };

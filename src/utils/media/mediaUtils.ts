@@ -1,6 +1,7 @@
 
 import { nanoid } from 'nanoid';
 import { supabase } from "@/integrations/supabase/client";
+import { MediaType, MediaSource } from './types';
 
 /**
  * Creates a unique file path for storage
@@ -87,4 +88,73 @@ export const uploadFileToStorage = async (
       error: error.message || "An unknown error occurred"
     };
   }
+};
+
+/**
+ * Determines the media type from a file or URL
+ * 
+ * @param source Media source (string URL or object)
+ * @returns Media type (image, video, etc.)
+ */
+export const determineMediaType = (source: MediaSource | string): MediaType => {
+  // If it's a string URL
+  if (typeof source === 'string') {
+    const url = source.toLowerCase();
+    
+    if (url.match(/\.(jpeg|jpg|gif|png|webp|avif|svg)($|\?)/i)) {
+      return MediaType.IMAGE;
+    }
+    
+    if (url.match(/\.(mp4|webm|ogg|mov|avi)($|\?)/i)) {
+      return MediaType.VIDEO;
+    }
+    
+    if (url.match(/\.(mp3|wav|ogg|aac|flac)($|\?)/i)) {
+      return MediaType.AUDIO;
+    }
+    
+    return MediaType.UNKNOWN;
+  }
+  
+  // If it's an object with mediaType or content_type field
+  if (source.media_type) {
+    const type = source.media_type.toLowerCase();
+    if (type.includes('image')) return MediaType.IMAGE;
+    if (type.includes('video')) return MediaType.VIDEO;
+    if (type.includes('audio')) return MediaType.AUDIO;
+    return MediaType.UNKNOWN;
+  }
+  
+  // If it's an object with URL fields, try to determine from URL structure
+  const url = extractMediaUrl(source);
+  if (url) {
+    return determineMediaType(url);
+  }
+  
+  return MediaType.UNKNOWN;
+};
+
+/**
+ * Extracts media URL from various media source formats
+ * 
+ * @param source Media source object or string
+ * @returns Extracted URL or null if none found
+ */
+export const extractMediaUrl = (source: MediaSource | string): string | null => {
+  if (typeof source === 'string') {
+    return source;
+  }
+  
+  // Check various possible URL properties
+  if (source.media_url) return source.media_url;
+  if (source.video_url) return source.video_url;
+  if (source.image_url) return source.image_url;
+  if (source.url) return source.url;
+  if (source.src) return source.src;
+  
+  // Check array URLs (pick first one)
+  if (source.media_urls && source.media_urls.length > 0) return source.media_urls[0];
+  if (source.video_urls && source.video_urls.length > 0) return source.video_urls[0];
+  
+  return null;
 };

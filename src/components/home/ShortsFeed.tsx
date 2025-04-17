@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useShortsPagination } from "@/hooks/useShortsPagination";
@@ -7,7 +8,6 @@ import { EmptyShortsState } from "./components/EmptyShortsState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { ShortItem } from "./components/ShortItem";
-import { UploadShortButton } from "./UploadShortButton";
 
 interface ShortsFeedProps {
   specificShortId?: string | null;
@@ -190,9 +190,6 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
           </div>
         </div>
       )}
-
-      {/* Add the upload button component */}
-      <UploadShortButton />
     </div>
   );
 };
