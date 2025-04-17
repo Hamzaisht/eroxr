@@ -28,7 +28,7 @@ export interface MultiFileUploaderProps {
   /**
    * Content type category
    */
-  contentCategory?: UploadOptions['contentCategory'];
+  contentCategory?: string;
   
   /**
    * Maximum files to upload
@@ -80,7 +80,7 @@ export const MultiFileUploader = ({
   })();
   
   const uploadOptions = {
-    contentCategory,
+    contentCategory: contentCategory,
     maxSizeInMB,
     autoResetOnCompletion: true,
     resetDelay: 3000,
@@ -115,7 +115,7 @@ export const MultiFileUploader = ({
       const fileId = `${file.name}-${Date.now()}`;
       
       const validation = validateFile(file);
-      if (!validation.valid) {
+      if (!validation.isValid) {
         newFileErrors[fileId] = validation.message || "Invalid file";
         return;
       }

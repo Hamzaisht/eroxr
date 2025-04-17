@@ -22,7 +22,7 @@ export interface MediaUploaderProps {
   /**
    * Content type category
    */
-  context?: UploadOptions['contentCategory'];
+  context?: string;
   
   /**
    * Maximum file size in MB
@@ -123,7 +123,7 @@ export const MediaUploader = ({
     console.log("File selected:", file.name, file.type, file.size);
     
     const validation = validateFile(file);
-    if (!validation.valid) {
+    if (!validation.isValid) {
       console.error("File validation failed:", validation.message);
       if (onError) onError(validation.message || "Invalid file");
       return;

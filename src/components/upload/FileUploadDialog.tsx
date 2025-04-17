@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import { MediaUploader } from "./MediaUploader";
 import { MultiFileUploader } from "./MultiFileUploader";
 import { Upload, Image, FileVideo } from "lucide-react";
-import { UploadOptions } from "@/utils/media/types";
 
 export interface FileUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onFileUploaded?: (url: string) => void;
   onMultipleFilesUploaded?: (urls: string[]) => void;
-  contentCategory?: UploadOptions['contentCategory'];
+  contentCategory?: string;
   title?: string;
   allowMultiple?: boolean;
   defaultTab?: 'single' | 'multiple';

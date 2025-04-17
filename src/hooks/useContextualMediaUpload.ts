@@ -10,7 +10,7 @@ interface UploadResult {
   error?: string;
 }
 
-type MediaContext = UploadOptions['contentCategory'];
+type MediaContext = string;
 
 /**
  * Hook for handling contextual media uploads (posts, stories, etc.)
@@ -42,7 +42,7 @@ export const useContextualMediaUpload = (context: MediaContext) => {
           description: "Could not upload your media file.",
           variant: "destructive"
         });
-        return result;
+        return { success: false, error: result.error };
       }
       
       toast({
@@ -50,7 +50,7 @@ export const useContextualMediaUpload = (context: MediaContext) => {
         description: "Your media has been uploaded successfully."
       });
       
-      return result;
+      return { success: true, url: result.url };
     } catch (error: any) {
       toast({
         title: "Upload Error",

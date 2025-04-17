@@ -113,76 +113,33 @@ export function getThumbnailUrl(source: MediaSource | string): string | null {
 export function createUniqueFilePath(userId: string, file: File): string {
   const ext = file.name.split('.').pop() || '';
   const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(2, 8);
+  const randomString = Math.random().toString(36).substring(2, 10);
+  return `${userId}/${timestamp}-${randomString}.${ext}`;
+}
+
+/**
+ * Get content type from file
+ */
+export function getContentType(file: File): string {
+  return file.type || 'application/octet-stream';
+}
+
+/**
+ * Upload file to storage
+ */
+export async function uploadFileToStorage(bucket: string, path: string, file: File) {
+  // This is a stub function that would normally upload to Supabase or another storage system
+  // For now it just simulates uploading
+  console.log(`Uploading ${file.name} to ${bucket}/${path}`);
   
-  return `${userId}/${timestamp}_${randomId}.${ext}`;
-}
-
-/**
- * Get content type from file or URL
- */
-export function getContentType(fileOrUrl: File | string): string {
-  if (typeof fileOrUrl === 'string') {
-    const ext = fileOrUrl.split('.').pop()?.toLowerCase();
-    
-    if (!ext) return 'application/octet-stream';
-    
-    switch (ext) {
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'png':
-        return 'image/png';
-      case 'gif':
-        return 'image/gif';
-      case 'webp':
-        return 'image/webp';
-      case 'mp4':
-        return 'video/mp4';
-      case 'webm':
-        return 'video/webm';
-      case 'mp3':
-        return 'audio/mpeg';
-      case 'wav':
-        return 'audio/wav';
-      case 'pdf':
-        return 'application/pdf';
-      default:
-        return 'application/octet-stream';
-    }
-  } else {
-    return fileOrUrl.type || 'application/octet-stream';
-  }
-}
-
-/**
- * Upload a file to storage
- */
-export async function uploadFileToStorage(
-  bucket: string, 
-  filePath: string, 
-  file: File
-): Promise<{ success: boolean; url?: string; error?: string }> {
-  try {
-    // This would normally interact with a storage API like Supabase
-    // For now, we'll simulate a successful upload with a delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // In a real app, this would be the URL returned from storage
-    const url = `https://storage.example.com/${bucket}/${filePath}`;
-    
-    console.log(`File ${file.name} uploaded to ${bucket}/${filePath}`);
-    
-    return {
-      success: true,
-      url
-    };
-  } catch (error: any) {
-    console.error('Upload error:', error);
-    
-    return {
-      success: false,
-      error: error.message || 'Failed to upload file'
-    };
-  }
+  // Simulate upload process
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  const url = `https://example.com/storage/${bucket}/${path}`;
+  
+  return {
+    success: true,
+    url,
+    error: null
+  };
 }

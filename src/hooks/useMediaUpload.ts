@@ -8,9 +8,9 @@ export const useMediaUpload = (options?: UploadOptions) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
-    isComplete: false,
     error: null,
-    success: false
+    success: false,
+    isComplete: false
   });
 
   const session = useSession();
@@ -18,7 +18,7 @@ export const useMediaUpload = (options?: UploadOptions) => {
 
   const validateFile = useCallback((file: File, opts?: UploadOptions): FileValidationResult => {
     if (!file) {
-      return { valid: false, message: 'No file selected' };
+      return { isValid: false, message: 'No file selected' };
     }
     
     // Check file size if max size is provided
@@ -26,7 +26,7 @@ export const useMediaUpload = (options?: UploadOptions) => {
       const maxSizeInBytes = opts.maxSizeInMB * 1024 * 1024;
       if (file.size > maxSizeInBytes) {
         return {
-          valid: false,
+          isValid: false,
           message: `File is too large. Maximum size is ${opts.maxSizeInMB}MB`
         };
       }
@@ -43,13 +43,13 @@ export const useMediaUpload = (options?: UploadOptions) => {
       
       if (!isAllowedType) {
         return {
-          valid: false,
+          isValid: false,
           message: `Invalid file type. Allowed types: ${opts.allowedTypes.join(', ')}`
         };
       }
     }
     
-    return { valid: true };
+    return { isValid: true };
   }, []);
 
   const uploadMedia = useCallback(async (
@@ -57,28 +57,42 @@ export const useMediaUpload = (options?: UploadOptions) => {
     customOptions?: UploadOptions
   ): Promise<UploadResult> => {
     if (!session?.user) {
-      return { success: false, error: 'User is not authenticated' };
+      return { 
+        url: '',
+        path: '',
+        size: 0,
+        contentType: '',
+        success: false, 
+        error: 'User is not authenticated' 
+      };
     }
 
     // Merge default options with custom options
     const mergedOptions = { ...options, ...customOptions };
 
     const validation = validateFile(file, mergedOptions);
-    if (!validation.valid) {
+    if (!validation.isValid) {
       toast({
         title: 'Invalid file',
-        description: validation.message,
+        description: validation.message || '',
         variant: 'destructive',
       });
-      return { success: false, error: validation.message };
+      return { 
+        url: '',
+        path: '',
+        size: 0,
+        contentType: '',
+        success: false, 
+        error: validation.message || 'Invalid file'
+      };
     }
 
     setUploadState({
       isUploading: true,
       progress: 0,
-      isComplete: false,
       error: null,
-      success: false
+      success: false,
+      isComplete: false
     });
 
     try {
@@ -104,9 +118,9 @@ export const useMediaUpload = (options?: UploadOptions) => {
       setUploadState({
         isUploading: false,
         progress: 100,
-        isComplete: true,
         error: null,
-        success: true
+        success: true,
+        isComplete: true
       });
 
       // Auto reset if needed
@@ -115,14 +129,20 @@ export const useMediaUpload = (options?: UploadOptions) => {
           setUploadState({
             isUploading: false,
             progress: 0,
-            isComplete: false,
             error: null,
-            success: false
+            success: false,
+            isComplete: false
           });
         }, mergedOptions.resetDelay || 2000);
       }
 
-      return { success: true, url: mockUrl };
+      return { 
+        url: mockUrl, 
+        path: `uploads/${file.name}`,
+        size: file.size,
+        contentType: file.type,
+        success: true 
+      };
     } catch (error: any) {
       console.error("Media upload error:", error);
       
@@ -131,9 +151,9 @@ export const useMediaUpload = (options?: UploadOptions) => {
       setUploadState({
         isUploading: false,
         progress: 0,
-        isComplete: false,
         error: errorMessage,
-        success: false
+        success: false,
+        isComplete: false
       });
       
       toast({
@@ -142,7 +162,14 @@ export const useMediaUpload = (options?: UploadOptions) => {
         variant: 'destructive',
       });
       
-      return { success: false, error: errorMessage };
+      return { 
+        url: '',
+        path: '',
+        size: 0,
+        contentType: '',
+        success: false, 
+        error: errorMessage
+      };
     }
   }, [session, validateFile, toast, options]);
 
@@ -150,9 +177,9 @@ export const useMediaUpload = (options?: UploadOptions) => {
     setUploadState({
       isUploading: false,
       progress: 0,
-      isComplete: false,
       error: null,
-      success: false
+      success: false,
+      isComplete: false
     });
   }, []);
 
