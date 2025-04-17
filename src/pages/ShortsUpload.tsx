@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -12,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { UploadCloud, X, PlayCircle, PauseCircle, Scissors, CheckCircle, AlertCircle, VideoIcon } from "lucide-react";
+import { UploadCloud, X, PlayCircle, PauseCircle, CheckCircle, AlertCircle, VideoIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { createFilePreview, revokeFilePreview } from "@/utils/upload/fileUtils";
 import { validateVideoFormat, getVideoDuration } from "@/utils/videoProcessing";
@@ -322,12 +321,12 @@ const ShortsUpload = () => {
         .insert({
           creator_id: session.user.id,
           content: title,
-          description: description,
+          content_extended: description,
           video_urls: [publicUrl],
           visibility: isPremiumContent ? 'subscribers_only' : 'public',
           tags: tags.length > 0 ? tags : undefined,
           video_processing_status: 'completed',
-          video_thumbnail_url: null // We'll update this later when thumbnails are generated
+          video_thumbnail_url: null
         })
         .select('id')
         .single();
@@ -585,7 +584,6 @@ const ShortsUpload = () => {
                   <Progress 
                     value={uploadStatus.progress} 
                     className="h-2 bg-zinc-800" 
-                    indicatorClassName="bg-luxury-primary" 
                   />
                   
                   {uploadStatus.isComplete && (

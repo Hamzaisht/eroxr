@@ -1,233 +1,145 @@
+
+/**
+ * Utility functions for validating and processing video files
+ */
+
+/**
+ * Validate that a file is a valid video format
+ * @param file File to validate
+ * @returns Promise resolving to boolean indicating if it's a valid video
+ */
 export const validateVideoFormat = async (file: File): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-
-    video.onloadedmetadata = () => {
-      URL.revokeObjectURL(video.src);
-      resolve(true);
-    };
-
-    video.onerror = () => {
-      URL.revokeObjectURL(video.src);
-      resolve(false);
-    };
-
-    const timeout = setTimeout(() => {
-      URL.revokeObjectURL(video.src);
-      resolve(false);
-    }, 5000);
-
-    video.onloadedmetadata = () => {
-      clearTimeout(timeout);
-      URL.revokeObjectURL(video.src);
-      resolve(true);
-    };
-
-    video.src = URL.createObjectURL(file);
-  });
-};
-
-export const getVideoDuration = async (file: File): Promise<number> => {
-  return new Promise((resolve) => {
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-
-    const timeout = setTimeout(() => {
-      URL.revokeObjectURL(video.src);
-      resolve(0);
-    }, 5000);
-
-    video.onloadedmetadata = () => {
-      clearTimeout(timeout);
-      URL.revokeObjectURL(video.src);
-      resolve(video.duration);
-    };
-
-    video.onerror = () => {
-      clearTimeout(timeout);
-      URL.revokeObjectURL(video.src);
-      resolve(0);
-    };
-
-    video.src = URL.createObjectURL(file);
-  });
-};
-
-// Helper function to generate video thumbnails with better error handling
-export const generateVideoThumbnails = async (videoFile: File, numThumbnails = 3): Promise<string[]> => {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement('video');
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const thumbnails: string[] = [];
+  if (!file.type.startsWith('video/')) {
+    return false;
+  }
+  
+  try {
+    // Create a URL for the file
+    const url = URL.createObjectURL(file);
     
-    if (!ctx) {
-      reject(new Error('Failed to create canvas context'));
-      return;
-    }
+    // Create a video element to test loading
+    const video = document.createElement('video');
     
-    let loadError = false;
-    
-    video.addEventListener('loadedmetadata', () => {
-      if (loadError) return;
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      const duration = video.duration;
-      // Calculate evenly spaced time points
-      const timePoints = Array.from({length: numThumbnails}, (_, i) => 
-        duration * (i + 1) / (numThumbnails + 1)
-      );
-      
-      let loaded = 0;
-      
-      const processThumbnail = () => {
-        if (loaded >= timePoints.length) {
-          URL.revokeObjectURL(video.src);
-          resolve(thumbnails);
-          return;
-        }
-        
-        const currentTime = timePoints[loaded];
-        video.currentTime = currentTime;
+    // Wait for either error or metadata to load
+    const result = await new Promise<boolean>((resolve) => {
+      video.onloadedmetadata = () => {
+        resolve(true);
       };
       
-      video.addEventListener('seeked', () => {
-        if (loadError) return;
-        
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        thumbnails.push(canvas.toDataURL('image/jpeg', 0.7)); // Add quality parameter for better performance
-        loaded++;
-        
-        if (loaded < timePoints.length) {
-          processThumbnail();
-        } else {
-          URL.revokeObjectURL(video.src);
-          resolve(thumbnails);
-        }
-      });
+      video.onerror = () => {
+        resolve(false);
+      };
       
-      // Start the process
-      processThumbnail();
+      // Set source and try to load
+      video.src = url;
     });
     
-    video.addEventListener('error', (e) => {
-      loadError = true;
-      URL.revokeObjectURL(video.src);
-      reject(new Error('Error generating thumbnails: ' + (e.message || 'Unknown error')));
-    });
-    
-    video.src = URL.createObjectURL(videoFile);
-  });
+    // Clean up
+    URL.revokeObjectURL(url);
+    return result;
+  } catch (error) {
+    console.error('Error validating video format:', error);
+    return false;
+  }
 };
 
-// New function to apply watermark on video during processing
-export const applyWatermarkToVideo = async (
-  videoElement: HTMLVideoElement,
-  username: string
-): Promise<Blob> => {
-  return new Promise((resolve, reject) => {
-    try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+/**
+ * Get the duration of a video file in seconds
+ * @param file Video file to check
+ * @returns Promise resolving to duration in seconds
+ */
+export const getVideoDuration = async (file: File): Promise<number> => {
+  try {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    
+    const duration = await new Promise<number>((resolve, reject) => {
+      video.onloadedmetadata = () => {
+        resolve(video.duration);
+      };
       
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return;
-      }
+      video.onerror = () => {
+        reject(new Error('Could not load video metadata'));
+      };
       
-      // Set canvas size to match video
-      canvas.width = videoElement.videoWidth;
-      canvas.height = videoElement.videoHeight;
+      video.src = url;
+    });
+    
+    URL.revokeObjectURL(url);
+    return duration;
+  } catch (error) {
+    console.error('Error getting video duration:', error);
+    return 0;
+  }
+};
+
+/**
+ * Utilities to create a thumbnail from a video at a specific timestamp
+ * @param videoFile Video file to create thumbnail from
+ * @param timeInSeconds Time in seconds to capture thumbnail
+ * @returns Promise resolving to Blob of thumbnail image
+ */
+export const createThumbnailFromVideo = async (
+  videoFile: File, 
+  timeInSeconds = 0
+): Promise<Blob | null> => {
+  try {
+    const url = URL.createObjectURL(videoFile);
+    const video = document.createElement('video');
+    video.src = url;
+    
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => {
+        // Ensure time is within video duration
+        const seekTime = Math.min(timeInSeconds, video.duration / 2);
+        video.currentTime = seekTime;
+      };
       
-      // Draw video frame to canvas
-      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      video.onseeked = () => {
+        resolve();
+      };
       
-      // Add watermark
-      const watermarkText = `www.eroxr.com/@${username}`;
-      const fontSize = Math.max(16, Math.min(canvas.width * 0.025, 24));
-      
-      ctx.font = `600 ${fontSize}px sans-serif`;
-      ctx.fillStyle = 'white';
-      
-      // Measure text for positioning
-      const metrics = ctx.measureText(watermarkText);
-      const textWidth = metrics.width;
-      
-      // Position at bottom right with padding
-      const padding = fontSize / 2;
-      const x = canvas.width - textWidth - padding;
-      const y = canvas.height - padding;
-      
-      // Add background for better visibility
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(
-        x - padding / 2,
-        y - fontSize - padding / 2,
-        textWidth + padding,
-        fontSize + padding
-      );
-      
-      // Draw text
-      ctx.fillStyle = 'white';
-      ctx.fillText(watermarkText, x, y - padding / 2);
-      
-      // Convert canvas to blob
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Failed to convert canvas to blob'));
-          }
-        },
-        'image/jpeg',
-        0.95
-      );
-    } catch (error) {
-      reject(error);
+      video.onerror = () => {
+        reject(new Error('Error loading video'));
+      };
+    });
+    
+    // Draw the video frame to a canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Could not get canvas context');
     }
-  });
+    
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert canvas to blob
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/jpeg', 0.7);
+    });
+    
+    // Clean up
+    URL.revokeObjectURL(url);
+    
+    return blob;
+  } catch (error) {
+    console.error('Error creating thumbnail:', error);
+    return null;
+  }
 };
 
-// Function to watermark an individual frame (for livestreams)
-export const watermarkVideoFrame = (
-  videoElement: HTMLVideoElement,
-  username: string,
-  ctx: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement
-): void => {
-  // Draw current video frame
-  ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-  
-  // Add watermark
-  const watermarkText = `www.eroxr.com/@${username}`;
-  const fontSize = Math.max(16, Math.min(canvas.width * 0.025, 24));
-  
-  ctx.font = `600 ${fontSize}px sans-serif`;
-  ctx.fillStyle = 'white';
-  
-  // Measure text for positioning
-  const metrics = ctx.measureText(watermarkText);
-  const textWidth = metrics.width;
-  
-  // Position at bottom right with padding
-  const padding = fontSize / 2;
-  const x = canvas.width - textWidth - padding;
-  const y = canvas.height - padding;
-  
-  // Add background for better visibility
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  ctx.fillRect(
-    x - padding / 2,
-    y - fontSize - padding / 2,
-    textWidth + padding,
-    fontSize + padding
-  );
-  
-  // Draw text
-  ctx.fillStyle = 'white';
-  ctx.fillText(watermarkText, x, y - padding / 2);
+/**
+ * Utility function to add file extension if missing
+ * @param filename Filename to check
+ * @param extension Extension to add if missing (without dot)
+ * @returns Filename with extension
+ */
+export const ensureFileExtension = (filename: string, extension: string): string => {
+  if (!filename.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
+    return `${filename}.${extension}`;
+  }
+  return filename;
 };

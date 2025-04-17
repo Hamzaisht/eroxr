@@ -110,7 +110,7 @@ export const useShortsPagination = ({
             id: specificShort.id,
             url: specificShort.video_urls?.[0] || '',
             thumbnailUrl: specificShort.video_thumbnail_url || '',
-            description: specificShort.content || specificShort.description || '',
+            description: specificShort.content || '',
             hasLiked,
             hasSaved,
             stats: {
@@ -213,7 +213,7 @@ export const useShortsPagination = ({
           id: short.id,
           url: short.video_urls?.[0] || '',
           thumbnailUrl: short.video_thumbnail_url || '',
-          description: short.content || short.description || '',
+          description: short.content || '', // Using content instead of description
           hasLiked,
           hasSaved,
           stats: {
