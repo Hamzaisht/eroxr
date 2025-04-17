@@ -132,6 +132,43 @@ export const createThumbnailFromVideo = async (
 };
 
 /**
+ * Generate multiple thumbnails from a video file
+ * @param videoFile Video file to create thumbnails from
+ * @param count Number of thumbnails to generate
+ * @returns Promise resolving to array of thumbnail URLs
+ */
+export const generateVideoThumbnails = async (
+  videoFile: File, 
+  count = 3
+): Promise<string[]> => {
+  try {
+    const duration = await getVideoDuration(videoFile);
+    if (!duration) {
+      throw new Error("Could not determine video duration");
+    }
+
+    const thumbnailURLs: string[] = [];
+    
+    // Generate thumbnails at evenly spaced intervals
+    for (let i = 0; i < count; i++) {
+      // Get time points at 10%, 50%, 90% of the duration
+      const timePoint = duration * (i + 1) / (count + 1);
+      const thumbnailBlob = await createThumbnailFromVideo(videoFile, timePoint);
+      
+      if (thumbnailBlob) {
+        const thumbnailURL = URL.createObjectURL(thumbnailBlob);
+        thumbnailURLs.push(thumbnailURL);
+      }
+    }
+    
+    return thumbnailURLs;
+  } catch (error) {
+    console.error('Error generating thumbnails:', error);
+    return [];
+  }
+};
+
+/**
  * Utility function to add file extension if missing
  * @param filename Filename to check
  * @param extension Extension to add if missing (without dot)

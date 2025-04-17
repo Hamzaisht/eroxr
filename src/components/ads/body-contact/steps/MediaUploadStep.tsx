@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AdFormValues } from "../types";
 import { useToast } from "@/hooks/use-toast";
-import { getVideoDuration, generateVideoThumbnails, validateVideoFormat } from "@/utils/videoProcessing";
+import { getVideoDuration, validateVideoFormat, generateVideoThumbnails } from "@/utils/videoProcessing";
 
 interface MediaUploadStepProps {
   values: AdFormValues;

@@ -56,7 +56,7 @@ export const useShortsPagination = ({
           .select(`
             id,
             content,
-            description,
+            content_extended,
             video_urls,
             video_thumbnail_url,
             created_at,
@@ -110,7 +110,7 @@ export const useShortsPagination = ({
             id: specificShort.id,
             url: specificShort.video_urls?.[0] || '',
             thumbnailUrl: specificShort.video_thumbnail_url || '',
-            description: specificShort.content || '',
+            description: specificShort.content || specificShort.content_extended || '',
             hasLiked,
             hasSaved,
             stats: {
@@ -141,7 +141,7 @@ export const useShortsPagination = ({
         .select(`
           id,
           content,
-          description,
+          content_extended,
           video_urls,
           video_thumbnail_url,
           created_at,
@@ -213,7 +213,7 @@ export const useShortsPagination = ({
           id: short.id,
           url: short.video_urls?.[0] || '',
           thumbnailUrl: short.video_thumbnail_url || '',
-          description: short.content || '', // Using content instead of description
+          description: short.content || short.content_extended || '',
           hasLiked,
           hasSaved,
           stats: {
