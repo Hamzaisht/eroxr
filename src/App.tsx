@@ -46,7 +46,7 @@ export default function App() {
             <Route path="/dating" element={<Dating />} />
             <Route path="/shorts" element={<Shorts />} />
             <Route path="/shorts/:videoId" element={<Shorts />} />
-            <Route path="/shorts/upload" element={<ErosUpload />} />
+            <Route path="/shorts/upload" element={<ShortsUpload />} />
           </Route>
         </Routes>
         <Toaster />

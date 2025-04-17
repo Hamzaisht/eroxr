@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { MediaUploader } from "@/components/upload/MediaUploader";
+import { VideoUploadForm } from "@/components/upload/VideoUploadForm";
 
 export default function ShortsUpload() {
   const session = useSession();
@@ -20,9 +20,7 @@ export default function ShortsUpload() {
     return null;
   }
 
-  const handleComplete = (url: string) => {
-    // Here we would typically create a database entry for the short
-    // For now we'll just navigate back to shorts feed
+  const handleComplete = (videoId: string) => {
     toast({
       title: "Upload successful",
       description: "Your video has been uploaded successfully"
@@ -30,32 +28,15 @@ export default function ShortsUpload() {
     navigate("/shorts");
   };
 
-  const handleError = (error: string) => {
-    toast({
-      title: "Upload failed",
-      description: error,
-      variant: "destructive"
-    });
-  };
-
   return (
-    <div className="container max-w-md mx-auto py-12">
+    <div className="container max-w-2xl mx-auto py-12">
       <h1 className="text-2xl font-bold mb-6">Upload Short Video</h1>
       
-      <MediaUploader
+      <VideoUploadForm 
         onComplete={handleComplete}
-        onError={handleError}
-        context="shorts"
-        mediaTypes="video"
-        buttonText="Select Video to Upload"
+        onCancel={() => navigate("/shorts")}
         maxSizeInMB={100}
-        autoUpload={true}
       />
-      
-      <div className="mt-8 text-center text-sm text-muted-foreground">
-        <p>Upload short videos to share with your audience.</p>
-        <p className="mt-2">Maximum size: 100MB</p>
-      </div>
     </div>
   );
 }
