@@ -1,92 +1,67 @@
 
 /**
- * Create a file preview URL
- * @param file - The file to create a preview for
- * @returns A blob URL for the file
+ * Creates a blob URL preview for a file
+ * @param file File to create preview for
+ * @returns Local URL for preview
  */
 export const createFilePreview = (file: File): string => {
-  if (!file) {
-    throw new Error('Cannot create preview for null file');
+  try {
+    return URL.createObjectURL(file);
+  } catch (error) {
+    console.error("Error creating file preview:", error);
+    return "";
   }
-  
-  return URL.createObjectURL(file);
 };
 
 /**
- * Revoke a file preview URL to free up memory
- * @param url - The URL to revoke
+ * Revokes a blob URL to prevent memory leaks
+ * @param url URL to revoke
  */
 export const revokeFilePreview = (url: string): void => {
-  if (!url || !url.startsWith('blob:')) return;
-  
   try {
-    URL.revokeObjectURL(url);
+    if (url && url.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
   } catch (error) {
-    console.error('Error revoking object URL:', error);
+    console.error("Error revoking file preview:", error);
   }
 };
 
 /**
- * Check if a file is a valid image
- * @param file - The file to check
- * @returns true if the file is a valid image
+ * Checks if file size is within limits
+ * @param file File to check
+ * @param maxSizeMB Maximum size in MB
+ * @returns Boolean indicating if file is within size limit
  */
-export const isValidImageFile = (file: File): boolean => {
-  return file.type.startsWith('image/');
+export const isFileSizeValid = (file: File, maxSizeMB: number): boolean => {
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  return file.size <= maxSizeBytes;
 };
 
 /**
- * Check if a file is a valid video
- * @param file - The file to check
- * @returns true if the file is a valid video
+ * Checks if file type is in allowed types
+ * @param file File to check
+ * @param allowedTypes Array of allowed MIME types
+ * @returns Boolean indicating if file type is allowed
  */
-export const isValidVideoFile = (file: File): boolean => {
-  return file.type.startsWith('video/');
-};
-
-/**
- * Convert a file to a base64 data URL
- * @param file - The file to convert
- * @returns A promise resolving to the base64 data URL
- */
-export const convertFileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = () => {
-      resolve(reader.result as string);
-    };
-    
-    reader.onerror = (error) => {
-      reject(error);
-    };
-    
-    reader.readAsDataURL(file);
-  });
-};
-
-/**
- * Get the file extension from a file name
- * @param fileName - The file name
- * @returns The file extension (lowercase, without the dot)
- */
-export const getFileExtension = (fileName: string): string => {
-  return fileName.split('.').pop()?.toLowerCase() || '';
-};
-
-/**
- * Calculate the file size in human-readable format
- * @param bytes - The file size in bytes
- * @returns A human-readable size string (e.g., "1.5 MB")
- */
-export const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
+export const isFileTypeValid = (file: File, allowedTypes: string[]): boolean => {
+  if (allowedTypes.includes('*')) return true;
   
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  // Check for wildcard types (e.g., 'image/*')
+  const wildcardTypes = allowedTypes.filter(type => type.endsWith('/*'));
   
-  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+  // Check exact match
+  if (allowedTypes.includes(file.type)) {
+    return true;
+  }
+  
+  // Check wildcard match
+  for (const wildcardType of wildcardTypes) {
+    const prefix = wildcardType.split('/*')[0];
+    if (file.type.startsWith(prefix + '/')) {
+      return true;
+    }
+  }
+  
+  return false;
 };
-
-// Export for backward compatibility
-export { formatFileSize as calculateFileSize };

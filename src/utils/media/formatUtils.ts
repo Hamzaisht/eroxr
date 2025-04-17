@@ -1,84 +1,62 @@
-/**
- * Utilities for working with media formats
- */
 
 /**
- * Infer content type from file extension
+ * Infers content type based on file extension
+ * @param filename Filename with extension
+ * @returns Content type string
  */
-export function inferContentTypeFromExtension(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase();
+export const inferContentTypeFromExtension = (filename: string): string => {
+  const extension = filename.split('.').pop()?.toLowerCase() || '';
   
-  if (!ext) return 'application/octet-stream';
-  
-  const mimeTypes: Record<string, string> = {
-    // Images
+  const mimeTypes: {[key: string]: string} = {
     'jpg': 'image/jpeg',
     'jpeg': 'image/jpeg',
     'png': 'image/png',
     'gif': 'image/gif',
     'webp': 'image/webp',
     'svg': 'image/svg+xml',
-    'avif': 'image/avif',
-    
-    // Videos
     'mp4': 'video/mp4',
     'webm': 'video/webm',
     'mov': 'video/quicktime',
     'avi': 'video/x-msvideo',
     'mkv': 'video/x-matroska',
-    
-    // Audio
-    'mp3': 'audio/mpeg',
-    'wav': 'audio/wav',
-    'ogg': 'audio/ogg',
-    'm4a': 'audio/mp4',
-    
-    // Documents
     'pdf': 'application/pdf',
     'doc': 'application/msword',
     'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'xls': 'application/vnd.ms-excel',
     'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    
-    // Other
-    'json': 'application/json',
-    'txt': 'text/plain',
-    'html': 'text/html',
-    'css': 'text/css',
-    'js': 'text/javascript'
   };
   
-  return mimeTypes[ext] || 'application/octet-stream';
-}
+  return mimeTypes[extension] || 'application/octet-stream';
+};
 
 /**
- * Format file size for display
+ * Formats file size into human readable format
+ * @param bytes File size in bytes
+ * @param decimals Decimal places to show
+ * @returns Formatted size string
  */
-export function formatFileSize(bytes: number): string {
+export const formatFileSize = (bytes: number, decimals = 2): string => {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+};
 
 /**
- * Format video duration in seconds to mm:ss or hh:mm:ss
+ * Formats a duration in seconds to a readable time string
+ * @param seconds Duration in seconds
+ * @returns Formatted time string (mm:ss)
  */
-export function formatDuration(seconds: number): string {
-  if (isNaN(seconds)) return '00:00';
+export const formatDuration = (seconds: number): string => {
+  if (isNaN(seconds) || seconds <= 0) return '0:00';
   
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
   
-  const padded = (num: number) => num.toString().padStart(2, '0');
-  
-  if (hrs > 0) {
-    return `${padded(hrs)}:${padded(mins)}:${padded(secs)}`;
-  }
-  
-  return `${padded(mins)}:${padded(secs)}`;
-}
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};

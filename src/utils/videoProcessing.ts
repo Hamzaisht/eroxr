@@ -1,182 +1,142 @@
 
 /**
- * Utility functions for validating and processing video files
- */
-
-/**
- * Validate that a file is a valid video format
- * @param file File to validate
- * @returns Promise resolving to boolean indicating if it's a valid video
+ * Validates if a file is a properly formatted video file
+ * @param file Video file to validate
+ * @returns Promise resolving to boolean indicating if video is valid
  */
 export const validateVideoFormat = async (file: File): Promise<boolean> => {
-  if (!file.type.startsWith('video/')) {
-    return false;
-  }
-  
-  try {
-    // Create a URL for the file
-    const url = URL.createObjectURL(file);
-    
-    // Create a video element to test loading
-    const video = document.createElement('video');
-    
-    // Wait for either error or metadata to load
-    const result = await new Promise<boolean>((resolve) => {
+  return new Promise((resolve) => {
+    try {
+      // Check if file type starts with 'video/'
+      if (!file.type.startsWith('video/')) {
+        console.warn('File is not a video type:', file.type);
+        resolve(false);
+        return;
+      }
+      
+      // Create a video element to test loading
+      const video = document.createElement('video');
+      const objectUrl = URL.createObjectURL(file);
+      
+      // Set up event listeners
       video.onloadedmetadata = () => {
+        URL.revokeObjectURL(objectUrl);
         resolve(true);
       };
       
       video.onerror = () => {
+        console.warn('Error loading video file');
+        URL.revokeObjectURL(objectUrl);
         resolve(false);
       };
       
-      // Set source and try to load
-      video.src = url;
-    });
-    
-    // Clean up
-    URL.revokeObjectURL(url);
-    return result;
-  } catch (error) {
-    console.error('Error validating video format:', error);
-    return false;
-  }
+      // Try to load the video
+      video.src = objectUrl;
+      
+      // Set a timeout to handle videos that don't trigger events
+      setTimeout(() => {
+        if (video.readyState === 0) {
+          console.warn('Video load timed out');
+          URL.revokeObjectURL(objectUrl);
+          resolve(false);
+        }
+      }, 3000);
+    } catch (error) {
+      console.error('Error validating video format:', error);
+      resolve(false);
+    }
+  });
 };
 
 /**
- * Get the duration of a video file in seconds
- * @param file Video file to check
+ * Gets the duration of a video file
+ * @param file Video file
  * @returns Promise resolving to duration in seconds
  */
-export const getVideoDuration = async (file: File): Promise<number> => {
-  try {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    
-    const duration = await new Promise<number>((resolve, reject) => {
+export const getVideoDuration = (file: File): Promise<number> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
       video.onloadedmetadata = () => {
+        URL.revokeObjectURL(video.src);
         resolve(video.duration);
       };
       
-      video.onerror = () => {
-        reject(new Error('Could not load video metadata'));
+      video.onerror = (error) => {
+        URL.revokeObjectURL(video.src);
+        reject(new Error(`Failed to load video metadata: ${error}`));
       };
       
-      video.src = url;
-    });
-    
-    URL.revokeObjectURL(url);
-    return duration;
-  } catch (error) {
-    console.error('Error getting video duration:', error);
-    return 0;
-  }
+      video.src = URL.createObjectURL(file);
+    } catch (error) {
+      reject(error);
+    }
+  });
 };
 
 /**
- * Utilities to create a thumbnail from a video at a specific timestamp
- * @param videoFile Video file to create thumbnail from
- * @param timeInSeconds Time in seconds to capture thumbnail
- * @returns Promise resolving to Blob of thumbnail image
+ * Generates a thumbnail from a video file at a specific time
+ * @param videoFile Video file to get thumbnail from
+ * @param timeInSeconds Time position for thumbnail (default: 0)
+ * @returns Promise resolving to thumbnail blob
  */
-export const createThumbnailFromVideo = async (
+export const generateVideoThumbnail = (
   videoFile: File, 
   timeInSeconds = 0
-): Promise<Blob | null> => {
-  try {
-    const url = URL.createObjectURL(videoFile);
-    const video = document.createElement('video');
-    video.src = url;
-    
-    await new Promise<void>((resolve, reject) => {
-      video.onloadedmetadata = () => {
-        // Ensure time is within video duration
-        const seekTime = Math.min(timeInSeconds, video.duration / 2);
-        video.currentTime = seekTime;
-      };
+): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const video = document.createElement('video');
+      const objectUrl = URL.createObjectURL(videoFile);
       
-      video.onseeked = () => {
-        resolve();
+      video.onloadedmetadata = () => {
+        // Seek to the specific time
+        video.currentTime = Math.min(timeInSeconds, video.duration / 2);
+        
+        video.onseeked = () => {
+          try {
+            // Create canvas and draw video frame
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              throw new Error('Failed to get canvas context');
+            }
+            
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert canvas to blob
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  URL.revokeObjectURL(objectUrl);
+                  resolve(blob);
+                } else {
+                  reject(new Error('Failed to create thumbnail blob'));
+                }
+              },
+              'image/jpeg',
+              0.7 // Quality
+            );
+          } catch (error) {
+            URL.revokeObjectURL(objectUrl);
+            reject(error);
+          }
+        };
       };
       
       video.onerror = () => {
-        reject(new Error('Error loading video'));
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Error loading video for thumbnail generation'));
       };
-    });
-    
-    // Draw the video frame to a canvas
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Could not get canvas context');
-    }
-    
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // Convert canvas to blob
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, 'image/jpeg', 0.7);
-    });
-    
-    // Clean up
-    URL.revokeObjectURL(url);
-    
-    return blob;
-  } catch (error) {
-    console.error('Error creating thumbnail:', error);
-    return null;
-  }
-};
-
-/**
- * Generate multiple thumbnails from a video file
- * @param videoFile Video file to create thumbnails from
- * @param count Number of thumbnails to generate
- * @returns Promise resolving to array of thumbnail URLs
- */
-export const generateVideoThumbnails = async (
-  videoFile: File, 
-  count = 3
-): Promise<string[]> => {
-  try {
-    const duration = await getVideoDuration(videoFile);
-    if (!duration) {
-      throw new Error("Could not determine video duration");
-    }
-
-    const thumbnailURLs: string[] = [];
-    
-    // Generate thumbnails at evenly spaced intervals
-    for (let i = 0; i < count; i++) {
-      // Get time points at 10%, 50%, 90% of the duration
-      const timePoint = duration * (i + 1) / (count + 1);
-      const thumbnailBlob = await createThumbnailFromVideo(videoFile, timePoint);
       
-      if (thumbnailBlob) {
-        const thumbnailURL = URL.createObjectURL(thumbnailBlob);
-        thumbnailURLs.push(thumbnailURL);
-      }
+      video.src = objectUrl;
+    } catch (error) {
+      reject(error);
     }
-    
-    return thumbnailURLs;
-  } catch (error) {
-    console.error('Error generating thumbnails:', error);
-    return [];
-  }
-};
-
-/**
- * Utility function to add file extension if missing
- * @param filename Filename to check
- * @param extension Extension to add if missing (without dot)
- * @returns Filename with extension
- */
-export const ensureFileExtension = (filename: string, extension: string): string => {
-  if (!filename.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
-    return `${filename}.${extension}`;
-  }
-  return filename;
+  });
 };
