@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { createUniqueFilePath, inferContentTypeFromExtension } from "@/utils/media/mediaUtils";
+import { createUniqueFilePath } from "@/utils/media/mediaUtils";
 import { addCacheBuster } from "@/utils/media/urlUtils";
+import { inferContentTypeFromExtension } from "@/utils/media/formatUtils";
 
 interface FileUploadOptions {
   contentType?: string;

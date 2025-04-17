@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { UploadOptions, UploadResult, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useSession } from '@supabase/auth-helpers-react';
@@ -49,7 +48,8 @@ export const useMediaUpload = (options?: UploadOptions) => {
       }
     }
     
-    return { isValid: true };
+    // Now properly include the message property even for successful validation
+    return { isValid: true, message: '' };
   }, []);
 
   const uploadMedia = useCallback(async (

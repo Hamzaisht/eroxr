@@ -121,8 +121,8 @@ export const MediaUploader = ({
     
     const validation = validateFile(file);
     if (!validation.isValid) {
-      console.error("File validation failed:", validation.error);
-      if (onError) onError(validation.error || "Invalid file");
+      console.error("File validation failed:", validation.message);
+      if (onError) onError(validation.message || "Invalid file");
       return;
     }
     
