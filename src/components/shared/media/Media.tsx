@@ -1,25 +1,14 @@
 
 import { forwardRef, useState, useEffect, useCallback } from 'react';
-import { MediaType, MediaSource } from '@/utils/media/types';
+import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 import { MediaLoadingState } from '@/components/media/states/MediaLoadingState';
 import { MediaErrorState } from '@/components/media/states/MediaErrorState';
 
-interface MediaProps {
+interface MediaProps extends MediaOptions {
   source: MediaSource | string;
-  className?: string;
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  poster?: string;
   showWatermark?: boolean;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: () => void;
-  onEnded?: () => void;
-  onTimeUpdate?: (currentTime: number) => void;
 }
 
 export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(({

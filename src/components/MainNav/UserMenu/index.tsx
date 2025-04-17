@@ -1,7 +1,9 @@
+
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,7 +78,7 @@ export const UserMenu = () => {
   const handleStatusChange = async (newStatus: AvailabilityStatus) => {
     // Make sure we only use statuses compatible with the profile table
     const safeStatus: 'online' | 'offline' | 'away' | 'busy' = 
-      newStatus === 'invisible' ? 'offline' : newStatus;
+      newStatus === 'invisible' ? 'offline' : newStatus as any;
     
     try {
       const { error } = await supabase
