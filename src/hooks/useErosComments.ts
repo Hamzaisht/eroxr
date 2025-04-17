@@ -40,18 +40,23 @@ export function useErosComments(videoId: string) {
         throw new Error(fetchError.message);
       }
       
-      const mappedComments = (data || []).map(comment => ({
-        id: comment.id,
-        content: comment.content,
-        createdAt: comment.created_at,
-        user: {
-          id: comment.user_id,
-          username: comment.profiles?.username || 'Anonymous',
-          avatarUrl: comment.profiles?.avatar_url,
-        },
-        likes: 0, // This would come from a real likes table
-        hasLiked: false,
-      }));
+      const mappedComments = (data || []).map(comment => {
+        // Properly access the nested profile data
+        const profile = comment.profiles as { username: string, avatar_url: string } | null;
+        
+        return {
+          id: comment.id,
+          content: comment.content,
+          createdAt: comment.created_at,
+          user: {
+            id: comment.user_id,
+            username: profile?.username || 'Anonymous',
+            avatarUrl: profile?.avatar_url,
+          },
+          likes: 0, // This would come from a real likes table
+          hasLiked: false,
+        };
+      });
       
       setComments(mappedComments);
     } catch (err: any) {

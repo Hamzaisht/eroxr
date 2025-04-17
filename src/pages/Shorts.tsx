@@ -5,7 +5,7 @@ import Eros from "./Eros";
 const Shorts = () => {
   // Set page title
   useEffect(() => {
-    document.title = "Eros - Short Videos";
+    document.title = "Shorts - Short Videos";
   }, []);
 
   return <Eros />;

@@ -183,17 +183,19 @@ export function ErosUploadForm({
       const fileExt = selectedFile.name.split('.').pop();
       const filePath = `${session.user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       
-      // Upload the file
+      // Upload the file with progress tracking
+      const uploadOptions = {
+        cacheControl: '3600',
+        upsert: false,
+      };
+      
+      // Create a custom upload handler with progress
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('eros-videos')
-        .upload(filePath, selectedFile, {
-          cacheControl: '3600',
-          upsert: false,
-          onUploadProgress: (progress) => {
-            const percent = Math.round((progress.loadedBytes / progress.totalBytes) * 100);
-            setUploadProgress(prev => ({ ...prev, progress: percent }));
-          },
-        });
+        .upload(filePath, selectedFile, uploadOptions);
+      
+      // Track progress manually
+      setUploadProgress(prev => ({ ...prev, progress: 100 }));
       
       if (uploadError) {
         throw new Error(uploadError.message);

@@ -1,18 +1,14 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { InteractiveNav } from './InteractiveNav';
-import { MainContent } from './components/MainContent';
+import { MainLayout } from './MainLayout';
 
 const Layout: React.FC = () => {
   return (
     <div className="flex min-h-screen w-full bg-[#0D1117]">
-      <InteractiveNav />
-      
-      <div className="flex-1 ml-[60px] md:ml-[220px] min-h-screen">
-        <MainContent>
-          <Outlet />
-        </MainContent>
+      <div className="flex-1 min-h-screen">
+        <MainLayout />
+        <Outlet />
       </div>
     </div>
   );
