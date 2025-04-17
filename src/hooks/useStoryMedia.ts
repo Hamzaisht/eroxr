@@ -1,16 +1,73 @@
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { MediaOptions } from '@/utils/media/types';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
-export const useStoryMedia = (options?: MediaOptions) => {
-  const [isLoading, setIsLoading] = useState(false);
+interface UseStoryMediaOptions extends MediaOptions {
+  onComplete?: () => void;
+  onError?: (error: string) => void;
+}
+
+export const useStoryMedia = (
+  mediaUrl?: string | null, 
+  mediaType: 'image' | 'video' = 'image',
+  isPaused: boolean = false,
+  options?: UseStoryMediaOptions
+) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   
   const session = useSession();
   const { toast } = useToast();
+  
+  useEffect(() => {
+    if (!mediaUrl) {
+      setIsLoading(false);
+      setHasError(true);
+      setError("No media URL provided");
+      return;
+    }
+    
+    setIsLoading(true);
+    setHasError(false);
+    
+    try {
+      const processedUrl = getPlayableMediaUrl(mediaUrl);
+      setUrl(processedUrl);
+    } catch (err: any) {
+      console.error("Error processing media URL:", err);
+      setError(err.message || "Failed to process media URL");
+      setHasError(true);
+    }
+  }, [mediaUrl, retryCount]);
+  
+  const handleLoad = useCallback(() => {
+    console.log('Story media loaded successfully');
+    setIsLoading(false);
+    
+    if (options?.onComplete && mediaType === 'image') {
+      options.onComplete();
+    }
+  }, [mediaType, options]);
+  
+  const handleError = useCallback(() => {
+    console.error('Failed to load story media:', mediaUrl);
+    setIsLoading(false);
+    setHasError(true);
+    setError("Failed to load media");
+    
+    if (options?.onError) {
+      options.onError("Failed to load media");
+    }
+  }, [mediaUrl, options]);
+  
+  const retryLoad = useCallback(() => {
+    setRetryCount(prev => prev + 1);
+  }, []);
   
   const uploadMedia = useCallback(async (file: File): Promise<{ success: boolean; url?: string; error?: string }> => {
     if (!session?.user?.id) {
@@ -21,11 +78,10 @@ export const useStoryMedia = (options?: MediaOptions) => {
     setError(null);
     
     try {
-      // Simulate upload - replace with actual upload code
       await new Promise(resolve => setTimeout(resolve, 1000));
       const url = `https://example.com/stories/${Date.now()}_${file.name}`;
       
-      setMediaUrl(url);
+      setUrl(url);
       setIsLoading(false);
       
       return { success: true, url };
@@ -33,6 +89,7 @@ export const useStoryMedia = (options?: MediaOptions) => {
       const errorMessage = err.message || 'Failed to upload media';
       setError(errorMessage);
       setIsLoading(false);
+      setHasError(true);
       
       toast({
         title: 'Upload failed',
@@ -47,7 +104,12 @@ export const useStoryMedia = (options?: MediaOptions) => {
   return {
     isLoading,
     error,
-    mediaUrl,
+    hasError,
+    mediaUrl: url,
+    url,
+    handleLoad,
+    handleError,
+    retryLoad,
     uploadMedia,
   };
 };

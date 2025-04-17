@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { MediaUploader } from "@/components/upload/MediaUploader";
 import { NewMediaRenderer } from "@/components/media/NewMediaRenderer";
-import { getContentType } from "@/utils/mediaUtils";
 import { Loader2, X } from "lucide-react";
 
 export const NewStoryUploader: React.FC = () => {
@@ -41,7 +40,7 @@ export const NewStoryUploader: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const contentType = getContentType(mediaUrl);
+      const contentType = mediaUrl.toLowerCase().includes('.mp4') ? 'video' : 'image';
       
       const { error } = await supabase
         .from("stories")

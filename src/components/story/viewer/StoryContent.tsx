@@ -32,7 +32,7 @@ export const StoryContent = memo(({ story, onNext, isPaused }: StoryContentProps
     handleLoad,
     handleError,
     retryLoad
-  } = useStoryMedia(mediaUrl, mediaType as any, isPaused, {
+  } = useStoryMedia(mediaUrl, mediaType as 'video' | 'image', isPaused, {
     onComplete: isVideo ? undefined : handleMediaEnded,
     onError: () => {}
   });

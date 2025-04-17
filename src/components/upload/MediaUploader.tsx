@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -88,7 +87,6 @@ export const MediaUploader = ({
     allowedTypes,
     autoResetOnCompletion: true,
     resetDelay: 3000,
-    // Add an optional onProgress callback
     onProgress: (progress: number) => {}
   };
   
@@ -106,7 +104,6 @@ export const MediaUploader = ({
     createPreview
   } = useFilePreview();
   
-  // Capture errors from preview for debugging
   useEffect(() => {
     if (filePreviewError) {
       console.error("File preview error:", filePreviewError);
@@ -123,15 +120,14 @@ export const MediaUploader = ({
     console.log("File selected:", file.name, file.type, file.size);
     
     const validation = validateFile(file);
-    if (!validation.valid) {
-      console.error("File validation failed:", validation.message);
-      if (onError) onError(validation.message || "Invalid file");
+    if (!validation.isValid) {
+      console.error("File validation failed:", validation.error);
+      if (onError) onError(validation.error || "Invalid file");
       return;
     }
     
     setSelectedFile(file);
     
-    // Create preview - this should create a local blob URL for immediate display
     console.log("Creating preview for file:", file.name);
     const preview = createPreview(file);
     console.log("Preview created:", preview ? "success" : "failed");
@@ -230,7 +226,6 @@ export const MediaUploader = ({
         </div>
       )}
       
-      {/* Preview loading state */}
       {showPreview && selectedFile && previewLoading && (
         <div className="relative border rounded-md overflow-hidden bg-black/5 h-64 flex items-center justify-center">
           <div className="flex flex-col items-center">
@@ -240,7 +235,6 @@ export const MediaUploader = ({
         </div>
       )}
       
-      {/* Debug Info (in development mode) */}
       {process.env.NODE_ENV === 'development' && selectedFile && (
         <div className="bg-muted/30 p-2 rounded text-xs font-mono overflow-auto max-h-40">
           <p>File: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)</p>
