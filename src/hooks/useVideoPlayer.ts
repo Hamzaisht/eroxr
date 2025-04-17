@@ -26,8 +26,18 @@ export const useVideoPlayer = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
+  
+  // Update current source when URL changes
+  useEffect(() => {
+    if (url !== currentSrc) {
+      setCurrentSrc(url);
+      setIsLoading(true);
+      setHasError(false);
+    }
+  }, [url, currentSrc]);
   
   // Initialize and handle video events
   useEffect(() => {

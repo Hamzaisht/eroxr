@@ -1,5 +1,5 @@
 
-import { Loader2, AlertCircle, X } from "lucide-react";
+import { Loader2, AlertCircle, X, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { RefObject, useState, useEffect } from "react";
@@ -24,6 +24,7 @@ export const VideoPreview = ({
   onClear
 }: VideoPreviewProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
 
   // Auto-play the video when it's loaded
   useEffect(() => {
@@ -50,6 +51,21 @@ export const VideoPreview = ({
       }
     }
   }, [previewUrl, isPreviewLoading, previewError, videoRef]);
+
+  const togglePlayback = () => {
+    if (!videoRef.current) return;
+
+    if (isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      videoRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(err => {
+          console.error("Error playing video:", err);
+        });
+    }
+  };
 
   if (!previewUrl) return null;
 
@@ -80,17 +96,40 @@ export const VideoPreview = ({
             </Button>
           </div>
         ) : (
-          <video 
-            ref={videoRef}
-            src={previewUrl} 
-            className="w-full h-full object-contain"
-            controls
-            playsInline
-            autoPlay
-            loop
-            onLoadedData={onVideoLoad}
-            onError={onVideoError}
-          />
+          <div
+            className="relative w-full h-full"
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+          >
+            <video 
+              ref={videoRef}
+              src={previewUrl} 
+              className="w-full h-full object-contain"
+              controls={false}
+              playsInline
+              loop
+              onLoadedData={onVideoLoad}
+              onError={onVideoError}
+            />
+            
+            {/* Play/pause overlay */}
+            {(isHovering || !isPlaying) && (
+              <div 
+                className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer"
+                onClick={togglePlayback}
+              >
+                {!isPlaying && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="bg-black/50 hover:bg-black/70 text-white rounded-full h-12 w-12"
+                  >
+                    <Play className="h-6 w-6" />
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         )}
         
         <Button

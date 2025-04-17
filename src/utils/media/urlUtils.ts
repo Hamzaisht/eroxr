@@ -1,75 +1,34 @@
 
 /**
- * Utilities for working with media URLs
+ * Adds a cache-buster parameter to a URL
+ * @param url The URL to add cache-buster to
+ * @returns URL with cache-buster parameter
  */
-
-/**
- * Check if URL is an image based on extension or content type
- */
-export function isImageUrl(url: string): boolean {
-  const lowercaseUrl = url.toLowerCase();
-  return /\.(jpg|jpeg|png|gif|bmp|webp|svg|avif|tiff|heic)($|\?)/.test(lowercaseUrl) ||
-         lowercaseUrl.includes('image/');
-}
-
-/**
- * Check if URL is a video based on extension or content type
- */
-export function isVideoUrl(url: string): boolean {
-  const lowercaseUrl = url.toLowerCase();
-  return /\.(mp4|webm|mkv|avi|mov|flv|wmv|3gp|m4v)($|\?)/.test(lowercaseUrl) ||
-         lowercaseUrl.includes('video/');
-}
-
-/**
- * Check if URL is an audio file
- */
-export function isAudioUrl(url: string): boolean {
-  const lowercaseUrl = url.toLowerCase();
-  return /\.(mp3|wav|ogg|m4a|flac|aac)($|\?)/.test(lowercaseUrl) ||
-         lowercaseUrl.includes('audio/');
-}
-
-/**
- * Add cache busting parameter to URL
- */
-export function addCacheBuster(url: string): string {
+export const addCacheBuster = (url: string): string => {
   if (!url) return '';
   
-  const cacheBuster = `t=${Date.now()}`;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}${cacheBuster}`;
-}
-
-/**
- * Ensures URL includes protocol (https)
- */
-export function ensureFullUrl(url: string): string {
-  if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  if (url.startsWith('//')) return `https:${url}`;
-  return `https://${url}`;
-}
-
-/**
- * Process media URL to make it playable
- */
-export function getPlayableMediaUrl(url: string | null | undefined): string {
-  if (!url) return '';
-  
-  // Don't process blob or data URLs 
+  // Don't add cache buster to blob URLs or data URLs
   if (url.startsWith('blob:') || url.startsWith('data:')) {
     return url;
   }
   
-  // Add cache buster to avoid browser caching issues
-  return addCacheBuster(url);
-}
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_cb=${Date.now()}`;
+};
 
 /**
- * Get a stable URL without cache busting parameters for comparing URLs
+ * Ensures media URL is safe and properly formatted
+ * @param url Raw URL string
+ * @returns Processed URL ready for use
  */
-export function getStableUrl(url: string): string {
+export const getSafeMediaUrl = (url: string | null): string => {
   if (!url) return '';
-  return url.split('?')[0];
-}
+  
+  // Process URLs for different sources
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  
+  // Add cache buster to regular URLs
+  return addCacheBuster(url);
+};
