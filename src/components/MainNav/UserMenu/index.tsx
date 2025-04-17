@@ -1,27 +1,47 @@
-
 import { useNavigate } from "react-router-dom";
+import { useSession } from "@supabase/auth-helpers-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { UserBadge } from "./UserBadge";
-import { GuestButtons } from "./GuestButtons";
-import { UserMenuItems } from "./UserMenuItems";
-import { UserAvatar } from "@/components/shared/user/UserAvatar";
-import { AvailabilityStatus } from "@/utils/media/types";
-import type { Profile } from "@/integrations/supabase/types/profile";
+import { useQuery } from "@tanstack/react-query";
+import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
+import type { AvailabilityStatus } from "@/utils/media/types";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
+  const session = useSession();
   const { toast } = useToast();
-  const { user, profile, isLoading, signOut, updateStatus } = useAuth();
 
-  const handleLogin = () => navigate('/login');
+  const { data: profile } = useQuery({
+    queryKey: ["profile", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+      if (error) {
+        console.error("Profile fetch error:", error);
+        throw error;
+      }
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  const handleLogin = () => navigate("/login");
   const handleSignUp = () => {
-    navigate('/login');
+    navigate("/login");
     toast({
       title: "Join our community!",
       description: "Create your account to get started.",
@@ -30,8 +50,14 @@ export const UserMenu = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut();
-      navigate('/login');
+      console.log("Attempting to sign out...");
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Logout error:", error);
+        throw error;
+      }
+      console.log("Sign out successful");
+      navigate("/login");
       toast({
         title: "Signed out successfully",
         description: "Come back soon!",
@@ -46,50 +72,114 @@ export const UserMenu = () => {
     }
   };
 
+  // Convert AvailabilityStatus to the subset used by the component
   const handleStatusChange = async (newStatus: AvailabilityStatus) => {
-    await updateStatus(newStatus);
+    // Make sure we only use statuses compatible with the profile table
+    const safeStatus: 'online' | 'offline' | 'away' | 'busy' = 
+      newStatus === 'invisible' ? 'offline' : newStatus;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: safeStatus })
+        .eq('id', session?.user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Status updated",
+        description: `You are now ${safeStatus}`,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error updating status",
+        description: "Please try again later",
+      });
+    }
   };
 
-  if (!user || isLoading) {
-    return <GuestButtons onLogin={handleLogin} onSignUp={handleSignUp} />;
-  }
-
-  // Create a properly typed safe profile object
-  const safeProfile: Partial<Profile> = {
-    ...(profile || {}),
-    id: profile?.id || user.id,
-    username: profile?.username || null,
-    avatar_url: profile?.avatar_url || null,
-    status: (profile?.status as AvailabilityStatus) || 'offline',
+  const navigateToProfile = () => {
+    if (session?.user?.id) {
+      navigate(`/profile/${session.user.id}`);
+    }
   };
-  
-  if (!safeProfile.created_at) {
-    safeProfile.created_at = new Date().toISOString();
-  }
-  
-  if (!safeProfile.updated_at) {
-    safeProfile.updated_at = new Date().toISOString();
+
+  if (!session) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          onClick={handleLogin}
+          className="hover:bg-white/5"
+        >
+          Log in
+        </Button>
+        <Button 
+          onClick={handleSignUp}
+          className="bg-white/10 hover:bg-white/20"
+        >
+          Sign up
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div className="flex items-center gap-4">
-      <UserBadge 
-        profile={safeProfile as Profile} 
-        fallbackEmail={user.email} 
-      />
+      <div className="flex flex-col items-end">
+        <span className="text-sm font-medium">
+          @{profile?.username || session.user.email?.split('@')[0] || 'Guest'}
+        </span>
+        <Badge variant="outline" className="text-xs">
+          {profile?.is_paying_customer ? 'Premium' : 'Free'}
+        </Badge>
+      </div>
+      
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div>
-            <UserAvatar 
-              avatarUrl={profile?.avatar_url}
-              email={user.email}
-              status={profile?.status as AvailabilityStatus}
-              onStatusChange={handleStatusChange}
-            />
-          </div>
+          <Button 
+            variant="ghost" 
+            className="relative h-10 w-10 rounded-full p-0"
+            onClick={navigateToProfile}
+          >
+            <Avatar className="h-10 w-10 cursor-pointer">
+              <AvatarImage 
+                src={profile?.avatar_url} 
+                alt={profile?.username || 'User avatar'} 
+              />
+              <AvatarFallback>
+                {session.user.email?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="absolute -bottom-1 -right-1">
+              <AvailabilityIndicator 
+                status={(profile?.status as AvailabilityStatus) || 'offline'} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleStatusChange(profile?.status === 'online' ? 'offline' : 'online');
+                }}
+              />
+            </div>
+          </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end">
-          <UserMenuItems onLogout={handleLogout} />
+        
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => navigate(`/profile/${session.user.id}`)}>
+            Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/settings")}>
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/dating")}>
+            Dating Ads
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout} className="text-red-500">
+            Log out
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
