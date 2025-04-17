@@ -120,8 +120,8 @@ export const useShortsPagination = ({
             },
             creator: {
               id: specificShort.creator_id,
-              username: specificShort.profiles?.username || 'Anonymous',
-              avatarUrl: specificShort.profiles?.avatar_url || ''
+              username: specificShort.profiles?.[0]?.username || 'Anonymous',
+              avatarUrl: specificShort.profiles?.[0]?.avatar_url || ''
             },
             createdAt: specificShort.created_at
           };
@@ -223,8 +223,8 @@ export const useShortsPagination = ({
           },
           creator: {
             id: short.creator_id,
-            username: short.profiles?.username || 'Anonymous',
-            avatarUrl: short.profiles?.avatar_url || ''
+            username: short.profiles?.[0]?.username || 'Anonymous',
+            avatarUrl: short.profiles?.[0]?.avatar_url || ''
           },
           createdAt: short.created_at
         };
