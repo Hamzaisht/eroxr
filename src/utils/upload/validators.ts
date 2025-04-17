@@ -1,137 +1,90 @@
 
-/**
- * File validation utilities
- */
-
-// Common MIME types for images
+// Supported media types
 export const SUPPORTED_IMAGE_TYPES = [
   'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/heic',
-  'image/heif'
+  'image/png', 
+  'image/gif', 
+  'image/webp'
 ];
 
-// Common MIME types for videos
 export const SUPPORTED_VIDEO_TYPES = [
-  'video/mp4',
-  'video/webm',
-  'video/quicktime',
-  'video/x-msvideo',
-  'video/x-ms-wmv'
-];
-
-// Common MIME types for audio
-export const SUPPORTED_AUDIO_TYPES = [
-  'audio/mpeg',
-  'audio/wav',
-  'audio/ogg',
-  'audio/webm',
-  'audio/mp3',
-  'audio/aac'
+  'video/mp4', 
+  'video/webm', 
+  'video/quicktime'
 ];
 
 /**
  * Check if a file is a valid image
- * @param file - The file to check
- * @returns true if the file is a valid image
+ * @param file - File to validate
+ * @returns true if it's a valid image file
  */
-export function isImageFile(file: File): boolean {
+export const isImageFile = (file: File): boolean => {
   return SUPPORTED_IMAGE_TYPES.includes(file.type);
-}
+};
 
 /**
  * Check if a file is a valid video
- * @param file - The file to check
- * @returns true if the file is a valid video
+ * @param file - File to validate
+ * @returns true if it's a valid video file
  */
-export function isVideoFile(file: File): boolean {
+export const isVideoFile = (file: File): boolean => {
   return SUPPORTED_VIDEO_TYPES.includes(file.type);
-}
+};
 
 /**
- * Check if a file is a valid audio file
- * @param file - The file to check
- * @returns true if the file is a valid audio
- */
-export function isAudioFile(file: File): boolean {
-  return SUPPORTED_AUDIO_TYPES.includes(file.type);
-}
-
-/**
- * Validate file size
- * @param file - The file to validate
- * @param maxSizeInMB - Maximum file size in MB
- * @returns An object with validation result and optional error message
- */
-export function validateFileSize(file: File, maxSizeInMB: number = 100): {
-  valid: boolean;
-  message?: string;
-} {
-  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-  
-  if (file.size > maxSizeInBytes) {
-    return {
-      valid: false,
-      message: `File size exceeds the maximum allowed size of ${maxSizeInMB}MB`
-    };
-  }
-  
-  return { valid: true };
-}
-
-/**
- * Validate file type
- * @param file - The file to validate
- * @param allowedTypes - Array of allowed MIME types
- * @returns An object with validation result and optional error message
- */
-export function validateFileType(file: File, allowedTypes: string[]): {
-  valid: boolean;
-  message?: string;
-} {
-  if (!allowedTypes.includes(file.type)) {
-    return {
-      valid: false,
-      message: `File type not allowed: ${file.type}`
-    };
-  }
-  
-  return { valid: true };
-}
-
-/**
- * Comprehensive file validation
- * @param file - The file to validate
+ * Validates a file based on type and size
+ * @param file - File to validate
  * @param options - Validation options
- * @returns An object with validation result and optional error message
+ * @returns Validation result with status and message
  */
-export function validateFile(
-  file: File,
-  options: {
-    maxSizeInMB?: number;
-    allowedTypes?: string[];
-  } = {}
-): {
-  valid: boolean;
+export interface ValidationOptions {
+  allowedTypes?: string[];
+  maxSizeInMB?: number;
+  minSizeInKB?: number;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
   message?: string;
-} {
-  // Check file size
-  if (options.maxSizeInMB) {
-    const sizeValidation = validateFileSize(file, options.maxSizeInMB);
-    if (!sizeValidation.valid) {
-      return sizeValidation;
-    }
+}
+
+export const validateFile = (file: File, options: ValidationOptions = {}): ValidationResult => {
+  const {
+    allowedTypes = [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES],
+    maxSizeInMB = 100,
+    minSizeInKB = 1
+  } = options;
+  
+  // Check if file is provided
+  if (!file) {
+    return { isValid: false, message: 'No file selected' };
   }
   
   // Check file type
-  if (options.allowedTypes && options.allowedTypes.length > 0) {
-    const typeValidation = validateFileType(file, options.allowedTypes);
-    if (!typeValidation.valid) {
-      return typeValidation;
-    }
+  if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
+    return { 
+      isValid: false, 
+      message: `Unsupported file type. Please upload ${allowedTypes.map(t => t.split('/')[1]).join(', ')}`
+    };
   }
   
-  return { valid: true };
-}
+  // Check minimum file size
+  const minSizeInBytes = minSizeInKB * 1024;
+  if (file.size < minSizeInBytes) {
+    return { 
+      isValid: false, 
+      message: `File size is too small. Minimum size is ${minSizeInKB}KB`
+    };
+  }
+  
+  // Check maximum file size
+  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+  if (file.size > maxSizeInBytes) {
+    return { 
+      isValid: false, 
+      message: `File size exceeds maximum limit of ${maxSizeInMB}MB`
+    };
+  }
+  
+  return { isValid: true };
+};

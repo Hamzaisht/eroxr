@@ -1,243 +1,285 @@
 
-import { motion } from "framer-motion";
-import { useState, useEffect, memo, useCallback } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { ShareDialog } from "@/components/feed/ShareDialog";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { CommentSection } from "@/components/feed/CommentSection";
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { useSoundEffects } from "@/hooks/use-sound-effects";
-import { Short } from "../types/short";
-import { useShortActions } from "../hooks/actions";
-import { useToast } from "@/hooks/use-toast";
-import { ShortVideoPlayer } from "./ShortVideoPlayer";
-import { ShortHeader } from "./short/ShortHeader";
-import { ShortActions } from "./short/ShortActions";
-import { ShortDescription } from "./short/ShortDescription";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Heart, MessageCircle, Share2, Bookmark, BookmarkCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Creator {
+  id: string;
+  username: string;
+  avatar_url: string;
+}
 
 interface ShortItemProps {
-  short: Short;
+  short: {
+    id: string;
+    creator: Creator;
+    creator_id: string;
+    content: string;
+    description: string;
+    video_urls: string[];
+    video_thumbnail_url?: string;
+    likes_count: number;
+    comments_count: number;
+    view_count: number;
+    has_liked: boolean;
+    has_saved: boolean;
+    created_at: string;
+    visibility: string;
+  };
   isCurrentVideo: boolean;
   index: number;
   currentVideoIndex: number;
 }
 
-export const ShortItem = memo(({ 
+export const ShortItem = ({ 
   short, 
   isCurrentVideo, 
   index, 
   currentVideoIndex 
 }: ShortItemProps) => {
-  // State
-  const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const [viewTracked, setViewTracked] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLiked, setIsLiked] = useState(short.has_liked);
+  const [isSaved, setIsSaved] = useState(short.has_saved);
+  const [error, setError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
-  // Hooks
-  const { handleLike, handleSave, handleDelete, handleShare, handleShareTracking, handleView } = useShortActions();
-  const session = useSession();
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const { playCommentSound } = useSoundEffects();
-  const { toast } = useToast();
-
-  // Validate data for rendering
-  const isValidShort = !!short && !!short.id;
+  const isVisible = isCurrentVideo;
   
-  // Track view when this becomes the current video
+  // Control video playback based on visibility
   useEffect(() => {
-    const trackView = async () => {
-      if (isCurrentVideo && !viewTracked && short?.id) {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    if (isVisible) {
+      // Play when visible and add a small delay for better performance
+      const playPromise = setTimeout(() => {
         try {
-          await handleView(short.id);
-          setViewTracked(true);
-        } catch (error) {
-          console.error("Failed to track view:", error);
+          video.play()
+            .then(() => setIsPlaying(true))
+            .catch(err => {
+              console.error("Video play error:", err);
+              setError("Could not play video");
+              setIsPlaying(false);
+            });
+        } catch (err) {
+          console.error("Error playing video:", err);
+          setError("Could not play video");
+          setIsPlaying(false);
         }
+      }, 100);
+      
+      // Increment view count when visible
+      const incrementView = async () => {
+        try {
+          await supabase.rpc('increment_counter', { 
+            row_id: short.id, 
+            counter_name: 'view_count',
+            table_name: 'posts'
+          });
+        } catch (err) {
+          console.error("Error incrementing view count:", err);
+        }
+      };
+      
+      incrementView();
+      
+      return () => {
+        clearTimeout(playPromise);
+        video.pause();
+        setIsPlaying(false);
+      };
+    } else {
+      // Pause when not visible
+      video.pause();
+      setIsPlaying(false);
+    }
+  }, [isVisible, short.id]);
+  
+  // Video click handler to toggle play/pause
+  const handleVideoClick = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    if (isPlaying) {
+      video.pause();
+      setIsPlaying(false);
+    } else {
+      video.play()
+        .then(() => setIsPlaying(true))
+        .catch(err => {
+          console.error("Video play error:", err);
+          setError("Could not play video");
+        });
+    }
+  };
+  
+  // Format the created_at date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    // Less than a minute
+    if (diffInSeconds < 60) {
+      return "Just now";
+    }
+    
+    // Less than an hour
+    if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+    }
+    
+    // Less than a day
+    if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+    }
+    
+    // Less than a month
+    if (diffInSeconds < 2592000) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} ${days === 1 ? "day" : "days"} ago`;
+    }
+    
+    // Format as date
+    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+    if (date.getFullYear() !== now.getFullYear()) {
+      options.year = 'numeric';
+    }
+    
+    return date.toLocaleDateString(undefined, options);
+  };
+  
+  // Animation variants
+  const videoVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5 } }
+  };
+  
+  const slideInVariants = {
+    hidden: { x: 20, opacity: 0 },
+    visible: { 
+      x: 0, 
+      opacity: 1,
+      transition: {
+        delay: 0.2,
+        duration: 0.5
       }
-    };
-
-    if (isCurrentVideo && isValidShort) {
-      trackView();
     }
-  }, [isCurrentVideo, viewTracked, short?.id, handleView, isValidShort]);
-
-  // Reset view tracking when short changes
-  useEffect(() => {
-    if (isValidShort) {
-      setViewTracked(false);
-    }
-  }, [short?.id, isValidShort]);
-
-  // Event handlers
-  const handleShareClick = useCallback(() => {
-    if (!isValidShort) return;
-    
-    setIsShareOpen(true);
-    if (handleShareTracking) {
-      handleShareTracking(short.id);
-    }
-  }, [isValidShort, short?.id, handleShareTracking]);
-
-  const handleCommentClick = useCallback(() => {
-    if (!isValidShort) return;
-    
-    if (!session) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to comment on shorts",
-      });
-      return;
-    }
-    
-    setIsCommentsOpen(true);
-    playCommentSound();
-  }, [isValidShort, session, toast, playCommentSound]);
-
-  const handleLikeClick = useCallback(async () => {
-    if (!isValidShort) return;
-    
-    if (!session) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to like shorts",
-      });
-      return;
-    }
-    
-    await handleLike(short.id);
-  }, [isValidShort, session, toast, handleLike, short?.id]);
-
-  const handleSaveClick = useCallback(async () => {
-    if (!isValidShort) return;
-    
-    if (!session) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to save shorts",
-      });
-      return;
-    }
-    
-    await handleSave(short.id);
-  }, [isValidShort, session, toast, handleSave, short?.id]);
-
-  const handleDeleteClick = useCallback(async () => {
-    if (!isValidShort) return;
-    
-    try {
-      setIsDeleting(true);
-      await handleDelete(short.id);
-      toast({
-        title: "Short deleted",
-        description: "Your short has been successfully deleted",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Delete failed",
-        description: error.message || "An error occurred while deleting your short",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [isValidShort, short?.id, handleDelete, toast]);
-
-  const handleVideoError = useCallback(() => {
-    console.error("Video playback error in ShortItem");
-  }, []);
-
-  // If no valid short data, show a placeholder
-  if (!isValidShort) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="relative h-[100dvh] w-full snap-start snap-always flex items-center justify-center bg-luxury-darker"
-      >
-        <div className="text-center p-4">
-          <p className="text-luxury-neutral/70">This content is not available</p>
-        </div>
-      </motion.div>
-    );
-  }
-
+  };
+  
   return (
     <motion.div
-      key={short.id}
-      initial={{ opacity: 0 }}
-      animate={{ 
-        opacity: 1,
-        scale: isCurrentVideo ? 1 : 0.95
-      }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="relative h-[100dvh] w-full snap-start snap-always"
+      className="h-screen w-full snap-start bg-black flex flex-col items-center relative"
+      initial="hidden"
+      animate={isVisible ? "visible" : "hidden"}
+      variants={videoVariants}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 z-10" />
-      
-      {/* Video Player */}
-      <ShortVideoPlayer
-        videoUrl={short.video_urls?.length ? short.video_urls[0] : null}
-        thumbnailUrl={short.video_thumbnail_url}
-        creatorId={short.creator_id}
-        isCurrentVideo={index === currentVideoIndex}
-        isDeleting={isDeleting}
-        onError={handleVideoError}
-      />
-      
-      {/* Short Content */}
-      <div className={`absolute bottom-0 left-0 right-0 z-20 p-4 ${isMobile ? 'pb-16' : 'p-6'}`}>
-        <div className="flex justify-between">
-          <div className="flex-1 mr-4">
-            <ShortHeader short={short} />
-            
-            <ShortDescription 
-              content={short.description || short.content || ''} 
-              username={short.creator?.username || 'Anonymous'} 
-            />
-          </div>
-          
-          <div>
-            <ShortActions
-              hasLiked={!!short.has_liked}
-              hasSaved={!!short.has_saved}
-              likesCount={short.likes_count || 0}
-              commentsCount={short.comments_count || 0}
-              onLike={() => handleLikeClick()}
-              onComment={handleCommentClick}
-              onShare={handleShareClick}
-              onSave={() => handleSaveClick()}
-              onDelete={session?.user?.id === short.creator_id ? handleDeleteClick : undefined}
-              isDeleting={isDeleting}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Dialogs */}
-      {isValidShort && (
-        <>
-          <ShareDialog
-            open={isShareOpen}
-            onOpenChange={setIsShareOpen}
-            postId={short.id}
+      {/* Main video container */}
+      <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
+        {/* Video element */}
+        <div
+          className="w-full h-full flex items-center justify-center cursor-pointer"
+          onClick={handleVideoClick}
+        >
+          <video
+            ref={videoRef}
+            src={short.video_urls[0]}
+            className="w-full h-full object-contain"
+            poster={short.video_thumbnail_url}
+            playsInline
+            loop
+            muted={false}
+            preload="auto"
+            onError={() => setError("Error loading video")}
           />
           
-          <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
-            <DialogContent className={`${isMobile ? 'w-full h-[80dvh] rounded-t-xl mt-auto' : 'sm:max-w-[425px] h-[80vh]'} bg-black/95`}>
-              <CommentSection
-                postId={short.id}
-                commentsCount={short.comments_count ?? 0}
-              />
-            </DialogContent>
-          </Dialog>
-        </>
-      )}
+          {/* Error indicator */}
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+              <div className="text-white text-center p-4">
+                <p className="font-medium">{error}</p>
+                <button
+                  className="mt-2 px-4 py-1 rounded-full bg-white/20 text-sm text-white"
+                  onClick={() => {
+                    setError(null);
+                    if (videoRef.current) {
+                      videoRef.current.load();
+                      videoRef.current.play()
+                        .then(() => setIsPlaying(true))
+                        .catch(() => setError("Could not play video"));
+                    }
+                  }}
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Caption/description */}
+        <div className="absolute bottom-16 left-4 right-12 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-lg">
+          <h3 className="font-medium text-white mb-2">@{short.creator.username}</h3>
+          <p className="text-white/90 text-sm line-clamp-2">{short.description || short.content}</p>
+          <p className="text-white/60 text-xs mt-1">{formatDate(short.created_at)}</p>
+        </div>
+        
+        {/* Interaction buttons */}
+        <AnimatePresence>
+          {isVisible && (
+            <motion.div
+              className="absolute right-4 bottom-32 flex flex-col items-center gap-6"
+              variants={slideInVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              <button 
+                className="flex flex-col items-center"
+                onClick={() => setIsLiked(!isLiked)}
+              >
+                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
+                  <Heart 
+                    className={`h-6 w-6 ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} 
+                  />
+                </div>
+                <span className="text-white text-xs mt-1">{short.likes_count}</span>
+              </button>
+              
+              <button className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
+                  <MessageCircle className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-white text-xs mt-1">{short.comments_count}</span>
+              </button>
+              
+              <button className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
+                  <Share2 className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-white text-xs mt-1">Share</span>
+              </button>
+              
+              <button 
+                className="flex flex-col items-center"
+                onClick={() => setIsSaved(!isSaved)}
+              >
+                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center">
+                  {isSaved ? (
+                    <BookmarkCheck className="h-6 w-6 text-luxury-primary" />
+                  ) : (
+                    <Bookmark className="h-6 w-6 text-white" />
+                  )}
+                </div>
+                <span className="text-white text-xs mt-1">Save</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
-});
-
-ShortItem.displayName = "ShortItem";
+};

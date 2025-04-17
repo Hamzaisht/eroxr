@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Home from "@/pages/Home";
@@ -16,6 +15,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
 import Shorts from "@/pages/Shorts";
+import ShortsUpload from "@/pages/ShortsUpload";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,8 +44,8 @@ export default function App() {
             <Route path="/eroboard" element={<Eroboard />} />
             <Route path="/dating" element={<Dating />} />
             <Route path="/shorts" element={<Shorts />} />
-            <Route path="/shorts/:videoId" element={<Eros />} />
-            <Route path="/shorts/upload" element={<ErosUpload />} />
+            <Route path="/shorts/:videoId" element={<Shorts />} />
+            <Route path="/shorts/upload" element={<ShortsUpload />} />
           </Route>
         </Routes>
         <Toaster />
