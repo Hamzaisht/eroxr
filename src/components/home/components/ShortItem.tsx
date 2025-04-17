@@ -1,8 +1,9 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle, Share2, Bookmark, BookmarkCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { VideoPlayer } from "@/components/video/VideoPlayer";
 
 interface Creator {
   id: string;
@@ -38,38 +39,15 @@ export const ShortItem = ({
   index, 
   currentVideoIndex 
 }: ShortItemProps) => {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isLiked, setIsLiked] = useState(short.has_liked);
   const [isSaved, setIsSaved] = useState(short.has_saved);
   const [error, setError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   
   const isVisible = isCurrentVideo;
-  
-  // Control video playback based on visibility
+
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    
+    // Increment view count when visible
     if (isVisible) {
-      // Play when visible and add a small delay for better performance
-      const playPromise = setTimeout(() => {
-        try {
-          video.play()
-            .then(() => setIsPlaying(true))
-            .catch(err => {
-              console.error("Video play error:", err);
-              setError("Could not play video");
-              setIsPlaying(false);
-            });
-        } catch (err) {
-          console.error("Error playing video:", err);
-          setError("Could not play video");
-          setIsPlaying(false);
-        }
-      }, 100);
-      
-      // Increment view count when visible
       const incrementView = async () => {
         try {
           await supabase.rpc('increment_counter', { 
@@ -83,36 +61,8 @@ export const ShortItem = ({
       };
       
       incrementView();
-      
-      return () => {
-        clearTimeout(playPromise);
-        video.pause();
-        setIsPlaying(false);
-      };
-    } else {
-      // Pause when not visible
-      video.pause();
-      setIsPlaying(false);
     }
   }, [isVisible, short.id]);
-  
-  // Video click handler to toggle play/pause
-  const handleVideoClick = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    
-    if (isPlaying) {
-      video.pause();
-      setIsPlaying(false);
-    } else {
-      video.play()
-        .then(() => setIsPlaying(true))
-        .catch(err => {
-          console.error("Video play error:", err);
-          setError("Could not play video");
-        });
-    }
-  };
   
   // Format the created_at date
   const formatDate = (dateString: string) => {
@@ -169,6 +119,11 @@ export const ShortItem = ({
       }
     }
   };
+
+  // Handle video error
+  const handleVideoError = () => {
+    setError("Could not play video");
+  };
   
   return (
     <motion.div
@@ -179,46 +134,32 @@ export const ShortItem = ({
     >
       {/* Main video container */}
       <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-        {/* Video element */}
-        <div
-          className="w-full h-full flex items-center justify-center cursor-pointer"
-          onClick={handleVideoClick}
-        >
-          <video
-            ref={videoRef}
-            src={short.video_urls[0]}
-            className="w-full h-full object-contain"
-            poster={short.video_thumbnail_url}
-            playsInline
-            loop
-            muted={false}
-            preload="auto"
-            onError={() => setError("Error loading video")}
-          />
-          
-          {/* Error indicator */}
-          {error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-              <div className="text-white text-center p-4">
-                <p className="font-medium">{error}</p>
-                <button
-                  className="mt-2 px-4 py-1 rounded-full bg-white/20 text-sm text-white"
-                  onClick={() => {
-                    setError(null);
-                    if (videoRef.current) {
-                      videoRef.current.load();
-                      videoRef.current.play()
-                        .then(() => setIsPlaying(true))
-                        .catch(() => setError("Could not play video"));
-                    }
-                  }}
-                >
-                  Try Again
-                </button>
-              </div>
+        {/* Video player */}
+        <VideoPlayer
+          url={short.video_urls[0]}
+          poster={short.video_thumbnail_url}
+          className="w-full h-full object-contain"
+          autoPlay={isVisible}
+          controls={false}
+          muted={false}
+          loop={true}
+          onError={handleVideoError}
+        />
+        
+        {/* Error indicator */}
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50">
+            <div className="text-white text-center p-4">
+              <p className="font-medium">{error}</p>
+              <button
+                className="mt-2 px-4 py-1 rounded-full bg-white/20 text-sm text-white"
+                onClick={() => setError(null)}
+              >
+                Try Again
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
         
         {/* Caption/description */}
         <div className="absolute bottom-16 left-4 right-12 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-lg">

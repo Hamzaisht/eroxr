@@ -70,6 +70,11 @@ export const useVideoDialogState = (open: boolean, onOpenChange: (open: boolean)
       if (resetUploadState) {
         resetUploadState();
       }
+    } else {
+      // Clean up preview URL when dialog closes
+      if (state.previewUrl) {
+        URL.revokeObjectURL(state.previewUrl);
+      }
     }
   }, [open, resetUploadState]);
 
@@ -80,7 +85,7 @@ export const useVideoDialogState = (open: boolean, onOpenChange: (open: boolean)
         URL.revokeObjectURL(state.previewUrl);
       }
     };
-  }, [state.previewUrl]);
+  }, []);
 
   // Form field updaters
   const updateState = (newState: Partial<VideoFormState>) => {
@@ -214,7 +219,7 @@ export const useVideoDialogState = (open: boolean, onOpenChange: (open: boolean)
         visibility
       );
 
-      if (result.success) {
+      if (result?.success) {
         updateState({ uploadComplete: true });
         
         toast({

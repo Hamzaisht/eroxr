@@ -1,10 +1,53 @@
 
 import { useRef } from 'react';
 import { Loader2, RefreshCw, AlertCircle, X, Volume2, VolumeX } from 'lucide-react';
-import { VideoErrorState } from './VideoErrorState';
-import { VideoLoadingState } from './VideoLoadingState';
+import { cn } from '@/lib/utils';
 import { useMedia } from '@/hooks/useMedia';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
+
+interface VideoErrorStateProps {
+  message: string;
+  onRetry: () => void;
+}
+
+const VideoErrorState = ({ message, onRetry }: VideoErrorStateProps) => (
+  <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 z-20">
+    <AlertCircle className="h-12 w-12 text-red-500 mb-2" />
+    <p className="text-white text-center mb-4">{message}</p>
+    <button 
+      onClick={onRetry}
+      className="px-4 py-2 rounded-md bg-luxury-primary text-white flex items-center"
+    >
+      <RefreshCw className="w-4 h-4 mr-2" /> Retry
+    </button>
+  </div>
+);
+
+interface VideoLoadingStateProps {
+  isStalled?: boolean;
+  onRetry?: () => void;
+}
+
+const VideoLoadingState = ({ isStalled, onRetry }: VideoLoadingStateProps) => (
+  <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20">
+    {isStalled ? (
+      <div className="flex flex-col items-center">
+        <Loader2 className="h-8 w-8 text-luxury-primary animate-spin mb-2" />
+        <p className="text-white text-sm">Loading taking too long...</p>
+        {onRetry && (
+          <button 
+            onClick={onRetry}
+            className="mt-2 px-3 py-1 rounded text-xs bg-luxury-primary text-white flex items-center"
+          >
+            <RefreshCw className="w-3 h-3 mr-1" /> Retry
+          </button>
+        )}
+      </div>
+    ) : (
+      <Loader2 className="h-8 w-8 text-luxury-primary animate-spin" />
+    )}
+  </div>
+);
 
 interface VideoPlayerProps {
   url: string;
@@ -30,7 +73,7 @@ export const VideoPlayer = ({
   className = "",
   autoPlay = false,
   controls = true,
-  muted = false,
+  muted = true,
   loop = true,
   playOnHover = false,
   showCloseButton = false,
@@ -42,7 +85,7 @@ export const VideoPlayer = ({
   creatorId
 }: VideoPlayerProps) => {
   // Use our media hook to handle media URL processing
-  const { url: processedUrl, isLoading: mediaLoading, isError, retry, retryCount } = 
+  const { url: processedUrl, isLoading: mediaLoading, isError, retry } = 
     useMedia({ video_url: url });
   
   // Use our video player hook for video functionality
@@ -51,10 +94,11 @@ export const VideoPlayer = ({
     isPlaying,
     isMuted,
     isBuffering,
+    hasError,
     togglePlay,
     toggleMute,
   } = useVideoPlayer({
-    url: processedUrl,
+    url: processedUrl || '',
     autoPlay,
     muted,
     loop,
@@ -63,7 +107,7 @@ export const VideoPlayer = ({
     onLoadedData
   });
   
-  // Handle playOnHover functionality
+  // Container for handling hover events
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Handle play on hover if needed
@@ -94,7 +138,7 @@ export const VideoPlayer = ({
       )}
       
       {/* Error state */}
-      {isError && (
+      {(isError || hasError) && (
         <VideoErrorState 
           message="Failed to load video" 
           onRetry={() => retry()} 
@@ -126,7 +170,7 @@ export const VideoPlayer = ({
       <video
         ref={videoRef}
         src={processedUrl || undefined}
-        className="w-full h-full object-contain"
+        className={cn("w-full h-full object-contain", className)}
         controls={controls}
         poster={poster}
         playsInline

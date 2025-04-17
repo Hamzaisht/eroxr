@@ -1,45 +1,45 @@
 
-import { MediaSource } from './types';
-import { extractMediaUrl } from './mediaUtils';
-
 /**
- * Process a media URL or source object into a playable URL.
- * Handles various source formats and ensures the URL is valid for display.
+ * Utility function to get a playable media URL
+ * This handles various URL formats and ensures that videos can be played
+ * 
+ * @param url The original media URL
+ * @returns A URL that can be used in video or img elements
  */
-export function getPlayableMediaUrl(source: MediaSource | string | null | undefined): string {
-  if (!source) return '';
-  
-  // Extract the URL from a source object or use the string directly
-  const url = extractMediaUrl(source);
-  
+export const getPlayableMediaUrl = (url: string): string => {
   if (!url) return '';
   
-  // Handle special Supabase storage URLs
-  if (url.includes('storage/v1/object/public')) {
-    // The URL is already public and playable
+  // Handle already processed URLs
+  if (url.startsWith('blob:') || 
+      url.startsWith('data:') || 
+      url.startsWith('http://localhost') ||
+      url.startsWith('http://127.0.0.1')) {
     return url;
   }
   
-  // Handle YouTube URLs
-  if (url.includes('youtube.com') || url.includes('youtu.be')) {
-    // Convert to embedded format if needed
-    if (url.includes('watch?v=')) {
-      const videoId = url.split('v=')[1].split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
+  // Handle Supabase storage URLs
+  if (url.includes('supabase.co/storage/v1/object/public/')) {
     return url;
   }
   
-  // Handle Vimeo URLs
-  if (url.includes('vimeo.com')) {
-    // Convert to embedded format if needed
-    const vimeoId = url.split('vimeo.com/')[1];
-    if (vimeoId) {
-      return `https://player.vimeo.com/video/${vimeoId}`;
-    }
-    return url;
+  // Handle relative URLs
+  if (url.startsWith('/')) {
+    return `${window.location.origin}${url}`;
   }
-  
-  // Return the processed URL
-  return url;
-}
+
+  // Add timestamp to bust cache if needed
+  if (url.includes('?')) {
+    return `${url}&_t=${Date.now()}`;
+  } else {
+    return `${url}?_t=${Date.now()}`;
+  }
+};
+
+/**
+ * Gets a direct media URL that can be used without caching issues
+ * @param url The original media URL
+ * @returns A direct URL that bypasses caching
+ */
+export const getDirectMediaUrl = (url: string): string => {
+  return getPlayableMediaUrl(url);
+};

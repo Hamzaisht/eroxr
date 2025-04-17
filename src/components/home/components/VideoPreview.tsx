@@ -2,7 +2,7 @@
 import { Loader2, AlertCircle, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { RefObject } from "react";
+import { RefObject, useState, useEffect } from "react";
 
 interface VideoPreviewProps {
   previewUrl: string | null;
@@ -23,6 +23,34 @@ export const VideoPreview = ({
   onVideoError,
   onClear
 }: VideoPreviewProps) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Auto-play the video when it's loaded
+  useEffect(() => {
+    if (videoRef.current && previewUrl && !isPreviewLoading && !previewError) {
+      // Try to play the video automatically
+      const playPromise = videoRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(error => {
+            // Auto-play was prevented, likely due to browser restrictions
+            console.warn("Autoplay prevented:", error);
+            // Mute the video and try again as most browsers allow muted autoplay
+            if (videoRef.current) {
+              videoRef.current.muted = true;
+              videoRef.current.play().catch(e => {
+                console.error("Failed to play even when muted:", e);
+              });
+            }
+          });
+      }
+    }
+  }, [previewUrl, isPreviewLoading, previewError, videoRef]);
+
   if (!previewUrl) return null;
 
   return (
@@ -57,6 +85,9 @@ export const VideoPreview = ({
             src={previewUrl} 
             className="w-full h-full object-contain"
             controls
+            playsInline
+            autoPlay
+            loop
             onLoadedData={onVideoLoad}
             onError={onVideoError}
           />
