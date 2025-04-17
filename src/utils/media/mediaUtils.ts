@@ -1,6 +1,7 @@
 
 import { MediaType, MediaSource } from './types';
 import { supabase } from "@/integrations/supabase/client";
+import { inferContentTypeFromExtension } from './formatUtils';
 
 /**
  * Creates a unique file path for uploads
@@ -178,34 +179,4 @@ export const uploadFileToStorage = async (
       error: error.message || "An unknown error occurred"
     };
   }
-};
-
-/**
- * Infers content type based on file extension
- * @param filename Filename with extension
- * @returns Content type string
- */
-export const inferContentTypeFromExtension = (filename: string): string => {
-  const extension = filename.split('.').pop()?.toLowerCase() || '';
-  
-  const mimeTypes: {[key: string]: string} = {
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png',
-    'gif': 'image/gif',
-    'webp': 'image/webp',
-    'svg': 'image/svg+xml',
-    'mp4': 'video/mp4',
-    'webm': 'video/webm',
-    'mov': 'video/quicktime',
-    'avi': 'video/x-msvideo',
-    'mkv': 'video/x-matroska',
-    'pdf': 'application/pdf',
-    'doc': 'application/msword',
-    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'xls': 'application/vnd.ms-excel',
-    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  };
-  
-  return mimeTypes[extension] || 'application/octet-stream';
 };

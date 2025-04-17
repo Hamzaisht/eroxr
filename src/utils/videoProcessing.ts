@@ -140,3 +140,6 @@ export const generateVideoThumbnail = (
     }
   });
 };
+
+// Alias for backward compatibility
+export const generateVideoThumbnails = generateVideoThumbnail;

@@ -7,8 +7,11 @@ export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
+  DOCUMENT = 'document',
   UNKNOWN = 'unknown'
 }
+
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'invisible';
 
 export interface MediaOptions {
   className?: string;
@@ -37,4 +40,37 @@ export interface MediaSource {
   id?: string;
   media_urls?: string[];
   video_urls?: string[];
+  thumbnail_url?: string; // Added for thumbnail support
+}
+
+// Upload related types
+export interface UploadOptions {
+  contentCategory?: string;
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
+  onProgress?: (progress: number) => void;
+}
+
+export interface UploadResult {
+  success: boolean;
+  url: string;
+  path: string;
+  size: number;
+  contentType: string;
+  error?: string;
+}
+
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  success: boolean;
+  isComplete: boolean;
+}
+
+export interface FileValidationResult {
+  isValid: boolean;
+  message: string;
 }
