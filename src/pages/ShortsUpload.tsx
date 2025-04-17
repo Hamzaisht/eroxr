@@ -18,9 +18,7 @@ export default function ShortsUpload() {
   };
 
   return (
-    <div className="container max-w-2xl mx-auto py-12">
-      <h1 className="text-2xl font-bold mb-6">Upload Short Video</h1>
-      
+    <div className="container max-w-2xl mx-auto py-8 px-4">
       <VideoUploadForm 
         onComplete={handleComplete}
         onCancel={() => navigate("/shorts")}

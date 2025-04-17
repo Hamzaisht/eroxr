@@ -9,23 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Upload,
-  X,
-  Play,
-  Pause,
-  Loader2,
   AlertCircle,
   CheckCircle,
+  Loader2,
+  Trash2,
+  Upload,
+  Video,
+  Play,
+  Pause,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { createFilePreview } from "@/utils/upload";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 
 interface VideoUploadFormProps {
@@ -42,7 +36,8 @@ export function VideoUploadForm({
   // File state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Form state
   const [title, setTitle] = useState("");
@@ -50,16 +45,10 @@ export function VideoUploadForm({
   const [isPremium, setIsPremium] = useState(false);
   
   // Upload state
-  const [uploadState, setUploadState] = useState<{
-    isUploading: boolean;
-    progress: number;
-    error: string | null;
-    isComplete: boolean;
-    isProcessing: boolean;
-  }>({
+  const [uploadState, setUploadState] = useState({
     isUploading: false,
     progress: 0,
-    error: null,
+    error: null as string | null,
     isComplete: false,
     isProcessing: false
   });
@@ -73,7 +62,7 @@ export function VideoUploadForm({
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Clean up preview URL when component unmounts or file changes
+  // Clean up preview URL when component unmounts
   useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -85,6 +74,11 @@ export function VideoUploadForm({
   // Handle file selection
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    processSelectedFile(file);
+  };
+
+  // Process the selected file
+  const processSelectedFile = (file?: File) => {
     if (!file) return;
     
     // Clean up previous preview if exists
@@ -93,7 +87,7 @@ export function VideoUploadForm({
       setPreviewUrl(null);
     }
     
-    // Check file type
+    // Validate file type
     if (!file.type.startsWith('video/')) {
       setUploadState(prev => ({
         ...prev,
@@ -102,11 +96,11 @@ export function VideoUploadForm({
       return;
     }
     
-    // Check file size
+    // Validate file size
     if (file.size > maxSizeInMB * 1024 * 1024) {
       setUploadState(prev => ({
         ...prev,
-        error: `File size must be less than ${maxSizeInMB}MB`
+        error: `Video size must be less than ${maxSizeInMB}MB`
       }));
       return;
     }
@@ -130,32 +124,42 @@ export function VideoUploadForm({
       ...prev,
       error: null
     }));
+
+    // Show success toast
+    toast({
+      title: "Video selected",
+      description: "Preview ready. Add details and click upload when ready.",
+    });
+  };
+
+  // Handle drag events
+  const handleDragEvents = (e: React.DragEvent<HTMLDivElement>, isDragActive: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(isDragActive);
+  };
+
+  // Handle drop event
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processSelectedFile(e.dataTransfer.files[0]);
+    }
   };
 
   // Toggle video playback
   const togglePlayback = () => {
     if (videoRef.current) {
-      if (isPreviewPlaying) {
+      if (isPlaying) {
         videoRef.current.pause();
       } else {
         videoRef.current.play();
       }
-      setIsPreviewPlaying(!isPreviewPlaying);
+      setIsPlaying(!isPlaying);
     }
-  };
-
-  // Handle video load event
-  const handleVideoLoad = () => {
-    console.log("Video loaded successfully");
-  };
-
-  // Handle video error
-  const handleVideoError = () => {
-    console.error("Error loading video preview");
-    setUploadState(prev => ({
-      ...prev,
-      error: "Failed to preview video. The format may not be supported."
-    }));
   };
 
   // Clear selected video
@@ -165,11 +169,26 @@ export function VideoUploadForm({
     }
     setSelectedFile(null);
     setPreviewUrl(null);
-    setIsPreviewPlaying(false);
+    setIsPlaying(false);
+    setTitle("");
+    setDescription("");
+    setUploadState(prev => ({
+      ...prev,
+      error: null
+    }));
     
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Format bytes to human-readable size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   // Upload the video
@@ -180,7 +199,7 @@ export function VideoUploadForm({
         description: "You must be logged in to upload videos",
         variant: "destructive",
       });
-      navigate("/login");
+      navigate("/login", { state: { from: "/shorts/upload" } });
       return;
     }
     
@@ -214,6 +233,14 @@ export function VideoUploadForm({
       const fileExt = selectedFile.name.split('.').pop();
       const filePath = `${session.user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       
+      // Upload progress simulation
+      let progressInterval = setInterval(() => {
+        setUploadState(prev => ({
+          ...prev,
+          progress: Math.min(prev.progress + Math.random() * 5, 90)
+        }));
+      }, 300);
+      
       // Upload the file to Supabase storage
       const { data, error: uploadError } = await supabase.storage
         .from('shorts')
@@ -221,6 +248,8 @@ export function VideoUploadForm({
           cacheControl: '3600',
           upsert: false,
         });
+      
+      clearInterval(progressInterval);
       
       if (uploadError) {
         throw new Error(uploadError.message);
@@ -284,7 +313,7 @@ export function VideoUploadForm({
         // Navigate to shorts feed
         setTimeout(() => {
           navigate("/shorts");
-        }, 1000);
+        }, 1500);
       }
       
     } catch (error: any) {
@@ -306,158 +335,196 @@ export function VideoUploadForm({
   };
 
   return (
-    <Card className="max-w-xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="h-5 w-5" />
-          Upload Video
-        </CardTitle>
-      </CardHeader>
+    <div className="max-w-xl mx-auto bg-black text-white rounded-xl overflow-hidden shadow-lg p-6 border border-gray-800">
+      <div className="flex items-center gap-3 mb-6">
+        <Video className="h-6 w-6 text-luxury-primary" />
+        <h2 className="text-xl font-bold">Upload Short Video</h2>
+      </div>
       
-      <CardContent className="space-y-6">
-        {/* Video selector or preview */}
-        {!selectedFile ? (
-          <div 
-            className="border-2 border-dashed rounded-md border-gray-300 hover:border-primary p-8 flex flex-col items-center justify-center cursor-pointer transition-all"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 text-gray-400 mb-4" />
-            <p className="text-sm text-gray-600 mb-1">
-              Click to select a video
-            </p>
-            <p className="text-xs text-gray-500">
-              MP4, WebM, MOV up to {maxSizeInMB}MB
-            </p>
-          </div>
-        ) : (
-          <div className="relative rounded-md overflow-hidden aspect-video bg-black">
-            {/* Video preview */}
+      {!selectedFile ? (
+        <div
+          className={`border-2 ${
+            isDragging ? "border-luxury-primary bg-luxury-primary/10" : "border-gray-700"
+          } border-dashed rounded-lg flex flex-col items-center justify-center h-56 cursor-pointer transition-all duration-200 hover:border-luxury-primary/70 hover:bg-luxury-primary/5`}
+          onDragEnter={(e) => handleDragEvents(e, true)}
+          onDragOver={(e) => handleDragEvents(e, true)}
+          onDragLeave={(e) => handleDragEvents(e, false)}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          
+          <Upload className="h-12 w-12 text-gray-400 mb-4" />
+          <p className="text-base text-gray-300 mb-2">
+            {isDragging ? "Drop your video here" : "Drag & drop or click to upload"}
+          </p>
+          <p className="text-xs text-gray-500">
+            MP4, WebM, MOV up to {maxSizeInMB}MB
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Video preview */}
+          <div className="relative rounded-lg overflow-hidden aspect-video bg-black border border-gray-800">
             {previewUrl && (
               <video
                 ref={videoRef}
                 src={previewUrl}
                 className="w-full h-full object-contain"
-                onLoadedData={handleVideoLoad}
-                onError={handleVideoError}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onEnded={() => setIsPlaying(false)}
                 onClick={togglePlayback}
               />
             )}
             
-            {/* Play/pause button overlay */}
-            <button
-              type="button"
-              className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
+            <div
+              className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer opacity-0 hover:opacity-100 transition-opacity"
               onClick={togglePlayback}
             >
-              {isPreviewPlaying ? (
-                <Pause className="h-12 w-12 text-white opacity-70" />
+              {isPlaying ? (
+                <Pause className="h-16 w-16 text-white/90" />
               ) : (
-                <Play className="h-12 w-12 text-white opacity-70" />
+                <Play className="h-16 w-16 text-white/90" />
               )}
-            </button>
+            </div>
             
-            {/* Remove button */}
             <button
               type="button"
-              className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-black rounded-full text-white"
               onClick={clearVideo}
+              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+              title="Remove video"
             >
-              <X className="h-4 w-4" />
+              <Trash2 className="h-5 w-5" />
             </button>
             
-            {/* File name */}
-            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/70 text-white text-xs flex justify-between">
-              <span className="truncate max-w-[80%]">{selectedFile.name}</span>
-              <span>{Math.round(selectedFile.size / 1024 / 1024)}MB</span>
+            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 text-xs flex justify-between items-center">
+              <span className="truncate max-w-[70%]">{selectedFile.name}</span>
+              <span className="text-luxury-primary">{formatFileSize(selectedFile.size)}</span>
             </div>
           </div>
-        )}
-        
-        {/* Error message */}
-        {uploadState.error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-            <span className="text-sm text-red-800">{uploadState.error}</span>
-          </div>
-        )}
-        
-        {/* Title input */}
-        <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Add a title to your video"
-            disabled={uploadState.isUploading || uploadState.isProcessing}
-            className="bg-card"
-          />
-        </div>
-        
-        {/* Description textarea */}
-        <div className="space-y-2">
-          <Label htmlFor="description">Description (optional)</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe your video..."
-            disabled={uploadState.isUploading || uploadState.isProcessing}
-            className="resize-none bg-card"
-          />
-        </div>
-        
-        {/* Premium toggle */}
-        <div className="flex items-center space-x-2 pt-2">
-          <Switch
-            id="premium"
-            checked={isPremium}
-            onCheckedChange={setIsPremium}
-            disabled={uploadState.isUploading || uploadState.isProcessing}
-          />
-          <Label htmlFor="premium">Premium content (subscribers only)</Label>
-        </div>
-        
-        {/* Upload progress */}
-        {uploadState.isUploading && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span>Uploading...</span>
-              <span>{uploadState.progress}%</span>
+          
+          {/* Video details form */}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title" className="text-gray-200 mb-1.5 block">Title</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Add a title to your video"
+                disabled={uploadState.isUploading || uploadState.isProcessing}
+                className="border-gray-700 bg-gray-900 text-white focus:ring-luxury-primary"
+                required
+              />
             </div>
-            <Progress value={uploadState.progress} />
+            
+            <div>
+              <Label htmlFor="description" className="text-gray-200 mb-1.5 block">Description (optional)</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Tell viewers about your video..."
+                disabled={uploadState.isUploading || uploadState.isProcessing}
+                className="resize-none border-gray-700 bg-gray-900 text-white focus:ring-luxury-primary min-h-[80px]"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2 pt-2">
+              <Switch
+                id="premium"
+                checked={isPremium}
+                onCheckedChange={setIsPremium}
+                disabled={uploadState.isUploading || uploadState.isProcessing}
+                className="data-[state=checked]:bg-luxury-primary"
+              />
+              <Label htmlFor="premium" className="text-gray-200">Premium content (subscribers only)</Label>
+            </div>
           </div>
-        )}
-        
-        {/* Processing message */}
-        {uploadState.isProcessing && (
-          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-md">
-            <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-            <span className="text-sm text-blue-700">Processing your video...</span>
-          </div>
-        )}
-        
-        {/* Success message */}
-        {uploadState.isComplete && (
-          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-md">
-            <CheckCircle className="h-4 w-4 text-green-500" />
-            <span className="text-sm text-green-700">Video uploaded successfully</span>
-          </div>
-        )}
-      </CardContent>
+        </div>
+      )}
       
-      <CardFooter className="flex justify-end gap-2">
+      {/* Error message */}
+      <AnimatePresence>
+        {uploadState.error && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-2 p-3 mt-6 bg-red-950/40 border border-red-800/50 rounded-md text-red-200"
+          >
+            <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-400" />
+            <p className="text-sm">{uploadState.error}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Upload progress */}
+      <AnimatePresence>
+        {uploadState.isUploading && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mt-6 space-y-2"
+          >
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-300">Uploading...</span>
+              <span className="text-luxury-primary font-medium">{Math.round(uploadState.progress)}%</span>
+            </div>
+            <Progress 
+              value={uploadState.progress} 
+              className="h-2 bg-gray-800" 
+              indicatorClassName="bg-gradient-to-r from-luxury-primary to-luxury-primary/80"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Processing message */}
+      <AnimatePresence>
+        {uploadState.isProcessing && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-2 p-3 mt-6 bg-blue-950/30 border border-blue-800/40 rounded-md text-blue-200"
+          >
+            <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+            <span className="text-sm">Processing your video...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Success message */}
+      <AnimatePresence>
+        {uploadState.isComplete && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-2 p-3 mt-6 bg-green-950/30 border border-green-800/40 rounded-md text-green-200"
+          >
+            <CheckCircle className="h-5 w-5 text-green-400" />
+            <span className="text-sm">Video uploaded successfully</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Actions */}
+      <div className="flex justify-end gap-3 mt-6">
         <Button
           variant="outline"
           onClick={onCancel || (() => navigate(-1))}
           disabled={uploadState.isUploading || uploadState.isProcessing}
+          className="text-gray-300 border-gray-700 hover:bg-gray-800 hover:text-white"
         >
           Cancel
         </Button>
@@ -471,6 +538,7 @@ export function VideoUploadForm({
             uploadState.isProcessing ||
             uploadState.isComplete
           }
+          className="bg-luxury-primary hover:bg-luxury-primary/90 text-white"
         >
           {uploadState.isUploading ? (
             <>
@@ -485,7 +553,7 @@ export function VideoUploadForm({
           ) : uploadState.isComplete ? (
             <>
               <CheckCircle className="h-4 w-4 mr-2" />
-              Completed
+              Complete
             </>
           ) : (
             <>
@@ -494,7 +562,7 @@ export function VideoUploadForm({
             </>
           )}
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
