@@ -5,6 +5,12 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ErosComment } from "@/types/eros";
 
+// Define a type for the profile data structure
+type ProfileData = {
+  username?: string | null;
+  avatar_url?: string | null;
+};
+
 export function useErosComments(videoId: string) {
   const [comments, setComments] = useState<ErosComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,15 +56,16 @@ export function useErosComments(videoId: string) {
         if (comment.profiles) {
           if (Array.isArray(comment.profiles)) {
             // If it's an array (sometimes happens with joins), take the first item
-            const profile = comment.profiles[0];
+            const profile = comment.profiles[0] as ProfileData | undefined;
             if (profile) {
               username = profile.username || 'Anonymous';
               avatarUrl = profile.avatar_url;
             }
           } else {
             // If it's a single object (more common case)
-            username = comment.profiles.username || 'Anonymous';
-            avatarUrl = comment.profiles.avatar_url;
+            const profile = comment.profiles as ProfileData;
+            username = profile.username || 'Anonymous';
+            avatarUrl = profile.avatar_url;
           }
         }
         
