@@ -41,8 +41,9 @@ export function useErosComments(videoId: string) {
       }
       
       const mappedComments = (data || []).map(comment => {
-        // Properly access the nested profile data
-        const profile = comment.profiles as { username: string, avatar_url: string } | null;
+        // Fix type issue: profiles should be accessed as a single object, not an array
+        // The profile data is a single joined record, not an array
+        const profile = comment.profiles as { username: string; avatar_url: string } | null;
         
         return {
           id: comment.id,
