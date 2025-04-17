@@ -41,9 +41,26 @@ export function useErosComments(videoId: string) {
       }
       
       const mappedComments = (data || []).map(comment => {
-        // Fix type issue: profiles should be accessed as a single object, not an array
-        // The profile data is a single joined record, not an array
-        const profile = comment.profiles as { username: string; avatar_url: string } | null;
+        // Fix the type issue - profiles is coming back in various formats depending on the join
+        // We need to handle different possible structures
+        let username = 'Anonymous';
+        let avatarUrl = undefined;
+        
+        // Check what format the profiles data is in and extract properly
+        if (comment.profiles) {
+          if (Array.isArray(comment.profiles)) {
+            // If it's an array (sometimes happens with joins), take the first item
+            const profile = comment.profiles[0];
+            if (profile) {
+              username = profile.username || 'Anonymous';
+              avatarUrl = profile.avatar_url;
+            }
+          } else {
+            // If it's a single object (more common case)
+            username = comment.profiles.username || 'Anonymous';
+            avatarUrl = comment.profiles.avatar_url;
+          }
+        }
         
         return {
           id: comment.id,
@@ -51,8 +68,8 @@ export function useErosComments(videoId: string) {
           createdAt: comment.created_at,
           user: {
             id: comment.user_id,
-            username: profile?.username || 'Anonymous',
-            avatarUrl: profile?.avatar_url,
+            username,
+            avatarUrl,
           },
           likes: 0, // This would come from a real likes table
           hasLiked: false,
