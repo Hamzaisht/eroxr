@@ -130,139 +130,139 @@ const Eroboard = () => {
               <TabsTrigger value="content">Content</TabsTrigger>
               <TabsTrigger value="audience">Audience</TabsTrigger>
             </TabsList>
-          </Tabs>
           
-          <div className="flex items-center gap-2">
-            <Label htmlFor="date-range" className="whitespace-nowrap">Date Range:</Label>
-            <DatePickerWithRange
-              id="date-range"
-              date={date}
-              setDate={setDate}
-            />
-          </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="date-range" className="whitespace-nowrap">Date Range:</Label>
+              <DatePickerWithRange
+                id="date-range"
+                date={date}
+                setDate={setDate}
+              />
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="animate-spin h-8 w-8 text-luxury-primary" />
+              </div>
+            ) : (
+              <>
+                <TabsContent value="overview" className="mt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <StatCard
+                      title="Total Subscribers"
+                      value={stats.totalSubscribers}
+                      icon={<Users className="h-5 w-5" />}
+                      trend={8.2}
+                      isLoading={loading}
+                    />
+                    <StatCard
+                      title="Total Earnings"
+                      value={stats.totalEarnings}
+                      icon={<DollarSign className="h-5 w-5" />}
+                      trend={12.5}
+                      isMoney={true}
+                      isLoading={loading}
+                    />
+                    <StatCard
+                      title="Engagement Rate"
+                      value={stats.engagementRate}
+                      icon={<LineChart className="h-5 w-5" />}
+                      trend={-2.1}
+                      isPercent={true}
+                      isLoading={loading}
+                    />
+                    <StatCard
+                      title="Total Views"
+                      value={stats.totalViews}
+                      icon={<Eye className="h-5 w-5" />}
+                      trend={15.3}
+                      isLoading={loading}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <EarningsChart data={earningsData} isLoading={loading} />
+                    <RevenueBreakdown data={revenueBreakdown} isLoading={loading} />
+                  </div>
+
+                  <ContentPerformance data={contentPerformanceData} isLoading={loading} />
+                </TabsContent>
+
+                <TabsContent value="content" className="mt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <StatCard
+                      title="Total Content"
+                      value={stats.totalContent}
+                      icon={<BarChart3 className="h-5 w-5" />}
+                      isLoading={loading}
+                    />
+                    <StatCard
+                      title="Revenue Share"
+                      value={stats.revenueShare * 100}
+                      icon={<Percent className="h-5 w-5" />}
+                      isPercent={true}
+                      isLoading={loading}
+                    />
+                    {stats.earningsPercentile && (
+                      <StatCard
+                        title="Earnings Percentile"
+                        value={`Top ${Math.ceil(100 - stats.earningsPercentile)}%`}
+                        icon={<LineChart className="h-5 w-5" />}
+                        isLoading={loading}
+                        className="col-span-2"
+                      />
+                    )}
+                  </div>
+
+                  <ContentPerformance data={contentPerformanceData} isLoading={loading} />
+                </TabsContent>
+
+                <TabsContent value="audience" className="mt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <StatCard
+                      title="New Subscribers"
+                      value={stats.newSubscribers}
+                      icon={<Users className="h-5 w-5" />}
+                      isLoading={loading}
+                    />
+                    <StatCard
+                      title="Returning Subscribers"
+                      value={stats.returningSubscribers}
+                      icon={<Users className="h-5 w-5" />}
+                      isLoading={loading}
+                    />
+                    <StatCard
+                      title="Churn Rate"
+                      value={stats.churnRate}
+                      icon={<Percent className="h-5 w-5" />}
+                      isPercent={true}
+                      isLoading={loading}
+                    />
+                    <StatCard
+                      title="VIP Fans"
+                      value={stats.vipFans}
+                      icon={<Users className="h-5 w-5" />}
+                      isLoading={loading}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <AudienceGroups 
+                      isLoading={loading}
+                      newSubscribers={stats.newSubscribers}
+                      returningSubscribers={stats.returningSubscribers}
+                      vipFans={stats.vipFans}
+                      churnRate={stats.churnRate}
+                    />
+                    <Card className="col-span-1 md:col-span-2">
+                      {/* This space is for audience geography */}
+                    </Card>
+                  </div>
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
         </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="animate-spin h-8 w-8 text-luxury-primary" />
-          </div>
-        ) : (
-          <>
-            <TabsContent value="overview" className="mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <StatCard
-                  title="Total Subscribers"
-                  value={stats.totalSubscribers}
-                  icon={<Users className="h-5 w-5" />}
-                  trend={8.2}
-                  isLoading={loading}
-                />
-                <StatCard
-                  title="Total Earnings"
-                  value={stats.totalEarnings}
-                  icon={<DollarSign className="h-5 w-5" />}
-                  trend={12.5}
-                  isMoney={true}
-                  isLoading={loading}
-                />
-                <StatCard
-                  title="Engagement Rate"
-                  value={stats.engagementRate}
-                  icon={<LineChart className="h-5 w-5" />}
-                  trend={-2.1}
-                  isPercent={true}
-                  isLoading={loading}
-                />
-                <StatCard
-                  title="Total Views"
-                  value={stats.totalViews}
-                  icon={<Eye className="h-5 w-5" />}
-                  trend={15.3}
-                  isLoading={loading}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <EarningsChart data={earningsData} isLoading={loading} />
-                <RevenueBreakdown data={revenueBreakdown} isLoading={loading} />
-              </div>
-
-              <ContentPerformance data={contentPerformanceData} isLoading={loading} />
-            </TabsContent>
-
-            <TabsContent value="content" className="mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <StatCard
-                  title="Total Content"
-                  value={stats.totalContent}
-                  icon={<BarChart3 className="h-5 w-5" />}
-                  isLoading={loading}
-                />
-                <StatCard
-                  title="Revenue Share"
-                  value={stats.revenueShare * 100}
-                  icon={<Percent className="h-5 w-5" />}
-                  isPercent={true}
-                  isLoading={loading}
-                />
-                {stats.earningsPercentile && (
-                  <StatCard
-                    title="Earnings Percentile"
-                    value={`Top ${Math.ceil(100 - stats.earningsPercentile)}%`}
-                    icon={<LineChart className="h-5 w-5" />}
-                    isLoading={loading}
-                    className="col-span-2"
-                  />
-                )}
-              </div>
-
-              <ContentPerformance data={contentPerformanceData} isLoading={loading} />
-            </TabsContent>
-
-            <TabsContent value="audience" className="mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <StatCard
-                  title="New Subscribers"
-                  value={stats.newSubscribers}
-                  icon={<Users className="h-5 w-5" />}
-                  isLoading={loading}
-                />
-                <StatCard
-                  title="Returning Subscribers"
-                  value={stats.returningSubscribers}
-                  icon={<Users className="h-5 w-5" />}
-                  isLoading={loading}
-                />
-                <StatCard
-                  title="Churn Rate"
-                  value={stats.churnRate}
-                  icon={<Percent className="h-5 w-5" />}
-                  isPercent={true}
-                  isLoading={loading}
-                />
-                <StatCard
-                  title="VIP Fans"
-                  value={stats.vipFans}
-                  icon={<Users className="h-5 w-5" />}
-                  isLoading={loading}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <AudienceGroups 
-                  isLoading={loading}
-                  newSubscribers={stats.newSubscribers}
-                  returningSubscribers={stats.returningSubscribers}
-                  vipFans={stats.vipFans}
-                  churnRate={stats.churnRate}
-                />
-                <Card className="col-span-1 md:col-span-2">
-                  {/* This space is for audience geography */}
-                </Card>
-              </div>
-            </TabsContent>
-          </>
-        )}
       </motion.div>
     </div>
   );
