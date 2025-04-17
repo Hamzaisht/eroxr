@@ -11,7 +11,7 @@ interface AuthLayoutProps {
 }
 
 export const AuthLayout = ({
-  requireAuth = true,
+  requireAuth = false,  // Changed to false for login/register pages
   redirectAuthenticatedTo = '/home',
   redirectUnauthenticatedTo = '/login',
 }: AuthLayoutProps) => {

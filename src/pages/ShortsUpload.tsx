@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -10,13 +11,18 @@ export default function ShortsUpload() {
   const navigate = useNavigate();
 
   // Check authentication
+  useEffect(() => {
+    if (!session) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to upload videos",
+        variant: "destructive",
+      });
+      navigate("/login");
+    }
+  }, [session, navigate, toast]);
+
   if (!session) {
-    toast({
-      title: "Authentication required",
-      description: "You must be logged in to upload videos",
-      variant: "destructive",
-    });
-    navigate("/login");
     return null;
   }
 
