@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ShortsFeed } from "@/components/home/ShortsFeed";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { UploadShortButton } from "@/components/home/UploadShortButton";
 
 const Shorts = () => {
   const { videoId } = useParams<{ videoId?: string }>();

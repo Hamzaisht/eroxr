@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useShortsPagination } from "@/hooks/useShortsPagination";
@@ -8,12 +7,9 @@ import { EmptyShortsState } from "./components/EmptyShortsState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { ShortItem } from "./components/ShortItem";
+import { UploadShortButton } from "@/components/home/UploadShortButton";
 
-interface ShortsFeedProps {
-  specificShortId?: string | null;
-}
-
-export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
+export const ShortsFeed = ({ specificShortId }) => {
   // State
   const [isMuted, setIsMuted] = useState(true);
   
@@ -167,22 +163,22 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
         </AnimatePresence>
       </div>
 
-      {/* Navigation buttons */}
+      {/* Navigation buttons for desktop */}
       {!isMobile && shorts.length > 0 && (
-        <ShortNavigationButtons 
+        <ShortNavigationButtons
           currentVideoIndex={currentIndex}
           totalShorts={shorts.length}
           onNextClick={handleNextVideo}
           onPrevClick={handlePrevVideo}
         />
       )}
-
-      {/* Loading indicators */}
+      
+      {/* Loading indicator */}
       {isLoading && shorts.length > 0 && (
         <ShortsLoadingIndicator isLoading={true} type="more" />
       )}
-
-      {/* Mobile swipe indicator */}
+      
+      {/* Mobile swipe hint */}
       {isMobile && shorts.length > 0 && (
         <div className="fixed top-1/2 right-4 -translate-y-1/2 z-30 flex flex-col gap-2 items-center">
           <div className="text-white/70 text-xs bg-black/30 rounded-full px-2 py-1 backdrop-blur-sm">
@@ -190,6 +186,9 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
           </div>
         </div>
       )}
+      
+      {/* Upload button */}
+      <UploadShortButton />
     </div>
   );
 };

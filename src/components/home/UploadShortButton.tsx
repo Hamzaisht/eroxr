@@ -15,9 +15,9 @@ export const UploadShortButton = () => {
       <Button
         onClick={handleClick}
         size="lg"
-        className="rounded-full h-12 w-12 bg-luxury-primary hover:bg-luxury-primary/80 shadow-lg"
+        className="rounded-full h-14 w-14 bg-luxury-primary hover:bg-luxury-primary/80 shadow-lg"
       >
-        <Upload className="h-5 w-5" />
+        <Upload className="h-6 w-6" />
       </Button>
     </div>
   );
