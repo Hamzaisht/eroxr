@@ -1,15 +1,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useShortsFeed } from "./hooks/useShortsFeed";
-import { useRealtimeShorts } from "./hooks/useRealtimeShorts";
-import { useShortNavigation } from "./hooks/useShortNavigation";
+import { useShortsPagination } from "@/hooks/useShortsPagination";
 import { ShortsLoadingIndicator } from "./components/ShortsLoadingIndicator";
 import { ShortNavigationButtons } from "./components/ShortNavigationButtons";
 import { EmptyShortsState } from "./components/EmptyShortsState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { useTrackingAction } from "./hooks/actions/useTrackingAction";
 import { ShortItem } from "./components/ShortItem";
 
 interface ShortsFeedProps {
@@ -23,62 +20,108 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
   // Hooks
   const { 
     shorts, 
-    currentVideoIndex, 
-    setCurrentVideoIndex, 
+    currentIndex, 
+    setCurrentIndex, 
     isLoading, 
-    isError, 
     error,
-    hasNextPage,
-    handleRetryLoad, 
-    refetch 
-  } = useShortsFeed(specificShortId);
+    hasMore,
+    loadMore,
+    refresh,
+    handleLike,
+    handleSave,
+    handleShare
+  } = useShortsPagination({
+    initialShortId: specificShortId,
+    pageSize: 5
+  });
   
-  useRealtimeShorts(refetch);
-  
-  const { handleView } = useTrackingAction();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const feedContainerRef = useRef<HTMLDivElement>(null);
   
-  const { handleScroll, handleTouchStart, handleTouchEnd } = useShortNavigation({
-    currentVideoIndex,
-    setCurrentVideoIndex,
-    totalShorts: shorts.length,
-    setIsMuted
-  });
-
-  // Track view when current video changes
-  useEffect(() => {
-    if (shorts.length > 0 && currentVideoIndex >= 0 && currentVideoIndex < shorts.length) {
-      const currentShort = shorts[currentVideoIndex];
-      handleView(currentShort.id);
+  // Handle scroll navigation
+  const handleScroll = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (event.deltaY > 0 && currentIndex < shorts.length - 1) {
+      // Scrolling down
+      setCurrentIndex(currentIndex + 1);
+    } else if (event.deltaY < 0 && currentIndex > 0) {
+      // Scrolling up
+      setCurrentIndex(currentIndex - 1);
     }
-  }, [currentVideoIndex, shorts, handleView]);
-
+  };
+  
+  // Handle touch navigation for mobile
+  const [touchStart, setTouchStart] = useState(0);
+  
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    setTouchStart(event.touches[0].clientY);
+  };
+  
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touchEnd = event.changedTouches[0].clientY;
+    const diff = touchStart - touchEnd;
+    
+    if (diff > 50 && currentIndex < shorts.length - 1) {
+      // Swipe up
+      setCurrentIndex(currentIndex + 1);
+    } else if (diff < -50 && currentIndex > 0) {
+      // Swipe down
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+  
+  // Scroll to current video when index changes
+  useEffect(() => {
+    if (feedContainerRef.current && shorts.length > 0) {
+      const container = feedContainerRef.current;
+      const videoHeight = container.clientHeight;
+      container.scrollTo({
+        top: currentIndex * videoHeight,
+        behavior: 'smooth'
+      });
+      
+      // Load more videos when approaching the end
+      if (currentIndex >= shorts.length - 2 && !isLoading && hasMore) {
+        loadMore();
+      }
+    }
+  }, [currentIndex, shorts.length, isLoading, hasMore, loadMore]);
+  
+  // Handle manual navigation
   const handleNextVideo = () => {
-    if (currentVideoIndex < shorts.length - 1) {
-      setCurrentVideoIndex(currentVideoIndex + 1);
+    if (currentIndex < shorts.length - 1) {
+      setCurrentIndex(currentIndex + 1);
     }
   };
 
   const handlePrevVideo = () => {
-    if (currentVideoIndex > 0) {
-      setCurrentVideoIndex(currentVideoIndex - 1);
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
     }
   };
 
-  // Render states
-  if (isError && !isLoading) {
+  // Render initial loading state
+  if (isLoading && shorts.length === 0) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-luxury-darker">
+      <div className="fixed inset-0 flex items-center justify-center bg-black">
+        <ShortsLoadingIndicator isLoading={true} type="fullscreen" />
+      </div>
+    );
+  }
+
+  // Render error state
+  if (error && shorts.length === 0) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black">
         <ErrorState 
-          title="Failed to load shorts" 
-          description={error?.message || "We couldn't load videos. Please try again."} 
-          onRetry={handleRetryLoad}
+          title="Failed to load videos" 
+          description={error || "We couldn't load videos. Please try again."} 
+          onRetry={refresh}
         />
       </div>
     );
   }
 
+  // Render empty state
   if (!isLoading && shorts.length === 0) {
     return <EmptyShortsState />;
   }
@@ -96,19 +139,38 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
           {shorts.map((short, index) => (
             <ShortItem 
               key={short.id}
-              short={short}
-              isCurrentVideo={index === currentVideoIndex}
+              short={{
+                id: short.id,
+                creator: {
+                  username: short.creator.username,
+                  avatar_url: short.creator.avatarUrl,
+                  id: short.creator.id
+                },
+                creator_id: short.creator.id,
+                content: short.description || "",
+                description: short.description || "",
+                video_urls: [short.url],
+                video_thumbnail_url: short.thumbnailUrl,
+                likes_count: short.stats.likes,
+                comments_count: short.stats.comments,
+                view_count: short.stats.views,
+                has_liked: short.hasLiked,
+                has_saved: short.hasSaved,
+                created_at: short.createdAt,
+                visibility: 'public'
+              }}
+              isCurrentVideo={index === currentIndex}
               index={index}
-              currentVideoIndex={currentVideoIndex}
+              currentVideoIndex={currentIndex}
             />
           ))}
         </AnimatePresence>
       </div>
 
       {/* Navigation buttons */}
-      {!isMobile && (
+      {!isMobile && shorts.length > 0 && (
         <ShortNavigationButtons 
-          currentVideoIndex={currentVideoIndex}
+          currentVideoIndex={currentIndex}
           totalShorts={shorts.length}
           onNextClick={handleNextVideo}
           onPrevClick={handlePrevVideo}
@@ -116,8 +178,7 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
       )}
 
       {/* Loading indicators */}
-      <ShortsLoadingIndicator isLoading={isLoading} type="fullscreen" />
-      {hasNextPage && currentVideoIndex >= shorts.length - 2 && (
+      {isLoading && shorts.length > 0 && (
         <ShortsLoadingIndicator isLoading={true} type="more" />
       )}
 
