@@ -40,6 +40,17 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
           onTimeUpdate(videoElement.currentTime);
         } 
       : undefined;
+    
+    // Create event handlers that adapt our React events to our component's API
+    const handleError = onError 
+      ? (e: React.SyntheticEvent<HTMLVideoElement | HTMLImageElement, Event>) => {
+          const element = e.currentTarget;
+          const errorMessage = element instanceof HTMLVideoElement 
+            ? "Video failed to load" 
+            : "Image failed to load";
+          onError(errorMessage);
+        }
+      : undefined;
         
     if (mediaType === MediaType.VIDEO || mediaType === 'video') {
       return (
@@ -54,7 +65,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
           poster={poster}
           onClick={onClick}
           onLoadedData={onLoad}
-          onError={onError}
+          onError={handleError}
           onEnded={onEnded}
           onTimeUpdate={handleTimeUpdate}
           playsInline
@@ -70,7 +81,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
           className={className}
           onClick={onClick}
           onLoad={onLoad}
-          onError={onError}
+          onError={handleError}
           alt=""
         />
       );
