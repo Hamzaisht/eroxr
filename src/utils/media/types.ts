@@ -1,4 +1,5 @@
 
+
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
@@ -18,7 +19,7 @@ export interface MediaOptions {
   poster?: string;
   onClick?: () => void;
   onLoad?: () => void;
-  onError?: () => void;
+  onError?: (error?: string) => void;  // Updated to accept an optional error parameter
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number) => void;
 }

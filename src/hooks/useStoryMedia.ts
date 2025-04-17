@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
@@ -6,7 +7,7 @@ import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
 interface UseStoryMediaOptions extends MediaOptions {
   onComplete?: () => void;
-  onError?: (error: string) => void;
+  // No need to redefine onError as it's now compatible with the parent interface
 }
 
 export const useStoryMedia = (
