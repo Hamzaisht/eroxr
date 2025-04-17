@@ -18,6 +18,7 @@ import Layout from "@/components/layout/Layout";
 import Shorts from "@/pages/Shorts";
 import ShortsUpload from "@/pages/ShortsUpload";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,21 +35,30 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <Routes>
+            {/* Auth routes */}
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
             </Route>
+            
+            {/* Public routes */}
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
-              <Route path="/profile/:username" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/eroboard" element={<Eroboard />} />
-              <Route path="/dating" element={<Dating />} />
               <Route path="/shorts" element={<Shorts />} />
               <Route path="/shorts/:videoId" element={<Shorts />} />
-              <Route path="/shorts/upload" element={<ShortsUpload />} />
+            </Route>
+            
+            {/* Protected routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<Layout />}>
+                <Route path="/profile/:username" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/eroboard" element={<Eroboard />} />
+                <Route path="/dating" element={<Dating />} />
+                <Route path="/shorts/upload" element={<ShortsUpload />} />
+              </Route>
             </Route>
           </Routes>
           <Toaster />

@@ -2,12 +2,25 @@
 import { Plus, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const UploadShortButton = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   
   const handleClick = () => {
-    navigate("/shorts/upload");
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to upload videos",
+        variant: "destructive",
+      });
+      navigate("/login", { state: { from: "/shorts/upload" } });
+    } else {
+      navigate("/shorts/upload");
+    }
   };
   
   return (
