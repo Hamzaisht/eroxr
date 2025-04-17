@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Image, Video, Heart, Film } from "lucide-react";
@@ -5,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { FloatingMenuItem } from "./menu/FloatingMenuItem";
 import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@supabase/auth-helpers-react";
+import { UploadVideoDialog } from "../home/UploadVideoDialog";
 
 interface FloatingActionMenuProps {
   currentPath: string;
@@ -12,92 +15,87 @@ interface FloatingActionMenuProps {
 
 export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const session = useSession();
+
+  const handleAuthentication = (action: () => void) => {
+    if (!session?.user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to access this feature",
+        variant: "destructive",
+      });
+      return;
+    }
+    action();
+  };
 
   const getContextualMenuItems = () => {
+    const commonItems = [
+      { 
+        icon: Image, 
+        label: "Create Post", 
+        onClick: () => {
+          setIsOpen(false);
+          handleAuthentication(() => {
+            navigate("/create-post");
+            toast({
+              title: "Create Post",
+              description: "Share your thoughts with your audience"
+            });
+          });
+        }
+      },
+      { 
+        icon: Video, 
+        label: "Create Story", 
+        onClick: () => {
+          setIsOpen(false);
+          handleAuthentication(() => {
+            navigate("/create-story");
+            toast({
+              title: "Create Story",
+              description: "Share a moment with your audience"
+            });
+          });
+        }
+      },
+      { 
+        icon: Film, 
+        label: "Upload Eros", 
+        onClick: () => {
+          setIsOpen(false);
+          handleAuthentication(() => {
+            setIsVideoDialogOpen(true);
+          });
+        }
+      },
+      { 
+        icon: Heart, 
+        label: "Dating Ad", 
+        onClick: () => {
+          setIsOpen(false);
+          handleAuthentication(() => {
+            navigate("/dating/create");
+            toast({
+              title: "Create Dating Profile",
+              description: "Start creating your dating profile"
+            });
+          });
+        }
+      },
+    ];
+    
+    // Return specialized menu based on current path
     switch (currentPath) {
       case '/shorts':
-        return [
-          { 
-            icon: Film, 
-            label: "Upload Eros", 
-            onClick: () => {
-              setIsOpen(false);
-              navigate("/shorts/upload");
-              toast({
-                title: "Create new Eros",
-                description: "Upload a video to share with your audience"
-              });
-            }
-          }
-        ];
+        return [commonItems[2]]; // Just the Upload Eros option
       case '/dating':
-        return [
-          { 
-            icon: Heart, 
-            label: "Create BD", 
-            onClick: () => {
-              setIsOpen(false);
-              navigate("/dating/create");
-              toast({
-                title: "Create Dating Profile",
-                description: "Start creating your dating profile"
-              });
-            }
-          }
-        ];
+        return [commonItems[3]]; // Just the Dating Ad option
       default:
-        return [
-          { 
-            icon: Image, 
-            label: "Create Post", 
-            onClick: () => {
-              setIsOpen(false);
-              navigate("/create-post");
-              toast({
-                title: "Create Post",
-                description: "Share your thoughts with your audience"
-              });
-            }
-          },
-          { 
-            icon: Video, 
-            label: "Create Story", 
-            onClick: () => {
-              setIsOpen(false);
-              navigate("/create-story");
-              toast({
-                title: "Create Story",
-                description: "Share a moment with your audience"
-              });
-            }
-          },
-          { 
-            icon: Heart, 
-            label: "Dating Ad", 
-            onClick: () => {
-              setIsOpen(false);
-              navigate("/dating/create");
-              toast({
-                title: "Create Dating Profile",
-                description: "Start creating your dating profile"
-              });
-            }
-          },
-          { 
-            icon: Film, 
-            label: "Create Eros", 
-            onClick: () => {
-              setIsOpen(false);
-              navigate("/shorts/upload");
-              toast({
-                title: "Create new Eros",
-                description: "Upload a video to share with your audience"
-              });
-            }
-          },
-        ];
+        return commonItems;
     }
   };
 
@@ -133,6 +131,12 @@ export const FloatingActionMenu = ({ currentPath }: FloatingActionMenuProps) => 
       >
         <Plus className="h-6 w-6" />
       </Button>
+
+      {/* Video Upload Dialog */}
+      <UploadVideoDialog 
+        open={isVideoDialogOpen} 
+        onOpenChange={setIsVideoDialogOpen}
+      />
     </div>
   );
 };

@@ -28,6 +28,7 @@ export const MainLayout = () => {
           <Outlet />
         </MainContent>
 
+        {/* Single source for all upload buttons */}
         <FloatingActionMenu currentPath={location.pathname} />
       </div>
     </div>

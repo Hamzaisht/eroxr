@@ -1,7 +1,9 @@
+
 import { useState, useCallback } from 'react';
 import { UploadOptions, UploadResult, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from './use-toast';
+import { useFileUpload } from './useFileUpload';
 
 export const useMediaUpload = (options?: UploadOptions) => {
   const [uploadState, setUploadState] = useState<UploadState>({
@@ -14,6 +16,7 @@ export const useMediaUpload = (options?: UploadOptions) => {
 
   const session = useSession();
   const { toast } = useToast();
+  const { uploadFileToStorage } = useFileUpload();
 
   const validateFile = useCallback((file: File, opts?: UploadOptions): FileValidationResult => {
     if (!file) {
@@ -96,24 +99,28 @@ export const useMediaUpload = (options?: UploadOptions) => {
     });
 
     try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
+      // Determine content bucket based on content category
+      const bucket = mergedOptions?.contentCategory === 'story' ? 'stories' : 'media';
+      
+      // Track progress
+      const onProgress = (progress: number) => {
         setUploadState(prev => {
-          const newProgress = Math.min(prev.progress + Math.random() * 10, 90);
           if (mergedOptions?.onProgress) {
-            mergedOptions.onProgress(newProgress);
+            mergedOptions.onProgress(progress);
           }
-          return { ...prev, progress: newProgress };
+          return { ...prev, progress };
         });
-      }, 300);
+      };
 
-      // TODO: Replace with actual upload logic
-      // This is just a placeholder for the real implementation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Use our utility function for the upload
+      const result = await uploadFileToStorage(file, {
+        bucket,
+        onProgress
+      });
 
-      clearInterval(progressInterval);
-
-      const mockUrl = `https://example.com/uploads/${Date.now()}_${file.name}`;
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
 
       setUploadState({
         isUploading: false,
@@ -137,8 +144,8 @@ export const useMediaUpload = (options?: UploadOptions) => {
       }
 
       return { 
-        url: mockUrl, 
-        path: `uploads/${file.name}`,
+        url: result.url || '', 
+        path: result.path || '',
         size: file.size,
         contentType: file.type,
         success: true 
@@ -171,7 +178,7 @@ export const useMediaUpload = (options?: UploadOptions) => {
         error: errorMessage
       };
     }
-  }, [session, validateFile, toast, options]);
+  }, [session, validateFile, toast, options, uploadFileToStorage]);
 
   const resetUploadState = useCallback(() => {
     setUploadState({
