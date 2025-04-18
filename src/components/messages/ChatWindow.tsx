@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -134,6 +135,24 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         description: 'Failed to process snap. Please try again.',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleVisibilityChange = () => {
+    if (!document.hidden && session?.user?.id) {
+      // Mark messages as read when the document becomes visible
+      const unreadMessages = (messages || []).filter(
+        msg => msg.recipient_id === session.user.id && !msg.viewed_at
+      );
+      
+      if (unreadMessages.length > 0) {
+        supabase.from('direct_messages')
+          .update({ 
+            delivery_status: 'seen',
+            viewed_at: new Date().toISOString() 
+          })
+          .in('id', unreadMessages.map(msg => msg.id));
+      }
     }
   };
 

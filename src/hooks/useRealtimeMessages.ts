@@ -23,11 +23,15 @@ export function useRealtimeMessages(recipientId?: string) {
       }, () => {
         // Invalidate messages queries
         if (recipientId) {
-          queryClient.invalidateQueries(['chat', session.user.id, recipientId]);
+          queryClient.invalidateQueries({
+            queryKey: ['chat', session.user.id, recipientId]
+          });
         }
         
         // Always invalidate the conversation list
-        queryClient.invalidateQueries(['messages', session.user.id]);
+        queryClient.invalidateQueries({
+          queryKey: ['messages', session.user.id]
+        });
       })
       .on('postgres_changes', {
         event: 'UPDATE',
@@ -39,9 +43,13 @@ export function useRealtimeMessages(recipientId?: string) {
       }, () => {
         // Same invalidation as for inserts
         if (recipientId) {
-          queryClient.invalidateQueries(['chat', session.user.id, recipientId]);
+          queryClient.invalidateQueries({
+            queryKey: ['chat', session.user.id, recipientId]
+          });
         }
-        queryClient.invalidateQueries(['messages', session.user.id]);
+        queryClient.invalidateQueries({
+          queryKey: ['messages', session.user.id]
+        });
       })
       .subscribe();
       

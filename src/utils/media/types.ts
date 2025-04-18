@@ -47,3 +47,17 @@ export interface UploadOptions {
   resetDelay?: number;
   onProgress?: (progress: number) => void;
 }
+
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  success: boolean;
+  files: File[];
+  previews: string[];
+}
+
+export interface FileValidationResult {
+  isValid: boolean;
+  error?: string;
+}

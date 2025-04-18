@@ -9,18 +9,20 @@ import { useGhostSurveillance } from '@/components/admin/platform/surveillance/h
 import { LiveSession } from '@/types/surveillance';
 import { LiveAlert } from '@/types/alerts';
 
+interface ActiveSurveillanceState {
+  isWatching: boolean;
+  targetUserId?: string;
+  startedAt?: string;
+  session?: LiveSession | null;
+  startTime?: string | null;
+}
+
 interface GhostModeContextType {
   isGhostMode: boolean;
   canUseGhostMode: boolean;
   isLoading: boolean;
   toggleGhostMode: () => Promise<void>;
-  activeSurveillance: {
-    isWatching: boolean;
-    targetUserId?: string;
-    startedAt?: string;
-    session?: LiveSession | null;
-    startTime?: string | null;
-  };
+  activeSurveillance: ActiveSurveillanceState;
   liveAlerts?: LiveAlert[];
   refreshAlerts?: () => Promise<void>;
   startSurveillance: (targetUserIdOrSession: string | LiveSession) => Promise<boolean>;
