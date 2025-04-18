@@ -6,7 +6,7 @@ import { useSuperAdminCheck } from './useSuperAdminCheck';
 import { useToast } from '@/hooks/use-toast';
 import { useGhostAlerts } from '@/components/admin/platform/surveillance/hooks/useGhostAlerts';
 import { useGhostSurveillance } from '@/components/admin/platform/surveillance/hooks/useGhostSurveillance';
-import { LiveSession } from '@/components/admin/platform/surveillance/types';
+import { LiveSession } from '@/types/surveillance';
 import { LiveAlert } from '@/types/alerts';
 
 interface GhostModeContextType {
