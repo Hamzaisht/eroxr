@@ -16,6 +16,7 @@ interface Video {
   like_count: number;
   comment_count: number;
   share_count: number;
+  duration: number; // Added duration property
   creator?: {
     username: string;
     avatar_url: string | null;
