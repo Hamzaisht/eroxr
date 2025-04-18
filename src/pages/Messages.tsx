@@ -79,20 +79,20 @@ const Messages = () => {
           data.forEach(msg => {
             // Create sender Profile object
             const sender: Profile = {
-              id: msg.sender.id,
-              username: msg.sender.username,
-              avatar_url: msg.sender.avatar_url,
-              status: msg.sender.status,
+              id: (msg.sender as any).id,
+              username: (msg.sender as any).username,
+              avatar_url: (msg.sender as any).avatar_url,
+              status: (msg.sender as any).status,
               created_at: '', // These fields are required but not used in this context
               updated_at: ''
             };
             
             // Create recipient Profile object
             const recipient: Profile = {
-              id: msg.recipient.id,
-              username: msg.recipient.username,
-              avatar_url: msg.recipient.avatar_url,
-              status: msg.recipient.status,
+              id: (msg.recipient as any).id,
+              username: (msg.recipient as any).username,
+              avatar_url: (msg.recipient as any).avatar_url,
+              status: (msg.recipient as any).status,
               created_at: '', // These fields are required but not used in this context
               updated_at: ''
             };
@@ -191,19 +191,19 @@ const Messages = () => {
           // Convert the raw data to properly typed Message array
           const typedMessages: Message[] = data.map(msg => {
             const sender: Profile = {
-              id: msg.sender.id,
-              username: msg.sender.username,
-              avatar_url: msg.sender.avatar_url,
-              status: msg.sender.status,
+              id: (msg.sender as any).id,
+              username: (msg.sender as any).username,
+              avatar_url: (msg.sender as any).avatar_url,
+              status: (msg.sender as any).status,
               created_at: '', // These fields are required but not used in this context
               updated_at: ''
             };
             
             const recipient: Profile = {
-              id: msg.recipient.id,
-              username: msg.recipient.username,
-              avatar_url: msg.recipient.avatar_url,
-              status: msg.recipient.status,
+              id: (msg.recipient as any).id,
+              username: (msg.recipient as any).username,
+              avatar_url: (msg.recipient as any).avatar_url,
+              status: (msg.recipient as any).status,
               created_at: '', // These fields are required but not used in this context
               updated_at: ''
             };
