@@ -55,9 +55,20 @@ export interface UploadState {
   success: boolean;
   files: File[];
   previews: string[];
+  isComplete?: boolean;
 }
 
 export interface FileValidationResult {
   isValid: boolean;
   error?: string;
+  message?: string;
+}
+
+export interface ActiveSurveillanceState {
+  active: boolean;
+  userId: string;
+  targetUserId?: string;
+  startedAt?: Date;
+  duration: number;
+  sessionId?: string;
 }

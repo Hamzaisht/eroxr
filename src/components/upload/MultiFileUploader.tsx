@@ -1,5 +1,4 @@
-
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Upload, X, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -72,6 +71,7 @@ export const MultiFileUploader = ({
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [errors, setErrors] = useState<string[]>([]);
   
   const allowedTypes = (() => {
     if (mediaTypes === 'image') return 'image/*';
@@ -98,50 +98,39 @@ export const MultiFileUploader = ({
     clearPreview
   } = useFilePreview();
   
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleFilesSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const fileArray = Array.from(e.target.files);
+    const newSelectedFiles: File[] = [];
+    const newErrors: string[] = [];
     
-    const newFiles: File[] = [];
-    const newFileErrors: Record<string, string> = {};
-    const newPreviews: Record<string, string> = {};
-    
-    if (selectedFiles.length + files.length > maxFiles) {
-      onUploadError?.(`You can upload a maximum of ${maxFiles} files`);
-      return;
-    }
-    
-    Array.from(files).forEach(file => {
-      const fileId = `${file.name}-${Date.now()}`;
-      
+    fileArray.forEach(file => {
       const validation = validateFile(file);
       if (!validation.isValid) {
-        newFileErrors[fileId] = validation.message || "Invalid file";
-        return;
-      }
-      
-      newFiles.push(file);
-      
-      try {
-        const previewUrl = createPreview(file);
-        newPreviews[fileId] = previewUrl;
-      } catch (error) {
-        console.error('Failed to create preview:', error);
+        newErrors.push(`${file.name}: ${validation.error || validation.message || 'Invalid file'}`);
+      } else {
+        newSelectedFiles.push(file);
       }
     });
     
-    setSelectedFiles(prev => [...prev, ...newFiles]);
-    setFileErrors(prev => ({ ...prev, ...newFileErrors }));
-    setPreviews(prev => ({ ...prev, ...newPreviews }));
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (newErrors.length > 0) {
+      setErrors(prev => [...prev, ...newErrors]);
     }
     
-    if (autoUpload && newFiles.length > 0) {
-      handleUploadAll(newFiles);
+    if (newSelectedFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...newSelectedFiles]);
+      
+      // Create previews for the valid files
+      newSelectedFiles.forEach(file => {
+        createPreview(file);
+      });
+      
+      if (autoUpload) {
+        handleUpload(newSelectedFiles);
+      }
     }
-  };
+  }, [validateFile, createPreview, autoUpload, handleUpload]);
   
   const handleUploadFile = async (file: File, index: number) => {
     const result = await uploadMedia(file, uploadOptions);
@@ -156,7 +145,7 @@ export const MultiFileUploader = ({
     return result;
   };
   
-  const handleUploadAll = async (filesToUpload = selectedFiles) => {
+  const handleUpload = async (filesToUpload: File[] = selectedFiles) => {
     const urls: string[] = [];
     
     for (let i = 0; i < filesToUpload.length; i++) {
@@ -207,7 +196,7 @@ export const MultiFileUploader = ({
         type="file"
         className="hidden"
         accept={allowedTypes}
-        onChange={handleFileSelect}
+        onChange={handleFilesSelect}
         multiple
         disabled={isUploading || selectedFiles.length >= maxFiles}
       />
@@ -299,7 +288,7 @@ export const MultiFileUploader = ({
       {!autoUpload && selectedFiles.length > 0 && (
         <Button
           variant="default"
-          onClick={() => handleUploadAll()}
+          onClick={() => handleUpload(selectedFiles)}
           disabled={isUploading || selectedFiles.length === 0}
           className="w-full"
         >
@@ -326,6 +315,16 @@ export const MultiFileUploader = ({
         <div className="flex items-center gap-2 text-destructive text-sm p-2 bg-destructive/10 rounded-md">
           <AlertCircle className="h-4 w-4" />
           <span>{error}</span>
+        </div>
+      )}
+      {errors.length > 0 && (
+        <div className="space-y-2">
+          {errors.map((err, index) => (
+            <div key={index} className="flex items-center gap-2 text-destructive text-sm p-2 bg-destructive/10 rounded-md">
+              <AlertCircle className="h-4 w-4" />
+              <span>{err}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>

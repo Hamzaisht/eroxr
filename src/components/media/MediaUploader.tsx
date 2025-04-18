@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -124,8 +123,8 @@ export const MediaUploader = ({
     
     const validation = validateFile(file);
     if (!validation.isValid) {
-      console.error("File validation failed:", validation.message);
-      if (onError) onError(validation.message || "Invalid file");
+      console.error("File validation failed:", validation.error || validation.message);
+      if (onError) onError(validation.error || validation.message || "Invalid file");
       return;
     }
     

@@ -23,6 +23,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     progress: 0,
     error: null,
     success: false,
+    files: [],
+    previews: [],
     isComplete: false
   });
 
@@ -36,6 +38,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       progress: 0,
       error: null,
       success: false,
+      files: [],
+      previews: [],
       isComplete: false
     });
   }, []);
@@ -46,7 +50,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     options?: UploadOptions
   ): FileValidationResult => {
     if (!file) {
-      return { isValid: false, message: 'No file provided' };
+      return { isValid: false, error: 'No file provided', message: 'No file provided' };
     }
 
     const maxSizeMB = options?.maxSizeInMB || defaultOptions?.maxSizeInMB || MAX_FILE_SIZE_DEFAULT;
@@ -55,7 +59,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     if (file.size > maxSizeBytes) {
       return { 
         isValid: false, 
-        message: `File size exceeds the ${maxSizeMB}MB limit` 
+        error: `File size exceeds the ${maxSizeMB}MB limit`,
+        message: `File size exceeds the ${maxSizeMB}MB limit`
       };
     }
 
@@ -64,7 +69,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
       return { 
         isValid: false, 
-        message: `File type '${file.type}' is not supported` 
+        error: `File type '${file.type}' is not supported`,
+        message: `File type '${file.type}' is not supported`
       };
     }
 
@@ -92,11 +98,11 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     if (!validation.isValid) {
       toast({
         title: 'Invalid File',
-        description: validation.message,
+        description: validation.message || validation.error || 'Invalid file',
         variant: 'destructive',
       });
       
-      return { success: false, error: validation.message };
+      return { success: false, error: validation.message || validation.error };
     }
 
     // Begin upload process
@@ -105,6 +111,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       progress: 0,
       error: null,
       success: false,
+      files: [],
+      previews: [],
       isComplete: false
     });
 
@@ -120,7 +128,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         
         return {
           ...prev,
-          progress: newProgress
+          progress: newProgress,
         };
       });
     }, 300);
@@ -143,6 +151,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
           progress: 0,
           error: result.error || 'Upload failed',
           success: false,
+          files: [],
+          previews: [],
           isComplete: false
         });
         
@@ -161,6 +171,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         progress: 100,
         error: null,
         success: true,
+        files: [],
+        previews: [],
         isComplete: true
       });
       
@@ -191,6 +203,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         progress: 0,
         error: errorMessage,
         success: false,
+        files: [],
+        previews: [],
         isComplete: false
       });
       
