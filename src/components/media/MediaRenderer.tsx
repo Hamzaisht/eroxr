@@ -106,8 +106,8 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
     );
   }
 
-  // Render based on media type - using more comprehensive checking
-  if (mediaType === MediaType.VIDEO || mediaType === MediaType.VIDEO) {
+  // Render based on media type
+  if (mediaType === MediaType.VIDEO) {
     return (
       <video
         ref={ref as React.Ref<HTMLVideoElement>}
@@ -127,7 +127,7 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
     );
   }
 
-  if (mediaType === MediaType.IMAGE || mediaType === MediaType.IMAGE) {
+  if (mediaType === MediaType.IMAGE) {
     return (
       <img
         ref={ref as React.Ref<HTMLImageElement>}
@@ -141,7 +141,7 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
     );
   }
 
-  if (mediaType === MediaType.AUDIO || mediaType === MediaType.AUDIO) {
+  if (mediaType === MediaType.AUDIO) {
     return (
       <audio
         src={mediaUrl}
@@ -157,7 +157,7 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
     );
   }
 
-  if (mediaType === MediaType.DOCUMENT || mediaType === MediaType.DOCUMENT) {
+  if (mediaType === MediaType.DOCUMENT) {
     return (
       <iframe
         src={mediaUrl}

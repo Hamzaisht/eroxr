@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,9 +7,16 @@ import { ActiveSurveillanceState } from '@/utils/media/types';
 
 interface UseGhostModeReturn {
   isGhostModeEnabled: boolean;
+  isGhostMode: boolean; // Alias for isGhostModeEnabled for backwards compatibility
   toggleGhostMode: () => Promise<void>;
   activeSurveillance: ActiveSurveillanceState;
   formatTime: (state: ActiveSurveillanceState) => string;
+  isLoading: boolean;
+  canUseGhostMode: boolean;
+  startSurveillance: (targetUserId: string, duration: number) => Promise<void>;
+  stopSurveillance: () => Promise<void>;
+  liveAlerts: any[] | null;
+  refreshAlerts: () => Promise<void>;
 }
 
 export const useGhostMode = (): UseGhostModeReturn => {
@@ -17,7 +25,15 @@ export const useGhostMode = (): UseGhostModeReturn => {
     active: false,
     userId: '',
     duration: 0,
+    isWatching: false,
+    session: null,
+    startTime: null,
+    targetUserId: '',
+    startedAt: undefined,
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [canUseGhostMode, setCanUseGhostMode] = useState(true); // Default to true
+  const [liveAlerts, setLiveAlerts] = useState<any[] | null>(null);
   const session = useSession();
   const { toast } = useToast();
 
@@ -56,16 +72,21 @@ export const useGhostMode = (): UseGhostModeReturn => {
       return;
     }
 
-    setIsGhostModeEnabled(prev => {
-      const newState = !prev;
-      localStorage.setItem('ghostMode', String(newState));
-      return newState;
-    });
+    setIsLoading(true);
+    try {
+      setIsGhostModeEnabled(prev => {
+        const newState = !prev;
+        localStorage.setItem('ghostMode', String(newState));
+        return newState;
+      });
 
-    toast({
-      title: "Ghost Mode",
-      description: `Ghost mode ${isGhostModeEnabled ? 'disabled' : 'enabled'}.`,
-    });
+      toast({
+        title: "Ghost Mode",
+        description: `Ghost mode ${isGhostModeEnabled ? 'disabled' : 'enabled'}.`,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }, [session?.user?.id, isGhostModeEnabled, toast]);
 
   const startSurveillance = useCallback(async (targetUserId: string, duration: number) => {
@@ -88,6 +109,9 @@ export const useGhostMode = (): UseGhostModeReturn => {
       startedAt: startedAt,
       duration: duration,
       sessionId: sessionId,
+      isWatching: true,
+      session: null, // Will be populated with actual session data
+      startTime: startedAt.toISOString(),
     });
 
     toast({
@@ -106,6 +130,11 @@ export const useGhostMode = (): UseGhostModeReturn => {
       active: false,
       userId: '',
       duration: 0,
+      isWatching: false,
+      session: null,
+      startTime: null,
+      targetUserId: '',
+      startedAt: undefined,
     });
 
     toast({
@@ -129,10 +158,24 @@ export const useGhostMode = (): UseGhostModeReturn => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  // Mock implementation for refreshAlerts
+  const refreshAlerts = useCallback(async () => {
+    // In a real app, this would fetch real alerts from an API
+    console.log("Refreshing ghost mode alerts");
+    setLiveAlerts([]);
+  }, []);
+
   return {
     isGhostModeEnabled,
+    isGhostMode: isGhostModeEnabled, // Alias for backward compatibility
     toggleGhostMode,
     activeSurveillance,
     formatTime,
+    isLoading,
+    canUseGhostMode,
+    startSurveillance,
+    stopSurveillance,
+    liveAlerts,
+    refreshAlerts
   };
 };

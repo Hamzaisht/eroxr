@@ -71,4 +71,7 @@ export interface ActiveSurveillanceState {
   startedAt?: Date;
   duration: number;
   sessionId?: string;
+  isWatching?: boolean;
+  session?: any | null;
+  startTime?: string | null;
 }
