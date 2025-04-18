@@ -1,4 +1,5 @@
-import { Creator } from "@/integrations/supabase/types/profile";
+
+import { Creator, Profile } from "@/integrations/supabase/types/profile";
 
 export type Post = {
   id: string;
@@ -18,5 +19,5 @@ export type Post = {
   has_purchased?: boolean;
   screenshots_count: number;
   downloads_count: number;
-  creator: Creator;
+  creator: Creator | Profile;
 };

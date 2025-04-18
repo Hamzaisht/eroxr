@@ -28,7 +28,7 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   const { isGhostMode } = useGhostMode();
   
   useRealtimeMessages(recipientId);
-  const { isUploading, handleSendMessage, handleMediaSelect, handleSnapCapture } = useChatActions({
+  const { isUploading, handleSendMessage, handleMediaSelect, handleSnapCapture: originalHandleSnapCapture } = useChatActions({
     recipientId
   });
 
@@ -88,7 +88,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         if (payload.user_id === recipientId && payload.recipient_id === session?.user?.id) {
           setIsTyping(payload.is_typing);
           
-          // Auto-clear typing indicator after 5 seconds in case the event is missed
           if (payload.is_typing) {
             setTimeout(() => setIsTyping(false), 5000);
           }
@@ -111,21 +110,30 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     setShowCall(true);
   };
 
-  const handleVisibilityChange = async () => {
-    if (document.visibilityState === 'visible' && session?.user?.id) {
-      const unviewedMessages = messages.filter(
-        msg => msg.recipient_id === session.user.id && 
-        (msg.delivery_status === 'delivered' || !msg.viewed_at)
-      );
+  const blobToDataURL = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const handleSnapCapture = async (blob: Blob) => {
+    try {
+      const dataURL = await blobToDataURL(blob);
       
-      if (unviewedMessages.length > 0) {
-        await supabase.from('direct_messages')
-          .update({ 
-            delivery_status: 'seen',
-            viewed_at: new Date().toISOString()
-          })
-          .in('id', unviewedMessages.map(msg => msg.id));
-      }
+      if (!session?.user?.id || !recipientId) return;
+      
+      await originalHandleSnapCapture(dataURL);
+      
+    } catch (error) {
+      console.error('Error processing snap:', error);
+      toast({
+        title: 'Snap failed',
+        description: 'Failed to process snap. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -141,7 +149,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     };
   }, [messages, session?.user?.id]);
 
-  // Track online presence via channels
   useEffect(() => {
     if (!session?.user?.id || isGhostMode) return;
     
@@ -174,82 +181,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
       });
     };
   }, [session?.user?.id, isGhostMode]);
-
-  const handleSnapCapture = async (blob: Blob) => {
-    try {
-      // Convert blob to data URL for proper handling
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      
-      reader.onloadend = async () => {
-        const dataURL = reader.result as string;
-        
-        // Continue with the existing logic using dataURL
-        if (!session?.user?.id || !recipientId) return;
-    
-        setIsUploading(true);
-    
-        // Upload to storage
-        const userId = session.user.id;
-        const fileName = `snap_${Date.now()}.jpg`;
-        const path = `${userId}/messages/${fileName}`;
-    
-        const { data, error } = await supabase.storage
-          .from('messages')
-          .upload(path, dataURLToBlob(dataURL), {
-            contentType: 'image/jpeg',
-          });
-    
-        if (error) {
-          console.error('Error uploading snap:', error);
-          toast({
-            title: 'Upload failed',
-            description: 'Failed to upload snap. Please try again.',
-            variant: 'destructive',
-          });
-          setIsUploading(false);
-          return;
-        }
-    
-        // Get public URL
-        const { data: publicURL } = supabase.storage
-          .from('messages')
-          .getPublicUrl(path);
-    
-        if (publicURL && publicURL.publicUrl) {
-          await handleSendMessage({
-            media: [publicURL.publicUrl],
-            message: '',
-            messageType: 'snap',
-          });
-        }
-    
-        setIsUploading(false);
-      };
-    } catch (error) {
-      console.error('Error processing snap:', error);
-      toast({
-        title: 'Snap failed',
-        description: 'Failed to process snap. Please try again.',
-        variant: 'destructive',
-      });
-      setIsUploading(false);
-    }
-  };
-
-  const dataURLToBlob = (dataURL: string): Blob => {
-    const arr = dataURL.split(',');
-    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    
-    return new Blob([u8arr], { type: mime });
-  };
 
   return (
     <div className="flex flex-col h-full bg-luxury-dark">

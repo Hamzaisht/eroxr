@@ -25,9 +25,11 @@ export const useShortsFeed = (specificShortId?: string | null) => {
   const shorts: Short[] = (data?.pages.flatMap(page => page) ?? []).map(post => ({
     id: post.id,
     creator: {
+      id: post.creator_id,
       username: post.creator?.username || 'Anonymous',
       avatar_url: post.creator?.avatar_url || null,
-      id: post.creator_id
+      created_at: post.created_at,
+      updated_at: post.created_at
     },
     creator_id: post.creator_id,
     content: post.content,
@@ -39,7 +41,7 @@ export const useShortsFeed = (specificShortId?: string | null) => {
     created_at: post.created_at,
     view_count: post.view_count || 0,
     visibility: post.visibility,
-    description: post.content // Use content as description since description doesn't exist on Post
+    description: post.content
   }));
 
   // Update loading state when data changes

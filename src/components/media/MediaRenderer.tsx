@@ -106,7 +106,7 @@ export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, Med
     );
   }
 
-  // Render based on media type - using string comparisons to be safer
+  // Render based on media type - using more comprehensive checking
   if (mediaType === MediaType.VIDEO || mediaType === 'video') {
     return (
       <video

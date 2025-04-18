@@ -13,6 +13,8 @@ export interface MediaSource {
   id?: string;
   media_url?: string | string[] | null;
   video_url?: string | null;
+  video_urls?: string[] | null;
+  media_urls?: string[] | null;
   thumbnail_url?: string | null;
   media_type?: MediaType | string;
   creator_id?: string;

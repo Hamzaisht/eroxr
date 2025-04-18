@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { PlayCircle, ImageIcon } from "lucide-react";
@@ -6,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { AvatarImage } from "@/components/ui/avatar";
 import { AvatarFallback } from "@/components/ui/avatar";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType, MediaSource } from "@/utils/media/types";
 
 interface StoryItemProps {
   story: Story;

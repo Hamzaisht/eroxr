@@ -1,4 +1,6 @@
+
 import { Post as PostType } from "@/integrations/supabase/types/post";
+import { Creator, BasicProfile } from "@/integrations/supabase/types/profile";
 
 export interface MainFeedProps {
   userId?: string;
@@ -10,9 +12,5 @@ export interface MainFeedProps {
 
 export interface FeedPost extends PostType {
   has_liked: boolean;
-  creator: {
-    id: string;
-    username: string | null;
-    avatar_url: string | null;
-  };
+  creator: BasicProfile | Creator;
 }

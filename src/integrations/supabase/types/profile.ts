@@ -21,5 +21,18 @@ export interface Profile {
   last_username_change?: string | null;
 }
 
-// Creator type used in various components
-export type Creator = Profile;
+// Creator type used in various components - more lenient for easier usage
+export interface Creator {
+  id: string;
+  username?: string | null;
+  avatar_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Use this type for components that don't need full profile data
+export interface BasicProfile {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+}
