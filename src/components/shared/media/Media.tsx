@@ -3,8 +3,7 @@ import { forwardRef, useState, useEffect, useCallback } from 'react';
 import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
-import { MediaLoadingState } from '@/components/media/states/MediaLoadingState';
-import { MediaErrorState } from '@/components/media/states/MediaErrorState';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 interface MediaProps extends MediaOptions {
   source: MediaSource | string;
@@ -100,27 +99,32 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     }
   };
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className={`relative ${className}`}>
-        <MediaLoadingState />
+      <div className={`relative flex items-center justify-center bg-black/30 ${className}`}>
+        <Loader2 className="h-8 w-8 animate-spin text-white/70" />
       </div>
     );
   }
 
+  // Error state
   if (error || !mediaUrl) {
     return (
-      <div className={`relative ${className}`}>
-        <MediaErrorState 
-          message={error || "Media unavailable"}
-          onRetry={handleRetry}
-          accessibleUrl={mediaUrl}
-          retryCount={retryCount}
-        />
+      <div className={`relative flex flex-col items-center justify-center bg-black/30 ${className}`}>
+        <AlertCircle className="h-8 w-8 mb-2 text-white/70" />
+        <p className="text-sm text-white/70 mb-2">{error || "Media unavailable"}</p>
+        <button
+          onClick={handleRetry}
+          className="px-3 py-1 bg-luxury-primary/80 text-white rounded-md text-sm"
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
+  // Render video element
   if (mediaType === MediaType.VIDEO || mediaType === 'video') {
     return (
       <video
@@ -143,6 +147,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     );
   }
 
+  // Render image element
   return (
     <img
       ref={ref as React.RefObject<HTMLImageElement>}

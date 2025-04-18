@@ -1,14 +1,23 @@
 
 import { Plus, Upload } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 export const UploadShortButton = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Determine the correct navigation path based on current location
+  const getUploadPath = () => {
+    if (location.pathname.includes('/eros')) {
+      return '/eros/upload';
+    }
+    return '/shorts/upload';
+  };
   
   const handleClick = () => {
     if (!user) {
@@ -17,9 +26,9 @@ export const UploadShortButton = () => {
         description: "You must be logged in to upload videos",
         variant: "destructive",
       });
-      navigate("/login", { state: { from: "/shorts/upload" } });
+      navigate("/login", { state: { from: getUploadPath() } });
     } else {
-      navigate("/shorts/upload");
+      navigate(getUploadPath());
     }
   };
   

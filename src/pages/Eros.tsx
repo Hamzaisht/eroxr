@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { ErosItem } from "@/components/eros/ErosItem";
 import { ErosCommentDialog } from "@/components/eros/ErosCommentDialog";
@@ -9,6 +8,7 @@ import { ErosShareDialog } from "@/components/eros/ErosShareDialog";
 import { useErosFeed } from "@/hooks/useErosFeed";
 import { useErosComments } from "@/hooks/useErosComments";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { UploadShortButton } from "@/components/home/UploadShortButton";
 
 export default function Eros() {
   const { videoId } = useParams<{ videoId?: string }>();
@@ -17,6 +17,7 @@ export default function Eros() {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const navigate = useNavigate();
   
   // Get videos from our hook
   const {
@@ -85,6 +86,10 @@ export default function Eros() {
     
     // Track share action
     handleShare(id);
+  };
+
+  const handleUploadClick = () => {
+    navigate("/eros/upload");
   };
 
   return (
@@ -160,6 +165,11 @@ export default function Eros() {
           console.log(`Shared on ${platform}`);
         }}
       />
+
+      {/* Upload button */}
+      <div className="fixed bottom-24 right-6 md:bottom-6 z-50">
+        <UploadShortButton />
+      </div>
     </div>
   );
 }

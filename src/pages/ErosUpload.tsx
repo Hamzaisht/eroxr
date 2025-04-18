@@ -1,27 +1,27 @@
 
 import { motion } from "framer-motion";
-import { ErosUploadForm } from "@/components/eros/ErosUploadForm";
 import { useNavigate } from "react-router-dom";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { VideoUploadForm } from "@/components/upload/VideoUploadForm";
 
 export default function ErosUpload() {
-  const session = useSession();
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
   // Check authentication
   useEffect(() => {
-    if (!session) {
+    if (!user) {
       toast({
         title: "Sign in required",
         description: "Please sign in to upload videos",
         variant: "destructive"
       });
-      navigate("/shorts");
+      navigate("/login", { state: { from: "/eros/upload" } });
     }
-  }, [session, toast, navigate]);
+  }, [user, toast, navigate]);
   
   // Handle successful upload
   const handleUploaded = (videoId: string) => {
@@ -29,10 +29,14 @@ export default function ErosUpload() {
       title: "Upload successful",
       description: "Your video has been uploaded and is being processed",
     });
-    navigate(`/shorts/${videoId}`);
+    navigate(`/eros/${videoId}`);
   };
   
-  if (!session) {
+  const handleCancel = () => {
+    navigate("/eros");
+  };
+  
+  if (!user) {
     return null;
   }
 
@@ -44,9 +48,14 @@ export default function ErosUpload() {
         transition={{ duration: 0.5 }}
         className="container px-4 mx-auto"
       >
-        <h1 className="text-2xl font-bold mb-6">Upload to Eros</h1>
+        <h1 className="text-2xl font-bold mb-6">Upload Video</h1>
         
-        <ErosUploadForm onUploaded={handleUploaded} />
+        <VideoUploadForm 
+          onComplete={handleUploaded}
+          onCancel={handleCancel}
+          maxSizeInMB={100}
+          userId={user.id}
+        />
       </motion.div>
     </div>
   );

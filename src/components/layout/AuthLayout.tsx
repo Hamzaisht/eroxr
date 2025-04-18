@@ -11,7 +11,7 @@ interface AuthLayoutProps {
 }
 
 export const AuthLayout = ({
-  requireAuth = false,  // Changed to false for login/register pages
+  requireAuth = false,  // Default for login/register pages
   redirectAuthenticatedTo = '/home',
   redirectUnauthenticatedTo = '/login',
 }: AuthLayoutProps) => {
@@ -23,12 +23,21 @@ export const AuthLayout = ({
     if (!isLoading) {
       if (requireAuth && !user) {
         // Redirect unauthenticated users to login
+        console.log('Auth required, redirecting to', redirectUnauthenticatedTo);
         navigate(redirectUnauthenticatedTo, { 
           state: { from: location.pathname } 
         });
       } else if (!requireAuth && user) {
         // Redirect authenticated users away from login/signup pages
-        navigate(redirectAuthenticatedTo);
+        console.log('User authenticated, redirecting to', redirectAuthenticatedTo);
+        
+        // Check if there's a return path in location state
+        const returnPath = location.state?.from;
+        if (returnPath && typeof returnPath === 'string') {
+          navigate(returnPath);
+        } else {
+          navigate(redirectAuthenticatedTo);
+        }
       }
     }
   }, [
@@ -38,7 +47,7 @@ export const AuthLayout = ({
     requireAuth, 
     redirectAuthenticatedTo, 
     redirectUnauthenticatedTo,
-    location.pathname
+    location
   ]);
 
   if (isLoading) {
@@ -47,7 +56,7 @@ export const AuthLayout = ({
 
   // Don't render anything if the user will be redirected
   if ((requireAuth && !user) || (!requireAuth && user)) {
-    return null;
+    return <LoadingScreen />;
   }
 
   return <Outlet />;

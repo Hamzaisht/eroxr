@@ -38,10 +38,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log('Auth state changed:', event, currentSession?.user?.email);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
-        // Defer profile fetch with setTimeout
+        // Defer profile fetch with setTimeout to prevent deadlocks
         if (currentSession?.user) {
           setTimeout(() => {
             fetchProfile(currentSession.user.id);
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log('Initial session check:', currentSession?.user?.email);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
@@ -69,6 +71,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
+      
       // Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -90,11 +94,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userRole = roleData?.role || 'user';
       
       if (profileData) {
+        console.log('Profile data loaded:', profileData.username);
         setProfile({
           ...profileData,
           role: userRole,
           status: profileData.status || 'offline'
         });
+      } else {
+        console.log('No profile data found for user:', userId);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -174,6 +181,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
+      console.log('User signed out successfully');
     } catch (error) {
       console.error('Error during logout:', error);
       toast({
