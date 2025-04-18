@@ -1,13 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { createUniqueFilePath } from "@/utils/media/mediaUtils";
 import { inferContentTypeFromExtension } from "@/utils/media/formatUtils";
-
-// Define a local addCacheBuster function since it's missing from urlUtils
-const addCacheBuster = (url: string): string => {
-  if (!url) return '';
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}t=${Date.now()}`;
-};
+import { addCacheBuster } from "@/utils/media/urlUtils";
 
 interface FileUploadOptions {
   contentType?: string;

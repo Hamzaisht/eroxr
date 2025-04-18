@@ -19,6 +19,7 @@ interface ErosItemProps {
   onSave: (id: string) => void;
   onMore?: (id: string) => void;
   className?: string;
+  autoPlay?: boolean;
 }
 
 export function ErosItem({
@@ -29,7 +30,8 @@ export function ErosItem({
   onShare,
   onSave,
   onMore,
-  className
+  className,
+  autoPlay = true
 }: ErosItemProps) {
   const [hasLiked, setHasLiked] = useState(video.hasLiked || false);
   const [hasSaved, setHasSaved] = useState(video.hasSaved || false);
@@ -89,6 +91,7 @@ export function ErosItem({
           videoUrl={video.url}
           thumbnailUrl={video.thumbnailUrl}
           isActive={isActive}
+          autoPlay={autoPlay}
           onError={handleVideoError}
         />
         

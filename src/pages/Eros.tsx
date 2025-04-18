@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2, AlertTriangle, RefreshCcw } from "lucide-react";
@@ -7,7 +8,6 @@ import { ErosShareDialog } from "@/components/eros/ErosShareDialog";
 import { useErosFeed } from "@/hooks/useErosFeed";
 import { useErosComments } from "@/hooks/useErosComments";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { UploadShortButton } from "@/components/home/UploadShortButton";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { ErosVideo } from "@/types/eros";
@@ -125,6 +125,7 @@ export default function Eros() {
     }
   }, []);
 
+  // Map Video type to ErosVideo type with correct properties
   const mappedVideos: ErosVideo[] = videos.map(video => ({
     id: video.id,
     url: video.video_url,
@@ -145,7 +146,7 @@ export default function Eros() {
     hasLiked: video.is_liked,
     hasSaved: video.is_saved,
     createdAt: video.created_at,
-    duration: video.duration,
+    duration: video.duration || 0,
   }));
 
   return (
@@ -183,7 +184,6 @@ export default function Eros() {
             onComment={() => handleCommentClick(video.id)}
             onShare={() => handleShareClick(video.id)}
             onSave={() => handleSave(video.id)}
-            autoPlay={isAutoPlayEnabled}
           />
         ))}
         
@@ -220,7 +220,9 @@ export default function Eros() {
       />
 
       <div className="fixed bottom-24 right-6 md:bottom-6 z-50">
-        <UploadShortButton onUploadClick={handleUploadClick} />
+        <div onClick={handleUploadClick}>
+          <UploadShortButton />
+        </div>
       </div>
       
       <div className="fixed bottom-24 left-6 md:bottom-6 z-50">

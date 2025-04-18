@@ -41,71 +41,89 @@ const Messages = () => {
   const { toast } = useToast();
   
   // Fetch conversations
-  useEffect(() => {
-    const fetchConversations = async () => {
-      if (!session?.user?.id) return;
+  const fetchConversations = async () => {
+    if (!session?.user?.id) return;
+    
+    try {
+      setLoading(true);
       
-      try {
-        setLoading(true);
-        
-        // Get all conversations where the user is either sender or recipient
-        const { data, error } = await supabase
-          .from('direct_messages')
-          .select(`
-            id, 
-            sender_id, 
-            recipient_id,
-            content,
-            media_url,
-            video_url,
-            created_at,
-            sender:profiles!direct_messages_sender_id_fkey (id, username, avatar_url, status),
-            recipient:profiles!direct_messages_recipient_id_fkey (id, username, avatar_url, status)
-          `)
-          .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
-          .order('created_at', { ascending: false });
+      // Get all conversations where the user is either sender or recipient
+      const { data, error } = await supabase
+        .from('direct_messages')
+        .select(`
+          id, 
+          sender_id, 
+          recipient_id,
+          content,
+          media_url,
+          video_url,
+          created_at,
+          sender:profiles!direct_messages_sender_id_fkey (id, username, avatar_url, status),
+          recipient:profiles!direct_messages_recipient_id_fkey (id, username, avatar_url, status)
+        `)
+        .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
+        .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching conversations:', error);
+      toast({
+        title: "Failed to load messages",
+        description: "Please try again later",
+        variant: "destructive"
+      });
+    } else {
+      // Group by conversation partner
+      const conversationsMap = new Map<string, Message>();
+      
+      if (data) {
+        data.forEach(msg => {
+          // Correctly handle the sender and recipient as Profile objects
+          const sender: Profile = {
+            id: msg.sender.id,
+            username: msg.sender.username,
+            avatar_url: msg.sender.avatar_url,
+            status: msg.sender.status,
+            created_at: '', // These fields are required but not used in this context
+            updated_at: ''
+          };
           
-        if (error) {
-          console.error('Error fetching conversations:', error);
-          toast({
-            title: "Failed to load messages",
-            description: "Please try again later",
-            variant: "destructive"
-          });
-        } else {
-          // Group by conversation partner
-          const conversationsMap = new Map<string, Message>();
+          const recipient: Profile = {
+            id: msg.recipient.id,
+            username: msg.recipient.username,
+            avatar_url: msg.recipient.avatar_url,
+            status: msg.recipient.status,
+            created_at: '', // These fields are required but not used in this context
+            updated_at: ''
+          };
           
-          if (data) {
-            data.forEach(msg => {
-              // Convert the raw data to properly typed Message
-              const message: Message = {
-                id: msg.id,
-                sender_id: msg.sender_id,
-                recipient_id: msg.recipient_id,
-                content: msg.content,
-                media_url: msg.media_url,
-                video_url: msg.video_url,
-                created_at: msg.created_at,
-                sender: msg.sender as unknown as Profile,
-                recipient: msg.recipient as unknown as Profile
-              };
-              
-              const otherUserId = message.sender_id === session.user.id ? message.recipient_id : message.sender_id;
-              if (!conversationsMap.has(otherUserId)) {
-                conversationsMap.set(otherUserId, message);
-              }
-            });
-            
-            setConversations(Array.from(conversationsMap.values()));
+          // Convert the raw data to properly typed Message
+          const message: Message = {
+            id: msg.id,
+            sender_id: msg.sender_id,
+            recipient_id: msg.recipient_id,
+            content: msg.content,
+            media_url: msg.media_url,
+            video_url: msg.video_url,
+            created_at: msg.created_at,
+            sender,
+            recipient
+          };
+          
+          const otherUserId = message.sender_id === session.user.id ? message.recipient_id : message.sender_id;
+          if (!conversationsMap.has(otherUserId)) {
+            conversationsMap.set(otherUserId, message);
           }
-        }
-      } catch (err) {
-        console.error('Error in conversation fetch:', err);
-      } finally {
-        setLoading(false);
+        });
+        
+        setConversations(Array.from(conversationsMap.values()));
       }
-    };
+    }
+  } catch (err) {
+    console.error('Error in conversation fetch:', err);
+  } finally {
+    setLoading(false);
+  }
+};
     
     fetchConversations();
     
@@ -158,27 +176,48 @@ const Messages = () => {
         `)
         .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${userId}),and(sender_id.eq.${userId},recipient_id.eq.${session.user.id})`)
         .order('created_at', { ascending: true });
-        
-      if (error) {
-        console.error('Error fetching messages:', error);
-        toast({
-          title: "Failed to load conversation",
-          description: "Please try again later", 
-          variant: "destructive"
-        });
-      } else {
+      
+    if (error) {
+      console.error('Error fetching messages:', error);
+      toast({
+        title: "Failed to load conversation",
+        description: "Please try again later", 
+        variant: "destructive"
+      });
+    } else {
+      if (data) {
         // Convert the raw data to properly typed Message array
-        const typedMessages: Message[] = data ? data.map(msg => ({
-          id: msg.id,
-          sender_id: msg.sender_id,
-          recipient_id: msg.recipient_id,
-          content: msg.content,
-          media_url: msg.media_url,
-          video_url: msg.video_url,
-          created_at: msg.created_at,
-          sender: msg.sender as unknown as Profile,
-          recipient: msg.recipient as unknown as Profile
-        })) : [];
+        const typedMessages: Message[] = data.map(msg => {
+          const sender: Profile = {
+            id: msg.sender.id,
+            username: msg.sender.username,
+            avatar_url: msg.sender.avatar_url,
+            status: msg.sender.status,
+            created_at: '', // These fields are required but not used in this context
+            updated_at: ''
+          };
+          
+          const recipient: Profile = {
+            id: msg.recipient.id,
+            username: msg.recipient.username,
+            avatar_url: msg.recipient.avatar_url,
+            status: msg.recipient.status,
+            created_at: '', // These fields are required but not used in this context
+            updated_at: ''
+          };
+          
+          return {
+            id: msg.id,
+            sender_id: msg.sender_id,
+            recipient_id: msg.recipient_id,
+            content: msg.content,
+            media_url: msg.media_url,
+            video_url: msg.video_url,
+            created_at: msg.created_at,
+            sender,
+            recipient
+          };
+        });
         
         setMessages(typedMessages);
         
@@ -190,12 +229,13 @@ const Messages = () => {
           .eq('sender_id', userId)
           .is('viewed_at', null);
       }
-    } catch (err) {
-      console.error('Error in message fetch:', err);
-    } finally {
-      setLoadingMessages(false);
     }
-  };
+  } catch (err) {
+    console.error('Error in message fetch:', err);
+  } finally {
+    setLoadingMessages(false);
+  }
+};
   
   // Select a conversation
   const selectConversation = (userId: string) => {
@@ -241,18 +281,18 @@ const Messages = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, avatar_url, status')
+        .select('id, username, avatar_url, status, created_at, updated_at')
         .neq('id', session?.user?.id || '');
-        
-      if (error) {
-        console.error('Error fetching available users:', error);
-      } else {
-        setAvailableUsers(data || []);
-      }
-    } catch (err) {
-      console.error('Error fetching users:', err);
+      
+    if (error) {
+      console.error('Error fetching available users:', error);
+    } else {
+      setAvailableUsers(data || []);
     }
-  };
+  } catch (err) {
+    console.error('Error fetching users:', err);
+  }
+};
   
   // Start a new conversation
   const startConversation = (userId: string) => {

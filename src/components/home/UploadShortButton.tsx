@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-export const UploadShortButton = () => {
+interface UploadShortButtonProps {
+  onUploadClick?: () => void;
+}
+
+export const UploadShortButton = ({ onUploadClick }: UploadShortButtonProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -20,6 +24,11 @@ export const UploadShortButton = () => {
   };
   
   const handleClick = () => {
+    if (onUploadClick) {
+      onUploadClick();
+      return;
+    }
+    
     if (!user) {
       toast({
         title: "Authentication required",
@@ -33,14 +42,12 @@ export const UploadShortButton = () => {
   };
   
   return (
-    <div className="fixed bottom-24 right-6 md:bottom-6 z-50">
-      <Button
-        onClick={handleClick}
-        size="lg"
-        className="rounded-full h-14 w-14 bg-luxury-primary hover:bg-luxury-primary/80 shadow-lg"
-      >
-        <Upload className="h-6 w-6" />
-      </Button>
-    </div>
+    <Button
+      onClick={handleClick}
+      size="lg"
+      className="rounded-full h-14 w-14 bg-luxury-primary hover:bg-luxury-primary/80 shadow-lg"
+    >
+      <Upload className="h-6 w-6" />
+    </Button>
   );
 };
