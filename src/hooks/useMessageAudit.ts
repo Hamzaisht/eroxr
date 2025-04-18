@@ -1,39 +1,47 @@
 
-import { useEffect } from 'react';
+import { useCallback } from 'react';
+import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useMessageAudit = (messageId?: string, userId?: string) => {
-  useEffect(() => {
-    if (!messageId || !userId) return;
-    
-    // Log message view for audit purposes
-    const logMessageView = async () => {
-      try {
-        await supabase.from('admin_audit_logs').insert({
-          user_id: userId,
-          action: 'message_viewed',
-          details: {
-            message_id: messageId,
-            timestamp: new Date().toISOString()
-          }
-        });
-      } catch (error) {
-        console.error('Error logging message view:', error);
-      }
-    };
-    
-    logMessageView();
-  }, [messageId, userId]);
+type MessageActivityType = 
+  | 'send_attempt'
+  | 'media_upload'
+  | 'message_view'
+  | 'message_delete'
+  | 'message_edit'
+  | 'message_react'
+  | 'call_attempt'
+  | 'call_answer'
+  | 'call_end'
+  | 'error';
+
+interface MessageActivityDetails {
+  recipient_id?: string;
+  message_id?: string;
+  content?: string;
+  duration?: number;
+  error?: string;
+  message_type?: string;
+  file_count?: number;
+  file_types?: string[];
+  [key: string]: any;
+}
+
+export function useMessageAudit(recipientId?: string, messageId?: string) {
+  const session = useSession();
   
-  // Add the logMessageActivity function to match usage in MessageInput
-  const logMessageActivity = async (action: string, details: any) => {
-    if (!userId) return;
+  const logMessageActivity = useCallback(async (
+    activityType: MessageActivityType,
+    details?: MessageActivityDetails
+  ) => {
+    if (!session?.user?.id) return;
     
     try {
-      // Execute the insert query with await to properly handle the response
-      const { error } = await supabase.from('admin_audit_logs').insert({
-        user_id: userId,
-        action,
+      const { error } = await supabase.from('message_audit_logs').insert({
+        user_id: session.user.id,
+        recipient_id: recipientId || details?.recipient_id,
+        message_id: messageId || details?.message_id,
+        action_type: activityType,
         details: {
           ...details,
           timestamp: new Date().toISOString()
@@ -43,10 +51,10 @@ export const useMessageAudit = (messageId?: string, userId?: string) => {
       if (error) {
         console.error('Error logging message activity:', error);
       }
-    } catch (error) {
-      console.error('Error logging message activity:', error);
+    } catch (err) {
+      console.error('Failed to log message activity:', err);
     }
-  };
+  }, [session?.user?.id, recipientId, messageId]);
   
   return { logMessageActivity };
-};
+}

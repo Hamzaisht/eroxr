@@ -1,45 +1,16 @@
 
-import type { Json } from './database.types';
-
-export type Profile = {
+export interface Profile {
   id: string;
   username?: string | null;
+  full_name?: string | null;
   avatar_url?: string | null;
-  banner_url?: string | null;
+  status?: 'online' | 'offline' | 'away' | 'busy' | null;
   created_at: string;
   updated_at: string;
-  is_age_verified?: boolean | null;
-  date_of_birth?: string | null;
-  id_verification_status?: string | null;
   bio?: string | null;
+  website?: string | null;
   location?: string | null;
-  interests?: string[] | null;
-  social_links?: Json | null;
-  profile_visibility?: boolean | null;
-  is_paying_customer?: boolean | null;
-  first_name?: string | null;
-  last_name?: string | null;
-  is_suspended?: boolean | null;
-  suspended_at?: string | null;
-  status?: 'online' | 'offline' | 'away' | 'busy' | null;
-  last_username_change?: string | null;
-};
-
-export type Creator = {
-  id: string;
-  username: string | null;
-  avatar_url: string | null;
-};
-
-export type MutualFollower = {
-  following_id: string;
-  following: Profile;
-};
-
-// Add a type for Supabase join responses
-export type WithProfile<T> = T & {
-  profiles?: {
-    username?: string | null;
-    avatar_url?: string | null;
-  } | null;
-};
+  has_stories?: boolean;
+  is_verified?: boolean;
+  role?: string | null;
+}

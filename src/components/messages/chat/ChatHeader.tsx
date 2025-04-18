@@ -1,10 +1,10 @@
 
-import { useState } from "react";
+import { useMediaQuery } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
-import { Phone, Video, Info, PenSquare } from "lucide-react";
+import { Phone, Video, Info, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 interface ChatHeaderProps {
   recipientProfile: any;
@@ -15,89 +15,84 @@ interface ChatHeaderProps {
   isTyping?: boolean;
 }
 
-export const ChatHeader = ({ 
-  recipientProfile, 
+export const ChatHeader = ({
+  recipientProfile,
   recipientId,
   onVoiceCall,
   onVideoCall,
   onToggleDetails,
   isTyping = false
 }: ChatHeaderProps) => {
-  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  
-  if (!recipientProfile) {
-    return (
-      <div className="flex items-center justify-between p-4 border-b border-white/5 bg-luxury-dark-secondary">
-        <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-luxury-neutral/20 animate-pulse" />
-          <div className="h-5 w-32 rounded-md bg-luxury-neutral/20 animate-pulse" />
-        </div>
-      </div>
-    );
-  }
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-luxury-neutral/10 bg-luxury-dark-secondary">
-      <div className="flex items-center space-x-3">
-        <div className="relative">
-          <Avatar className="h-10 w-10 border border-luxury-neutral/10">
-            <AvatarImage src={recipientProfile.avatar_url} />
-            <AvatarFallback>{recipientProfile.username?.[0]?.toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div className="absolute -bottom-0.5 -right-0.5">
-            <AvailabilityIndicator 
-              status={recipientProfile.status || "offline"} 
-              size={12} 
-            />
-          </div>
-        </div>
+    <div className="p-3 md:p-4 border-b border-white/10 bg-luxury-darker/50 backdrop-blur-md flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        {isMobile && (
+          <Link to="/messages" className="mr-1">
+            <ChevronLeft className="h-5 w-5 text-luxury-neutral" />
+          </Link>
+        )}
         
-        <div>
-          <div className="font-medium text-luxury-text">
-            {recipientProfile.username}
-          </div>
-          <div className="text-xs text-luxury-neutral/70">
-            {isTyping ? (
-              <div className="flex items-center text-luxury-primary">
-                <PenSquare className="h-3 w-3 mr-1 animate-pulse" />
-                <span>typing...</span>
-              </div>
-            ) : (
-              <span>{recipientProfile.status || "offline"}</span>
+        <Avatar className="h-10 w-10 border border-white/10">
+          <AvatarImage src={recipientProfile?.avatar_url || undefined} />
+          <AvatarFallback>
+            {recipientProfile?.username?.[0]?.toUpperCase() || '?'}
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium text-luxury-neutral">
+              {recipientProfile?.username || 'User'}
+            </h3>
+            {recipientProfile?.is_verified && (
+              <span className="h-4 w-4 bg-blue-500 rounded-full flex items-center justify-center text-[10px] text-white">✓</span>
             )}
           </div>
+          <p className={cn(
+            "text-xs",
+            isTyping
+              ? "text-luxury-primary animate-pulse"
+              : recipientProfile?.status === "online"
+              ? "text-emerald-400"
+              : "text-luxury-neutral/50"
+          )}>
+            {isTyping
+              ? "typing..."
+              : recipientProfile?.status === "online"
+              ? "online"
+              : "offline"}
+          </p>
         </div>
       </div>
       
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full"
+          className="rounded-full bg-luxury-darker/60 hover:bg-luxury-darker/90"
           onClick={onVoiceCall}
         >
-          <Phone className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="icon" 
-          className="rounded-full"
-          onClick={onVideoCall}
-        >
-          <Video className="h-4 w-4" />
+          <Phone className="h-4 w-4 text-luxury-neutral" />
         </Button>
         
         <Button
           variant="ghost"
           size="icon"
-          className={cn("rounded-full", isOptionsOpen && "bg-luxury-neutral/10")}
-          onClick={() => {
-            setIsOptionsOpen(!isOptionsOpen);
-            onToggleDetails();
-          }}
+          className="rounded-full bg-luxury-darker/60 hover:bg-luxury-darker/90"
+          onClick={onVideoCall}
         >
-          <Info className="h-4 w-4" />
+          <Video className="h-4 w-4 text-luxury-neutral" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full bg-luxury-darker/60 hover:bg-luxury-darker/90"
+          onClick={onToggleDetails}
+        >
+          <Info className="h-4 w-4 text-luxury-neutral" />
         </Button>
       </div>
     </div>

@@ -1,12 +1,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check } from "lucide-react";
-import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 interface MessageEditFormProps {
   content: string;
-  onChange: (content: string) => void;
+  onChange: (value: string) => void;
   onSave: () => void;
   onCancel: () => void;
   isUpdating: boolean;
@@ -21,59 +20,52 @@ export const MessageEditForm = ({
   isUpdating,
   inputRef
 }: MessageEditFormProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSave();
+    } else if (e.key === "Escape") {
+      onCancel();
+    }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col gap-3 p-4 rounded-xl bg-luxury-darker/90 backdrop-blur-md border border-luxury-primary/10 shadow-lg min-w-[280px] max-w-[400px]"
-    >
+    <div className="flex flex-col gap-2">
       <Input
         ref={inputRef}
         value={content}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            onSave();
-          }
-          if (e.key === 'Escape') {
-            onCancel();
-          }
-        }}
-        className="w-full bg-luxury-darker/50 border-none focus:ring-1 focus:ring-luxury-primary/50 rounded-lg px-4 py-2"
+        onKeyDown={handleKeyDown}
+        className="bg-transparent border-white/20 text-white"
+        disabled={isUpdating}
         autoFocus
       />
-      <div className="flex items-center justify-end gap-2">
-        <Button 
-          size="sm" 
-          variant="ghost" 
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onCancel}
-          className="text-luxury-neutral hover:text-white rounded-lg px-4"
           disabled={isUpdating}
+          className="text-xs h-7"
         >
           Cancel
         </Button>
-        <Button 
-          size="sm" 
-          onClick={onSave} 
-          className="bg-luxury-primary hover:bg-luxury-primary/90 rounded-lg px-4"
-          disabled={isUpdating}
+        <Button
+          size="sm"
+          onClick={onSave}
+          disabled={!content.trim() || isUpdating}
+          className="text-xs h-7"
         >
           {isUpdating ? (
-            <span className="flex items-center gap-2">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              >
-                <Check className="h-4 w-4" />
-              </motion.div>
+            <>
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
               Saving...
-            </span>
+            </>
           ) : (
-            'Save'
+            "Save"
           )}
         </Button>
       </div>
-    </motion.div>
+    </div>
   );
 };

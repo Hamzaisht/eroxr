@@ -1,11 +1,10 @@
 
-import { VideoMessage } from "../VideoMessage";
-import { Camera, FileText, Mic, Phone, Video } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { Button } from "@/components/ui/button";
+import { Clock, Lock, Image, Video } from "lucide-react";
 import type { DirectMessage } from "@/integrations/supabase/types/message";
-import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { useState } from "react";
-import { MediaViewer } from "@/components/media/MediaViewer";
+import { cn } from "@/lib/utils";
+import { MediaType } from "@/utils/media/types";
 
 interface MessageContentProps {
   message: DirectMessage;
@@ -15,155 +14,112 @@ interface MessageContentProps {
   onSnapView: () => void;
 }
 
-export const MessageContent = ({ 
-  message, 
-  isOwnMessage, 
+export const MessageContent = ({
+  message,
+  isOwnMessage,
   isEditing,
   onMediaSelect,
-  onSnapView 
+  onSnapView
 }: MessageContentProps) => {
-  const [enlargedMedia, setEnlargedMedia] = useState<string | null>(null);
+  // Handle text content
+  if (message.content) {
+    return <p className="whitespace-pre-wrap break-words">{message.content}</p>;
+  }
 
-  // Helper function to render media with protection
-  const renderMedia = (url: string, type: 'image' | 'video') => (
-    <ProtectedMedia
-      contentOwnerId={message.sender_id || ''}
-      className="max-w-full"
-    >
-      {type === 'image' ? (
-        <img
-          src={url}
-          alt="Image message"
-          className="max-w-[200px] rounded-lg cursor-pointer"
-          onClick={() => !isEditing && handleMediaClick(url)}
-        />
-      ) : (
-        <video
-          src={url}
-          className="max-w-[200px] rounded-lg cursor-pointer"
-          onClick={() => !isEditing && handleMediaClick(url)}
-        />
-      )}
-    </ProtectedMedia>
-  );
-
-  // Handle media click to either call the parent's handler or handle internally
-  const handleMediaClick = (url: string) => {
-    if (onMediaSelect) {
-      onMediaSelect(url);
-    } else {
-      setEnlargedMedia(url);
-    }
-  };
-
-  switch (message.message_type) {
-    case 'video':
-      return (
-        <>
-          <VideoMessage
-            messageId={message.id || ''}
-            videoUrl={message.video_url || message.media_url?.[0] || ''}
-            isViewed={!!message.viewed_at}
-            onView={() => {}}
-          />
-          {enlargedMedia && (
-            <MediaViewer
-              media={enlargedMedia}
-              onClose={() => setEnlargedMedia(null)}
-              creatorId={message.sender_id}
-            />
-          )}
-        </>
-      );
-    case 'image':
-      return (
-        <>
-          {message.media_url?.map((url: string, index: number) => (
-            <div key={index} className="media-container">
-              {renderMedia(url, 'image')}
-            </div>
-          ))}
-          {enlargedMedia && (
-            <MediaViewer
-              media={enlargedMedia}
-              onClose={() => setEnlargedMedia(null)}
-              creatorId={message.sender_id}
-            />
-          )}
-        </>
-      );
-    case 'audio':
-      return (
-        <div className="flex items-center p-2 bg-luxury-primary/10 rounded-lg">
-          <Mic className="h-5 w-5 mr-2 text-luxury-primary" />
-          <audio 
-            src={message.media_url?.[0] || ''} 
-            controls 
-            className="max-w-[200px]"
-          />
-        </div>
-      );
-    case 'file':
-      return (
-        <div 
-          className="flex items-center p-3 bg-luxury-primary/5 rounded-lg cursor-pointer"
-          onClick={() => !isEditing && message.media_url?.[0] && handleMediaClick(message.media_url[0])}
-        >
-          <FileText className="h-6 w-6 text-luxury-primary mr-2" />
-          <div>
-            <div className="text-sm font-medium">{message.content || 'File'}</div>
-            <div className="text-xs text-luxury-neutral/60">Click to view</div>
-          </div>
-        </div>
-      );
-    case 'snap':
-      return (
-        <div 
+  // Handle Snap messages
+  if (message.message_type === 'snap') {
+    return (
+      <div className="flex flex-col">
+        <Button
+          variant="secondary"
           className={cn(
-            "cursor-pointer rounded-lg p-3 flex items-center",
-            message.viewed_at ? "bg-gray-500/10" : "bg-luxury-primary/10"
+            "py-6 w-full gap-2",
+            isOwnMessage 
+              ? "bg-luxury-primary/30 hover:bg-luxury-primary/40 text-white" 
+              : "bg-luxury-neutral/10 hover:bg-luxury-neutral/20"
           )}
           onClick={onSnapView}
         >
-          <Camera className={cn(
-            "w-6 h-6 mr-2",
-            message.viewed_at ? "text-gray-500" : "text-luxury-primary"
-          )} />
-          <div className="text-sm">
-            {message.viewed_at ? "Snap opened" : "Tap to view snap"}
-          </div>
-        </div>
-      );
-    case 'call':
-      return (
-        <div className="flex items-center p-2 bg-luxury-primary/5 rounded-lg">
-          {message.call_type === 'video' ? (
-            <Video className="h-5 w-5 mr-2 text-luxury-primary" />
-          ) : (
-            <Phone className="h-5 w-5 mr-2 text-luxury-primary" />
+          <Image className="h-5 w-5 mr-2" />
+          {message.viewed_at 
+            ? <span>Snap viewed</span> 
+            : <span>View Snap</span>
+          }
+          {message.expires_at && (
+            <Clock className="h-4 w-4 ml-1" />
           )}
-          <span className="text-sm">
-            {message.call_status === 'answered'
-              ? `${message.call_type === 'video' ? 'Video' : 'Audio'} call (${message.call_duration ? formatCallDuration(message.call_duration) : 'N/A'})`
-              : `${message.call_status === 'missed' ? 'Missed' : 'Declined'} ${message.call_type === 'video' ? 'video' : 'audio'} call`}
-          </span>
-        </div>
-      );
-    default:
-      return (
-        <p className={cn(
-          "text-sm whitespace-pre-wrap",
-          isOwnMessage ? "text-white" : "text-luxury-neutral"
-        )}>
-          {message.content}
-        </p>
-      );
+        </Button>
+        {message.viewed_at && (
+          <p className="text-xs text-center mt-1 text-luxury-neutral/60">
+            This snap has been viewed
+          </p>
+        )}
+      </div>
+    );
   }
-};
 
-// Helper function to format call duration in mm:ss
-function formatCallDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
+  // Handle Media messages (image array)
+  if (message.media_url && message.media_url.length > 0) {
+    return (
+      <div className="space-y-2">
+        {message.media_url.map((url, index) => (
+          <div 
+            key={`${message.id}-image-${index}`}
+            className="cursor-pointer rounded-md overflow-hidden"
+            onClick={() => onMediaSelect(url)}
+          >
+            <UniversalMedia 
+              item={{
+                media_url: url,
+                creator_id: message.sender_id,
+                media_type: MediaType.IMAGE
+              }}
+              className="w-full max-h-60 object-cover"
+              showWatermark={false}
+              controls={false}
+              muted={true}
+            />
+          </div>
+        ))}
+        {message.content && (
+          <p className="mt-2 whitespace-pre-wrap break-words">{message.content}</p>
+        )}
+      </div>
+    );
+  }
+
+  // Handle Video messages
+  if (message.video_url) {
+    return (
+      <div className="space-y-2">
+        <div 
+          className="cursor-pointer rounded-md overflow-hidden"
+          onClick={() => onMediaSelect(message.video_url!)}
+        >
+          <UniversalMedia 
+            item={{
+              video_url: message.video_url,
+              creator_id: message.sender_id,
+              media_type: MediaType.VIDEO
+            }}
+            className="w-full max-h-60 object-cover"
+            showWatermark={false}
+            controls={true}
+            muted={true}
+          />
+        </div>
+        {message.content && (
+          <p className="mt-2 whitespace-pre-wrap break-words">{message.content}</p>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback for empty content
+  return (
+    <div className="text-luxury-neutral/50 italic flex items-center justify-center gap-2">
+      <Lock className="h-3 w-3" />
+      <span className="text-sm">Encrypted message</span>
+    </div>
+  );
+};

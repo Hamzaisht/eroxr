@@ -1,69 +1,65 @@
 
-import { useState, useRef } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import type { DirectMessage } from "@/integrations/supabase/types/message";
+import { useState, useRef, useCallback } from 'react';
+import { useSession } from '@supabase/auth-helpers-react';
+import { supabase } from '@/integrations/supabase/client';
+import { DirectMessage } from '@/integrations/supabase/types/message';
+import { useToast } from './use-toast';
 
-interface MessageUpdateData {
-  content: string;
-  updated_at: string;
-  original_content?: string;
-}
-
-export const useMessageEdit = (message: DirectMessage) => {
+export function useMessageEdit(message: DirectMessage) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(message.content || "");
+  const [editedContent, setEditedContent] = useState(message.content || '');
   const [isUpdating, setIsUpdating] = useState(false);
-  const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const startEditing = () => {
+  const session = useSession();
+  const { toast } = useToast();
+  
+  const startEditing = useCallback(() => {
     setIsEditing(true);
-    setEditedContent(message.content || "");
-  };
-
-  const cancelEditing = () => {
+    setEditedContent(message.content || '');
+    // Focus the input after a short delay to ensure it's rendered
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
+  }, [message.content]);
+  
+  const cancelEditing = useCallback(() => {
     setIsEditing(false);
-  };
-
-  const handleEdit = async () => {
-    if (!editedContent.trim()) return;
+  }, []);
+  
+  const handleEdit = useCallback(async () => {
+    if (!session?.user?.id || session.user.id !== message.sender_id || !editedContent.trim()) {
+      return;
+    }
+    
+    setIsUpdating(true);
     
     try {
-      setIsUpdating(true);
-      
-      const updateData: MessageUpdateData = {
-        content: editedContent.trim(),
-        updated_at: new Date().toISOString()
-      };
-
-      if (!message.original_content) {
-        updateData.original_content = message.content;
-      }
-
       const { error } = await supabase
         .from('direct_messages')
-        .update(updateData)
+        .update({
+          content: editedContent.trim(),
+          original_content: message.original_content || message.content,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', message.id);
-
-      if (error) throw error;
-
-      setIsEditing(false);
+        
+      if (error) {
+        throw error;
+      }
       
+      setIsEditing(false);
+    } catch (err: any) {
+      console.error('Error updating message:', err);
       toast({
-        description: "Message updated successfully",
-      });
-    } catch (error) {
-      console.error("Update error:", error);
-      toast({
+        title: "Failed to update message",
+        description: err.message || "An error occurred",
         variant: "destructive",
-        description: "Failed to update message",
       });
     } finally {
       setIsUpdating(false);
     }
-  };
-
+  }, [session, message, editedContent, toast]);
+  
   return {
     isEditing,
     editedContent,
@@ -74,4 +70,4 @@ export const useMessageEdit = (message: DirectMessage) => {
     cancelEditing,
     handleEdit
   };
-};
+}
