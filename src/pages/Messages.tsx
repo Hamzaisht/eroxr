@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Footer } from "@/components/Footer";
@@ -78,7 +77,7 @@ const Messages = () => {
         
         if (data) {
           data.forEach(msg => {
-            // Correctly handle the sender and recipient as Profile objects
+            // Create sender Profile object
             const sender: Profile = {
               id: msg.sender.id,
               username: msg.sender.username,
@@ -88,6 +87,7 @@ const Messages = () => {
               updated_at: ''
             };
             
+            // Create recipient Profile object
             const recipient: Profile = {
               id: msg.recipient.id,
               username: msg.recipient.username,

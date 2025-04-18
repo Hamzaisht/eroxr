@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2, AlertTriangle, RefreshCcw } from "lucide-react";
@@ -11,6 +10,7 @@ import { useMediaQuery } from "@/hooks/use-mobile";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { ErosVideo } from "@/types/eros";
+import { UploadShortButton } from "@/components/home/UploadShortButton";
 
 export default function Eros() {
   const { videoId } = useParams<{ videoId?: string }>();
@@ -125,7 +125,6 @@ export default function Eros() {
     }
   }, []);
 
-  // Map Video type to ErosVideo type with correct properties
   const mappedVideos: ErosVideo[] = videos.map(video => ({
     id: video.id,
     url: video.video_url,
@@ -221,7 +220,7 @@ export default function Eros() {
 
       <div className="fixed bottom-24 right-6 md:bottom-6 z-50">
         <div onClick={handleUploadClick}>
-          <UploadShortButton />
+          <UploadShortButton onUploadClick={handleUploadClick} />
         </div>
       </div>
       
