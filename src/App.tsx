@@ -20,13 +20,16 @@ import ShortsUpload from "@/pages/ShortsUpload";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Index from "@/pages/Index";
+import { AdminRoutes } from "@/components/admin/routes/AdminRoutes";
 
+// Create Query Client with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
     },
   },
 });
@@ -67,6 +70,9 @@ export default function App() {
                 <Route path="/eros/upload" element={<ErosUpload />} />
               </Route>
             </Route>
+            
+            {/* Admin routes */}
+            <Route path="/admin/*" element={<AdminRoutes />} />
           </Routes>
           <Toaster />
         </AuthProvider>

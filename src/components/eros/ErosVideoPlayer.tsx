@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from "react";
 import { Loader2, AlertCircle, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInView } from "react-intersection-observer";
-import { useMedia } from "@/hooks/useMedia";
 
 interface ErosVideoPlayerProps {
   videoUrl: string;
@@ -39,29 +38,33 @@ export function ErosVideoPlayer({
     threshold: 0.6,
   });
   
-  // Process video URL
-  const { 
-    url: processedVideoUrl, 
-    isLoading,
-    isError: mediaError,
-    retry: retryVideoLoad,
-  } = useMedia(
-    videoUrl ? { video_url: videoUrl } : null
-  );
+  // Clean and prepare video URL
+  const getCleanVideoUrl = () => {
+    if (!videoUrl) return '';
+    
+    // Handle URL without protocol
+    if (videoUrl.startsWith('//')) {
+      return `https:${videoUrl}`;
+    }
+    
+    // Add protocol if missing
+    if (!videoUrl.startsWith('http')) {
+      return `https://${videoUrl}`;
+    }
+    
+    return videoUrl;
+  };
   
-  // Process thumbnail URL
-  const { 
-    url: processedThumbnailUrl 
-  } = useMedia(
-    thumbnailUrl ? { media_url: thumbnailUrl } : null
-  );
-
+  const processedVideoUrl = getCleanVideoUrl();
+  const processedThumbnailUrl = thumbnailUrl ? getCleanVideoUrl() : '';
+  
   // Control video playback based on visibility and active status
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !isLoaded) return;
     
     if (isActive && inView) {
+      console.log("Playing video:", processedVideoUrl);
       video.play()
         .then(() => setIsPlaying(true))
         .catch(err => {
@@ -72,7 +75,7 @@ export function ErosVideoPlayer({
       video.pause();
       setIsPlaying(false);
     }
-  }, [isActive, inView, isLoaded]);
+  }, [isActive, inView, isLoaded, processedVideoUrl]);
 
   // Handle video loaded
   const handleVideoLoaded = () => {
@@ -89,7 +92,9 @@ export function ErosVideoPlayer({
     if (loadRetries < 2) {
       setLoadRetries(prev => prev + 1);
       setTimeout(() => {
-        retryVideoLoad();
+        if (videoRef.current) {
+          videoRef.current.load();
+        }
       }, 1000);
     } else if (onError) {
       onError();
@@ -153,18 +158,19 @@ export function ErosVideoPlayer({
           onLoadedData={handleVideoLoaded}
           onError={handleVideoError}
           onEnded={handleVideoEnded}
+          crossOrigin="anonymous"
         />
       )}
       
       {/* Loading state */}
-      {(isLoading || (!isLoaded && !hasError)) && (
+      {(!isLoaded && !hasError) && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
           <Loader2 className="w-12 h-12 animate-spin text-luxury-primary" />
         </div>
       )}
       
       {/* Error state */}
-      {(hasError || mediaError) && (
+      {hasError && (
         <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 text-center z-10">
           <AlertCircle className="w-12 h-12 text-red-500 mb-2" />
           <p className="text-white mb-4">Failed to load video</p>
@@ -173,7 +179,9 @@ export function ErosVideoPlayer({
               e.stopPropagation();
               setHasError(false);
               setLoadRetries(0);
-              retryVideoLoad();
+              if (videoRef.current) {
+                videoRef.current.load();
+              }
             }}
             className="px-4 py-2 bg-luxury-primary text-white rounded-md"
           >
@@ -183,7 +191,7 @@ export function ErosVideoPlayer({
       )}
       
       {/* Volume control */}
-      {isLoaded && !hasError && !mediaError && (
+      {isLoaded && !hasError && (
         <button
           onClick={toggleMute}
           className="absolute bottom-4 right-4 z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all"

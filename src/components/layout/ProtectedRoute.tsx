@@ -11,6 +11,7 @@ const ProtectedRoute = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [isInitialCheck, setIsInitialCheck] = useState(true);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
   useEffect(() => {
     // Only redirect after initial loading is complete
@@ -23,6 +24,9 @@ const ProtectedRoute = () => {
           variant: "destructive",
         });
         
+        // Save the current path for redirect after login
+        setRedirectPath(location.pathname);
+        
         // Redirect to login with return path
         navigate('/login', { 
           state: { from: location.pathname }
@@ -30,9 +34,15 @@ const ProtectedRoute = () => {
       } else {
         // User is authenticated, mark initial check as complete
         setIsInitialCheck(false);
+        
+        // If we have a saved redirect path and user is logged in, navigate there
+        if (redirectPath) {
+          navigate(redirectPath);
+          setRedirectPath(null);
+        }
       }
     }
-  }, [user, isLoading, navigate, location.pathname, toast]);
+  }, [user, isLoading, navigate, location.pathname, toast, redirectPath]);
 
   // Show loading screen during initial auth check or loading state
   if (isLoading || (isInitialCheck && !user)) {
