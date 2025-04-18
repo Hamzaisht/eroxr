@@ -124,7 +124,12 @@ export const GhostModeProvider = ({ children }: { children: React.ReactNode }) =
 export const useGhostMode = () => {
   const context = useContext(GhostModeContext);
   if (context === undefined) {
-    return { isGhostMode: false, toggleGhostMode: () => {}, startSurveillance: () => {}, endSurveillance: () => {} };
+    return { 
+      isGhostMode: false, 
+      toggleGhostMode: () => {}, 
+      startSurveillance: () => {}, 
+      endSurveillance: () => {} 
+    };
   }
   return context;
 };
