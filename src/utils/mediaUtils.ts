@@ -5,3 +5,5 @@ export * from './media/urlUtils';
 export * from './media/formatUtils';
 export * from './media/mediaUtils';
 
+// Explicitly re-export getFileExtension to resolve ambiguity
+export { getFileExtension } from './media/urlUtils';

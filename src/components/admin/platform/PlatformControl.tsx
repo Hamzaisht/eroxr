@@ -61,7 +61,7 @@ export const PlatformControl = () => {
       
       try {
         // Fetch user counts
-        const { data: userCount, error: userError } = await supabase
+        const { data: userCount, error: userError, count: userCountVal } = await supabase
           .from('profiles')
           .select('id', { count: 'exact', head: true });
           
@@ -76,7 +76,7 @@ export const PlatformControl = () => {
           .select('id, status', { count: 'exact' });
           
         // Fetch content stats
-        const { data: contentStats, error: contentError } = await supabase
+        const { data: contentStats, error: contentError, count: contentCountVal } = await supabase
           .from('posts')
           .select('id', { count: 'exact', head: true });
           
@@ -91,12 +91,12 @@ export const PlatformControl = () => {
         const pendingVerifications = verificationCount?.filter(v => v.status === 'pending').length || 0;
         
         return {
-          users: userCount?.count || 0,
+          users: userCountVal || 0,
           reports: reportCount?.length || 0,
           pendingReports,
           verifications: verificationCount?.length || 0,
           pendingVerifications,
-          content: contentStats?.count || 0
+          content: contentCountVal || 0
         };
       } catch (err) {
         console.error('Error fetching platform stats:', err);

@@ -1,6 +1,12 @@
-
 import { useState, useEffect, useCallback } from 'react';
-import { getPlayableMediaUrl, addCacheBuster } from '@/utils/mediaUtils';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+
+// Helper function for cache busting since it's missing from mediaUtils
+const addCacheBuster = (url: string): string => {
+  if (!url) return '';
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${Date.now()}`;
+};
 
 interface MediaHandlerOptions {
   item: any; // The data item containing the media URL

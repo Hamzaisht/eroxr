@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Footer } from "@/components/Footer";
@@ -11,14 +10,10 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
+import { Profile } from "@/integrations/supabase/types/profile";
+import { DirectMessage } from "@/integrations/supabase/types/message";
 
-interface Profile {
-  id: string;
-  username: string;
-  avatar_url: string | null;
-  status: string | null;
-}
-
+// Define a properly structured Message type
 interface Message {
   id: string;
   sender_id: string;
@@ -81,14 +76,29 @@ const Messages = () => {
           // Group by conversation partner
           const conversationsMap = new Map<string, Message>();
           
-          data.forEach(msg => {
-            const otherUserId = msg.sender_id === session.user.id ? msg.recipient_id : msg.sender_id;
-            if (!conversationsMap.has(otherUserId)) {
-              conversationsMap.set(otherUserId, msg);
-            }
-          });
-          
-          setConversations(Array.from(conversationsMap.values()));
+          if (data) {
+            data.forEach(msg => {
+              // Convert the raw data to properly typed Message
+              const message: Message = {
+                id: msg.id,
+                sender_id: msg.sender_id,
+                recipient_id: msg.recipient_id,
+                content: msg.content,
+                media_url: msg.media_url,
+                video_url: msg.video_url,
+                created_at: msg.created_at,
+                sender: msg.sender as unknown as Profile,
+                recipient: msg.recipient as unknown as Profile
+              };
+              
+              const otherUserId = message.sender_id === session.user.id ? message.recipient_id : message.sender_id;
+              if (!conversationsMap.has(otherUserId)) {
+                conversationsMap.set(otherUserId, message);
+              }
+            });
+            
+            setConversations(Array.from(conversationsMap.values()));
+          }
         }
       } catch (err) {
         console.error('Error in conversation fetch:', err);
@@ -157,7 +167,20 @@ const Messages = () => {
           variant: "destructive"
         });
       } else {
-        setMessages(data || []);
+        // Convert the raw data to properly typed Message array
+        const typedMessages: Message[] = data ? data.map(msg => ({
+          id: msg.id,
+          sender_id: msg.sender_id,
+          recipient_id: msg.recipient_id,
+          content: msg.content,
+          media_url: msg.media_url,
+          video_url: msg.video_url,
+          created_at: msg.created_at,
+          sender: msg.sender as unknown as Profile,
+          recipient: msg.recipient as unknown as Profile
+        })) : [];
+        
+        setMessages(typedMessages);
         
         // Mark messages as viewed
         await supabase
