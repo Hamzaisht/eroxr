@@ -23,8 +23,9 @@ const MediaGrid = ({ media, onMediaClick }: MediaGridProps) => {
       return mediaItem;
     }
     
+    // Check all possible URL properties
     return mediaItem.video_url || 
-           mediaItem.media_url || 
+           (typeof mediaItem.media_url === 'string' ? mediaItem.media_url : '') || 
            mediaItem.url || 
            mediaItem.src || 
            '';

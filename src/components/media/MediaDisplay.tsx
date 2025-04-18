@@ -44,11 +44,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
     // Create event handlers that adapt our React events to our component's API
     const handleError = onError 
       ? (e: React.SyntheticEvent<HTMLVideoElement | HTMLImageElement, Event>) => {
-          const element = e.currentTarget;
-          const errorMessage = element instanceof HTMLVideoElement 
-            ? "Video failed to load" 
-            : "Image failed to load";
-          onError(errorMessage);
+          onError();
         }
       : undefined;
         

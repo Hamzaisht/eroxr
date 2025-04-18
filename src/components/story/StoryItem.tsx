@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { PlayCircle, ImageIcon } from "lucide-react";
@@ -49,6 +48,14 @@ export const StoryItem = ({
     setIsMediaLoaded(false);
   };
 
+  // Create a proper media source object for UniversalMedia
+  const mediaItem: MediaSource = {
+    media_url: story.media_url,
+    video_url: story.video_url,
+    media_type: isVideo ? MediaType.VIDEO : MediaType.IMAGE,
+    creator_id: story.creator_id,
+  };
+
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
@@ -83,7 +90,7 @@ export const StoryItem = ({
           </div>
         ) : (
           <UniversalMedia
-            item={story}
+            item={mediaItem}
             className="w-full h-full object-cover"
             onLoad={handleLoad}
             onError={handleError}

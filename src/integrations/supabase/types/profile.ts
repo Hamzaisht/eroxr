@@ -13,4 +13,13 @@ export interface Profile {
   has_stories?: boolean;
   is_verified?: boolean;
   role?: string | null;
+  banner_url?: string | null;
+  interests?: string[] | null;
+  profile_visibility?: boolean;
+  id_verification_status?: string;
+  is_paying_customer?: boolean;
+  last_username_change?: string | null;
 }
+
+// Creator type used in various components
+export type Creator = Profile;

@@ -7,14 +7,19 @@ export enum MediaType {
   UNKNOWN = 'unknown'
 }
 
+export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'invisible';
+
 export interface MediaSource {
   id?: string;
   media_url?: string | string[] | null;
   video_url?: string | null;
   thumbnail_url?: string | null;
-  media_type?: MediaType;
+  media_type?: MediaType | string;
   creator_id?: string;
   duration?: number;
+  url?: string;
+  src?: string;
+  content_type?: string;
 }
 
 export interface MediaOptions {
@@ -27,7 +32,16 @@ export interface MediaOptions {
   showWatermark?: boolean;
   onClick?: () => void;
   onLoad?: () => void;
-  onError?: () => void;
+  onError?: (message?: string) => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number) => void;
+}
+
+export interface UploadOptions {
+  contentCategory?: string;
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
+  onProgress?: (progress: number) => void;
 }

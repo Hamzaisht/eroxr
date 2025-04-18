@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { MediaType } from "@/utils/media/types";
 
 export const UniversalMediaDemo = () => {
   const [mediaUrl, setMediaUrl] = useState<string>("");
@@ -15,21 +16,22 @@ export const UniversalMediaDemo = () => {
       type: "image", 
       item: { 
         media_url: "https://images.unsplash.com/photo-1682687982029-edb9aecf5f89",
-        alt_text: "Demo image" 
+        media_type: MediaType.IMAGE
       } 
     },
     { 
       type: "video", 
       item: { 
         video_url: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4",
-        media_type: "video" 
+        media_type: MediaType.VIDEO
       } 
     },
     { 
       type: "storage", 
       item: { 
-        media_url: "path/to/your/storage/image.jpg" // Replace with actual path in your storage
-      } 
+        media_url: "path/to/your/storage/image.jpg",
+        media_type: MediaType.IMAGE
+      }
     }
   ];
 
@@ -80,7 +82,7 @@ export const UniversalMediaDemo = () => {
             {showMedia && (
               <div className="aspect-video bg-black/20 rounded-md overflow-hidden">
                 <UniversalMedia 
-                  item={{ media_url: mediaUrl }}
+                  item={{ media_url: mediaUrl, media_type: MediaType.IMAGE }}
                   className="w-full h-full" 
                 />
               </div>

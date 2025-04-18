@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { UniversalMedia } from './UniversalMedia';
+import { MediaType } from '@/utils/media/types';
 
 interface WatermarkedMediaProps {
   src: string;
@@ -20,9 +21,9 @@ export const WatermarkedMedia: React.FC<WatermarkedMediaProps> = ({
   imageProps
 }) => {
   const mediaItem = {
-    media_url: type === 'image' ? src : null,
-    video_url: type === 'video' ? src : null,
-    media_type: type,
+    media_url: type === 'image' ? src : undefined,
+    video_url: type === 'video' ? src : undefined,
+    media_type: type === 'video' ? MediaType.VIDEO : MediaType.IMAGE,
     creator_id: creatorId,
   };
   

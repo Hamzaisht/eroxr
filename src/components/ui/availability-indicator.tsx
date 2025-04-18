@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import type { AvailabilityStatus } from "@/utils/media/types";
+import { AvailabilityStatus } from "@/utils/media/types";
 
 export type { AvailabilityStatus };
 
