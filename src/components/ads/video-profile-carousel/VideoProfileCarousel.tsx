@@ -10,6 +10,15 @@ interface VideoProfileCarouselProps {
 }
 
 export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
+  // Check if we have any ads to display to prevent errors
+  if (!ads || ads.length === 0) {
+    return (
+      <div className="relative w-full h-[85vh] overflow-hidden rounded-2xl bg-gradient-to-br from-luxury-dark/80 to-luxury-darker/80 backdrop-blur-xl flex items-center justify-center">
+        <p className="text-luxury-neutral">No profiles available at this time</p>
+      </div>
+    );
+  }
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 

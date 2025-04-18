@@ -16,20 +16,28 @@ export const CreatorShowcase = () => {
   const { data: creators, isLoading } = useQuery({
     queryKey: ["top-creators"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, username, avatar_url, bio")
-        .eq("is_paying_customer", true)
-        .limit(10);
+      // Handle the case where supabase might not be initialized yet
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, username, avatar_url, bio")
+          .eq("is_paying_customer", true)
+          .limit(10);
 
-      if (error) {
-        console.error("Error fetching creators:", error);
-        throw error;
+        if (error) {
+          console.error("Error fetching creators:", error);
+          throw error;
+        }
+
+        return data || [];
+      } catch (err) {
+        console.error("Failed to fetch creators:", err);
+        return [];
       }
-
-      return data || [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
   const renderCreatorCards = () => {
@@ -119,7 +127,6 @@ export const CreatorShowcase = () => {
         <Carousel
           opts={{
             align: "start",
-            loop: true,
           }}
           className="w-full"
         >

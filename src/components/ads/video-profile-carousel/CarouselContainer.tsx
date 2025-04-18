@@ -1,4 +1,6 @@
 
+"use client"
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { DatingAd } from '../types/dating';
 import { VideoProfileCard } from '../video-profile-card';
@@ -10,12 +12,17 @@ interface CarouselContainerProps {
 }
 
 export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselContainerProps) => {
+  // Handle edge cases to prevent errors
+  if (!ads || ads.length === 0) {
+    return null;
+  }
+
   return (
     <AnimatePresence mode="popLayout">
       <div className="absolute inset-0 flex items-center justify-center">
         {ads.map((ad, index) => (
           <motion.div
-            key={ad.id}
+            key={ad?.id || index}
             initial={{ scale: 0.8, opacity: 0, x: '100%' }}
             animate={{
               scale: index === currentIndex ? 1 : 0.8,
