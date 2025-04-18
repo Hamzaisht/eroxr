@@ -4,6 +4,7 @@ import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { ActiveSurveillanceState } from '@/utils/media/types';
+import { LiveSession } from '@/types/surveillance';
 
 interface UseGhostModeReturn {
   isGhostModeEnabled: boolean;
@@ -13,8 +14,8 @@ interface UseGhostModeReturn {
   formatTime: (state: ActiveSurveillanceState) => string;
   isLoading: boolean;
   canUseGhostMode: boolean;
-  startSurveillance: (targetUserId: string, duration: number) => Promise<void>;
-  stopSurveillance: () => Promise<void>;
+  startSurveillance: (sessionOrUserId: LiveSession | string, duration?: number) => Promise<boolean>;
+  stopSurveillance: () => Promise<boolean>;
   liveAlerts: any[] | null;
   refreshAlerts: () => Promise<void>;
 }
@@ -89,18 +90,30 @@ export const useGhostMode = (): UseGhostModeReturn => {
     }
   }, [session?.user?.id, isGhostModeEnabled, toast]);
 
-  const startSurveillance = useCallback(async (targetUserId: string, duration: number) => {
+  const startSurveillance = useCallback(async (sessionOrUserId: LiveSession | string, duration: number = 30): Promise<boolean> => {
     if (!session?.user?.id) {
       toast({
         title: "Authentication required",
         description: "You must be signed in to start surveillance.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
     const sessionId = Math.random().toString(36).substring(2, 15);
     const startedAt = new Date();
+    
+    // Handle both LiveSession objects and direct userId strings
+    let targetUserId: string;
+    let sessionObject: any = null;
+    
+    if (typeof sessionOrUserId === 'string') {
+      targetUserId = sessionOrUserId;
+    } else {
+      // This is a LiveSession object
+      targetUserId = sessionOrUserId.user_id;
+      sessionObject = sessionOrUserId;
+    }
 
     setActiveSurveillance({
       active: true,
@@ -110,7 +123,7 @@ export const useGhostMode = (): UseGhostModeReturn => {
       duration: duration,
       sessionId: sessionId,
       isWatching: true,
-      session: null, // Will be populated with actual session data
+      session: sessionObject, // Will be populated with actual session data
       startTime: startedAt.toISOString(),
     });
 
@@ -123,9 +136,11 @@ export const useGhostMode = (): UseGhostModeReturn => {
     setTimeout(() => {
       stopSurveillance();
     }, duration * 60 * 1000);
+    
+    return true;
   }, [session?.user?.id, toast]);
 
-  const stopSurveillance = useCallback(async () => {
+  const stopSurveillance = useCallback(async (): Promise<boolean> => {
     setActiveSurveillance({
       active: false,
       userId: '',
@@ -141,6 +156,8 @@ export const useGhostMode = (): UseGhostModeReturn => {
       title: "Surveillance Stopped",
       description: "Surveillance has been stopped.",
     });
+    
+    return true;
   }, [toast]);
 
   const formatTime = (state: ActiveSurveillanceState) => {

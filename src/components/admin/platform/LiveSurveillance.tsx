@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { SessionList } from "./surveillance/SessionList";
@@ -80,7 +81,7 @@ export const LiveSurveillance = () => {
         <SurveillanceProvider
           liveAlerts={liveAlerts}
           refreshAlerts={refreshAlerts}
-          startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
+          startSurveillance={startSurveillance}
         >
           <SurveillanceTabs 
             liveAlerts={liveAlerts} 

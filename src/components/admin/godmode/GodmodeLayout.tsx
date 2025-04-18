@@ -7,7 +7,6 @@ import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { SurveillanceProvider } from "@/components/admin/platform/surveillance/SurveillanceContext";
-import { LiveSession } from "@/components/admin/platform/surveillance/types";
 
 function GodmodeLayout() {
   const session = useSession();
@@ -41,7 +40,7 @@ function GodmodeLayout() {
     <SurveillanceProvider
       liveAlerts={liveAlerts}
       refreshAlerts={refreshAlerts}
-      startSurveillance={startSurveillance as (session: LiveSession) => Promise<boolean>}
+      startSurveillance={startSurveillance}
     >
       <div className="flex min-h-screen w-full bg-[#0D1117]">
         <GodmodeSidebar />
