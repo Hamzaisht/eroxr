@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Footer } from "@/components/Footer";
@@ -23,11 +22,13 @@ import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { transformRawAds } from "@/components/ads/utils/adTransformers";
 import { nordicCountries } from "@/components/dating/utils/datingUtils";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { DatingToolbar } from "@/components/dating/DatingToolbar";
+import { DatingFiltersPanel } from "@/components/dating/DatingFiltersPanel";
+import { DatingResults } from "@/components/dating/DatingResults";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
 const Dating = () => {
-  // State management
   const [datingAds, setDatingAds] = useState<DatingAd[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userProfile, setUserProfile] = useState<DatingAd | null>(null);
@@ -36,10 +37,8 @@ const Dating = () => {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   
-  // App state
   const [activeTab, setActiveTab] = useState<string>("browse");
   
-  // Filtering states
   const [isFilterCollapsed, setIsFilterCollapsed] = useState<boolean>(window.innerWidth < 1024);
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [selectedCountry, setSelectedCountry] = useState<NordicCountry | null>(null);
@@ -58,13 +57,11 @@ const Dating = () => {
     username: "",
   });
   
-  // UI states
   const [isNewMessageOpen, setIsNewMessageOpen] = useState<boolean>(false);
   const { ref: headerRef, inView: headerInView } = useInView({
     threshold: 0
   });
   
-  // Default search categories
   const defaultSearchCategories = [
     { seeker: "male", lookingFor: "female", label: "Men seeking Women" },
     { seeker: "female", lookingFor: "male", label: "Women seeking Men" },
@@ -79,7 +76,6 @@ const Dating = () => {
     { seeker: "premium", lookingFor: "any", label: "Premium Profiles" },
   ];
   
-  // Use our AdsQuery hook for better performance
   const { 
     data: queryAds, 
     isLoading: queryLoading, 
@@ -97,7 +93,6 @@ const Dating = () => {
     }
   });
   
-  // Update ads from query
   useEffect(() => {
     if (queryAds) {
       setDatingAds(queryAds);
@@ -115,7 +110,6 @@ const Dating = () => {
     }
   }, [queryAds, queryLoading, queryError, toast]);
   
-  // Get user's own profile if they have one
   useEffect(() => {
     if (!session?.user?.id) {
       setUserProfile(null);
@@ -154,7 +148,6 @@ const Dating = () => {
       variant: "default"
     });
     
-    // Refetch the user's profile
     if (session?.user?.id) {
       supabase
         .from("dating_ads")
@@ -173,12 +166,10 @@ const Dating = () => {
   const handleTagClick = (tag: string) => {
     setSelectedTag(tag);
     
-    // If on mobile, collapse filters
     if (window.innerWidth < 768) {
       setShowFilters(false);
     }
     
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
     toast({
@@ -188,7 +179,6 @@ const Dating = () => {
     });
   };
   
-  // Reset all filters
   const handleResetFilters = () => {
     setSelectedCountry(null);
     setSelectedCity(null);
@@ -213,11 +203,9 @@ const Dating = () => {
     });
   };
 
-  // Real-time presence tracking
   useEffect(() => {
     if (!session) return;
 
-    // Set user as online
     const channel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
@@ -232,7 +220,6 @@ const Dating = () => {
         }
       });
 
-    // Update the user's last_active in their dating profile
     if (session.user.id && userProfile) {
       supabase
         .from('dating_ads')
@@ -248,15 +235,12 @@ const Dating = () => {
     };
   }, [session, userProfile]);
 
-  // Toggle filters on mobile
   const handleFilterToggle = () => {
     setShowFilters(!showFilters);
   };
   
-  // Handle tab changes
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    // Smooth scroll to top when changing tabs on mobile
     if (isMobile) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -272,7 +256,7 @@ const Dating = () => {
       >
         <div className="container mx-auto px-4 sm:px-6">
           <div ref={headerRef}>
-            <DatingHeader 
+            <DatingHeader
               isNewMessageOpen={isNewMessageOpen}
               setIsNewMessageOpen={setIsNewMessageOpen}
               canAccessBodyContact={true}
@@ -280,40 +264,17 @@ const Dating = () => {
               activeTab={activeTab}
               onTabChange={handleTabChange}
             />
-            
-            <div className="mt-6 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-luxury-neutral hover:text-luxury-primary" 
-                  onClick={() => navigate('/home')}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-                <h2 className="text-xl sm:text-2xl font-semibold text-white">Body Dating</h2>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-luxury-dark/50 border-luxury-primary/20 text-luxury-primary hover:bg-luxury-primary/10"
-                  onClick={handleResetFilters}
-                >
-                  Reset Filters
-                </Button>
-                <MobileFilterToggle 
-                  showFilters={showFilters} 
-                  setShowFilters={setShowFilters} 
-                />
-              </div>
-            </div>
+
+            <DatingToolbar
+              onBack={() => navigate('/home')}
+              onResetFilters={handleResetFilters}
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+            />
           </div>
-          
+
           <div className="mt-6 flex flex-col lg:flex-row gap-6">
-            <DatingFilterSidebar
+            <DatingFiltersPanel
               isFilterCollapsed={isFilterCollapsed}
               setIsFilterCollapsed={setIsFilterCollapsed}
               showFilters={showFilters}
@@ -331,47 +292,20 @@ const Dating = () => {
               nordicCountries={nordicCountries as NordicCountry[]}
               selectedTag={selectedTag}
               setSelectedTag={setSelectedTag}
+              showFilterPanel={showFilters}
             />
-            
+
             <div className="flex-1">
-              {isLoading ? (
-                <div className="flex items-center justify-center p-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
-                </div>
-              ) : (
-                <>
-                  {datingAds && datingAds.length > 0 && activeTab === "browse" ? (
-                    <div className="grid grid-cols-1 gap-8">
-                      <div className="relative">
-                        <VideoProfileCarousel ads={datingAds} />
-                      </div>
-                      <DatingContent 
-                        ads={datingAds} 
-                        canAccessBodyContact={true}
-                        onAdCreationSuccess={handleAdCreationSuccess}
-                        onTagClick={handleTagClick}
-                        isLoading={isLoading}
-                        userProfile={userProfile}
-                        activeTab={activeTab}
-                        onTabChange={handleTabChange}
-                        onFilterToggle={handleFilterToggle}
-                      />
-                    </div>
-                  ) : (
-                    <DatingContent 
-                      ads={datingAds} 
-                      canAccessBodyContact={true}
-                      onAdCreationSuccess={handleAdCreationSuccess}
-                      onTagClick={handleTagClick}
-                      isLoading={isLoading}
-                      userProfile={userProfile}
-                      activeTab={activeTab}
-                      onTabChange={handleTabChange}
-                      onFilterToggle={handleFilterToggle}
-                    />
-                  )}
-                </>
-              )}
+              <DatingResults
+                datingAds={datingAds}
+                isLoading={isLoading}
+                activeTab={activeTab}
+                userProfile={userProfile}
+                handleAdCreationSuccess={handleAdCreationSuccess}
+                handleTagClick={handleTagClick}
+                handleTabChange={handleTabChange}
+                handleFilterToggle={handleFilterToggle}
+              />
             </div>
           </div>
         </div>
