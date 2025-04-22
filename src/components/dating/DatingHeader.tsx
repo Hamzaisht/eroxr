@@ -1,5 +1,6 @@
+
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Bell, User, Plus } from "lucide-react";
+import { MessageCircle, User, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
@@ -28,17 +29,12 @@ export const DatingHeader = ({
   const session = useSession();
   const navigate = useNavigate();
   const [unreadMessages, setUnreadMessages] = useState<number>(0);
-  const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
 
   useEffect(() => {
-    // For demo purposes, set some random numbers for unread items
+    // Simulate fetching for unread messages count
     setUnreadMessages(Math.floor(Math.random() * 5));
-    setUnreadNotifications(Math.floor(Math.random() * 3));
-    // In a real app, we would fetch these counts from the database
-    // based on the current user's session
   }, []);
 
-  // Open the BodyContact ad creation flow.
   const handleCreateBodyContact = () => {
     if (!session) {
       navigate("/auth");
@@ -82,8 +78,7 @@ export const DatingHeader = ({
           <div className="flex items-center gap-2">
             {session ? (
               <>
-                {/* Removed Heart icon (Favorites) */}
-                {/* Only keep Messages and Profile */}
+                {/* ONLY Messages and Profile left */}
                 <Button
                   variant="outline"
                   size="icon"
@@ -98,7 +93,6 @@ export const DatingHeader = ({
                     </span>
                   )}
                 </Button>
-                {/* Notifications moved to main nav bar */}
 
                 <Button
                   variant="outline"
@@ -124,7 +118,7 @@ export const DatingHeader = ({
               className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Create your BodyContact
+              Create your Body Contact Ad
             </Button>
           </div>
         </div>

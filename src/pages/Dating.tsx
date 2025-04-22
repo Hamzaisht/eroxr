@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Footer } from "@/components/Footer";
@@ -18,6 +17,7 @@ import { nordicCountries } from "@/components/dating/utils/datingUtils";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { DatingToolbar } from "@/components/dating/DatingToolbar";
 import { DatingMainContent } from "./DatingMainContent";
+import { ImmersiveAdCreation } from "@/components/ads/body-contact/immersive-creation/ImmersiveAdCreation";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
@@ -282,6 +282,16 @@ const Dating = () => {
             handleTabChange={handleTabChange}
             handleFilterToggle={handleFilterToggle}
           />
+
+          {isNewMessageOpen && (
+            <ImmersiveAdCreation
+              onClose={() => setIsNewMessageOpen(false)}
+              onSuccess={() => {
+                setIsNewMessageOpen(false);
+                handleAdCreationSuccess();
+              }}
+            />
+          )}
         </div>
       </motion.main>
       <Footer />
