@@ -1,12 +1,12 @@
-
 import React, { useState, useRef, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, Accept } from 'react-dropzone';
 import { FilePlus, X } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from "@/utils/upload/validators";
 
 interface UploadState {
   isUploading: boolean;
@@ -27,7 +27,7 @@ interface MultiFileUploaderProps {
   onUploadsComplete?: (urls: string[]) => void;
   maxSizeInMB?: number;
   allowedTypes?: string[];
-  contentCategory?: string; // Add this prop to match what FileUploadDialog is passing
+  contentCategory?: string;
   maxFiles?: number;
   autoUpload?: boolean;
 }
@@ -35,17 +35,12 @@ interface MultiFileUploaderProps {
 export const MultiFileUploader = ({ 
   onUploadComplete,
   onUploadsComplete,
-  maxSizeInMB = 50, // Default max size: 50MB
+  maxSizeInMB = 50,
   allowedTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'video/mp4',
-    'video/webm',
-    'video/quicktime'
+    ...SUPPORTED_IMAGE_TYPES,
+    ...SUPPORTED_VIDEO_TYPES
   ],
-  contentCategory = 'generic', // Default value for the new prop
+  contentCategory = 'generic',
   maxFiles = 10,
   autoUpload = false
 }: MultiFileUploaderProps) => {
@@ -63,11 +58,9 @@ export const MultiFileUploader = ({
   
   const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
 
-  // Define handleUpload BEFORE it's used (fixing the order issue)
   const handleUpload = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
     
-    // Reset state for new upload
     setUploadState({
       isUploading: true,
       progress: 0,
@@ -77,7 +70,6 @@ export const MultiFileUploader = ({
       previews: []
     });
     
-    // Simulate progress for better UX
     const interval = setInterval(() => {
       setUploadState(prevState => {
         const newProgress = Math.min(prevState.progress + Math.random() * 20, 99);
@@ -85,7 +77,6 @@ export const MultiFileUploader = ({
       });
     }, 300);
 
-    // Simulate upload completion
     setTimeout(() => {
       clearInterval(interval);
       setUploadState(prevState => ({
@@ -99,15 +90,10 @@ export const MultiFileUploader = ({
         onUploadComplete(files);
       }
       
-      // For FileUploadDialog which needs URLs instead of File objects
-      if (onUploadsComplete) {
-        // In a real app, we would get actual URLs from the server
-        // Here we simulate it by creating fake URLs
-        const mockUrls = files.map((_, i) => 
-          `https://storage.example.com/${contentCategory}/${Date.now()}-${i}.file`
-        );
-        onUploadsComplete(mockUrls);
-      }
+      const mockUrls = files.map((_, i) => 
+        `https://storage.example.com/${contentCategory}/${Date.now()}-${i}.file`
+      );
+      onUploadsComplete(mockUrls);
       
       toast({
         title: "Upload Complete",
@@ -119,7 +105,6 @@ export const MultiFileUploader = ({
   const handleDrop = useCallback((acceptedFiles: File[]) => {
     const filesArray = Array.from(acceptedFiles);
     
-    // Validate files
     const validFiles = filesArray.filter(file => {
       if (file.size > maxSizeInBytes) {
         toast({
@@ -140,7 +125,6 @@ export const MultiFileUploader = ({
       return true;
     });
     
-    // Check if we're exceeding the maximum number of files
     if (previews.length + validFiles.length > maxFiles) {
       toast({
         title: "Too Many Files",
@@ -150,19 +134,22 @@ export const MultiFileUploader = ({
       return;
     }
     
-    // Update previews
     const newPreviews = validFiles.map(file => URL.createObjectURL(file));
     setPreviews(prev => [...prev, ...newPreviews]);
     
-    // Auto upload if enabled
     if (autoUpload && validFiles.length > 0) {
       handleUpload(validFiles);
     }
   }, [handleUpload, allowedTypes, maxSizeInBytes, maxSizeInMB, toast, previews, maxFiles, autoUpload]);
 
+  const acceptTypes: Accept = allowedTypes.reduce((acc, type) => {
+    acc[type] = [];
+    return acc;
+  }, {} as Accept);
+
   const {getRootProps, getInputProps, isDragActive} = useDropzone({
     onDrop: handleDrop,
-    accept: allowedTypes.join(','),
+    accept: acceptTypes,
     maxSize: maxSizeInBytes,
     multiple: true
   });
@@ -170,7 +157,6 @@ export const MultiFileUploader = ({
   const handleRemove = (index: number) => {
     setPreviews(prev => {
       const newPreviews = [...prev];
-      // Revoke object URL to prevent memory leaks
       URL.revokeObjectURL(newPreviews[index]);
       newPreviews.splice(index, 1);
       return newPreviews;
@@ -182,10 +168,7 @@ export const MultiFileUploader = ({
   };
 
   const handleManualUpload = () => {
-    // Convert object URLs back to File objects - in a real app this would be different
     if (previews.length > 0 && !uploadState.isUploading) {
-      // In a real implementation, we would have stored the actual File objects
-      // For now, we'll just simulate the upload with empty files
       const dummyFiles = Array(previews.length).fill(null).map((_, i) => 
         new File([""], `file-${i}.jpg`, { type: "image/jpeg" })
       );
