@@ -1,3 +1,4 @@
+
 export type DatingAd = {
   id: string;
   user_id: string | null;
@@ -49,8 +50,8 @@ export type DatingAd = {
 };
 
 export interface SearchCategory {
-  seeker: "couple" | "female" | "male";
-  looking_for: "male" | "female" | "couple";
+  seeker: string; // Changed from restricted type to allow any string value
+  looking_for: string; // Changed from restricted type to allow any string value
   label?: string;
 }
 
