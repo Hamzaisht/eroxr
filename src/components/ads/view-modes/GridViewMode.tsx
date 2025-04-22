@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { DatingAd } from "../types/dating";
 import { GridItem } from "./components/GridItem";
@@ -36,14 +35,12 @@ export const GridViewMode = ({
     threshold: 400,
   });
   
-  // Initialize with first page of ads
   useEffect(() => {
     if (ads && ads.length) {
       setVisibleAds(ads.slice(0, pageSize));
     }
   }, [ads, pageSize, setVisibleAds]);
   
-  // Load more ads as user scrolls
   useEffect(() => {
     if (!hasMore || loadingMore || !ads) return;
     
@@ -59,25 +56,23 @@ export const GridViewMode = ({
     
   }, [hasMore, loadingMore, ads, visibleAds.length, setVisibleAds, pageSize]);
   
-  // Handle video player fullscreen
   const handleSelectAd = (ad: DatingAd) => {
     setSelectedAd(ad);
     
-    // Track view in database
     if (ad.id) {
-      supabase.from('dating_ads').update({ 
-        view_count: (ad.view_count || 0) + 1 
-      }).eq('id', ad.id)
-      .then(() => {
-        console.log('View tracked');
-      })
-      .catch(error => {
+      try {
+        supabase.from('dating_ads').update({ 
+          view_count: (ad.view_count || 0) + 1 
+        }).eq('id', ad.id)
+        .then(() => {
+          console.log('View tracked');
+        });
+      } catch (error) {
         console.error('Error tracking view:', error);
-      });
+      }
     }
   };
   
-  // Pull-to-refresh functionality for mobile
   useEffect(() => {
     if (!isMobile || !gridRef.current) return;
     
@@ -92,23 +87,18 @@ export const GridViewMode = ({
       const currentY = e.touches[0].clientY;
       const diff = currentY - startY;
       
-      // Only trigger pull to refresh if scrolled to top and pulling down
       if (diff > 70 && window.scrollY === 0 && !isRefreshing) {
         isRefreshing = true;
         
-        // Visual feedback for refresh
         if (gridRef.current) {
           gridRef.current.style.transform = `translateY(60px)`;
           gridRef.current.style.transition = 'transform 0.3s ease';
         }
         
-        // Reset after animation
         setTimeout(() => {
           if (gridRef.current) {
             gridRef.current.style.transform = '';
           }
-          
-          // Refresh data logic would go here
           
           isRefreshing = false;
         }, 1000);
@@ -157,14 +147,12 @@ export const GridViewMode = ({
         ))}
       </div>
       
-      {/* Loading indicator for infinite scroll */}
       {loadingMore && (
         <div className="flex justify-center py-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
         </div>
       )}
       
-      {/* Ad Fullscreen Viewer */}
       {selectedAd && (
         <FullscreenAdViewer ad={selectedAd} onClose={() => setSelectedAd(null)} />
       )}

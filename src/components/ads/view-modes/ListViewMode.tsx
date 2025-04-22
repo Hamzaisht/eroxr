@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Eye, MapPin, Calendar, User, Clock } from "lucide-react";
@@ -15,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
 import { MediaSource } from "@/utils/media/types";
+import { calculateMatchPercentage } from "@/components/dating/utils/matchCalculator";
 
 interface ListViewModeProps {
   ads: DatingAd[];
