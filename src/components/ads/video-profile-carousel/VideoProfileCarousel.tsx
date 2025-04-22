@@ -7,6 +7,8 @@ import { CarouselProgressIndicator } from './CarouselProgressIndicator';
 import { VideoControls } from '../video-profile-card/VideoControls';
 import { useMediaQuery } from '@/hooks/use-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
+import { UniversalMedia } from '@/components/media/UniversalMedia';
+import { MediaType } from '@/utils/media/types';
 
 interface VideoProfileCarouselProps {
   ads: DatingAd[];
@@ -15,6 +17,8 @@ interface VideoProfileCarouselProps {
 export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isActive, setIsActive] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -46,6 +50,14 @@ export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
 
   const handleGoToSlide = (index: number) => {
     setCurrentIndex(index);
+  };
+
+  const togglePlay = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
   };
 
   if (!ads || ads.length === 0) {
@@ -90,11 +102,33 @@ export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
           onSlideChange={handleGoToSlide} 
         />
 
-        <VideoControls 
-          videoUrl={ads[currentIndex]?.video_url || null}
-          avatarUrl={ads[currentIndex]?.avatar_url || null}
-          isActive={isActive}
-        />
+        <div className="absolute inset-0 pointer-events-none z-10">
+          <div className="absolute bottom-4 left-4 z-20 pointer-events-auto">
+            <VideoControls 
+              isHovered={isActive}
+              isPlaying={isPlaying}
+              isMuted={isMuted}
+              togglePlay={togglePlay}
+              toggleMute={toggleMute}
+            />
+          </div>
+        </div>
+
+        {/* Video in background - hidden but handles actual playback */}
+        <div className="absolute inset-0 opacity-0 pointer-events-none">
+          {ads[currentIndex]?.video_url && (
+            <UniversalMedia
+              item={{
+                video_url: ads[currentIndex].video_url,
+                media_type: MediaType.VIDEO
+              }}
+              autoPlay={isPlaying}
+              muted={isMuted}
+              controls={false}
+              loop={true}
+            />
+          )}
+        </div>
       </div>
     </motion.div>
   );
