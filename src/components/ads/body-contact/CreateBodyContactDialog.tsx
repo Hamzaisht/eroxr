@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ImmersiveAdCreation } from "./immersive-creation";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import "./styles.css";
 
 interface CreateBodyContactDialogProps {
@@ -13,7 +14,7 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <Button 
         onClick={() => setIsOpen(true)}
         className="relative overflow-hidden bg-gradient-to-r from-luxury-primary to-luxury-secondary 
@@ -29,12 +30,15 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
           opacity-0 group-hover:opacity-100 group-hover:animate-shine"></span>
       </Button>
 
-      {isOpen && (
-        <ImmersiveAdCreation 
-          onClose={() => setIsOpen(false)} 
-          onSuccess={onSuccess} 
-        />
-      )}
-    </>
+      <DialogContent asChild>
+        {/* The asChild prop lets us render the immersive modal without default DialogContent padding/borders */}
+        {isOpen ? (
+          <ImmersiveAdCreation 
+            onClose={() => setIsOpen(false)} 
+            onSuccess={onSuccess} 
+          />
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 };
