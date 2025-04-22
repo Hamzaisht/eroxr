@@ -1,118 +1,165 @@
 
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Info, Heart, MessageCircle, Search } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Heart, MessageCircle, Bell, User, Plus } from "lucide-react";
+import { motion } from "framer-motion";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { CreateBodyContactDialog } from "@/components/ads/body-contact";
-import { NewMessageDialog } from "@/components/messages/NewMessageDialog";
+import { useNavigate } from "react-router-dom";
 
 interface DatingHeaderProps {
   isNewMessageOpen: boolean;
-  setIsNewMessageOpen: (isOpen: boolean) => void;
+  setIsNewMessageOpen: (open: boolean) => void;
   canAccessBodyContact: boolean;
   onAdCreationSuccess: () => void;
   isSticky?: boolean;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
-export const DatingHeader = ({ 
-  isNewMessageOpen, 
-  setIsNewMessageOpen, 
-  canAccessBodyContact, 
+export const DatingHeader = ({
+  isNewMessageOpen,
+  setIsNewMessageOpen,
+  canAccessBodyContact,
   onAdCreationSuccess,
-  isSticky = false
+  isSticky = false,
+  activeTab = "browse",
+  onTabChange,
 }: DatingHeaderProps) => {
   const session = useSession();
   const navigate = useNavigate();
+  const [unreadMessages, setUnreadMessages] = useState<number>(0);
+  const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
+  const [favoritesCount, setFavoritesCount] = useState<number>(0);
+
+  useEffect(() => {
+    // For demo purposes, set some random numbers for unread items
+    setUnreadMessages(Math.floor(Math.random() * 5));
+    setUnreadNotifications(Math.floor(Math.random() * 3));
+    
+    // In a real app, we would fetch these counts from the database
+    // based on the current user's session
+  }, []);
+
+  const handleCreateProfile = () => {
+    if (!session) {
+      navigate("/auth");
+      return;
+    }
+    setIsNewMessageOpen(true);
+  };
+
+  const handleTabChange = (value: string) => {
+    if (onTabChange) {
+      onTabChange(value);
+    }
+  };
 
   return (
     <motion.div
-      className={`${isSticky ? 'sticky top-0 z-30' : 'relative'} transition-all duration-300`}
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.3 }}
+      className={`w-full ${
+        isSticky
+          ? "bg-luxury-dark/80 backdrop-blur-lg border-b border-luxury-primary/10 py-3 px-4"
+          : "mb-6"
+      }`}
     >
-      {/* Header Section */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-neon-glow opacity-20 blur-xl"></div>
-        <div className="relative glass-effect p-6 md:p-8 rounded-2xl">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
-            <div className="space-y-2 text-center md:text-left">
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
-                Discover Connections
-              </h1>
-              <p className="text-luxury-neutral text-base md:text-lg max-w-md">
-                Find your perfect match through authentic video profiles
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 md:gap-3 justify-center md:justify-end">
-              {session?.user && (
-                <div className="hidden md:flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="bg-luxury-dark/50 border-luxury-primary/20 text-luxury-primary hover:bg-luxury-primary/10"
-                    onClick={() => navigate('/favorites')}
-                  >
-                    <Heart className="h-4 w-4 mr-2" />
-                    Favorites
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="bg-luxury-dark/50 border-luxury-primary/20 text-luxury-primary hover:bg-luxury-primary/10"
-                    onClick={() => setIsNewMessageOpen(true)}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Messages
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="bg-luxury-dark/50 border-luxury-primary/20 text-luxury-primary hover:bg-luxury-primary/10"
-                  >
-                    <Search className="h-4 w-4 mr-2" />
-                    Advanced Search
-                  </Button>
-                </div>
-              )}
-              
-              {!session?.user ? (
-                <Button 
-                  onClick={() => navigate('/login')}
-                  className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent">
+              Body Dating
+            </h1>
+            <p className="text-sm text-luxury-neutral">
+              Find your perfect match in the Nordic region
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {session ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="relative bg-luxury-dark/50 border-luxury-primary/20"
+                  onClick={() => navigate("/dating/favorites")}
                 >
-                  Login to Create
+                  <Heart className="h-5 w-5 text-luxury-primary" />
+                  {favoritesCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-luxury-primary text-black text-xs rounded-full flex items-center justify-center">
+                      {favoritesCount}
+                    </span>
+                  )}
                 </Button>
-              ) : !canAccessBodyContact ? (
-                <Button 
-                  onClick={() => navigate('/subscription')}
-                  className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="relative bg-luxury-dark/50 border-luxury-primary/20"
+                  onClick={() => navigate("/messages")}
                 >
-                  Upgrade to Create
+                  <MessageCircle className="h-5 w-5 text-luxury-primary" />
+                  {unreadMessages > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-luxury-primary text-black text-xs rounded-full flex items-center justify-center">
+                      {unreadMessages}
+                    </span>
+                  )}
                 </Button>
-              ) : (
-                <CreateBodyContactDialog onSuccess={onAdCreationSuccess} />
-              )}
-              <NewMessageDialog 
-                open={isNewMessageOpen} 
-                onOpenChange={setIsNewMessageOpen} 
-                onSelectUser={() => {}} 
-              />
-            </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="relative bg-luxury-dark/50 border-luxury-primary/20"
+                  onClick={() => navigate("/notifications")}
+                >
+                  <Bell className="h-5 w-5 text-luxury-primary" />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-luxury-primary text-black text-xs rounded-full flex items-center justify-center">
+                      {unreadNotifications}
+                    </span>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="bg-luxury-dark/50 border-luxury-primary/20"
+                  onClick={() => navigate("/profile")}
+                >
+                  <User className="h-5 w-5 text-luxury-primary" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="default"
+                onClick={() => navigate("/auth")}
+                className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
+              >
+                Sign In
+              </Button>
+            )}
+            <Button
+              onClick={handleCreateProfile}
+              className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Profile
+            </Button>
           </div>
         </div>
-      </div>
 
-      {!session?.user && (
-        <Alert className="mt-4 bg-luxury-dark/70 backdrop-blur-sm border-luxury-primary/20">
-          <Info className="h-4 w-4 text-luxury-primary" />
-          <AlertDescription className="text-luxury-neutral">
-            Sign in to create your own profile and connect with others
-          </AlertDescription>
-        </Alert>
-      )}
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full max-w-md mx-auto"
+        >
+          <TabsList className="grid grid-cols-4">
+            <TabsTrigger value="browse">Browse</TabsTrigger>
+            <TabsTrigger value="quick-match">Quick Match</TabsTrigger>
+            <TabsTrigger value="favorites">Favorites</TabsTrigger>
+            <TabsTrigger value="nearby">Nearby</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
     </motion.div>
   );
 };

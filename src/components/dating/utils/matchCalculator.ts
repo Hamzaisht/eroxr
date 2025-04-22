@@ -2,7 +2,13 @@
 import { DatingAd } from "@/components/ads/types/dating";
 
 /**
- * Calculate match percentage between user profile and another profile
+ * Enhanced match calculation algorithm that takes into account more factors:
+ * - Location proximity
+ * - Age preference matching
+ * - Tags/interests overlap
+ * - Relationship type compatibility
+ * - Drinking/smoking preferences
+ * - Education/occupation compatibility
  */
 export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProfile: DatingAd): number => {
   if (!userProfile) return 50; // Default match percentage
@@ -10,18 +16,19 @@ export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProf
   let score = 0;
   let totalFactors = 0;
   
-  // Location matching
+  // Location matching (30 points max)
   if (userProfile.city && otherProfile.city) {
     if (userProfile.city.toLowerCase() === otherProfile.city.toLowerCase()) {
-      score += 30;
+      score += 30; // Perfect match for same city
     } else if (userProfile.country === otherProfile.country) {
-      score += 15;
+      score += 15; // Partial match for same country
     }
     totalFactors += 30;
   }
   
-  // Tags/interests matching
-  if (userProfile.tags && otherProfile.tags && userProfile.tags.length > 0 && otherProfile.tags.length > 0) {
+  // Tags/interests matching (30 points max)
+  if (userProfile.tags && otherProfile.tags && 
+      userProfile.tags.length > 0 && otherProfile.tags.length > 0) {
     const userTags = new Set(userProfile.tags.map(tag => tag.toLowerCase()));
     const otherTags = otherProfile.tags.map(tag => tag.toLowerCase());
     
@@ -37,7 +44,7 @@ export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProf
     totalFactors += 30;
   }
   
-  // Age preferences matching
+  // Age preferences matching (20 points max)
   if (userProfile.preferred_age_range && otherProfile.age_range) {
     const userMinAge = userProfile.preferred_age_range.lower || userProfile.preferred_age_range[0];
     const userMaxAge = userProfile.preferred_age_range.upper || userProfile.preferred_age_range[1];
@@ -55,14 +62,76 @@ export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProf
     totalFactors += 20;
   }
   
-  // Relationship compatibility
+  // Relationship compatibility (20 points max)
   if (userProfile.looking_for && otherProfile.relationship_status) {
-    const lookingFor = Array.isArray(userProfile.looking_for) ? userProfile.looking_for : [userProfile.looking_for];
+    const lookingFor = Array.isArray(userProfile.looking_for) 
+      ? userProfile.looking_for 
+      : [userProfile.looking_for];
     
     if (lookingFor.includes(otherProfile.relationship_status) || lookingFor.includes('any')) {
       score += 20;
     }
     totalFactors += 20;
+  }
+  
+  // Body type preference (10 points max) - new factor
+  if (userProfile.body_type && otherProfile.body_type) {
+    // Simple exact match check - this could be enhanced with preference matrices
+    if (userProfile.body_type === otherProfile.body_type) {
+      score += 10;
+    }
+    totalFactors += 10;
+  }
+  
+  // Lifestyle compatibility (10 points max) - new factor
+  let lifestyleScore = 0;
+  let lifestyleFactors = 0;
+  
+  // Smoking preferences
+  if (userProfile.smoking_status && otherProfile.smoking_status) {
+    if (userProfile.smoking_status === otherProfile.smoking_status) {
+      lifestyleScore += 5;
+    }
+    lifestyleFactors += 5;
+  }
+  
+  // Drinking preferences
+  if (userProfile.drinking_status && otherProfile.drinking_status) {
+    if (userProfile.drinking_status === otherProfile.drinking_status) {
+      lifestyleScore += 5;
+    }
+    lifestyleFactors += 5;
+  }
+  
+  if (lifestyleFactors > 0) {
+    score += lifestyleScore;
+    totalFactors += lifestyleFactors;
+  }
+  
+  // Educational/occupational compatibility (10 points max) - new factor
+  let eduOccScore = 0;
+  let eduOccFactors = 0;
+  
+  // Education level
+  if (userProfile.education_level && otherProfile.education_level) {
+    if (userProfile.education_level === otherProfile.education_level) {
+      eduOccScore += 5;
+    }
+    eduOccFactors += 5;
+  }
+  
+  // Occupation - this is more complex and would require categorization
+  if (userProfile.occupation && otherProfile.occupation) {
+    // Check for exact match (simple approach)
+    if (userProfile.occupation.toLowerCase() === otherProfile.occupation.toLowerCase()) {
+      eduOccScore += 5;
+    }
+    eduOccFactors += 5;
+  }
+  
+  if (eduOccFactors > 0) {
+    score += eduOccScore;
+    totalFactors += eduOccFactors;
   }
   
   // Calculate final percentage

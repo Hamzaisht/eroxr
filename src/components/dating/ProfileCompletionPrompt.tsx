@@ -19,25 +19,32 @@ export const ProfileCompletionPrompt = ({ userProfile }: ProfileCompletionPrompt
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  if (!session || !userProfile || isDismissed || (userProfile.profile_completion_score || 0) >= 80) {
+  if (!session || !userProfile || isDismissed || (userProfile.profile_completion_score || 0) >= 90) {
     return null;
   }
   
   const score = userProfile.profile_completion_score || 0;
-  const missingItems: {label: string; completed: boolean}[] = [
-    { label: "Profile photo", completed: !!userProfile.avatar_url },
-    { label: "Video introduction", completed: !!userProfile.video_url },
-    { label: "About me", completed: !!userProfile.about_me },
-    { label: "Interests", completed: !!(userProfile.interests && userProfile.interests.length > 0) },
-    { label: "What I'm seeking", completed: !!userProfile.seeking_description },
+  
+  // Enhanced profile completion items with more granular checks
+  const completionItems: {label: string; completed: boolean; points: number}[] = [
+    { label: "Profile photo", completed: !!userProfile.avatar_url, points: 15 },
+    { label: "Video introduction", completed: !!userProfile.video_url, points: 20 },
+    { label: "About me", completed: !!userProfile.about_me && (userProfile.about_me?.length || 0) > 50, points: 15 },
+    { label: "Interests", completed: !!(userProfile.interests && userProfile.interests.length >= 3), points: 10 },
+    { label: "Location details", completed: !!userProfile.city && !!userProfile.country, points: 10 },
+    { label: "What I'm seeking", completed: !!userProfile.seeking_description && (userProfile.seeking_description?.length || 0) > 30, points: 15 },
+    { label: "Height information", completed: !!userProfile.height, points: 5 },
+    { label: "Body type", completed: !!userProfile.body_type, points: 5 },
+    { label: "Lifestyle info", completed: !!userProfile.smoking_status && !!userProfile.drinking_status, points: 5 }
   ];
   
-  const incompleteItems = missingItems.filter(item => !item.completed);
+  const incompleteItems = completionItems.filter(item => !item.completed);
+  const totalMissingPoints = incompleteItems.reduce((total, item) => total + item.points, 0);
   
   const handleEditProfile = () => {
     toast({
       title: "Let's complete your profile",
-      description: "Higher completion scores get up to 5x more views!",
+      description: `Completing your profile could boost your visibility by up to ${totalMissingPoints}%!`,
       duration: 3000,
     });
     navigate("/profile/edit");
@@ -54,7 +61,7 @@ export const ProfileCompletionPrompt = ({ userProfile }: ProfileCompletionPrompt
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             <Info className="h-5 w-5 text-luxury-primary" />
-            <h3 className="text-lg font-medium text-white">Complete Your Profile</h3>
+            <h3 className="text-lg font-medium text-white">Boost Your Profile</h3>
           </div>
           <Button 
             variant="ghost" 
@@ -75,7 +82,7 @@ export const ProfileCompletionPrompt = ({ userProfile }: ProfileCompletionPrompt
         </div>
         
         <div className="mt-4 space-y-2">
-          {incompleteItems.slice(0, 3).map((item, index) => (
+          {incompleteItems.slice(0, 4).map((item, index) => (
             <div key={index} className="flex items-center gap-2 text-sm text-luxury-neutral">
               <div className="h-4 w-4 rounded-full border border-luxury-primary/30 flex items-center justify-center">
                 {item.completed ? (
@@ -83,8 +90,15 @@ export const ProfileCompletionPrompt = ({ userProfile }: ProfileCompletionPrompt
                 ) : null}
               </div>
               <span>{item.label}</span>
+              <span className="ml-auto text-xs text-luxury-primary">+{item.points}%</span>
             </div>
           ))}
+          
+          {incompleteItems.length > 4 && (
+            <div className="text-sm text-luxury-neutral/70">
+              +{incompleteItems.length - 4} more items to complete
+            </div>
+          )}
         </div>
         
         <Button
@@ -94,9 +108,16 @@ export const ProfileCompletionPrompt = ({ userProfile }: ProfileCompletionPrompt
           Complete Profile <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
         
-        <p className="text-xs text-luxury-neutral/70 mt-2 text-center">
-          Complete profiles get up to 5x more views and matches!
-        </p>
+        <div className="flex items-center justify-center mt-3 gap-2">
+          <div className="flex space-x-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <div key={star} className={`h-2 w-2 rounded-full ${star <= (score / 20) ? 'bg-luxury-primary' : 'bg-luxury-neutral/20'}`} />
+            ))}
+          </div>
+          <p className="text-xs text-luxury-neutral/70">
+            Complete profiles get up to 5x more views and matches!
+          </p>
+        </div>
       </motion.div>
     </AnimatePresence>
   );

@@ -33,6 +33,9 @@ const Dating = () => {
   const session = useSession();
   const navigate = useNavigate();
   
+  // App state
+  const [activeTab, setActiveTab] = useState<string>("browse");
+  
   // Filtering states
   const [isFilterCollapsed, setIsFilterCollapsed] = useState<boolean>(window.innerWidth < 1024);
   const [showFilters, setShowFilters] = useState<boolean>(false);
@@ -241,6 +244,11 @@ const Dating = () => {
       supabase.removeChannel(channel);
     };
   }, [session, userProfile]);
+
+  // Handle tab changes
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
   
   return (
     <HomeLayout>
@@ -257,6 +265,8 @@ const Dating = () => {
               setIsNewMessageOpen={setIsNewMessageOpen}
               canAccessBodyContact={true}
               onAdCreationSuccess={handleAdCreationSuccess}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
             />
             
             <div className="mt-6 flex justify-between items-center">
@@ -308,10 +318,12 @@ const Dating = () => {
                   canAccessBodyContact={true}
                   onAdCreationSuccess={handleAdCreationSuccess}
                   isSticky={true}
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
                 />
               )}
               
-              {datingAds && datingAds.length > 0 ? (
+              {datingAds && datingAds.length > 0 && activeTab === "browse" ? (
                 <div className="grid grid-cols-1 gap-8">
                   <div className="relative">
                     <VideoProfileCarousel ads={datingAds} />
@@ -323,16 +335,20 @@ const Dating = () => {
                     onTagClick={handleTagClick}
                     isLoading={isLoading}
                     userProfile={userProfile}
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
                   />
                 </div>
               ) : (
                 <DatingContent 
-                  ads={[]}
+                  ads={datingAds} 
                   canAccessBodyContact={true}
                   onAdCreationSuccess={handleAdCreationSuccess}
                   onTagClick={handleTagClick}
                   isLoading={isLoading}
                   userProfile={userProfile}
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
                 />
               )}
             </div>
