@@ -1,67 +1,83 @@
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { motion, AnimatePresence } from "framer-motion";
 import { DatingAd } from "../types/dating";
+import { AdCard } from "./components/grid-item";
 import { FullscreenAdViewer } from "../video-profile/FullscreenAdViewer";
-import { LoadingGrid } from "./components/LoadingGrid";
-import { AdCard } from "./components/grid-item/AdCard";
+import { useMediaQuery } from "@/hooks/use-mobile";
+import { Loader2 } from "lucide-react";
 
 interface GridViewModeProps {
   ads: DatingAd[];
   isLoading?: boolean;
-  onMediaClick?: (ad: DatingAd) => void;
 }
 
-export const GridViewMode = ({ ads, isLoading = false, onMediaClick }: GridViewModeProps) => {
+export const GridViewMode = ({ ads, isLoading }: GridViewModeProps) => {
   const [selectedAd, setSelectedAd] = useState<DatingAd | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
-  
+
   if (isLoading) {
-    return <LoadingGrid />;
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, delay: idx * 0.1 }}
+            className="aspect-[4/5] rounded-xl bg-gradient-to-br from-luxury-dark/80 to-black/50 animate-pulse"
+          />
+        ))}
+      </div>
+    );
   }
 
   if (!ads || ads.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex flex-col items-center justify-center min-h-[300px] rounded-xl bg-luxury-dark/40 backdrop-blur-sm p-8"
-      >
-        <p className="text-luxury-neutral text-lg">No profiles match your criteria</p>
-      </motion.div>
+      <div className="text-center py-12">
+        <p className="text-luxury-neutral">No ads found matching your criteria</p>
+      </div>
     );
   }
 
   return (
-    <TooltipProvider>
+    <>
       <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        layout
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
       >
         <AnimatePresence>
-          {ads.map((ad) => (
-            <AdCard
+          {ads.map((ad, index) => (
+            <motion.div
               key={ad.id}
-              ad={ad}
-              onSelect={setSelectedAd}
-              isMobile={isMobile}
-            />
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                transition: { delay: Math.min(index * 0.05, 0.5) } 
+              }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              layout
+            >
+              <AdCard 
+                ad={ad} 
+                onSelect={setSelectedAd} 
+                isMobile={isMobile} 
+              />
+            </motion.div>
           ))}
         </AnimatePresence>
       </motion.div>
-      
+
       <AnimatePresence>
         {selectedAd && (
-          <FullscreenAdViewer 
-            ad={selectedAd} 
-            onClose={() => setSelectedAd(null)} 
+          <FullscreenAdViewer
+            ad={selectedAd}
+            onClose={() => setSelectedAd(null)}
           />
         )}
       </AnimatePresence>
-    </TooltipProvider>
+    </>
   );
 };

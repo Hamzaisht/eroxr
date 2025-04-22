@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GridViewMode, ListViewMode } from "@/components/ads/view-modes";
 import { ViewModeToggle } from "@/components/ads/view-modes/ViewModeToggle";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useInView } from "react-intersection-observer";
 
 interface DatingContentProps {
   ads: DatingAd[] | undefined;
@@ -28,11 +29,16 @@ export const DatingContent = ({
   const session = useSession();
   const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>('bd-view-mode', 'grid');
   const [activeTab, setActiveTab] = useState('all');
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const { ref: tabsRef, inView: tabsInView } = useInView({
+    threshold: 0,
+    rootMargin: "-50px 0px 0px 0px"
+  });
   
-  // Filter most viewed ads (top 5)
+  // Filter most viewed ads (top 8)
   const mostViewedAds = ads
     ?.sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
-    ?.slice(0, 5);
+    ?.slice(0, 8);
 
   // Filter trending ads (based on recency and views)
   const trendingAds = ads
@@ -51,9 +57,9 @@ export const DatingContent = ({
       
       return totalScoreB - totalScoreA;
     })
-    ?.slice(0, 5);
+    ?.slice(0, 8);
 
-  // All ads for "All Ads" tab
+  // All ads for "All" tab
   const allAds = ads;
 
   // Check if we have any ads to display
@@ -70,18 +76,32 @@ export const DatingContent = ({
     }));
   };
 
-  // Maintain scroll position when changing tabs or view modes
+  // Store scroll position when changing tabs
   useEffect(() => {
-    // Save scroll position to restore later
-    const scrollPosition = window.scrollY;
-    
-    // Return to the saved position after a short delay to allow rendering
+    const savedPosition = scrollPosition;
     const timer = setTimeout(() => {
-      window.scrollTo(0, scrollPosition);
+      window.scrollTo(0, savedPosition);
     }, 100);
     
     return () => clearTimeout(timer);
-  }, [viewMode, activeTab]);
+  }, [viewMode, activeTab, scrollPosition]);
+  
+  // Track scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollPosition(window.scrollY);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Floating tabs when scrolled past header
+  const [showFloatingTabs, setShowFloatingTabs] = useState(false);
+  
+  useEffect(() => {
+    setShowFloatingTabs(!tabsInView);
+  }, [tabsInView]);
 
   return (
     <motion.div 
@@ -92,7 +112,7 @@ export const DatingContent = ({
     >
       {hasAds || isLoading ? (
         <>
-          <div className="flex justify-between items-center">
+          <div className="relative" ref={tabsRef}>
             <Tabs 
               defaultValue="all" 
               className="w-full"
@@ -170,6 +190,41 @@ export const DatingContent = ({
               </TabsContent>
             </Tabs>
           </div>
+          
+          {/* Floating tabs that appear when scrolling */}
+          {showFloatingTabs && (
+            <motion.div 
+              className="fixed top-0 left-0 right-0 z-40 px-4 py-2 bg-luxury-dark/80 backdrop-blur-xl border-b border-luxury-primary/10"
+              initial={{ y: -100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -100, opacity: 0 }}
+            >
+              <div className="container mx-auto flex justify-between items-center">
+                <TabsList className="grid grid-cols-3 w-full max-w-md">
+                  <TabsTrigger value="all" className="text-sm" 
+                    onClick={() => setActiveTab('all')}>
+                    All
+                  </TabsTrigger>
+                  <TabsTrigger value="trending" className="text-sm" 
+                    onClick={() => setActiveTab('trending')}>
+                    Trending
+                  </TabsTrigger>
+                  <TabsTrigger value="popular" className="text-sm" 
+                    onClick={() => setActiveTab('popular')}>
+                    Popular
+                  </TabsTrigger>
+                </TabsList>
+                
+                <div className="hidden md:block">
+                  <ViewModeToggle 
+                    viewMode={viewMode} 
+                    setViewMode={setViewMode} 
+                    size="sm"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
         </>
       ) : (
         <EmptyProfilesState 

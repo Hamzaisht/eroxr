@@ -1,16 +1,17 @@
 
-import { useState, useEffect } from 'react';
-import { X, MessageCircle, Eye, Map, Clock, Calendar, ChevronLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, Heart, MessageCircle, Share2, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { DatingAd } from '../types/dating';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 import { useMediaQuery } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { formatDistanceToNow } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import { useSession } from '@supabase/auth-helpers-react';
 
 interface FullscreenAdViewerProps {
   ad: DatingAd;
@@ -18,242 +19,257 @@ interface FullscreenAdViewerProps {
 }
 
 export const FullscreenAdViewer = ({ ad, onClose }: FullscreenAdViewerProps) => {
-  const [viewCount, setViewCount] = useState(ad.view_count || 0);
-  const [replyCount, setReplyCount] = useState(ad.message_count || 0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const { toast } = useToast();
   const session = useSession();
-  const navigate = useNavigate();
-  const isMobile = useMediaQuery("(max-width: 768px)");
   
-  // Update view count on open
+  // Handle keyboard events for closing
   useEffect(() => {
-    const updateViewCount = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('dating_ads')
-          .update({ view_count: (ad.view_count || 0) + 1 })
-          .eq('id', ad.id)
-          .select('view_count');
-          
-        if (!error && data && data[0]) {
-          setViewCount(data[0].view_count);
-        }
-      } catch (error) {
-        console.error('Error updating view count:', error);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === ' ' || e.key === 'Space') {
+        e.preventDefault();
+        setIsPlaying(prev => !prev);
+      } else if (e.key === 'm') {
+        setIsMuted(prev => !prev);
+      } else if (e.key === 'l') {
+        handleLike();
       }
     };
     
-    updateViewCount();
-  }, [ad.id, ad.view_count]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
   
-  // Format age range for display
-  const ageRangeDisplay = `${ad.age_range.lower}-${ad.age_range.upper}`;
-  
-  // Handle message button click
-  const handleMessageClick = () => {
+  const handleLike = () => {
     if (!session) {
       toast({
-        title: "Login Required",
-        description: "Please sign in to message BD ad creators",
-        variant: "destructive",
+        title: "Login required",
+        description: "Please sign in to like profiles",
+        variant: "destructive"
       });
       return;
     }
     
-    // Check if user is premium (this will need to be implemented)
-    const isPremium = session?.user?.email && ["hamzaishtiaq242@gmail.com"].includes(session.user.email.toLowerCase());
+    setIsLiked(prev => !prev);
     
-    if (!isPremium) {
-      toast({
-        title: "Premium Feature",
-        description: "Messaging BD ad creators is a premium feature. Upgrade for 59 SEK/month to unlock messaging & more.",
-        duration: 5000,
-      });
-      return;
-    }
-    
-    // Navigate to messages with this user
-    navigate(`/messages?user=${ad.user_id}`);
+    toast({
+      title: isLiked ? "Removed from favorites" : "Added to favorites",
+      description: isLiked ? "Profile removed from your favorites" : "Profile added to your favorites",
+      duration: 2000,
+    });
   };
   
-  // Close on escape key
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleEsc);
+  const handleMessage = () => {
+    if (!session) {
+      toast({
+        title: "Login required",
+        description: "Please sign in to message users",
+        variant: "destructive"
+      });
+      return;
+    }
     
-    return () => {
-      window.removeEventListener('keydown', handleEsc);
-    };
-  }, [onClose]);
-
+    toast({
+      title: "Message feature",
+      description: "This feature will be available soon!",
+      duration: 2000,
+    });
+  };
+  
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: ad.title,
+        text: `Check out this profile: ${ad.title}`,
+        url: window.location.href
+      })
+      .catch(err => {
+        console.error("Share failed:", err);
+        toast({
+          title: "Share failed",
+          description: "Could not share this profile",
+          variant: "destructive"
+        });
+      });
+    } else {
+      // Fallback
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link copied",
+        description: "Profile link copied to clipboard",
+        duration: 2000,
+      });
+    }
+  };
+  
   return (
     <AnimatePresence>
-      <motion.div 
-        className="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg flex items-center justify-center overflow-auto"
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+        onClick={onClose}
       >
-        {/* Close Button - Always Visible */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onClose}
-          className="fixed top-4 right-4 text-white hover:bg-white/10 z-[60] bg-black/30 backdrop-blur-sm"
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="relative w-full max-w-4xl h-[90vh] bg-luxury-dark/90 rounded-xl overflow-hidden"
+          onClick={e => e.stopPropagation()}
         >
-          <X size={24} />
-        </Button>
-        
-        {/* Back to Browse Button - Mobile Only */}
-        {isMobile && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <button 
+            className="absolute top-4 right-4 z-30 p-2 rounded-full bg-black/50 text-white hover:bg-black/70"
             onClick={onClose}
-            className="fixed top-4 left-4 text-white hover:bg-white/10 z-[60] bg-black/30 backdrop-blur-sm flex items-center gap-1"
           >
-            <ChevronLeft size={16} />
-            Back
-          </Button>
-        )}
-        
-        <div className={`container h-[90vh] ${isMobile ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-[2fr,1fr] gap-6'}`}>
-          {/* Left side - Video Container */}
-          <div className="relative h-full flex flex-col">
-            <div className="flex-1 overflow-hidden rounded-xl bg-black">
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div className="flex flex-col md:flex-row h-full">
+            {/* Video section */}
+            <div className="relative md:w-2/3 h-1/2 md:h-full">
               {ad.video_url ? (
                 <VideoPlayer 
                   url={ad.video_url} 
-                  className="w-full h-full"
-                  autoPlay
+                  className="w-full h-full object-cover"
+                  autoPlay={isPlaying}
+                  muted={isMuted}
+                  loop={true}
+                  controls={true}
+                  onEnded={() => setIsPlaying(false)}
+                  onClick={() => setIsPlaying(!isPlaying)}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-luxury-darker/50">
+                <div className="w-full h-full flex items-center justify-center bg-luxury-darker">
                   <p className="text-luxury-neutral">No video available</p>
                 </div>
               )}
             </div>
             
-            {/* Engagement Metrics */}
-            <div className="mt-4 flex items-center justify-between bg-luxury-dark/40 backdrop-blur-sm p-3 rounded-lg">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5 text-white/80">
-                  <Eye className="h-5 w-5" />
-                  <span>{viewCount} views</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-white/80">
-                  <MessageCircle className="h-5 w-5" />
-                  <span>{replyCount} replies</span>
-                </div>
-              </div>
-              
-              {/* Message CTA Button */}
-              <Button 
-                onClick={handleMessageClick}
-                className="bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary"
-                size={isMobile ? "lg" : "default"}
-              >
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Message
-              </Button>
-            </div>
-          </div>
-          
-          {/* Right side - Profile Info */}
-          <div className="bg-luxury-dark/60 backdrop-blur-md rounded-xl p-6 flex flex-col h-full overflow-y-auto">
-            <div className="flex items-center gap-4 mb-6">
-              {ad.avatar_url ? (
-                <img 
-                  src={ad.avatar_url} 
-                  alt="Profile"
-                  className="w-16 h-16 rounded-full object-cover border-2 border-luxury-primary"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-luxury-darker flex items-center justify-center">
-                  <span className="text-xl text-luxury-neutral">?</span>
-                </div>
-              )}
-              
-              <div>
-                <h2 className="text-2xl font-bold text-white">{ad.title}</h2>
-                <p className="text-luxury-neutral/80">{ad.user?.username || "Anonymous"}</p>
-              </div>
-            </div>
-            
-            <div className="space-y-5 mb-6">
-              {/* Profile Information with Clear Spacing */}
-              <div className="bg-black/20 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Relationship Status</h3>
-                <p className="text-white flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-luxury-primary" />
-                  {ad.relationship_status}
-                </p>
-              </div>
-              
-              <div className="bg-black/20 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Looking For</h3>
-                <div className="flex flex-wrap gap-2">
-                  {Array.isArray(ad.looking_for) && ad.looking_for.map(type => (
-                    <Badge key={type} className="bg-luxury-primary/80 text-white px-3 py-1 text-sm">
-                      {type}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="bg-black/20 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Age Range</h3>
-                <p className="text-white flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-luxury-primary" />
-                  {ageRangeDisplay}
-                </p>
-              </div>
-              
-              <div className="bg-black/20 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Location</h3>
-                <p className="text-white flex items-center gap-2">
-                  <Map className="h-4 w-4 text-luxury-primary" />
-                  {ad.city}, {ad.country}
-                </p>
-              </div>
-              
-              {ad.tags && ad.tags.length > 0 && (
-                <div className="bg-black/20 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Tags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {ad.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="bg-luxury-dark/50 text-luxury-neutral border-none px-2 py-1">
-                        {tag}
+            {/* Details section */}
+            <div className="md:w-1/3 bg-luxury-dark h-1/2 md:h-full flex flex-col">
+              <ScrollArea className="flex-grow">
+                <div className="p-5 space-y-4">
+                  {/* Header with title and verification */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{ad.title}</h3>
+                      {ad.user?.username && (
+                        <div className="flex items-center mt-1">
+                          <Avatar className="h-5 w-5 mr-2">
+                            <AvatarImage src={ad.avatar_url || undefined} />
+                            <AvatarFallback>{ad.user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-luxury-neutral">{ad.user.username}</span>
+                        </div>
+                      )}
+                    </div>
+                    {ad.is_verified && (
+                      <Badge className="bg-luxury-primary/20 text-luxury-primary flex items-center gap-1">
+                        <Shield className="h-3 w-3" />
+                        <span>Verified</span>
                       </Badge>
-                    ))}
+                    )}
+                  </div>
+                  
+                  {/* Location and age */}
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-luxury-neutral">
+                      {ad.city}, {ad.country}
+                    </div>
+                    <div className="text-sm text-luxury-neutral">
+                      {ad.age_range && `${ad.age_range.lower}-${ad.age_range.upper} years`}
+                    </div>
+                  </div>
+                  
+                  {/* Description */}
+                  <div className="border-t border-luxury-primary/10 pt-4">
+                    <h4 className="text-sm font-semibold text-luxury-primary mb-2">About</h4>
+                    <p className="text-sm text-luxury-neutral whitespace-pre-line">
+                      {ad.description}
+                    </p>
+                  </div>
+                  
+                  {/* Looking for */}
+                  <div className="border-t border-luxury-primary/10 pt-4">
+                    <h4 className="text-sm font-semibold text-luxury-primary mb-2">Looking for</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {ad.looking_for?.map((item) => (
+                        <Badge 
+                          key={item} 
+                          variant="secondary"
+                          className="bg-luxury-primary/10 text-luxury-primary"
+                        >
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Tags/Interests */}
+                  {ad.tags && ad.tags.length > 0 && (
+                    <div className="border-t border-luxury-primary/10 pt-4">
+                      <h4 className="text-sm font-semibold text-luxury-primary mb-2">Interests</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ad.tags.map((tag) => (
+                          <Badge 
+                            key={tag}
+                            variant="outline" 
+                            className="text-xs bg-luxury-primary/5 border-luxury-primary/20 text-luxury-neutral"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Created date */}
+                  <div className="text-xs text-luxury-neutral/60 flex items-center pt-2">
+                    Posted {ad.created_at && formatDistanceToNow(new Date(ad.created_at), { addSuffix: true })}
                   </div>
                 </div>
-              )}
-            </div>
-            
-            <div className="mt-auto">
-              <div className="bg-black/20 rounded-lg p-4 mb-4">
-                <h3 className="text-sm font-medium text-luxury-neutral/80 mb-2">Description</h3>
-                <p className="text-white/90 whitespace-pre-line">{ad.description}</p>
-              </div>
+              </ScrollArea>
               
-              {/* Mobile-optimized Message Button */}
-              {isMobile && (
-                <Button 
-                  onClick={handleMessageClick}
-                  className="w-full bg-gradient-to-r from-luxury-primary to-luxury-secondary hover:from-luxury-secondary hover:to-luxury-primary py-4 text-lg"
+              {/* Action buttons */}
+              <div className="p-4 border-t border-luxury-primary/10 flex justify-between">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={`rounded-full ${isLiked ? 'bg-luxury-primary text-white' : 'bg-luxury-darker text-luxury-neutral'}`}
+                  onClick={handleLike}
                 >
-                  <MessageCircle className="mr-2 h-5 w-5" />
+                  <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+                </Button>
+                
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-luxury-primary text-white rounded-full px-6"
+                  onClick={handleMessage}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
                   Message
                 </Button>
-              )}
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full bg-luxury-darker text-luxury-neutral"
+                  onClick={handleShare}
+                >
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
     </AnimatePresence>
   );
