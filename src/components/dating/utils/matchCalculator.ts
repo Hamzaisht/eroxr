@@ -9,6 +9,10 @@ import { DatingAd } from "@/components/ads/types/dating";
  * - Relationship type compatibility
  * - Drinking/smoking preferences
  * - Education/occupation compatibility
+ * - Body type preference compatibility
+ * - Language compatibility
+ * 
+ * This provides a more holistic matching score based on comprehensive profile data
  */
 export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProfile: DatingAd): number => {
   if (!userProfile) return 50; // Default match percentage
@@ -74,16 +78,34 @@ export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProf
     totalFactors += 20;
   }
   
-  // Body type preference (10 points max) - new factor
+  // Body type preference (10 points max)
   if (userProfile.body_type && otherProfile.body_type) {
     // Simple exact match check - this could be enhanced with preference matrices
     if (userProfile.body_type === otherProfile.body_type) {
       score += 10;
+    } else {
+      // Partial match for related body types
+      const relatedBodyTypes = {
+        'athletic': ['fit', 'muscular', 'toned'],
+        'average': ['normal', 'medium'],
+        'slim': ['slender', 'thin'],
+        'curvy': ['full figured', 'voluptuous']
+      };
+      
+      const userBodyType = userProfile.body_type.toLowerCase();
+      const otherBodyType = otherProfile.body_type.toLowerCase();
+      
+      // @ts-ignore - Safely check if body types are related
+      if (relatedBodyTypes[userBodyType]?.includes(otherBodyType) || 
+          // @ts-ignore - Check the reverse relationship
+          relatedBodyTypes[otherBodyType]?.includes(userBodyType)) {
+        score += 5; // Partial match for related body types
+      }
     }
     totalFactors += 10;
   }
   
-  // Lifestyle compatibility (10 points max) - new factor
+  // Lifestyle compatibility (10 points max)
   let lifestyleScore = 0;
   let lifestyleFactors = 0;
   
@@ -91,6 +113,9 @@ export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProf
   if (userProfile.smoking_status && otherProfile.smoking_status) {
     if (userProfile.smoking_status === otherProfile.smoking_status) {
       lifestyleScore += 5;
+    } else if ((userProfile.smoking_status === "occasionally" && otherProfile.smoking_status === "never") ||
+               (userProfile.smoking_status === "never" && otherProfile.smoking_status === "occasionally")) {
+      lifestyleScore += 2; // Partial compatibility
     }
     lifestyleFactors += 5;
   }
@@ -99,6 +124,9 @@ export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProf
   if (userProfile.drinking_status && otherProfile.drinking_status) {
     if (userProfile.drinking_status === otherProfile.drinking_status) {
       lifestyleScore += 5;
+    } else if ((userProfile.drinking_status === "occasionally" && otherProfile.drinking_status === "never") ||
+               (userProfile.drinking_status === "never" && otherProfile.drinking_status === "occasionally")) {
+      lifestyleScore += 2; // Partial compatibility
     }
     lifestyleFactors += 5;
   }
@@ -108,7 +136,7 @@ export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProf
     totalFactors += lifestyleFactors;
   }
   
-  // Educational/occupational compatibility (10 points max) - new factor
+  // Educational/occupational compatibility (10 points max)
   let eduOccScore = 0;
   let eduOccFactors = 0;
   
@@ -116,17 +144,42 @@ export const calculateMatchPercentage = (userProfile: DatingAd | null, otherProf
   if (userProfile.education_level && otherProfile.education_level) {
     if (userProfile.education_level === otherProfile.education_level) {
       eduOccScore += 5;
+    } else {
+      // Create an education hierarchy
+      const eduLevels = ["high_school", "some_college", "associates", "bachelors", "masters", "phd", "professional"];
+      const userEduIndex = eduLevels.indexOf(userProfile.education_level);
+      const otherEduIndex = eduLevels.indexOf(otherProfile.education_level);
+      
+      if (userEduIndex !== -1 && otherEduIndex !== -1) {
+        // If they're within one level of each other
+        if (Math.abs(userEduIndex - otherEduIndex) <= 1) {
+          eduOccScore += 3; // Good compatibility
+        } else if (Math.abs(userEduIndex - otherEduIndex) <= 2) {
+          eduOccScore += 2; // Fair compatibility
+        }
+      }
     }
     eduOccFactors += 5;
   }
   
-  // Occupation - this is more complex and would require categorization
-  if (userProfile.occupation && otherProfile.occupation) {
-    // Check for exact match (simple approach)
-    if (userProfile.occupation.toLowerCase() === otherProfile.occupation.toLowerCase()) {
-      eduOccScore += 5;
+  // Languages compatibility (new factor - 10 points max)
+  if (userProfile.languages && otherProfile.languages &&
+      userProfile.languages.length > 0 && otherProfile.languages.length > 0) {
+      
+    const userLangs = new Set(userProfile.languages.map(lang => lang.toLowerCase()));
+    const otherLangs = otherProfile.languages.map(lang => lang.toLowerCase());
+    
+    let commonLanguages = 0;
+    for (const lang of otherLangs) {
+      if (userLangs.has(lang)) {
+        commonLanguages++;
+      }
     }
-    eduOccFactors += 5;
+    
+    if (commonLanguages > 0) {
+      score += Math.min(10, commonLanguages * 5); // 5 points per common language, max 10
+      totalFactors += 10;
+    }
   }
   
   if (eduOccFactors > 0) {

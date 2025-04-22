@@ -1,10 +1,9 @@
-
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { DatingAd } from "../ads/types/dating";
 import { EmptyProfilesState } from "./EmptyProfilesState";
 import { useSession } from "@supabase/auth-helpers-react";
-import { TrendingUp, AlertCircle, Eye } from "lucide-react";
+import { TrendingUp, AlertCircle, Eye, Heart } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GridViewMode, ListViewMode } from "@/components/ads/view-modes";
 import { ViewModeToggle } from "@/components/ads/view-modes/ViewModeToggle";
