@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Home from "@/pages/Home";
@@ -14,7 +13,6 @@ import ErosUpload from "@/pages/ErosUpload";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Layout from "@/components/layout/Layout";
 import Shorts from "@/pages/Shorts";
 import ShortsUpload from "@/pages/ShortsUpload";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -50,7 +48,7 @@ export default function App() {
             </Route>
             
             {/* Public routes */}
-            <Route element={<Layout />}>
+            <Route element={<MainLayout />}>
               <Route path="/home" element={<Home />} />
               <Route path="/shorts" element={<Shorts />} />
               <Route path="/shorts/:videoId" element={<Shorts />} />
@@ -60,7 +58,7 @@ export default function App() {
             
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
-              <Route element={<Layout />}>
+              <Route element={<MainLayout />}>
                 <Route path="/profile/:username" element={<Profile />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/messages" element={<Messages />} />
