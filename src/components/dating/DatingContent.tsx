@@ -1,7 +1,6 @@
-
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { DatingAd } from "@/components/ads/types/dating";
+import { DatingAd } from "../ads/types/dating";
 import { EmptyProfilesState } from "./EmptyProfilesState";
 import { useSession } from "@supabase/auth-helpers-react";
 import { TrendingUp, AlertCircle, Eye } from "lucide-react";
@@ -18,7 +17,7 @@ import { SimilarProfiles } from "./SimilarProfiles";
 import { SkeletonCards } from "../ads/view-modes/SkeletonCards";
 
 // Import our custom animations
-import "../styles/dating-animations.css";
+import "@/components/styles/dating-animations.css";
 
 interface DatingContentProps {
   ads: DatingAd[] | undefined;
