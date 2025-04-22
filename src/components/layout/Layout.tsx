@@ -1,13 +1,9 @@
 
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { MainLayout } from './MainLayout';
 
-interface LayoutProps {
-  children?: ReactNode;
-}
-
-const Layout: React.FC<LayoutProps> = () => {
+const Layout: React.FC = () => {
   return (
     <MainLayout>
       <Outlet />
