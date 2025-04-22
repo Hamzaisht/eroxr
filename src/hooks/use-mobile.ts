@@ -5,20 +5,33 @@ export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
   
   useEffect(() => {
-    const mediaQuery = window.matchMedia(query);
-    setMatches(mediaQuery.matches);
+    const media = window.matchMedia(query);
     
-    const handler = (event: MediaQueryListEvent) => {
-      setMatches(event.matches);
+    const updateMatch = () => {
+      setMatches(media.matches);
     };
     
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
+    // Set initial value
+    updateMatch();
+    
+    // Listen for changes
+    media.addEventListener('change', updateMatch);
+    
+    // Cleanup
+    return () => {
+      media.removeEventListener('change', updateMatch);
+    };
   }, [query]);
-  
+
   return matches;
 }
 
+// Export the useIsMobile function
+export function useIsMobile(): boolean {
+  return useMediaQuery("(max-width: 767px)");
+}
+
+// For backward compatibility, also export as useBreakpoint
 export function useBreakpoint() {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1023px)");
