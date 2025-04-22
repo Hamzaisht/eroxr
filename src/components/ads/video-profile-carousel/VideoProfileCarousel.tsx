@@ -9,6 +9,7 @@ import { useMediaQuery } from '@/hooks/use-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UniversalMedia } from '@/components/media/UniversalMedia';
 import { MediaType } from '@/utils/media/types';
+import { Maximize2, Minimize2 } from 'lucide-react';
 
 interface VideoProfileCarouselProps {
   ads: DatingAd[];
@@ -22,42 +23,80 @@ export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
 
+  // Handle keyboard navigation and controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
         handlePrev();
       } else if (e.key === 'ArrowRight') {
         handleNext();
+      } else if (e.key === ' ' || e.key === 'Space') {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.key === 'm') {
+        toggleMute();
+      } else if (e.key === 'f') {
+        toggleFullscreen();
+      } else if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, ads.length]);
+  }, [currentIndex, ads.length, isPlaying, isFullscreen]);
+
+  // Auto-hide controls after inactivity
+  useEffect(() => {
+    if (!isActive) return;
+    
+    const timer = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [isActive]);
 
   const handleNext = () => {
     if (currentIndex < ads.length - 1) {
       setCurrentIndex(prev => prev + 1);
+      setIsPlaying(false);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
+      setIsPlaying(false);
     }
   };
 
   const handleGoToSlide = (index: number) => {
     setCurrentIndex(index);
+    setIsPlaying(false);
   };
 
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
+    setShowControls(true);
   };
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
+    setShowControls(true);
+  };
+  
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+    setShowControls(true);
+  };
+
+  // Show controls when mouse moves
+  const handleMouseMove = () => {
+    setIsActive(true);
+    setShowControls(true);
   };
 
   if (!ads || ads.length === 0) {
@@ -82,6 +121,7 @@ export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
         className="relative h-full flex items-center"
         onMouseEnter={() => setIsActive(true)}
         onMouseLeave={() => setIsActive(false)}
+        onMouseMove={handleMouseMove}
       >
         <CarouselContainer 
           ads={ads} 
@@ -89,23 +129,41 @@ export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
           isActive={isActive} 
         />
 
-        <CarouselNavigation 
-          onPrev={handlePrev} 
-          onNext={handleNext} 
-          hasPrev={currentIndex > 0} 
-          hasNext={currentIndex < ads.length - 1} 
-        />
+        {showControls && (
+          <>
+            <CarouselNavigation 
+              onPrev={handlePrev} 
+              onNext={handleNext} 
+              hasPrev={currentIndex > 0} 
+              hasNext={currentIndex < ads.length - 1} 
+            />
 
-        <CarouselProgressIndicator 
-          totalSlides={ads.length} 
-          currentIndex={currentIndex} 
-          onSlideChange={handleGoToSlide} 
-        />
+            <CarouselProgressIndicator 
+              totalSlides={ads.length} 
+              currentIndex={currentIndex} 
+              onSlideChange={handleGoToSlide} 
+            />
+            
+            {/* Fullscreen toggle button */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={toggleFullscreen}
+              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-luxury-dark/50 backdrop-blur-md border border-luxury-primary/20 text-luxury-primary hover:text-white transition-colors"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-5 h-5" />
+              ) : (
+                <Maximize2 className="w-5 h-5" />
+              )}
+            </motion.button>
+          </>
+        )}
 
         <div className="absolute inset-0 pointer-events-none z-10">
           <div className="absolute bottom-4 left-4 z-20 pointer-events-auto">
             <VideoControls 
-              isHovered={isActive}
+              isHovered={showControls}
               isPlaying={isPlaying}
               isMuted={isMuted}
               togglePlay={togglePlay}

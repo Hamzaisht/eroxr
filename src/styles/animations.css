@@ -58,3 +58,68 @@
   box-shadow: 0 0 10px rgba(155, 135, 245, 0.3);
   border: 1px solid rgba(155, 135, 245, 0.2);
 }
+
+@keyframes neon-pulse {
+  0% {
+    box-shadow: 0 0 5px rgba(155, 135, 245, 0.3),
+               0 0 10px rgba(155, 135, 245, 0.2),
+               0 0 15px rgba(155, 135, 245, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(155, 135, 245, 0.5),
+               0 0 20px rgba(155, 135, 245, 0.3),
+               0 0 30px rgba(155, 135, 245, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(155, 135, 245, 0.3),
+               0 0 10px rgba(155, 135, 245, 0.2),
+               0 0 15px rgba(155, 135, 245, 0.1);
+  }
+}
+
+.animate-neon-glow {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}

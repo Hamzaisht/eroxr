@@ -11,6 +11,7 @@ interface VideoProfileCardProps {
   ad: DatingAd;
   isActive?: boolean;
   isPreviewMode?: boolean;
+  isAnimation?: boolean;
   onClick?: () => void;
 }
 
@@ -18,6 +19,7 @@ export const VideoProfileCard = ({
   ad, 
   isActive = false, 
   isPreviewMode = false,
+  isAnimation = false,
   onClick
 }: VideoProfileCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -47,6 +49,7 @@ export const VideoProfileCard = ({
         ad={ad} 
         isActive={isActive} 
         isHovered={isHovered} 
+        isAnimation={isAnimation}
       />
       
       {/* Profile Information */}

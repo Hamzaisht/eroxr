@@ -38,7 +38,11 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
             }}
             className="absolute w-full h-full flex items-center justify-center px-8"
           >
-            <VideoProfileCard ad={ad} isActive={index === currentIndex && isActive} />
+            <VideoProfileCard 
+              ad={ad} 
+              isActive={index === currentIndex && isActive}
+              isAnimation={true}
+            />
           </motion.div>
         ))}
       </div>
