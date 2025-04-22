@@ -110,8 +110,12 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
       {/* Chat Header */}
       {recipientProfile && (
         <ChatHeader 
-          profile={recipientProfile} 
+          recipientProfile={recipientProfile} 
+          recipientId={recipientId}
+          onVoiceCall={() => {}}
+          onVideoCall={() => {}}
           onToggleDetails={onToggleDetails}
+          isTyping={isTyping}
         />
       )}
       
