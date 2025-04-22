@@ -30,15 +30,14 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
           opacity-0 group-hover:opacity-100 group-hover:animate-shine"></span>
       </Button>
 
-      <DialogContent asChild>
-        {/* The asChild prop lets us render the immersive modal without default DialogContent padding/borders */}
-        {isOpen ? (
+      {isOpen && (
+        <DialogContent className="p-0 border-none bg-transparent max-w-6xl">
           <ImmersiveAdCreation 
             onClose={() => setIsOpen(false)} 
             onSuccess={onSuccess} 
           />
-        ) : null}
-      </DialogContent>
+        </DialogContent>
+      )}
     </Dialog>
   );
 };
