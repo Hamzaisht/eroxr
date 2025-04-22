@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DatingContent } from "@/components/dating/DatingContent";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Loader2, Filter } from "lucide-react";
+import { Loader2, Filter, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CreateBodyContactDialog } from "@/components/ads/body-contact";
 import { HomeLayout } from "@/components/home/HomeLayout";
@@ -22,16 +22,19 @@ import { type Database } from "@/integrations/supabase/types";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { transformRawAds } from "@/components/ads/utils/adTransformers";
 import { nordicCountries } from "@/components/dating/utils/datingUtils";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
 const Dating = () => {
+  // State management
   const [datingAds, setDatingAds] = useState<DatingAd[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userProfile, setUserProfile] = useState<DatingAd | null>(null);
   const { toast } = useToast();
   const session = useSession();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   
   // App state
   const [activeTab, setActiveTab] = useState<string>("browse");
@@ -245,9 +248,18 @@ const Dating = () => {
     };
   }, [session, userProfile]);
 
+  // Toggle filters on mobile
+  const handleFilterToggle = () => {
+    setShowFilters(!showFilters);
+  };
+  
   // Handle tab changes
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    // Smooth scroll to top when changing tabs on mobile
+    if (isMobile) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
   
   return (
@@ -258,7 +270,7 @@ const Dating = () => {
         transition={{ duration: 0.5 }}
         className="pt-16 pb-20"
       >
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6">
           <div ref={headerRef}>
             <DatingHeader 
               isNewMessageOpen={isNewMessageOpen}
@@ -270,7 +282,18 @@ const Dating = () => {
             />
             
             <div className="mt-6 flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-white">Body Dating</h2>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-luxury-neutral hover:text-luxury-primary" 
+                  onClick={() => navigate('/home')}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <h2 className="text-xl sm:text-2xl font-semibold text-white">Body Dating</h2>
+              </div>
               
               <div className="flex items-center gap-3">
                 <Button
@@ -311,45 +334,43 @@ const Dating = () => {
             />
             
             <div className="flex-1">
-              {datingAds && datingAds.length > 0 && !headerInView && (
-                <DatingHeader 
-                  isNewMessageOpen={isNewMessageOpen}
-                  setIsNewMessageOpen={setIsNewMessageOpen}
-                  canAccessBodyContact={true}
-                  onAdCreationSuccess={handleAdCreationSuccess}
-                  isSticky={true}
-                  activeTab={activeTab}
-                  onTabChange={handleTabChange}
-                />
-              )}
-              
-              {datingAds && datingAds.length > 0 && activeTab === "browse" ? (
-                <div className="grid grid-cols-1 gap-8">
-                  <div className="relative">
-                    <VideoProfileCarousel ads={datingAds} />
-                  </div>
-                  <DatingContent 
-                    ads={datingAds} 
-                    canAccessBodyContact={true}
-                    onAdCreationSuccess={handleAdCreationSuccess}
-                    onTagClick={handleTagClick}
-                    isLoading={isLoading}
-                    userProfile={userProfile}
-                    activeTab={activeTab}
-                    onTabChange={handleTabChange}
-                  />
+              {isLoading ? (
+                <div className="flex items-center justify-center p-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-luxury-primary" />
                 </div>
               ) : (
-                <DatingContent 
-                  ads={datingAds} 
-                  canAccessBodyContact={true}
-                  onAdCreationSuccess={handleAdCreationSuccess}
-                  onTagClick={handleTagClick}
-                  isLoading={isLoading}
-                  userProfile={userProfile}
-                  activeTab={activeTab}
-                  onTabChange={handleTabChange}
-                />
+                <>
+                  {datingAds && datingAds.length > 0 && activeTab === "browse" ? (
+                    <div className="grid grid-cols-1 gap-8">
+                      <div className="relative">
+                        <VideoProfileCarousel ads={datingAds} />
+                      </div>
+                      <DatingContent 
+                        ads={datingAds} 
+                        canAccessBodyContact={true}
+                        onAdCreationSuccess={handleAdCreationSuccess}
+                        onTagClick={handleTagClick}
+                        isLoading={isLoading}
+                        userProfile={userProfile}
+                        activeTab={activeTab}
+                        onTabChange={handleTabChange}
+                        onFilterToggle={handleFilterToggle}
+                      />
+                    </div>
+                  ) : (
+                    <DatingContent 
+                      ads={datingAds} 
+                      canAccessBodyContact={true}
+                      onAdCreationSuccess={handleAdCreationSuccess}
+                      onTagClick={handleTagClick}
+                      isLoading={isLoading}
+                      userProfile={userProfile}
+                      activeTab={activeTab}
+                      onTabChange={handleTabChange}
+                      onFilterToggle={handleFilterToggle}
+                    />
+                  )}
+                </>
               )}
             </div>
           </div>

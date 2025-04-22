@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { DatingAd } from "../ads/types/dating";
@@ -17,6 +18,10 @@ import { SimilarProfiles } from "./SimilarProfiles";
 import { SkeletonCards } from "../ads/view-modes/SkeletonCards";
 import { QuickMatch } from "./QuickMatch";
 import { FavoritesView } from "./FavoritesView";
+import { StickyHeader } from "./StickyHeader";
+import { FloatingActionButton } from "./FloatingActionButton";
+import { useMediaQuery } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
 
 // Import our custom animations
 import "@/components/styles/dating-animations.css";
@@ -30,6 +35,7 @@ interface DatingContentProps {
   userProfile?: DatingAd | null;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  onFilterToggle?: () => void;
 }
 
 export const DatingContent = ({ 
@@ -40,7 +46,8 @@ export const DatingContent = ({
   isLoading = false,
   userProfile,
   activeTab = "browse",
-  onTabChange
+  onTabChange,
+  onFilterToggle
 }: DatingContentProps) => {
   const session = useSession();
   const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>('bd-view-mode', 'grid');
@@ -51,6 +58,8 @@ export const DatingContent = ({
     threshold: 0,
     rootMargin: "-50px 0px 0px 0px"
   });
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const { toast } = useToast();
   
   // Filter most viewed ads (top 8)
   const mostViewedAds = ads
@@ -92,6 +101,50 @@ export const DatingContent = ({
         view_count: (ad.view_count || 0) + 1 
       }).eq('id', ad.id);
     }
+  };
+
+  // Quick interactions for mobile
+  const handleLike = () => {
+    if (!selectedAd || !session) {
+      toast({
+        title: "Select a profile first",
+        description: "You need to select a profile before you can like it",
+        duration: 2000,
+      });
+      return;
+    }
+    
+    toast({
+      title: "Liked profile",
+      description: `You've liked ${selectedAd.title}`,
+      duration: 2000,
+    });
+  };
+  
+  const handleSkip = () => {
+    setSelectedAd(null);
+    toast({
+      title: "Skipped profile",
+      description: "Showing you different profiles",
+      duration: 2000,
+    });
+  };
+  
+  const handleMessage = () => {
+    if (!selectedAd || !session) {
+      toast({
+        title: "Select a profile first",
+        description: "You need to select a profile before you can message them",
+        duration: 2000,
+      });
+      return;
+    }
+    
+    toast({
+      title: "Message sent",
+      description: `You've messaged ${selectedAd.title}`,
+      duration: 2000,
+    });
   };
 
   // Make ad elements clickable for tag filtering
@@ -146,6 +199,25 @@ export const DatingContent = ({
       transition={{ duration: 0.5, delay: 0.4 }}
       className="flex-1 space-y-6"
     >
+      {/* Sticky header for improved navigation */}
+      {showFloatingTabs && (
+        <StickyHeader 
+          activeTab={activeTab} 
+          onTabChange={handleTabChange}
+          onFilterToggle={onFilterToggle}
+        />
+      )}
+      
+      {/* Floating action button for mobile */}
+      {isMobile && (
+        <FloatingActionButton 
+          showFilters={onFilterToggle}
+          onLike={handleLike}
+          onSkip={handleSkip}
+          onMessage={handleMessage}
+        />
+      )}
+      
       {/* Main content tabs */}
       <Tabs 
         value={activeTab} 
@@ -176,7 +248,7 @@ export const DatingContent = ({
                   onValueChange={(value) => setBrowseSubTab(value)}
                   value={browseSubTab}
                 >
-                  <TabsList className="grid grid-cols-3 mb-6">
+                  <TabsList className={`grid grid-cols-3 mb-6 ${isMobile ? 'w-full' : ''}`}>
                     <TabsTrigger value="all" className="flex items-center gap-2">
                       All Ads
                     </TabsTrigger>
@@ -274,40 +346,6 @@ export const DatingContent = ({
                   allAds={allAds} 
                   onSelectProfile={handleSelectProfile}
                 />
-              )}
-              
-              {/* Floating tabs that appear when scrolling */}
-              {showFloatingTabs && (
-                <motion.div 
-                  className="fixed top-0 left-0 right-0 z-40 px-4 py-2 bg-luxury-dark/80 backdrop-blur-xl border-b border-luxury-primary/10"
-                  initial={{ y: -100, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -100, opacity: 0 }}
-                >
-                  <div className="container mx-auto flex justify-between items-center">
-                    <Tabs value={browseSubTab} onValueChange={(value) => setBrowseSubTab(value)}>
-                      <TabsList className="grid grid-cols-3 w-full max-w-md">
-                        <TabsTrigger value="all" className="text-sm">
-                          All
-                        </TabsTrigger>
-                        <TabsTrigger value="trending" className="text-sm">
-                          Trending
-                        </TabsTrigger>
-                        <TabsTrigger value="popular" className="text-sm">
-                          Popular
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                    
-                    <div className="hidden md:block">
-                      <ViewModeToggle 
-                        viewMode={viewMode} 
-                        setViewMode={setViewMode} 
-                        size="sm"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
               )}
               
               {/* Full screen profile viewer */}
