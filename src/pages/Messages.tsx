@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Footer } from "@/components/Footer";
 import { HomeLayout } from "@/components/home/HomeLayout";
-import { MessageList } from "@/components/messages/MessageList";
+import { ConversationsList } from "@/components/messages/ConversationsList";
 import { ChatWindow } from "@/components/messages/ChatWindow";
 
 const Messages = () => {
@@ -39,7 +39,7 @@ const Messages = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 h-[80vh] bg-luxury-darker/40 rounded-lg shadow-lg overflow-hidden">
             {/* Conversations List - Hidden on mobile when a chat is selected */}
             <div className={`${selectedUserId ? 'hidden md:block' : ''} md:col-span-1 border-r border-white/10 h-full`}>
-              <MessageList
+              <ConversationsList
                 onSelectUser={handleSelectUser}
                 onNewMessage={handleNewMessage}
               />

@@ -5,19 +5,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { MessageBubble } from "../MessageBubble";
 
-interface MessageListProps {
+interface ChatMessageListProps {
   messages: DirectMessage[];
   currentUserId?: string;
   recipientProfile: any;
   isTyping?: boolean;
 }
 
-export const MessageList = ({
+export const ChatMessageList = ({
   messages,
   currentUserId,
   recipientProfile,
   isTyping = false
-}: MessageListProps) => {
+}: ChatMessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessagesLength = useRef<number>(0);
 

@@ -8,13 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 import { DatingContent } from "@/components/dating/DatingContent";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; 
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { CreateBodyContactDialog } from "@/components/ads/body-contact";
+import { HomeLayout } from "@/components/home/HomeLayout";
 
 const Dating = () => {
-  const [activeView, setActiveView] = useState<"browse" | "create">("browse");
   const [datingAds, setDatingAds] = useState<DatingAd[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
@@ -23,46 +23,43 @@ const Dating = () => {
   
   // Fetch dating ads
   useEffect(() => {
-    const fetchDatingAds = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("dating_ads")
-          .select("*")
-          .order("created_at", { ascending: false });
-        
-        if (error) {
-          console.error("Error fetching dating ads:", error);
-          toast({
-            title: "Failed to load profiles",
-            description: "Please try again later",
-            variant: "destructive"
-          });
-          setDatingAds([]);
-        } else {
-          console.log("Dating ads loaded:", data.length);
-          setDatingAds(data);
-        }
-      } catch (err) {
-        console.error("Exception fetching dating ads:", err);
+    fetchDatingAds();
+  }, []);
+
+  const fetchDatingAds = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("dating_ads")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching dating ads:", error);
         toast({
-          title: "Error loading profiles",
-          description: "An unexpected error occurred",
+          title: "Failed to load profiles",
+          description: "Please try again later",
           variant: "destructive"
         });
         setDatingAds([]);
-      } finally {
-        setIsLoading(false);
+      } else {
+        console.log("Dating ads loaded:", data.length);
+        setDatingAds(data);
       }
-    };
-
-    fetchDatingAds();
-  }, [toast]);
+    } catch (err) {
+      console.error("Exception fetching dating ads:", err);
+      toast({
+        title: "Error loading profiles",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+      setDatingAds([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAdCreationSuccess = () => {
-    // Refresh the dating ads
-    setActiveView("browse");
-    
     toast({
       title: "Profile created successfully!",
       description: "Your profile is now visible to others.",
@@ -73,25 +70,8 @@ const Dating = () => {
     fetchDatingAds();
   };
 
-  const fetchDatingAds = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("dating_ads")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      setDatingAds(data || []);
-    } catch (err) {
-      console.error("Error refreshing dating ads:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-luxury-dark">
+    <HomeLayout>
       <motion.main
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -104,20 +84,7 @@ const Dating = () => {
               Body Dating
             </h1>
             
-            <Button 
-              variant="outline" 
-              onClick={() => setActiveView(activeView === "browse" ? "create" : "browse")}
-              className="border-luxury-primary text-luxury-primary hover:bg-luxury-primary/20"
-            >
-              {activeView === "browse" ? (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Profile
-                </>
-              ) : (
-                "Browse Profiles"
-              )}
-            </Button>
+            <CreateBodyContactDialog onSuccess={handleAdCreationSuccess} />
           </div>
           
           {isLoading ? (
@@ -126,48 +93,32 @@ const Dating = () => {
             </div>
           ) : (
             <>
-              {activeView === "browse" ? (
-                datingAds && datingAds.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-8">
-                    <div className="relative">
-                      <VideoProfileCarousel ads={datingAds} />
-                    </div>
-                    <DatingContent 
-                      ads={datingAds} 
-                      canAccessBodyContact={true}
-                      onAdCreationSuccess={handleAdCreationSuccess}
-                      isLoading={isLoading}
-                    />
+              {datingAds && datingAds.length > 0 ? (
+                <div className="grid grid-cols-1 gap-8">
+                  <div className="relative">
+                    <VideoProfileCarousel ads={datingAds} />
                   </div>
-                ) : (
                   <DatingContent 
-                    ads={[]}
+                    ads={datingAds} 
                     canAccessBodyContact={true}
                     onAdCreationSuccess={handleAdCreationSuccess}
                     isLoading={isLoading}
                   />
-                )
-              ) : (
-                <div className="bg-luxury-darker/40 rounded-lg p-6 shadow-lg">
-                  <h2 className="text-2xl font-semibold text-luxury-neutral mb-4">Create your profile</h2>
-                  <p className="text-luxury-neutral mb-8">
-                    Fill out the form below to create your dating profile. This feature is coming soon.
-                  </p>
-                  
-                  <Button 
-                    onClick={() => setActiveView("browse")}
-                    variant="default"
-                  >
-                    Back to Browsing
-                  </Button>
                 </div>
+              ) : (
+                <DatingContent 
+                  ads={[]}
+                  canAccessBodyContact={true}
+                  onAdCreationSuccess={handleAdCreationSuccess}
+                  isLoading={isLoading}
+                />
               )}
             </>
           )}
         </div>
       </motion.main>
       <Footer />
-    </div>
+    </HomeLayout>
   );
 };
 

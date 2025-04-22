@@ -3,15 +3,11 @@ import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { MessageInput } from "./MessageInput";
 import { ChatHeader } from "./chat/ChatHeader";
-import { MessageList } from "./chat/MessageList";
-import { SnapCamera } from "./chat/SnapCamera";
-import { VideoCallDialog } from "./call/VideoCallDialog";
-import { useRealtimeMessages, useTypingIndicator } from "@/hooks";
-import { useChatActions } from "./chat/ChatActions";
-import { useGhostMode } from "@/hooks/useGhostMode";
+import { ChatMessageList } from "./chat/ChatMessageList";
+import { ChatInput } from "./chat/ChatInput";
+import { useRealtimeMessages } from "@/hooks";
+import { Loader2 } from "lucide-react";
 
 interface ChatWindowProps {
   recipientId: string;
@@ -19,230 +15,125 @@ interface ChatWindowProps {
 }
 
 export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) => {
-  const [showCamera, setShowCamera] = useState(false);
-  const [showCall, setShowCall] = useState(false);
-  const [isVideoCall, setIsVideoCall] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [deliveryStatus, setDeliveryStatus] = useState<Record<string, 'sent' | 'delivered' | 'seen'>>({});
   const session = useSession();
-  const { toast } = useToast();
-  const { isGhostMode } = useGhostMode();
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   
-  useRealtimeMessages(recipientId);
-  const { isUploading, handleSendMessage, handleMediaSelect, handleSnapCapture: originalHandleSnapCapture } = useChatActions({
-    recipientId
-  });
-
-  const { data: messages = [] } = useQuery({
-    queryKey: ['chat', session?.user?.id, recipientId],
-    queryFn: async () => {
-      if (!session?.user?.id) return [];
-
-      const { data, error } = await supabase
-        .from('direct_messages')
-        .select('*')
-        .or(`and(sender_id.eq.${session?.user?.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${session?.user?.id})`)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      
-      const receivedMessages = (data || []).filter(
-        msg => msg.recipient_id === session.user.id && !msg.viewed_at
-      );
-      
-      if (receivedMessages.length > 0) {
-        await supabase.from('direct_messages')
-          .update({ 
-            delivery_status: 'delivered',
-            viewed_at: document.visibilityState === 'visible' ? new Date().toISOString() : null 
-          })
-          .in('id', receivedMessages.map(msg => msg.id));
-      }
-      
-      return data || [];
-    },
-    enabled: !!session?.user?.id && !!recipientId,
-    staleTime: 0,
-    gcTime: 0,
-  });
-
-  const { data: recipientProfile } = useQuery({
+  // Subscribe to realtime messages
+  useRealtimeMessages();
+  
+  // Fetch recipient profile
+  const { data: recipientProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', recipientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, username, avatar_url, status')
         .eq('id', recipientId)
         .single();
-
+        
       if (error) throw error;
       return data;
     },
-    enabled: !!recipientId,
+    enabled: !!recipientId
   });
-
-  useEffect(() => {
-    if (isGhostMode) return;
-    
-    const channel = supabase.channel('typing-status')
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        if (payload.user_id === recipientId && payload.recipient_id === session?.user?.id) {
-          setIsTyping(payload.is_typing);
-          
-          if (payload.is_typing) {
-            setTimeout(() => setIsTyping(false), 5000);
-          }
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [recipientId, session?.user?.id, isGhostMode]);
-
-  const handleVoiceCall = () => {
-    setIsVideoCall(false);
-    setShowCall(true);
-  };
-
-  const handleVideoCall = () => {
-    setIsVideoCall(true);
-    setShowCall(true);
-  };
-
-  const blobToDataURL = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  const handleSnapCapture = async (blob: Blob) => {
-    try {
-      const dataURL = await blobToDataURL(blob);
+  
+  // Fetch messages between current user and recipient
+  const { data: messages, isLoading: messagesLoading } = useQuery({
+    queryKey: ['direct-messages', session?.user?.id, recipientId],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
       
-      if (!session?.user?.id || !recipientId) return;
-      
-      await originalHandleSnapCapture(dataURL);
-      
-    } catch (error) {
-      console.error('Error processing snap:', error);
-      toast({
-        title: 'Snap failed',
-        description: 'Failed to process snap. Please try again.',
-        variant: 'destructive',
-      });
+      const { data, error } = await supabase
+        .from('direct_messages')
+        .select('*')
+        .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${session.user.id})`)
+        .order('created_at', { ascending: true });
+        
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id && !!recipientId,
+    gcTime: 0, // Using gcTime instead of cacheTime
+    staleTime: 0
+  });
+  
+  const isLoading = profileLoading || messagesLoading;
+  
+  // Simple typing indicator simulation
+  const simulateTypingIndicator = () => {
+    // Clear any existing timeout
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
     }
+    
+    // Show typing indicator
+    setIsTyping(true);
+    
+    // Hide typing indicator after 3 seconds
+    const timeout = setTimeout(() => {
+      setIsTyping(false);
+    }, 3000);
+    
+    setTypingTimeout(timeout);
   };
-
-  const handleVisibilityChange = () => {
-    if (!document.hidden && session?.user?.id) {
-      // Mark messages as read when the document becomes visible
-      const unreadMessages = (messages || []).filter(
-        msg => msg.recipient_id === session.user.id && !msg.viewed_at
-      );
-      
-      if (unreadMessages.length > 0) {
-        supabase.from('direct_messages')
-          .update({ 
-            delivery_status: 'seen',
-            viewed_at: new Date().toISOString() 
-          })
-          .in('id', unreadMessages.map(msg => msg.id));
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
       }
+    };
+  }, [typingTimeout]);
+  
+  // Handle sending a message
+  const handleSendMessage = async (content: string) => {
+    if (!session?.user?.id || !content.trim()) return;
+    
+    try {
+      const message = {
+        sender_id: session.user.id,
+        recipient_id: recipientId,
+        content: content.trim(),
+        is_read: false,
+      };
+      
+      await supabase.from('direct_messages').insert(message);
+    } catch (error) {
+      console.error('Error sending message:', error);
     }
   };
-
-  useEffect(() => {
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    if (messages.length > 0 && session?.user?.id) {
-      handleVisibilityChange();
-    }
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [messages, session?.user?.id]);
-
-  useEffect(() => {
-    if (!session?.user?.id || isGhostMode) return;
-    
-    const presenceChannel = supabase.channel('online-presence');
-    
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const presenceState = presenceChannel.presenceState();
-        console.log('Online users:', presenceState);
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('User joined:', key, newPresences);
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('User left:', key, leftPresences);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await presenceChannel.track({
-            user_id: session.user.id,
-            online_at: new Date().toISOString(),
-            status: 'online'
-          });
-        }
-      });
-      
-    return () => {
-      presenceChannel.untrack().then(() => {
-        supabase.removeChannel(presenceChannel);
-      });
-    };
-  }, [session?.user?.id, isGhostMode]);
 
   return (
-    <div className="flex flex-col h-full bg-luxury-dark">
-      <ChatHeader
-        recipientProfile={recipientProfile}
-        recipientId={recipientId}
-        onVoiceCall={handleVoiceCall}
-        onVideoCall={handleVideoCall}
-        onToggleDetails={onToggleDetails}
-        isTyping={isTyping}
-      />
+    <div className="flex flex-col h-full relative">
+      {/* Chat Header */}
+      {recipientProfile && (
+        <ChatHeader 
+          profile={recipientProfile} 
+          onToggleDetails={onToggleDetails}
+        />
+      )}
       
-      <MessageList
-        messages={messages}
-        currentUserId={session?.user?.id}
-        recipientProfile={recipientProfile}
-        isTyping={isTyping}
-      />
-
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        onMediaSelect={handleMediaSelect}
-        onSnapStart={() => setShowCamera(true)}
-        isLoading={isUploading}
-        recipientId={recipientId}
-      />
-
-      {showCamera && (
-        <SnapCamera
-          onCapture={handleSnapCapture}
-          onClose={() => setShowCamera(false)}
-        />
-      )}
-
-      {showCall && (
-        <VideoCallDialog
-          isOpen={showCall}
-          onClose={() => setShowCall(false)}
-          recipientId={recipientId}
+      {/* Messages */}
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-white/50" />
+        </div>
+      ) : (
+        <ChatMessageList
+          messages={messages || []}
+          currentUserId={session?.user?.id}
           recipientProfile={recipientProfile}
-          isVideoEnabled={isVideoCall}
+          isTyping={isTyping}
         />
       )}
+      
+      {/* Message Input */}
+      <ChatInput 
+        onSendMessage={handleSendMessage} 
+        onTyping={simulateTypingIndicator}
+      />
     </div>
   );
 };

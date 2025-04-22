@@ -8,12 +8,12 @@ import { useRealtimeMessages } from "@/hooks"; // Updated import
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-interface MessageListProps {
+interface ConversationsListProps {
   onSelectUser: (userId: string) => void;
   onNewMessage: () => void;
 }
 
-export const MessageList = ({ onSelectUser, onNewMessage }: MessageListProps) => {
+export const ConversationsList = ({ onSelectUser, onNewMessage }: ConversationsListProps) => {
   const session = useSession();
   useRealtimeMessages(); // Subscribe to all message updates
 

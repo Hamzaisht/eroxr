@@ -3,14 +3,15 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { MainLayout } from './MainLayout';
 
+/**
+ * Root layout component that handles authentication status and renders the main layout
+ * This serves as the parent wrapper for all authenticated pages
+ */
 const Layout: React.FC = () => {
   return (
-    <div className="flex min-h-screen w-full bg-[#0D1117]">
-      <div className="flex-1 min-h-screen">
-        <MainLayout />
-        <Outlet />
-      </div>
-    </div>
+    <MainLayout>
+      <Outlet />
+    </MainLayout>
   );
 };
 

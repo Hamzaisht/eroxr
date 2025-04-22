@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+
 import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { GoLiveDialog } from "@/components/home/GoLiveDialog";
 import { MainFeed } from "@/components/home/MainFeed";
@@ -8,38 +8,23 @@ import { RightSidebar } from "@/components/home/RightSidebar";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { StoryReel } from "@/components/StoryReel";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Video } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Video } from "lucide-react";
 
 const Home = () => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
-  const [showFloatingMenu, setShowFloatingMenu] = useState(false);
   const [isErosDialogOpen, setIsErosDialogOpen] = useState(false);
-  const [isButtonVisible, setIsButtonVisible] = useState(true);
   const session = useSession();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
   
   console.log('Home - session?.user?.id:', session?.user?.id);
-
-  useEffect(() => {
-    let lastScrollY = window.scrollY;
-    
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      setIsButtonVisible(currentScrollY <= lastScrollY || currentScrollY < 100);
-      lastScrollY = currentScrollY;
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     const checkPayingCustomerStatus = async () => {
@@ -80,56 +65,6 @@ const Home = () => {
             <RightSidebar />
           </div>
         </div>
-
-        {/* Floating Action Button with visibility animation */}
-        <AnimatePresence>
-          {isButtonVisible && (
-            <motion.div 
-              className="fixed bottom-6 right-6 z-50 group"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.2 }}
-              onMouseEnter={() => setShowFloatingMenu(true)}
-              onMouseLeave={() => setShowFloatingMenu(false)}
-            >
-              <AnimatePresence>
-                {(showFloatingMenu || isMobile) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    className={`absolute ${isMobile ? 'bottom-16' : 'bottom-full'} right-0 mb-4 space-y-2 min-w-[180px]`}
-                  >
-                    <Button
-                      onClick={() => setIsErosDialogOpen(true)}
-                      className="w-full flex items-center gap-2 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary"
-                    >
-                      <Video className="h-4 w-4" />
-                      Create Eros
-                    </Button>
-                    <Button
-                      onClick={() => setIsCreatePostOpen(true)}
-                      className="w-full flex items-center gap-2 bg-luxury-dark hover:bg-luxury-dark/90"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Create Post
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => isMobile ? setShowFloatingMenu(!showFloatingMenu) : null}
-                className="h-14 w-14 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary shadow-lg flex items-center justify-center"
-              >
-                <Plus className="h-6 w-6 text-white" />
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       <CreatePostDialog 
