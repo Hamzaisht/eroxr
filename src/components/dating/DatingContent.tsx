@@ -117,6 +117,7 @@ export const DatingContent = ({
               defaultValue="all" 
               className="w-full"
               onValueChange={(value) => setActiveTab(value)}
+              value={activeTab}
             >
               <TabsList className="grid grid-cols-3 mb-6">
                 <TabsTrigger value="all" className="flex items-center gap-2">
@@ -200,20 +201,19 @@ export const DatingContent = ({
               exit={{ y: -100, opacity: 0 }}
             >
               <div className="container mx-auto flex justify-between items-center">
-                <TabsList className="grid grid-cols-3 w-full max-w-md">
-                  <TabsTrigger value="all" className="text-sm" 
-                    onClick={() => setActiveTab('all')}>
-                    All
-                  </TabsTrigger>
-                  <TabsTrigger value="trending" className="text-sm" 
-                    onClick={() => setActiveTab('trending')}>
-                    Trending
-                  </TabsTrigger>
-                  <TabsTrigger value="popular" className="text-sm" 
-                    onClick={() => setActiveTab('popular')}>
-                    Popular
-                  </TabsTrigger>
-                </TabsList>
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)}>
+                  <TabsList className="grid grid-cols-3 w-full max-w-md">
+                    <TabsTrigger value="all" className="text-sm">
+                      All
+                    </TabsTrigger>
+                    <TabsTrigger value="trending" className="text-sm">
+                      Trending
+                    </TabsTrigger>
+                    <TabsTrigger value="popular" className="text-sm">
+                      Popular
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 
                 <div className="hidden md:block">
                   <ViewModeToggle 

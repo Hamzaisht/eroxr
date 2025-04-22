@@ -1,77 +1,35 @@
 
-export interface Ad {
+export type DatingAd = {
   id: string;
+  user_id: string | null;
   title: string;
   description: string;
-  videoUrl: string;
-  thumbnailUrl: string;
-  createdAt: string;
-  profile: {
-    id: string;
-    username: string;
-    avatarUrl: string;
-  };
-}
-
-export interface DatingAd {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string;
-  video_url: string;
-  created_at: string;
-  city: string;
-  country: string;
-  age_range: { lower: number; upper: number };
-  relationship_status: string;
+  relationship_status: 'single' | 'couple' | 'other';
   looking_for: string[];
-  tags: string[];
-  user: {
-    id: string;
-    username: string;
-    avatar_url: string;
-  };
-  // Additional properties used in components
+  country: 'denmark' | 'finland' | 'iceland' | 'norway' | 'sweden';
+  city: string;
+  age_range: [number, number];
+  created_at: string | null;
+  updated_at: string | null;
+  is_active: boolean | null;
+  views_count: number | null;
+  click_count?: number | null;
+  interests: string[] | null;
+  preferred_age_range: [number, number] | null;
+  height: number | null;
+  body_type: string | null;
+  smoking_status: string | null;
+  drinking_status: string | null;
+  languages: string[] | null;
+  occupation: string | null;
+  education_level: string | null;
+  about_me: string | null;
+  seeking_description: string | null;
+  last_active: string | null;
+  profile_completion_score: number | null;
+  tags?: string[];
   view_count?: number;
-  message_count?: number;
-  click_count?: number;
-  is_active?: boolean;
-  is_premium?: boolean;
-  is_verified?: boolean;
-  avatar_url?: string;
-  body_type?: string;
-  education_level?: string;
-  interests?: string[];
-  profile_completion_score?: number;
-  last_active?: string;
-  preferred_age_range?: { lower: number; upper: number };
-  // Properties for verification status and premium status
-  isUserVerified?: boolean;
-  isUserPremium?: boolean;
-  // Moderation status for dating ads
-  moderation_status?: 'pending' | 'approved' | 'rejected';
-  // Additional computed properties not present in the database
-  profiles?: {
-    id_verification_status?: string;
-    is_paying_customer?: boolean;
-  };
-  // Function for tag click handling
+  location?: string;
+  // For interactivity on the UI:
   onTagClick?: (tag: string) => void;
-}
-
-export interface FilterOptions {
-  minAge?: number;
-  maxAge?: number;
-  bodyType?: string[];
-  isVerified?: boolean;
-  isPremium?: boolean;
-  maxDistance?: number;
-  country?: string;
-  userType?: string;
-  [key: string]: string | string[] | number | boolean | undefined;
-}
-
-export interface SearchCategory {
-  seeker: "male" | "female" | "couple" | "verified" | "premium";
-  looking_for: "male" | "female" | "couple" | "trans" | "any";
-}
+};

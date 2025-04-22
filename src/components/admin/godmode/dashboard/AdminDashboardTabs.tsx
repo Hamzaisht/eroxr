@@ -15,7 +15,7 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
   children
 }) => {
   return (
-    <>
+    <Tabs value={activeTab} onValueChange={onTabChange}>
       <TabsList className="bg-[#0F141A]">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="surveillance">Surveillance</TabsTrigger>
@@ -29,6 +29,6 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
       </TabsContent>
       
       {children}
-    </>
+    </Tabs>
   );
 };

@@ -1,62 +1,62 @@
 
-import { DatingAd } from '../../../types/dating';
-import { MapPin, Heart, Eye, MessageCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Heart, Eye, MessageCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DatingAd } from "../../../types/dating";
 
 interface AdStatsProps {
   ad: DatingAd;
+  size?: 'sm' | 'md' | 'lg';
+  showStatLabels?: boolean;
+  className?: string;
 }
 
-export const AdStats = ({ ad }: AdStatsProps) => {
-  const formatAgeRange = () => {
-    if (!ad.age_range) return 'N/A';
-    return `${ad.age_range.lower}-${ad.age_range.upper}`;
+export const AdStats = ({ 
+  ad, 
+  size = 'md', 
+  showStatLabels = false,
+  className 
+}: AdStatsProps) => {
+  const iconSizes = {
+    sm: "w-3 h-3",
+    md: "w-4 h-4",
+    lg: "w-5 h-5"
   };
-
+  
+  const textSizes = {
+    sm: "text-xs",
+    md: "text-sm",
+    lg: "text-base"
+  };
+  
+  // Use click_count instead of like_count
+  const viewCount = ad.views_count || 0;
+  const likeCount = ad.click_count || 0;
+  const messageCount = 0; // Default if not available
+  
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center text-luxury-neutral">
-          <MapPin className="h-3 w-3 mr-1 text-luxury-primary/80" />
-          <span>{ad.city}, {ad.country}</span>
-        </div>
-        <div className="text-luxury-neutral">
-          <span>{formatAgeRange()} y/o</span>
-        </div>
+    <div className={cn("flex items-center gap-3", className)}>
+      <div className="flex items-center gap-1">
+        <Eye className={cn(iconSizes[size], "text-luxury-neutral")} />
+        <span className={cn(textSizes[size], "text-luxury-neutral")}>
+          {viewCount}
+          {showStatLabels && <span className="ml-1">Views</span>}
+        </span>
       </div>
       
-      <div className="flex justify-between items-center text-xs text-luxury-neutral">
-        <div className="flex space-x-3">
-          <div className="flex items-center">
-            <Eye className="h-3 w-3 mr-1" />
-            <span>{ad.view_count || 0}</span>
-          </div>
-          <div className="flex items-center">
-            <Heart className="h-3 w-3 mr-1" />
-            <span>{ad.like_count || 0}</span>
-          </div>
-          <div className="flex items-center">
-            <MessageCircle className="h-3 w-3 mr-1" />
-            <span>{ad.message_count || 0}</span>
-          </div>
-        </div>
-        
-        {/* Profile completion progress */}
-        <div className="flex items-center">
-          <div className="w-16 h-1 rounded-full bg-luxury-neutral/20">
-            <div 
-              className={cn(
-                "h-full rounded-full transition-all duration-300",
-                ad.profile_completion_score && ad.profile_completion_score >= 80 
-                  ? "bg-luxury-primary" 
-                  : ad.profile_completion_score && ad.profile_completion_score >= 50 
-                    ? "bg-yellow-500" 
-                    : "bg-red-500"
-              )}
-              style={{ width: `${ad.profile_completion_score || 0}%` }}
-            />
-          </div>
-        </div>
+      <div className="flex items-center gap-1">
+        <Heart className={cn(iconSizes[size], "text-luxury-neutral")} />
+        <span className={cn(textSizes[size], "text-luxury-neutral")}>
+          {likeCount}
+          {showStatLabels && <span className="ml-1">Likes</span>}
+        </span>
+      </div>
+      
+      <div className="flex items-center gap-1">
+        <MessageCircle className={cn(iconSizes[size], "text-luxury-neutral")} />
+        <span className={cn(textSizes[size], "text-luxury-neutral")}>
+          {messageCount}
+          {showStatLabels && <span className="ml-1">Messages</span>}
+        </span>
       </div>
     </div>
   );

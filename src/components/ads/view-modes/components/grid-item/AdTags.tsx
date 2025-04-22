@@ -4,15 +4,18 @@ import { DatingAd } from '../../../types/dating';
 
 interface AdTagsProps {
   ad: DatingAd;
+  onTagClick?: (tag: string) => void;
 }
 
-export const AdTags = ({ ad }: AdTagsProps) => {
+export const AdTags = ({ ad, onTagClick }: AdTagsProps) => {
   if (!ad.tags || ad.tags.length === 0) return null;
   
-  // Handle tag click if the ad has an onTagClick handler
+  // Handle tag click 
   const handleTagClick = (tag: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (ad.onTagClick) {
+    if (onTagClick) {
+      onTagClick(tag);
+    } else if (ad.onTagClick) {
       ad.onTagClick(tag);
     }
   };
