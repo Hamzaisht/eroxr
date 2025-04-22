@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -19,10 +18,8 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
   const [isTyping, setIsTyping] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   
-  // Subscribe to realtime messages
   useRealtimeMessages();
   
-  // Fetch recipient profile
   const { data: recipientProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', recipientId],
     queryFn: async () => {
@@ -38,7 +35,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     enabled: !!recipientId
   });
   
-  // Fetch messages between current user and recipient
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ['direct-messages', session?.user?.id, recipientId],
     queryFn: async () => {
@@ -54,23 +50,19 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
       return data;
     },
     enabled: !!session?.user?.id && !!recipientId,
-    gcTime: 0, // Using gcTime instead of cacheTime
+    gcTime: 0,
     staleTime: 0
   });
   
   const isLoading = profileLoading || messagesLoading;
   
-  // Simple typing indicator simulation
   const simulateTypingIndicator = () => {
-    // Clear any existing timeout
     if (typingTimeout) {
       clearTimeout(typingTimeout);
     }
     
-    // Show typing indicator
     setIsTyping(true);
     
-    // Hide typing indicator after 3 seconds
     const timeout = setTimeout(() => {
       setIsTyping(false);
     }, 3000);
@@ -78,7 +70,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     setTypingTimeout(timeout);
   };
   
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (typingTimeout) {
@@ -87,7 +78,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
     };
   }, [typingTimeout]);
   
-  // Handle sending a message
   const handleSendMessage = async (content: string) => {
     if (!session?.user?.id || !content.trim()) return;
     
@@ -107,7 +97,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
 
   return (
     <div className="flex flex-col h-full relative">
-      {/* Chat Header */}
       {recipientProfile && (
         <ChatHeader 
           recipientProfile={recipientProfile} 
@@ -119,7 +108,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         />
       )}
       
-      {/* Messages */}
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="w-6 h-6 animate-spin text-white/50" />
@@ -133,7 +121,6 @@ export const ChatWindow = ({ recipientId, onToggleDetails }: ChatWindowProps) =>
         />
       )}
       
-      {/* Message Input */}
       <ChatInput 
         onSendMessage={handleSendMessage} 
         onTyping={simulateTypingIndicator}
