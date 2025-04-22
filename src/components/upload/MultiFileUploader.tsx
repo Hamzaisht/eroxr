@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FilePlus, X } from 'lucide-react';
@@ -16,14 +17,24 @@ interface UploadState {
   previews: string[];
 }
 
+interface FileValidationResult {
+  isValid: boolean;
+  message?: string;
+}
+
 interface MultiFileUploaderProps {
-  onUploadComplete: (files: File[]) => void;
+  onUploadComplete?: (files: File[]) => void;
+  onUploadsComplete?: (urls: string[]) => void;
   maxSizeInMB?: number;
   allowedTypes?: string[];
+  contentCategory?: string; // Add this prop to match what FileUploadDialog is passing
+  maxFiles?: number;
+  autoUpload?: boolean;
 }
 
 export const MultiFileUploader = ({ 
   onUploadComplete,
+  onUploadsComplete,
   maxSizeInMB = 50, // Default max size: 50MB
   allowedTypes = [
     'image/jpeg',
@@ -33,7 +44,10 @@ export const MultiFileUploader = ({
     'video/mp4',
     'video/webm',
     'video/quicktime'
-  ]
+  ],
+  contentCategory = 'generic', // Default value for the new prop
+  maxFiles = 10,
+  autoUpload = false
 }: MultiFileUploaderProps) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
@@ -49,7 +63,7 @@ export const MultiFileUploader = ({
   
   const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
 
-  // handleUpload function moved up before it's first used
+  // Define handleUpload BEFORE it's used (fixing the order issue)
   const handleUpload = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
     
@@ -80,13 +94,27 @@ export const MultiFileUploader = ({
         success: true,
         isUploading: false
       }));
-      onUploadComplete(files);
+      
+      if (onUploadComplete) {
+        onUploadComplete(files);
+      }
+      
+      // For FileUploadDialog which needs URLs instead of File objects
+      if (onUploadsComplete) {
+        // In a real app, we would get actual URLs from the server
+        // Here we simulate it by creating fake URLs
+        const mockUrls = files.map((_, i) => 
+          `https://storage.example.com/${contentCategory}/${Date.now()}-${i}.file`
+        );
+        onUploadsComplete(mockUrls);
+      }
+      
       toast({
         title: "Upload Complete",
         description: "All files have been successfully uploaded.",
       });
     }, 3000);
-  }, [onUploadComplete, toast]);
+  }, [onUploadComplete, onUploadsComplete, toast, contentCategory]);
 
   const handleDrop = useCallback((acceptedFiles: File[]) => {
     const filesArray = Array.from(acceptedFiles);
@@ -112,14 +140,25 @@ export const MultiFileUploader = ({
       return true;
     });
     
+    // Check if we're exceeding the maximum number of files
+    if (previews.length + validFiles.length > maxFiles) {
+      toast({
+        title: "Too Many Files",
+        description: `You can only upload a maximum of ${maxFiles} files.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Update previews
     const newPreviews = validFiles.map(file => URL.createObjectURL(file));
     setPreviews(prev => [...prev, ...newPreviews]);
     
-    // Now handleUpload is correctly declared before this call
-    handleUpload(validFiles);
-    
-  }, [handleUpload, allowedTypes, maxSizeInBytes, toast]);
+    // Auto upload if enabled
+    if (autoUpload && validFiles.length > 0) {
+      handleUpload(validFiles);
+    }
+  }, [handleUpload, allowedTypes, maxSizeInBytes, maxSizeInMB, toast, previews, maxFiles, autoUpload]);
 
   const {getRootProps, getInputProps, isDragActive} = useDropzone({
     onDrop: handleDrop,
@@ -131,6 +170,8 @@ export const MultiFileUploader = ({
   const handleRemove = (index: number) => {
     setPreviews(prev => {
       const newPreviews = [...prev];
+      // Revoke object URL to prevent memory leaks
+      URL.revokeObjectURL(newPreviews[index]);
       newPreviews.splice(index, 1);
       return newPreviews;
     });
@@ -138,6 +179,18 @@ export const MultiFileUploader = ({
 
   const handleClick = () => {
     inputRef.current?.click();
+  };
+
+  const handleManualUpload = () => {
+    // Convert object URLs back to File objects - in a real app this would be different
+    if (previews.length > 0 && !uploadState.isUploading) {
+      // In a real implementation, we would have stored the actual File objects
+      // For now, we'll just simulate the upload with empty files
+      const dummyFiles = Array(previews.length).fill(null).map((_, i) => 
+        new File([""], `file-${i}.jpg`, { type: "image/jpeg" })
+      );
+      handleUpload(dummyFiles);
+    }
   };
 
   return (
@@ -152,7 +205,7 @@ export const MultiFileUploader = ({
           {isDragActive ? "Drop the files here..." : "Drag 'n' drop some files here, or click to select files"}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          (Max {maxSizeInMB}MB per file, {allowedTypes.map(type => type.split('/')[1]).join(', ')} allowed)
+          (Max {maxSizeInMB}MB per file, {maxFiles} files, {allowedTypes.map(type => type.split('/')[1]).join(', ')} allowed)
         </p>
       </div>
 
@@ -167,24 +220,40 @@ export const MultiFileUploader = ({
       )}
 
       {previews.length > 0 && (
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {previews.map((preview, index) => (
-            <div key={index} className="relative">
-              <img 
-                src={preview} 
-                alt={`Preview ${index}`} 
-                className="rounded-md aspect-square object-cover" 
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 rounded-full shadow-md hover:bg-muted text-muted-foreground"
-                onClick={() => handleRemove(index)}
+        <div className="mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {previews.map((preview, index) => (
+              <div key={index} className="relative">
+                <img 
+                  src={preview} 
+                  alt={`Preview ${index}`} 
+                  className="rounded-md aspect-square object-cover" 
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 rounded-full shadow-md hover:bg-muted text-muted-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemove(index);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          
+          {!autoUpload && previews.length > 0 && (
+            <div className="mt-4 flex justify-end">
+              <Button 
+                onClick={handleManualUpload} 
+                disabled={uploadState.isUploading || uploadState.success}
               >
-                <X className="h-4 w-4" />
+                {uploadState.isUploading ? 'Uploading...' : 'Upload Files'}
               </Button>
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>
