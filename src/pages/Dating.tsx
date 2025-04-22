@@ -21,6 +21,7 @@ import { useInView } from "react-intersection-observer";
 import { type Database } from "@/integrations/supabase/types";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { transformRawAds } from "@/components/ads/utils/adTransformers";
+import { nordicCountries } from "@/components/dating/utils/datingUtils";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 

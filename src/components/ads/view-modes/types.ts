@@ -5,6 +5,7 @@ export interface GridViewModeProps {
   ads: DatingAd[];
   isLoading?: boolean;
   onMediaClick?: (url: string) => void;
+  userProfile?: DatingAd | null;
 }
 
 export interface GridItemProps {
@@ -15,4 +16,12 @@ export interface GridItemProps {
   onMediaClick?: (url: string) => void;
   onTagClick?: (tag: string, e: React.MouseEvent) => void;
   isMobile: boolean;
+  userProfile?: DatingAd | null;
+}
+
+export interface ListViewModeProps {
+  ads: DatingAd[];
+  isLoading?: boolean;
+  onMediaClick?: (url: string) => void;
+  userProfile?: DatingAd | null;
 }
