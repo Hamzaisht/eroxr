@@ -19,9 +19,9 @@ export const transformRawAds = (rawAds: RawDatingAd[]): DatingAd[] => {
         }
       : ad.age_range;
     
-    // Create a minimal user object since we don't have profiles data
+    // Create a user object from available data
     const user = {
-      id: ad.user_id,
+      id: ad.user_id || '',
       username: "User", // Fallback username
       avatar_url: ad.avatar_url || null
     };
@@ -30,14 +30,14 @@ export const transformRawAds = (rawAds: RawDatingAd[]): DatingAd[] => {
       ...ad,
       age_range: ageRange,
       user: user,
-      // Set default verified/premium status
-      is_verified: ad.is_verified ?? false,
-      is_premium: ad.is_premium ?? false,
-      // Set default view and message counts if not present
+      // Set defaults for optional fields if they don't exist
+      is_verified: ad.is_verified || false,
+      is_premium: ad.is_premium || false,
       view_count: ad.view_count || 0,
       message_count: ad.message_count || 0,
-      // Set moderation status to approved by default
-      moderation_status: ad.moderation_status || 'approved'
+      moderation_status: ad.moderation_status || 'approved',
+      avatar_url: ad.avatar_url || null,
+      video_url: ad.video_url || null
     } as DatingAd;
   });
 };

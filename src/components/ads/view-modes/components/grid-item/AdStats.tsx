@@ -28,10 +28,10 @@ export const AdStats = ({
     lg: "text-base"
   };
   
-  // Use click_count instead of like_count
-  const viewCount = ad.views_count || 0;
+  // Use view_count or views_count property
+  const viewCount = ad.view_count || ad.views_count || 0;
   const likeCount = ad.click_count || 0;
-  const messageCount = 0; // Default if not available
+  const messageCount = ad.message_count || 0;
   
   return (
     <div className={cn("flex items-center gap-3", className)}>

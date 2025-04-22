@@ -4,7 +4,7 @@ import { DatingAd } from '../../../types/dating';
 
 interface AdTagsProps {
   ad: DatingAd;
-  onTagClick?: (tag: string) => void;
+  onTagClick?: (tag: string, e?: React.MouseEvent) => void;
 }
 
 export const AdTags = ({ ad, onTagClick }: AdTagsProps) => {
@@ -14,7 +14,7 @@ export const AdTags = ({ ad, onTagClick }: AdTagsProps) => {
   const handleTagClick = (tag: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (onTagClick) {
-      onTagClick(tag);
+      onTagClick(tag, e);
     } else if (ad.onTagClick) {
       ad.onTagClick(tag);
     }

@@ -26,10 +26,17 @@ export interface UseAdsQueryOptions {
 // Define the type for raw data from Supabase
 export type RawDatingAd = Omit<DatingAd, 'age_range'> & {
   age_range: string | { lower: number; upper: number };
+  preferred_age_range?: string | { lower: number; upper: number } | null;
   profiles?: {
     id_verification_status?: string;
     is_paying_customer?: boolean;
   };
+  // Additional fields that might be in the raw data
   message_count?: number;
   view_count?: number;
+  avatar_url?: string | null;
+  video_url?: string | null;
+  is_premium?: boolean;
+  is_verified?: boolean;
+  moderation_status?: string;
 };

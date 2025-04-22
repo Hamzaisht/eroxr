@@ -1,4 +1,3 @@
-
 export type DatingAd = {
   id: string;
   user_id: string | null;
@@ -8,14 +7,20 @@ export type DatingAd = {
   looking_for: string[];
   country: 'denmark' | 'finland' | 'iceland' | 'norway' | 'sweden';
   city: string;
-  age_range: [number, number];
+  age_range: {
+    lower: number;
+    upper: number;
+  };
   created_at: string | null;
   updated_at: string | null;
   is_active: boolean | null;
   views_count: number | null;
   click_count?: number | null;
   interests: string[] | null;
-  preferred_age_range: [number, number] | null;
+  preferred_age_range: {
+    lower: number;
+    upper: number;
+  } | null;
   height: number | null;
   body_type: string | null;
   smoking_status: string | null;
@@ -30,6 +35,52 @@ export type DatingAd = {
   tags?: string[];
   view_count?: number;
   location?: string;
-  // For interactivity on the UI:
+  is_premium?: boolean;
+  is_verified?: boolean;
+  video_url?: string;
+  avatar_url?: string;
+  message_count?: number;
+  user?: {
+    id: string;
+    username: string;
+    avatar_url?: string;
+  };
   onTagClick?: (tag: string) => void;
+};
+
+export interface SearchCategory {
+  seeker: "couple" | "female" | "male";
+  looking_for: "male" | "female" | "couple";
+  label?: string;
+}
+
+export interface FilterOptions {
+  minAge?: number;
+  maxAge?: number;
+  minDistance?: number;
+  maxDistance?: number;
+  bodyType?: string[];
+  educationLevel?: string[];
+  verifiedOnly?: boolean;
+  premiumOnly?: boolean;
+  keyword?: string;
+  username?: string;
+  sortBy?: 'newest' | 'lastActive' | 'profileScore';
+  lastActive?: 'today' | 'week' | 'month' | 'all';
+  isVerified?: boolean;
+  isPremium?: boolean;
+}
+
+export type LegacyDatingAd = {
+  id: string;
+  title: string;
+  description: string;
+  relationship_status: "single" | "couple" | "other";
+  looking_for: string[];
+  country: string;
+  city: string;
+  age_range: { lower: number; upper: number };
+  created_at: string;
+  is_premium?: boolean;
+  is_verified?: boolean;
 };
