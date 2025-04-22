@@ -10,22 +10,64 @@ import { VideoThumbnail } from '../VideoThumbnail';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Crown, Shield, MessageCircle } from 'lucide-react';
+import { calculateMatchPercentage, getMatchLabel } from '@/components/dating/utils/matchCalculator';
+import { useSession } from '@supabase/auth-helpers-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useRef } from 'react';
 
 interface AdCardProps {
   ad: DatingAd;
   onSelect: (ad: DatingAd) => void;
   isMobile: boolean;
+  userProfile?: DatingAd | null;
 }
 
-export const AdCard = ({ ad, onSelect, isMobile }: AdCardProps) => {
+export const AdCard = ({ ad, onSelect, isMobile, userProfile }: AdCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const session = useSession();
+  const [isViewTracked, setIsViewTracked] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  // Generate a match percentage for demonstration - in real app, would be calculated based on user preferences
-  const matchPercentage = Math.floor(65 + Math.random() * 30);
+  // Calculate match percentage
+  const matchPercentage = calculateMatchPercentage(userProfile || null, ad);
+  const matchInfo = getMatchLabel(matchPercentage);
   const isHighMatch = matchPercentage > 85;
+
+  // Track view when card becomes visible
+  useEffect(() => {
+    if (isViewTracked || !session) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        // Track view in database
+        (async () => {
+          try {
+            await supabase.from('dating_ads').update({ 
+              view_count: (ad.view_count || 0) + 1 
+            }).eq('id', ad.id);
+            setIsViewTracked(true);
+          } catch (error) {
+            console.error('Error tracking view:', error);
+          }
+        })();
+        
+        // Disconnect after tracking
+        observer.disconnect();
+      }
+    }, { threshold: 0.6 });
+    
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, [ad.id, isViewTracked, session, ad.view_count]);
 
   return (
     <motion.div
+      ref={cardRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -77,9 +119,9 @@ export const AdCard = ({ ad, onSelect, isMobile }: AdCardProps) => {
             "border-0 flex items-center gap-1 px-2 py-1",
             isHighMatch 
               ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white" 
-              : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
+              : `bg-gradient-to-r from-blue-500 to-indigo-600 text-white ${isHighMatch ? 'animate-pulse' : ''}`
           )}>
-            <span className="text-xs font-medium">{matchPercentage}% Match</span>
+            <span className="text-xs font-medium">{matchPercentage}% {isHighMatch ? 'Perfect Match' : 'Match'}</span>
           </Badge>
         </div>
 
@@ -90,6 +132,14 @@ export const AdCard = ({ ad, onSelect, isMobile }: AdCardProps) => {
         <UserInfo ad={ad} />
         <AdStats ad={ad} />
         <AdTags ad={ad} />
+        
+        {/* Last active indicator */}
+        {ad.last_active && (
+          <div className="flex items-center gap-1.5 text-xs text-luxury-neutral mt-1">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span>Active recently</span>
+          </div>
+        )}
         
         {/* Quick message button that appears on hover */}
         <motion.div 

@@ -10,6 +10,15 @@ import { GridViewMode, ListViewMode } from "@/components/ads/view-modes";
 import { ViewModeToggle } from "@/components/ads/view-modes/ViewModeToggle";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useInView } from "react-intersection-observer";
+import { RecentlyActive } from "./RecentlyActive";
+import { ProfileCompletionPrompt } from "./ProfileCompletionPrompt";
+import { supabase } from "@/integrations/supabase/client";
+import { FullscreenAdViewer } from "@/components/ads/video-profile/FullscreenAdViewer";
+import { SimilarProfiles } from "./SimilarProfiles";
+import { SkeletonCards } from "../ads/view-modes/SkeletonCards";
+
+// Import our custom animations
+import "../styles/dating-animations.css";
 
 interface DatingContentProps {
   ads: DatingAd[] | undefined;
@@ -17,6 +26,7 @@ interface DatingContentProps {
   onAdCreationSuccess: () => void;
   onTagClick?: (tag: string) => void;
   isLoading?: boolean;
+  userProfile?: DatingAd | null; // User's own profile if they have one
 }
 
 export const DatingContent = ({ 
@@ -24,12 +34,14 @@ export const DatingContent = ({
   canAccessBodyContact, 
   onAdCreationSuccess,
   onTagClick,
-  isLoading = false
+  isLoading = false,
+  userProfile
 }: DatingContentProps) => {
   const session = useSession();
   const [viewMode, setViewMode] = useLocalStorage<'grid' | 'list'>('bd-view-mode', 'grid');
   const [activeTab, setActiveTab] = useState('all');
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [selectedAd, setSelectedAd] = useState<DatingAd | null>(null);
   const { ref: tabsRef, inView: tabsInView } = useInView({
     threshold: 0,
     rootMargin: "-50px 0px 0px 0px"
@@ -44,8 +56,8 @@ export const DatingContent = ({
   const trendingAds = ads
     ?.sort((a, b) => {
       // Custom scoring: 0.7 * recency + 0.3 * views
-      const dateA = new Date(a.created_at);
-      const dateB = new Date(b.created_at);
+      const dateA = new Date(a.created_at ?? '');
+      const dateB = new Date(b.created_at ?? '');
       const recencyScoreA = dateA.getTime();
       const recencyScoreB = dateB.getTime();
       
@@ -64,6 +76,18 @@ export const DatingContent = ({
 
   // Check if we have any ads to display
   const hasAds = allAds && allAds.length > 0;
+  
+  // Function to handle profile selection
+  const handleSelectProfile = (ad: DatingAd) => {
+    setSelectedAd(ad);
+    
+    // Track view in analytics
+    if (ad.id && session) {
+      supabase.from('dating_ads').update({ 
+        view_count: (ad.view_count || 0) + 1 
+      }).eq('id', ad.id);
+    }
+  };
 
   // Make ad elements clickable for tag filtering
   const makeTagClickable = (ads: DatingAd[] | undefined) => {
@@ -112,6 +136,19 @@ export const DatingContent = ({
     >
       {hasAds || isLoading ? (
         <>
+          {/* Profile completion prompt if user is logged in */}
+          {session && userProfile && (
+            <ProfileCompletionPrompt userProfile={userProfile} />
+          )}
+          
+          {/* Recently active users */}
+          {!isLoading && allAds && allAds.length > 0 && (
+            <RecentlyActive 
+              ads={allAds} 
+              onSelectProfile={handleSelectProfile} 
+            />
+          )}
+          
           <div className="relative" ref={tabsRef}>
             <Tabs 
               defaultValue="all" 
@@ -140,27 +177,37 @@ export const DatingContent = ({
                 />
               </div>
               
-              <TabsContent value="all" className="space-y-4">
+              <TabsContent value="all" className="space-y-6">
                 {viewMode === 'grid' ? (
                   <GridViewMode 
                     ads={makeTagClickable(allAds) as DatingAd[]} 
                     isLoading={isLoading}
+                    userProfile={userProfile}
                   />
                 ) : (
                   <ListViewMode 
                     ads={makeTagClickable(allAds) as DatingAd[]} 
                     isLoading={isLoading}
+                    userProfile={userProfile}
                   />
                 )}
               </TabsContent>
               
-              <TabsContent value="trending" className="space-y-4">
+              <TabsContent value="trending" className="space-y-6">
                 {trendingAds && trendingAds.length > 0 ? (
                   viewMode === 'grid' ? (
-                    <GridViewMode ads={makeTagClickable(trendingAds) as DatingAd[]} />
+                    <GridViewMode 
+                      ads={makeTagClickable(trendingAds) as DatingAd[]} 
+                      userProfile={userProfile}
+                    />
                   ) : (
-                    <ListViewMode ads={makeTagClickable(trendingAds) as DatingAd[]} />
+                    <ListViewMode 
+                      ads={makeTagClickable(trendingAds) as DatingAd[]} 
+                      userProfile={userProfile}
+                    />
                   )
+                ) : isLoading ? (
+                  <SkeletonCards count={4} type={viewMode} />
                 ) : (
                   <div className="flex flex-col items-center justify-center p-8 text-center bg-black/20 rounded-xl">
                     <TrendingUp className="h-12 w-12 text-luxury-primary/40 mb-4" />
@@ -172,13 +219,21 @@ export const DatingContent = ({
                 )}
               </TabsContent>
               
-              <TabsContent value="popular" className="space-y-4">
+              <TabsContent value="popular" className="space-y-6">
                 {mostViewedAds && mostViewedAds.length > 0 ? (
                   viewMode === 'grid' ? (
-                    <GridViewMode ads={makeTagClickable(mostViewedAds) as DatingAd[]} />
+                    <GridViewMode 
+                      ads={makeTagClickable(mostViewedAds) as DatingAd[]} 
+                      userProfile={userProfile}
+                    />
                   ) : (
-                    <ListViewMode ads={makeTagClickable(mostViewedAds) as DatingAd[]} />
+                    <ListViewMode 
+                      ads={makeTagClickable(mostViewedAds) as DatingAd[]} 
+                      userProfile={userProfile}
+                    />
                   )
+                ) : isLoading ? (
+                  <SkeletonCards count={4} type={viewMode} />
                 ) : (
                   <div className="flex flex-col items-center justify-center p-8 text-center bg-black/20 rounded-xl">
                     <Eye className="h-12 w-12 text-luxury-primary/40 mb-4" />
@@ -191,6 +246,15 @@ export const DatingContent = ({
               </TabsContent>
             </Tabs>
           </div>
+          
+          {/* Similar profiles display when viewing a specific ad */}
+          {selectedAd && allAds && (
+            <SimilarProfiles 
+              currentAd={selectedAd} 
+              allAds={allAds} 
+              onSelectProfile={handleSelectProfile}
+            />
+          )}
           
           {/* Floating tabs that appear when scrolling */}
           {showFloatingTabs && (
@@ -224,6 +288,14 @@ export const DatingContent = ({
                 </div>
               </div>
             </motion.div>
+          )}
+          
+          {/* Full screen profile viewer */}
+          {selectedAd && (
+            <FullscreenAdViewer 
+              ad={selectedAd} 
+              onClose={() => setSelectedAd(null)} 
+            />
           )}
         </>
       ) : (

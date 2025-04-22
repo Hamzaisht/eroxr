@@ -1,80 +1,69 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
-import Home from "@/pages/Home";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import Profile from "@/pages/Profile";
-import Settings from "@/pages/Settings";
-import Messages from "@/pages/Messages";
-import Eroboard from "@/pages/Eroboard";
-import Dating from "@/pages/Dating";
-import Eros from "@/pages/Eros";
-import ErosUpload from "@/pages/ErosUpload";
-import { AuthLayout } from "@/components/layout/AuthLayout";
-import { Toaster } from "@/components/ui/toaster";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Shorts from "@/pages/Shorts";
-import ShortsUpload from "@/pages/ShortsUpload";
-import { AuthProvider } from "@/contexts/AuthContext";
-import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import Index from "@/pages/Index";
-import { AdminRoutes } from "@/components/admin/routes/AdminRoutes";
+import { lazy, Suspense } from "react";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { ScrollToTop } from "./components/ScrollToTop";
+import { AuthProvider } from "./components/AuthProvider";
+import { Toaster } from "./components/ui/toaster";
+import { LoadingScreen } from "./components/layout/LoadingScreen";
 
-// Create Query Client with optimized settings
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-    },
-  },
-});
+// Import our custom animations
+import "./styles/dating-animations.css";
 
-export default function App() {
+// Lazy load pages for better performance
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Messages = lazy(() => import("./pages/Messages"));
+const Dating = lazy(() => import("./pages/Dating"));
+const Subscription = lazy(() => import("./pages/Subscription"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const Eroboard = lazy(() => import("./pages/Eroboard"));
+const EroboardDashboard = lazy(() => import("./pages/EroboardDashboard"));
+const EroboardContent = lazy(() => import("./pages/EroboardContent"));
+const EroboardAnalytics = lazy(() => import("./pages/EroboardAnalytics"));
+const EroboardMonetization = lazy(() => import("./pages/EroboardMonetization"));
+const EroboardSettings = lazy(() => import("./pages/EroboardSettings"));
+const Story = lazy(() => import("./pages/Story"));
+const CreateStory = lazy(() => import("./pages/CreateStory"));
+const WatchStory = lazy(() => import("./pages/WatchStory"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+function App() {
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
+    <Router>
+      <AuthProvider>
+        <ScrollToTop />
+        <Suspense fallback={<LoadingScreen />}>
           <Routes>
-            {/* Landing route */}
-            <Route path="/" element={<Index />} />
-            
-            {/* Auth routes */}
-            <Route element={<AuthLayout />}>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-            </Route>
-            
-            {/* Public routes */}
-            <Route element={<MainLayout />}>
-              <Route path="/home" element={<Home />} />
-              <Route path="/shorts" element={<Shorts />} />
-              <Route path="/shorts/:videoId" element={<Shorts />} />
-              <Route path="/eros" element={<Eros />} />
-              <Route path="/eros/:videoId" element={<Eros />} />
-            </Route>
-            
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<MainLayout />}>
-                <Route path="/profile/:username" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/eroboard" element={<Eroboard />} />
-                <Route path="/dating" element={<Dating />} />
-                <Route path="/shorts/upload" element={<ShortsUpload />} />
-                <Route path="/eros/upload" element={<ErosUpload />} />
-              </Route>
-            </Route>
-            
-            {/* Admin routes */}
-            <Route path="/admin/*" element={<AdminRoutes />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:id" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/dating" element={<Dating />} />
+            <Route path="/subscription" element={<Subscription />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/eroboard" element={<Eroboard />} />
+            <Route path="/eroboard/dashboard" element={<EroboardDashboard />} />
+            <Route path="/eroboard/content" element={<EroboardContent />} />
+            <Route path="/eroboard/analytics" element={<EroboardAnalytics />} />
+            <Route path="/eroboard/monetization" element={<EroboardMonetization />} />
+            <Route path="/eroboard/settings" element={<EroboardSettings />} />
+            <Route path="/story" element={<Story />} />
+            <Route path="/story/create" element={<CreateStory />} />
+            <Route path="/story/watch/:id" element={<WatchStory />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
-          <Toaster />
-        </AuthProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+        </Suspense>
+        <Toaster />
+      </AuthProvider>
+    </Router>
   );
 }
+
+export default App;

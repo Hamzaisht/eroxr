@@ -19,12 +19,15 @@ import { FilterOptions } from "@/components/ads/types/dating";
 import { Button } from "@/components/ui/button";
 import { useInView } from "react-intersection-observer";
 import { type Database } from "@/integrations/supabase/types";
+import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
+import { transformRawAds } from "@/components/ads/utils/adTransformers";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
 const Dating = () => {
   const [datingAds, setDatingAds] = useState<DatingAd[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [userProfile, setUserProfile] = useState<DatingAd | null>(null);
   const { toast } = useToast();
   const session = useSession();
   const navigate = useNavigate();
@@ -64,99 +67,78 @@ const Dating = () => {
     { seeker: "male", lookingFor: "couple", label: "Men seeking Couples" },
     { seeker: "female", lookingFor: "female", label: "Women seeking Women" },
     { seeker: "male", lookingFor: "male", label: "Men seeking Men" },
+    { seeker: "any", lookingFor: "any", label: "Open to All" },
+    { seeker: "verified", lookingFor: "any", label: "Verified Profiles" },
+    { seeker: "premium", lookingFor: "any", label: "Premium Profiles" },
   ];
   
-  // Nordic countries list
-  const nordicCountries = ["denmark", "finland", "iceland", "norway", "sweden"];
+  // Use our AdsQuery hook for better performance
+  const { 
+    data: queryAds, 
+    isLoading: queryLoading, 
+    error: queryError 
+  } = useAdsQuery({
+    verifiedOnly: filterOptions.verifiedOnly,
+    premiumOnly: filterOptions.premiumOnly,
+    filterOptions: {
+      ...filterOptions,
+      country: selectedCountry,
+      city: selectedCity,
+      relationship_status: selectedSeeker,
+      looking_for: selectedLookingFor ? [selectedLookingFor] : undefined,
+      tags: selectedTag ? [selectedTag] : undefined
+    }
+  });
   
-  // Fetch dating ads
+  // Update ads from query
   useEffect(() => {
-    fetchDatingAds();
-  }, [selectedCountry, selectedCity, selectedSeeker, selectedLookingFor, selectedTag, filterOptions]);
-
-  const fetchDatingAds = async () => {
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from("dating_ads")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      // Apply filters
-      if (selectedCountry) {
-        query = query.eq("country", selectedCountry);
-      }
-      
-      if (selectedCity) {
-        query = query.eq("city", selectedCity);
-      }
-      
-      if (selectedSeeker) {
-        query = query.eq("relationship_status", selectedSeeker);
-      }
-      
-      if (selectedLookingFor) {
-        query = query.contains("looking_for", [selectedLookingFor]);
-      }
-      
-      if (selectedTag) {
-        query = query.contains("tags", [selectedTag]);
-      }
-      
-      if (filterOptions.verifiedOnly) {
-        query = query.eq("is_verified", true);
-      }
-      
-      if (filterOptions.premiumOnly) {
-        query = query.eq("is_premium", true);
-      }
-      
-      if (filterOptions.minAge || filterOptions.maxAge) {
-        // Note: This is a simplified approach. In a real app, you would use a more complex query
-        if (filterOptions.minAge) {
-          query = query.gte("age_range->>lower", filterOptions.minAge);
-        }
-        
-        if (filterOptions.maxAge) {
-          query = query.lte("age_range->>upper", filterOptions.maxAge);
-        }
-      }
-      
-      if (filterOptions.keyword) {
-        query = query.or(`title.ilike.%${filterOptions.keyword}%,description.ilike.%${filterOptions.keyword}%`);
-      }
-      
-      if (filterOptions.username) {
-        // This would typically join with a users table, simplified here
-        query = query.ilike("user_id", `%${filterOptions.username}%`);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error("Error fetching dating ads:", error);
-        toast({
-          title: "Failed to load profiles",
-          description: "Please try again later",
-          variant: "destructive"
-        });
-        setDatingAds([]);
-      } else {
-        console.log("Dating ads loaded:", data.length);
-        setDatingAds(data);
-      }
-    } catch (err) {
-      console.error("Exception fetching dating ads:", err);
+    if (queryAds) {
+      setDatingAds(queryAds);
+      setIsLoading(false);
+    } else if (queryError) {
+      console.error("Error fetching ads:", queryError);
       toast({
-        title: "Error loading profiles",
-        description: "An unexpected error occurred",
+        title: "Failed to load profiles",
+        description: "Please try again later",
         variant: "destructive"
       });
-      setDatingAds([]);
-    } finally {
       setIsLoading(false);
+    } else {
+      setIsLoading(queryLoading);
     }
-  };
+  }, [queryAds, queryLoading, queryError, toast]);
+  
+  // Get user's own profile if they have one
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setUserProfile(null);
+      return;
+    }
+    
+    async function fetchUserProfile() {
+      try {
+        const { data, error } = await supabase
+          .from("dating_ads")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .limit(1)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching user profile:", error);
+          return;
+        }
+        
+        if (data) {
+          setUserProfile(transformRawAds([data])[0]);
+        }
+      } catch (err) {
+        console.error("Exception fetching user profile:", err);
+      }
+    }
+    
+    fetchUserProfile();
+  }, [session]);
 
   const handleAdCreationSuccess = () => {
     toast({
@@ -165,8 +147,20 @@ const Dating = () => {
       variant: "default"
     });
     
-    // Refetch the ads
-    fetchDatingAds();
+    // Refetch the user's profile
+    if (session?.user?.id) {
+      supabase
+        .from("dating_ads")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .limit(1)
+        .single()
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setUserProfile(transformRawAds([data])[0]);
+          }
+        });
+    }
   };
   
   const handleTagClick = (tag: string) => {
@@ -211,6 +205,41 @@ const Dating = () => {
       duration: 2000,
     });
   };
+
+  // Real-time presence tracking
+  useEffect(() => {
+    if (!session) return;
+
+    // Set user as online
+    const channel = supabase.channel('online-users')
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        console.log('Presence state updated:', state);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: session.user.id,
+            online_at: new Date().toISOString()
+          });
+        }
+      });
+
+    // Update the user's last_active in their dating profile
+    if (session.user.id && userProfile) {
+      supabase
+        .from('dating_ads')
+        .update({ last_active: new Date().toISOString() })
+        .eq('user_id', session.user.id)
+        .then(({ error }) => {
+          if (error) console.error('Error updating last_active:', error);
+        });
+    }
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session, userProfile]);
   
   return (
     <HomeLayout>
@@ -292,6 +321,7 @@ const Dating = () => {
                     onAdCreationSuccess={handleAdCreationSuccess}
                     onTagClick={handleTagClick}
                     isLoading={isLoading}
+                    userProfile={userProfile}
                   />
                 </div>
               ) : (
@@ -301,6 +331,7 @@ const Dating = () => {
                   onAdCreationSuccess={handleAdCreationSuccess}
                   onTagClick={handleTagClick}
                   isLoading={isLoading}
+                  userProfile={userProfile}
                 />
               )}
             </div>
