@@ -1,27 +1,22 @@
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Footer } from "@/components/Footer";
-import { DatingAd } from "@/components/ads/types/dating";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
-import { HomeLayout } from "@/components/home/HomeLayout";
-import { DatingHeader } from "@/components/dating/DatingHeader";
-import { FilterOptions } from "@/components/ads/types/dating";
 import { useInView } from "react-intersection-observer";
-import { type Database } from "@/integrations/supabase/types";
-import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
-import { transformRawAds } from "@/components/ads/utils/adTransformers";
-import { nordicCountries } from "@/components/dating/utils/datingUtils";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { DatingToolbar } from "@/components/dating/DatingToolbar";
-import { DatingMainContent } from "./DatingMainContent";
+import { type Database } from "@/integrations/supabase/types";
+import { DatingAd, FilterOptions } from "@/components/ads/types/dating";
+import { nordicCountries } from "@/components/dating/utils/datingUtils";
+import { useDatingAds } from "./dating/useDatingAds";
+import { useUserDatingProfile } from "./dating/useUserDatingProfile";
+import { useDatingPresence } from "./dating/useDatingPresence";
+import { DatingPageLayout } from "./dating/DatingPageLayout";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
 const Dating = () => {
+  // States for filters and ads
   const [datingAds, setDatingAds] = useState<DatingAd[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userProfile, setUserProfile] = useState<DatingAd | null>(null);
@@ -47,7 +42,7 @@ const Dating = () => {
     keyword: "",
     username: "",
   });
-  const { ref: headerRef, inView: headerInView } = useInView({ threshold: 0 });
+  const { ref: headerRef } = useInView({ threshold: 0 });
 
   const defaultSearchCategories = [
     { seeker: "male", lookingFor: "female", label: "Men seeking Women" },
@@ -63,89 +58,33 @@ const Dating = () => {
     { seeker: "premium", lookingFor: "any", label: "Premium Profiles" },
   ];
 
-  const {
-    data: queryAds,
-    isLoading: queryLoading,
-    error: queryError
-  } = useAdsQuery({
-    verifiedOnly: filterOptions.verifiedOnly,
-    premiumOnly: filterOptions.premiumOnly,
-    filterOptions: {
-      ...filterOptions,
-      country: selectedCountry,
-      city: selectedCity,
-      relationship_status: selectedSeeker,
-      looking_for: selectedLookingFor ? [selectedLookingFor] : undefined,
-      tags: selectedTag ? [selectedTag] : undefined
-    }
-  });
+  // Custom query hook for fetching ads
+  useDatingAds(
+    filterOptions,
+    selectedCountry,
+    selectedCity,
+    selectedSeeker,
+    selectedLookingFor,
+    setSelectedTag,
+    setDatingAds,
+    setIsLoading
+  );
 
-  useEffect(() => {
-    if (queryAds) {
-      setDatingAds(queryAds);
-      setIsLoading(false);
-    } else if (queryError) {
-      console.error("Error fetching ads:", queryError);
-      toast({
-        title: "Failed to load profiles",
-        description: "Please try again later",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-    } else {
-      setIsLoading(queryLoading);
-    }
-  }, [queryAds, queryLoading, queryError, toast]);
+  // Custom hook for user profile
+  useUserDatingProfile(setUserProfile);
 
-  useEffect(() => {
-    if (!session?.user?.id) {
-      setUserProfile(null);
-      return;
-    }
-
-    async function fetchUserProfile() {
-      try {
-        const { data, error } = await supabase
-          .from("dating_ads")
-          .select("*")
-          .eq("user_id", session.user.id)
-          .limit(1)
-          .single();
-
-        if (error) {
-          console.error("Error fetching user profile:", error);
-          return;
-        }
-
-        if (data) {
-          setUserProfile(transformRawAds([data])[0]);
-        }
-      } catch (err) {
-        console.error("Exception fetching user profile:", err);
-      }
-    }
-
-    fetchUserProfile();
-  }, [session]);
+  // Set up online presence tracking
+  useDatingPresence(userProfile);
 
   const handleAdCreationSuccess = () => {
     toast({
       title: "Profile created successfully!",
       description: "Your profile is now visible to others.",
-      variant: "default"
+      variant: "default",
     });
     if (session?.user?.id) {
-      supabase
-        .from("dating_ads")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .limit(1)
-        .single()
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setUserProfile(transformRawAds([data])[0]);
-          }
-        });
+      // Re-fetch the user profile once ad is created
+      setTimeout(() => useUserDatingProfile(setUserProfile), 500);
     }
   };
 
@@ -154,7 +93,7 @@ const Dating = () => {
     if (window.innerWidth < 768) {
       setShowFilters(false);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     toast({
       title: `Filtering by: ${tag}`,
       description: "Showing profiles matching this tag",
@@ -185,104 +124,42 @@ const Dating = () => {
     });
   };
 
-  useEffect(() => {
-    if (!session) return;
-
-    const channel = supabase.channel('online-users')
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        console.log('Presence state updated:', state);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            user_id: session.user.id,
-            online_at: new Date().toISOString()
-          });
-        }
-      });
-
-    if (session.user.id && userProfile) {
-      supabase
-        .from('dating_ads')
-        .update({ last_active: new Date().toISOString() })
-        .eq('user_id', session.user.id)
-        .then(({ error }) => {
-          if (error) console.error('Error updating last_active:', error);
-        });
-    }
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session, userProfile]);
-
   const handleFilterToggle = () => {
     setShowFilters(!showFilters);
   };
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    if (isMobile) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   return (
-    <HomeLayout>
-      <motion.main
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="pt-16 pb-20"
-      >
-        <div className="container mx-auto px-4 sm:px-6">
-          <div ref={headerRef}>
-            <DatingHeader
-              canAccessBodyContact={true}
-              onAdCreationSuccess={handleAdCreationSuccess}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-            />
-            <DatingToolbar
-              onBack={() => navigate('/home')}
-              onResetFilters={handleResetFilters}
-              showFilters={showFilters}
-              setShowFilters={setShowFilters}
-            />
-          </div>
-          <DatingMainContent
-            isFilterCollapsed={isFilterCollapsed}
-            setIsFilterCollapsed={setIsFilterCollapsed}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-            selectedCountry={selectedCountry}
-            setSelectedCountry={setSelectedCountry}
-            selectedCity={selectedCity}
-            setSelectedCity={setSelectedCity}
-            selectedSeeker={selectedSeeker}
-            selectedLookingFor={selectedLookingFor}
-            setSelectedSeeker={setSelectedSeeker}
-            setSelectedLookingFor={setSelectedLookingFor}
-            filterOptions={filterOptions}
-            setFilterOptions={setFilterOptions}
-            defaultSearchCategories={defaultSearchCategories}
-            nordicCountries={nordicCountries as NordicCountry[]}
-            selectedTag={selectedTag}
-            setSelectedTag={setSelectedTag}
-            datingAds={datingAds}
-            isLoading={isLoading}
-            activeTab={activeTab}
-            userProfile={userProfile}
-            handleAdCreationSuccess={handleAdCreationSuccess}
-            handleTagClick={handleTagClick}
-            handleTabChange={handleTabChange}
-            handleFilterToggle={handleFilterToggle}
-          />
-        </div>
-      </motion.main>
-      <Footer />
-    </HomeLayout>
+    <DatingPageLayout
+      datingAds={datingAds}
+      isLoading={isLoading}
+      userProfile={userProfile}
+      filterOptions={filterOptions}
+      setFilterOptions={setFilterOptions}
+      selectedCountry={selectedCountry}
+      setSelectedCountry={setSelectedCountry}
+      selectedCity={selectedCity}
+      setSelectedCity={setSelectedCity}
+      selectedSeeker={selectedSeeker}
+      setSelectedSeeker={setSelectedSeeker}
+      selectedLookingFor={selectedLookingFor}
+      setSelectedLookingFor={setSelectedLookingFor}
+      selectedTag={selectedTag}
+      setSelectedTag={setSelectedTag}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      isFilterCollapsed={isFilterCollapsed}
+      setIsFilterCollapsed={setIsFilterCollapsed}
+      showFilters={showFilters}
+      setShowFilters={setShowFilters}
+      handleAdCreationSuccess={handleAdCreationSuccess}
+      handleTagClick={handleTagClick}
+      handleResetFilters={handleResetFilters}
+      handleFilterToggle={handleFilterToggle}
+      defaultSearchCategories={defaultSearchCategories}
+      nordicCountries={nordicCountries as NordicCountry[]}
+      headerRef={headerRef}
+      navigate={navigate}
+    />
   );
 };
 
