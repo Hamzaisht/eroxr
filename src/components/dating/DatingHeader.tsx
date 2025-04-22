@@ -55,16 +55,20 @@ export const DatingHeader = ({
     }
   };
 
+  // Handler for header icon buttons with correct routing
+  const handleIconClick = (route: string) => {
+    navigate(route);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`w-full ${
-        isSticky
-          ? "bg-luxury-dark/80 backdrop-blur-lg border-b border-luxury-primary/10 py-3 px-4"
-          : "mb-6"
-      }`}
+      className={`w-full ${isSticky
+            ? "bg-luxury-dark/80 backdrop-blur-lg border-b border-luxury-primary/10 py-3 px-4"
+            : "mb-6"
+          }`}
     >
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
@@ -84,7 +88,8 @@ export const DatingHeader = ({
                   variant="outline"
                   size="icon"
                   className="relative bg-luxury-dark/50 border-luxury-primary/20"
-                  onClick={() => navigate("/dating/favorites")}
+                  onClick={() => handleIconClick("/dating/favorites")}
+                  aria-label="Favorites"
                 >
                   <Heart className="h-5 w-5 text-luxury-primary" />
                   {favoritesCount > 0 && (
@@ -97,7 +102,8 @@ export const DatingHeader = ({
                   variant="outline"
                   size="icon"
                   className="relative bg-luxury-dark/50 border-luxury-primary/20"
-                  onClick={() => navigate("/messages")}
+                  onClick={() => handleIconClick("/messages")}
+                  aria-label="Messages"
                 >
                   <MessageCircle className="h-5 w-5 text-luxury-primary" />
                   {unreadMessages > 0 && (
@@ -110,7 +116,8 @@ export const DatingHeader = ({
                   variant="outline"
                   size="icon"
                   className="relative bg-luxury-dark/50 border-luxury-primary/20"
-                  onClick={() => navigate("/notifications")}
+                  onClick={() => handleIconClick("/notifications")}
+                  aria-label="Notifications"
                 >
                   <Bell className="h-5 w-5 text-luxury-primary" />
                   {unreadNotifications > 0 && (
@@ -123,7 +130,8 @@ export const DatingHeader = ({
                   variant="outline"
                   size="icon"
                   className="bg-luxury-dark/50 border-luxury-primary/20"
-                  onClick={() => navigate("/profile")}
+                  onClick={() => handleIconClick("/profile")}
+                  aria-label="Profile"
                 >
                   <User className="h-5 w-5 text-luxury-primary" />
                 </Button>
