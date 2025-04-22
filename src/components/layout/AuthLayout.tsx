@@ -1,63 +1,31 @@
 
 import { useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSession } from "@supabase/auth-helpers-react";
 import { LoadingScreen } from './LoadingScreen';
 
-interface AuthLayoutProps {
-  requireAuth?: boolean;
-  redirectAuthenticatedTo?: string;
-  redirectUnauthenticatedTo?: string;
-}
-
-export const AuthLayout = ({
-  requireAuth = false,  // Default for login/register pages
-  redirectAuthenticatedTo = '/home',
-  redirectUnauthenticatedTo = '/login',
-}: AuthLayoutProps) => {
-  const { user, isLoading } = useAuth();
+export const AuthLayout = () => {
+  const session = useSession();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (requireAuth && !user) {
-        // Redirect unauthenticated users to login
-        console.log('Auth required, redirecting to', redirectUnauthenticatedTo);
-        navigate(redirectUnauthenticatedTo, { 
-          state: { from: location.pathname } 
-        });
-      } else if (!requireAuth && user) {
-        // Redirect authenticated users away from login/signup pages
-        console.log('User authenticated, redirecting to', redirectAuthenticatedTo);
-        
-        // Check if there's a return path in location state
-        const returnPath = location.state?.from;
-        if (returnPath && typeof returnPath === 'string') {
-          navigate(returnPath);
-        } else {
-          navigate(redirectAuthenticatedTo);
-        }
-      }
+    if (session && location.pathname !== '/demo') {
+      const returnPath = location.state?.from || '/home';
+      navigate(returnPath, { replace: true });
     }
-  }, [
-    user, 
-    isLoading, 
-    navigate, 
-    requireAuth, 
-    redirectAuthenticatedTo, 
-    redirectUnauthenticatedTo,
-    location
-  ]);
+  }, [session, navigate, location]);
 
-  if (isLoading) {
-    return <LoadingScreen />;
+  if (location.pathname === '/demo') {
+    return <Outlet />;
   }
 
-  // Don't render anything if the user will be redirected
-  if ((requireAuth && !user) || (!requireAuth && user)) {
-    return <LoadingScreen />;
-  }
-
-  return <Outlet />;
+  return (
+    <div className="min-h-screen w-full bg-luxury-dark flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_80%)] opacity-5" />
+      <div className="relative z-10 w-full max-w-md mx-auto py-8">
+        <Outlet />
+      </div>
+    </div>
+  );
 };
