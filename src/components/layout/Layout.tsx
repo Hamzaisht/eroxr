@@ -1,13 +1,13 @@
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import { MainLayout } from './MainLayout';
 
-/**
- * Root layout component that handles authentication status and renders the main layout
- * This serves as the parent wrapper for all authenticated pages
- */
-const Layout: React.FC = () => {
+interface LayoutProps {
+  children?: ReactNode;
+}
+
+const Layout: React.FC<LayoutProps> = () => {
   return (
     <MainLayout>
       <Outlet />
