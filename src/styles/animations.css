@@ -15,10 +15,46 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-.animation-delay-200 {
-  animation-delay: 0.2s;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-.animation-delay-400 {
-  animation-delay: 0.4s;
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.animate-shine {
+  animation: shine 2s linear infinite;
+}
+
+.glass-card {
+  background: rgba(26, 31, 44, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(155, 135, 245, 0.1);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(155, 135, 245, 0.3);
+  box-shadow: 0 0 20px rgba(155, 135, 245, 0.15);
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(155, 135, 245, 0.5);
+}
+
+.neon-border {
+  box-shadow: 0 0 10px rgba(155, 135, 245, 0.3);
+  border: 1px solid rgba(155, 135, 245, 0.2);
 }

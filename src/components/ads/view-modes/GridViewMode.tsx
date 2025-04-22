@@ -1,16 +1,21 @@
+
 import { useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DatingAd } from "../types/dating";
 import { FullscreenAdViewer } from "../video-profile/FullscreenAdViewer";
 import { LoadingGrid } from "./components/LoadingGrid";
-import { GridItem } from "./components/GridItem";
-import type { GridViewModeProps } from "./types";
+import { AdCard } from "./components/grid-item/AdCard";
+
+interface GridViewModeProps {
+  ads: DatingAd[];
+  isLoading?: boolean;
+  onMediaClick?: (ad: DatingAd) => void;
+}
 
 export const GridViewMode = ({ ads, isLoading = false, onMediaClick }: GridViewModeProps) => {
   const [selectedAd, setSelectedAd] = useState<DatingAd | null>(null);
-  const [hoveredAdId, setHoveredAdId] = useState<string | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   
   if (isLoading) {
@@ -19,33 +24,35 @@ export const GridViewMode = ({ ads, isLoading = false, onMediaClick }: GridViewM
 
   if (!ads || ads.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-luxury-neutral">No ads found matching your criteria</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center min-h-[300px] rounded-xl bg-luxury-dark/40 backdrop-blur-sm p-8"
+      >
+        <p className="text-luxury-neutral text-lg">No profiles match your criteria</p>
+      </motion.div>
     );
   }
 
   return (
     <TooltipProvider>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {ads.map((ad) => (
-          <GridItem
-            key={ad.id}
-            ad={ad}
-            isHovered={hoveredAdId === ad.id}
-            onHover={setHoveredAdId}
-            onSelect={setSelectedAd}
-            onMediaClick={onMediaClick}
-            onTagClick={(tag, e) => {
-              e.stopPropagation();
-              if (ad.onTagClick) {
-                ad.onTagClick(tag);
-              }
-            }}
-            isMobile={isMobile}
-          />
-        ))}
-      </div>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      >
+        <AnimatePresence>
+          {ads.map((ad) => (
+            <AdCard
+              key={ad.id}
+              ad={ad}
+              onSelect={setSelectedAd}
+              isMobile={isMobile}
+            />
+          ))}
+        </AnimatePresence>
+      </motion.div>
       
       <AnimatePresence>
         {selectedAd && (
