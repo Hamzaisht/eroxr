@@ -2,7 +2,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AdminLayout } from '../AdminLayout';
 import PlatformControl from '@/pages/admin/godmode/PlatformControl';
-import { UsersManagement } from '../platform/users/UsersManagement';
+import { UsersManagement } from '../platform/UsersManagement';
 import { VerificationRequests } from '../platform/verifications/VerificationRequests';
 import { FlaggedContent } from '../platform/flagged/FlaggedContent';
 import { DeletedContent } from '../platform/deleted/DeletedContent';
@@ -25,8 +25,6 @@ export const AdminRoutes = () => {
           <Route path="analytics" element={<UserAnalytics />} />
           <Route path="payouts" element={<PayoutRequests />} />
         </Route>
-        
-        {/* Ghost Mode Routes will go here */}
         
         {/* Catch-all for admin routes */}
         <Route path="*" element={<Navigate to="platform/users" replace />} />
