@@ -65,7 +65,7 @@ const Dating = () => {
     selectedCity,
     selectedSeeker,
     selectedLookingFor,
-    setSelectedTag,
+    selectedTag,
     setDatingAds,
     setIsLoading
   );
