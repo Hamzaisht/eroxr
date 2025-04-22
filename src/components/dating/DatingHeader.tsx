@@ -6,10 +6,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
+import { CreateBodyContactDialog } from "@/components/ads/body-contact/CreateBodyContactDialog";
 
 interface DatingHeaderProps {
-  isNewMessageOpen: boolean;
-  setIsNewMessageOpen: (open: boolean) => void;
   canAccessBodyContact: boolean;
   onAdCreationSuccess: () => void;
   isSticky?: boolean;
@@ -18,8 +17,6 @@ interface DatingHeaderProps {
 }
 
 export const DatingHeader = ({
-  isNewMessageOpen,
-  setIsNewMessageOpen,
   canAccessBodyContact,
   onAdCreationSuccess,
   isSticky = false,
@@ -34,14 +31,6 @@ export const DatingHeader = ({
     // Simulate fetching for unread messages count
     setUnreadMessages(Math.floor(Math.random() * 5));
   }, []);
-
-  const handleCreateBodyContact = () => {
-    if (!session) {
-      navigate("/auth");
-      return;
-    }
-    setIsNewMessageOpen(true);
-  };
 
   const handleTabChange = (value: string) => {
     if (onTabChange) {
@@ -113,13 +102,7 @@ export const DatingHeader = ({
                 Sign In
               </Button>
             )}
-            <Button
-              onClick={handleCreateBodyContact}
-              className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create your Body Contact Ad
-            </Button>
+            <CreateBodyContactDialog onSuccess={onAdCreationSuccess} />
           </div>
         </div>
 

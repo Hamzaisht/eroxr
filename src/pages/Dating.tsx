@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Footer } from "@/components/Footer";
@@ -17,7 +18,6 @@ import { nordicCountries } from "@/components/dating/utils/datingUtils";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { DatingToolbar } from "@/components/dating/DatingToolbar";
 import { DatingMainContent } from "./DatingMainContent";
-import { ImmersiveAdCreation } from "@/components/ads/body-contact/immersive-creation/ImmersiveAdCreation";
 
 type NordicCountry = Database['public']['Enums']['nordic_country'];
 
@@ -47,7 +47,6 @@ const Dating = () => {
     keyword: "",
     username: "",
   });
-  const [isNewMessageOpen, setIsNewMessageOpen] = useState<boolean>(false);
   const { ref: headerRef, inView: headerInView } = useInView({ threshold: 0 });
 
   const defaultSearchCategories = [
@@ -240,8 +239,6 @@ const Dating = () => {
         <div className="container mx-auto px-4 sm:px-6">
           <div ref={headerRef}>
             <DatingHeader
-              isNewMessageOpen={isNewMessageOpen}
-              setIsNewMessageOpen={setIsNewMessageOpen}
               canAccessBodyContact={true}
               onAdCreationSuccess={handleAdCreationSuccess}
               activeTab={activeTab}
@@ -282,16 +279,6 @@ const Dating = () => {
             handleTabChange={handleTabChange}
             handleFilterToggle={handleFilterToggle}
           />
-
-          {isNewMessageOpen && (
-            <ImmersiveAdCreation
-              onClose={() => setIsNewMessageOpen(false)}
-              onSuccess={() => {
-                setIsNewMessageOpen(false);
-                handleAdCreationSuccess();
-              }}
-            />
-          )}
         </div>
       </motion.main>
       <Footer />
