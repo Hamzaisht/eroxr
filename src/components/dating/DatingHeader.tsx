@@ -1,6 +1,5 @@
-
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Bell, User, Plus } from "lucide-react";
+import { MessageCircle, Bell, User, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
@@ -30,18 +29,17 @@ export const DatingHeader = ({
   const navigate = useNavigate();
   const [unreadMessages, setUnreadMessages] = useState<number>(0);
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
-  const [favoritesCount, setFavoritesCount] = useState<number>(0);
 
   useEffect(() => {
     // For demo purposes, set some random numbers for unread items
     setUnreadMessages(Math.floor(Math.random() * 5));
     setUnreadNotifications(Math.floor(Math.random() * 3));
-    
     // In a real app, we would fetch these counts from the database
     // based on the current user's session
   }, []);
 
-  const handleCreateProfile = () => {
+  // Open the BodyContact ad creation flow.
+  const handleCreateBodyContact = () => {
     if (!session) {
       navigate("/auth");
       return;
@@ -84,20 +82,8 @@ export const DatingHeader = ({
           <div className="flex items-center gap-2">
             {session ? (
               <>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="relative bg-luxury-dark/50 border-luxury-primary/20"
-                  onClick={() => handleIconClick("/dating/favorites")}
-                  aria-label="Favorites"
-                >
-                  <Heart className="h-5 w-5 text-luxury-primary" />
-                  {favoritesCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-luxury-primary text-black text-xs rounded-full flex items-center justify-center">
-                      {favoritesCount}
-                    </span>
-                  )}
-                </Button>
+                {/* Removed Heart icon (Favorites) */}
+                {/* Only keep Messages and Profile */}
                 <Button
                   variant="outline"
                   size="icon"
@@ -112,20 +98,8 @@ export const DatingHeader = ({
                     </span>
                   )}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="relative bg-luxury-dark/50 border-luxury-primary/20"
-                  onClick={() => handleIconClick("/notifications")}
-                  aria-label="Notifications"
-                >
-                  <Bell className="h-5 w-5 text-luxury-primary" />
-                  {unreadNotifications > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-luxury-primary text-black text-xs rounded-full flex items-center justify-center">
-                      {unreadNotifications}
-                    </span>
-                  )}
-                </Button>
+                {/* Notifications moved to main nav bar */}
+
                 <Button
                   variant="outline"
                   size="icon"
@@ -146,11 +120,11 @@ export const DatingHeader = ({
               </Button>
             )}
             <Button
-              onClick={handleCreateProfile}
+              onClick={handleCreateBodyContact}
               className="bg-gradient-to-r from-luxury-primary to-luxury-accent text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Create Profile
+              Create your BodyContact
             </Button>
           </div>
         </div>
