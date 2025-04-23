@@ -4,9 +4,10 @@ import { motion } from "framer-motion";
 
 interface EmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
+  onClose?: () => void; // Adding optional onClose prop
 }
 
-export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
+export const EmojiPicker = ({ onEmojiSelect, onClose }: EmojiPickerProps) => {
   // Quick emoji set for simple implementation
   const quickEmojis = ["👍", "❤️", "😂", "😢", "😮", "🔥", "👏", "✅"];
   
@@ -30,13 +31,19 @@ export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
   
   const currentCategory = emojiCategories[activeTab];
 
+  // Handler for outside click to close the picker
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // If onClose is provided, we can call it here for additional handling if needed
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9, y: 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 10 }}
       className="bg-black/70 backdrop-blur-sm rounded-lg border border-white/10 shadow-lg p-2 w-[250px]"
-      onClick={(e) => e.stopPropagation()}
+      onClick={handleClick}
     >
       {/* Tabs */}
       <div className="flex border-b border-white/10 mb-2">

@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { AttachmentButton } from './message-parts/AttachmentButton';
 import { MessageControls } from './message-parts/MessageControls';
 import { EmojiPicker } from './message-parts/EmojiPicker'; // Updated path
-import { VoiceRecorder } from '@/components/messages/VoiceRecorder'; // Fixed path
 import { DirectMessage } from '@/integrations/supabase/types/message';
+
+// Create a simple implementation of VoiceRecorder
+import { VoiceRecorder } from './VoiceRecorder';
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -70,12 +72,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </div>
 
         {showEmojiPicker && (
-          <EmojiPicker 
-            onEmojiSelect={(emoji) => {
-              setMessage(prev => prev + emoji);
-              setShowEmojiPicker(false);
-            }}
-          />
+          <div className="absolute bottom-full mb-2 z-10">
+            <EmojiPicker 
+              onEmojiSelect={(emoji) => {
+                setMessage(prev => prev + emoji);
+                setShowEmojiPicker(false);
+              }}
+              onClose={() => setShowEmojiPicker(false)}
+            />
+          </div>
         )}
 
         <textarea

@@ -1,179 +1,138 @@
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { Mic, X, Send } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Mic, Send, Trash2, Pause, Play, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface VoiceRecorderProps {
   onSend: (audioBlob: Blob) => void;
   onCancel: () => void;
 }
 
-export const VoiceRecorder = ({ onSend, onCancel }: VoiceRecorderProps) => {
-  const [isRecording, setIsRecording] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onSend, onCancel }) => {
+  const [recording, setRecording] = useState(false);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
+  const [recordingDuration, setRecordingDuration] = useState(0);
   
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  
-  // Clean up function
-  const cleanup = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
-    }
-    
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-  };
-  
+  // Start recording when component mounts
   useEffect(() => {
-    // Start recording when component mounts
     startRecording();
     
+    // Clean up on component unmount
     return () => {
-      cleanup();
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+      }
     };
   }, []);
+  
+  // Update recording duration
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (recording) {
+      interval = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [recording]);
   
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      setAudioStream(stream);
       
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      setMediaRecorder(recorder);
       
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
+      // Clear previous audio chunks
+      setAudioChunks([]);
+      
+      // Start recording
+      recorder.start();
+      setRecording(true);
+      
+      // Handle data available event
+      recorder.addEventListener('dataavailable', (event) => {
+        if (event.data.size > 0) {
+          setAudioChunks(prev => [...prev, event.data]);
         }
-      };
+      });
       
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setAudioBlob(audioBlob);
-        setIsRecording(false);
-      };
+      // Handle recording stop event
+      recorder.addEventListener('stop', () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        // Don't auto-send here, wait for user to click send
+      });
       
-      // Start the recorder
-      mediaRecorder.start();
-      setIsRecording(true);
-      setIsPaused(false);
-      setRecordingTime(0);
-      
-      // Start timer
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
+    } catch (error) {
+      console.error('Error starting voice recording:', error);
+      onCancel();
     }
   };
   
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop();
+    if (mediaRecorder && recording) {
+      mediaRecorder.stop();
+      setRecording(false);
       
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
       }
     }
   };
   
+  const handleSend = () => {
+    stopRecording();
+    
+    // Create audio blob from chunks
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    onSend(audioBlob);
+  };
+  
+  const handleCancel = () => {
+    stopRecording();
+    onCancel();
+  };
+  
+  // Format seconds to MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-
+  
   return (
-    <div className="flex items-center space-x-2">
-      {!audioBlob ? (
-        // Recording state
-        <>
-          <div className="flex-1 flex items-center space-x-2">
-            <div className={cn(
-              "w-3 h-3 rounded-full",
-              isPaused ? "bg-amber-500" : "bg-red-500 animate-pulse"
-            )}></div>
-            <span className="text-xs">
-              {formatTime(recordingTime)}
-            </span>
-          </div>
-          
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={onCancel}
-            className="h-8 w-8 rounded-full"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            onClick={stopRecording}
-            variant="default"
-            className="h-8 w-8 rounded-full"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </>
-      ) : (
-        // Playback state
-        <>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={() => {
-              setAudioBlob(null);
-              setRecordingTime(0);
-              if (audioRef.current) {
-                audioRef.current.pause();
-              }
-            }}
-            className="h-8 w-8 rounded-full"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            onClick={() => onSend(audioBlob)}
-            variant="default"
-            className="h-8 w-8 rounded-full"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </>
-      )}
+    <div className="flex items-center space-x-2 bg-muted/30 rounded-full px-3 py-1">
+      <div className="flex items-center">
+        <Mic className="h-5 w-5 text-red-500 animate-pulse" />
+        <span className="ml-2 text-sm font-medium">{formatTime(recordingDuration)}</span>
+      </div>
+      
+      <div className="flex items-center space-x-1">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full hover:bg-red-500/20"
+          onClick={handleCancel}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+        
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full hover:bg-green-500/20"
+          onClick={handleSend}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };

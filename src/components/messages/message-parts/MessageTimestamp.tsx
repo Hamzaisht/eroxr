@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -107,7 +106,7 @@ export const MessageTimestamp = ({
     >
       {showEmojiPicker && (
         <div className="absolute bottom-full mb-2 z-10">
-          <EmojiPicker onEmojiSelect={handleReaction} onClose={() => setShowEmojiPicker(false)} />
+          <EmojiPicker onEmojiSelect={handleReaction} />
         </div>
       )}
       

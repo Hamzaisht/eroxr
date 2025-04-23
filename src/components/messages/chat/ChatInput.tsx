@@ -77,10 +77,9 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
     handleMediaSelect();
   };
   
-  // Create a wrapper function for handleSnapCapture to match expected signature
+  // Create a wrapper function for handleSnapCapture with a dummy parameter
   const handleSnapStart = () => {
-    // Pass an empty string or dummy URL if the original function expects a parameter
-    handleSnapCapture("data:image/png;base64,");
+    handleSnapCapture("dummy-url");
   };
 
   return (
