@@ -1,11 +1,22 @@
 
 import { forwardRef, Ref } from 'react';
 import { Media } from '@/components/shared/media/Media';
-import { MediaSource, MediaOptions } from '@/utils/media/types';
+import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
 
-interface UniversalMediaProps extends MediaOptions {
+interface UniversalMediaProps {
   item: MediaSource | string;
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
   showWatermark?: boolean;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: () => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (currentTime: number) => void;
 }
 
 export const UniversalMedia = forwardRef(({
