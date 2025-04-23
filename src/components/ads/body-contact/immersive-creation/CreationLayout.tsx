@@ -57,9 +57,9 @@ export const CreationLayout = ({
   };
 
   return (
-    <div className="relative z-20 w-full h-full min-h-[60vh] flex flex-col rounded-2xl bg-gradient-to-br from-[#171A24da] to-[#0D1117f6] shadow-xl overflow-hidden">
+    <div className="relative z-20 w-full h-full min-h-[65vh] flex flex-col rounded-2xl bg-gradient-to-br from-[#171A24da] to-[#0D1117f6] shadow-xl overflow-hidden">
       {/* Navigation bar */}
-      <div className="flex items-center justify-between py-4 px-2 md:px-6 bg-transparent rounded-t-2xl">
+      <div className="flex items-center justify-between py-5 px-3 md:px-10 bg-transparent rounded-t-2xl">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -68,8 +68,8 @@ export const CreationLayout = ({
         >
           <X size={22} />
         </Button>
-        
-        <div className="flex-1 mx-4 md:mx-8">
+
+        <div className="flex-1 mx-4 md:mx-10">
           <ProgressBar progress={formProgress} />
           <StepIndicator 
             steps={steps} 
@@ -77,13 +77,12 @@ export const CreationLayout = ({
             onStepClick={onStepClick}
           />
         </div>
-        
-        {/* Spacer for symmetry */}
+
         <div className="w-10" />
       </div>
-      
+
       {/* Step content */}
-      <div className="flex-1 relative overflow-hidden flex flex-col rounded-b-2xl">
+      <div className="flex-1 relative overflow-visible flex flex-col rounded-b-2xl">
         <AnimatePresence custom={direction} mode="wait">
           <motion.div
             key={currentStep}
@@ -106,9 +105,8 @@ export const CreationLayout = ({
                 currentStep={currentStep}
                 totalSteps={steps.length}
               />
-              
               {/* Main Content */}
-              <div className="col-span-1 lg:col-span-4 p-4 md:p-6 pb-8 overflow-y-auto">
+              <div className="col-span-1 lg:col-span-4 p-6 pb-10 overflow-visible">
                 {steps[currentStep].component}
               </div>
             </div>
@@ -117,7 +115,7 @@ export const CreationLayout = ({
       </div>
 
       {/* Navigation actions */}
-      <div className="bg-transparent px-4 py-2">
+      <div className="bg-transparent px-7 py-3">
         <StepNavigation
           currentStep={currentStep}
           totalSteps={steps.length}
@@ -130,3 +128,4 @@ export const CreationLayout = ({
     </div>
   );
 };
+

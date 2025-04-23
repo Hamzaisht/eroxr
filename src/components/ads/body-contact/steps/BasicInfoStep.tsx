@@ -25,25 +25,28 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
   // Fetch profile info for logged in user
   const userProfile = useLoggedInProfile();
 
-  // Initialize the avatar and title fields if profile available
+  // Autofill logic: only run on step mount / first update
   useEffect(() => {
-    // Only set title if not yet set and userProfile is available
-    if (userProfile && !values.title) {
+    if (userProfile && (!values.title || values.title === "My Body Contact Ad")) {
       const nextTitle =
         userProfile.full_name ||
         userProfile.username ||
         "My Body Contact Ad";
       onUpdateValues({ title: nextTitle });
 
-      // auto-preview avatar
-      if (userProfile.avatar_url && !avatarPreview) {
+      if (userProfile.avatar_url && !avatarPreview && !values.avatarFile) {
         setAvatarPreview(userProfile.avatar_url);
-        onUpdateValues({ avatarFile: null }); // keep file null, just preview for now
+        onUpdateValues({ avatarFile: null });
       }
     }
-    // Auto-preview avatar if user updates, but do not overwrite if user uploads own image
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Only run when userProfile changes or values.avatarFile/title become empty
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userProfile]);
+
+  // Show avatar preview (choose: uploaded by user else from profile else fallback)
+  const resolvedAvatar =
+    avatarPreview ||
+    (values.avatarFile ? "" : userProfile?.avatar_url ?? "");
 
   const handleAvatarChange = (file: File | null, preview: string) => {
     onUpdateValues({ avatarFile: file });
@@ -61,7 +64,6 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
     }
   };
 
-  // Set location when city or country changes
   useEffect(() => {
     handleLocationChange();
     // eslint-disable-next-line
@@ -72,14 +74,16 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="space-y-6 custom-scrollbar"
-      style={{ overflowY: "auto", maxHeight: "62vh", paddingRight: 4 }}
+      className="space-y-7 custom-scrollbar"
+      style={{ overflowY: "visible", maxHeight: "unset", paddingRight: 2 }}
     >
-      {/* Profile Image */}
-      <ProfileImageUploader 
-        onAvatarChange={handleAvatarChange}
-        avatarPreview={avatarPreview || (userProfile?.avatar_url ?? "")}
-      />
+      {/* Avatar – show only one! */}
+      <div className="flex w-full justify-center py-3 pb-0">
+        <ProfileImageUploader 
+          onAvatarChange={handleAvatarChange}
+          avatarPreview={avatarPreview || (userProfile?.avatar_url ?? "")}
+        />
+      </div>
 
       {/* Title and Description */}
       <TitleDescriptionInputs 
@@ -115,3 +119,4 @@ export const BasicInfoStep = ({ values, onUpdateValues }: BasicInfoStepProps) =>
     </motion.div>
   );
 };
+

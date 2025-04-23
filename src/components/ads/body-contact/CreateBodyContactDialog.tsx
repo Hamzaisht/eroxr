@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ImmersiveAdCreation } from "./immersive-creation";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import "./styles.css";
 
@@ -37,20 +37,21 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
 
       {isOpen && (
         <DialogContent
-          className="p-0 bg-gradient-to-br from-[#181B24e6] via-[#161B22e1] to-[#0D1117ed] max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border-none shadow-[0_10px_56px_0_rgba(155,135,245,0.22)] animate-fade-in glass-morph custom-popup-content custom-scrollbar"
+          className="p-0 !w-full max-w-[920px] xl:max-w-[1080px] min-h-[80vh] md:min-h-[680px] bg-gradient-to-br from-[#181B24e6] via-[#161B22e1] to-[#0D1117ed] rounded-2xl border-none shadow-[0_10px_56px_0_rgba(155,135,245,0.22)] glass-morph custom-popup-content custom-scrollbar"
           style={{
             boxShadow:
-              "0 8px 40px 0 rgba(155,135,245,0.17), 0 1.5px 0 0 rgba(217,70,239,0.07), 0 0 0 1px rgba(255,255,255,0.06) inset",
-            backdropFilter: "blur(20px)",
+              "0 8px 40px 0 rgba(155,135,245,0.22), 0 1.5px 0 0 rgba(217,70,239,0.09), 0 0 0 1px rgba(255,255,255,0.07) inset",
+            backdropFilter: "blur(24px)",
             alignItems: "center",
             justifyContent: "center",
             display: "flex",
-            minHeight: "64vh",
+            minHeight: "80vh",
+            margin: "0 auto",
           }}
         >
           {/* Premium styled header */}
-          <div className="flex items-center justify-between px-7 pt-6 pb-2 border-b border-white/10 bg-gradient-to-r from-transparent via-luxury-primary/10 to-transparent rounded-t-2xl w-full">
-            <span className="text-lg md:text-xl font-bold text-white/80 tracking-tight select-none">Create Body Contact</span>
+          <div className="flex items-center justify-between px-9 pt-7 pb-2 border-b border-white/10 bg-gradient-to-r from-transparent via-luxury-primary/10 to-transparent rounded-t-2xl w-full">
+            <span className="text-lg md:text-2xl font-bold text-white/80 tracking-tight select-none">Create Body Contact</span>
             <button
               className="group inline-flex items-center justify-center rounded-full bg-transparent hover:bg-luxury-primary/15 p-1.5 transition"
               aria-label="Close dialog"
@@ -60,23 +61,11 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
               autoFocus
             >
               <span className="sr-only">Close</span>
-              <svg
-                viewBox="0 0 24 24"
-                className="h-6 w-6 text-luxury-primary group-hover:text-luxury-accent transition"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <X className="h-6 w-6 text-luxury-primary group-hover:text-luxury-secondary transition" />
             </button>
           </div>
           {/* Content Area */}
-          <div className="w-full min-h-[60vh] flex items-center justify-center px-1 pb-6 pt-2 md:px-3 md:pb-8 md:pt-3 transition">
+          <div className="w-full min-h-[65vh] flex items-center justify-center px-2 pb-7 pt-4 md:px-6 md:pb-10 md:pt-4 transition custom-scrollbar glass-morph-bg">
             <ImmersiveAdCreation
               onClose={() => setIsOpen(false)}
               onSuccess={onSuccess}
@@ -87,3 +76,4 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
     </Dialog>
   );
 };
+

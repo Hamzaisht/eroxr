@@ -1,17 +1,25 @@
 
-/* Modern seamless scrollbar */
+/* POPUP SIZE & LAYOUT REFINEMENT */
+/* Removed legacy scrollbar look. Use fully transparent modern styles. Only show on hover. */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155,135,245,0.12) transparent;
+  overscroll-behavior: contain;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
   background: transparent;
 }
 
+/* Hide thumb until hover. */
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, rgba(155, 135, 245, 0.12), rgba(217,70,239,0.17));
+  background: transparent;
   border-radius: 8px;
   transition: background 0.2s;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, rgba(155, 135, 245, 0.33), rgba(217,70,239,0.37));
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(155,135,245,0.15), rgba(217,70,239,0.19));
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -22,10 +30,9 @@
 /* Firefox support */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(155,135,245,0.18) transparent;
+  scrollbar-color: rgba(155,135,245,0.13) transparent;
 }
 
-/* Remove ugly overlay scroll */
 body,
 .custom-popup-content,
 .custom-dialog-content {
@@ -33,11 +40,30 @@ body,
   scrollbar-color: rgba(155,135,245,0.18) transparent;
 }
 
-/* Center dialog content refinement */
+/* Popup Content glassmorphism & size */
 .glass-morph {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+/* Remove shadow ripple/overflow at edges in modal */
+.custom-popup-content, .glass-morph-bg {
+  box-shadow: 0 8px 42px 0 rgba(155,135,245,0.22), 0 1.5px 0 0 rgba(217,70,239,0.09), 0 0 0 1px rgba(255,255,255,0.06) inset !important;
+  background: linear-gradient(140deg, #181B241f 0%, #161B2219 55%, #0D111710 100%);
+  backdrop-filter: blur(34px) !important;
+}
+
+/* Wider dialog on big screens, and taller content */
+@media (min-width: 1024px) {
+  .custom-popup-content {
+    max-width: 1080px !important;
+  }
+}
+@media (max-width: 640px) {
+  .custom-popup-content {
+    min-height: 94vh !important;
+  }
 }
 
