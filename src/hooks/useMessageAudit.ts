@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 type MessageActivityType = 
   | 'send_attempt'
   | 'media_upload'
+  | 'document_upload'  // Added this line
   | 'message_view'
   | 'message_delete'
   | 'message_edit'
