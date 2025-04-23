@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { AdFormValues } from "../types";
 import { useBodyContactSubmit } from "../hooks/useBodyContactSubmit";
@@ -21,6 +22,9 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
     videoFile: null,
     avatarFile: null,
   });
+
+  // Flag to track if navigation is in progress
+  const isNavigating = useRef(false);
 
   const { handleSubmit, isLoading } = useBodyContactSubmit({
     onSuccess: () => {
@@ -59,25 +63,41 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
   }, [values]);
 
   const goToNextStep = (maxSteps: number) => {
-    if (!isExiting && currentStep < maxSteps - 1) {
-      setDirection(1);
-      setIsExiting(true);
+    // Prevent multiple rapid clicks
+    if (isNavigating.current || isExiting || currentStep >= maxSteps - 1) return;
+    
+    isNavigating.current = true;
+    setDirection(1);
+    setIsExiting(true);
+    
+    setTimeout(() => {
+      setCurrentStep((prev) => Math.min(prev + 1, maxSteps - 1));
+      setIsExiting(false);
+      
+      // Reset navigation flag after animation completes
       setTimeout(() => {
-        setCurrentStep((prev) => Math.min(prev + 1, maxSteps - 1));
-        setIsExiting(false);
-      }, 300);
-    }
+        isNavigating.current = false;
+      }, 50);
+    }, 300);
   };
 
   const goToPrevStep = () => {
-    if (!isExiting && currentStep > 0) {
-      setDirection(-1);
-      setIsExiting(true);
+    // Prevent multiple rapid clicks
+    if (isNavigating.current || isExiting || currentStep <= 0) return;
+    
+    isNavigating.current = true;
+    setDirection(-1);
+    setIsExiting(true);
+    
+    setTimeout(() => {
+      setCurrentStep((prev) => Math.max(prev - 1, 0));
+      setIsExiting(false);
+      
+      // Reset navigation flag after animation completes
       setTimeout(() => {
-        setCurrentStep((prev) => Math.max(prev - 1, 0));
-        setIsExiting(false);
-      }, 300);
-    }
+        isNavigating.current = false;
+      }, 50);
+    }, 300);
   };
 
   useEffect(() => {
@@ -92,18 +112,27 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
   }, [onClose]);
 
   const jumpToStep = (index: number) => {
+    // Prevent jump while animation is in progress
+    if (isNavigating.current || isExiting || index === currentStep) return;
+    
+    isNavigating.current = true;
+    
     if (index < currentStep) {
       setDirection(-1);
-    } else if (index > currentStep) {
-      setDirection(1);
     } else {
-      return; // No change needed
+      setDirection(1);
     }
     
     setIsExiting(true);
+    
     setTimeout(() => {
       setCurrentStep(index);
       setIsExiting(false);
+      
+      // Reset navigation flag after animation completes
+      setTimeout(() => {
+        isNavigating.current = false;
+      }, 50);
     }, 300);
   };
 

@@ -31,7 +31,8 @@ export const LocationSearch = ({
     filteredCountries,
     filteredCities,
     handleSelectCountry,
-    handleSelectCity
+    handleSelectCity,
+    allCountries
   } = useLocationSearch(selectedCountry, selectedCity);
 
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
@@ -42,8 +43,6 @@ export const LocationSearch = ({
   const countryDropdownRef = useRef<HTMLDivElement>(null);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const { preventFormSubmission, handleKeyDown } = usePreventFormSubmission();
-
-  // Always allow writing in the country input field even if a country is already selected
 
   // Handle clicks outside the dropdowns to close them
   useEffect(() => {
@@ -67,7 +66,14 @@ export const LocationSearch = ({
     };
   }, []);
 
-  // Update parent's state when selection is made, always allow searching/typing
+  // Always show countries when user focuses or types in the field
+  useEffect(() => {
+    if (countrySearch.length > 0) {
+      setShowCountryDropdown(true);
+    }
+  }, [countrySearch]);
+
+  // Update parent's state when selection is made
   const onSelectCountry = (e: React.MouseEvent, country: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -86,6 +92,10 @@ export const LocationSearch = ({
 
   const handleCountryFocus = () => {
     setShowCountryDropdown(true);
+    // When user focuses, show all countries if no search term yet
+    if (!countrySearch && allCountries.length > 0) {
+      setShowCountryDropdown(true);
+    }
   };
 
   const handleCityFocus = () => {
@@ -97,8 +107,6 @@ export const LocationSearch = ({
       className="space-y-3" 
       onSubmit={preventFormSubmission}
       onClick={preventFormSubmission}
-      onMouseDown={preventFormSubmission}
-      onTouchStart={preventFormSubmission}
     >
       {/* Country Search */}
       <div className="relative">
@@ -115,27 +123,44 @@ export const LocationSearch = ({
           onChange={(e) => {
             setCountrySearch(e.target.value);
             setShowCountryDropdown(true);
-            setSelectedCountry(null);
           }}
           onFocus={handleCountryFocus}
           onKeyDown={handleKeyDown}
           placeholder="Type & search for a country…"
           className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3 placeholder:text-white/30"
         />
-        {filteredCountries.length > 0 && showCountryDropdown && (
+        {/* Always show dropdown when focused or has search content */}
+        {showCountryDropdown && (
           <div 
             ref={countryDropdownRef}
             className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg"
           >
-            {filteredCountries.map((country) => (
-              <div
-                key={country}
-                onClick={(e) => onSelectCountry(e, country)}
-                className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
-              >
-                {country}
-              </div>
-            ))}
+            {countrySearch.length === 0 ? (
+              // Show all countries when no search term
+              allCountries.map((country) => (
+                <div
+                  key={country}
+                  onClick={(e) => onSelectCountry(e, country)}
+                  className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
+                >
+                  {country}
+                </div>
+              ))
+            ) : filteredCountries.length > 0 ? (
+              // Show filtered results when searching
+              filteredCountries.map((country) => (
+                <div
+                  key={country}
+                  onClick={(e) => onSelectCountry(e, country)}
+                  className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
+                >
+                  {country}
+                </div>
+              ))
+            ) : (
+              // No matches found
+              <div className="px-4 py-2 text-sm text-white/50">No matches found</div>
+            )}
           </div>
         )}
       </div>
@@ -156,27 +181,30 @@ export const LocationSearch = ({
             onChange={(e) => {
               setCitySearch(e.target.value);
               setShowCityDropdown(true);
-              setSelectedCity(null);
             }}
             onFocus={handleCityFocus}
             onKeyDown={handleKeyDown}
             placeholder="Type & search for a city…"
             className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3 placeholder:text-white/30"
           />
-          {filteredCities.length > 0 && showCityDropdown && (
+          {showCityDropdown && (
             <div 
               ref={cityDropdownRef}
               className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-md bg-luxury-darker border border-luxury-primary/20 shadow-lg"
             >
-              {filteredCities.map((city) => (
-                <div
-                  key={city}
-                  onClick={(e) => onSelectCity(e, city)}
-                  className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
-                >
-                  {city}
-                </div>
-              ))}
+              {filteredCities.length > 0 ? (
+                filteredCities.map((city) => (
+                  <div
+                    key={city}
+                    onClick={(e) => onSelectCity(e, city)}
+                    className="px-4 py-2 cursor-pointer hover:bg-luxury-dark hover:text-white transition-colors text-sm"
+                  >
+                    {city}
+                  </div>
+                ))
+              ) : (
+                <div className="px-4 py-2 text-sm text-white/50">No matches found</div>
+              )}
             </div>
           )}
         </div>

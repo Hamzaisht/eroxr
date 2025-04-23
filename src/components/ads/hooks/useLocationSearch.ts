@@ -34,9 +34,9 @@ export const useLocationSearch = (initialCountry: string | null = null, initialC
       );
       setFilteredCountries(filtered);
     } else {
-      setFilteredCountries([]);
+      setFilteredCountries(allCountries);
     }
-  }, [countrySearch]);
+  }, [countrySearch, allCountries]);
 
   // Filter cities based on selected country and search term with improved accent handling
   useEffect(() => {
@@ -47,6 +47,9 @@ export const useLocationSearch = (initialCountry: string | null = null, initialC
         normalizeText(city).includes(normalizedSearch)
       );
       setFilteredCities(filtered);
+    } else if (selectedCountry) {
+      const countryCities = countriesData[selectedCountry as keyof typeof countriesData] || [];
+      setFilteredCities(countryCities);
     } else {
       setFilteredCities([]);
     }
@@ -76,13 +79,11 @@ export const useLocationSearch = (initialCountry: string | null = null, initialC
   const handleSelectCountry = (country: string) => {
     setSelectedCountry(country);
     setCountrySearch(country);
-    setFilteredCountries([]);
   };
 
   const handleSelectCity = (city: string) => {
     setSelectedCity(city);
     setCitySearch(city);
-    setFilteredCities([]);
   };
 
   return {

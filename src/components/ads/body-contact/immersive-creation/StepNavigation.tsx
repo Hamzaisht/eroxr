@@ -26,6 +26,7 @@ export const StepNavigation = ({
     <div className="flex justify-between py-6">
       <Button
         variant="outline"
+        type="button"
         onClick={onPrevClick}
         disabled={currentStep === 0}
         className={cn(
@@ -39,6 +40,7 @@ export const StepNavigation = ({
       </Button>
       
       <Button
+        type="button"
         onClick={isLastStep ? onSubmitClick : onNextClick}
         disabled={isLoading}
         className="rounded-full bg-gradient-to-r from-luxury-primary to-luxury-secondary text-white 
