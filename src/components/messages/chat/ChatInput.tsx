@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { MessageInput } from '../MessageInput';
+import { MessageInput } from '../MessageInput';  // Updated import
 import { useChatActions } from './ChatActions';
 import { DirectMessage } from '@/integrations/supabase/types/message';
 import { supabase } from '@/integrations/supabase/client';
