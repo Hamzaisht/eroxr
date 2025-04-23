@@ -2,43 +2,24 @@
 import { useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
-
-type MessageActivityType = 
-  | 'send_attempt'
-  | 'media_upload'
-  | 'document_upload'  // Added this line
-  | 'message_view'
-  | 'message_delete'
-  | 'message_edit'
-  | 'message_react'
-  | 'call_attempt'
-  | 'call_answer'
-  | 'call_end'
-  | 'error';
-
-interface MessageActivityDetails {
-  recipient_id?: string;
-  message_id?: string;
-  content?: string;
-  duration?: number;
-  error?: string;
-  message_type?: string;
-  file_count?: number;
-  file_types?: string[];
-  [key: string]: any;
-}
+import { MessageActivityType, MessageActivityDetails, MessageAuditLog } from '@/types/audit';
+import { useToast } from '@/hooks/use-toast';
 
 export function useMessageAudit(recipientId?: string, messageId?: string) {
   const session = useSession();
+  const { toast } = useToast();
   
   const logMessageActivity = useCallback(async (
     activityType: MessageActivityType,
     details?: MessageActivityDetails
-  ) => {
-    if (!session?.user?.id) return;
+  ): Promise<boolean> => {
+    if (!session?.user?.id) {
+      console.error('Cannot log message activity: No user session');
+      return false;
+    }
     
     try {
-      const { error } = await supabase.from('message_audit_logs').insert({
+      const auditLog: MessageAuditLog = {
         user_id: session.user.id,
         recipient_id: recipientId || details?.recipient_id,
         message_id: messageId || details?.message_id,
@@ -47,15 +28,28 @@ export function useMessageAudit(recipientId?: string, messageId?: string) {
           ...details,
           timestamp: new Date().toISOString()
         }
-      });
+      };
+
+      const { error } = await supabase
+        .from('message_audit_logs')
+        .insert(auditLog);
       
       if (error) {
         console.error('Error logging message activity:', error);
+        toast({
+          title: "Audit Log Error",
+          description: "Failed to record message activity",
+          variant: "destructive",
+        });
+        return false;
       }
+
+      return true;
     } catch (err) {
       console.error('Failed to log message activity:', err);
+      return false;
     }
-  }, [session?.user?.id, recipientId, messageId]);
+  }, [session?.user?.id, recipientId, messageId, toast]);
   
   return { logMessageActivity };
 }
