@@ -30,14 +30,19 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
           opacity-0 group-hover:opacity-100 group-hover:animate-shine"></span>
       </Button>
 
-      {isOpen && (
-        <DialogContent className="p-0 border-none bg-transparent max-w-6xl">
-          <ImmersiveAdCreation 
-            onClose={() => setIsOpen(false)} 
-            onSuccess={onSuccess} 
-          />
-        </DialogContent>
-      )}
+      <DialogContent
+        className="border-none bg-gradient-to-br from-[#161B22ef] to-[#0D1117ee] max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl transition-all duration-300 rounded-2xl shadow-2xl flex flex-col p-0"
+      >
+        {/* Always render a single child, conditionally render content */}
+        {isOpen && (
+          <div className="w-full min-h-[60vh] flex items-center justify-center p-1 md:p-2">
+            <ImmersiveAdCreation
+              onClose={() => setIsOpen(false)}
+              onSuccess={onSuccess}
+            />
+          </div>
+        )}
+      </DialogContent>
     </Dialog>
   );
 };

@@ -57,78 +57,67 @@ export const CreationLayout = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-luxury-primary/10 via-transparent to-transparent pointer-events-none"
-      />
+    <div className="relative z-20 w-full h-full min-h-[60vh] flex flex-col rounded-2xl bg-gradient-to-br from-[#171A24da] to-[#0D1117f6] shadow-xl overflow-hidden">
+      {/* Navigation bar */}
+      <div className="flex items-center justify-between py-4 px-2 md:px-6 bg-transparent rounded-t-2xl">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onClose}
+          className="rounded-full bg-black/40 hover:bg-black/60 shadow-lg"
+        >
+          <X size={22} />
+        </Button>
+        
+        <div className="flex-1 mx-4 md:mx-8">
+          <ProgressBar progress={formProgress} />
+          <StepIndicator 
+            steps={steps} 
+            currentStep={currentStep} 
+            onStepClick={onStepClick}
+          />
+        </div>
+        
+        {/* Spacer for symmetry */}
+        <div className="w-10" />
+      </div>
       
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        className="container relative z-10 max-w-6xl h-[90vh] flex flex-col"
-      >
-        {/* Top navigation bar */}
-        <div className="flex items-center justify-between py-6">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onClose}
-            className="rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/40"
+      {/* Step content */}
+      <div className="flex-1 relative overflow-hidden flex flex-col rounded-b-2xl">
+        <AnimatePresence custom={direction} mode="wait">
+          <motion.div
+            key={currentStep}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 }
+            }}
+            className="absolute inset-0 w-full h-full"
           >
-            <X size={20} />
-          </Button>
-          
-          <div className="flex-1 mx-8">
-            <ProgressBar progress={formProgress} />
-            <StepIndicator 
-              steps={steps} 
-              currentStep={currentStep} 
-              onStepClick={onStepClick}
-            />
-          </div>
-          
-          <div className="w-12"></div> {/* Empty div for flex alignment */}
-        </div>
-        
-        {/* Main content area */}
-        <div className="flex-1 relative overflow-hidden glass-morph rounded-xl border border-luxury-primary/20">
-          <AnimatePresence custom={direction} mode="wait">
-            <motion.div
-              key={currentStep}
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
-              }}
-              className="absolute inset-0 w-full h-full"
-            >
-              <div className="grid grid-cols-1 lg:grid-cols-5 h-full">
-                {/* Left side - step info */}
-                <StepSidebar 
-                  title={steps[currentStep].title}
-                  description={steps[currentStep].description}
-                  currentStep={currentStep}
-                  totalSteps={steps.length}
-                />
-                
-                {/* Right side - step content */}
-                <div className="col-span-1 lg:col-span-4 p-6 overflow-y-auto">
-                  {steps[currentStep].component}
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-5 h-full">
+              {/* Sidebar */}
+              <StepSidebar 
+                title={steps[currentStep].title}
+                description={steps[currentStep].description}
+                currentStep={currentStep}
+                totalSteps={steps.length}
+              />
+              
+              {/* Main Content */}
+              <div className="col-span-1 lg:col-span-4 p-4 md:p-6 pb-8 overflow-y-auto">
+                {steps[currentStep].component}
               </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-        
-        {/* Bottom action buttons */}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Navigation actions */}
+      <div className="bg-transparent px-4 py-2">
         <StepNavigation
           currentStep={currentStep}
           totalSteps={steps.length}
@@ -137,7 +126,7 @@ export const CreationLayout = ({
           onSubmitClick={onSubmitClick}
           isLoading={isLoading}
         />
-      </motion.div>
+      </div>
     </div>
   );
 };
