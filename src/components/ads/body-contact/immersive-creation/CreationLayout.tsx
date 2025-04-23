@@ -57,16 +57,16 @@ export const CreationLayout = ({
   };
 
   return (
-    <div className="relative z-20 w-full h-full flex flex-col rounded-2xl bg-gradient-to-br from-[#171A24da] to-[#0D1117f6] shadow-xl overflow-hidden">
+    <div className="flex flex-col w-full h-full min-h-0 bg-gradient-to-br from-[#171A24da] to-[#0D1117f6] rounded-2xl overflow-hidden">
       {/* Navigation bar */}
-      <div className="flex items-center justify-between py-4 px-6 lg:px-16 bg-transparent rounded-t-2xl">
+      <div className="flex items-center justify-between py-4 px-6 lg:px-16 bg-transparent">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={onClose}
           className="rounded-full bg-black/40 hover:bg-black/60 shadow-lg"
         >
-          <X size={24} /> {/* Only ONE close icon, no visual duplication */}
+          <X size={24} />
         </Button>
 
         <div className="flex-1 mx-4 md:mx-10">
@@ -81,9 +81,9 @@ export const CreationLayout = ({
         <div className="w-10" />
       </div>
 
-      {/* Step content */}
-      <div className="flex-1 relative overflow-visible flex flex-col rounded-b-2xl">
-        <AnimatePresence custom={direction} mode="wait">
+      {/* Content area */}
+      <div className="flex-1 min-h-0 relative">
+        <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentStep}
             custom={direction}
@@ -95,9 +95,9 @@ export const CreationLayout = ({
               x: { type: "spring", stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 }
             }}
-            className="absolute inset-0 w-full h-full"
+            className="absolute inset-0 w-full h-full overflow-y-auto custom-scrollbar"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-5 h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-5 min-h-full">
               {/* Sidebar */}
               <StepSidebar 
                 title={steps[currentStep].title}
@@ -105,8 +105,9 @@ export const CreationLayout = ({
                 currentStep={currentStep}
                 totalSteps={steps.length}
               />
+              
               {/* Main Content */}
-              <div className="col-span-1 lg:col-span-4 px-4 md:px-12 py-10 flex flex-col h-full overflow-visible justify-center">
+              <div className="col-span-1 lg:col-span-4 px-4 md:px-12 py-8 flex flex-col">
                 {steps[currentStep].component}
               </div>
             </div>
@@ -115,7 +116,7 @@ export const CreationLayout = ({
       </div>
 
       {/* Navigation actions */}
-      <div className="bg-transparent px-7 py-3">
+      <div className="px-7 py-3 border-t border-white/5">
         <StepNavigation
           currentStep={currentStep}
           totalSteps={steps.length}
@@ -128,4 +129,3 @@ export const CreationLayout = ({
     </div>
   );
 };
-
