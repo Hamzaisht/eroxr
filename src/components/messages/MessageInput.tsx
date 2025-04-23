@@ -1,10 +1,11 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Smile } from "lucide-react";
+
+import React, { useState, useRef } from 'react';
+import { Smile, X } from "lucide-react"; // Added X import
 import { Button } from "@/components/ui/button";
 import { AttachmentButton } from './message-parts/AttachmentButton';
 import { MessageControls } from './message-parts/MessageControls';
-import { EmojiPicker } from './chat/EmojiPicker';
-import { VoiceRecorder } from '../VoiceRecorder';
+import { EmojiPicker } from './message-parts/EmojiPicker'; // Updated path
+import { VoiceRecorder } from '@/components/messages/VoiceRecorder'; // Fixed path
 import { DirectMessage } from '@/integrations/supabase/types/message';
 
 interface MessageInputProps {
@@ -73,8 +74,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onEmojiSelect={(emoji) => {
               setMessage(prev => prev + emoji);
               setShowEmojiPicker(false);
-            }} 
-            onClose={() => setShowEmojiPicker(false)} 
+            }}
           />
         )}
 
@@ -89,7 +89,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
         {isVoiceRecording ? (
           <VoiceRecorder 
-            onStop={(audioBlob) => {
+            onSend={(audioBlob) => {
               if (onVoiceMessage) {
                 onVoiceMessage(audioBlob);
                 setIsVoiceRecording(false);

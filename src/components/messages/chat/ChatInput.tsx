@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { MessageInput } from '../MessageInput';  // Updated import
+import { MessageInput } from '../MessageInput';
 import { useChatActions } from './ChatActions';
 import { DirectMessage } from '@/integrations/supabase/types/message';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,6 +72,11 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
     }
   };
   
+  // Create a wrapper function for media select
+  const handleMediaSelectWrapper = () => {
+    handleMediaSelect();
+  };
+  
   // Create a wrapper function for handleSnapCapture to match expected signature
   const handleSnapStart = () => {
     // Pass an empty string or dummy URL if the original function expects a parameter
@@ -81,7 +86,7 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
   return (
     <MessageInput
       onSendMessage={onSendMessage}
-      onMediaSelect={handleMediaSelect}
+      onMediaSelect={handleMediaSelectWrapper}
       onSnapStart={handleSnapStart}
       onVoiceMessage={handleSendVoiceMessage}
       isLoading={isUploading}

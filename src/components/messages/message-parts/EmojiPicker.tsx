@@ -4,10 +4,9 @@ import { motion } from "framer-motion";
 
 interface EmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
-  onClose: () => void;
 }
 
-export const EmojiPicker = ({ onEmojiSelect, onClose }: EmojiPickerProps) => {
+export const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
   // Quick emoji set for simple implementation
   const quickEmojis = ["👍", "❤️", "😂", "😢", "😮", "🔥", "👏", "✅"];
   
@@ -44,7 +43,7 @@ export const EmojiPicker = ({ onEmojiSelect, onClose }: EmojiPickerProps) => {
         {emojiCategories.map((category, index) => (
           <button
             key={index}
-            className={`text-xs px-3 py-1.5 ${activeTab === index ? 'text-luxury-primary border-b-2 border-luxury-primary' : 'text-white/60'}`}
+            className={`text-xs px-3 py-1.5 ${activeTab === index ? 'text-primary border-b-2 border-primary' : 'text-white/60'}`}
             onClick={() => setActiveTab(index)}
           >
             {category.name}
@@ -63,15 +62,6 @@ export const EmojiPicker = ({ onEmojiSelect, onClose }: EmojiPickerProps) => {
             {emoji}
           </button>
         ))}
-      </div>
-      
-      {/* Search - placeholder for future enhancement */}
-      <div className="mt-2 pt-2 border-t border-white/10">
-        <input
-          type="text"
-          placeholder="Search emojis..."
-          className="w-full text-xs bg-white/5 border border-white/10 rounded p-1.5 text-white"
-        />
       </div>
     </motion.div>
   );
