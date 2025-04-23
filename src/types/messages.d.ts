@@ -1,13 +1,5 @@
 
-export type MessageActivityType = 
-  | 'send_attempt' 
-  | 'send_success' 
-  | 'send_failed' 
-  | 'read' 
-  | 'delivered' 
-  | 'media_upload'
-  | 'document_upload'
-  | 'reaction'
-  | 'reply'
-  | 'delete'
-  | 'edit';
+// Re-export MessageActivityType from audit.ts to maintain compatibility
+import { MessageActivityType } from '@/types/audit';
+
+export { MessageActivityType };

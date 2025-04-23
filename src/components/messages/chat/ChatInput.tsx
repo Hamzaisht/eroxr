@@ -5,6 +5,7 @@ import { useChatActions } from './ChatActions';
 import { DirectMessage } from '@/integrations/supabase/types/message';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@supabase/auth-helpers-react';
+import { useMessageAudit } from '@/hooks/useMessageAudit';
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
@@ -21,6 +22,8 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
     handleMediaSelect, 
     handleSnapCapture 
   } = useChatActions({ recipientId });
+
+  const { logMessageActivity, logMediaUpload, logDocumentUpload } = useMessageAudit(recipientId);
 
   const handleSendVoiceMessage = async (audioBlob: Blob) => {
     if (!session?.user?.id) return;
@@ -52,6 +55,14 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
         message_type: 'audio',
         reply_to_id: replyTo?.id,
         created_at: new Date().toISOString(),
+      });
+      
+      // Log the activity
+      logMediaUpload({
+        recipient_id: recipientId, 
+        file_count: 1, 
+        file_types: ['audio/webm'],
+        size_bytes: file.size
       });
       
       // Clear reply
