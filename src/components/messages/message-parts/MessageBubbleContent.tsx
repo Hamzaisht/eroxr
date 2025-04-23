@@ -60,7 +60,8 @@ export const MessageBubbleContent = ({
   const isMediaMessage = message.message_type === 'media';
   const isVideoMessage = message.message_type === 'video' || hasVideo;
   const isFileMessage = message.message_type === 'document';
-  const isTextMessage = message.content && !isMediaMessage && !isVideoMessage && !isSnapMessage && !isFileMessage;
+  const isAdMessage = message.message_type === 'ad_message';
+  const isTextMessage = message.content && !isMediaMessage && !isVideoMessage && !isSnapMessage && !isFileMessage && !isAdMessage;
 
   // For JSON content in ad messages
   const parseAdContent = () => {
