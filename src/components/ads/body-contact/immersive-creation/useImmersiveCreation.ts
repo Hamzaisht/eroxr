@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { AdFormValues } from "../types";
 import { useBodyContactSubmit } from "../hooks/useBodyContactSubmit";
@@ -10,7 +9,6 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
   const [showSuccess, setShowSuccess] = useState(false);
   const [formProgress, setFormProgress] = useState(0);
   
-  // Define initial form values
   const [values, setValues] = useState<AdFormValues>({
     title: "",
     description: "",
@@ -24,7 +22,6 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
     avatarFile: null,
   });
 
-  // Handle form submission
   const { handleSubmit, isLoading } = useBodyContactSubmit({
     onSuccess: () => {
       setShowSuccess(true);
@@ -40,13 +37,11 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
     isSuperAdmin: false // This will be passed in from the parent
   });
 
-  // Update form progress based on field completion
   useEffect(() => {
     const calculateProgress = () => {
       let points = 0;
       const totalPoints = 10;
       
-      // Required fields
       if (values.title) points += 1;
       if (values.description) points += 1;
       if (values.lookingFor.length > 0) points += 1;
@@ -64,28 +59,27 @@ export const useImmersiveCreation = (onSuccess?: () => void, onClose?: () => voi
   }, [values]);
 
   const goToNextStep = (maxSteps: number) => {
-    if (currentStep < maxSteps - 1) {
+    if (!isExiting && currentStep < maxSteps - 1) {
       setDirection(1);
       setIsExiting(true);
       setTimeout(() => {
-        setCurrentStep(prev => prev + 1);
+        setCurrentStep((prev) => Math.min(prev + 1, maxSteps - 1));
         setIsExiting(false);
       }, 300);
     }
   };
 
   const goToPrevStep = () => {
-    if (currentStep > 0) {
+    if (!isExiting && currentStep > 0) {
       setDirection(-1);
       setIsExiting(true);
       setTimeout(() => {
-        setCurrentStep(prev => prev - 1);
+        setCurrentStep((prev) => Math.max(prev - 1, 0));
         setIsExiting(false);
       }, 300);
     }
   };
 
-  // Handle escape key to close the modal
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && onClose) {

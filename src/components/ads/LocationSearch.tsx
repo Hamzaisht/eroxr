@@ -43,18 +43,17 @@ export const LocationSearch = ({
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const { preventFormSubmission, handleKeyDown } = usePreventFormSubmission();
 
+  // Always allow writing in the country input field even if a country is already selected
+
   // Handle clicks outside the dropdowns to close them
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Handle country dropdown
       if (countryDropdownRef.current && 
           countryInputRef.current && 
           !countryDropdownRef.current.contains(event.target as Node) &&
           !countryInputRef.current.contains(event.target as Node)) {
         setShowCountryDropdown(false);
       }
-      
-      // Handle city dropdown
       if (cityDropdownRef.current && 
           cityInputRef.current && 
           !cityDropdownRef.current.contains(event.target as Node) &&
@@ -62,25 +61,24 @@ export const LocationSearch = ({
         setShowCityDropdown(false);
       }
     };
-    
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
-  // Update the parent component's state when a selection is made
+  // Update parent's state when selection is made, always allow searching/typing
   const onSelectCountry = (e: React.MouseEvent, country: string) => {
-    e.preventDefault(); // Prevent form submission
-    e.stopPropagation(); // Stop event propagation
+    e.preventDefault();
+    e.stopPropagation();
     handleSelectCountry(country as NordicCountry);
     setSelectedCountry(country as NordicCountry);
     setShowCountryDropdown(false);
   };
 
   const onSelectCity = (e: React.MouseEvent, city: string) => {
-    e.preventDefault(); // Prevent form submission
-    e.stopPropagation(); // Stop event propagation
+    e.preventDefault();
+    e.stopPropagation();
     handleSelectCity(city);
     setSelectedCity(city);
     setShowCityDropdown(false);
@@ -112,14 +110,17 @@ export const LocationSearch = ({
           ref={countryInputRef}
           type="text"
           value={countrySearch}
+          autoComplete="off"
+          spellCheck={false}
           onChange={(e) => {
             setCountrySearch(e.target.value);
             setShowCountryDropdown(true);
+            setSelectedCountry(null);
           }}
           onFocus={handleCountryFocus}
           onKeyDown={handleKeyDown}
-          placeholder="Search for a country..."
-          className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3"
+          placeholder="Type & search for a country…"
+          className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3 placeholder:text-white/30"
         />
         {filteredCountries.length > 0 && showCountryDropdown && (
           <div 
@@ -150,14 +151,17 @@ export const LocationSearch = ({
             ref={cityInputRef}
             type="text"
             value={citySearch}
+            autoComplete="off"
+            spellCheck={false}
             onChange={(e) => {
               setCitySearch(e.target.value);
               setShowCityDropdown(true);
+              setSelectedCity(null);
             }}
             onFocus={handleCityFocus}
             onKeyDown={handleKeyDown}
-            placeholder="Search for a city..."
-            className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3"
+            placeholder="Type & search for a city…"
+            className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 pl-3 pr-3 placeholder:text-white/30"
           />
           {filteredCities.length > 0 && showCityDropdown && (
             <div 

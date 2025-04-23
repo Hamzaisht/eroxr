@@ -28,11 +28,11 @@ export const TitleDescriptionInputs = ({
         <Label htmlFor="title" className="text-luxury-neutral">Title</Label>
         <Input
           id="title"
-          placeholder="Enter a catchy title"
+          placeholder="Example: Male looking for Couple for a date"
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
           className="bg-black/20 border-luxury-primary/20 focus:border-luxury-primary/50 focus:ring-luxury-primary/20
-            transition-all duration-300 hover:border-luxury-primary/30"
+            transition-all duration-300 hover:border-luxury-primary/30 placeholder:text-white/40"
         />
       </motion.div>
 
