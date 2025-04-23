@@ -37,15 +37,19 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
 
       {isOpen && (
         <DialogContent
-          className="p-0 bg-gradient-to-br from-[#181B24e6] via-[#161B22e1] to-[#0D1117ed] max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border-none shadow-[0_10px_56px_0_rgba(155,135,245,0.22)] animate-fade-in glass-morph"
+          className="p-0 bg-gradient-to-br from-[#181B24e6] via-[#161B22e1] to-[#0D1117ed] max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border-none shadow-[0_10px_56px_0_rgba(155,135,245,0.22)] animate-fade-in glass-morph custom-popup-content custom-scrollbar"
           style={{
             boxShadow:
               "0 8px 40px 0 rgba(155,135,245,0.17), 0 1.5px 0 0 rgba(217,70,239,0.07), 0 0 0 1px rgba(255,255,255,0.06) inset",
             backdropFilter: "blur(20px)",
+            alignItems: "center",
+            justifyContent: "center",
+            display: "flex",
+            minHeight: "64vh",
           }}
         >
           {/* Premium styled header */}
-          <div className="flex items-center justify-between px-7 pt-6 pb-2 border-b border-white/10 bg-gradient-to-r from-transparent via-luxury-primary/10 to-transparent rounded-t-2xl">
+          <div className="flex items-center justify-between px-7 pt-6 pb-2 border-b border-white/10 bg-gradient-to-r from-transparent via-luxury-primary/10 to-transparent rounded-t-2xl w-full">
             <span className="text-lg md:text-xl font-bold text-white/80 tracking-tight select-none">Create Body Contact</span>
             <button
               className="group inline-flex items-center justify-center rounded-full bg-transparent hover:bg-luxury-primary/15 p-1.5 transition"
@@ -83,4 +87,3 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
     </Dialog>
   );
 };
-

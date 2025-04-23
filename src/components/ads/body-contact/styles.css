@@ -1,34 +1,43 @@
 
-/* Glassmorphism utilities */
-.glass-morph {
-  @apply backdrop-blur-xl bg-black/10 shadow-lg;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.1),
-    inset 0 0 0 1px rgba(155, 135, 245, 0.1);
-}
-
-/* Custom scrollbar for webkit browsers */
+/* Modern seamless scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
-  height: 8px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(155, 135, 245, 0.3);
-  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(155, 135, 245, 0.12), rgba(217,70,239,0.17));
+  border-radius: 8px;
+  transition: background 0.2s;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(155, 135, 245, 0.5);
+  background: linear-gradient(135deg, rgba(155, 135, 245, 0.33), rgba(217,70,239,0.37));
 }
 
-/* Firefox scrollbar */
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 8px;
+}
+
+/* Firefox support */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(155, 135, 245, 0.3) rgba(0, 0, 0, 0.1);
+  scrollbar-color: rgba(155,135,245,0.18) transparent;
 }
+
+/* Remove ugly overlay scroll */
+body,
+.custom-popup-content,
+.custom-dialog-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155,135,245,0.18) transparent;
+}
+
+/* Center dialog content refinement */
+.glass-morph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
