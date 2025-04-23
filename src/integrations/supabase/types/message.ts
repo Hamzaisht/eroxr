@@ -2,7 +2,7 @@
 import { Profile } from './profile';
 
 export type MessageDeliveryStatus = 'sent' | 'delivered' | 'seen' | 'failed';
-export type MessageType = 'text' | 'media' | 'video' | 'audio' | 'snap' | 'document' | 'location';
+export type MessageType = 'text' | 'media' | 'video' | 'audio' | 'snap' | 'document' | 'location' | 'ad_message';
 
 export interface DirectMessage {
   id: string;
@@ -27,6 +27,15 @@ export interface DirectMessage {
   original_content?: string | null;
   sender?: Profile;
   recipient?: Profile;
+  reactions?: Reaction[];
+  reply_to_id?: string;
+  reply_to?: DirectMessage;
+}
+
+export interface Reaction {
+  emoji: string;
+  users: string[];
+  count?: number;
 }
 
 export interface MessageAudit {
