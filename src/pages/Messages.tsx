@@ -1,18 +1,35 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Footer } from "@/components/Footer";
 import { HomeLayout } from "@/components/home/HomeLayout";
 import { ConversationsList } from "@/components/messages/ConversationsList";
 import { ChatWindow } from "@/components/messages/ChatWindow";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Messages = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Extract userId from URL if present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const userId = params.get('userId');
+    if (userId) {
+      setSelectedUserId(userId);
+    }
+  }, [location]);
   
   const handleSelectUser = (userId: string) => {
     setSelectedUserId(userId);
     setShowDetails(false);
+    
+    // Update URL with selected userId for deep linking
+    navigate(`/messages?userId=${userId}`, { replace: true });
   };
   
   const handleNewMessage = () => {
@@ -21,6 +38,11 @@ const Messages = () => {
   
   const handleToggleDetails = () => {
     setShowDetails(prev => !prev);
+  };
+  
+  const handleBackToList = () => {
+    setSelectedUserId(null);
+    navigate('/messages', { replace: true });
   };
   
   return (
@@ -36,9 +58,9 @@ const Messages = () => {
             Messages
           </h1>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 h-[80vh] bg-luxury-darker/40 rounded-lg shadow-lg overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 h-[80vh] bg-luxury-darker/40 backdrop-blur-lg rounded-lg shadow-lg overflow-hidden">
             {/* Conversations List - Hidden on mobile when a chat is selected */}
-            <div className={`${selectedUserId ? 'hidden md:block' : ''} md:col-span-1 border-r border-white/10 h-full`}>
+            <div className={`${isMobile && selectedUserId ? 'hidden' : 'block'} md:col-span-1 border-r border-white/10 h-full`}>
               <ConversationsList
                 onSelectUser={handleSelectUser}
                 onNewMessage={handleNewMessage}
@@ -47,7 +69,7 @@ const Messages = () => {
             
             {/* Chat Window */}
             {selectedUserId ? (
-              <div className="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col h-full">
+              <div className={`col-span-1 md:col-span-2 lg:col-span-3 flex flex-col h-full ${isMobile ? 'absolute inset-0 z-10 bg-luxury-darker/90' : ''}`}>
                 <ChatWindow
                   recipientId={selectedUserId}
                   onToggleDetails={handleToggleDetails}

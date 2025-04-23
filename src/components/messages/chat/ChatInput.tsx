@@ -1,60 +1,76 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Send } from "lucide-react";
+import { useState } from 'react';
+import { MessageInput } from '../MessageInput';
+import { useChatActions } from './ChatActions';
+import { DirectMessage } from '@/integrations/supabase/types/message';
+import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@supabase/auth-helpers-react';
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
-  onTyping?: () => void;
+  onTyping: () => void;
+  recipientId: string;
 }
 
-export const ChatInput = ({ onSendMessage, onTyping }: ChatInputProps) => {
-  const [message, setMessage] = useState("");
+export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputProps) => {
+  const [replyTo, setReplyTo] = useState<DirectMessage | null>(null);
+  const session = useSession();
+  
+  const { 
+    isUploading, 
+    handleMediaSelect, 
+    handleSnapCapture 
+  } = useChatActions({ recipientId });
 
-  const handleSend = () => {
-    if (message.trim()) {
-      onSendMessage(message.trim());
-      setMessage("");
-    }
-  };
+  const handleSendVoiceMessage = async (audioBlob: Blob) => {
+    if (!session?.user?.id) return;
+    
+    try {
+      // Create a file from the blob
+      const file = new File([audioBlob], `voice-message-${Date.now()}.webm`, {
+        type: 'audio/webm',
+      });
+      
+      // Upload audio file
+      const fileName = `${crypto.randomUUID()}.webm`;
+      
+      const { error: uploadError, data } = await supabase.storage
+        .from('messages')
+        .upload(fileName, file);
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
+      if (uploadError) throw uploadError;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMessage(e.target.value);
-    if (onTyping && e.target.value.length > 0) {
-      onTyping();
+      const { data: { publicUrl } } = supabase.storage
+        .from('messages')
+        .getPublicUrl(fileName);
+      
+      // Insert message with audio URL
+      await supabase.from('direct_messages').insert({
+        sender_id: session.user.id,
+        recipient_id: recipientId,
+        media_url: [publicUrl],
+        message_type: 'audio',
+        reply_to_id: replyTo?.id,
+        created_at: new Date().toISOString(),
+      });
+      
+      // Clear reply
+      setReplyTo(null);
+    } catch (error) {
+      console.error('Error sending voice message:', error);
     }
   };
 
   return (
-    <div className="flex items-center gap-2 p-4 border-t border-luxury-neutral/10 bg-luxury-darker">
-      <div className="flex-1 relative">
-        <Input
-          type="text"
-          placeholder="Type a message..."
-          value={message}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyPress}
-          className="bg-luxury-neutral/5 border-luxury-neutral/20 text-luxury-text"
-        />
-      </div>
-      
-      <Button 
-        onClick={handleSend}
-        disabled={!message.trim()}
-        variant={message.trim() ? "default" : "ghost"}
-        size="icon"
-        className="h-9 w-9 rounded-full"
-      >
-        <Send className="h-5 w-5" />
-      </Button>
-    </div>
+    <MessageInput
+      onSendMessage={onSendMessage}
+      onMediaSelect={handleMediaSelect}
+      onSnapStart={() => handleSnapCapture()}
+      onVoiceMessage={handleSendVoiceMessage}
+      isLoading={isUploading}
+      recipientId={recipientId}
+      replyToMessage={replyTo}
+      onReplyCancel={() => setReplyTo(null)}
+    />
   );
 };

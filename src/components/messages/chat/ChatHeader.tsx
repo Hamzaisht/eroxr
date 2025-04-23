@@ -1,99 +1,192 @@
 
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Phone, Video, Info, ChevronLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { 
+  Phone, 
+  Video, 
+  MoreVertical, 
+  Settings, 
+  Flag, 
+  UserX, 
+  Search,
+  ArrowLeft
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { cn } from '@/lib/utils';
 
 interface ChatHeaderProps {
   recipientProfile: any;
   recipientId: string;
-  onVoiceCall: () => void;
-  onVideoCall: () => void;
-  onToggleDetails: () => void;
+  onVoiceCall?: () => void;
+  onVideoCall?: () => void;
+  onToggleDetails?: () => void;
   isTyping?: boolean;
+  onBack?: () => void;
 }
 
-export const ChatHeader = ({
+export const ChatHeader = ({ 
   recipientProfile,
   recipientId,
   onVoiceCall,
   onVideoCall,
   onToggleDetails,
-  isTyping = false
+  isTyping,
+  onBack
 }: ChatHeaderProps) => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const [isActive, setIsActive] = useState(false);
+  const { toast } = useToast();
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  
+  const handleReport = () => {
+    toast({
+      description: "Report functionality will be implemented soon"
+    });
+  };
+  
+  const handleBlock = () => {
+    toast({
+      description: "Block functionality will be implemented soon"
+    });
+  };
+
+  // For demo: toggle active state when clicked
+  const toggleActive = () => setIsActive(prev => !prev);
 
   return (
-    <div className="p-3 md:p-4 border-b border-white/10 bg-luxury-darker/50 backdrop-blur-md flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        {isMobile && (
-          <Link to="/messages" className="mr-1">
-            <ChevronLeft className="h-5 w-5 text-luxury-neutral" />
-          </Link>
+    <div className="flex items-center justify-between px-3 py-2 bg-luxury-darker/60 backdrop-blur-sm border-b border-white/5">
+      <div className="flex items-center space-x-3">
+        {isMobile && onBack && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 mr-1 rounded-full hover:bg-white/10"
+            onClick={onBack}
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
         )}
         
-        <Avatar className="h-10 w-10 border border-white/10">
-          <AvatarImage src={recipientProfile?.avatar_url || undefined} />
-          <AvatarFallback>
-            {recipientProfile?.username?.[0]?.toUpperCase() || '?'}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative" onClick={toggleActive}>
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={recipientProfile.avatar_url} />
+            <AvatarFallback>
+              {recipientProfile.username?.[0]?.toUpperCase() || '?'}
+            </AvatarFallback>
+          </Avatar>
+          <span className={cn(
+            "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-luxury-dark",
+            isActive ? "bg-green-500" : "bg-gray-400"
+          )} />
+        </div>
         
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-luxury-neutral">
-              {recipientProfile?.username || 'User'}
-            </h3>
-            {recipientProfile?.is_verified && (
-              <span className="h-4 w-4 bg-blue-500 rounded-full flex items-center justify-center text-[10px] text-white">✓</span>
+        <div>
+          <h3 className="text-sm font-medium text-white">
+            {recipientProfile.username}
+          </h3>
+          
+          <p className="text-xs text-white/60">
+            {isTyping ? (
+              <span className="text-luxury-primary inline-flex items-center">
+                <span className="animate-typing">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+                <span className="ml-1">typing...</span>
+              </span>
+            ) : isActive ? (
+              'Online'
+            ) : (
+              'Offline'
             )}
-          </div>
-          <p className={cn(
-            "text-xs",
-            isTyping
-              ? "text-luxury-primary animate-pulse"
-              : recipientProfile?.status === "online"
-              ? "text-emerald-400"
-              : "text-luxury-neutral/50"
-          )}>
-            {isTyping
-              ? "typing..."
-              : recipientProfile?.status === "online"
-              ? "online"
-              : "offline"}
           </p>
         </div>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center space-x-1">
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full bg-luxury-darker/60 hover:bg-luxury-darker/90"
+          className="h-8 w-8 rounded-full hover:bg-white/10"
+          onClick={() => {
+            toast({
+              description: "Search functionality will be implemented soon"
+            });
+          }}
+          aria-label="Search in conversation"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onVoiceCall}
+          className="h-8 w-8 rounded-full hover:bg-white/10"
+          aria-label="Start voice call"
         >
-          <Phone className="h-4 w-4 text-luxury-neutral" />
+          <Phone className="h-4 w-4" />
         </Button>
         
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full bg-luxury-darker/60 hover:bg-luxury-darker/90"
           onClick={onVideoCall}
+          className="h-8 w-8 rounded-full hover:bg-white/10"
+          aria-label="Start video call"
         >
-          <Video className="h-4 w-4 text-luxury-neutral" />
+          <Video className="h-4 w-4" />
         </Button>
         
-        <Button
-          variant="ghost"
-          size="icon"
-          className="rounded-full bg-luxury-darker/60 hover:bg-luxury-darker/90"
-          onClick={onToggleDetails}
-        >
-          <Info className="h-4 w-4 text-luxury-neutral" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full hover:bg-white/10"
+              aria-label="More options"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-48 bg-black/80 backdrop-blur-sm border-white/10"
+          >
+            <DropdownMenuItem 
+              onClick={onToggleDetails}
+              className="text-sm cursor-pointer"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Chat settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-white/10" />
+            <DropdownMenuItem 
+              onClick={handleReport}
+              className="text-sm cursor-pointer"
+            >
+              <Flag className="h-4 w-4 mr-2" />
+              Report
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleBlock}
+              className="text-sm cursor-pointer text-red-500"
+            >
+              <UserX className="h-4 w-4 mr-2" />
+              Block user
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
