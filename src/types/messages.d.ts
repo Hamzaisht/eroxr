@@ -1,4 +1,5 @@
 
+
 export type MessageActivityType = 
   | 'send_attempt' 
   | 'send_success' 
@@ -11,3 +12,4 @@ export type MessageActivityType =
   | 'reply'
   | 'delete'
   | 'edit';
+

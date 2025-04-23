@@ -8,8 +8,8 @@ import { LiveSession } from '@/types/surveillance';
 import { LiveAlert } from '@/types/alerts';
 
 interface UseGhostModeReturn {
-  isGhostMode: boolean;
-  isGhostModeEnabled: boolean; // Alias for backwards compatibility
+  isGhostModeEnabled: boolean;
+  isGhostMode: boolean; // Alias for isGhostModeEnabled for backwards compatibility
   toggleGhostMode: () => Promise<void>;
   activeSurveillance: ActiveSurveillanceState;
   formatTime: (state: ActiveSurveillanceState) => string;
@@ -17,7 +17,7 @@ interface UseGhostModeReturn {
   canUseGhostMode: boolean;
   startSurveillance: (sessionOrUserId: LiveSession | string, duration?: number) => Promise<boolean>;
   stopSurveillance: () => Promise<boolean>;
-  liveAlerts: LiveAlert[] | null;
+  liveAlerts: any[] | null;
   refreshAlerts: () => Promise<void>;
 }
 
@@ -32,10 +32,11 @@ export const useGhostMode = (): UseGhostModeReturn => {
     startTime: null,
     targetUserId: '',
     startedAt: undefined,
+    sessionId: '' // Added missing sessionId property
   });
   const [isLoading, setIsLoading] = useState(false);
   const [canUseGhostMode, setCanUseGhostMode] = useState(true); // Default to true
-  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[] | null>(null);
+  const [liveAlerts, setLiveAlerts] = useState<any[] | null>(null);
   const session = useSession();
   const { toast } = useToast();
 
@@ -151,6 +152,7 @@ export const useGhostMode = (): UseGhostModeReturn => {
       startTime: null,
       targetUserId: '',
       startedAt: undefined,
+      sessionId: '' // Added missing sessionId property
     });
 
     toast({

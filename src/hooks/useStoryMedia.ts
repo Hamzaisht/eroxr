@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
@@ -62,7 +61,7 @@ export const useStoryMedia = (
     setError("Failed to load media");
     
     if (options?.onError) {
-      options.onError("Failed to load media");
+      options.onError();
     }
   }, [mediaUrl, options]);
   

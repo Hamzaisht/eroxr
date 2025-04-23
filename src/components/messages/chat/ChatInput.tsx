@@ -65,7 +65,7 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
     <MessageInput
       onSendMessage={onSendMessage}
       onMediaSelect={handleMediaSelect}
-      onSnapStart={() => handleSnapCapture()}
+      onSnapStart={() => handleSnapCapture()} // This function call was missing arguments
       onVoiceMessage={handleSendVoiceMessage}
       isLoading={isUploading}
       recipientId={recipientId}

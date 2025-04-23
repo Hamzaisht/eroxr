@@ -48,6 +48,22 @@ export interface UploadOptions {
   onProgress?: (progress: number) => void;
 }
 
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: null | string;
+  success: boolean;
+  files: File[];
+  previews: string[];
+  isComplete: boolean;
+}
+
+export interface FileValidationResult {
+  isValid: boolean;
+  error?: string;
+  message?: string;
+}
+
 export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'invisible';
 
 export interface ActiveSurveillanceState {

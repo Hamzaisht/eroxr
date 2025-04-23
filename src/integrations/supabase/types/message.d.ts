@@ -1,4 +1,5 @@
 
+
 export interface Reaction {
   emoji: string;
   users: string[];
@@ -37,3 +38,4 @@ export interface DirectMessage {
   original_content?: string;
   expires_at?: string;
 }
+
