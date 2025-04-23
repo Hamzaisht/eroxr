@@ -37,7 +37,8 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
 
       {isOpen && (
         <DialogContent
-          className="p-0 !w-full max-w-[920px] xl:max-w-[1080px] min-h-[80vh] md:min-h-[680px] bg-gradient-to-br from-[#181B24e6] via-[#161B22e1] to-[#0D1117ed] rounded-2xl border-none shadow-[0_10px_56px_0_rgba(155,135,245,0.22)] glass-morph custom-popup-content custom-scrollbar"
+          // Make the dialog nearly fullscreen on desktop, larger on mobile/tablet, add only minimal paddings.
+          className="p-0 !w-[99vw] !max-w-[1680px] !h-[98vh] !min-h-[750px] m-0 bg-gradient-to-br from-[#181B24e6] via-[#161B22e1] to-[#0D1117ed] rounded-2xl border-none shadow-[0_10px_56px_0_rgba(155,135,245,0.22)] glass-morph custom-popup-content custom-scrollbar flex flex-col"
           style={{
             boxShadow:
               "0 8px 40px 0 rgba(155,135,245,0.22), 0 1.5px 0 0 rgba(217,70,239,0.09), 0 0 0 1px rgba(255,255,255,0.07) inset",
@@ -45,15 +46,18 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
             alignItems: "center",
             justifyContent: "center",
             display: "flex",
-            minHeight: "80vh",
-            margin: "0 auto",
+            minHeight: "98vh",
+            height: "98vh",
+            margin: 0,
+            padding: 0,
+            overflow: "hidden",
           }}
         >
-          {/* Premium styled header */}
-          <div className="flex items-center justify-between px-9 pt-7 pb-2 border-b border-white/10 bg-gradient-to-r from-transparent via-luxury-primary/10 to-transparent rounded-t-2xl w-full">
-            <span className="text-lg md:text-2xl font-bold text-white/80 tracking-tight select-none">Create Body Contact</span>
+          {/* Header */}
+          <div className="flex items-center justify-between px-14 pt-9 pb-2 border-b border-white/10 bg-gradient-to-r from-transparent via-luxury-primary/10 to-transparent rounded-t-2xl w-full min-h-[70px]">
+            <span className="text-xl md:text-3xl font-bold text-white/80 tracking-tight select-none">Create Body Contact</span>
             <button
-              className="group inline-flex items-center justify-center rounded-full bg-transparent hover:bg-luxury-primary/15 p-1.5 transition"
+              className="group inline-flex items-center justify-center rounded-full bg-transparent hover:bg-luxury-primary/15 p-2 transition"
               aria-label="Close dialog"
               onClick={() => setIsOpen(false)}
               tabIndex={0}
@@ -61,11 +65,15 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
               autoFocus
             >
               <span className="sr-only">Close</span>
-              <X className="h-6 w-6 text-luxury-primary group-hover:text-luxury-secondary transition" />
+              <X className="h-7 w-7 text-luxury-primary group-hover:text-luxury-secondary transition" />
             </button>
           </div>
-          {/* Content Area */}
-          <div className="w-full min-h-[65vh] flex items-center justify-center px-2 pb-7 pt-4 md:px-6 md:pb-10 md:pt-4 transition custom-scrollbar glass-morph-bg">
+          {/* Form/content area: take 100% of available space and never force a scroll unless xs device */}
+          <div className="w-full h-full flex-1 flex items-center justify-center px-2 md:px-10 py-6 glass-morph-bg" style={{
+            minHeight: "0",
+            height: "calc(98vh - 70px)", // minus header
+            overflow: "visible",
+          }}>
             <ImmersiveAdCreation
               onClose={() => setIsOpen(false)}
               onSuccess={onSuccess}
@@ -76,4 +84,3 @@ export const CreateBodyContactDialog = ({ onSuccess }: CreateBodyContactDialogPr
     </Dialog>
   );
 };
-

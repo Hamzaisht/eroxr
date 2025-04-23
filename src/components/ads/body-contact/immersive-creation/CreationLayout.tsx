@@ -57,16 +57,16 @@ export const CreationLayout = ({
   };
 
   return (
-    <div className="relative z-20 w-full h-full min-h-[65vh] flex flex-col rounded-2xl bg-gradient-to-br from-[#171A24da] to-[#0D1117f6] shadow-xl overflow-hidden">
+    <div className="relative z-20 w-full h-full flex flex-col rounded-2xl bg-gradient-to-br from-[#171A24da] to-[#0D1117f6] shadow-xl overflow-hidden">
       {/* Navigation bar */}
-      <div className="flex items-center justify-between py-5 px-3 md:px-10 bg-transparent rounded-t-2xl">
+      <div className="flex items-center justify-between py-4 px-6 lg:px-16 bg-transparent rounded-t-2xl">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={onClose}
           className="rounded-full bg-black/40 hover:bg-black/60 shadow-lg"
         >
-          <X size={22} />
+          <X size={24} /> {/* Only ONE close icon, no visual duplication */}
         </Button>
 
         <div className="flex-1 mx-4 md:mx-10">
@@ -106,7 +106,7 @@ export const CreationLayout = ({
                 totalSteps={steps.length}
               />
               {/* Main Content */}
-              <div className="col-span-1 lg:col-span-4 p-6 pb-10 overflow-visible">
+              <div className="col-span-1 lg:col-span-4 px-4 md:px-12 py-10 flex flex-col h-full overflow-visible justify-center">
                 {steps[currentStep].component}
               </div>
             </div>
