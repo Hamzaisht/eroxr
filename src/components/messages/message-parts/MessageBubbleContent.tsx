@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -65,7 +64,7 @@ export const MessageBubbleContent = ({
 
   // For JSON content in ad messages
   const parseAdContent = () => {
-    if (message.message_type === 'ad_message' && message.content) {
+    if (isAdMessage && message.content) {
       try {
         return JSON.parse(message.content);
       } catch (e) {

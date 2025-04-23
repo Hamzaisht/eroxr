@@ -60,12 +60,17 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
       console.error('Error sending voice message:', error);
     }
   };
+  
+  // Create a wrapper function for handleSnapCapture to match expected signature
+  const handleSnapStart = () => {
+    handleSnapCapture();
+  };
 
   return (
     <MessageInput
       onSendMessage={onSendMessage}
       onMediaSelect={handleMediaSelect}
-      onSnapStart={handleSnapCapture}
+      onSnapStart={handleSnapStart}
       onVoiceMessage={handleSendVoiceMessage}
       isLoading={isUploading}
       recipientId={recipientId}
