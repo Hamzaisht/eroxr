@@ -25,6 +25,7 @@ export interface MessageSendActivityDetails extends BaseMessageActivityDetails {
   recipient_id: string;
   content?: string;
   message_type?: string;
+  reply_to_id?: string; // Added this field to support reply functionality
 }
 
 // Media related activities

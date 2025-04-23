@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,7 +52,7 @@ export const MessageInput = ({
         content: message.trim(),
         recipient_id: recipientId,
         message_type: 'text',
-        reply_to: replyToMessage?.id
+        reply_to_id: replyToMessage?.id
       });
       
       onSendMessage(message.trim());
@@ -175,7 +174,6 @@ export const MessageInput = ({
     inputRef.current?.focus();
   };
   
-  // Render reply preview component
   const renderReplyPreview = () => {
     if (!replyToMessage) return null;
     
@@ -213,7 +211,6 @@ export const MessageInput = ({
     };
   }, [recipientId, sendTypingStatus]);
   
-  // Voice recording is active, show the recorder
   if (isRecordingVoice) {
     return <VoiceRecorder onSend={handleVoiceMessageSend} onCancel={handleVoiceMessageCancel} />;
   }
@@ -356,7 +353,6 @@ export const MessageInput = ({
         )}
       </div>
 
-      {/* Media Viewer for enlarged media */}
       <MediaViewer 
         media={selectedMedia} 
         onClose={() => setSelectedMedia(null)}
