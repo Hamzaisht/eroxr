@@ -1,13 +1,19 @@
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, memo } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Hero3D } from "./Hero3D";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 
-export const HeroSection = () => {
+export const HeroSection = memo(() => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const [elementRef, isInView] = useIntersectionObserver({
+    threshold: 0.1,
+    triggerOnce: false
+  });
 
   // Handle scroll progress
   useEffect(() => {
@@ -16,12 +22,14 @@ export const HeroSection = () => {
       
       const { height } = containerRef.current.getBoundingClientRect();
       const scrollPosition = window.scrollY;
-      const maxScroll = height - window.innerHeight;
+      const viewportHeight = window.innerHeight;
+      const maxScroll = Math.max(0, height - viewportHeight);
       
       setScrollProgress(Math.min(1, Math.max(0, scrollPosition / maxScroll)));
     };
     
     window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Initial calculation
     
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -29,19 +37,28 @@ export const HeroSection = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative w-full min-h-screen overflow-hidden">
-      {/* Edge-to-edge hero content */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-        className="w-full min-h-screen relative z-10 flex items-center"
-      >
-        <Hero3D />
-      </motion.div>
+    <section 
+      ref={(node) => {
+        // @ts-ignore - combine refs
+        containerRef.current = node;
+        // @ts-ignore
+        elementRef.current = node;
+      }} 
+      className="relative w-full min-h-screen overflow-hidden"
+    >
+      <div className="absolute inset-0 z-0">
+        <motion.div 
+          className="w-full h-full"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isInView ? 1 : 0 }}
+          transition={{ duration: 1 }}
+        >
+          <Hero3D isActive={isInView} />
+        </motion.div>
+      </div>
       
       {/* Scroll indicator */}
-      {!isMobile && scrollProgress < 0.2 && (
+      {!isMobile && scrollProgress < 0.1 && (
         <motion.div
           className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-10"
           initial={{ opacity: 0, y: -20 }}
@@ -64,6 +81,8 @@ export const HeroSection = () => {
       )}
     </section>
   );
-};
+});
+
+HeroSection.displayName = "HeroSection";
 
 export default HeroSection;

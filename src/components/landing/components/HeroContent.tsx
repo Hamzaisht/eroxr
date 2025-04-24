@@ -3,13 +3,12 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
-import { useState } from "react";
-import { GlowingButton } from "./GlowingButton";
+import { memo, useRef } from "react";
 import { AnimatedGradientText } from "./AnimatedGradientText";
 import { MagneticButton } from "./MagneticButton";
 
-export const HeroContent = () => {
-  const [isHovered, setIsHovered] = useState(false);
+export const HeroContent = memo(() => {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const textReveal = {
     hidden: { opacity: 0, y: 20 },
@@ -25,14 +24,20 @@ export const HeroContent = () => {
   };
 
   return (
-    <div className="w-full h-full px-6 lg:px-14">
+    <div className="w-full h-full px-0 lg:px-10">
       <motion.div 
+        ref={containerRef}
         className="max-w-[1600px] mx-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="mb-4 flex items-center space-x-2">
+        <motion.div 
+          className="mb-4 flex items-center space-x-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <motion.div 
             className="flex items-center px-3 py-1 rounded-full border border-luxury-primary/20"
             whileHover={{ scale: 1.05 }}
@@ -48,7 +53,7 @@ export const HeroContent = () => {
               Trusted by 10,000+ creators worldwide
             </motion.span>
           </motion.div>
-        </div>
+        </motion.div>
         
         <div className="relative">
           <motion.h1 
@@ -90,15 +95,15 @@ export const HeroContent = () => {
           animate="visible"
         >
           <MagneticButton magneticStrength={0.5}>
-            <GlowingButton 
+            <Button 
               asChild 
-              className="rounded-full text-lg h-14 px-8 font-semibold tracking-wider group" 
+              className="rounded-full text-lg h-14 px-8 font-semibold tracking-wider group bg-luxury-primary hover:bg-luxury-accent transition-colors duration-300" 
             >
               <Link to="/register" className="flex items-center justify-center">
                 Start Creating
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Link>
-            </GlowingButton>
+            </Button>
           </MagneticButton>
           
           <MagneticButton magneticStrength={0.3}>
@@ -107,17 +112,10 @@ export const HeroContent = () => {
               variant="outline" 
               asChild 
               className="text-lg h-14 px-8 rounded-full border-luxury-neutral/20 hover:border-luxury-primary/30 transition-all duration-500"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
             >
-              <motion.div
-                animate={isHovered ? { scale: 1.02 } : { scale: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Link to="/about" className="flex items-center">
-                  Learn More
-                </Link>
-              </motion.div>
+              <Link to="/about" className="flex items-center">
+                Learn More
+              </Link>
             </Button>
           </MagneticButton>
         </motion.div>
@@ -143,6 +141,7 @@ export const HeroContent = () => {
                   src={`https://i.pravatar.cc/100?img=${i+10}`} 
                   alt="User avatar" 
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               </motion.div>
             ))}
@@ -159,4 +158,6 @@ export const HeroContent = () => {
       </motion.div>
     </div>
   );
-};
+});
+
+HeroContent.displayName = "HeroContent";

@@ -1,16 +1,20 @@
 
-import { useScroll, useTransform, motion } from "framer-motion";
+import { useScroll, useTransform, motion, useMotionValueEvent } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { HeroNavigation } from "./components/HeroNavigation";
 import { HeroContent } from "./components/HeroContent";
 import { ParticleBackground } from "./components/ParticleBackground";
-import { CustomCursor } from "./components/CustomCursor";
 
-export const Hero3D = () => {
+interface Hero3DProps {
+  isActive?: boolean;
+}
+
+export const Hero3D = memo(({ isActive = true }: Hero3DProps) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const { scrollY } = useScroll();
   const headerBg = useTransform(
     scrollY,
@@ -24,13 +28,23 @@ export const Hero3D = () => {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Optimize scroll event listener with useMotionValueEvent
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    if (!isActive) return;
+    // Performance optimization - no DOM updates in scroll handler
+    // Just track if we need to animate something based on scroll
+  });
+
   useEffect(() => {
     if (session) {
       navigate('/home');
     }
   }, [session, navigate]);
 
+  // Memoize video loading to prevent unnecessary re-renders
   useEffect(() => {
+    if (!isActive) return;
+
     const loadVideo = async () => {
       try {
         const { data: { publicUrl } } = supabase
@@ -47,6 +61,11 @@ export const Hero3D = () => {
     };
 
     loadVideo();
+  }, [isActive]);
+
+  // Handle video playback
+  useEffect(() => {
+    if (!isActive || !videoRef.current) return;
 
     // Add event listener for user interaction to enable autoplay
     const handleUserInteraction = () => {
@@ -55,28 +74,41 @@ export const Hero3D = () => {
       }
     };
 
+    const handleVideoLoaded = () => {
+      setVideoLoaded(true);
+    };
+
+    if (videoRef.current) {
+      videoRef.current.addEventListener('loadeddata', handleVideoLoaded);
+    }
+
     window.addEventListener("click", handleUserInteraction);
     window.addEventListener("touchstart", handleUserInteraction);
 
     return () => {
+      if (videoRef.current) {
+        videoRef.current.removeEventListener('loadeddata', handleVideoLoaded);
+      }
       window.removeEventListener("click", handleUserInteraction);
       window.removeEventListener("touchstart", handleUserInteraction);
     };
-  }, []);
+  }, [isActive, videoRef.current]);
+
+  // Only render particles when section is active
+  const particles = useMemo(() => {
+    return isActive ? <ParticleBackground /> : null;
+  }, [isActive]);
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col">
-      {/* Custom Cursor */}
-      <CustomCursor />
-      
-      {/* Particle Background */}
-      <ParticleBackground />
-      
+    <div className="relative w-full min-h-screen flex flex-col overflow-hidden">
       {/* Background Video - Edge to Edge */}
       {videoUrl && (
         <motion.div 
           className="absolute inset-0 w-full h-full z-[-1] overflow-hidden"
           style={{ opacity: videoOpacity }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: videoLoaded ? 1 : 0 }}
+          transition={{ duration: 1.5 }}
         >
           <video
             ref={videoRef}
@@ -85,6 +117,7 @@ export const Hero3D = () => {
             muted
             loop
             className="absolute h-full w-full object-cover object-center"
+            style={{ opacity: videoLoaded ? 1 : 0 }}
           >
             <source src={videoUrl} type="video/mp4" />
           </video>
@@ -92,12 +125,15 @@ export const Hero3D = () => {
         </motion.div>
       )}
       
+      {/* Optimized particle background - only render when active */}
+      {particles}
+      
       {/* Navigation */}
       <HeroNavigation headerBg={headerBg} />
       
       {/* Content */}
       <motion.div 
-        className="flex-1 flex items-center w-full"
+        className="flex-1 flex items-center w-full px-0"
         style={{
           scale: contentScale,
           opacity: contentOpacity,
@@ -106,7 +142,7 @@ export const Hero3D = () => {
         <motion.div 
           className="w-full"
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 20 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
           <HeroContent />
@@ -114,4 +150,6 @@ export const Hero3D = () => {
       </motion.div>
     </div>
   );
-};
+});
+
+Hero3D.displayName = "Hero3D";

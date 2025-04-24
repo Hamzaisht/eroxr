@@ -1,144 +1,149 @@
 
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 
 interface CursorProps {
   color?: string;
+  size?: number;
+  magneticElements?: string[];
 }
 
 export const CustomCursor: React.FC<CursorProps> = ({ 
-  color = "rgba(155, 135, 245, 0.7)" 
+  color = "rgba(155, 135, 245, 0.7)",
+  size = 12,
+  magneticElements = ["button", "a", ".interactive"]
 }) => {
-  const [position, setPosition] = useState({ x: -100, y: -100 }); // Start off-screen
+  // Use refs to avoid re-renders
+  const position = {
+    x: useMotionValue(-100),
+    y: useMotionValue(-100)
+  };
+  
+  // Spring physics for smooth movement
+  const springConfig = { stiffness: 1000, damping: 50 };
+  const cursorX = useSpring(position.x, springConfig);
+  const cursorY = useSpring(position.y, springConfig);
+  
   const [isHovering, setIsHovering] = useState(false);
   const [isClicking, setIsClicking] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [hasMovedOnce, setHasMovedOnce] = useState(false);
+  const magneticElementsRef = useRef<Element[]>([]);
+  const idleTimerRef = useRef<number | null>(null);
 
+  // Hide cursor when idle
+  const resetIdleTimer = () => {
+    if (idleTimerRef.current) {
+      window.clearTimeout(idleTimerRef.current);
+    }
+    
+    setIsVisible(true);
+    idleTimerRef.current = window.setTimeout(() => {
+      setIsVisible(false);
+    }, 5000);
+  };
+  
+  // Track cursor position
   useEffect(() => {
-    const updatePosition = (e: MouseEvent) => {
-      setPosition({ x: e.clientX, y: e.clientY });
+    const handleMouseMove = (e: MouseEvent) => {
+      position.x.set(e.clientX);
+      position.y.set(e.clientY);
       
       if (!hasMovedOnce) {
         setHasMovedOnce(true);
         setTimeout(() => setIsVisible(true), 500);
       }
+      
+      resetIdleTimer();
+      checkHoverState(e);
     };
-
+    
     const handleMouseDown = () => setIsClicking(true);
     const handleMouseUp = () => setIsClicking(false);
-
-    const handleMouseEnter = (e: MouseEvent) => {
+    
+    const checkHoverState = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      
-      // Check if hovering over interactive element
-      if (
-        target.tagName === "BUTTON" ||
-        target.tagName === "A" ||
-        target.closest("button") ||
-        target.closest("a") ||
-        target.classList.contains("interactive")
-      ) {
-        setIsHovering(true);
-      }
+      const isOverMagneticElement = magneticElementsRef.current.some(
+        element => element.contains(target)
+      );
+      setIsHovering(isOverMagneticElement);
     };
-
-    const handleMouseLeave = () => {
-      setIsHovering(false);
-    };
-
-    const addListenersToInteractiveElements = () => {
-      const elements = document.querySelectorAll("button, a, .interactive");
-      elements.forEach(element => {
-        element.addEventListener("mouseenter", handleMouseEnter);
-        element.addEventListener("mouseleave", handleMouseLeave);
-      });
-    };
-
-    window.addEventListener("mousemove", updatePosition);
+    
+    window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);
     
-    // Initial setup and periodic check for new elements
-    addListenersToInteractiveElements();
-    const interval = setInterval(addListenersToInteractiveElements, 2000);
-
     return () => {
-      window.removeEventListener("mousemove", updatePosition);
+      window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
       
-      const elements = document.querySelectorAll("button, a, .interactive");
-      elements.forEach(element => {
-        element.removeEventListener("mouseenter", handleMouseEnter);
-        element.removeEventListener("mouseleave", handleMouseLeave);
-      });
-      
-      clearInterval(interval);
+      if (idleTimerRef.current) {
+        window.clearTimeout(idleTimerRef.current);
+      }
     };
   }, [hasMovedOnce]);
-
-  // Don't show custom cursor on touch devices
+  
+  // Set up magnetic elements
   useEffect(() => {
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (isTouchDevice) {
-      setIsVisible(false);
-    }
+    const findMagneticElements = () => {
+      const elements: Element[] = [];
+      magneticElements.forEach(selector => {
+        document.querySelectorAll(selector).forEach(element => {
+          elements.push(element);
+        });
+      });
+      magneticElementsRef.current = elements;
+    };
+    
+    // Initial setup and periodic refresh of elements
+    findMagneticElements();
+    const interval = setInterval(findMagneticElements, 1000);
+    
+    return () => clearInterval(interval);
+  }, [magneticElements]);
+  
+  // Don't show custom cursor on touch devices
+  const isTouchDevice = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }, []);
 
-  if (!isVisible) return null;
+  if (isTouchDevice || !isVisible) return null;
 
   return (
     <>
       {/* Main cursor */}
       <motion.div
         className="fixed pointer-events-none z-[9999] mix-blend-difference"
-        animate={{
-          x: position.x,
-          y: position.y,
-          scale: isClicking ? 0.8 : isHovering ? 1.5 : 1,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 150,
-          damping: 15,
-          mass: 0.1,
-        }}
-        style={{ 
+        style={{
+          x: cursorX,
+          y: cursorY,
           translateX: "-50%",
           translateY: "-50%",
         }}
       >
         <motion.div
           className="rounded-full bg-white"
-          style={{
-            width: isHovering ? "40px" : "12px", 
-            height: isHovering ? "40px" : "12px",
-            opacity: 0.7,
-          }}
           animate={{
-            opacity: isClicking ? 0.9 : 0.7,
+            width: isHovering ? `40px` : `${size}px`,
+            height: isHovering ? `40px` : `${size}px`,
+            opacity: isClicking ? 0.9 : 0.7
           }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
         />
       </motion.div>
       
-      {/* Trailing cursor effect */}
+      {/* Trailing cursor effect - optimized to avoid reflow */}
       <motion.div
         className="fixed pointer-events-none z-[9998]"
-        animate={{
-          x: position.x,
-          y: position.y,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 250,
-          damping: 35,
-          mass: 0.5,
-        }}
-        style={{ 
+        style={{
+          x: cursorX,
+          y: cursorY,
           translateX: "-50%",
-          translateY: "-50%",
+          translateY: "-50%"
         }}
+        transition={{ type: "spring", stiffness: 100, damping: 25 }}
       >
         <motion.div
           className="rounded-full bg-luxury-primary/30"
@@ -150,6 +155,7 @@ export const CustomCursor: React.FC<CursorProps> = ({
           animate={{
             scale: isHovering ? 2.2 : isClicking ? 0.8 : 1,
           }}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
         />
       </motion.div>
     </>

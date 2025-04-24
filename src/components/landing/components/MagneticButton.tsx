@@ -1,6 +1,6 @@
 
-import React, { useRef, useState, useEffect } from "react";
-import { motion, HTMLMotionProps } from "framer-motion";
+import React, { useRef, useState, useEffect, memo } from "react";
+import { motion, useTransform, useMotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
 
@@ -13,7 +13,7 @@ interface MagneticButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
-export const MagneticButton = ({
+export const MagneticButton = memo(({
   children,
   className,
   magneticStrength = 1,
@@ -23,8 +23,18 @@ export const MagneticButton = ({
   ...props
 }: MagneticButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
   const { playLikeSound } = useSoundEffects();
+  
+  // Transform mouse position to button position
+  const positionX = useTransform(mouseX, (val) => {
+    return val * magneticStrength;
+  });
+  
+  const positionY = useTransform(mouseY, (val) => {
+    return val * magneticStrength;
+  });
   
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!buttonRef.current) return;
@@ -41,14 +51,13 @@ export const MagneticButton = ({
     // Scale the effect based on the button size
     const magneticScale = Math.min(width, height) / 100;
     
-    setPosition({
-      x: distanceX * magneticScale * magneticStrength,
-      y: distanceY * magneticScale * magneticStrength,
-    });
+    mouseX.set(distanceX * magneticScale);
+    mouseY.set(distanceY * magneticScale);
   };
   
   const handleMouseLeave = () => {
-    setPosition({ x: 0, y: 0 });
+    mouseX.set(0);
+    mouseY.set(0);
   };
   
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -56,13 +65,22 @@ export const MagneticButton = ({
     playLikeSound();
     
     // Reset position
-    setPosition({ x: 0, y: 0 });
+    mouseX.set(0);
+    mouseY.set(0);
     
     // Call the original onClick handler if provided
     if (onClick) {
       onClick(e);
     }
   };
+
+  // Clean up animations on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      mouseX.destroy();
+      mouseY.destroy();
+    };
+  }, []);
 
   // Use the Component specified, or just a button if not specified
   const ButtonComponent = asChild ? (Component || "button") : "button";
@@ -75,8 +93,8 @@ export const MagneticButton = ({
     onMouseLeave: handleMouseLeave,
     onClick: handleClick,
     animate: {
-      x: position.x,
-      y: position.y,
+      x: positionX,
+      y: positionY,
     },
     transition: {
       type: "spring",
@@ -97,4 +115,6 @@ export const MagneticButton = ({
       {children}
     </motion.button>
   );
-};
+});
+
+MagneticButton.displayName = "MagneticButton";
