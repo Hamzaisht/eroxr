@@ -1,3 +1,4 @@
+
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
@@ -26,6 +27,11 @@ body,
 }
 html {
   overflow-x: hidden;
+}
+
+/* Background noise pattern */
+.bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
 @layer base {
@@ -135,6 +141,34 @@ html {
   .glass-morph-from-glow {
     @apply rounded-2xl bg-luxury-dark/60 shadow-lg backdrop-blur-xl border border-luxury-primary/10;
     border: 1.5px solid rgba(155, 135, 245, 0.05);
+  }
+  
+  .futuristic-card {
+    @apply relative overflow-hidden rounded-xl border border-luxury-primary/20 bg-luxury-dark/30 backdrop-blur-xl;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .futuristic-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      135deg,
+      rgba(155, 135, 245, 0) 0%,
+      rgba(155, 135, 245, 0.05) 50%,
+      rgba(217, 70, 239, 0.05) 100%
+    );
+    z-index: -1;
+  }
+  
+  .futuristic-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5);
+    border-color: rgba(155, 135, 245, 0.4);
   }
 }
 
@@ -354,5 +388,62 @@ html {
 
   .animate-fade-in {
     animation: fade-in 1.4s cubic-bezier(.55,.16,.53,.96) 1 both;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-15px);
+    }
+  }
+  
+  .animate-cursor {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .animate-cursor::after {
+    content: "|";
+    position: absolute;
+    right: -4px;
+    animation: cursor 1s infinite step-start;
+  }
+  
+  @keyframes cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  
+  .animate-gradient-text {
+    background-size: 300% 300%;
+    animation: gradient-shift 8s ease infinite;
+  }
+  
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50% }
+    50% { background-position: 100% 50% }
+    100% { background-position: 0% 50% }
+  }
+  
+  .animate-tilt {
+    transform-style: preserve-3d;
+  }
+  
+  .animate-tilt:hover {
+    transform: perspective(1000px) rotateX(5deg) rotateY(5deg);
+  }
+  
+  .clip-path-slant {
+    clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+  }
+  
+  .clip-path-angular {
+    clip-path: polygon(0 10%, 100% 0, 100% 90%, 0 100%);
   }
 }

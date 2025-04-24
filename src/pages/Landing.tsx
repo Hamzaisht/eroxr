@@ -1,8 +1,9 @@
 
-import { Suspense, lazy } from "react";
-import { motion, LazyMotion, domAnimation } from "framer-motion";
+import { Suspense, lazy, useRef } from "react";
+import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
 import HeroSection from "@/components/landing/HeroSection";
 import Footer from "@/components/landing/Footer";
+import { SmoothScroll } from "@/components/landing/components/SmoothScroll";
 
 // Lazy load other sections
 const Features3D = lazy(() => import("@/components/landing/Features3D"));
@@ -11,6 +12,24 @@ const AnimatedStats = lazy(() => import("@/components/landing/AnimatedStats"));
 const InteractiveFeatures = lazy(() => import("@/components/landing/InteractiveFeatures"));
 const CreatorCategories = lazy(() => import("@/components/landing/sections/CreatorCategories"));
 const PlatformPreview = lazy(() => import("@/components/landing/PlatformPreview"));
+
+// Section wrapper with animation
+const AnimatedSection = ({ children }: { children: React.ReactNode }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      className="w-full"
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 // Loading placeholder with skeleton UI
 const LoadingSection = () => (
@@ -26,93 +45,66 @@ const LoadingSection = () => (
 const Landing = () => {
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white">
-        {/* Hero Section - Immediate Load */}
-        <motion.div initial={{ opacity: 1 }} className="w-full">
-          <HeroSection />
-        </motion.div>
+      <SmoothScroll>
+        <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white">
+          {/* Hero Section - Immediate Load */}
+          <motion.div initial={{ opacity: 1 }} className="w-full">
+            <HeroSection />
+          </motion.div>
 
-        {/* Stats Section - Social Proof */}
-        <Suspense fallback={<LoadingSection />}>
+          {/* Stats Section - Social Proof */}
+          <Suspense fallback={<LoadingSection />}>
+            <AnimatedSection>
+              <AnimatedStats />
+            </AnimatedSection>
+          </Suspense>
+
+          {/* Platform Preview - Show Value */}
+          <Suspense fallback={<LoadingSection />}>
+            <AnimatedSection>
+              <PlatformPreview />
+            </AnimatedSection>
+          </Suspense>
+
+          {/* Creator Categories - Target Audience */}
+          <Suspense fallback={<LoadingSection />}>
+            <AnimatedSection>
+              <CreatorCategories />
+            </AnimatedSection>
+          </Suspense>
+
+          {/* Features Section - Benefits */}
+          <Suspense fallback={<LoadingSection />}>
+            <AnimatedSection>
+              <Features3D />
+            </AnimatedSection>
+          </Suspense>
+
+          {/* Creator Showcase - Social Proof */}
+          <Suspense fallback={<LoadingSection />}>
+            <AnimatedSection>
+              <CreatorShowcase />
+            </AnimatedSection>
+          </Suspense>
+
+          {/* Interactive Features - Engagement */}
+          <Suspense fallback={<LoadingSection />}>
+            <AnimatedSection>
+              <InteractiveFeatures />
+            </AnimatedSection>
+          </Suspense>
+
+          {/* Footer with CTAs */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5 }}
-            className="w-full"
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
           >
-            <AnimatedStats />
+            <Footer />
           </motion.div>
-        </Suspense>
-
-        {/* Platform Preview - Show Value */}
-        <Suspense fallback={<LoadingSection />}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5 }}
-            className="w-full"
-          >
-            <PlatformPreview />
-          </motion.div>
-        </Suspense>
-
-        {/* Creator Categories - Target Audience */}
-        <Suspense fallback={<LoadingSection />}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5 }}
-            className="w-full"
-          >
-            <CreatorCategories />
-          </motion.div>
-        </Suspense>
-
-        {/* Features Section - Benefits */}
-        <Suspense fallback={<LoadingSection />}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5 }}
-            className="w-full"
-          >
-            <Features3D />
-          </motion.div>
-        </Suspense>
-
-        {/* Creator Showcase - Social Proof */}
-        <Suspense fallback={<LoadingSection />}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5 }}
-            className="w-full"
-          >
-            <CreatorShowcase />
-          </motion.div>
-        </Suspense>
-
-        {/* Interactive Features - Engagement */}
-        <Suspense fallback={<LoadingSection />}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5 }}
-            className="w-full"
-          >
-            <InteractiveFeatures />
-          </motion.div>
-        </Suspense>
-
-        {/* Footer with CTAs */}
-        <Footer />
-      </div>
+        </div>
+      </SmoothScroll>
     </LazyMotion>
   );
 };
