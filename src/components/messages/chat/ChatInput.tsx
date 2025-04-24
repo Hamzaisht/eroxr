@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { MessageInput } from '../MessageInput';
 import { useChatActions } from './ChatActions';
@@ -72,16 +71,16 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
     }
   };
   
-  // Create a wrapper function for media select
-  const handleMediaSelectWrapper = () => {
-    handleMediaSelect();
+  // Create a wrapper function for media selection that accepts FileList
+  const handleMediaSelectWrapper = (files: FileList | null) => {
+    if (files && files.length > 0) {
+      handleMediaSelect(files);
+    }
   };
   
-  // Create a wrapper function for snap capture that passes the required argument
-  const handleSnapStart = () => {
-    // We need to pass a valid string parameter since handleSnapCapture expects one
-    // In the actual implementation, this would likely be a dataURL from a captured image
-    handleSnapCapture("dummy-data-url");
+  // Create a wrapper function for snap capture
+  const handleSnapStart = (dataUrl: string) => {
+    handleSnapCapture(dataUrl);
   };
 
   return (
