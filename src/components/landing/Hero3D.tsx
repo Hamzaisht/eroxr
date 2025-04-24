@@ -43,7 +43,7 @@ export const Hero3D = () => {
     <div className="relative w-full min-h-screen flex flex-col">
       {/* Hero Background */}
       <div className="absolute inset-0 bg-cover bg-center z-0" style={{
-        backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.8), rgba(22, 27, 34, 0.9))'
+        backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.7), rgba(22, 27, 34, 0.8))'
       }} />
       
       {/* Background Video */}
@@ -63,8 +63,10 @@ export const Hero3D = () => {
       
       <HeroNavigation headerBg={headerBg} />
       
-      <div className="flex-1 flex items-center justify-start px-6 xl:px-8">
-        <HeroContent />
+      <div className="flex-1 flex items-center justify-center w-full max-w-[1440px] mx-auto">
+        <div className="w-full flex flex-col lg:flex-row items-center lg:items-start justify-between px-6 xl:px-8">
+          <HeroContent />
+        </div>
       </div>
     </div>
   );
