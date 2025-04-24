@@ -47,62 +47,65 @@ const Landing = () => {
     <LazyMotion features={domAnimation}>
       <SmoothScroll>
         <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white">
-          {/* Hero Section - Immediate Load */}
+          {/* Remove container class to allow edge-to-edge design */}
           <motion.div initial={{ opacity: 1 }} className="w-full">
             <HeroSection />
           </motion.div>
 
-          {/* Stats Section - Social Proof */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <AnimatedStats />
-            </AnimatedSection>
-          </Suspense>
+          {/* Content Sections */}
+          <div className="w-full">
+            {/* Stats Section */}
+            <Suspense fallback={<LoadingSection />}>
+              <AnimatedSection>
+                <AnimatedStats />
+              </AnimatedSection>
+            </Suspense>
 
-          {/* Platform Preview - Show Value */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <PlatformPreview />
-            </AnimatedSection>
-          </Suspense>
+            {/* Platform Preview */}
+            <Suspense fallback={<LoadingSection />}>
+              <AnimatedSection>
+                <PlatformPreview />
+              </AnimatedSection>
+            </Suspense>
 
-          {/* Creator Categories - Target Audience */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <CreatorCategories />
-            </AnimatedSection>
-          </Suspense>
+            {/* Creator Categories */}
+            <Suspense fallback={<LoadingSection />}>
+              <AnimatedSection>
+                <CreatorCategories />
+              </AnimatedSection>
+            </Suspense>
 
-          {/* Features Section - Benefits */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <Features3D />
-            </AnimatedSection>
-          </Suspense>
+            {/* Features Section */}
+            <Suspense fallback={<LoadingSection />}>
+              <AnimatedSection>
+                <Features3D />
+              </AnimatedSection>
+            </Suspense>
 
-          {/* Creator Showcase - Social Proof */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <CreatorShowcase />
-            </AnimatedSection>
-          </Suspense>
+            {/* Creator Showcase */}
+            <Suspense fallback={<LoadingSection />}>
+              <AnimatedSection>
+                <CreatorShowcase />
+              </AnimatedSection>
+            </Suspense>
 
-          {/* Interactive Features - Engagement */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <InteractiveFeatures />
-            </AnimatedSection>
-          </Suspense>
+            {/* Interactive Features */}
+            <Suspense fallback={<LoadingSection />}>
+              <AnimatedSection>
+                <InteractiveFeatures />
+              </AnimatedSection>
+            </Suspense>
 
-          {/* Footer with CTAs */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <Footer />
-          </motion.div>
+            {/* Footer */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <Footer />
+            </motion.div>
+          </div>
         </div>
       </SmoothScroll>
     </LazyMotion>

@@ -39,7 +39,7 @@ export const HeroSection = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative min-h-[100vh] w-full overflow-hidden">
+    <section ref={containerRef} className="relative w-full min-h-screen overflow-hidden">
       <BackgroundEffects />
       {!isMobile && (
         <MouseParallax className="absolute inset-0 z-0">
@@ -52,7 +52,7 @@ export const HeroSection = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
-        className="container mx-auto max-w-[1440px] min-h-screen px-6 xl:px-8 relative z-10 flex items-center justify-center"
+        className="w-full min-h-screen relative z-10 flex items-center justify-center px-4 sm:px-6 lg:px-8"
       >
         <Hero3D />
       </motion.div>

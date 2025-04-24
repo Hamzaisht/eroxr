@@ -13,7 +13,7 @@ export const HeroContent = () => {
 
   return (
     <motion.div 
-      className="w-full max-w-[800px] text-left"
+      className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
