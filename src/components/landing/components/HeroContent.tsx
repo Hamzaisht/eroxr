@@ -54,8 +54,11 @@ export const HeroContent = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.6 }}
       >
-        <GlowingButton asChild>
-          <Link to="/register">
+        <GlowingButton 
+          asChild 
+          className="rounded-full text-lg h-14 px-8 font-semibold tracking-wider" 
+        >
+          <Link to="/register" className="flex items-center">
             Start Creating
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>

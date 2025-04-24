@@ -50,7 +50,7 @@ export const GlowingButton = React.forwardRef<HTMLButtonElement, GlowingButtonPr
           asChild 
           size="lg"
           className={cn(
-            "text-lg h-14 px-8 relative z-10 bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-500",
+            "text-lg h-14 px-8 relative z-10 rounded-full bg-gradient-to-r from-luxury-primary to-luxury-accent hover:from-luxury-accent hover:to-luxury-primary transition-all duration-500",
             className
           )}
           {...props}
