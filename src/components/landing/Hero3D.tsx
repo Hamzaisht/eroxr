@@ -40,22 +40,21 @@ export const Hero3D = () => {
   }, []);
 
   return (
-    <>
+    <div className="relative w-full min-h-[80vh] lg:min-h-screen flex flex-col">
       {/* Hero Background */}
-      <div className="absolute inset-0 bg-cover bg-center" style={{
+      <div className="absolute inset-0 bg-cover bg-center z-0" style={{
         backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.9), rgba(22, 27, 34, 0.95))'
       }} />
       
       {/* Background Video */}
       {videoUrl && (
-        <div className="absolute inset-0 w-full h-full">
+        <div className="absolute inset-0 w-full h-full z-[-1]">
           <video
             autoPlay
             playsInline
             muted
             loop
             className="w-full h-full object-cover"
-            style={{ zIndex: -1 }}
           >
             <source src={videoUrl} type="video/mp4" />
           </video>
@@ -63,7 +62,10 @@ export const Hero3D = () => {
       )}
       
       <HeroNavigation headerBg={headerBg} />
-      <HeroContent />
-    </>
+      
+      <div className="flex-1 flex items-center justify-center lg:justify-start px-4 lg:px-16 py-12">
+        <HeroContent />
+      </div>
+    </div>
   );
 };

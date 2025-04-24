@@ -6,7 +6,7 @@ export const HeroSection = () => {
   return (
     <section className="relative min-h-screen w-full overflow-hidden">
       <BackgroundEffects />
-      <div className="container mx-auto max-w-[1400px] relative z-10">
+      <div className="container mx-auto max-w-[1400px] h-full relative z-10">
         <Hero3D />
       </div>
     </section>

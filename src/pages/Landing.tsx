@@ -14,7 +14,7 @@ const PlatformPreview = lazy(() => import("@/components/landing/PlatformPreview"
 
 // Loading placeholder with skeleton UI
 const LoadingSection = () => (
-  <div className="h-screen w-full flex items-center justify-center bg-luxury-dark">
+  <div className="h-[60vh] lg:h-screen w-full flex items-center justify-center bg-luxury-dark">
     <div className="space-y-8 w-full max-w-4xl mx-auto px-4">
       <div className="h-12 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
       <div className="h-64 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
@@ -28,7 +28,7 @@ const Landing = () => {
     <LazyMotion features={domAnimation}>
       <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white">
         {/* Hero Section - Immediate Load */}
-        <motion.div initial={{ opacity: 1 }}>
+        <motion.div initial={{ opacity: 1 }} className="w-full">
           <HeroSection />
         </motion.div>
 
@@ -39,6 +39,7 @@ const Landing = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
+            className="w-full"
           >
             <AnimatedStats />
           </motion.div>
@@ -51,6 +52,7 @@ const Landing = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
+            className="w-full"
           >
             <PlatformPreview />
           </motion.div>
@@ -63,6 +65,7 @@ const Landing = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
+            className="w-full"
           >
             <CreatorCategories />
           </motion.div>
@@ -75,6 +78,7 @@ const Landing = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
+            className="w-full"
           >
             <Features3D />
           </motion.div>
@@ -87,6 +91,7 @@ const Landing = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
+            className="w-full"
           >
             <CreatorShowcase />
           </motion.div>
@@ -99,6 +104,7 @@ const Landing = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
+            className="w-full"
           >
             <InteractiveFeatures />
           </motion.div>
