@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { MessageInput } from '../MessageInput';
 import { useChatActions } from './ChatActions';
@@ -77,9 +76,9 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
     handleMediaSelect();
   };
   
-  // Create a wrapper function for handleSnapCapture with a dummy parameter
+  // Update the handleSnapStart function to provide the required argument
   const handleSnapStart = () => {
-    handleSnapCapture("dummy-url");
+    handleSnapCapture(recipientId);
   };
 
   return (

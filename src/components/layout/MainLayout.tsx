@@ -5,19 +5,21 @@ import { BackgroundEffects } from "./BackgroundEffects";
 import { InteractiveNav } from "./InteractiveNav";
 import { MainContent } from "./components/MainContent";
 import { FloatingActionMenu } from "./FloatingActionMenu";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 export const MainLayout = () => {
   const session = useSession();
   const location = useLocation();
   const isErosRoute = location.pathname.includes('/shorts');
-
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  
   if (!session) return null;
 
   return (
-    <div className="flex min-h-screen w-full bg-[#0D1117]">
+    <div className="flex min-h-screen w-full bg-[#0D1117] overflow-x-hidden">
       <InteractiveNav />
       
-      <div className="flex-1 ml-[60px] md:ml-[220px] min-h-screen">
+      <div className={`flex-1 ${isMobile ? 'ml-0' : 'ml-[60px] md:ml-[220px]'} min-h-screen relative`}>
         {/* Background */}
         <div className="fixed inset-0 pointer-events-none">
           <BackgroundEffects />
