@@ -1,14 +1,13 @@
 
-import { BackgroundEffects } from "./sections/BackgroundEffects";
-import { Hero3D } from "./Hero3D";
-import { motion } from "framer-motion";
-import { MouseParallax } from "./components/MouseParallax";
 import { useRef, useEffect, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { Hero3D } from "./Hero3D";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 export const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Handle scroll progress
   useEffect(() => {
@@ -22,37 +21,21 @@ export const HeroSection = () => {
       setScrollProgress(Math.min(1, Math.max(0, scrollPosition / maxScroll)));
     };
     
-    // Check if mobile
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    
     window.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", checkMobile);
     
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", checkMobile);
     };
   }, []);
 
   return (
     <section ref={containerRef} className="relative w-full min-h-screen overflow-hidden">
-      <BackgroundEffects />
-      {!isMobile && (
-        <MouseParallax className="absolute inset-0 z-0">
-          <div className="absolute right-5 top-10 w-64 h-64 bg-luxury-primary/10 rounded-full filter blur-3xl" />
-          <div className="absolute left-1/3 bottom-40 w-96 h-96 bg-luxury-accent/10 rounded-full filter blur-3xl" />
-        </MouseParallax>
-      )}
-      
+      {/* Edge-to-edge hero content */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
-        className="w-full min-h-screen relative z-10 flex items-center justify-center px-4 sm:px-6 lg:px-8"
+        className="w-full min-h-screen relative z-10 flex items-center"
       >
         <Hero3D />
       </motion.div>

@@ -4,12 +4,13 @@ import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
 
-interface MagneticButtonProps extends Omit<HTMLMotionProps<"button">, "whileHover" | "whileTap" | "animate" | "transition"> {
+interface MagneticButtonProps {
   children: React.ReactNode;
   className?: string;
   magneticStrength?: number;
   asChild?: boolean;
   Component?: React.ElementType;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 export const MagneticButton = ({
@@ -17,7 +18,8 @@ export const MagneticButton = ({
   className,
   magneticStrength = 1,
   asChild = false,
-  Component: CustomComponent,
+  Component,
+  onClick,
   ...props
 }: MagneticButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -57,14 +59,16 @@ export const MagneticButton = ({
     setPosition({ x: 0, y: 0 });
     
     // Call the original onClick handler if provided
-    if (props.onClick) {
-      props.onClick(e);
+    if (onClick) {
+      onClick(e);
     }
   };
 
-  const Component = asChild ? CustomComponent : "button";
+  // Use the Component specified, or just a button if not specified
+  const ButtonComponent = asChild ? (Component || "button") : "button";
   
-  const motionProps: HTMLMotionProps<"button"> = {
+  // Separate motion props from other props to avoid type errors
+  const motionProps = {
     ref: buttonRef,
     className: cn("relative inline-block", className),
     onMouseMove: handleMouseMove,
@@ -86,11 +90,10 @@ export const MagneticButton = ({
     whileTap: {
       scale: 0.97,
     },
-    ...props
   };
 
   return (
-    <motion.button {...motionProps}>
+    <motion.button {...motionProps} {...props}>
       {children}
     </motion.button>
   );

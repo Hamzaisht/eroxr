@@ -47,12 +47,12 @@ const Landing = () => {
     <LazyMotion features={domAnimation}>
       <SmoothScroll>
         <div className="min-h-screen w-full bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark text-white">
-          {/* Remove container class to allow edge-to-edge design */}
+          {/* Full width hero section */}
           <motion.div initial={{ opacity: 1 }} className="w-full">
             <HeroSection />
           </motion.div>
 
-          {/* Content Sections */}
+          {/* Content Sections - All full width */}
           <div className="w-full">
             {/* Stats Section */}
             <Suspense fallback={<LoadingSection />}>

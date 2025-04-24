@@ -115,7 +115,6 @@ export const CustomCursor: React.FC<CursorProps> = ({
             width: isHovering ? "40px" : "12px", 
             height: isHovering ? "40px" : "12px",
             opacity: 0.7,
-            boxShadow: `0 0 10px ${color}, 0 0 20px ${color}`,
           }}
           animate={{
             opacity: isClicking ? 0.9 : 0.7,

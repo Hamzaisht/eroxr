@@ -25,10 +25,6 @@ export const BackgroundEffects = () => {
     
     // Set up WebGL gradient animation
     if (canvasRef.current) {
-      const density = 0.01; // The lower the value, the smoother the gradient
-      const saturation = 0.6;
-      const brightness = 0.8;
-      
       const gl = canvasRef.current.getContext('webgl');
         
       if (!gl) return;
@@ -102,11 +98,6 @@ export const BackgroundEffects = () => {
           
           // Mix colors based on noise and mouse
           vec3 color = mix(color1, color2, n + d * 0.2);
-          
-          // Add brightness and saturation adjustments
-          vec3 gray = vec3(dot(color, vec3(0.299, 0.587, 0.114)));
-          color = mix(gray, color, saturation);
-          color *= brightness;
           
           // Output final color with opacity
           gl_FragColor = vec4(color, 0.15);
@@ -213,18 +204,18 @@ export const BackgroundEffects = () => {
         className="absolute inset-0 z-0"
       />
       
-      {/* Grid Background */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_85%)] opacity-10" />
-      
-      {/* Animated Gradient Orbs */}
+      {/* Grid Background - No blur */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
+
+      {/* Animated Gradient Orbs - No blur */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div 
-          className="absolute -top-[5%] -right-[5%] h-[800px] w-[800px] rounded-full bg-luxury-primary/20 blur-[120px]" 
+          className="absolute -top-[5%] -right-[5%] h-[800px] w-[800px] rounded-full bg-luxury-primary/10"
           animate={{ 
             x: mousePosition.x * -30,
             y: mousePosition.y * -30,
             scale: [1, 1.05, 1],
-            opacity: [0.2, 0.25, 0.2]
+            opacity: [0.1, 0.15, 0.1]
           }}
           transition={{ 
             repeat: Infinity, 
@@ -233,12 +224,12 @@ export const BackgroundEffects = () => {
           }}
         />
         <motion.div 
-          className="absolute -bottom-[5%] -left-[5%] h-[800px] w-[800px] rounded-full bg-luxury-accent/20 blur-[120px]" 
+          className="absolute -bottom-[5%] -left-[5%] h-[800px] w-[800px] rounded-full bg-luxury-accent/10"
           animate={{ 
             x: mousePosition.x * 30,
             y: mousePosition.y * 30,
             scale: [1, 1.1, 1],
-            opacity: [0.2, 0.3, 0.2]
+            opacity: [0.1, 0.15, 0.1]
           }}
           transition={{ 
             repeat: Infinity, 
@@ -248,12 +239,12 @@ export const BackgroundEffects = () => {
           }}
         />
         
-        {/* Additional subtle orb */}
+        {/* Additional orb */}
         <motion.div 
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-luxury-secondary/10 blur-[150px]" 
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-luxury-secondary/5"
           animate={{ 
             scale: [1, 1.2, 1],
-            opacity: [0.1, 0.15, 0.1]
+            opacity: [0.05, 0.08, 0.05]
           }}
           transition={{ 
             repeat: Infinity, 
@@ -264,7 +255,8 @@ export const BackgroundEffects = () => {
       </div>
       
       {/* Main background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-luxury-dark/80 via-luxury-dark/60 to-luxury-dark/80" 
+      <div 
+        className="absolute inset-0 bg-gradient-to-b from-luxury-dark/50 via-luxury-dark/40 to-luxury-dark/50" 
         style={{
           opacity: Math.min(1, scrollPosition / 500)
         }}
@@ -273,11 +265,11 @@ export const BackgroundEffects = () => {
       {/* Subtle particle overlay */}
       <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay" />
       
-      {/* Subtle glow at the center */}
+      {/* Subtle glow at the center - No blur */}
       <div 
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-3xl max-h-96 bg-luxury-primary/5 rounded-full blur-3xl"
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-3xl max-h-96 bg-luxury-primary/5"
         style={{
-          background: `radial-gradient(circle at ${50 + mousePosition.x * 20}% ${50 + mousePosition.y * 20}%, rgba(155, 135, 245, 0.1), transparent 70%)`
+          background: `radial-gradient(circle at ${50 + mousePosition.x * 20}% ${50 + mousePosition.y * 20}%, rgba(155, 135, 245, 0.05), transparent 70%)`
         }}
       />
     </>

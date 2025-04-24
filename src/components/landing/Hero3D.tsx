@@ -6,7 +6,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { HeroNavigation } from "./components/HeroNavigation";
 import { HeroContent } from "./components/HeroContent";
-import { FloatingElements } from "./components/FloatingElements";
 import { ParticleBackground } from "./components/ParticleBackground";
 import { CustomCursor } from "./components/CustomCursor";
 
@@ -33,13 +32,17 @@ export const Hero3D = () => {
 
   useEffect(() => {
     const loadVideo = async () => {
-      const { data: { publicUrl } } = supabase
-        .storage
-        .from('landing-videos')
-        .getPublicUrl('background.mp4');
-      
-      if (publicUrl) {
-        setVideoUrl(publicUrl);
+      try {
+        const { data: { publicUrl } } = supabase
+          .storage
+          .from('landing-videos')
+          .getPublicUrl('background.mp4');
+        
+        if (publicUrl) {
+          setVideoUrl(publicUrl);
+        }
+      } catch (error) {
+        console.error("Error loading video:", error);
       }
     };
 
@@ -69,18 +72,10 @@ export const Hero3D = () => {
       {/* Particle Background */}
       <ParticleBackground />
       
-      {/* Hero Background */}
-      <motion.div 
-        className="absolute inset-0 bg-cover bg-center z-0" 
-        style={{
-          backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.5), rgba(22, 27, 34, 0.6))'
-        }} 
-      />
-      
-      {/* Background Video */}
+      {/* Background Video - Edge to Edge */}
       {videoUrl && (
         <motion.div 
-          className="absolute inset-0 w-full h-full z-[-1]"
+          className="absolute inset-0 w-full h-full z-[-1] overflow-hidden"
           style={{ opacity: videoOpacity }}
         >
           <video
@@ -89,29 +84,27 @@ export const Hero3D = () => {
             playsInline
             muted
             loop
-            className="w-full h-full object-cover"
+            className="absolute h-full w-full object-cover object-center"
           >
             <source src={videoUrl} type="video/mp4" />
           </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-luxury-dark/40 to-luxury-darker/60" />
         </motion.div>
       )}
-      
-      {/* Floating design elements */}
-      <FloatingElements />
       
       {/* Navigation */}
       <HeroNavigation headerBg={headerBg} />
       
       {/* Content */}
       <motion.div 
-        className="flex-1 flex items-center justify-center w-full max-w-[1440px] mx-auto"
+        className="flex-1 flex items-center w-full"
         style={{
           scale: contentScale,
           opacity: contentOpacity,
         }}
       >
         <motion.div 
-          className="w-full flex flex-col lg:flex-row items-center lg:items-start justify-between px-6 xl:px-8"
+          className="w-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
