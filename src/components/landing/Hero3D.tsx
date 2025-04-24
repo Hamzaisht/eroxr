@@ -40,10 +40,10 @@ export const Hero3D = () => {
   }, []);
 
   return (
-    <div className="relative w-full min-h-[80vh] lg:min-h-screen flex flex-col">
+    <div className="relative w-full min-h-screen flex flex-col">
       {/* Hero Background */}
       <div className="absolute inset-0 bg-cover bg-center z-0" style={{
-        backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.9), rgba(22, 27, 34, 0.95))'
+        backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.8), rgba(22, 27, 34, 0.9))'
       }} />
       
       {/* Background Video */}
@@ -63,7 +63,7 @@ export const Hero3D = () => {
       
       <HeroNavigation headerBg={headerBg} />
       
-      <div className="flex-1 flex items-center justify-center lg:justify-start px-4 lg:px-16 py-12">
+      <div className="flex-1 flex items-center justify-start px-6 xl:px-8">
         <HeroContent />
       </div>
     </div>

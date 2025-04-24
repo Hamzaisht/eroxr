@@ -4,9 +4,9 @@ import { Hero3D } from "./Hero3D";
 
 export const HeroSection = () => {
   return (
-    <section className="relative min-h-screen w-full overflow-hidden">
+    <section className="relative min-h-[100vh] w-full overflow-hidden">
       <BackgroundEffects />
-      <div className="container mx-auto max-w-[1400px] h-full relative z-10">
+      <div className="container mx-auto max-w-[1440px] min-h-screen px-6 xl:px-8 relative z-10">
         <Hero3D />
       </div>
     </section>

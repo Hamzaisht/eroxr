@@ -3,20 +3,17 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { useMediaQuery } from "@/hooks/use-mobile";
 
 export const HeroContent = () => {
-  const isMobile = useMediaQuery("(max-width: 640px)");
-  
   return (
     <motion.div 
-      className="w-full max-w-[700px] lg:max-w-[800px] text-left"
+      className="w-full max-w-[800px] text-left"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       <motion.h1 
-        className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 lg:mb-8 bg-gradient-to-r from-white via-luxury-primary to-luxury-accent bg-clip-text text-transparent"
+        className="text-5xl lg:text-6xl xl:text-7xl font-bold mb-8 bg-gradient-to-r from-white via-luxury-primary to-luxury-accent bg-clip-text text-transparent"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
@@ -25,7 +22,7 @@ export const HeroContent = () => {
       </motion.h1>
       
       <motion.p 
-        className="text-lg sm:text-xl lg:text-2xl text-luxury-neutral mb-8 lg:mb-10 max-w-[600px]"
+        className="text-xl lg:text-2xl text-luxury-neutral mb-10 max-w-[600px]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
@@ -34,15 +31,15 @@ export const HeroContent = () => {
       </motion.p>
 
       <motion.div 
-        className="flex flex-row items-center gap-4 lg:gap-6"
+        className="flex flex-row items-center gap-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.6 }}
       >
         <Button 
-          size={isMobile ? "default" : "lg"}
+          size="lg"
           asChild 
-          className="bg-luxury-primary hover:bg-luxury-primary/90 text-lg"
+          className="bg-luxury-primary hover:bg-luxury-primary/90 text-lg h-14 px-8"
         >
           <Link to="/register">
             Start Creating
@@ -50,10 +47,10 @@ export const HeroContent = () => {
           </Link>
         </Button>
         <Button 
-          size={isMobile ? "default" : "lg"}
+          size="lg"
           variant="outline" 
           asChild 
-          className="text-lg"
+          className="text-lg h-14 px-8"
         >
           <Link to="/about">
             Learn More
