@@ -61,7 +61,7 @@ const features = [
 export const Features3D = () => {
   return (
     <section className="py-20 lg:py-32 bg-luxury-dark overflow-hidden">
-      <div className="container relative">
+      <div className="container mx-auto max-w-[1400px] px-4 lg:px-6 relative">
         {/* Background Elements */}
         <div className="absolute inset-0 bg-luxury-gradient opacity-30 blur-3xl" />
         <div className="absolute -inset-x-40 -top-40 h-[500px] bg-gradient-to-r from-luxury-primary/20 to-luxury-secondary/20 blur-3xl rounded-full" />
@@ -86,7 +86,7 @@ export const Features3D = () => {
             </motion.p>
           </div>
           
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (

@@ -37,7 +37,7 @@ export const CreatorCategories = () => {
     <section className="py-24 bg-luxury-dark relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_85%)] opacity-10" />
       
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto max-w-[1400px] px-4 lg:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -54,7 +54,7 @@ export const CreatorCategories = () => {
 
         <div 
           ref={containerRef}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16"
+          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-8 mb-16"
         >
           {categories.map((category, index) => (
             <motion.div

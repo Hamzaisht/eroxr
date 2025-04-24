@@ -110,7 +110,7 @@ export const CreatorShowcase = () => {
 
   return (
     <section className="py-20 bg-luxury-dark">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto max-w-[1400px] px-4 lg:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -130,11 +130,11 @@ export const CreatorShowcase = () => {
           }}
           className="w-full"
         >
-          <CarouselContent>
+          <CarouselContent className="-ml-4">
             {renderCreatorCards()}
           </CarouselContent>
-          <CarouselPrevious className="hidden md:flex" />
-          <CarouselNext className="hidden md:flex" />
+          <CarouselPrevious className="hidden md:flex -left-16" />
+          <CarouselNext className="hidden md:flex -right-16" />
         </Carousel>
       </div>
     </section>
