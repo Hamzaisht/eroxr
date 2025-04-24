@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { HeroNavigation } from "./components/HeroNavigation";
 import { HeroContent } from "./components/HeroContent";
 import { FloatingElements } from "./components/FloatingElements";
+import { ParticleBackground } from "./components/ParticleBackground";
+import { CustomCursor } from "./components/CustomCursor";
 
 export const Hero3D = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -17,6 +19,8 @@ export const Hero3D = () => {
     ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 1)"]
   );
   const videoOpacity = useTransform(scrollY, [0, 300], [1, 0.3]);
+  const contentScale = useTransform(scrollY, [0, 200], [1, 0.95]);
+  const contentOpacity = useTransform(scrollY, [0, 300], [1, 0.8]);
   const session = useSession();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,15 +44,36 @@ export const Hero3D = () => {
     };
 
     loadVideo();
+
+    // Add event listener for user interaction to enable autoplay
+    const handleUserInteraction = () => {
+      if (videoRef.current && videoRef.current.paused) {
+        videoRef.current.play().catch(err => console.error("Video playback failed:", err));
+      }
+    };
+
+    window.addEventListener("click", handleUserInteraction);
+    window.addEventListener("touchstart", handleUserInteraction);
+
+    return () => {
+      window.removeEventListener("click", handleUserInteraction);
+      window.removeEventListener("touchstart", handleUserInteraction);
+    };
   }, []);
 
   return (
     <div className="relative w-full min-h-screen flex flex-col">
+      {/* Custom Cursor */}
+      <CustomCursor />
+      
+      {/* Particle Background */}
+      <ParticleBackground />
+      
       {/* Hero Background */}
       <motion.div 
         className="absolute inset-0 bg-cover bg-center z-0" 
         style={{
-          backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.6), rgba(22, 27, 34, 0.7))'
+          backgroundImage: 'linear-gradient(to bottom, rgba(13, 17, 23, 0.5), rgba(22, 27, 34, 0.6))'
         }} 
       />
       
@@ -78,7 +103,13 @@ export const Hero3D = () => {
       <HeroNavigation headerBg={headerBg} />
       
       {/* Content */}
-      <div className="flex-1 flex items-center justify-center w-full max-w-[1440px] mx-auto">
+      <motion.div 
+        className="flex-1 flex items-center justify-center w-full max-w-[1440px] mx-auto"
+        style={{
+          scale: contentScale,
+          opacity: contentOpacity,
+        }}
+      >
         <motion.div 
           className="w-full flex flex-col lg:flex-row items-center lg:items-start justify-between px-6 xl:px-8"
           initial={{ opacity: 0, y: 20 }}
@@ -87,7 +118,7 @@ export const Hero3D = () => {
         >
           <HeroContent />
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -1,10 +1,12 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import { useState } from "react";
 import { GlowingButton } from "./GlowingButton";
-import { AnimatedText } from "./AnimatedText";
+import { AnimatedGradientText } from "./AnimatedGradientText";
+import { MagneticButton } from "./MagneticButton";
 
 export const HeroContent = () => {
   const [isHovered, setIsHovered] = useState(false);
@@ -16,26 +18,41 @@ export const HeroContent = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="mb-2 flex items-center space-x-2">
-        <div className="flex items-center px-3 py-1 rounded-full bg-luxury-primary/10 border border-luxury-primary/20">
+      <div className="mb-4 flex items-center space-x-2">
+        <motion.div 
+          className="flex items-center px-3 py-1 rounded-full bg-luxury-primary/10 border border-luxury-primary/20"
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+        >
           <Star className="h-3.5 w-3.5 text-luxury-primary mr-1.5" />
-          <span className="text-sm font-medium text-luxury-neutral">
+          <motion.span 
+            className="text-sm font-medium text-luxury-neutral"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
             Trusted by 10,000+ creators worldwide
-          </span>
-        </div>
+          </motion.span>
+        </motion.div>
       </div>
       
       <motion.h1 
-        className="text-5xl lg:text-6xl xl:text-7xl font-bold mb-8 bg-clip-text text-transparent relative z-10"
-        style={{
-          backgroundImage: 'linear-gradient(135deg, #fff 0%, rgba(155, 135, 245, 0.8) 50%, rgba(217, 70, 239, 0.8) 100%)',
-        }}
+        className="text-5xl lg:text-6xl xl:text-7xl font-bold mb-8 relative z-10"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <AnimatedText text="Connect With Your" />
-        <AnimatedText text="Audience" delay={0.5} className="bg-gradient-to-r from-luxury-primary to-luxury-accent bg-clip-text text-transparent" />
+        <AnimatedGradientText 
+          text="Connect With Your"
+          gradient="from-white via-luxury-primary to-white"
+          className="block mb-3"
+        />
+        <AnimatedGradientText 
+          text="Audience" 
+          delay={0.5}
+          gradient="from-luxury-primary via-luxury-accent to-luxury-primary"
+          className="block"
+        />
       </motion.h1>
       
       <motion.p 
@@ -53,55 +70,71 @@ export const HeroContent = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.6 }}
       >
-        <GlowingButton 
-          asChild 
-          className="rounded-full text-lg h-14 px-8 font-semibold tracking-wider group" 
-        >
-          <Link to="/register" className="flex items-center justify-center">
-            Start Creating
-            <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </GlowingButton>
-        
-        <Button 
-          size="lg"
-          variant="outline" 
-          asChild 
-          className="text-lg h-14 px-8 rounded-full backdrop-blur-sm border-luxury-neutral/20 bg-luxury-dark/40 hover:bg-luxury-primary/10 hover:border-luxury-primary/30 transition-all duration-500"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <motion.div
-            animate={isHovered ? { scale: 1.02 } : { scale: 1 }}
-            transition={{ duration: 0.3 }}
+        <MagneticButton magneticStrength={0.5}>
+          <GlowingButton 
+            asChild 
+            className="rounded-full text-lg h-14 px-8 font-semibold tracking-wider group" 
           >
-            <Link to="/about" className="flex items-center">
-              Learn More
+            <Link to="/register" className="flex items-center justify-center">
+              Start Creating
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
-          </motion.div>
-        </Button>
+          </GlowingButton>
+        </MagneticButton>
+        
+        <MagneticButton magneticStrength={0.3}>
+          <Button 
+            size="lg"
+            variant="outline" 
+            asChild 
+            className="text-lg h-14 px-8 rounded-full backdrop-blur-sm border-luxury-neutral/20 bg-luxury-dark/40 hover:bg-luxury-primary/10 hover:border-luxury-primary/30 transition-all duration-500"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <motion.div
+              animate={isHovered ? { scale: 1.02 } : { scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Link to="/about" className="flex items-center">
+                Learn More
+              </Link>
+            </motion.div>
+          </Button>
+        </MagneticButton>
       </motion.div>
       
       <motion.div 
-        className="mt-12 flex items-center gap-4"
+        className="mt-16 flex items-center gap-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
-        <div className="flex -space-x-2">
+        <div className="flex -space-x-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="w-8 h-8 rounded-full border-2 border-luxury-dark bg-gray-200 overflow-hidden">
+            <motion.div 
+              key={i} 
+              className="w-10 h-10 rounded-full border-2 border-luxury-dark bg-gray-200 overflow-hidden"
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.8 + (i * 0.1), duration: 0.5 }}
+              whileHover={{ y: -5, scale: 1.1, zIndex: 10 }}
+            >
               <img 
                 src={`https://i.pravatar.cc/100?img=${i+10}`} 
                 alt="User avatar" 
                 className="w-full h-full object-cover"
               />
-            </div>
+            </motion.div>
           ))}
         </div>
-        <p className="text-sm text-luxury-neutral/80">
+        <motion.p 
+          className="text-sm text-luxury-neutral/80"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 1.2, duration: 0.5 }}
+        >
           <span className="font-semibold text-white">1,200+ creators</span> joined in the last month
-        </p>
+        </motion.p>
       </motion.div>
     </motion.div>
   );

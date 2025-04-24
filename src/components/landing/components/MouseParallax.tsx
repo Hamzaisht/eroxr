@@ -1,6 +1,7 @@
 
-import React, { useState, useEffect, ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef, ReactNode } from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface MouseParallaxProps {
   children: ReactNode;
@@ -8,52 +9,64 @@ interface MouseParallaxProps {
   strength?: number;
 }
 
-export const MouseParallax: React.FC<MouseParallaxProps> = ({ 
+export const MouseParallax = ({ 
   children, 
-  className = "",
-  strength = 0.05
-}) => {
+  className, 
+  strength = 0.03 
+}: MouseParallaxProps) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const prevMousePosition = useRef({ x: 0, y: 0 });
+  const isEnabled = useRef(true);
+
   useEffect(() => {
+    // Disable on mobile devices
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      isEnabled.current = false;
+      return;
+    }
+
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: e.clientX,
-        y: e.clientY
-      });
+      if (!isEnabled.current || !containerRef.current) return;
+
+      const { clientX, clientY } = e;
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      
+      // Convert to normalized coordinates (-1 to 1)
+      const x = (clientX / width) * 2 - 1;
+      const y = (clientY / height) * 2 - 1;
+      
+      // Apply smoothing by averaging with previous position
+      const smoothedX = (x * 0.3) + (prevMousePosition.current.x * 0.7);
+      const smoothedY = (y * 0.3) + (prevMousePosition.current.y * 0.7);
+      
+      setMousePosition({ x: smoothedX, y: smoothedY });
+      prevMousePosition.current = { x: smoothedX, y: smoothedY };
     };
     
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
+    // Handle visibility change
+    const handleVisibilityChange = () => {
+      isEnabled.current = document.visibilityState === "visible";
     };
     
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('resize', handleResize);
-    
-    // Initialize window size
-    handleResize();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("mousemove", handleMouseMove);
     
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('resize', handleResize);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("mousemove", handleMouseMove);
     };
   }, []);
-  
-  const x = windowSize.width > 0 ? (mousePosition.x / windowSize.width - 0.5) * strength : 0;
-  const y = windowSize.height > 0 ? (mousePosition.y / windowSize.height - 0.5) * strength : 0;
-  
+
   return (
-    <motion.div 
-      className={className}
+    <motion.div
+      ref={containerRef}
+      className={cn("relative", className)}
       style={{
-        x: x * -100,
-        y: y * -100,
+        x: mousePosition.x * -strength * 100,
+        y: mousePosition.y * -strength * 100,
+        transition: "transform 0.15s ease-out",
       }}
-      transition={{ type: 'spring', stiffness: 75, damping: 30, mass: 0.5 }}
     >
       {children}
     </motion.div>
