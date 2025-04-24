@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from "react";
 import { motion, LazyMotion, domAnimation } from "framer-motion";
 import HeroSection from "@/components/landing/HeroSection";

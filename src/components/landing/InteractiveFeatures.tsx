@@ -1,3 +1,4 @@
+
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
@@ -107,7 +108,7 @@ export const InteractiveFeatures = () => {
   return (
     <section className="py-20 bg-luxury-dark relative">
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
-      <div className="container mx-auto px-4 relative">
+      <div className="container mx-auto max-w-[1400px] px-4 lg:px-6 relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
