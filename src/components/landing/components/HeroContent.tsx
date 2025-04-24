@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -56,11 +55,11 @@ export const HeroContent = () => {
       >
         <GlowingButton 
           asChild 
-          className="rounded-full text-lg h-14 px-8 font-semibold tracking-wider" 
+          className="rounded-full text-lg h-14 px-8 font-semibold tracking-wider group" 
         >
-          <Link to="/register" className="flex items-center">
+          <Link to="/register" className="flex items-center justify-center">
             Start Creating
-            <ArrowRight className="ml-2 h-5 w-5" />
+            <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </GlowingButton>
         
@@ -68,7 +67,7 @@ export const HeroContent = () => {
           size="lg"
           variant="outline" 
           asChild 
-          className="text-lg h-14 px-8 backdrop-blur-sm border-luxury-neutral/20 bg-luxury-dark/40 hover:bg-luxury-primary/10 hover:border-luxury-primary/30 transition-all duration-500"
+          className="text-lg h-14 px-8 rounded-full backdrop-blur-sm border-luxury-neutral/20 bg-luxury-dark/40 hover:bg-luxury-primary/10 hover:border-luxury-primary/30 transition-all duration-500"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
