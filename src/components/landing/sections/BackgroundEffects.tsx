@@ -6,7 +6,7 @@ export const BackgroundEffects = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollPosition, setScrollPosition] = useState(0);
   const requestRef = useRef<number>(0);
-  const gradientRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -24,19 +24,18 @@ export const BackgroundEffects = () => {
     window.addEventListener('scroll', handleScroll);
     
     // Set up WebGL gradient animation
-    if (gradientRef.current) {
+    if (canvasRef.current) {
       const density = 0.01; // The lower the value, the smoother the gradient
       const saturation = 0.6;
       const brightness = 0.8;
       
-      const gl = (gradientRef.current as HTMLCanvasElement)
-        .getContext('webgl') as WebGLRenderingContext;
+      const gl = canvasRef.current.getContext('webgl');
         
       if (!gl) return;
       
       // Set canvas dimensions
-      gradientRef.current.width = window.innerWidth;
-      gradientRef.current.height = window.innerHeight;
+      canvasRef.current.width = window.innerWidth;
+      canvasRef.current.height = window.innerHeight;
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
       
       // Create shaders
@@ -182,10 +181,10 @@ export const BackgroundEffects = () => {
       
       // Handle window resize
       const handleResize = () => {
-        if (!gradientRef.current) return;
+        if (!canvasRef.current) return;
         
-        gradientRef.current.width = window.innerWidth;
-        gradientRef.current.height = window.innerHeight;
+        canvasRef.current.width = window.innerWidth;
+        canvasRef.current.height = window.innerHeight;
         
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
@@ -210,7 +209,7 @@ export const BackgroundEffects = () => {
     <>
       {/* WebGL Gradient Background */}
       <canvas 
-        ref={gradientRef} 
+        ref={canvasRef} 
         className="absolute inset-0 z-0"
       />
       

@@ -1,10 +1,10 @@
 
 import React, { useRef, useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
 
-interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface MagneticButtonProps extends Omit<HTMLMotionProps<"button">, "whileHover" | "whileTap" | "animate" | "transition"> {
   children: React.ReactNode;
   className?: string;
   magneticStrength?: number;
@@ -64,31 +64,33 @@ export const MagneticButton = ({
 
   const Component = asChild ? CustomComponent : "button";
   
+  const motionProps: HTMLMotionProps<"button"> = {
+    ref: buttonRef,
+    className: cn("relative inline-block", className),
+    onMouseMove: handleMouseMove,
+    onMouseLeave: handleMouseLeave,
+    onClick: handleClick,
+    animate: {
+      x: position.x,
+      y: position.y,
+    },
+    transition: {
+      type: "spring",
+      stiffness: 150,
+      damping: 15,
+      mass: 0.1,
+    },
+    whileHover: {
+      scale: 1.05,
+    },
+    whileTap: {
+      scale: 0.97,
+    },
+    ...props
+  };
+
   return (
-    <motion.button
-      ref={buttonRef}
-      className={cn("relative inline-block", className)}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      animate={{
-        x: position.x,
-        y: position.y,
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 150,
-        damping: 15,
-        mass: 0.1,
-      }}
-      whileHover={{
-        scale: 1.05,
-      }}
-      whileTap={{
-        scale: 0.97,
-      }}
-      {...props}
-    >
+    <motion.button {...motionProps}>
       {children}
     </motion.button>
   );
