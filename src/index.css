@@ -1,449 +1,88 @@
 
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-@import './styles/animations.css';
-
-/* GLOBAL SCROLLBAR POLISH */
-::-webkit-scrollbar {
-  width: 8px;
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, rgba(155, 135, 245, 0.12), rgba(217,70,239,0.17));
-  border-radius: 8px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, rgba(155, 135, 245, 0.33), rgba(217,70,239,0.37));
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-body,
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(155,135,245,0.18) transparent;
-}
-html {
-  overflow-x: hidden;
-}
-
-/* Background noise pattern */
-.bg-noise {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 252 87% 74%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 19% 27%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 19% 27%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217 19% 27%;
-    --accent-foreground: 210 40% 98%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 19% 27%;
-    --input: 217 19% 27%;
-    --ring: 252 87% 74%;
-    --radius: 0.75rem;
-    --mouse-x: 0px;
-    --mouse-y: 0px;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5% 64.9%;
+    --radius: 0.5rem;
   }
 
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0D1117;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #9b87f5;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D946EF;
+}
+
+body {
+  background-color: #0D1117;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+@layer base {
   * {
     @apply border-border;
   }
-  
-  html {
-    @apply h-full antialiased overflow-x-hidden scroll-smooth;
-  }
-
   body {
-    @apply bg-gradient-to-b from-[#0D1117] via-[#161B22] to-[#0D1117] text-white min-h-screen;
-  }
-
-  #root {
-    @apply min-h-screen flex flex-col;
-  }
-}
-
-@layer components {
-  .eroxr-logo {
-    @apply relative text-3xl font-bold;
-    text-shadow: 0 0 20px rgba(155, 135, 245, 0.5);
-    background: linear-gradient(
-      to right,
-      #9b87f5,
-      #D946EF,
-      #9b87f5
-    );
-    background-size: 200% auto;
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: shine 3s linear infinite;
-  }
-
-  @keyframes shine {
-    to {
-      background-position: 200% center;
-    }
-  }
-
-  .nav-item-liquid {
-    @apply relative overflow-hidden rounded-lg transition-all duration-300;
-    
-    &::before {
-      content: '';
-      @apply absolute inset-0 bg-gradient-to-r from-luxury-primary/20 to-luxury-accent/20 opacity-0 transition-opacity duration-300;
-    }
-    
-    &:hover::before {
-      @apply opacity-100;
-    }
-    
-    &::after {
-      content: '';
-      @apply absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-luxury-primary to-luxury-accent transform scale-x-0 transition-transform duration-300 origin-left;
-    }
-    
-    &:hover::after {
-      @apply scale-x-100;
-    }
-  }
-  
-  .glass-morph {
-    @apply backdrop-blur-xl bg-white/5 border border-white/10;
-    box-shadow: 
-      0 4px 12px rgba(0, 0, 0, 0.1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  }
-
-  .bg-gradient-blur {
-    @apply relative overflow-hidden;
-    &::before {
-      content: '';
-      @apply absolute inset-0 bg-gradient-to-r from-luxury-primary/20 to-luxury-accent/20 blur-3xl opacity-50;
-      transform: translate(-50%, -50%) rotate(-45deg);
-    }
-  }
-
-  .glass-morph-from-glow {
-    @apply rounded-2xl bg-luxury-dark/60 shadow-lg backdrop-blur-xl border border-luxury-primary/10;
-    border: 1.5px solid rgba(155, 135, 245, 0.05);
-  }
-  
-  .futuristic-card {
-    @apply relative overflow-hidden rounded-xl border border-luxury-primary/20 bg-luxury-dark/30 backdrop-blur-xl;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .futuristic-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      135deg,
-      rgba(155, 135, 245, 0) 0%,
-      rgba(155, 135, 245, 0.05) 50%,
-      rgba(217, 70, 239, 0.05) 100%
-    );
-    z-index: -1;
-  }
-  
-  .futuristic-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5);
-    border-color: rgba(155, 135, 245, 0.4);
-  }
-}
-
-@layer utilities {
-  .hover-scale {
-    @apply transition-transform duration-500 hover:scale-105;
-  }
-
-  .fade-in {
-    @apply animate-[fadeIn_0.7s_ease-in-out];
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes edge-pulse {
-    0% {
-      opacity: 0.4;
-      transform: scale(0.98) translateZ(0);
-      filter: drop-shadow(0 0 20px rgba(155, 135, 245, 0.5));
-      box-shadow: 
-        0 0 30px rgba(155, 135, 245, 0.4),
-        0 0 60px rgba(217, 70, 239, 0.3);
-    }
-    50% {
-      opacity: 0.6;
-      transform: scale(1.02) translateZ(0);
-      filter: drop-shadow(0 0 30px rgba(217, 70, 239, 0.7));
-      box-shadow: 
-        0 0 50px rgba(155, 135, 245, 0.6),
-        0 0 100px rgba(217, 70, 239, 0.5);
-    }
-    100% {
-      opacity: 0.4;
-      transform: scale(0.98) translateZ(0);
-      filter: drop-shadow(0 0 20px rgba(155, 135, 245, 0.5));
-      box-shadow: 
-        0 0 30px rgba(155, 135, 245, 0.4),
-        0 0 60px rgba(217, 70, 239, 0.3);
-    }
-  }
-
-  @keyframes edge-glow {
-    0% {
-      filter: blur(2px) drop-shadow(0 0 20px rgba(155, 135, 245, 0.5));
-      opacity: 0.4;
-      box-shadow: 
-        0 0 35px rgba(155, 135, 245, 0.5),
-        0 0 70px rgba(217, 70, 239, 0.4);
-    }
-    50% {
-      filter: blur(3px) drop-shadow(0 0 35px rgba(217, 70, 239, 0.7));
-      opacity: 0.6;
-      box-shadow: 
-        0 0 60px rgba(155, 135, 245, 0.6),
-        0 0 120px rgba(217, 70, 239, 0.5);
-    }
-    100% {
-      filter: blur(2px) drop-shadow(0 0 20px rgba(155, 135, 245, 0.5));
-      opacity: 0.4;
-      box-shadow: 
-        0 0 35px rgba(155, 135, 245, 0.5),
-        0 0 70px rgba(217, 70, 239, 0.4);
-    }
-  }
-
-  @keyframes float-up {
-    0% {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(-100px) scale(1.5);
-      opacity: 0;
-    }
-  }
-
-  .floating-heart {
-    position: absolute;
-    bottom: 20%;
-    left: 50%;
-    font-size: 24px;
-    animation: float-up 2s ease-out forwards;
-    pointer-events: none;
-  }
-
-  .video-container {
-    position: relative;
-    overflow: hidden;
-  }
-
-  @keyframes pulse-ring {
-    0% {
-      transform: scale(0.8);
-      opacity: 0.5;
-    }
-    100% {
-      transform: scale(1.2);
-      opacity: 0;
-    }
-  }
-
-  .animate-pulse-ring {
-    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .animate-neon-glow {
-    animation: neonGlow 2s ease-in-out infinite;
-  }
-
-  @keyframes neonGlow {
-    0%, 100% {
-      box-shadow: 
-        0 0 5px rgba(155, 135, 245, 0.5),
-        0 0 10px rgba(155, 135, 245, 0.3),
-        0 0 15px rgba(155, 135, 245, 0.2);
-    }
-    50% {
-      box-shadow: 
-        0 0 10px rgba(217, 70, 239, 0.5),
-        0 0 20px rgba(217, 70, 239, 0.3),
-        0 0 30px rgba(217, 70, 239, 0.2);
-    }
-  }
-
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Hide scrollbar for IE, Edge and Firefox */
-  .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-
-  .animate-text-move {
-    background-size: 200% 200% !important;
-    animation: text-move 2.2s linear infinite;
-  }
-
-  .animate-glow-move {
-    animation: glow-move 3.2s ease-in-out infinite;
-  }
-
-  .neon-underline-gradient {
-    background: linear-gradient(90deg, #D946EF 0%, #9b87f5 100%);
-    opacity: 0.66;
-    filter: blur(1px);
-    height: 3px !important;
-    display: block;
-    width: 100%;
-  }
-
-  .neon-text-shadow {
-    text-shadow:
-      0px 0px 8px #D946EF50,
-      0px 2px 22px #9b87f580,
-      0 0 4px #fff7;
-  }
-
-  .drop-shadow-glow {
-    filter: drop-shadow(0 0 10px #D946EFCC) drop-shadow(0 0 2px #9b87f5aa) !important;
-  }
-
-  .shadow-neon {
-    box-shadow: 0 0 8px #7E69AB22, 0 3px 16px #9b87f533;
-  }
-
-  .shadow-neon-lg {
-    box-shadow: 0 4px 32px #D946EF33, 0 0 12px #9b87f555;
-  }
-
-  .neon-blur-text {
-    text-shadow:
-      0 0 8px #9b87f599,
-      0 0 10px #D946EF44;
-    filter: blur(0.2px);
-  }
-
-  .neon-tab {
-    position: relative;
-    z-index: 1;
-    overflow: visible;
-    color: #d6bcfa;
-    font-weight: 700;
-    transition: color 0.18s;
-  }
-
-  .neon-tab[data-state='active'] {
-    color: #fff;
-    font-weight: 800;
-    text-shadow:
-      0 0 10px #D946EFcc,
-      0 0 18px #9b87f5cc;
-    background:
-        linear-gradient(90deg, #D946EF55 0%, #9b87f522 100%) !important;
-    box-shadow: 0 0 6px #9b87f533;
-  }
-
-  .animate-shine {
-    background-size: 200% 100%;
-    animation: shine 2.7s linear infinite;
-  }
-
-  .animate-spin-slow {
-    animation: spin-slow 4.5s linear infinite;
-  }
-
-  .animate-fade-in {
-    animation: fade-in 1.4s cubic-bezier(.55,.16,.53,.96) 1 both;
-  }
-  
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-15px);
-    }
-  }
-  
-  .animate-cursor {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .animate-cursor::after {
-    content: "|";
-    position: absolute;
-    right: -4px;
-    animation: cursor 1s infinite step-start;
-  }
-  
-  @keyframes cursor {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-  
-  .animate-gradient-text {
-    background-size: 300% 300%;
-    animation: gradient-shift 8s ease infinite;
-  }
-  
-  @keyframes gradient-shift {
-    0% { background-position: 0% 50% }
-    50% { background-position: 100% 50% }
-    100% { background-position: 0% 50% }
-  }
-  
-  .animate-tilt {
-    transform-style: preserve-3d;
-  }
-  
-  .animate-tilt:hover {
-    transform: perspective(1000px) rotateX(5deg) rotateY(5deg);
-  }
-  
-  .clip-path-slant {
-    clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
-  }
-  
-  .clip-path-angular {
-    clip-path: polygon(0 10%, 100% 0, 100% 90%, 0 100%);
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }

@@ -2,6 +2,7 @@
 import { useSession } from "@supabase/auth-helpers-react";
 import { Navigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
+import Landing from "@/pages/Landing";
 
 const Index = () => {
   const session = useSession();
@@ -10,7 +11,10 @@ const Index = () => {
     return <LoadingScreen />;
   }
 
-  // Redirect to /home if not logged in, this can be changed to any other page
+  if (!session) {
+    return <Landing />;
+  }
+
   return <Navigate to="/home" replace />;
 };
 
