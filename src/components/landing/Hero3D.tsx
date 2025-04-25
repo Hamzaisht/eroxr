@@ -1,39 +1,19 @@
 
-import { useScroll, useTransform, motion, useMotionValueEvent } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect, useRef, useMemo, memo } from "react";
+import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
-import { HeroNavigation } from "./components/HeroNavigation";
-import { HeroContent } from "./components/HeroContent";
-import { ParticleBackground } from "./components/ParticleBackground";
 
 interface Hero3DProps {
   isActive?: boolean;
 }
 
-export const Hero3D = memo(({ isActive = true }: Hero3DProps) => {
+export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const { scrollY } = useScroll();
-  const headerBg = useTransform(
-    scrollY,
-    [0, 100],
-    ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 1)"]
-  );
-  const videoOpacity = useTransform(scrollY, [0, 300], [1, 0.3]);
-  const contentScale = useTransform(scrollY, [0, 200], [1, 0.95]);
-  const contentOpacity = useTransform(scrollY, [0, 300], [1, 0.8]);
   const session = useSession();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Optimize scroll event listener with useMotionValueEvent
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    if (!isActive) return;
-    // Performance optimization - no DOM updates in scroll handler
-    // Just track if we need to animate something based on scroll
-  });
 
   useEffect(() => {
     if (session) {
@@ -41,20 +21,13 @@ export const Hero3D = memo(({ isActive = true }: Hero3DProps) => {
     }
   }, [session, navigate]);
 
-  // Memoize video loading to prevent unnecessary re-renders
   useEffect(() => {
     if (!isActive) return;
 
     const loadVideo = async () => {
       try {
-        const { data: { publicUrl } } = supabase
-          .storage
-          .from('landing-videos')
-          .getPublicUrl('background.mp4');
-        
-        if (publicUrl) {
-          setVideoUrl(publicUrl);
-        }
+        // Replace this URL with your actual video URL
+        setVideoUrl('YOUR_VIDEO_URL');
       } catch (error) {
         console.error("Error loading video:", error);
       }
@@ -63,16 +36,8 @@ export const Hero3D = memo(({ isActive = true }: Hero3DProps) => {
     loadVideo();
   }, [isActive]);
 
-  // Handle video playback
   useEffect(() => {
     if (!isActive || !videoRef.current) return;
-
-    // Add event listener for user interaction to enable autoplay
-    const handleUserInteraction = () => {
-      if (videoRef.current && videoRef.current.paused) {
-        videoRef.current.play().catch(err => console.error("Video playback failed:", err));
-      }
-    };
 
     const handleVideoLoaded = () => {
       setVideoLoaded(true);
@@ -82,30 +47,18 @@ export const Hero3D = memo(({ isActive = true }: Hero3DProps) => {
       videoRef.current.addEventListener('loadeddata', handleVideoLoaded);
     }
 
-    window.addEventListener("click", handleUserInteraction);
-    window.addEventListener("touchstart", handleUserInteraction);
-
     return () => {
       if (videoRef.current) {
         videoRef.current.removeEventListener('loadeddata', handleVideoLoaded);
       }
-      window.removeEventListener("click", handleUserInteraction);
-      window.removeEventListener("touchstart", handleUserInteraction);
     };
   }, [isActive, videoRef.current]);
 
-  // Only render particles when section is active
-  const particles = useMemo(() => {
-    return isActive ? <ParticleBackground /> : null;
-  }, [isActive]);
-
   return (
-    <div className="relative w-full h-full flex flex-col">
-      {/* Background Video */}
+    <div className="relative w-full h-full">
       {videoUrl && (
         <motion.div 
-          className="absolute inset-0 w-full h-full z-[-1]"
-          style={{ opacity: videoOpacity }}
+          className="absolute inset-0 w-full h-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: videoLoaded ? 1 : 0 }}
           transition={{ duration: 1.5 }}
@@ -116,8 +69,7 @@ export const Hero3D = memo(({ isActive = true }: Hero3DProps) => {
             playsInline
             muted
             loop
-            className="absolute h-full w-full object-cover object-center"
-            style={{ opacity: videoLoaded ? 1 : 0 }}
+            className="absolute h-full w-full object-cover"
           >
             <source src={videoUrl} type="video/mp4" />
           </video>
@@ -125,23 +77,8 @@ export const Hero3D = memo(({ isActive = true }: Hero3DProps) => {
         </motion.div>
       )}
       
-      {/* Optimized particle background */}
-      {particles}
-      
-      {/* Content wrapper */}
-      <div className="relative flex-1 flex items-center w-full mx-auto max-w-[1920px] px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          className="w-full"
-          style={{
-            scale: contentScale,
-            opacity: contentOpacity,
-          }}
-        >
-          <HeroContent />
-        </motion.div>
-      </div>
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-luxury-dark/50 to-luxury-dark pointer-events-none" />
     </div>
   );
-});
-
-Hero3D.displayName = "Hero3D";
+};

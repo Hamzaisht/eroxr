@@ -117,16 +117,9 @@ const Landing = () => {
         <BackgroundEffects />
         
         {/* Full width hero section */}
-        <motion.div 
-          initial={{ opacity: isLoading ? 0 : 1 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="w-full"
-        >
-          <HeroSection />
-        </motion.div>
+        <HeroSection />
 
-        {/* Content Sections - All full width */}
+        {/* Content Sections */}
         <div className="w-full">
           {/* Stats Section - High priority */}
           <Suspense fallback={<LoadingSection />}>
