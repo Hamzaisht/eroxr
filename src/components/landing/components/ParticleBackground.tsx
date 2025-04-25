@@ -1,144 +1,86 @@
 
-import React, { useRef, useEffect, useState } from 'react';
-import { useMotionValue } from 'framer-motion';
+import { useRef, useEffect, useState, memo } from "react";
+import { motion, useMotionValue } from "framer-motion";
+import { useMouseParallax } from "@/hooks/use-mouse-parallax";
 
-interface ParticleBackgroundProps {
-  count?: number;
-  maxSpeed?: number;
-  mouseInfluence?: number;
-}
-
-export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
-  count = 50,
-  maxSpeed = 0.5,
-  mouseInfluence = 100
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const requestRef = useRef<number>(0);
+export const ParticleBackground = memo(() => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [particles, setParticles] = useState<Array<{x: number, y: number, size: number, speed: number, opacity: number}>>([]);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const [ready, setReady] = useState(false);
-  const [particles, setParticles] = useState<any[]>([]);
-  
-  // Initialize particles
+  const { x: parallaxX, y: parallaxY } = useMouseParallax(0.05, 30);
+
+  // Generate particles on mount
   useEffect(() => {
-    if (!canvasRef.current) return;
+    const newParticles = [];
+    const count = Math.min(window.innerWidth / 15, 80); // Adjust for performance
     
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Set canvas dimensions
-    const updateSize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    
-    // Generate particles
-    const newParticles = Array.from({ length: count }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: Math.random() * 1.5 + 0.5,
-      speedX: (Math.random() - 0.5) * maxSpeed,
-      speedY: (Math.random() - 0.5) * maxSpeed,
-      opacity: Math.random() * 0.5 + 0.1
-    }));
+    for (let i = 0; i < count; i++) {
+      newParticles.push({
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 2 + 0.5,
+        speed: Math.random() * 1 + 0.2,
+        opacity: Math.random() * 0.5 + 0.1
+      });
+    }
     
     setParticles(newParticles);
-    setReady(true);
     
-    return () => {
-      window.removeEventListener('resize', updateSize);
-      cancelAnimationFrame(requestRef.current);
-    };
-  }, [count, maxSpeed]);
-  
-  // Track mouse position
-  useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
+      const { clientX, clientY } = e;
+      
+      if (containerRef.current) {
+        const { left, top, width, height } = containerRef.current.getBoundingClientRect();
+        const x = (clientX - left) / width;
+        const y = (clientY - top) / height;
+        
+        mouseX.set(x);
+        mouseY.set(y);
+      }
     };
     
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [mouseX, mouseY]);
-  
-  // Animation loop
-  useEffect(() => {
-    if (!ready || !canvasRef.current || particles.length === 0) return;
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Update and draw particles
-      particles.forEach((particle, i) => {
-        // Update position
-        particle.x += particle.speedX;
-        particle.y += particle.speedY;
-        
-        // Mouse interaction
-        const mouseXVal = mouseX.get();
-        const mouseYVal = mouseY.get();
-        const dx = particle.x - mouseXVal;
-        const dy = particle.y - mouseYVal;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < mouseInfluence) {
-          const force = mouseInfluence / distance;
-          particle.x += dx * force * 0.02;
-          particle.y += dy * force * 0.02;
-        }
-        
-        // Wrap around screen
-        if (particle.x < 0) particle.x = canvas.width;
-        if (particle.x > canvas.width) particle.x = 0;
-        if (particle.y < 0) particle.y = canvas.height;
-        if (particle.y > canvas.height) particle.y = 0;
-        
-        // Draw particle
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(155, 135, 245, ${particle.opacity})`;
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Connect nearby particles
-        for (let j = i + 1; j < particles.length; j++) {
-          const otherParticle = particles[j];
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < 100) {
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(155, 135, 245, ${0.1 * (1 - distance / 100)})`;
-            ctx.lineWidth = 0.5;
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(otherParticle.x, otherParticle.y);
-            ctx.stroke();
-          }
-        }
-      });
-      
-      requestRef.current = requestAnimationFrame(animate);
-    };
-    
-    animate();
-    
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [ready, particles, mouseInfluence, mouseX, mouseY]);
-  
+  }, []);
+
   return (
-    <canvas 
-      ref={canvasRef} 
-      className="absolute inset-0 w-full h-full z-0 pointer-events-none"
-    />
+    <motion.div
+      ref={containerRef}
+      className="absolute inset-0 overflow-hidden"
+      style={{
+        x: parallaxX,
+        y: parallaxY
+      }}
+    >
+      <div className="h-full w-full absolute">
+        {particles.map((particle, index) => (
+          <motion.div
+            key={index}
+            className="absolute rounded-full bg-luxury-primary"
+            style={{
+              width: particle.size,
+              height: particle.size,
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+              opacity: particle.opacity,
+            }}
+            animate={{
+              y: ["0%", `${particle.speed * 50}%`],
+              opacity: [particle.opacity, 0],
+            }}
+            transition={{
+              duration: 5 + particle.speed * 5,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: index * 0.05,
+            }}
+          />
+        ))}
+      </div>
+    </motion.div>
   );
-};
+});
+
+ParticleBackground.displayName = "ParticleBackground";

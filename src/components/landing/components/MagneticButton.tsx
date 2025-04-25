@@ -2,7 +2,6 @@
 import React, { useRef, useState, useEffect, memo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useSoundEffects } from "@/hooks/use-sound-effects";
 
 interface MagneticButtonProps {
   children: React.ReactNode;
@@ -24,7 +23,6 @@ export const MagneticButton = memo(({
 }: MagneticButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const { playLikeSound } = useSoundEffects();
   
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!buttonRef.current) return;
@@ -52,9 +50,6 @@ export const MagneticButton = memo(({
   };
   
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Add click sound
-    playLikeSound();
-    
     // Reset position
     setPosition({ x: 0, y: 0 });
     

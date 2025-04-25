@@ -1,3 +1,4 @@
+
 import { useScroll, useTransform, motion, useMotionValueEvent } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef, useMemo, memo } from "react";
