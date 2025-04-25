@@ -66,6 +66,10 @@ export const useTypingEffect = (
     return () => clearTimeout(timeout);
   }, [text, speed, delay, loop, onComplete]);
   
+  const cursorElement = (isTyping || (!isDone && displayedText === '')) && (
+    <span className="animate-cursor">|</span>
+  );
+
   return {
     text: displayedText,
     isTyping,
@@ -74,9 +78,7 @@ export const useTypingEffect = (
     element: cursor ? (
       <span>
         {displayedText}
-        {(isTyping || (!isDone && displayedText === '')) && (
-          <span className="animate-cursor">|</span>
-        )}
+        {cursorElement}
       </span>
     ) : displayedText
   };
