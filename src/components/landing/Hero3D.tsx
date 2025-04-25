@@ -26,7 +26,7 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
 
     const loadVideo = async () => {
       try {
-        setVideoUrl('https://player.vimeo.com/external/551889567.hd.mp4?s=06f5dac6463643ed759d43c75a2983fc836ab99f&profile_id=174&oauth2_token_id=57447761');
+        setVideoUrl('https://player.vimeo.com/external/503631518.hd.mp4?s=73f65bff02bf8622e1af5d85b2327fcdd074ec94&profile_id=175&oauth2_token_id=57447761');
       } catch (error) {
         console.error("Error loading video:", error);
       }

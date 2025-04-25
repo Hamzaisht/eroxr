@@ -44,9 +44,9 @@ export const HeroSection = memo(() => {
         style={{ opacity, scale, y }}
         className="relative z-10 w-full"
       >
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Main content - left aligned */}
-          <div className="flex flex-col items-start text-left max-w-4xl">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Main content - left aligned with NO max width container */}
+          <div className="flex flex-col items-start text-left">
             {/* Animated trusted badge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
