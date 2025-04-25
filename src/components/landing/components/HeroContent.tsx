@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -7,8 +6,8 @@ import { memo } from "react";
 
 export const HeroContent = memo(() => {
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col items-start text-left max-w-3xl">
+    <div className="w-full">
+      <div className="flex flex-col items-start text-left max-w-3xl py-8 sm:py-12 lg:py-16">
         {/* Animated trusted badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

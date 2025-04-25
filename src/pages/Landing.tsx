@@ -98,7 +98,7 @@ const Landing = () => {
           {/* Stats Section - High priority */}
           <SectionWrapper>
             <LazySection 
-              component={AnimatedStats} 
+              component={AnimatedStats}
               fallback={<SectionLoading />}
             />
           </SectionWrapper>

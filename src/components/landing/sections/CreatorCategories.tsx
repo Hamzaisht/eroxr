@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,6 @@ export const CreatorCategories = () => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [dragConstraints, setDragConstraints] = useState({ right: 0 });
 
-  // Update drag constraints when window resizes
   useEffect(() => {
     const updateDragConstraints = () => {
       if (containerRef.current) {
@@ -61,17 +59,16 @@ export const CreatorCategories = () => {
 
   return (
     <section className="py-24 relative overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 bg-luxury-darker z-0">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
       </div>
       
-      <div className="mb-16 px-6">
+      <div className="w-full mb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center max-w-[800px] mx-auto"
+          className="text-center"
         >
           <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-luxury-primary to-luxury-accent bg-clip-text text-transparent mb-6">
             Create What You Want
@@ -82,7 +79,6 @@ export const CreatorCategories = () => {
         </motion.div>
       </div>
 
-      {/* Horizontal scroll section */}
       <motion.div 
         ref={containerRef}
         className="flex overflow-hidden cursor-grab active:cursor-grabbing"
@@ -112,7 +108,6 @@ export const CreatorCategories = () => {
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                  {/* Video or Image Background */}
                   <div className="absolute inset-0 group-hover:opacity-0 transition-opacity duration-500">
                     <img 
                       src={category.image}
@@ -121,7 +116,6 @@ export const CreatorCategories = () => {
                     />
                   </div>
                   
-                  {/* Video hover state */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                     <VideoPlayer
                       url={category.video}
@@ -133,11 +127,9 @@ export const CreatorCategories = () => {
                     />
                   </div>
                   
-                  {/* Overlay gradient */}
                   <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30 z-10`} />
                 </motion.div>
                 
-                {/* Content */}
                 <div className="absolute inset-0 z-20 p-8 flex flex-col justify-end">
                   <motion.h3 
                     className={`text-2xl font-bold text-white mb-2`}
@@ -188,7 +180,7 @@ export const CreatorCategories = () => {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-center mt-16 px-6"
+        className="text-center mt-16"
       >
         <Button
           size="lg"
