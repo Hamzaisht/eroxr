@@ -12,16 +12,20 @@ export const HeroSection = memo(() => {
     triggerOnce: false
   });
   
+  // Handle the ref connection in useEffect instead of inline
+  useEffect(() => {
+    if (containerRef.current) {
+      // Set the intersection observer ref to watch our container
+      if (elementRef && typeof elementRef === 'object' && 'current' in elementRef) {
+        // Only set if elementRef is a mutable ref object
+        elementRef.current = containerRef.current;
+      }
+    }
+  }, [elementRef, containerRef.current]);
+  
   return (
     <section 
-      ref={(node) => {
-        if (node) {
-          containerRef.current = node;
-          // We need to cast the node to any type to avoid TypeScript errors
-          // since the elementRef expects a different type
-          elementRef.current = node as any;
-        }
-      }} 
+      ref={containerRef} 
       className="relative min-h-[90vh] w-full overflow-hidden"
     >
       {/* Hero background */}
