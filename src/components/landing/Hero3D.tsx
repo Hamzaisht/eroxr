@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -55,7 +54,7 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   }, [isActive, videoRef.current]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="absolute inset-0 w-full h-full">
       {videoUrl && (
         <motion.div 
           className="absolute inset-0 w-full h-full"

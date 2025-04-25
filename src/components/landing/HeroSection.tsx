@@ -42,9 +42,9 @@ export const HeroSection = memo(() => {
       {/* Content container */}
       <motion.div 
         style={{ opacity, scale, y }}
-        className="relative z-10 container mx-auto px-4 h-full flex items-center"
+        className="relative z-10 h-full flex items-center px-6 lg:px-12"
       >
-        <div className="w-full max-w-[1200px] mx-auto grid lg:grid-cols-2 gap-12 items-center pt-28 lg:pt-0">
+        <div className="w-full max-w-[1400px] mx-auto grid lg:grid-cols-2 gap-12 items-center pt-28 lg:pt-0">
           {/* Left column - Text content */}
           <div className="text-center lg:text-left">
             {/* Animated trusted badge */}
