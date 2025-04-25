@@ -55,7 +55,7 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   }, [isActive, videoRef.current]);
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden">
+    <div className="fixed inset-0 w-[100vw] h-[100vh] overflow-hidden" style={{ left: 0, right: 0 }}>
       {videoUrl && (
         <motion.div 
           className="absolute inset-0 w-full h-full"
@@ -78,7 +78,7 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
       )}
       
       {/* Gradient overlay - full width and height */}
-      <div className="fixed inset-0 w-full h-full bg-gradient-radial from-transparent via-luxury-dark/50 to-luxury-dark pointer-events-none" />
+      <div className="fixed inset-0 w-[100vw] h-[100vh] bg-gradient-radial from-transparent via-luxury-dark/50 to-luxury-dark pointer-events-none" />
     </div>
   );
 };

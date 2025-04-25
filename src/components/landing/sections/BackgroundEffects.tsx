@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 export const BackgroundEffects = () => {
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden pointer-events-none">
+    <div className="fixed inset-0 w-[100vw] h-[100vh] overflow-hidden pointer-events-none">
       <div className="absolute inset-0 w-full h-full bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_80%)] opacity-5" />
       <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-luxury-dark/50 via-luxury-darker/30 to-luxury-dark/50" />
       <motion.div

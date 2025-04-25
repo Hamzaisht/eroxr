@@ -22,10 +22,11 @@ export const HeroSection = memo(() => {
   return (
     <section 
       ref={ref}
-      className="relative min-h-screen w-screen overflow-hidden"
+      className="relative min-h-[100vh] w-[100vw] overflow-hidden"
+      style={{ margin: 0, padding: 0 }}
     >
       {/* Hero background with 3D elements */}
-      <div className="absolute inset-0 w-full h-full">
+      <div className="absolute inset-0 w-[100vw] h-full">
         <motion.div 
           className="w-full h-full"
           initial={{ opacity: 0 }}
@@ -42,10 +43,10 @@ export const HeroSection = memo(() => {
       {/* Content container - Full width */}
       <motion.div 
         style={{ opacity, scale, y }}
-        className="relative z-10 min-h-screen flex items-center w-full"
+        className="relative z-10 min-h-screen flex items-center w-[100vw]"
       >
         <div className="w-full">
-          <div className="grid lg:grid-cols-2 gap-12 items-center pt-28 lg:pt-0 px-6 lg:px-16 xl:px-24 max-w-[1920px] mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center pt-28 lg:pt-0 px-6 lg:px-16 xl:px-24 mx-auto">
             {/* Left column - Text content */}
             <div className="text-center lg:text-left">
               {/* Animated trusted badge */}
