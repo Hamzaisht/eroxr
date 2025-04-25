@@ -1,7 +1,7 @@
 
 import { Suspense, lazy, useEffect, useState } from "react";
 import { motion, LazyMotion, domAnimation } from "framer-motion";
-import HeroSection from "@/components/landing/HeroSection";
+import EnhancedHeroSection from "@/components/landing/EnhancedHeroSection";
 import Footer from "@/components/landing/Footer";
 import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
@@ -80,7 +80,7 @@ const Landing = () => {
 
   // Define common section loading state
   const SectionLoading = () => (
-    <div className="w-full py-24 px-4">
+    <div className="w-full py-24">
       <LoadingState message="Loading content..." />
     </div>
   );
@@ -90,8 +90,8 @@ const Landing = () => {
       <div className="min-h-screen w-full overflow-x-hidden bg-luxury-dark text-white">
         <BackgroundEffects />
         
-        {/* Hero section - always render immediately */}
-        <HeroSection />
+        {/* Enhanced hero section - always render immediately */}
+        <EnhancedHeroSection />
 
         {/* Content Sections with optimized loading */}
         <div className="w-full">
