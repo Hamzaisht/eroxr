@@ -22,10 +22,10 @@ export const HeroSection = memo(() => {
   return (
     <section 
       ref={ref}
-      className="relative min-h-screen w-full overflow-hidden"
+      className="relative w-screen h-screen flex items-center justify-center overflow-hidden"
     >
       {/* Hero background with 3D elements */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 w-screen h-screen">
         <motion.div 
           className="w-full h-full"
           initial={{ opacity: 0 }}
@@ -42,9 +42,9 @@ export const HeroSection = memo(() => {
       {/* Hero Content - Full screen, centered */}
       <motion.div 
         style={{ opacity, scale, y }}
-        className="relative z-10 flex items-center w-full min-h-screen"
+        className="relative z-10 w-full h-full flex items-center justify-center"
       >
-        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-[1400px] px-4 sm:px-6 lg:px-8 mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left column - Text content */}
             <div className="text-center lg:text-left">

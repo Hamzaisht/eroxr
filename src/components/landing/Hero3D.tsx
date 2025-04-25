@@ -55,7 +55,7 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   }, [isActive, videoRef.current]);
 
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
+    <div className="absolute inset-0 w-screen h-screen overflow-hidden z-0">
       {videoUrl && (
         <motion.div 
           className="absolute inset-0 w-full h-full"

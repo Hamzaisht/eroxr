@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 export const BackgroundEffects = () => {
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden pointer-events-none z-0">
       {/* Grid pattern with overlay */}
       <div className="absolute inset-0 w-full h-full bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_80%)] opacity-5" />
       

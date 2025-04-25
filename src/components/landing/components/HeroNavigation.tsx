@@ -52,12 +52,12 @@ export const HeroNavigation = ({
         style={{
           backgroundColor: headerBg
         }} 
-        className="fixed top-0 left-0 right-0 z-50 transition-colors duration-200 backdrop-blur-lg border-b border-white/5"
+        className="fixed top-0 left-0 right-0 z-50 transition-colors duration-200 backdrop-blur-lg border-b border-white/5 w-screen"
         initial="hidden"
         animate="visible"
         variants={navVariants}
       >
-        <div className="container mx-auto px-4 py-4">
+        <div className="max-w-[1600px] mx-auto px-4 md:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between relative z-10">
             <Link to="/" className="flex items-center space-x-2">
               <motion.h1 
