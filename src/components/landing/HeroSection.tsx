@@ -42,7 +42,7 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
   return (
     <section 
       ref={containerRef}
-      className="relative min-h-screen w-screen overflow-hidden flex items-center justify-center"
+      className="relative w-screen min-h-screen flex items-center justify-center overflow-hidden"
     >
       {/* Particle background */}
       <ParticlesBackground />
@@ -52,9 +52,9 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
         style={{ x, y }}
         className="relative z-10 w-full flex items-center justify-center"
       >
-        <div className="max-w-[90rem] w-full">
+        <div className="w-full flex justify-center">
           <motion.div 
-            className="text-center space-y-12 px-4 sm:px-6 lg:px-8"
+            className="text-center w-full max-w-[90rem] px-4 sm:px-6 lg:px-8 space-y-12"
             initial="hidden"
             animate="visible"
             variants={textVariants}
