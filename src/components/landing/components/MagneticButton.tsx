@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect, memo } from "react";
-import { motion, useTransform, useMotionValue } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
 
@@ -23,18 +23,8 @@ export const MagneticButton = memo(({
   ...props
 }: MagneticButtonProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const { playLikeSound } = useSoundEffects();
-  
-  // Transform mouse position to button position
-  const positionX = useTransform(mouseX, (val) => {
-    return val * magneticStrength;
-  });
-  
-  const positionY = useTransform(mouseY, (val) => {
-    return val * magneticStrength;
-  });
   
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!buttonRef.current) return;
@@ -51,13 +41,14 @@ export const MagneticButton = memo(({
     // Scale the effect based on the button size
     const magneticScale = Math.min(width, height) / 100;
     
-    mouseX.set(distanceX * magneticScale);
-    mouseY.set(distanceY * magneticScale);
+    setPosition({
+      x: distanceX * magneticScale * magneticStrength,
+      y: distanceY * magneticScale * magneticStrength
+    });
   };
   
   const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
+    setPosition({ x: 0, y: 0 });
   };
   
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -65,8 +56,7 @@ export const MagneticButton = memo(({
     playLikeSound();
     
     // Reset position
-    mouseX.set(0);
-    mouseY.set(0);
+    setPosition({ x: 0, y: 0 });
     
     // Call the original onClick handler if provided
     if (onClick) {
@@ -74,44 +64,34 @@ export const MagneticButton = memo(({
     }
   };
 
-  // Clean up animations on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      mouseX.destroy();
-      mouseY.destroy();
-    };
-  }, []);
-
   // Use the Component specified, or just a button if not specified
   const ButtonComponent = asChild ? (Component || "button") : "button";
   
-  // Separate motion props from other props to avoid type errors
-  const motionProps = {
-    ref: buttonRef,
-    className: cn("relative inline-block", className),
-    onMouseMove: handleMouseMove,
-    onMouseLeave: handleMouseLeave,
-    onClick: handleClick,
-    animate: {
-      x: positionX,
-      y: positionY,
-    },
-    transition: {
-      type: "spring",
-      stiffness: 150,
-      damping: 15,
-      mass: 0.1,
-    },
-    whileHover: {
-      scale: 1.05,
-    },
-    whileTap: {
-      scale: 0.97,
-    },
-  };
-
   return (
-    <motion.button {...motionProps} {...props}>
+    <motion.button
+      ref={buttonRef}
+      className={cn("relative inline-block", className)}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+      animate={{
+        x: position.x,
+        y: position.y,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 150,
+        damping: 15,
+        mass: 0.1,
+      }}
+      whileHover={{
+        scale: 1.05,
+      }}
+      whileTap={{
+        scale: 0.97,
+      }}
+      {...props}
+    >
       {children}
     </motion.button>
   );
