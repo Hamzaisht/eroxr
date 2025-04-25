@@ -36,7 +36,7 @@ const PlatformPreview = lazyImport(() => import("@/components/landing/PlatformPr
 
 // Loading placeholder with skeleton UI
 const LoadingSection = () => (
-  <div className="h-[40vh] lg:h-[60vh] w-[100vw] flex items-center justify-center bg-luxury-dark">
+  <div className="h-[40vh] lg:h-[60vh] w-full flex items-center justify-center bg-luxury-dark">
     <div className="space-y-8 w-full max-w-4xl px-4">
       <div className="h-12 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
       <div className="h-64 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
@@ -83,7 +83,7 @@ const AnimatedSection = ({
       initial={{ opacity: 0, y: 50 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className={`w-[100vw] ${className}`}
+      className={`w-full ${className}`}
       style={{ margin: 0, padding: 0 }}
     >
       {shouldLoad && children}
@@ -114,14 +114,14 @@ const Landing = () => {
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-[100vh] w-[100vw] overflow-hidden bg-luxury-dark text-white" style={{ margin: 0, padding: 0 }}>
+      <div className="min-h-screen w-full overflow-hidden bg-luxury-dark text-white" style={{ margin: 0, padding: 0 }}>
         <BackgroundEffects />
         
         {/* Full width hero section */}
         <HeroSection />
 
-        {/* Content Sections - Now all full width */}
-        <div className="w-[100vw] overflow-hidden" style={{ margin: 0, padding: 0 }}>
+        {/* Content Sections - All full width */}
+        <div className="w-full overflow-hidden" style={{ margin: 0, padding: 0 }}>
           {/* Stats Section - High priority */}
           <Suspense fallback={<LoadingSection />}>
             <AnimatedSection priority={true}>
@@ -170,7 +170,7 @@ const Landing = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="w-[100vw]"
+            className="w-full"
             style={{ margin: 0, padding: 0 }}
           >
             <Footer />

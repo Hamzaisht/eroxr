@@ -22,11 +22,11 @@ export const HeroSection = memo(() => {
   return (
     <section 
       ref={ref}
-      className="relative min-h-[100vh] w-[100vw] overflow-hidden"
+      className="relative min-h-screen w-full overflow-hidden"
       style={{ margin: 0, padding: 0 }}
     >
       {/* Hero background with 3D elements */}
-      <div className="absolute inset-0 w-[100vw] h-full">
+      <div className="absolute inset-0 w-full h-full">
         <motion.div 
           className="w-full h-full"
           initial={{ opacity: 0 }}
@@ -40,12 +40,12 @@ export const HeroSection = memo(() => {
       {/* Navigation */}
       <HeroNavigation headerBg={useTransform(scrollY, [0, 100], ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 0.9)"])} />
 
-      {/* Hero Content */}
+      {/* Hero Content - Full screen, centered */}
       <motion.div 
         style={{ opacity, scale, y }}
-        className="relative z-10 flex items-center justify-center min-h-[100vh] w-[100vw]"
+        className="relative z-10 flex items-center justify-center min-h-screen w-full"
       >
-        <div className="container max-w-[1400px] mx-auto px-4">
+        <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left column - Text content */}
             <div className="text-center lg:text-left">
