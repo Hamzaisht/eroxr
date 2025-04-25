@@ -1,12 +1,8 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-
-interface Short {
-  id: string;
-  url: string;
-  thumbnail: string;
-}
+import { Short } from '@/components/home/types/short';
 
 interface ShortsListProps {
   shorts: Short[];

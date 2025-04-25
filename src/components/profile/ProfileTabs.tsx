@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Image, Users, CircuitBoard, MessageCircle, Video } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -12,6 +13,7 @@ import { useState, useEffect } from "react";
 import { useFeedQuery } from "@/components/feed/useFeedQuery";
 import { useSession } from "@supabase/auth-helpers-react";
 import { ShortsList } from "./ShortsList";
+import { Short } from "@/components/home/types/short";
 
 export const ProfileTabs = ({ profile }: { profile: any }) => {
   const { id } = useParams();
@@ -39,6 +41,28 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
     }
   }, [profileAds]);
 
+  // Transform posts data to match the Short format expected by ShortsList
+  const transformPostsToShorts = (posts: any[]): Short[] => {
+    if (!posts) return [];
+    
+    return posts.flatMap(page => page).map(post => ({
+      id: post.id,
+      creator_id: post.creator_id,
+      description: post.content,
+      url: post.video_urls?.[0] || '',
+      thumbnail: post.video_thumbnail_url || post.media_url?.[0] || '',
+      likes_count: post.likes_count,
+      comments_count: post.comments_count,
+      created_at: post.created_at,
+      has_liked: post.has_liked,
+      has_saved: post.has_saved,
+      creator: post.creator,
+      video_thumbnail_url: post.video_thumbnail_url,
+      view_count: post.view_count,
+      video_duration: post.video_duration
+    }));
+  };
+
   const tabItems = [
     {
       value: "showcase",
@@ -61,7 +85,7 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-luxury-primary"></div>
         </div>
       ) : hasVideos ? (
-        <ShortsList shorts={videosData?.pages.flatMap(page => page) || []} />
+        <ShortsList shorts={transformPostsToShorts(videosData?.pages || [])} />
       ) : (
         <EmptyState 
           icon={Video} 
