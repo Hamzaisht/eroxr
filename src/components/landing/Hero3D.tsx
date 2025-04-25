@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface Hero3DProps {
   isActive?: boolean;
@@ -11,9 +12,11 @@ interface Hero3DProps {
 export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const session = useSession();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (session) {
@@ -24,42 +27,55 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   useEffect(() => {
     if (!isActive) return;
 
-    const loadVideo = async () => {
-      try {
-        setVideoUrl('https://player.vimeo.com/external/503631518.hd.mp4?s=73f65bff02bf8622e1af5d85b2327fcdd074ec94&profile_id=175&oauth2_token_id=57447761');
-      } catch (error) {
-        console.error("Error loading video:", error);
-      }
-    };
-
-    loadVideo();
+    // Direct video URL to avoid potential CORS issues
+    const directVideoUrl = "https://cdn.coverr.co/videos/coverr-typing-on-laptop-keyboard-3634/1080p.mp4";
+    
+    setVideoUrl(directVideoUrl);
+    setLoadError(false);
   }, [isActive]);
 
   useEffect(() => {
     if (!isActive || !videoRef.current) return;
 
+    const video = videoRef.current;
+
     const handleVideoLoaded = () => {
+      console.log("Video loaded successfully");
       setVideoLoaded(true);
+      setLoadError(false);
     };
 
-    if (videoRef.current) {
-      videoRef.current.addEventListener('loadeddata', handleVideoLoaded);
-    }
+    const handleVideoError = (e: Event) => {
+      console.error("Video loading error:", e);
+      setLoadError(true);
+      setVideoLoaded(false);
+      
+      toast({
+        title: "Video loading error",
+        description: "Background video couldn't be loaded. Using fallback background.",
+        variant: "destructive",
+      });
+    };
+
+    video.addEventListener('loadeddata', handleVideoLoaded);
+    video.addEventListener('error', handleVideoError);
 
     return () => {
-      if (videoRef.current) {
-        videoRef.current.removeEventListener('loadeddata', handleVideoLoaded);
-      }
+      video.removeEventListener('loadeddata', handleVideoLoaded);
+      video.removeEventListener('error', handleVideoError);
     };
-  }, [isActive, videoRef.current]);
+  }, [isActive, videoUrl, toast]);
 
   return (
     <div className="absolute inset-0 w-screen h-screen overflow-hidden z-0">
+      {/* Fallback background gradient when video fails to load */}
+      <div className={`absolute inset-0 bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark transition-opacity duration-1000 ${loadError ? 'opacity-100' : 'opacity-0'}`}></div>
+      
       {videoUrl && (
         <motion.div 
           className="absolute inset-0 w-full h-full"
           initial={{ opacity: 0 }}
-          animate={{ opacity: videoLoaded ? 1 : 0 }}
+          animate={{ opacity: videoLoaded && !loadError ? 1 : 0 }}
           transition={{ duration: 1.5 }}
         >
           <video
@@ -72,7 +88,7 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
           >
             <source src={videoUrl} type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-luxury-dark/40 to-luxury-darker/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-luxury-dark/60 to-luxury-darker/80" />
         </motion.div>
       )}
       
