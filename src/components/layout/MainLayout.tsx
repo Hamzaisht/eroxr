@@ -19,7 +19,7 @@ export const MainLayout = () => {
     <div className="flex min-h-screen w-full bg-[#0D1117] overflow-x-hidden">
       <InteractiveNav />
       
-      <div className={`flex-1 ${isMobile ? 'ml-0' : 'ml-[60px] md:ml-[220px]'} min-h-screen relative`}>
+      <div className="flex-1 min-h-screen relative w-full">
         {/* Background */}
         <div className="fixed inset-0 pointer-events-none">
           <BackgroundEffects />

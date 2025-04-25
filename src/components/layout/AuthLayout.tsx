@@ -21,9 +21,9 @@ export const AuthLayout = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-luxury-dark flex items-center justify-center p-4">
+    <div className="min-h-screen w-full bg-luxury-dark flex items-center justify-center">
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_80%)] opacity-5" />
-      <div className="relative z-10 w-full max-w-md mx-auto py-8">
+      <div className="relative z-10 w-full px-4 sm:px-8 md:px-12 lg:px-24">
         <Outlet />
       </div>
     </div>

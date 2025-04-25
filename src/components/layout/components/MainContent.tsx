@@ -23,7 +23,7 @@ export const MainContent = ({ children, isErosRoute = false }: MainContentProps)
       transition={{ duration: 0.3 }}
       className={`relative w-full min-h-screen ${isMobile ? 'pt-12' : isTablet ? 'pt-14' : 'pt-16'}`}
     >
-      <div className={`${isErosRoute ? 'max-w-none p-0' : 'container mx-auto px-0 sm:px-2 md:px-4 lg:px-6'}`}>
+      <div className={`${isErosRoute ? 'max-w-none p-0' : 'w-full px-4 sm:px-6 md:px-8 lg:px-12'}`}>
         {children}
       </div>
     </motion.div>

@@ -8,14 +8,14 @@ interface AuthLayoutProps {
 
 export const AuthLayout = ({ children }: AuthLayoutProps) => {
   return (
-    <div className="min-h-screen w-full bg-luxury-dark flex items-center justify-center p-4 overflow-auto">
+    <div className="min-h-screen w-full bg-luxury-dark flex items-center justify-center overflow-auto">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <BackgroundEffects />
       </div>
       
       {/* Content Container */}
-      <div className="relative z-10 w-full max-w-md mx-auto py-8">
+      <div className="relative z-10 w-full px-4 sm:px-8 md:px-12 lg:px-24">
         {children}
       </div>
     </div>

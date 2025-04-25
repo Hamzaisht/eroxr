@@ -16,12 +16,12 @@ export const Hero = () => {
   }, [session, navigate]);
 
   return (
-    <div className="min-h-screen bg-luxury-gradient flex items-center justify-center p-4">
+    <div className="min-h-screen w-full bg-luxury-gradient flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full px-4 sm:px-8 md:px-16 lg:px-24"
       >
         <div className="relative backdrop-blur-xl bg-white/5 rounded-2xl p-8 shadow-2xl border border-luxury-primary/20">
           <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/10 via-luxury-accent/5 to-transparent rounded-2xl" />

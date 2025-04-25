@@ -50,7 +50,7 @@ export const HomeLayout = ({ children }: HomeLayoutProps) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="w-full mx-auto px-0 sm:px-2 md:px-4 py-2 sm:py-4 space-y-4 sm:space-y-6"
+          className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-4 space-y-4 sm:space-y-6"
         >
           {children}
         </motion.div>
