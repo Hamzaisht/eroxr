@@ -1,31 +1,19 @@
 
-import { useRef, useEffect, useState, memo } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Hero3D } from "./Hero3D";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
-import { HeroContent } from "./components/HeroContent"; // Import the HeroContent component
+import { HeroContent } from "./components/HeroContent";
 
 export const HeroSection = memo(() => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [elementRef, isInView] = useIntersectionObserver({
+  const [ref, isInView] = useIntersectionObserver<HTMLElement>({
     threshold: 0.1,
     triggerOnce: false
   });
   
-  // Handle the ref connection in useEffect instead of inline
-  useEffect(() => {
-    if (containerRef.current) {
-      // Set the intersection observer ref to watch our container
-      if (elementRef && typeof elementRef === 'object' && 'current' in elementRef) {
-        // Only set if elementRef is a mutable ref object
-        elementRef.current = containerRef.current;
-      }
-    }
-  }, [elementRef, containerRef.current]);
-  
   return (
     <section 
-      ref={containerRef} 
+      ref={ref}
       className="relative min-h-[90vh] w-full overflow-hidden"
     >
       {/* Hero background */}
