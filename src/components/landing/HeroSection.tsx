@@ -42,7 +42,7 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
   return (
     <section 
       ref={containerRef}
-      className="relative min-h-screen w-full flex items-center justify-center overflow-hidden py-24 px-4 sm:px-6"
+      className="relative min-h-screen w-screen flex items-center justify-center overflow-hidden"
     >
       {/* Particle background */}
       <ParticlesBackground />
@@ -50,10 +50,10 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
       {/* Content container with parallax effect */}
       <motion.div 
         style={{ x, y }}
-        className="relative z-10 container mx-auto max-w-7xl"
+        className="relative z-10 w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
       >
         <motion.div 
-          className="text-center space-y-8 max-w-4xl mx-auto"
+          className="text-center space-y-8"
           initial="hidden"
           animate="visible"
           variants={textVariants}
@@ -69,7 +69,7 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
           
           {/* Subheadline */}
           <motion.p 
-            className="text-xl md:text-2xl text-luxury-neutral max-w-2xl mx-auto"
+            className="text-xl md:text-2xl text-luxury-neutral"
             variants={itemVariants}
           >
             Where creators thrive and fans belong.
