@@ -44,14 +44,14 @@ const Landing = () => {
   if (!mounted) return null;
 
   return (
-    <div className="relative min-h-screen w-full bg-luxury-dark text-white overflow-x-hidden">
+    <div className="relative w-screen max-w-none overflow-x-hidden bg-luxury-dark text-white">
       <BackgroundEffects />
       
       {/* Navigation */}
       <Navbar />
       
       {/* Main Content */}
-      <main className="relative w-full">
+      <main className="relative w-full max-w-none">
         {/* Hero Section */}
         <HeroSection scrollOpacity={opacity} />
         
