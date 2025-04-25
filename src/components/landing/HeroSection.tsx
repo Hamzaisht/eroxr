@@ -3,6 +3,7 @@ import { useRef, useEffect, useState, memo } from "react";
 import { motion } from "framer-motion";
 import { Hero3D } from "./Hero3D";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import { HeroContent } from "./components/HeroContent"; // Import the HeroContent component
 
 export const HeroSection = memo(() => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -14,9 +15,11 @@ export const HeroSection = memo(() => {
   return (
     <section 
       ref={(node) => {
-        containerRef.current = node;
-        // @ts-ignore
-        elementRef.current = node;
+        if (node) {
+          containerRef.current = node;
+          // @ts-ignore - we need to bypass the type checking here since elementRef expects a different type
+          elementRef.current = node;
+        }
       }} 
       className="relative min-h-[90vh] w-full overflow-hidden"
     >
