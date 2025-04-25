@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface Hero3DProps {
   isActive?: boolean;
@@ -13,6 +14,7 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const session = useSession();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -27,11 +29,12 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   useEffect(() => {
     if (!isActive) return;
 
-    // Direct video URL to avoid potential CORS issues
-    const directVideoUrl = "https://cdn.coverr.co/videos/coverr-typing-on-laptop-keyboard-3634/1080p.mp4";
+    // High-quality workspace video from Pexels
+    const directVideoUrl = "https://vod-progressive.akamaized.net/exp=1709861000~acl=%2Fvimeo-prod-skyfire-std-us%2F01%2F4182%2F14%2F371007600%2F1547301271.mp4~hmac=78c52d9d114bc9ebf7043b5365b6b3464d7a259355ed32b0a03b758ea3391051/vimeo-prod-skyfire-std-us/01/4182/14/371007600/1547301271.mp4";
     
     setVideoUrl(directVideoUrl);
     setLoadError(false);
+    setIsLoading(true);
   }, [isActive]);
 
   useEffect(() => {
@@ -43,12 +46,14 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
       console.log("Video loaded successfully");
       setVideoLoaded(true);
       setLoadError(false);
+      setIsLoading(false);
     };
 
     const handleVideoError = (e: Event) => {
       console.error("Video loading error:", e);
       setLoadError(true);
       setVideoLoaded(false);
+      setIsLoading(false);
       
       toast({
         title: "Video loading error",
@@ -71,6 +76,13 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
       {/* Fallback background gradient when video fails to load */}
       <div className={`absolute inset-0 bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark transition-opacity duration-1000 ${loadError ? 'opacity-100' : 'opacity-0'}`}></div>
       
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-luxury-dark/50">
+          <Loader2 className="w-8 h-8 text-luxury-primary animate-spin" />
+        </div>
+      )}
+      
       {videoUrl && (
         <motion.div 
           className="absolute inset-0 w-full h-full"
@@ -88,12 +100,14 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
           >
             <source src={videoUrl} type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-luxury-dark/60 to-luxury-darker/80" />
+          {/* Reduced opacity gradients for better video visibility */}
+          <div className="absolute inset-0 bg-gradient-to-b from-luxury-dark/40 to-luxury-darker/60" />
         </motion.div>
       )}
       
-      {/* Gradient overlay - full width and height */}
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-luxury-dark/50 to-luxury-dark" />
+      {/* Lighter radial gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-luxury-dark/30 to-luxury-dark/50" />
     </div>
   );
 };
+
