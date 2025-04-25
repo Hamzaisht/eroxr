@@ -17,8 +17,9 @@ export const HeroSection = memo(() => {
       ref={(node) => {
         if (node) {
           containerRef.current = node;
-          // @ts-ignore - we need to bypass the type checking here since elementRef expects a different type
-          elementRef.current = node;
+          // We need to cast the node to any type to avoid TypeScript errors
+          // since the elementRef expects a different type
+          elementRef.current = node as any;
         }
       }} 
       className="relative min-h-[90vh] w-full overflow-hidden"
