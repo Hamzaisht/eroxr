@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getEnlargedImageStyles, generateSrcSet, getResponsiveSizes } from "@/lib/image-utils";
@@ -207,7 +206,7 @@ export const MediaContent = ({
               autoPlay={true}
               onClick={handleMediaClick}
               onError={handleVideoError}
-              onLoadedData={handleVideoLoaded}
+              onLoad={handleVideoLoaded}
             />
           ) : (
             isImageError ? (

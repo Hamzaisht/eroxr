@@ -22,6 +22,7 @@ interface VideoPlayerProps {
   onEnded?: () => void;
   onClick?: () => void;
   onClose?: () => void;
+  onLoadedData?: () => void;  // Added this prop
 }
 
 export const VideoPlayer = memo(forwardRef<HTMLVideoElement, VideoPlayerProps>(({
@@ -41,7 +42,8 @@ export const VideoPlayer = memo(forwardRef<HTMLVideoElement, VideoPlayerProps>((
   onError,
   onEnded,
   onClick,
-  onClose
+  onClose,
+  onLoadedData
 }, ref) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -59,6 +61,12 @@ export const VideoPlayer = memo(forwardRef<HTMLVideoElement, VideoPlayerProps>((
       onLoad?.();
     };
 
+    const handleLoadedData = () => {
+      if (onLoadedData) {
+        onLoadedData();
+      }
+    };
+
     const handleError = (e: any) => {
       console.error('Video loading error:', e);
       setIsLoading(false);
@@ -71,6 +79,7 @@ export const VideoPlayer = memo(forwardRef<HTMLVideoElement, VideoPlayerProps>((
     };
 
     video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
     video.addEventListener('ended', handleEnded);
 
@@ -81,10 +90,11 @@ export const VideoPlayer = memo(forwardRef<HTMLVideoElement, VideoPlayerProps>((
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
       video.removeEventListener('ended', handleEnded);
     };
-  }, [ref, videoRef, onLoad, onError, onEnded, playbackRate]);
+  }, [ref, videoRef, onLoad, onError, onEnded, playbackRate, onLoadedData]);
   
   // Handle play on hover if enabled
   useEffect(() => {
