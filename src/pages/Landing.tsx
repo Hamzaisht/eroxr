@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -44,14 +43,14 @@ const Landing = () => {
   if (!mounted) return null;
 
   return (
-    <div className="relative w-screen max-w-none overflow-x-hidden bg-luxury-dark text-white">
+    <div className="relative w-screen overflow-x-hidden bg-luxury-dark text-white">
       <BackgroundEffects />
       
       {/* Navigation */}
       <Navbar />
       
       {/* Main Content */}
-      <main className="relative w-full max-w-none">
+      <main className="relative w-screen">
         {/* Hero Section */}
         <HeroSection scrollOpacity={opacity} />
         
