@@ -40,13 +40,13 @@ export const HeroSection = memo(() => {
       {/* Navigation */}
       <HeroNavigation headerBg={useTransform(scrollY, [0, 100], ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 0.9)"])} />
 
-      {/* Content container - Full width */}
+      {/* Hero Content */}
       <motion.div 
         style={{ opacity, scale, y }}
-        className="relative z-10 min-h-screen flex items-center w-[100vw]"
+        className="relative z-10 flex items-center justify-center min-h-[100vh] w-[100vw]"
       >
-        <div className="w-full">
-          <div className="grid lg:grid-cols-2 gap-12 items-center pt-28 lg:pt-0 px-6 lg:px-16 xl:px-24 mx-auto">
+        <div className="container max-w-[1400px] mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left column - Text content */}
             <div className="text-center lg:text-left">
               {/* Animated trusted badge */}
