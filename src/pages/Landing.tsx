@@ -84,7 +84,6 @@ const AnimatedSection = ({
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
       className={`w-full ${className}`}
-      style={{ margin: 0, padding: 0 }}
     >
       {shouldLoad && children}
       {!shouldLoad && <LoadingSection />}
@@ -114,14 +113,14 @@ const Landing = () => {
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-screen w-full overflow-hidden bg-luxury-dark text-white" style={{ margin: 0, padding: 0 }}>
+      <div className="min-h-screen w-full overflow-x-hidden bg-luxury-dark text-white">
         <BackgroundEffects />
         
         {/* Full width hero section */}
         <HeroSection />
 
-        {/* Content Sections - All full width */}
-        <div className="w-full overflow-hidden" style={{ margin: 0, padding: 0 }}>
+        {/* Content Sections */}
+        <div className="w-full overflow-hidden">
           {/* Stats Section - High priority */}
           <Suspense fallback={<LoadingSection />}>
             <AnimatedSection priority={true}>
@@ -171,7 +170,6 @@ const Landing = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
             className="w-full"
-            style={{ margin: 0, padding: 0 }}
           >
             <Footer />
           </motion.div>
