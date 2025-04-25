@@ -25,7 +25,7 @@ export const ShortsList: React.FC<ShortsListProps> = ({ shorts }) => {
       {shorts.map((short) => (
         <div key={short.id} className="relative">
           <img
-            src={short.thumbnail}
+            src={short.video_thumbnail_url || short.media_url?.[0] || ''}
             alt={`Short ${short.id}`}
             className="w-full h-auto rounded-md cursor-pointer"
             onClick={() => handleShortClick(short)}
@@ -45,8 +45,8 @@ export const ShortsList: React.FC<ShortsListProps> = ({ shorts }) => {
           </DialogHeader>
           {selectedShort && (
             <VideoPlayer
-              url={selectedShort.url}
-              poster={selectedShort.thumbnail}
+              url={selectedShort.video_urls?.[0] || ''}
+              poster={selectedShort.video_thumbnail_url || selectedShort.media_url?.[0] || ''}
               autoPlay={true}
               showCloseButton={true}
               onClose={() => setSelectedShort(null)}

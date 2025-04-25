@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Image, Users, CircuitBoard, MessageCircle, Video } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -48,18 +47,22 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
     return posts.flatMap(page => page).map(post => ({
       id: post.id,
       creator_id: post.creator_id,
+      content: post.content,
       description: post.content,
-      url: post.video_urls?.[0] || '',
-      thumbnail: post.video_thumbnail_url || post.media_url?.[0] || '',
+      media_url: post.media_url,
+      video_urls: post.video_urls,
       likes_count: post.likes_count,
       comments_count: post.comments_count,
       created_at: post.created_at,
+      updated_at: post.updated_at,
+      visibility: post.visibility,
       has_liked: post.has_liked,
       has_saved: post.has_saved,
-      creator: post.creator,
+      has_purchased: post.has_purchased,
       video_thumbnail_url: post.video_thumbnail_url,
       view_count: post.view_count,
-      video_duration: post.video_duration
+      video_duration: post.video_duration,
+      creator: post.creator
     }));
   };
 
