@@ -22,7 +22,7 @@ export const HeroSection = memo(() => {
   return (
     <section 
       ref={ref}
-      className="relative w-screen h-screen flex items-center justify-center overflow-hidden"
+      className="relative w-screen h-screen flex items-center overflow-hidden"
     >
       {/* Hero background with 3D elements */}
       <div className="absolute inset-0 w-screen h-screen">
@@ -39,14 +39,14 @@ export const HeroSection = memo(() => {
       {/* Navigation */}
       <HeroNavigation headerBg={useTransform(scrollY, [0, 100], ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 0.9)"])} />
 
-      {/* Hero Content - Full screen, centered */}
+      {/* Hero Content */}
       <motion.div 
         style={{ opacity, scale, y }}
-        className="relative z-10 flex items-center justify-center w-full h-full"
+        className="relative z-10 w-full"
       >
-        <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
-          {/* Main content - centered on all screens */}
-          <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Main content - left aligned */}
+          <div className="flex flex-col items-start text-left max-w-4xl">
             {/* Animated trusted badge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -87,7 +87,7 @@ export const HeroSection = memo(() => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6"
+              className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6"
             >
               <Button
                 className="w-full sm:w-auto px-8 py-6 bg-luxury-primary hover:bg-luxury-primary/90 text-white rounded-lg text-lg font-medium"
