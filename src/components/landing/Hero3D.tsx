@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -54,10 +55,10 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   }, [isActive, videoRef.current]);
 
   return (
-    <div className="absolute inset-0">
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden">
       {videoUrl && (
         <motion.div 
-          className="absolute inset-0"
+          className="absolute inset-0 w-full h-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: videoLoaded ? 1 : 0 }}
           transition={{ duration: 1.5 }}
@@ -76,8 +77,8 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
         </motion.div>
       )}
       
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-luxury-dark/50 to-luxury-dark pointer-events-none" />
+      {/* Gradient overlay - full width and height */}
+      <div className="fixed inset-0 w-full h-full bg-gradient-radial from-transparent via-luxury-dark/50 to-luxury-dark pointer-events-none" />
     </div>
   );
 };

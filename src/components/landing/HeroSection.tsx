@@ -1,3 +1,4 @@
+
 import { memo } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Hero3D } from "./Hero3D";
@@ -21,10 +22,10 @@ export const HeroSection = memo(() => {
   return (
     <section 
       ref={ref}
-      className="relative min-h-screen w-full overflow-hidden"
+      className="relative min-h-screen w-screen overflow-hidden"
     >
       {/* Hero background with 3D elements */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 w-full h-full">
         <motion.div 
           className="w-full h-full"
           initial={{ opacity: 0 }}
@@ -38,13 +39,13 @@ export const HeroSection = memo(() => {
       {/* Navigation */}
       <HeroNavigation headerBg={useTransform(scrollY, [0, 100], ["rgba(13, 17, 23, 0)", "rgba(13, 17, 23, 0.9)"])} />
 
-      {/* Content container */}
+      {/* Content container - Full width */}
       <motion.div 
         style={{ opacity, scale, y }}
-        className="relative z-10 min-h-screen flex items-center"
+        className="relative z-10 min-h-screen flex items-center w-full"
       >
-        <div className="w-full px-6 lg:px-16 xl:px-24">
-          <div className="max-w-[1400px] mx-auto grid lg:grid-cols-2 gap-12 items-center pt-28 lg:pt-0">
+        <div className="w-full">
+          <div className="grid lg:grid-cols-2 gap-12 items-center pt-28 lg:pt-0 px-6 lg:px-16 xl:px-24 max-w-[1920px] mx-auto">
             {/* Left column - Text content */}
             <div className="text-center lg:text-left">
               {/* Animated trusted badge */}

@@ -1,3 +1,4 @@
+
 import { Suspense, lazy, useRef, useEffect, useState } from "react";
 import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
 import HeroSection from "@/components/landing/HeroSection";
@@ -35,8 +36,8 @@ const PlatformPreview = lazyImport(() => import("@/components/landing/PlatformPr
 
 // Loading placeholder with skeleton UI
 const LoadingSection = () => (
-  <div className="h-[40vh] lg:h-[60vh] w-full flex items-center justify-center bg-luxury-dark">
-    <div className="space-y-8 w-full max-w-4xl mx-auto px-4">
+  <div className="h-[40vh] lg:h-[60vh] w-screen flex items-center justify-center bg-luxury-dark">
+    <div className="space-y-8 w-full max-w-4xl px-4">
       <div className="h-12 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
       <div className="h-64 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
       <div className="h-12 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
@@ -112,14 +113,14 @@ const Landing = () => {
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-screen w-full bg-luxury-dark text-white">
+      <div className="min-h-screen w-screen overflow-hidden bg-luxury-dark text-white">
         <BackgroundEffects />
         
         {/* Full width hero section */}
         <HeroSection />
 
-        {/* Content Sections */}
-        <div className="w-full">
+        {/* Content Sections - Now all full width */}
+        <div className="w-full overflow-hidden">
           {/* Stats Section - High priority */}
           <Suspense fallback={<LoadingSection />}>
             <AnimatedSection priority={true}>
@@ -168,6 +169,7 @@ const Landing = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
+            className="w-full"
           >
             <Footer />
           </motion.div>
