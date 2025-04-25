@@ -29,12 +29,14 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   useEffect(() => {
     if (!isActive) return;
 
-    // High-quality workspace video from Pexels
-    const directVideoUrl = "https://vod-progressive.akamaized.net/exp=1709861000~acl=%2Fvimeo-prod-skyfire-std-us%2F01%2F4182%2F14%2F371007600%2F1547301271.mp4~hmac=78c52d9d114bc9ebf7043b5365b6b3464d7a259355ed32b0a03b758ea3391051/vimeo-prod-skyfire-std-us/01/4182/14/371007600/1547301271.mp4";
+    // Using a more reliable self-hosted video URL
+    const directVideoUrl = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4";
     
     setVideoUrl(directVideoUrl);
     setLoadError(false);
     setIsLoading(true);
+    
+    console.log("Attempting to load video:", directVideoUrl);
   }, [isActive]);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   }, [isActive, videoUrl, toast]);
 
   return (
-    <div className="absolute inset-0 w-screen h-screen overflow-hidden z-0">
+    <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
       {/* Fallback background gradient when video fails to load */}
       <div className={`absolute inset-0 bg-gradient-to-b from-luxury-dark via-luxury-darker to-luxury-dark transition-opacity duration-1000 ${loadError ? 'opacity-100' : 'opacity-0'}`}></div>
       
@@ -110,4 +112,3 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
     </div>
   );
 };
-

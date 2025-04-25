@@ -5,6 +5,7 @@ import { ErrorState } from "./ErrorState";
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
@@ -24,6 +25,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error("Error caught by ErrorBoundary:", error, errorInfo);
+    
+    // Call the optional onError callback
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
   }
 
   render(): ReactNode {
@@ -33,11 +39,11 @@ export class ErrorBoundary extends Component<Props, State> {
       }
       
       return (
-        <div className="flex items-center justify-center min-h-screen bg-luxury-darker">
+        <div className="flex items-center justify-center min-h-[200px]">
           <ErrorState 
             title="Something went wrong"
             description={this.state.error?.message || "An unexpected error occurred. Please try refreshing the page."}
-            onRetry={() => window.location.reload()}
+            onRetry={() => this.setState({ hasError: false })}
           />
         </div>
       );
@@ -46,3 +52,5 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+export default ErrorBoundary;

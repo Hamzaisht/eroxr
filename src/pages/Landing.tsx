@@ -1,108 +1,75 @@
 
-import { Suspense, lazy, useRef, useEffect, useState } from "react";
-import { motion, LazyMotion, domAnimation, useInView } from "framer-motion";
+import { Suspense, lazy, useEffect, useState } from "react";
+import { motion, LazyMotion, domAnimation } from "framer-motion";
 import HeroSection from "@/components/landing/HeroSection";
 import Footer from "@/components/landing/Footer";
-import { BackgroundEffects } from "@/components/landing/sections/BackgroundEffects";
+import { BackgroundEffects } from "@/components/layout/BackgroundEffects";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 
-// Lazy load other sections with error boundaries and retry logic
-const lazyImport = (importFn: () => Promise<any>, maxRetries = 2) => {
-  return lazy(async () => {
-    let retries = 0;
-    while (retries < maxRetries) {
-      try {
-        return await importFn();
-      } catch (error) {
-        retries++;
-        if (retries >= maxRetries) {
-          console.error("Failed to load module after retries:", error);
-          throw error;
-        }
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
-    throw new Error("Failed to load module");
-  });
+// Better lazy loading implementation
+const LazySection = ({ 
+  component: Component,
+  fallback = <LoadingState />,
+  errorFallback = <ErrorState title="Section Failed to Load" description="Please refresh the page to try again." />
+}) => {
+  return (
+    <ErrorBoundary fallback={errorFallback}>
+      <Suspense fallback={fallback}>
+        <Component />
+      </Suspense>
+    </ErrorBoundary>
+  );
 };
 
-// Lazy load with retry
-const Features3D = lazyImport(() => import("@/components/landing/Features3D"));
-const CreatorShowcase = lazyImport(() => import("@/components/landing/CreatorShowcase"));
-const AnimatedStats = lazyImport(() => import("@/components/landing/AnimatedStats"));
-const InteractiveFeatures = lazyImport(() => import("@/components/landing/InteractiveFeatures"));
-const CreatorCategories = lazyImport(() => import("@/components/landing/sections/CreatorCategories"));
-const PlatformPreview = lazyImport(() => import("@/components/landing/PlatformPreview"));
+// Improved lazy imports with better error handling
+const AnimatedStats = lazy(() => import("@/components/landing/AnimatedStats"));
+const PlatformPreview = lazy(() => import("@/components/landing/PlatformPreview"));
+const CreatorCategories = lazy(() => import("@/components/landing/sections/CreatorCategories"));
+const Features3D = lazy(() => import("@/components/landing/Features3D"));
+const CreatorShowcase = lazy(() => import("@/components/landing/CreatorShowcase"));
+const InteractiveFeatures = lazy(() => import("@/components/landing/InteractiveFeatures"));
 
-// Loading placeholder with skeleton UI
-const LoadingSection = () => (
-  <div className="h-[40vh] lg:h-[60vh] w-full flex items-center justify-center bg-luxury-dark">
-    <div className="space-y-8 w-full max-w-4xl px-4">
-      <div className="h-12 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
-      <div className="h-64 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
-      <div className="h-12 bg-luxury-neutral/10 rounded-lg animate-pulse"></div>
-    </div>
-  </div>
-);
+// Optimized section wrapper with better loading strategy
+const SectionWrapper = ({ children, className = "" }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [sectionRef, setRef] = useState(null);
 
-// Section wrapper with animation
-const AnimatedSection = ({ 
-  children, 
-  className = "",
-  priority = false 
-}: { 
-  children: React.ReactNode, 
-  className?: string,
-  priority?: boolean 
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [shouldLoad, setShouldLoad] = useState(priority);
-  
   useEffect(() => {
-    const checkPosition = () => {
-      if (!ref.current || shouldLoad) return;
-      
-      const rect = ref.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      
-      // Pre-load when section is within 2x viewport height
-      if (rect.top < viewportHeight * 2) {
-        setShouldLoad(true);
-      }
-    };
+    if (!sectionRef) return;
     
-    checkPosition();
-    window.addEventListener('scroll', checkPosition);
-    return () => window.removeEventListener('scroll', checkPosition);
-  }, [shouldLoad]);
-  
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Preload when approaching viewport
+        if (entry.isIntersecting || entry.intersectionRatio > 0) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px 0px" } // Load 300px before coming into view
+    );
+    
+    observer.observe(sectionRef);
+    return () => observer.disconnect();
+  }, [sectionRef]);
+
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
+    <div 
+      ref={setRef}
       className={`w-full ${className}`}
     >
-      {shouldLoad && children}
-      {!shouldLoad && <LoadingSection />}
-    </motion.div>
+      {isVisible ? children : <div className="h-64 w-full" />}
+    </div>
   );
 };
 
 const Landing = () => {
-  // Track loading state
-  const [isLoading, setIsLoading] = useState(true);
-  
   // Disable scroll restoration during navigation
   useEffect(() => {
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
-    
-    // Set loading false after initial render
-    setIsLoading(false);
     
     return () => {
       if ('scrollRestoration' in history) {
@@ -111,65 +78,77 @@ const Landing = () => {
     };
   }, []);
 
+  // Define common section loading state
+  const SectionLoading = () => (
+    <div className="w-full py-24 px-4">
+      <LoadingState message="Loading content..." />
+    </div>
+  );
+
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-screen w-screen overflow-x-hidden bg-luxury-dark text-white">
+      <div className="min-h-screen w-full overflow-x-hidden bg-luxury-dark text-white">
         <BackgroundEffects />
         
-        {/* Full width hero section */}
+        {/* Hero section - always render immediately */}
         <HeroSection />
 
-        {/* Content Sections */}
-        <div className="w-full overflow-hidden">
+        {/* Content Sections with optimized loading */}
+        <div className="w-full">
           {/* Stats Section - High priority */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection priority={true}>
-              <AnimatedStats />
-            </AnimatedSection>
-          </Suspense>
+          <SectionWrapper>
+            <LazySection 
+              component={AnimatedStats} 
+              fallback={<SectionLoading />}
+            />
+          </SectionWrapper>
 
           {/* Platform Preview */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <PlatformPreview />
-            </AnimatedSection>
-          </Suspense>
+          <SectionWrapper>
+            <LazySection 
+              component={PlatformPreview}
+              fallback={<SectionLoading />}
+            />
+          </SectionWrapper>
 
           {/* Creator Categories */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <CreatorCategories />
-            </AnimatedSection>
-          </Suspense>
+          <SectionWrapper>
+            <LazySection 
+              component={CreatorCategories}
+              fallback={<SectionLoading />}
+            />
+          </SectionWrapper>
 
           {/* Features Section */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <Features3D />
-            </AnimatedSection>
-          </Suspense>
+          <SectionWrapper>
+            <LazySection 
+              component={Features3D}
+              fallback={<SectionLoading />}
+            />
+          </SectionWrapper>
 
           {/* Creator Showcase */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <CreatorShowcase />
-            </AnimatedSection>
-          </Suspense>
+          <SectionWrapper>
+            <LazySection 
+              component={CreatorShowcase}
+              fallback={<SectionLoading />}
+            />
+          </SectionWrapper>
 
           {/* Interactive Features */}
-          <Suspense fallback={<LoadingSection />}>
-            <AnimatedSection>
-              <InteractiveFeatures />
-            </AnimatedSection>
-          </Suspense>
+          <SectionWrapper>
+            <LazySection 
+              component={InteractiveFeatures}
+              fallback={<SectionLoading />}
+            />
+          </SectionWrapper>
 
-          {/* Footer */}
+          {/* Footer - always present */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="w-full"
           >
             <Footer />
           </motion.div>
