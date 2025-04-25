@@ -54,10 +54,10 @@ export const Hero3D = ({ isActive = true }: Hero3DProps) => {
   }, [isActive, videoRef.current]);
 
   return (
-    <div className="absolute inset-0 w-full h-full">
+    <div className="absolute inset-0">
       {videoUrl && (
         <motion.div 
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: videoLoaded ? 1 : 0 }}
           transition={{ duration: 1.5 }}

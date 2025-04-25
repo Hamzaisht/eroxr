@@ -112,8 +112,7 @@ const Landing = () => {
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-screen w-full bg-luxury-dark text-white relative">
-        {/* Background effects for entire page */}
+      <div className="min-h-screen w-full bg-luxury-dark text-white">
         <BackgroundEffects />
         
         {/* Full width hero section */}
