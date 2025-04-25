@@ -1,4 +1,3 @@
-
 import { useScroll, useTransform, motion, useMotionValueEvent } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef, useMemo, memo } from "react";
@@ -100,11 +99,11 @@ export const Hero3D = memo(({ isActive = true }: Hero3DProps) => {
   }, [isActive]);
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col overflow-hidden">
-      {/* Background Video - Edge to Edge */}
+    <div className="relative w-full h-full flex flex-col">
+      {/* Background Video */}
       {videoUrl && (
         <motion.div 
-          className="absolute inset-0 w-full h-full z-[-1] overflow-hidden"
+          className="absolute inset-0 w-full h-full z-[-1]"
           style={{ opacity: videoOpacity }}
           initial={{ opacity: 0 }}
           animate={{ opacity: videoLoaded ? 1 : 0 }}
@@ -125,29 +124,21 @@ export const Hero3D = memo(({ isActive = true }: Hero3DProps) => {
         </motion.div>
       )}
       
-      {/* Optimized particle background - only render when active */}
+      {/* Optimized particle background */}
       {particles}
       
-      {/* Navigation */}
-      <HeroNavigation headerBg={headerBg} />
-      
-      {/* Content */}
-      <motion.div 
-        className="flex-1 flex items-center w-full px-0"
-        style={{
-          scale: contentScale,
-          opacity: contentOpacity,
-        }}
-      >
+      {/* Content wrapper */}
+      <div className="relative flex-1 flex items-center w-full mx-auto max-w-[1920px] px-4 sm:px-6 lg:px-8">
         <motion.div 
           className="w-full"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 20 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
+          style={{
+            scale: contentScale,
+            opacity: contentOpacity,
+          }}
         >
           <HeroContent />
         </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 });
