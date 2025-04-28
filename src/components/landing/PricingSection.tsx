@@ -60,7 +60,7 @@ export const PricingSection = () => {
     },
     {
       name: "Elite",
-      price: "$19.99",
+      price: "$10.99",
       period: "per month",
       description: "Full suite of professional tools",
       features: [
