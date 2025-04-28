@@ -13,8 +13,17 @@ const Card = () => {
   // Reference to the mesh for animations
   const cardRef = useRef<Mesh>(null);
   
-  // Load texture for the card
-  const texture = useTexture("/lovable-uploads/1f90ad99-0978-444d-8b83-555a2ae853b0.png");
+  // Load texture for the card - Remove leading slash for Vite compatibility
+  const texture = useTexture("lovable-uploads/1f90ad99-0978-444d-8b83-555a2ae853b0.png");
+  
+  // Add error handling for texture loading
+  useEffect(() => {
+    if (texture) {
+      console.log("Texture loaded successfully");
+    } else {
+      console.error("Failed to load texture");
+    }
+  }, [texture]);
   
   // Subtle oscillating hover effect
   const [hoverY, setHoverY] = useState(0);
@@ -108,6 +117,12 @@ const Floor = () => {
 };
 
 export const RotatingCard: React.FC<RotatingCardProps> = ({ className }) => {
+  // Add debug logging to verify component rendering
+  useEffect(() => {
+    console.log("RotatingCard component mounted");
+    return () => console.log("RotatingCard component unmounted");
+  }, []);
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}

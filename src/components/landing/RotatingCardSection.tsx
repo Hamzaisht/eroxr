@@ -24,6 +24,7 @@ export const RotatingCardSection = () => {
     <section
       ref={sectionRef}
       className="relative py-24 px-4 sm:px-6 bg-luxury-darker overflow-hidden"
+      id="rotating-card-section"
     >
       <div ref={ref} className="container mx-auto max-w-7xl relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -68,7 +69,7 @@ export const RotatingCardSection = () => {
             animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.7, delay: 0.4 }}
             style={{ opacity }}
-            className="relative"
+            className="relative h-[500px]" /* Added explicit height */
           >
             {/* Glowing background effect */}
             <div className="absolute inset-0 -z-10">
@@ -76,7 +77,8 @@ export const RotatingCardSection = () => {
               <div className="absolute top-1/2 left-1/2 w-80 h-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-luxury-accent/20 blur-3xl" />
             </div>
             
-            <RotatingCard className="mx-auto max-w-md" />
+            {/* Ensured class is applied properly */}
+            <RotatingCard className="h-full w-full" />
             
             {/* Card description */}
             <div className="text-center mt-6">
