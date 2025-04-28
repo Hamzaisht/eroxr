@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -43,7 +44,7 @@ export const PricingSection = () => {
     {
       name: "Premium",
       price: "$2.99",
-      period: "per month",
+      period: "per week",
       description: "Everything you need to grow your audience",
       features: [
         "Unlimited content uploads",
