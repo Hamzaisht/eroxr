@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { AuthForm } from "./auth/AuthForm";
+import { useMouseParallax } from "@/hooks/use-mouse-parallax";
 
 export const Hero = () => {
   const session = useSession();
   const navigate = useNavigate();
+  const { x, y } = useMouseParallax(0.1);
 
   useEffect(() => {
     if (session) {
@@ -16,7 +18,16 @@ export const Hero = () => {
   }, [session, navigate]);
 
   return (
-    <div className="min-h-screen w-full bg-luxury-gradient flex items-center justify-center">
+    <div className="min-h-screen w-full bg-luxury-gradient flex items-center justify-center overflow-hidden">
+      {/* Parallax background elements */}
+      <motion.div 
+        style={{ x, y }}
+        className="absolute inset-0 pointer-events-none"
+      >
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(white,transparent_80%)] opacity-5" />
+      </motion.div>
+
+      {/* Main content */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

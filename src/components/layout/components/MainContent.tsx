@@ -21,9 +21,11 @@ export const MainContent = ({ children, isErosRoute = false }: MainContentProps)
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className={`relative w-full min-h-screen ${isMobile ? 'pt-12' : isTablet ? 'pt-14' : 'pt-16'}`}
+      className={`relative w-full min-h-screen ${
+        isMobile ? 'pt-12' : isTablet ? 'pt-14' : 'pt-16'
+      }`}
     >
-      <div className={`${isErosRoute ? 'max-w-none p-0' : 'w-full px-4 sm:px-6 md:px-8 lg:px-12'}`}>
+      <div className={isErosRoute ? 'w-full' : 'w-full px-4 sm:px-6 md:px-8 lg:px-12'}>
         {children}
       </div>
     </motion.div>
