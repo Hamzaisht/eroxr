@@ -28,6 +28,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        display: ['Clash Display', 'sans-serif'],
+        sans: ['Inter', 'sans-serif']
+      },
       colors: {
         luxury: {
           dark: "#0D1117",
@@ -95,10 +99,17 @@ export default {
         'button-gradient': 'linear-gradient(90deg, var(--tw-colors-luxury-primary) 0%, var(--tw-colors-luxury-secondary) 100%)',
         'hover-gradient': 'linear-gradient(90deg, var(--tw-colors-luxury-secondary) 0%, var(--tw-colors-luxury-primary) 100%)',
         'neon-glow': 'linear-gradient(90deg, rgba(155,135,245,0.15) 0%, rgba(217,70,239,0.15) 100%)',
+        'premium-gradient': 'linear-gradient(225deg, rgba(155,135,245,0.15) 0%, rgba(217,70,239,0.35) 50%, rgba(155,135,245,0.15) 100%)',
+        'cta-gradient': 'linear-gradient(135deg, rgba(155,135,245,0.85) 0%, rgba(217,70,239,0.85) 100%)'
       },
       boxShadow: {
         'luxury': '0 0 20px rgba(155, 135, 245, 0.15)',
         'luxury-hover': '0 0 30px rgba(155, 135, 245, 0.25)',
+        'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+        'premium': '0 0 30px rgba(155, 135, 245, 0.3)',
+        'button': '0 8px 16px -4px rgba(155, 135, 245, 0.25)',
+        'button-hover': '0 12px 24px -6px rgba(155, 135, 245, 0.35)',
+        'glow': '0 0 15px rgba(217, 70, 239, 0.5)',
       },
       keyframes: {
         "logo-spin": {
@@ -130,6 +141,43 @@ export default {
           "to": {
             backgroundPosition: "200% center"
           }
+        },
+        "breathe": {
+          "0%, 100%": { 
+            transform: "scale(1)",
+            opacity: "0.8"
+          },
+          "50%": { 
+            transform: "scale(1.1)",
+            opacity: "1"
+          }
+        },
+        "orbit": {
+          "0%": { 
+            transform: "rotate(0deg) translateX(10px) rotate(0deg)" 
+          },
+          "100%": { 
+            transform: "rotate(360deg) translateX(10px) rotate(-360deg)" 
+          }
+        },
+        "typewriter": {
+          "from": { width: "0" },
+          "to": { width: "100%" }
+        },
+        "blink": {
+          "50%": { borderColor: "transparent" }
+        },
+        "gradient-x": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" }
+        },
+        "shimmer": {
+          "0%": { backgroundPositionX: "-100%" },
+          "100%": { backgroundPositionX: "200%" }
+        },
+        "magnetic-move": {
+          "0%, 100%": { transform: "translate(0px, 0px)" },
+          "50%": { transform: "translate(var(--x, 0), var(--y, 0))" }
         }
       },
       animation: {
@@ -138,10 +186,29 @@ export default {
         "float": "float 6s ease-in-out infinite",
         "pulse-ring": "pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "neon-glow": "neon-pulse 2s ease-in-out infinite",
-        "shine": "shine 2s linear infinite"
+        "shine": "shine 2s linear infinite",
+        "breathe": "breathe 5s ease-in-out infinite",
+        "orbit": "orbit 12s linear infinite",
+        "typewriter": "typewriter 4s steps(40) forwards",
+        "cursor-blink": "blink 0.7s infinite",
+        "gradient-x": "gradient-x 10s ease infinite",
+        "shimmer": "shimmer 2s infinite",
+        "magnetic": "magnetic-move 0.3s ease"
       },
       clipPath: {
         hexagon: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+      },
+      backdropBlur: {
+        'xs': '2px',
+        'xxl': '40px',
+      },
+      transitionTimingFunction: {
+        'in-expo': 'cubic-bezier(0.95, 0.05, 0.795, 0.035)',
+        'out-expo': 'cubic-bezier(0.19, 1, 0.22, 1)',
+      },
+      backgroundSize: {
+        '300%': '300% 300%',
+        '400%': '400% 400%',
       },
     },
   },

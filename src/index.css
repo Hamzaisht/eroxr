@@ -75,6 +75,12 @@ body {
   background-color: #0D1117;
   min-height: 100vh;
   overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Clash Display', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 @layer base {
@@ -85,4 +91,89 @@ body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Glass effect */
+.glass-effect {
+  @apply backdrop-blur-lg bg-white/10 border border-white/10;
+}
+
+/* Premium card effect */
+.premium-card {
+  @apply relative overflow-hidden rounded-xl border border-luxury-primary/20 bg-luxury-dark/50 backdrop-blur-lg transition-all duration-500;
+}
+
+.premium-card:hover {
+  @apply border-luxury-primary/40 shadow-premium transform -translate-y-1;
+}
+
+.premium-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--tw-colors-luxury-primary), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.premium-card:hover::before {
+  transform: translateX(100%);
+}
+
+/* Animated gradient text */
+.gradient-text {
+  background: linear-gradient(90deg, #9b87f5, #D946EF, #9b87f5);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-x 8s linear infinite;
+}
+
+/* Floating animation classes */
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+.float-animation-delay-1 {
+  animation: float 6s ease-in-out 0.5s infinite;
+}
+
+.float-animation-delay-2 {
+  animation: float 6s ease-in-out 1s infinite;
+}
+
+/* Magnetic button effect */
+.magnetic-button {
+  transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+/* Shimmer effect */
+.shimmer-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-effect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+  animation: shimmer 2s infinite;
+}
+
+/* Adapted typewriter animation */
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  margin: 0 auto;
+  animation: typewriter 4s steps(40) forwards;
+  border-right: 2px solid white;
+  animation-delay: 1s;
 }

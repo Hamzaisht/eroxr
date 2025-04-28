@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -24,6 +25,7 @@ import { SuccessStoriesCarousel } from "@/components/landing/components/SuccessS
 import { CommunityHighlights } from "@/components/landing/components/CommunityHighlights";
 import { FeatureComparisonTable } from "@/components/landing/components/FeatureComparisonTable";
 import { FAQSection } from "@/components/landing/components/FAQSection";
+import { StickySignupCTA } from "@/components/landing/components/StickySignupCTA";
 
 const Landing = () => {
   const [mounted, setMounted] = useState(false);
@@ -82,6 +84,9 @@ const Landing = () => {
       
       <Navbar />
       
+      {/* Sticky CTA that appears after scrolling */}
+      <StickySignupCTA />
+      
       <motion.main 
         ref={mainRef}
         className="relative w-screen"
@@ -98,9 +103,19 @@ const Landing = () => {
         
         <section className="py-24 px-4 sm:px-6">
           <div className="container mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-12">
-              Calculate Your <span className="text-luxury-primary">Earning Potential</span>
-            </h2>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              className="mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-4">
+                Calculate Your <span className="gradient-text">Earning Potential</span>
+              </h2>
+              <p className="text-luxury-neutral/80 max-w-2xl mx-auto text-lg">
+                See how much you could earn on EROXR with our interactive calculator
+              </p>
+            </motion.div>
             <ROICalculator />
           </div>
         </section>
@@ -115,12 +130,12 @@ const Landing = () => {
         
         <PricingSection />
         
-        <MegaCTASection />
-        
         <SuccessStoriesCarousel />
         <CommunityHighlights />
         <FeatureComparisonTable />
         <FAQSection />
+        
+        <MegaCTASection />
       </motion.main>
       
       <Footer />
