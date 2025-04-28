@@ -71,6 +71,42 @@ export const FeaturesSection = () => {
       },
     }),
   };
+
+  // Function to handle 3D tilt effect
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    // Calculate rotation based on mouse position
+    // Reduced intensity for more subtle effect (7 degrees max)
+    const rotateX = ((y - centerY) / centerY) * -7;
+    const rotateY = ((x - centerX) / centerX) * 7;
+    
+    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+    
+    // Add glow effect positioning
+    const glow = card.querySelector('.card-glow') as HTMLElement;
+    if (glow) {
+      glow.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(155, 135, 245, 0.4) 0%, transparent 70%)`;
+    }
+  };
+
+  // Function to reset transform on mouse leave
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget;
+    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    
+    // Reset glow
+    const glow = card.querySelector('.card-glow') as HTMLElement;
+    if (glow) {
+      glow.style.background = 'transparent';
+    }
+  };
   
   return (
     <section
@@ -100,7 +136,7 @@ export const FeaturesSection = () => {
           {features.map((feature, i) => (
             <motion.div
               key={i}
-              className="relative overflow-hidden rounded-xl bg-gradient-to-br from-luxury-dark to-luxury-darker border border-luxury-primary/10 p-6 group hover:shadow-[0_0_30px_rgba(155,135,245,0.15)] transition-all duration-500"
+              className="relative overflow-hidden rounded-xl bg-gradient-to-br from-luxury-dark to-luxury-darker border-0 p-6 group hover:shadow-[0_0_30px_rgba(155,135,245,0.15)] transition-all duration-500"
               custom={i}
               initial="hidden"
               animate={isInView ? "visible" : "hidden"}
@@ -110,6 +146,8 @@ export const FeaturesSection = () => {
                 transition: { duration: 0.3 }
               }}
               style={{ y: i % 2 === 0 ? y2 : y3 }}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
             >
               {/* Feature Icon */}
               <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${feature.color} mb-5`}>
@@ -126,11 +164,18 @@ export const FeaturesSection = () => {
                 {feature.description}
               </p>
               
+              {/* 3D Interactive glow effect */}
+              <div className="card-glow absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              
+              {/* Futuristic border effect */}
+              <div className="absolute inset-0 border border-luxury-primary/0 rounded-xl group-hover:border-luxury-primary/30 transition-all duration-500"></div>
+              
+              {/* Futuristic corner accents */}
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-luxury-primary/0 group-hover:border-luxury-primary/50 rounded-tr-lg transition-all duration-500"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-luxury-primary/0 group-hover:border-luxury-primary/50 rounded-bl-lg transition-all duration-500"></div>
+              
               {/* Decorative Elements */}
               <div className="absolute -bottom-12 -right-12 w-24 h-24 rounded-full bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              
-              {/* Hover effect outline */}
-              <div className="absolute inset-0 border border-luxury-primary/0 rounded-xl group-hover:border-luxury-primary/30 transition-all duration-500" />
             </motion.div>
           ))}
         </div>
