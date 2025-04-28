@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { useParallax } from "@/hooks/use-parallax";
@@ -10,7 +10,6 @@ import { Navbar } from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { ExplainerSection } from "@/components/landing/ExplainerSection";
-import { CreatorShowcase } from "@/components/landing/CreatorShowcase";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { TrustSection } from "@/components/landing/TrustSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
@@ -19,13 +18,26 @@ import { MegaCTASection } from "@/components/landing/MegaCTASection";
 import BackgroundEffects from "@/components/layout/BackgroundEffects";
 import CustomCursor from "@/components/landing/components/CustomCursor";
 import "../styles/animations.css";
-import { ROICalculator } from "@/components/landing/components/ROICalculator";
-import { PressLogos } from "@/components/landing/components/PressLogos";
-import { SuccessStoriesCarousel } from "@/components/landing/components/SuccessStoriesCarousel";
-import { CommunityHighlights } from "@/components/landing/components/CommunityHighlights";
-import { FeatureComparisonTable } from "@/components/landing/components/FeatureComparisonTable";
-import { FAQSection } from "@/components/landing/components/FAQSection";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { StickySignupCTA } from "@/components/landing/components/StickySignupCTA";
+import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
+import { ThemeToggle } from "@/components/landing/components/ThemeToggle";
+import CSSParticlesBackground from "@/components/landing/CSSParticlesBackground";
+import { throttle } from "@/utils/throttle";
+
+// Lazy load non-critical components
+const ROICalculator = lazy(() => import("@/components/landing/components/ROICalculator"));
+const PressLogos = lazy(() => import("@/components/landing/components/PressLogos"));
+const SuccessStoriesCarousel = lazy(() => import("@/components/landing/components/SuccessStoriesCarousel"));
+const CommunityHighlights = lazy(() => import("@/components/landing/components/CommunityHighlights"));
+const FeatureComparisonTable = lazy(() => import("@/components/landing/components/FeatureComparisonTable"));
+const FAQSection = lazy(() => import("@/components/landing/components/FAQSection"));
+
+// Pre-load critical images
+const preloadImages = [
+  "/logo-glow.png",
+  "/grid.svg",
+];
 
 const Landing = () => {
   const [mounted, setMounted] = useState(false);
@@ -54,30 +66,40 @@ const Landing = () => {
   useEffect(() => {
     setMounted(true);
     
-    const preloadImages = [
-      "/creator-1.jpg",
-      "/creator-2.jpg",
-      "/creator-3.jpg",
-      "/logo-glow.png",
-      "/grid.svg",
-    ];
-    
+    // Preload critical images
     preloadImages.forEach(src => {
       const img = new Image();
       img.src = src;
     });
     
+    // Enable smooth scrolling behavior
     document.documentElement.style.scrollBehavior = "smooth";
+    
+    // Add performance optimization
+    const handleScroll = throttle(() => {
+      // No-op, just for event throttling
+    }, 100);
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     return () => {
       document.documentElement.style.scrollBehavior = "";
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted) return <LoadingState message="Initializing..." />;
 
   return (
     <div className="relative w-screen overflow-x-hidden bg-luxury-dark text-white">
+      {/* Scroll progress indicator */}
+      <ScrollProgress />
+      
+      {/* Theme toggle */}
+      <div className="fixed top-4 right-4 z-[60]">
+        <ThemeToggle />
+      </div>
+      
       {!isMobile && <CustomCursor />}
       
       <BackgroundEffects />
@@ -97,7 +119,9 @@ const Landing = () => {
       >
         <HeroSection scrollOpacity={opacity} />
         
-        <PressLogos />
+        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
+          <PressLogos />
+        </Suspense>
         
         <ExplainerSection />
         
@@ -116,11 +140,12 @@ const Landing = () => {
                 See how much you could earn on EROXR with our interactive calculator
               </p>
             </motion.div>
-            <ROICalculator />
+            
+            <Suspense fallback={<div className="h-96 flex justify-center items-center"><LoadingState /></div>}>
+              <ROICalculator />
+            </Suspense>
           </div>
         </section>
-        
-        <CreatorShowcase />
         
         <FeaturesSection />
         
@@ -130,10 +155,21 @@ const Landing = () => {
         
         <PricingSection />
         
-        <SuccessStoriesCarousel />
-        <CommunityHighlights />
-        <FeatureComparisonTable />
-        <FAQSection />
+        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
+          <SuccessStoriesCarousel />
+        </Suspense>
+        
+        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
+          <CommunityHighlights />
+        </Suspense>
+        
+        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
+          <FeatureComparisonTable />
+        </Suspense>
+        
+        <Suspense fallback={<div className="py-12 flex justify-center"><LoadingState /></div>}>
+          <FAQSection />
+        </Suspense>
         
         <MegaCTASection />
       </motion.main>

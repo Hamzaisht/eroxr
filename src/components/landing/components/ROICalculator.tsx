@@ -1,73 +1,114 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { DollarSign } from "lucide-react";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { AnimatedCounter } from "./AnimatedCounter";
 
 export const ROICalculator = () => {
-  const [subscribers, setSubscribers] = useState<number>(100);
-  const [pricePerSub, setPricePerSub] = useState<number>(5);
+  const [subscribers, setSubscribers] = useState(100);
+  const [pricePoint, setPricePoint] = useState(9.99);
+  const prefersReducedMotion = useReducedMotion();
   
-  const monthlyEarnings = subscribers * pricePerSub;
-  const yearlyEarnings = monthlyEarnings * 12;
+  // Memoize calculations to avoid re-rendering
+  const monthlyRevenue = useCallback(() => {
+    return subscribers * pricePoint * 0.8; // Assuming 20% platform fee
+  }, [subscribers, pricePoint]);
+  
+  const yearlyRevenue = useCallback(() => {
+    return monthlyRevenue() * 12;
+  }, [monthlyRevenue]);
+  
+  const subscriberOptions = [50, 100, 500, 1000, 5000];
+  const priceOptions = [4.99, 9.99, 14.99, 19.99, 29.99];
+  
+  // Use transform instead of margin/position for better performance
+  const animations = prefersReducedMotion
+    ? { 
+        initial: { opacity: 0 },
+        whileInView: { opacity: 1 },
+        transition: { duration: 0.3 }
+      }
+    : {
+        initial: { opacity: 0, y: 20 },
+        whileInView: { opacity: 1, y: 0 },
+        transition: { duration: 0.5 }
+      };
   
   return (
-    <div className="w-full max-w-lg mx-auto p-6 rounded-2xl bg-luxury-dark/50 backdrop-blur-xl border border-luxury-primary/20">
-      <h3 className="text-2xl font-bold text-white mb-6">Calculate Your Potential</h3>
-      
-      <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-luxury-neutral mb-2">
-            Number of Subscribers
-          </label>
-          <Input
-            type="number"
-            min="0"
-            value={subscribers}
-            onChange={(e) => setSubscribers(Number(e.target.value))}
-            className="bg-luxury-darker/50 border-luxury-primary/30 text-white"
-          />
+    <motion.div 
+      className="w-full max-w-3xl mx-auto glass-effect rounded-2xl p-6 sm:p-8"
+      {...animations}
+    >
+      <div className="grid gap-8 sm:grid-cols-2">
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-3">Number of Subscribers</h3>
+            <div className="flex flex-wrap gap-2">
+              {subscriberOptions.map((option) => (
+                <Button
+                  key={option}
+                  variant={subscribers === option ? "premium" : "outline"}
+                  size="sm"
+                  onClick={() => setSubscribers(option)}
+                  className="min-w-[70px]"
+                >
+                  {option.toLocaleString()}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="text-xl font-semibold mb-3">Monthly Subscription Price</h3>
+            <div className="flex flex-wrap gap-2">
+              {priceOptions.map((option) => (
+                <Button
+                  key={option}
+                  variant={pricePoint === option ? "premium" : "outline"}
+                  size="sm"
+                  onClick={() => setPricePoint(option)}
+                  className="min-w-[70px]"
+                >
+                  ${option}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
         
-        <div>
-          <label className="block text-sm font-medium text-luxury-neutral mb-2">
-            Price per Subscription ($)
-          </label>
-          <Input
-            type="number"
-            min="0"
-            step="0.5"
-            value={pricePerSub}
-            onChange={(e) => setPricePerSub(Number(e.target.value))}
-            className="bg-luxury-darker/50 border-luxury-primary/30 text-white"
-          />
-        </div>
-        
-        <div className="pt-6">
-          <motion.div 
-            className="p-4 rounded-xl bg-gradient-to-r from-luxury-primary/10 to-luxury-accent/10 border border-luxury-primary/20"
-            initial={{ scale: 0.95 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-luxury-neutral">Monthly Earnings</span>
-              <span className="text-2xl font-bold text-white flex items-center">
-                <DollarSign className="w-5 h-5 text-luxury-primary mr-1" />
-                {monthlyEarnings.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-luxury-neutral">Yearly Earnings</span>
-              <span className="text-2xl font-bold text-white flex items-center">
-                <DollarSign className="w-5 h-5 text-luxury-primary mr-1" />
-                {yearlyEarnings.toLocaleString()}
-              </span>
-            </div>
-          </motion.div>
+        <div className="flex flex-col justify-center items-center p-6 rounded-xl bg-luxury-primary/10 border border-luxury-primary/30">
+          <p className="text-lg text-luxury-neutral/80 mb-2">Monthly Revenue</p>
+          <div className="text-4xl sm:text-5xl font-display font-bold">
+            <AnimatedCounter 
+              endValue={monthlyRevenue()}
+              prefix="$"
+              duration={1200}
+              formatter={(value) => value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              className="bg-gradient-to-r from-white to-luxury-neutral bg-clip-text text-transparent"
+            />
+          </div>
+          
+          <div className="h-px w-3/4 bg-luxury-primary/20 my-6" />
+          
+          <p className="text-lg text-luxury-neutral/80 mb-2">Yearly Revenue</p>
+          <div className="text-4xl sm:text-5xl font-display font-bold">
+            <AnimatedCounter 
+              endValue={yearlyRevenue()}
+              prefix="$"
+              duration={1500}
+              formatter={(value) => value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              className="bg-gradient-to-r from-white to-luxury-neutral bg-clip-text text-transparent"
+            />
+          </div>
         </div>
       </div>
-    </div>
+      
+      <div className="mt-6 text-center text-luxury-neutral/70 text-sm">
+        * Revenue estimates assume an 80% creator payout rate after platform fees. Actual results may vary.
+      </div>
+    </motion.div>
   );
 };
+
+export default ROICalculator;

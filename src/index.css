@@ -54,6 +54,27 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Optimize scrolling */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Optimize scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -76,6 +97,10 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   font-family: 'Inter', sans-serif;
+  
+  /* Add content-visibility to improve paint performance */
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 5000px; /* Estimate size of content */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -101,6 +126,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Premium card effect */
 .premium-card {
   @apply relative overflow-hidden rounded-xl border border-luxury-primary/20 bg-luxury-dark/50 backdrop-blur-lg transition-all duration-500;
+  will-change: transform, box-shadow;
 }
 
 .premium-card:hover {
@@ -117,6 +143,7 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(90deg, transparent, var(--tw-colors-luxury-primary), transparent);
   transform: translateX(-100%);
   transition: transform 0.6s ease;
+  will-change: transform;
 }
 
 .premium-card:hover::before {
@@ -131,24 +158,52 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: gradient-x 8s linear infinite;
+  will-change: background-position;
 }
 
-/* Floating animation classes */
-.float-animation {
-  animation: float 6s ease-in-out infinite;
+/* Optimize animations with reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .gradient-text {
+    animation: none;
+  }
+  
+  .float-animation, 
+  .float-animation-delay-1, 
+  .float-animation-delay-2 {
+    animation: none;
+  }
+  
+  .hover-lift:hover {
+    transform: none;
+  }
+  
+  .shimmer-effect::before {
+    display: none;
+  }
 }
 
-.float-animation-delay-1 {
-  animation: float 6s ease-in-out 0.5s infinite;
-}
-
-.float-animation-delay-2 {
-  animation: float 6s ease-in-out 1s infinite;
+/* Floating animation classes - only apply if reduced motion is not preferred */
+@media (prefers-reduced-motion: no-preference) {
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
+    will-change: transform;
+  }
+  
+  .float-animation-delay-1 {
+    animation: float 6s ease-in-out 0.5s infinite;
+    will-change: transform;
+  }
+  
+  .float-animation-delay-2 {
+    animation: float 6s ease-in-out 1s infinite;
+    will-change: transform;
+  }
 }
 
 /* Magnetic button effect */
 .magnetic-button {
   transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+  will-change: transform;
 }
 
 /* Shimmer effect */
@@ -166,6 +221,7 @@ h1, h2, h3, h4, h5, h6 {
   height: 100%;
   background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
   animation: shimmer 2s infinite;
+  will-change: transform;
 }
 
 /* Adapted typewriter animation */
@@ -176,4 +232,35 @@ h1, h2, h3, h4, h5, h6 {
   animation: typewriter 4s steps(40) forwards;
   border-right: 2px solid white;
   animation-delay: 1s;
+}
+
+/* Animation keyframes */
+@keyframes gradient-x {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+/* Only load critical above-the-fold styles immediately */
+@media screen {
+  .below-fold {
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+  }
+}
+
+/* Add content visibility for offscreen sections to improve performance */
+.offscreen-content {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
 }

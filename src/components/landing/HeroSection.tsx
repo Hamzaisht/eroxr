@@ -5,8 +5,8 @@ import { useMouseParallax } from "@/hooks/use-mouse-parallax";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/landing/components/MagneticButton";
 import { Link } from "react-router-dom";
-import ParticlesBackground from "./ParticlesBackground";
 import { ArrowRight, Plus } from "lucide-react";
+import CSSParticlesBackground from "./CSSParticlesBackground";
 
 interface HeroSectionProps {
   scrollOpacity?: MotionValue<number>;
@@ -44,8 +44,8 @@ export const HeroSection = ({ scrollOpacity }: HeroSectionProps) => {
       ref={containerRef}
       className="relative w-screen min-h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* Particle background */}
-      <ParticlesBackground />
+      {/* Optimized particle background */}
+      <CSSParticlesBackground />
       
       {/* Content container with parallax effect */}
       <motion.div 

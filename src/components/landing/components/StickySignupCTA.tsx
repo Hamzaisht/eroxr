@@ -1,15 +1,29 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, X } from 'lucide-react';
+import { throttle } from '@/utils/throttle';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 export const StickySignupCTA = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const hasScrollListenerRef = useRef(false);
+  
+  // Use localStorage to remember if the user has dismissed the CTA
+  useEffect(() => {
+    const dismissed = localStorage.getItem('stickyCtaDismissed');
+    if (dismissed === 'true') {
+      setIsDismissed(true);
+    }
+  }, []);
   
   useEffect(() => {
-    const handleScroll = () => {
+    if (hasScrollListenerRef.current) return;
+    
+    const handleScroll = throttle(() => {
       // Show after scrolling down 60% of viewport height
       const scrollThreshold = window.innerHeight * 0.6;
       if (window.scrollY > scrollThreshold && !isDismissed) {
@@ -17,15 +31,21 @@ export const StickySignupCTA = () => {
       } else {
         setIsVisible(false);
       }
-    };
+    }, 200);
     
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    hasScrollListenerRef.current = true;
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      hasScrollListenerRef.current = false;
+    };
   }, [isDismissed]);
   
   const handleDismiss = () => {
     setIsDismissed(true);
     setIsVisible(false);
+    localStorage.setItem('stickyCtaDismissed', 'true');
   };
   
   return (
@@ -33,11 +53,11 @@ export const StickySignupCTA = () => {
       {isVisible && (
         <motion.div 
           className="fixed bottom-6 sm:bottom-10 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-sm px-4 sm:px-0"
-          initial={{ y: 100, opacity: 0 }}
+          initial={{ y: prefersReducedMotion ? 0 : 100, opacity: prefersReducedMotion ? 0 : 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
+          exit={{ y: prefersReducedMotion ? 0 : 100, opacity: 0 }}
           transition={{ 
-            type: "spring", 
+            type: prefersReducedMotion ? "tween" : "spring", 
             stiffness: 300, 
             damping: 30
           }}
@@ -46,6 +66,7 @@ export const StickySignupCTA = () => {
             <button
               onClick={handleDismiss}
               className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="Dismiss"
             >
               <X className="w-3 h-3" />
             </button>
@@ -63,8 +84,10 @@ export const StickySignupCTA = () => {
               <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
             </Link>
             
-            {/* Pulsing effect */}
-            <div className="absolute -inset-px rounded-xl opacity-0 animate-pulse-ring bg-white/20" />
+            {/* Pulsing effect - only if reduced motion is not preferred */}
+            {!prefersReducedMotion && (
+              <div className="absolute -inset-px rounded-xl opacity-0 animate-pulse-ring bg-white/20" />
+            )}
           </div>
         </motion.div>
       )}
