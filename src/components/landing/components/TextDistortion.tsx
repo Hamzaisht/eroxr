@@ -98,7 +98,6 @@ export const TextDistortion: React.FC<TextDistortionProps> = ({
             y: smoothDistortion.get() ? 
               smoothDistortion.get() * offsets.current[index].y : 0,
           }}
-          animate={controls}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
