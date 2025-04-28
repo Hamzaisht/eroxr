@@ -1,25 +1,21 @@
-
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-button-gradient text-white shadow hover:bg-hover-gradient hover:animate-neon-glow",
-        destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+        default: "bg-button-gradient text-white shadow-lg hover:shadow-xl hover:bg-hover-gradient hover:scale-105 hover:animate-neon-glow",
+        destructive: "bg-destructive text-destructive-foreground shadow-lg hover:bg-destructive/90",
+        outline: "border-2 border-input bg-background shadow-lg hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground shadow-lg hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all duration-300",
         link: "text-primary underline-offset-4 hover:underline",
-        success: "bg-green-700 text-white shadow-sm hover:bg-green-800",
-        warning: "bg-amber-600 text-white shadow-sm hover:bg-amber-700",
+        success: "bg-green-700 text-white shadow-lg hover:bg-green-800",
+        warning: "bg-amber-600 text-white shadow-lg hover:bg-amber-700",
       },
       size: {
         default: "h-9 px-4 py-2",

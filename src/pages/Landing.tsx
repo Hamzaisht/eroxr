@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -19,6 +18,8 @@ import { MegaCTASection } from "@/components/landing/MegaCTASection";
 import BackgroundEffects from "@/components/layout/BackgroundEffects";
 import CustomCursor from "@/components/landing/components/CustomCursor";
 import "../styles/animations.css";
+import { ROICalculator } from "@/components/landing/components/ROICalculator";
+import { PressLogos } from "@/components/landing/components/PressLogos";
 
 const Landing = () => {
   const [mounted, setMounted] = useState(false);
@@ -95,8 +96,21 @@ const Landing = () => {
         {/* Hero Section */}
         <HeroSection scrollOpacity={opacity} />
         
+        {/* Press Logos */}
+        <PressLogos />
+        
         {/* Explainer Section */}
         <ExplainerSection />
+        
+        {/* ROI Calculator */}
+        <section className="py-24 px-4 sm:px-6">
+          <div className="container mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-12">
+              Calculate Your <span className="text-luxury-primary">Earning Potential</span>
+            </h2>
+            <ROICalculator />
+          </div>
+        </section>
         
         {/* Creator Showcase */}
         <CreatorShowcase />
