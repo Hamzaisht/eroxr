@@ -24,6 +24,7 @@ import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
 import { ThemeToggle } from "@/components/landing/components/ThemeToggle";
 import CSSParticlesBackground from "@/components/landing/CSSParticlesBackground";
 import { throttle } from "@/utils/throttle";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 // Lazy load non-critical components
 const ROICalculator = lazy(() => import("@/components/landing/components/ROICalculator"));
@@ -42,6 +43,7 @@ const preloadImages = [
 const Landing = () => {
   const [mounted, setMounted] = useState(false);
   const isMobile = useIsMobile();
+  const prefersReducedMotion = useReducedMotion();
   const mainRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 200], [1, 0.2]);
@@ -73,7 +75,7 @@ const Landing = () => {
     });
     
     // Enable smooth scrolling behavior
-    document.documentElement.style.scrollBehavior = "smooth";
+    document.documentElement.style.scrollBehavior = prefersReducedMotion ? "auto" : "smooth";
     
     // Add performance optimization
     const handleScroll = throttle(() => {
@@ -86,7 +88,7 @@ const Landing = () => {
       document.documentElement.style.scrollBehavior = "";
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   if (!mounted) return <LoadingState message="Initializing..." />;
 
@@ -100,7 +102,7 @@ const Landing = () => {
         <ThemeToggle />
       </div>
       
-      {!isMobile && <CustomCursor />}
+      {!isMobile && !prefersReducedMotion && <CustomCursor />}
       
       <BackgroundEffects />
       
@@ -113,8 +115,8 @@ const Landing = () => {
         ref={mainRef}
         className="relative w-screen"
         style={{
-          scale: scrollProgressScale,
-          boxShadow: scrollProgressBorder,
+          scale: prefersReducedMotion ? 1 : scrollProgressScale,
+          boxShadow: prefersReducedMotion ? "none" : scrollProgressBorder,
         }}
       >
         <HeroSection scrollOpacity={opacity} />

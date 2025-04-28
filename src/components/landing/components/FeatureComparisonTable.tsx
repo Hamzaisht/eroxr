@@ -54,7 +54,7 @@ const features = [
   }
 ];
 
-export const FeatureComparisonTable = () => {
+const FeatureComparisonTable = () => {
   return (
     <section className="py-20">
       <div className="container mx-auto px-4">
@@ -164,3 +164,5 @@ export const FeatureComparisonTable = () => {
     </section>
   );
 };
+
+export default FeatureComparisonTable;

@@ -28,7 +28,7 @@ const stats = [
   }
 ];
 
-export const CommunityHighlights = () => {
+const CommunityHighlights = () => {
   return (
     <section className="py-20 relative overflow-hidden">
       <div className="container mx-auto px-4">
@@ -104,3 +104,5 @@ export const CommunityHighlights = () => {
     </section>
   );
 };
+
+export default CommunityHighlights;
