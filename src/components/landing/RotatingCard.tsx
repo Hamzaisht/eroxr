@@ -2,7 +2,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { PerspectiveCamera, useTexture, Environment } from "@react-three/drei";
-import { Vector3 } from "three";
+import { Vector3, Mesh } from "three";
 import { motion } from "framer-motion";
 
 interface RotatingCardProps {
@@ -11,7 +11,7 @@ interface RotatingCardProps {
 
 const Card = () => {
   // Reference to the mesh for animations
-  const cardRef = useRef<THREE.Mesh>(null);
+  const cardRef = useRef<Mesh>(null);
   
   // Load texture for the card
   const texture = useTexture("/lovable-uploads/1f90ad99-0978-444d-8b83-555a2ae853b0.png");
