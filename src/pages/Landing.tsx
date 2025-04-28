@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -15,6 +16,7 @@ import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { MegaCTASection } from "@/components/landing/MegaCTASection";
 import { VideoBackground } from "@/components/landing/components/VideoBackground";
+import { RotatingCardSection } from "@/components/landing/RotatingCardSection";
 import CustomCursor from "@/components/landing/components/CustomCursor";
 import "../styles/animations.css";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -124,6 +126,9 @@ const Landing = () => {
         </Suspense>
         
         <ExplainerSection />
+        
+        {/* Add our new Rotating Card Section here */}
+        <RotatingCardSection />
         
         <section className="py-24 px-4 sm:px-6">
           <div className="container mx-auto text-center">
