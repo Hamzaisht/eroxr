@@ -35,8 +35,8 @@ export const ROICalculator = () => {
       const centerY = rect.top + rect.height / 2;
       
       // Calculate distance from center as percentage
-      const x = ((e.clientX - centerX) / rect.width) * 10; // Max tilt by 10 degrees
-      const y = ((centerY - e.clientY) / rect.height) * 10;
+      const x = ((e.clientX - centerX) / rect.width) * 8; // Reduced from 10 to 8 degrees for more subtle effect
+      const y = ((centerY - e.clientY) / rect.height) * 8;
       
       setMousePosition({ x, y });
     };
@@ -75,20 +75,24 @@ export const ROICalculator = () => {
       {...animations}
     >
       <div className="relative group" ref={cardRef}>
-        {/* 3D Card Effect Container */}
-        <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary/20 via-luxury-accent/20 to-luxury-primary/20 rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* Enhanced glow effect for better visual clarity */}
+        <div 
+          className="absolute inset-0 bg-gradient-to-r from-luxury-primary/30 via-luxury-accent/20 to-luxury-primary/30 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-500" 
+          style={{ filter: 'contrast(1.2) brightness(1.1)' }}
+        />
         
         <motion.div 
-          className="relative backdrop-blur-xl bg-black/20 rounded-2xl p-8 border border-white/10 shadow-[0_0_50px_rgba(155,135,245,0.1)] transform hover:shadow-[0_0_80px_rgba(155,135,245,0.2)] transition-all duration-500"
+          className="relative backdrop-blur-lg bg-black/30 rounded-2xl p-8 border border-white/20 shadow-[0_0_50px_rgba(155,135,245,0.15)] transition-all duration-500"
           style={{
             transform: prefersReducedMotion ? "none" : `perspective(1000px) rotateY(${mousePosition.x}deg) rotateX(${mousePosition.y}deg)`,
             transition: "transform 0.2s ease-out",
+            boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.3), 0 0 50px -10px rgba(155, 135, 245, 0.25)"
           }}
         >
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-8">
               <div>
-                <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-white to-luxury-neutral/80 bg-clip-text text-transparent">
+                <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-white to-luxury-neutral/80 bg-clip-text text-transparent drop-shadow-sm">
                   Number of Subscribers
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -98,9 +102,9 @@ export const ROICalculator = () => {
                       variant={subscribers === option ? "premium" : "outline"}
                       size="sm"
                       onClick={() => setSubscribers(option)}
-                      className="min-w-[80px] relative overflow-hidden group"
+                      className="min-w-[80px] relative overflow-hidden group shadow-md hover:shadow-lg"
                     >
-                      <span className="relative z-10">{option.toLocaleString()}</span>
+                      <span className="relative z-10 font-medium">{option.toLocaleString()}</span>
                       <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary to-luxury-accent opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
                     </Button>
                   ))}
@@ -108,7 +112,7 @@ export const ROICalculator = () => {
               </div>
               
               <div>
-                <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-white to-luxury-neutral/80 bg-clip-text text-transparent">
+                <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-white to-luxury-neutral/80 bg-clip-text text-transparent drop-shadow-sm">
                   Monthly Subscription Price
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -118,9 +122,9 @@ export const ROICalculator = () => {
                       variant={pricePoint === option ? "premium" : "outline"}
                       size="sm"
                       onClick={() => setPricePoint(option)}
-                      className="min-w-[80px] relative overflow-hidden group"
+                      className="min-w-[80px] relative overflow-hidden group shadow-md hover:shadow-lg"
                     >
-                      <span className="relative z-10">${option}</span>
+                      <span className="relative z-10 font-medium">${option}</span>
                       <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary to-luxury-accent opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
                     </Button>
                   ))}
@@ -129,33 +133,34 @@ export const ROICalculator = () => {
             </div>
             
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/10 via-luxury-accent/5 to-transparent rounded-xl" />
-              <div className="relative p-6 rounded-xl backdrop-blur-sm border border-white/10">
+              {/* Enhanced inner card with better contrast */}
+              <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/15 via-luxury-accent/10 to-transparent rounded-xl" />
+              <div className="relative p-6 rounded-xl backdrop-blur-md border border-white/15 shadow-lg">
                 <div className="space-y-8">
                   <div className="text-center">
-                    <p className="text-lg text-luxury-neutral/80 mb-2">Monthly Revenue</p>
+                    <p className="text-lg text-white/90 mb-2 font-medium">Monthly Revenue</p>
                     <div className="text-4xl sm:text-5xl font-display font-bold">
                       <AnimatedCounter 
                         endValue={monthlyRevenue()}
                         prefix="$"
                         duration={1200}
                         formatter={(value) => value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                        className="bg-gradient-to-r from-white via-luxury-neutral to-white bg-clip-text text-transparent"
+                        className="bg-gradient-to-r from-white via-luxury-neutral to-white bg-clip-text text-transparent drop-shadow-sm"
                       />
                     </div>
                   </div>
                   
-                  <div className="h-px w-full bg-gradient-to-r from-transparent via-luxury-primary/20 to-transparent" />
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-luxury-primary/30 to-transparent" />
                   
                   <div className="text-center">
-                    <p className="text-lg text-luxury-neutral/80 mb-2">Yearly Revenue</p>
+                    <p className="text-lg text-white/90 mb-2 font-medium">Yearly Revenue</p>
                     <div className="text-4xl sm:text-5xl font-display font-bold">
                       <AnimatedCounter 
                         endValue={yearlyRevenue()}
                         prefix="$"
                         duration={1500}
                         formatter={(value) => value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                        className="bg-gradient-to-r from-white via-luxury-neutral to-white bg-clip-text text-transparent"
+                        className="bg-gradient-to-r from-white via-luxury-neutral to-white bg-clip-text text-transparent drop-shadow-sm"
                       />
                     </div>
                   </div>
@@ -164,7 +169,7 @@ export const ROICalculator = () => {
             </div>
           </div>
           
-          <div className="mt-6 text-center text-luxury-neutral/60 text-sm">
+          <div className="mt-6 text-center text-white/70 text-sm">
             * Revenue estimates assume an 80% creator payout rate after platform fees. Actual results may vary.
           </div>
         </motion.div>
