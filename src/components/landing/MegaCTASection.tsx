@@ -1,4 +1,3 @@
-
 import { useRef } from "react";
 import { motion } from "framer-motion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -17,8 +16,19 @@ export const MegaCTASection = () => {
     <section className="relative py-24 px-4 sm:px-6">
       <div ref={ref} className="container mx-auto max-w-7xl">
         <div className="relative rounded-3xl overflow-hidden">
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-luxury-dark via-luxury-darker to-black -z-10" />
+          {/* Background video */}
+          <div className="absolute inset-0 -z-10">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover opacity-30"
+            >
+              <source src="https://placehold.co/1920x1080.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-br from-luxury-dark/90 via-luxury-darker/90 to-black/90" />
+          </div>
           
           {/* Animated particle effects */}
           <div className="absolute inset-0 -z-10">

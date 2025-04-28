@@ -20,6 +20,10 @@ import CustomCursor from "@/components/landing/components/CustomCursor";
 import "../styles/animations.css";
 import { ROICalculator } from "@/components/landing/components/ROICalculator";
 import { PressLogos } from "@/components/landing/components/PressLogos";
+import { SuccessStoriesCarousel } from "@/components/landing/components/SuccessStoriesCarousel";
+import { CommunityHighlights } from "@/components/landing/components/CommunityHighlights";
+import { FeatureComparisonTable } from "@/components/landing/components/FeatureComparisonTable";
+import { FAQSection } from "@/components/landing/components/FAQSection";
 
 const Landing = () => {
   const [mounted, setMounted] = useState(false);
@@ -28,7 +32,6 @@ const Landing = () => {
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 200], [1, 0.2]);
   
-  // Advanced scroll effects
   const { scrollYProgress } = useScroll({
     target: mainRef,
     offset: ["start start", "end end"],
@@ -49,7 +52,6 @@ const Landing = () => {
   useEffect(() => {
     setMounted(true);
     
-    // Preload critical assets
     const preloadImages = [
       "/creator-1.jpg",
       "/creator-2.jpg",
@@ -63,7 +65,6 @@ const Landing = () => {
       img.src = src;
     });
     
-    // Apply smooth scrolling with enhanced physics
     document.documentElement.style.scrollBehavior = "smooth";
     
     return () => {
@@ -75,16 +76,12 @@ const Landing = () => {
 
   return (
     <div className="relative w-screen overflow-x-hidden bg-luxury-dark text-white">
-      {/* Custom cursor effect */}
       {!isMobile && <CustomCursor />}
       
-      {/* Enhanced background effects */}
       <BackgroundEffects />
       
-      {/* Navigation */}
       <Navbar />
       
-      {/* Main Content */}
       <motion.main 
         ref={mainRef}
         className="relative w-screen"
@@ -93,16 +90,12 @@ const Landing = () => {
           boxShadow: scrollProgressBorder,
         }}
       >
-        {/* Hero Section */}
         <HeroSection scrollOpacity={opacity} />
         
-        {/* Press Logos */}
         <PressLogos />
         
-        {/* Explainer Section */}
         <ExplainerSection />
         
-        {/* ROI Calculator */}
         <section className="py-24 px-4 sm:px-6">
           <div className="container mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-12">
@@ -112,26 +105,24 @@ const Landing = () => {
           </div>
         </section>
         
-        {/* Creator Showcase */}
         <CreatorShowcase />
         
-        {/* Features Overview */}
         <FeaturesSection />
         
-        {/* Trust Section */}
         <TrustSection />
         
-        {/* Testimonials */}
         <TestimonialsSection />
         
-        {/* Pricing Teaser */}
         <PricingSection />
         
-        {/* Final CTA */}
         <MegaCTASection />
+        
+        <SuccessStoriesCarousel />
+        <CommunityHighlights />
+        <FeatureComparisonTable />
+        <FAQSection />
       </motion.main>
       
-      {/* Footer */}
       <Footer />
     </div>
   );
