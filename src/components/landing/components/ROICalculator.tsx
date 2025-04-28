@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -9,6 +9,8 @@ export const ROICalculator = () => {
   const [subscribers, setSubscribers] = useState(100);
   const [pricePoint, setPricePoint] = useState(9.99);
   const prefersReducedMotion = useReducedMotion();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   
   const monthlyRevenue = useCallback(() => {
     return subscribers * pricePoint * 0.8;
@@ -21,6 +23,40 @@ export const ROICalculator = () => {
   const subscriberOptions = [50, 100, 500, 1000, 5000];
   const priceOptions = [4.99, 9.99, 14.99, 19.99, 29.99];
   
+  // Handle mouse movement for 3D effect
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!cardRef.current) return;
+      
+      const rect = cardRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      // Calculate distance from center as percentage
+      const x = ((e.clientX - centerX) / rect.width) * 10; // Max tilt by 10 degrees
+      const y = ((centerY - e.clientY) / rect.height) * 10;
+      
+      setMousePosition({ x, y });
+    };
+
+    const handleMouseLeave = () => {
+      // Smooth return to original position
+      setMousePosition({ x: 0, y: 0 });
+    };
+
+    const currentCard = cardRef.current;
+    if (currentCard) {
+      currentCard.addEventListener("mousemove", handleMouseMove);
+      currentCard.addEventListener("mouseleave", handleMouseLeave);
+      return () => {
+        currentCard.removeEventListener("mousemove", handleMouseMove);
+        currentCard.removeEventListener("mouseleave", handleMouseLeave);
+      };
+    }
+  }, [prefersReducedMotion]);
+
   const animations = prefersReducedMotion
     ? { 
         initial: { opacity: 0 },
@@ -38,11 +74,17 @@ export const ROICalculator = () => {
       className="w-full max-w-4xl mx-auto"
       {...animations}
     >
-      <div className="relative group">
+      <div className="relative group" ref={cardRef}>
         {/* 3D Card Effect Container */}
         <div className="absolute inset-0 bg-gradient-to-r from-luxury-primary/20 via-luxury-accent/20 to-luxury-primary/20 rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
         
-        <div className="relative backdrop-blur-xl bg-black/20 rounded-2xl p-8 border border-white/10 shadow-[0_0_50px_rgba(155,135,245,0.1)] transform hover:translate-y-[-2px] hover:shadow-[0_0_80px_rgba(155,135,245,0.2)] transition-all duration-500">
+        <motion.div 
+          className="relative backdrop-blur-xl bg-black/20 rounded-2xl p-8 border border-white/10 shadow-[0_0_50px_rgba(155,135,245,0.1)] transform hover:shadow-[0_0_80px_rgba(155,135,245,0.2)] transition-all duration-500"
+          style={{
+            transform: prefersReducedMotion ? "none" : `perspective(1000px) rotateY(${mousePosition.x}deg) rotateX(${mousePosition.y}deg)`,
+            transition: "transform 0.2s ease-out",
+          }}
+        >
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-8">
               <div>
@@ -125,7 +167,7 @@ export const ROICalculator = () => {
           <div className="mt-6 text-center text-luxury-neutral/60 text-sm">
             * Revenue estimates assume an 80% creator payout rate after platform fees. Actual results may vary.
           </div>
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );
