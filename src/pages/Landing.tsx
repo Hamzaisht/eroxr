@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -15,14 +14,13 @@ import { TrustSection } from "@/components/landing/TrustSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { MegaCTASection } from "@/components/landing/MegaCTASection";
-import BackgroundEffects from "@/components/layout/BackgroundEffects";
+import { VideoBackground } from "@/components/landing/components/VideoBackground";
 import CustomCursor from "@/components/landing/components/CustomCursor";
 import "../styles/animations.css";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StickySignupCTA } from "@/components/landing/components/StickySignupCTA";
 import { ScrollProgress } from "@/components/landing/components/ScrollProgress";
 import { ThemeToggle } from "@/components/landing/components/ThemeToggle";
-import CSSParticlesBackground from "@/components/landing/CSSParticlesBackground";
 import { throttle } from "@/utils/throttle";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
@@ -104,7 +102,7 @@ const Landing = () => {
       
       {!isMobile && !prefersReducedMotion && <CustomCursor />}
       
-      <BackgroundEffects />
+      <VideoBackground />
       
       <Navbar />
       
