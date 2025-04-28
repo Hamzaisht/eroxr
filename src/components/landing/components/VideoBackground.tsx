@@ -39,7 +39,6 @@ export const VideoBackground = () => {
         muted
         playsInline
         aria-hidden="true"
-        loading="lazy"
       >
         <source src="/background.mp4" type="video/mp4" />
       </video>
