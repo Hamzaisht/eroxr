@@ -75,14 +75,10 @@ export const ROICalculator = () => {
       {...animations}
     >
       <div className="relative group" ref={cardRef}>
-        {/* Enhanced glow effect for better visual clarity */}
-        <div 
-          className="absolute inset-0 bg-gradient-to-r from-luxury-primary/30 via-luxury-accent/20 to-luxury-primary/30 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-500" 
-          style={{ filter: 'contrast(1.2) brightness(1.1)' }}
-        />
+        {/* Removed the gradient background container */}
         
         <motion.div 
-          className="relative backdrop-blur-lg bg-black/30 rounded-2xl p-8 border border-white/20 shadow-[0_0_50px_rgba(155,135,245,0.15)] transition-all duration-500"
+          className="relative backdrop-blur-lg bg-black/30 rounded-2xl p-8 shadow-[0_0_50px_rgba(155,135,245,0.15)] transition-all duration-500"
           style={{
             transform: prefersReducedMotion ? "none" : `perspective(1000px) rotateY(${mousePosition.x}deg) rotateX(${mousePosition.y}deg)`,
             transition: "transform 0.2s ease-out",
