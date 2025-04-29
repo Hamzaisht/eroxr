@@ -40,11 +40,15 @@ export const BackgroundVideo = ({
     const isLowPowerMode = window.matchMedia('(prefers-reduced-data: reduce)').matches;
     const isMobile = window.innerWidth < 768;
     
-    // Modified version that avoids using navigator.connection directly
+    // Safe check for saveData property on navigator
     const hasSaveData = () => {
-      // Type-safe check for saveData property on navigator
-      // @ts-ignore - This ignores TypeScript error for saveData which may exist in some browsers
-      return typeof navigator !== 'undefined' && 'connection' in navigator && navigator.connection?.saveData === true;
+      // Check if navigator and connection exist before accessing saveData
+      return (
+        typeof navigator !== 'undefined' &&
+        'connection' in navigator &&
+        // @ts-ignore - Type safely access saveData which may not be in TS definitions
+        navigator.connection?.saveData === true
+      );
     };
     
     const shouldDisableVideo = isLowPowerMode || (isMobile && !hasSaveData());
