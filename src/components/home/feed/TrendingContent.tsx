@@ -42,7 +42,7 @@ export const TrendingContent = () => {
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.length === 10 ? allPages.length : undefined;
     },
-    initialPageParam: 0,
+    initialPageParam: 0
   });
 
   if (isLoading) {
@@ -84,7 +84,7 @@ export const TrendingContent = () => {
           >
             {page && Array.isArray(page) && 
               page
-                .filter((post: PostType) => post.likes_count && post.likes_count > 50)
+                .filter((post: PostType) => post && typeof post === 'object' && post.likes_count && post.likes_count > 50)
                 .map((post: PostType) => (
                   <Post
                     key={post.id}

@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Image, Users, CircuitBoard, MessageCircle, Video } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -30,7 +31,7 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
   });
   
   const { data: videosData, isLoading: videosLoading } = useFeedQuery(id, 'shorts');
-  const hasVideos = videosData?.pages?.[0] && videosData.pages[0].length > 0;
+  const hasVideos = videosData?.pages?.[0] && Array.isArray(videosData.pages[0]) && videosData.pages[0].length > 0;
   
   useEffect(() => {
     if (profileAds) {

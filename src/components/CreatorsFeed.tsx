@@ -106,18 +106,29 @@ export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
       <ScrollArea className="h-[calc(100vh-20rem)]">
         <div className="space-y-4 max-w-3xl mx-auto">
           <AnimatePresence mode="popLayout">
-            {posts.map((post: any) => {
+            {posts.map((post: Post) => {
               const typedPost: Post = {
-                ...post as object,
-                visibility: (post.visibility || 'public') as 'public' | 'subscribers_only',
-                is_ppv: post.is_ppv || false,
-                has_liked: post.has_liked || false,
+                ...post,
+                id: post.id,
+                creator_id: post.creator_id,
+                content: post.content,
+                media_url: post.media_url || [],
+                likes_count: post.likes_count || 0,
+                comments_count: post.comments_count || 0,
+                created_at: post.created_at,
                 updated_at: post.updated_at || post.created_at,
+                visibility: (post.visibility || 'public') as 'public' | 'subscribers_only',
+                tags: post.tags || null,
+                is_ppv: post.is_ppv || false,
+                ppv_amount: post.ppv_amount || null,
+                video_urls: post.video_urls || null,
+                has_liked: post.has_liked || false,
+                has_saved: post.has_saved || false,
                 screenshots_count: post.screenshots_count || 0,
                 downloads_count: post.downloads_count || 0,
                 creator: {
-                  id: post.creator?.id,
-                  username: post.creator?.username || null,
+                  id: post.creator?.id || '',
+                  username: post.creator?.username || '',
                   avatar_url: post.creator?.avatar_url || null
                 }
               };

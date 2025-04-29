@@ -63,7 +63,7 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.length === 10 ? allPages.length : undefined;
     },
-    initialPageParam: 0,
+    initialPageParam: 0
   });
 
   // Handle infinite scroll

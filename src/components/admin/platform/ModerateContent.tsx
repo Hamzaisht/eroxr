@@ -94,7 +94,7 @@ export const ModerateContent = () => {
   const itemsPerPage = 25;
 
   // Fetch flagged content
-  const { data, isLoading, error, isError } = useQuery({
+  const { data, isLoading, error, isError, refetch } = useQuery({
     queryKey: ["flagged_content", searchQuery, statusFilter, contentTypeFilter, currentPage],
     queryFn: async () => {
       const { data: reportsData, error: reportsError } = await supabase

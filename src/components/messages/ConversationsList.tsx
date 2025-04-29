@@ -1,18 +1,12 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
-import { Loader2, RefreshCw } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface ConversationsListProps {
-  onSelectConversation: (recipientId: string) => void;
-}
-
+// Define the proper Conversation type interface if needed
 interface Conversation {
   id: string;
   created_at: string;
@@ -20,114 +14,161 @@ interface Conversation {
   user_id_2: string;
   recipient: {
     id: string;
-    username: string | null;
+    username: string;
     avatar_url: string | null;
   };
   last_message: {
     content: string;
     created_at: string;
-  } | null;
+  };
   unread_messages_count: number;
 }
 
-export const ConversationsList = ({ onSelectConversation }: ConversationsListProps) => {
+export interface ConversationsListProps {
+  onSelectUser: (userId: string) => void;
+  onNewMessage: () => void;
+}
+
+const ConversationsList = ({ onSelectUser, onNewMessage }: ConversationsListProps) => {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { 
-    data: conversations,
-    isLoading,
-    refetch: refreshConversations 
-  } = useQuery({
-    queryKey: ["conversations"],
-    queryFn: async () => {
+  // Fix the auth.currentUser issue
+  const session = useSession();
+  const userId = session?.user?.id;
+
+  useEffect(() => {
+    if (!userId) {
+      console.warn("User not logged in.");
+      return;
+    }
+
+    const fetchConversations = async () => {
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from("conversations")
+          .from("direct_messages_conversations")
           .select(
             `
             id,
             created_at,
             user_id_1,
             user_id_2,
-            recipient:profiles!conversations_user_id_2_fkey(id, username, avatar_url),
-            last_message:messages(content, created_at),
+            recipient: direct_messages_recipients(id, username, avatar_url),
+            last_message: direct_messages(content, created_at),
             unread_messages_count
-            `
+          `
           )
-          .eq("user_id_1", supabase.auth.currentUser?.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
+          .or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`)
+          .order("created_at", { ascending: false });
 
         if (error) {
           console.error("Error fetching conversations:", error);
           setError(error.message);
-          return [];
+        } else {
+          // Fix the type conversion for conversations
+          const typedConversations: Conversation[] = (data || []).map((conv: any) => ({
+            id: conv.id,
+            created_at: conv.created_at,
+            user_id_1: conv.user_id_1,
+            user_id_2: conv.user_id_2,
+            recipient: conv.recipient && conv.recipient[0] ? {
+              id: conv.recipient[0].id,
+              username: conv.recipient[0].username || "Unknown",
+              avatar_url: conv.recipient[0].avatar_url
+            } : {
+              id: "",
+              username: "Unknown",
+              avatar_url: null
+            },
+            last_message: conv.last_message && conv.last_message[0] ? {
+              content: conv.last_message[0].content,
+              created_at: conv.last_message[0].created_at
+            } : {
+              content: "No messages",
+              created_at: conv.created_at
+            },
+            unread_messages_count: conv.unread_messages_count || 0
+          }));
+          setConversations(typedConversations);
         }
-
-        return (data || []) as Conversation[];
-      } catch (error: any) {
-        console.error("Unexpected error fetching conversations:", error);
-        setError(error.message || "An unexpected error occurred");
-        return [];
+      } catch (err: any) {
+        console.error("Failed to fetch conversations:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
       }
-    }
-  });
+    };
 
-  const handleSelectConversation = (recipientId: string) => {
-    onSelectConversation(recipientId);
+    fetchConversations();
+  }, [userId]);
+
+  const getRecipient = (conversation: Conversation) => {
+    if (conversation.recipient) {
+      return conversation.recipient;
+    }
+    return {
+      id: "unknown",
+      username: "Unknown",
+      avatar_url: null,
+    };
   };
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-2 border-b border-luxury-neutral/10">
-        <h2 className="text-lg font-semibold text-luxury-neutral">Chats</h2>
+      <div className="px-4 py-2 border-b border-luxury-primary/20">
+        <button
+          onClick={onNewMessage}
+          className="w-full py-2 text-sm text-white bg-luxury-primary rounded-md hover:bg-luxury-primary/80 transition-colors"
+        >
+          New Message
+        </button>
       </div>
-      <ScrollArea className="flex-1">
-        <div className="space-y-2 p-4">
+      <ScrollArea className="flex-1 overflow-y-auto">
+        <div className="py-2">
           {isLoading ? (
-            <div className="flex items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-luxury-primary" />
+            <div className="space-y-3 p-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </div>
           ) : error ? (
-            <Alert variant="destructive">
-              <AlertDescription>
-                {error}
-                <Button variant="link" onClick={() => refreshConversations()}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-              </AlertDescription>
-            </Alert>
-          ) : conversations && conversations.length > 0 ? (
-            conversations.map((conversation) => (
-              <Link
-                key={conversation.id}
-                to={`/messages/${conversation.recipient.id}`}
-                className="flex items-center space-x-3 rounded-md p-2 hover:bg-luxury-primary/5 transition-colors"
-                onClick={() => handleSelectConversation(conversation.recipient.id)}
-              >
-                <Avatar>
-                  <AvatarImage src={conversation.recipient.avatar_url || ""} alt={conversation.recipient.username || "User"} />
-                  <AvatarFallback>{conversation.recipient.username?.[0] || "U"}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium leading-none">{conversation.recipient.username || "Anonymous"}</p>
-                  {conversation.last_message && (
-                    <p className="text-sm text-luxury-neutral/70 line-clamp-1">
-                      {conversation.last_message.content}
-                    </p>
-                  )}
-                </div>
-                {conversation.unread_messages_count > 0 && (
-                  <Badge variant="secondary">{conversation.unread_messages_count}</Badge>
-                )}
-              </Link>
-            ))
+            <p className="text-red-500 p-4">Error: {error}</p>
+          ) : conversations.length === 0 ? (
+            <p className="text-luxury-neutral p-4">No conversations yet.</p>
           ) : (
-            <p className="text-sm text-luxury-neutral/50 text-center">No conversations yet.</p>
+            conversations.map((conversation) => {
+              const recipient = getRecipient(conversation);
+              return (
+                <button
+                  key={conversation.id}
+                  onClick={() => onSelectUser(recipient.id)}
+                  className="w-full flex items-center space-x-2 py-3 px-4 hover:bg-luxury-dark transition-colors"
+                >
+                  <Avatar>
+                    <AvatarImage src={recipient.avatar_url || ""} alt={recipient.username} />
+                    <AvatarFallback>{recipient.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-white">{recipient.username}</p>
+                    <p className="text-xs text-luxury-neutral line-clamp-1">
+                      {conversation.last_message?.content || "No messages"}
+                    </p>
+                  </div>
+                  {conversation.unread_messages_count > 0 && (
+                    <Badge variant="secondary">
+                      {conversation.unread_messages_count}
+                    </Badge>
+                  )}
+                </button>
+              );
+            })
           )}
         </div>
       </ScrollArea>
     </div>
   );
 };
+
+export default ConversationsList;

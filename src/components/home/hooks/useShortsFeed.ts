@@ -5,6 +5,7 @@ import { useFeedQuery } from "../../feed/useFeedQuery";
 import { Short } from "../types/short";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { Post } from "@/integrations/supabase/types/post";
 
 export const useShortsFeed = (specificShortId?: string | null) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -22,8 +23,8 @@ export const useShortsFeed = (specificShortId?: string | null) => {
   } = useFeedQuery(session?.user?.id, 'shorts');
 
   // Transform data to Short format
-  const shorts: Short[] = (data?.pages.flatMap(page => page) ?? []).map(post => {
-    if (!post) return {} as Short;
+  const shorts: Short[] = (data?.pages?.flatMap(page => page) ?? []).map(post => {
+    if (!post || typeof post !== 'object') return {} as Short;
     
     return {
       id: post.id || '',

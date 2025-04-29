@@ -16,7 +16,7 @@ interface ChatDetailsProps {
     username: string;
     avatar_url: string | null;
   };
-  onBack: () => void;
+  onClose: () => void;
 }
 
 interface Message {
@@ -31,7 +31,7 @@ interface Message {
 
 export const ChatDetails = ({ 
   recipient,
-  onBack 
+  onClose 
 }: ChatDetailsProps) => {
   const [messageText, setMessageText] = useState("");
   const { id: currentUserId } = useSession()?.user || {};
@@ -152,18 +152,22 @@ export const ChatDetails = ({
     sendMessageMutation.mutate();
   };
 
+  // Fix the username and avatar_url error
+  const recipientUsername = recipient?.username || "User";
+  const recipientAvatar = recipient?.avatar_url || null;
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
-        <Button variant="ghost" size="icon" onClick={onBack}>
+        <Button variant="ghost" size="icon" onClick={onClose}>
           ←
         </Button>
         <Avatar>
-          <AvatarImage src={recipient?.avatar_url || ""} alt={recipient?.username || "User"} />
-          <AvatarFallback>{recipient?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+          <AvatarImage src={recipientAvatar || ""} alt={recipientUsername || "User"} />
+          <AvatarFallback>{recipientUsername?.[0]?.toUpperCase() || "U"}</AvatarFallback>
         </Avatar>
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold">{recipient?.username || "User"}</h2>
+          <h2 className="text-lg font-semibold">{recipientUsername || "User"}</h2>
         </div>
       </div>
 
@@ -228,3 +232,5 @@ export const ChatDetails = ({
     </div>
   );
 }
+
+export default ChatDetails;
