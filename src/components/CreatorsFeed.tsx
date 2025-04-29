@@ -81,7 +81,7 @@ export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
         <div className="max-w-md w-full">
           <Alert className="bg-luxury-darker border-red-500/20 mb-4">
             <AlertDescription className="flex flex-col items-center gap-4">
-              <p className="text-luxury-neutral">Error loading posts: {error?.message || "Something went wrong"}</p>
+              <p className="text-luxury-neutral">Error loading posts: {error instanceof Error ? error.message : "Something went wrong"}</p>
             </AlertDescription>
           </Alert>
           <Button 
@@ -106,9 +106,9 @@ export const CreatorsFeed = memo(({ feedType = 'feed' }: CreatorsFeedProps) => {
       <ScrollArea className="h-[calc(100vh-20rem)]">
         <div className="space-y-4 max-w-3xl mx-auto">
           <AnimatePresence mode="popLayout">
-            {posts.map((post) => {
+            {posts.map((post: any) => {
               const typedPost: Post = {
-                ...post,
+                ...post as object,
                 visibility: (post.visibility || 'public') as 'public' | 'subscribers_only',
                 is_ppv: post.is_ppv || false,
                 has_liked: post.has_liked || false,

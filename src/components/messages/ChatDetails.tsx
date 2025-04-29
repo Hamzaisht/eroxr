@@ -1,256 +1,230 @@
-import { X, Bell, Calendar, Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Send, Ban, Loader2 } from "lucide-react";
+import { formatDistanceToNow } from 'date-fns';
 
 interface ChatDetailsProps {
-  userId: string;
-  onClose: () => void;
+  recipient: {
+    id: string;
+    username: string;
+    avatar_url: string | null;
+  };
+  onBack: () => void;
 }
 
-export const ChatDetails = ({ userId, onClose }: ChatDetailsProps) => {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTime, setSelectedTime] = useState("");
-  const [duration, setDuration] = useState("30");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+interface Message {
+  id: string;
+  content: string;
+  created_at: string;
+  sender_id: string;
+  recipient_id: string;
+  sender_username: string;
+  sender_avatar_url: string | null;
+}
 
-  const { data: profile } = useQuery({
-    queryKey: ['profile', userId],
+export const ChatDetails = ({ 
+  recipient,
+  onBack 
+}: ChatDetailsProps) => {
+  const [messageText, setMessageText] = useState("");
+  const { id: currentUserId } = useSession()?.user || {};
+  const [isBlocked, setIsBlocked] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const recipientId = recipient?.id;
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  const { data: messages, isLoading: messagesLoading } = useQuery({
+    queryKey: ["messages", recipientId],
     queryFn: async () => {
+      if (!recipientId || !currentUserId) return [];
+
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    }
+        .from('messages')
+        .select(`
+          id,
+          content,
+          created_at,
+          sender_id,
+          recipient_id,
+          sender_username:sender_id(username),
+          sender_avatar_url:sender_id(avatar_url)
+        `)
+        .or(`and(sender_id.eq.${currentUserId}, recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId}, recipient_id.eq.${currentUserId})`)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching messages:", error);
+        throw error;
+      }
+
+      return data?.map(msg => ({
+        ...msg,
+        sender_username: msg.sender_username?.username,
+        sender_avatar_url: msg.sender_avatar_url?.avatar_url
+      })) as Message[];
+    },
+    enabled: !!recipientId && !!currentUserId,
   });
 
-  // Mutation for deleting conversation
-  const deleteConversationMutation = useMutation({
+  const sendMessageMutation = useMutation({
     mutationFn: async () => {
+      if (!messageText.trim() || !recipientId || !currentUserId) return;
+
       const { error } = await supabase
-        .from('direct_messages')
-        .delete()
-        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`);
-      
-      if (error) throw error;
+        .from('messages')
+        .insert([
+          {
+            content: messageText,
+            sender_id: currentUserId,
+            recipient_id: recipientId,
+            sender_username: useSession()?.user?.user_metadata?.username as string,
+            sender_avatar_url: useSession()?.user?.user_metadata?.avatar_url as string
+          }
+        ]);
+
+      if (error) {
+        console.error("Error sending message:", error);
+        throw error;
+      }
+
+      setMessageText("");
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages'] });
-      toast({
-        title: "Conversation deleted",
-        description: "The conversation has been permanently deleted.",
-      });
-      setShowDeleteDialog(false);
+      queryClient.invalidateQueries({ queryKey: ["messages", recipientId] });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete conversation. Please try again.",
-        variant: "destructive",
-      });
+    onError: (error) => {
+      console.error("Error in sendMessageMutation:", error);
     }
   });
 
-  const handleMuteToggle = () => {
-    setIsMuted(!isMuted);
-    toast({
-      title: isMuted ? "Chat unmuted" : "Chat muted",
-      description: isMuted ? "You will now receive notifications" : "You won't receive notifications from this chat",
-    });
+  const blockMutation = useMutation({
+    mutationFn: async () => {
+      if (!recipientId || !currentUserId) return;
+
+      const { error } = await supabase
+        .from('blocked_users')
+        .insert([
+          {
+            blocker_id: currentUserId,
+            blocked_id: recipientId
+          }
+        ]);
+
+      if (error) {
+        console.error("Error blocking user:", error);
+        throw error;
+      }
+
+      setIsBlocked(true);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages", recipientId] });
+    },
+    onError: (error) => {
+      console.error("Error in blockMutation:", error);
+    }
+  });
+
+  const isBlocking = blockMutation.isLoading; // Use isLoading instead of isPending
+  
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      sendMessage();
+    }
   };
 
-  const handleScheduleSubmit = () => {
-    if (!selectedDate || !selectedTime) {
-      toast({
-        title: "Invalid selection",
-        description: "Please select both date and time",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Session scheduled",
-      description: `Session scheduled for ${format(selectedDate, 'PPP')} at ${selectedTime} for ${duration} minutes`,
-    });
-    setShowScheduleDialog(false);
+  const sendMessage = () => {
+    sendMessageMutation.mutate();
   };
 
   return (
-    <div className="border-l border-luxury-neutral/10 bg-luxury-dark/50 w-80">
-      <div className="p-4 border-b border-luxury-neutral/10 flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-luxury-neutral">Chat Details</h3>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-luxury-neutral/5 rounded-full"
-        >
-          <X className="w-5 h-5 text-luxury-neutral/70" />
-        </button>
+    <div className="space-y-6">
+      <div className="flex items-center space-x-4">
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          ←
+        </Button>
+        <Avatar>
+          <AvatarImage src={recipient?.avatar_url || ""} alt={recipient?.username || "User"} />
+          <AvatarFallback>{recipient?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+        </Avatar>
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold">{recipient?.username || "User"}</h2>
+        </div>
       </div>
 
-      <ScrollArea className="h-[calc(100vh-64px)]">
-        <div className="p-4 space-y-6">
-          {/* Quick Actions */}
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={handleMuteToggle}
-              className={`flex flex-col items-center p-3 space-y-1 rounded-lg transition-colors ${
-                isMuted ? 'bg-luxury-primary/20 text-luxury-primary' : 'hover:bg-luxury-neutral/5'
-              }`}
-            >
-              <Bell className="w-5 h-5" />
-              <span className="text-xs">{isMuted ? 'Unmute' : 'Mute'}</span>
-            </button>
-            <button
-              onClick={() => setShowScheduleDialog(true)}
-              className="flex flex-col items-center p-3 space-y-1 rounded-lg hover:bg-luxury-neutral/5"
-            >
-              <Calendar className="w-5 h-5 text-luxury-neutral/70" />
-              <span className="text-xs text-luxury-neutral/70">Schedule</span>
-            </button>
-            <button
-              onClick={() => setShowDeleteDialog(true)}
-              className="flex flex-col items-center p-3 space-y-1 rounded-lg hover:bg-luxury-neutral/5"
-            >
-              <Trash2 className="w-5 h-5 text-luxury-neutral/70" />
-              <span className="text-xs text-luxury-neutral/70">Delete</span>
-            </button>
-          </div>
-
-          {/* Shared Media */}
-          <div>
-            <h4 className="text-sm font-medium text-luxury-neutral mb-3">
-              Shared Media
-            </h4>
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3].map((_, i) => (
+      <div className="h-[calc(100vh-300px)] rounded-md border bg-muted p-4">
+        <ScrollArea className="h-full">
+          <div className="space-y-4">
+            {messagesLoading ? (
+              <div>Loading messages...</div>
+            ) : (
+              messages?.map((message) => (
                 <div
-                  key={i}
-                  className="aspect-square rounded-lg bg-luxury-neutral/5"
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Shared Files */}
-          <div>
-            <h4 className="text-sm font-medium text-luxury-neutral mb-3">
-              Shared Files
-            </h4>
-            <div className="space-y-2">
-              {[1, 2, 3].map((_, i) => (
-                <div
-                  key={i}
-                  className="p-3 rounded-lg bg-luxury-neutral/5 flex items-center space-x-3"
+                  key={message.id}
+                  className={`flex flex-col ${message.sender_id === currentUserId ? 'items-end' : 'items-start'
+                    }`}
                 >
-                  <div className="w-10 h-10 rounded bg-luxury-neutral/10" />
-                  <div>
-                    <p className="text-sm text-luxury-neutral">Document.pdf</p>
-                    <p className="text-xs text-luxury-neutral/50">1.2 MB</p>
+                  <div className="flex items-center space-x-2">
+                    {message.sender_id !== currentUserId && (
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={message.sender_avatar_url || ""} alt={message.sender_username || "User"} />
+                        <AvatarFallback>{message.sender_username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{message.sender_username}</p>
+                      <p className="text-sm text-muted-foreground">{message.content}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(message.created_at), {
+                          addSuffix: true,
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              ))
+            )}
+            <div ref={bottomRef} />
           </div>
-        </div>
-      </ScrollArea>
+        </ScrollArea>
+      </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Conversation</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this conversation? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteConversationMutation.mutate()}
-              disabled={deleteConversationMutation.isPending}
-            >
-              {deleteConversationMutation.isPending ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Schedule Dialog */}
-      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Schedule Private Session</DialogTitle>
-            <DialogDescription>
-              Set up a date and time for your private call session.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <CalendarComponent
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border"
-                disabled={(date) => date < new Date()}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Time</label>
-              <Input
-                type="time"
-                value={selectedTime}
-                onChange={(e) => setSelectedTime(e.target.value)}
-                className="bg-luxury-dark/30 border-luxury-neutral/10"
-              />
-            </div>
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Duration (minutes)</label>
-              <Input
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                min="15"
-                max="120"
-                step="15"
-                className="bg-luxury-dark/30 border-luxury-neutral/10"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowScheduleDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleScheduleSubmit}>
-              Schedule Session
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <div className="flex space-x-2">
+        <Input
+          placeholder="Type your message..."
+          value={messageText}
+          onChange={(e) => setMessageText(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <Button onClick={sendMessage} disabled={sendMessageMutation.isLoading}>
+          {sendMessageMutation.isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        </Button>
+      </div>
+      
+      <Button
+        onClick={() => blockMutation.mutate()}
+        variant="destructive"
+        disabled={isBlocking} // Use isLoading instead
+        className="w-full"
+      >
+        {isBlocking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
+        Block User
+      </Button>
     </div>
   );
-};
+}

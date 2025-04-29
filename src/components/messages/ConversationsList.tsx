@@ -1,109 +1,130 @@
-
-import { useSession } from "@supabase/auth-helpers-react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MessagePreview } from "./MessagePreview";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useRealtimeMessages } from "@/hooks"; // Updated import
+import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
+import { Loader2, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 
 interface ConversationsListProps {
-  onSelectUser: (userId: string) => void;
-  onNewMessage: () => void;
+  onSelectConversation: (recipientId: string) => void;
 }
 
-export const ConversationsList = ({ onSelectUser, onNewMessage }: ConversationsListProps) => {
-  const session = useSession();
-  useRealtimeMessages(); // Subscribe to all message updates
+interface Conversation {
+  id: string;
+  created_at: string;
+  user_id_1: string;
+  user_id_2: string;
+  recipient: {
+    id: string;
+    username: string | null;
+    avatar_url: string | null;
+  };
+  last_message: {
+    content: string;
+    created_at: string;
+  } | null;
+  unread_messages_count: number;
+}
 
-  const { data: messages, error } = useQuery({
-    queryKey: ['messages', session?.user?.id],
+export const ConversationsList = ({ onSelectConversation }: ConversationsListProps) => {
+  const [error, setError] = useState<string | null>(null);
+
+  const { 
+    data: conversations,
+    isLoading,
+    refetch: refreshConversations 
+  } = useQuery({
+    queryKey: ["conversations"],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
-
-      const { data, error } = await supabase
-        .from('direct_messages')
-        .select(`
-          *,
-          sender:profiles!direct_messages_sender_id_fkey (
-            username,
-            avatar_url,
-            status
-          ),
-          recipient:profiles!direct_messages_recipient_id_fkey (
-            username,
-            avatar_url,
-            status
+      try {
+        const { data, error } = await supabase
+          .from("conversations")
+          .select(
+            `
+            id,
+            created_at,
+            user_id_1,
+            user_id_2,
+            recipient:profiles!conversations_user_id_2_fkey(id, username, avatar_url),
+            last_message:messages(content, created_at),
+            unread_messages_count
+            `
           )
-        `)
-        .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
-        .order('created_at', { ascending: false });
+          .eq("user_id_1", supabase.auth.currentUser?.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
 
-      if (error) throw error;
-
-      // Group messages by conversation
-      const conversationsMap = new Map();
-      
-      data.forEach(message => {
-        const otherUserId = message.sender_id === session.user.id
-          ? message.recipient_id
-          : message.sender_id;
-          
-        if (!conversationsMap.has(otherUserId)) {
-          conversationsMap.set(otherUserId, message);
+        if (error) {
+          console.error("Error fetching conversations:", error);
+          setError(error.message);
+          return [];
         }
-      });
 
-      return Array.from(conversationsMap.values());
-    },
-    enabled: !!session?.user?.id,
-    gcTime: 0, // Using gcTime instead of cacheTime
-    staleTime: 0
+        return (data || []) as Conversation[];
+      } catch (error: any) {
+        console.error("Unexpected error fetching conversations:", error);
+        setError(error.message || "An unexpected error occurred");
+        return [];
+      }
+    }
   });
 
-  if (error) {
-    console.error('Error fetching messages:', error);
-  }
+  const handleSelectConversation = (recipientId: string) => {
+    onSelectConversation(recipientId);
+  };
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-white/5">
-        <Button
-          onClick={onNewMessage}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New Message
-        </Button>
+      <div className="px-4 py-2 border-b border-luxury-neutral/10">
+        <h2 className="text-lg font-semibold text-luxury-neutral">Chats</h2>
       </div>
-
       <ScrollArea className="flex-1">
-        <div className="space-y-1 p-2">
-          {messages?.map((message) => (
-            <MessagePreview
-              key={message.id}
-              message={message}
-              currentUserId={session?.user?.id}
-              onClick={() => {
-                const otherUserId = message.sender_id === session?.user?.id
-                  ? message.recipient_id
-                  : message.sender_id;
-                onSelectUser(otherUserId || '');
-              }}
-            />
-          ))}
-          {!messages?.length && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-white/50 mb-4">No messages yet</p>
-              <Button
-                onClick={onNewMessage}
-                variant="outline"
-                className="border-white/10 hover:bg-white/5"
-              >
-                Start a conversation
-              </Button>
+        <div className="space-y-2 p-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-luxury-primary" />
             </div>
+          ) : error ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                {error}
+                <Button variant="link" onClick={() => refreshConversations()}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : conversations && conversations.length > 0 ? (
+            conversations.map((conversation) => (
+              <Link
+                key={conversation.id}
+                to={`/messages/${conversation.recipient.id}`}
+                className="flex items-center space-x-3 rounded-md p-2 hover:bg-luxury-primary/5 transition-colors"
+                onClick={() => handleSelectConversation(conversation.recipient.id)}
+              >
+                <Avatar>
+                  <AvatarImage src={conversation.recipient.avatar_url || ""} alt={conversation.recipient.username || "User"} />
+                  <AvatarFallback>{conversation.recipient.username?.[0] || "U"}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="text-sm font-medium leading-none">{conversation.recipient.username || "Anonymous"}</p>
+                  {conversation.last_message && (
+                    <p className="text-sm text-luxury-neutral/70 line-clamp-1">
+                      {conversation.last_message.content}
+                    </p>
+                  )}
+                </div>
+                {conversation.unread_messages_count > 0 && (
+                  <Badge variant="secondary">{conversation.unread_messages_count}</Badge>
+                )}
+              </Link>
+            ))
+          ) : (
+            <p className="text-sm text-luxury-neutral/50 text-center">No conversations yet.</p>
           )}
         </div>
       </ScrollArea>

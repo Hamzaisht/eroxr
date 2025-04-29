@@ -85,7 +85,7 @@ export const UserListModal = ({ open, onOpenChange, profileId, type }: UserListM
             <div className="flex flex-col items-center p-4 gap-4">
               <Alert className="bg-luxury-darker/80 border-red-500/20">
                 <AlertDescription>
-                  Failed to load {type}. {error?.message || "Please try again."}
+                  Failed to load {type}. {error instanceof Error ? error.message : "Please try again."}
                 </AlertDescription>
               </Alert>
               <Button onClick={() => refetch()} variant="outline" size="sm" className="flex items-center gap-2">

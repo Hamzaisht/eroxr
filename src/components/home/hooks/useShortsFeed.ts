@@ -22,27 +22,31 @@ export const useShortsFeed = (specificShortId?: string | null) => {
   } = useFeedQuery(session?.user?.id, 'shorts');
 
   // Transform data to Short format
-  const shorts: Short[] = (data?.pages.flatMap(page => page) ?? []).map(post => ({
-    id: post.id,
-    creator: {
-      id: post.creator_id,
-      username: post.creator?.username || 'Anonymous',
-      avatar_url: post.creator?.avatar_url || null,
-      created_at: post.created_at,
-      updated_at: post.created_at
-    },
-    creator_id: post.creator_id,
-    content: post.content,
-    video_urls: post.video_urls,
-    likes_count: post.likes_count,
-    comments_count: post.comments_count,
-    has_liked: post.has_liked,
-    has_saved: post.has_saved || false,
-    created_at: post.created_at,
-    view_count: post.view_count || 0,
-    visibility: post.visibility,
-    description: post.content
-  }));
+  const shorts: Short[] = (data?.pages.flatMap(page => page) ?? []).map(post => {
+    if (!post) return {} as Short;
+    
+    return {
+      id: post.id || '',
+      creator: {
+        id: post.creator?.id || '',
+        username: post.creator?.username || 'Anonymous',
+        avatar_url: post.creator?.avatar_url || null,
+        created_at: post.created_at || '',
+        updated_at: post.created_at || ''
+      },
+      creator_id: post.creator_id || '',
+      content: post.content || '',
+      video_urls: post.video_urls || [],
+      likes_count: post.likes_count || 0,
+      comments_count: post.comments_count || 0,
+      has_liked: !!post.has_liked,
+      has_saved: !!post.has_saved,
+      created_at: post.created_at || '',
+      view_count: post.view_count || 0,
+      visibility: post.visibility || 'public',
+      description: post.content || ''
+    };
+  });
 
   // Update loading state when data changes
   useEffect(() => {

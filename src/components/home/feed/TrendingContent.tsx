@@ -1,3 +1,4 @@
+
 import { Post } from "@/components/feed/Post";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useMediaQuery } from "@/hooks/use-mobile";
@@ -22,7 +23,7 @@ export const TrendingContent = () => {
   } = useInfiniteQuery({
     queryKey: ["trending-posts"],
     queryFn: async ({ pageParam = 0 }) => {
-      const from = pageParam * 10;
+      const from = (pageParam as number) * 10;
       const to = from + 9;
 
       const { data: posts, error } = await supabase
@@ -81,16 +82,18 @@ export const TrendingContent = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: i * 0.1 }}
           >
-            {page
-              .filter((post: PostType) => post.likes_count && post.likes_count > 50)
-              .map((post: PostType) => (
-                <Post
-                  key={post.id}
-                  post={post}
-                  creator={post.creator}
-                  currentUser={session?.user || null}
-                />
-              ))}
+            {page && Array.isArray(page) && 
+              page
+                .filter((post: PostType) => post.likes_count && post.likes_count > 50)
+                .map((post: PostType) => (
+                  <Post
+                    key={post.id}
+                    post={post}
+                    creator={post.creator}
+                    currentUser={session?.user || null}
+                  />
+                ))
+            }
           </motion.div>
         ))}
 

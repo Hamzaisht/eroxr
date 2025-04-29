@@ -30,7 +30,7 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
   } = useInfiniteQuery({
     queryKey: ["posts", "feed", userId],
     queryFn: async ({ pageParam = 0 }) => {
-      const from = pageParam * 10;
+      const from = (pageParam as number) * 10;
       const to = from + 9;
 
       let query = supabase

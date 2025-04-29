@@ -30,7 +30,7 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
   });
   
   const { data: videosData, isLoading: videosLoading } = useFeedQuery(id, 'shorts');
-  const hasVideos = videosData?.pages?.[0]?.length > 0;
+  const hasVideos = videosData?.pages?.[0] && videosData.pages[0].length > 0;
   
   useEffect(() => {
     if (profileAds) {

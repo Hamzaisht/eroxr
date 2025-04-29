@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,7 +110,7 @@ export const FeedContainer = ({
         <Alert className="bg-luxury-darker border-red-500/20 mb-4 max-w-md w-full">
           <AlertTriangle className="h-5 w-5 text-red-500" />
           <AlertDescription>
-            Failed to load your feed. {error?.message || "Please try again."}
+            Failed to load your feed. {error instanceof Error ? error.message : "Please try again."}
           </AlertDescription>
         </Alert>
         <Button 

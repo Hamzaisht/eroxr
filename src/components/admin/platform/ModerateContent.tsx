@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,7 +94,7 @@ export const ModerateContent = () => {
   const itemsPerPage = 25;
 
   // Fetch flagged content
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, isError } = useQuery({
     queryKey: ["flagged_content", searchQuery, statusFilter, contentTypeFilter, currentPage],
     queryFn: async () => {
       const { data: reportsData, error: reportsError } = await supabase
@@ -476,13 +475,16 @@ export const ModerateContent = () => {
   }
 
   // Error state
-  if (error) {
+  if (isError) {
     return (
-      <div className="p-8 text-center">
-        <h3 className="text-xl font-bold text-red-500">Error Loading Content</h3>
-        <p className="text-gray-400 mt-2">{(error as Error).message}</p>
-        <Button onClick={() => window.location.reload()} className="mt-4">
-          Try Again
+      <div className="flex flex-col items-center justify-center h-[50vh]">
+        <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+        <h3 className="text-xl font-semibold mb-2">Failed to load content</h3>
+        <p className="text-gray-500 mb-4">
+          {error instanceof Error ? error.message : "An unknown error occurred"}
+        </p>
+        <Button onClick={() => refetch()} variant="outline">
+          <RefreshCw className="w-4 h-4 mr-2" /> Retry
         </Button>
       </div>
     );
@@ -769,7 +771,7 @@ export const ModerateContent = () => {
               onClick={confirmAction}
               disabled={!actionReason}
             >
-              Confirm
+              Confirm {actionType}
             </Button>
           </DialogFooter>
         </DialogContent>
