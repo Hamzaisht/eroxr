@@ -22,8 +22,8 @@ export const TrendingContent = () => {
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["trending-posts"],
-    queryFn: async ({ pageParam = 0 }) => {
-      const from = (pageParam as number) * 10;
+    queryFn: async ({ pageParam }) => {
+      const from = (pageParam as number || 0) * 10;
       const to = from + 9;
 
       const { data: posts, error } = await supabase
@@ -41,8 +41,7 @@ export const TrendingContent = () => {
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.length === 10 ? allPages.length : undefined;
-    },
-    initialPageParam: 0
+    }
   });
 
   if (isLoading) {
@@ -84,7 +83,7 @@ export const TrendingContent = () => {
           >
             {page && Array.isArray(page) && 
               page
-                .filter((post: any) => post && typeof post === 'object' && post.likes_count && post.likes_count > 50)
+                .filter(post => post && typeof post === 'object' && post.likes_count && post.likes_count > 50)
                 .map((post: PostType) => (
                   <Post
                     key={post.id}

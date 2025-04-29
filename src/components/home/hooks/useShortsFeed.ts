@@ -26,29 +26,29 @@ export const useShortsFeed = (specificShortId?: string | null) => {
   const shorts: Short[] = (data?.pages?.flatMap(page => page) ?? []).map(post => {
     if (!post || typeof post !== 'object') return {} as Short;
     
-    // Use type assertion to safely access properties
-    const postObj = post as Record<string, any>;
+    // Use type assertion for safer property access
+    const typedPost = post as Post;
     
     return {
-      id: postObj.id || '',
+      id: typedPost.id || '',
       creator: {
-        id: postObj.creator?.id || '',
-        username: postObj.creator?.username || 'Anonymous',
-        avatar_url: postObj.creator?.avatar_url || null,
-        created_at: postObj.created_at || '',
-        updated_at: postObj.created_at || ''
+        id: typedPost.creator?.id || '',
+        username: typedPost.creator?.username || 'Anonymous',
+        avatar_url: typedPost.creator?.avatar_url || null,
+        created_at: typedPost.created_at || '',
+        updated_at: typedPost.created_at || ''
       },
-      creator_id: postObj.creator_id || '',
-      content: postObj.content || '',
-      video_urls: postObj.video_urls || [],
-      likes_count: postObj.likes_count || 0,
-      comments_count: postObj.comments_count || 0,
-      has_liked: !!postObj.has_liked,
-      has_saved: !!postObj.has_saved,
-      created_at: postObj.created_at || '',
-      view_count: postObj.view_count || 0,
-      visibility: postObj.visibility || 'public',
-      description: postObj.content || ''
+      creator_id: typedPost.creator_id || '',
+      content: typedPost.content || '',
+      video_urls: typedPost.video_urls || [],
+      likes_count: typedPost.likes_count || 0,
+      comments_count: typedPost.comments_count || 0,
+      has_liked: !!typedPost.has_liked,
+      has_saved: !!typedPost.has_saved,
+      created_at: typedPost.created_at || '',
+      view_count: typedPost.view_count || 0,
+      visibility: typedPost.visibility || 'public',
+      description: typedPost.content || ''
     };
   });
 

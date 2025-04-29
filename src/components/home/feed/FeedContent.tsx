@@ -29,8 +29,8 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["posts", "feed", userId],
-    queryFn: async ({ pageParam = 0 }) => {
-      const from = (pageParam as number) * 10;
+    queryFn: async ({ pageParam }) => {
+      const from = (pageParam as number || 0) * 10;
       const to = from + 9;
 
       let query = supabase
@@ -62,8 +62,7 @@ export const FeedContent = ({ userId }: FeedContentProps) => {
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.length === 10 ? allPages.length : undefined;
-    },
-    initialPageParam: 0
+    }
   });
 
   // Handle infinite scroll
