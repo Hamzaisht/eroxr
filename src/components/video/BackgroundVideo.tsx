@@ -39,7 +39,15 @@ export const BackgroundVideo = ({
     // Check if this is a low-power device or browser that might struggle
     const isLowPowerMode = window.matchMedia('(prefers-reduced-data: reduce)').matches;
     const isMobile = window.innerWidth < 768;
-    const shouldDisableVideo = isLowPowerMode || (isMobile && !navigator.connection?.saveData === false);
+    
+    // Modified version that avoids using navigator.connection directly
+    const hasSaveData = () => {
+      // Type-safe check for saveData property on navigator
+      // @ts-ignore - This ignores TypeScript error for saveData which may exist in some browsers
+      return typeof navigator !== 'undefined' && 'connection' in navigator && navigator.connection?.saveData === true;
+    };
+    
+    const shouldDisableVideo = isLowPowerMode || (isMobile && !hasSaveData());
     
     if (shouldDisableVideo) {
       setIsUnsupported(true);
