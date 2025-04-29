@@ -2,7 +2,7 @@
 import { Plus, Upload } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface UploadShortButtonProps {
@@ -12,7 +12,7 @@ interface UploadShortButtonProps {
 export const UploadShortButton = ({ onUploadClick }: UploadShortButtonProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const session = useSession();
   const { toast } = useToast();
   
   // Determine the correct navigation path based on current location
@@ -29,7 +29,7 @@ export const UploadShortButton = ({ onUploadClick }: UploadShortButtonProps) => 
       return;
     }
     
-    if (!user) {
+    if (!session) {
       toast({
         title: "Authentication required",
         description: "You must be logged in to upload videos",

@@ -1,11 +1,11 @@
 
 import { useNavigate } from "react-router-dom";
-import { useAuth } from '@/contexts/AuthContext';
+import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { VideoUploadForm } from "@/components/upload/VideoUploadForm";
 
 export default function ShortsUpload() {
-  const { user } = useAuth();
+  const session = useSession();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -27,7 +27,7 @@ export default function ShortsUpload() {
         onComplete={handleComplete}
         onCancel={handleCancel}
         maxSizeInMB={100}
-        userId={user?.id}
+        userId={session?.user?.id}
       />
     </div>
   );

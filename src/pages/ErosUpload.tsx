@@ -1,19 +1,19 @@
 
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from '@/contexts/AuthContext';
+import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { VideoUploadForm } from "@/components/upload/VideoUploadForm";
 
 export default function ErosUpload() {
-  const { user } = useAuth();
+  const session = useSession();
   const { toast } = useToast();
   const navigate = useNavigate();
   
   // Check authentication
   useEffect(() => {
-    if (!user) {
+    if (!session) {
       toast({
         title: "Sign in required",
         description: "Please sign in to upload videos",
@@ -21,7 +21,7 @@ export default function ErosUpload() {
       });
       navigate("/login", { state: { from: "/eros/upload" } });
     }
-  }, [user, toast, navigate]);
+  }, [session, toast, navigate]);
   
   // Handle successful upload
   const handleUploaded = (videoId: string) => {
@@ -36,7 +36,7 @@ export default function ErosUpload() {
     navigate("/eros");
   };
   
-  if (!user) {
+  if (!session) {
     return null;
   }
 
@@ -54,7 +54,7 @@ export default function ErosUpload() {
           onComplete={handleUploaded}
           onCancel={handleCancel}
           maxSizeInMB={100}
-          userId={user.id}
+          userId={session.user.id}
         />
       </motion.div>
     </div>
