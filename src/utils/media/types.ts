@@ -29,7 +29,7 @@ export interface MediaSource {
   video_urls?: string[] | null;
   
   // Media metadata
-  media_type?: MediaType;
+  media_type?: MediaType | string;
   content_type?: string;
   thumbnail_url?: string | null;
   video_thumbnail_url?: string | null;
@@ -65,12 +65,18 @@ export interface MediaOptions {
  */
 export interface UploadOptions {
   maxFileSize?: number;
+  maxSizeInMB?: number;
   acceptedFileTypes?: string[];
+  allowedTypes?: string[];
   bucket?: string;
   path?: string;
   contentType?: string;
+  contentCategory?: string;
   cacheControl?: string;
   upsert?: boolean;
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
+  onProgress?: (progress: number) => void;
 }
 
 /**
@@ -80,7 +86,11 @@ export interface UploadState {
   isUploading: boolean;
   progress: number;
   error: string | null;
-  url: string | null;
+  url?: string | null;
+  success?: boolean;
+  files?: any[];
+  previews?: string[];
+  isComplete?: boolean;
 }
 
 /**
@@ -88,7 +98,9 @@ export interface UploadState {
  */
 export interface FileValidationResult {
   valid: boolean;
+  isValid?: boolean; // Alias for backward compatibility
   error?: string;
+  message?: string; // Alias for error
 }
 
 /**
@@ -107,6 +119,48 @@ export enum AvailabilityStatus {
  */
 export interface ActiveSurveillanceState {
   active: boolean;
-  deviceId: string | null;
-  startTime: number | null;
+  deviceId?: string | null;
+  startTime: number | string | null;
+  userId?: string;
+  targetUserId?: string;
+  startedAt?: Date;
+  duration?: number;
+  sessionId?: string;
+  isWatching?: boolean;
+  session?: any;
+}
+
+/**
+ * Create a function to safely convert strings to AvailabilityStatus
+ */
+export function stringToAvailabilityStatus(status: string): AvailabilityStatus {
+  switch(status.toLowerCase()) {
+    case 'online': return AvailabilityStatus.ONLINE;
+    case 'away': return AvailabilityStatus.AWAY;
+    case 'busy': return AvailabilityStatus.BUSY;
+    case 'invisible': return AvailabilityStatus.INVISIBLE;
+    case 'offline':
+    default:
+      return AvailabilityStatus.OFFLINE;
+  }
+}
+
+/**
+ * Helper function to check if a value is a valid AvailabilityStatus
+ */
+export function isValidAvailabilityStatus(status: any): boolean {
+  return Object.values(AvailabilityStatus).includes(status as AvailabilityStatus);
+}
+
+// Add a function to help convert to MediaType enum values
+export function stringToMediaType(type: string): MediaType {
+  switch(type.toLowerCase()) {
+    case 'image': return MediaType.IMAGE;
+    case 'video': return MediaType.VIDEO;
+    case 'audio': return MediaType.AUDIO;
+    case 'document': return MediaType.DOCUMENT;
+    case 'embed': return MediaType.EMBED;
+    case 'file': return MediaType.FILE;
+    default: return MediaType.UNKNOWN;
+  }
 }

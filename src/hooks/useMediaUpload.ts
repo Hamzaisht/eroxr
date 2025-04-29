@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { uploadFile } from '@/utils/upload/fileUploadService';
+import { uploadFileToStorage } from '@/utils/media/mediaUtils';
 import { UploadOptions, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useToast } from './use-toast';
 
@@ -50,31 +50,26 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     options?: UploadOptions
   ): FileValidationResult => {
     if (!file) {
-      return { isValid: false, error: 'No file provided', message: 'No file provided' };
+      const error = 'No file provided';
+      return { valid: false, isValid: false, error, message: error };
     }
 
     const maxSizeMB = options?.maxSizeInMB || defaultOptions?.maxSizeInMB || MAX_FILE_SIZE_DEFAULT;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     
     if (file.size > maxSizeBytes) {
-      return { 
-        isValid: false, 
-        error: `File size exceeds the ${maxSizeMB}MB limit`,
-        message: `File size exceeds the ${maxSizeMB}MB limit`
-      };
+      const error = `File size exceeds the ${maxSizeMB}MB limit`;
+      return { valid: false, isValid: false, error, message: error };
     }
 
     const allowedTypes = options?.allowedTypes || defaultOptions?.allowedTypes || DEFAULT_ALLOWED_TYPES;
     
     if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
-      return { 
-        isValid: false, 
-        error: `File type '${file.type}' is not supported`,
-        message: `File type '${file.type}' is not supported`
-      };
+      const error = `File type '${file.type}' is not supported`;
+      return { valid: false, isValid: false, error, message: error };
     }
 
-    return { isValid: true, message: '' };
+    return { valid: true, isValid: true, message: '' };
   }, [defaultOptions]);
 
   // Upload media function
@@ -95,7 +90,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     }
 
     const validation = validateFile(file, options);
-    if (!validation.isValid) {
+    if (!validation.valid) {
       toast({
         title: 'Invalid File',
         description: validation.message || validation.error || 'Invalid file',
@@ -138,7 +133,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       const bucket = contentCategory === 'shorts' ? 'shorts' : 'media';
       
       // Upload the file using the fileUploadService
-      const result = await uploadFile(file, bucket, session.user.id, {
+      const result = await uploadFileToStorage(file, bucket, session.user.id, {
         contentType: file.type,
         upsert: true
       });
@@ -185,13 +180,11 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       }
 
       // Make sure we're returning url and path properties
-      const successResult = {
+      return {
         success: true,
         url: result.url || '',
         path: result.path || ''
       };
-      
-      return successResult;
     } catch (error: any) {
       clearInterval(progressInterval);
       console.error('Upload error:', error);

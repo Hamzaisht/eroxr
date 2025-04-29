@@ -34,7 +34,11 @@ export const useContextualMediaUpload = (context: MediaContext) => {
     }
     
     try {
-      const result = await uploadMedia(file, { contentCategory: context });
+      // Using the updated UploadOptions interface
+      const result = await uploadMedia(file, { 
+        contentCategory: context,
+        maxSizeInMB: 50
+      });
       
       if (!result.success) {
         toast({

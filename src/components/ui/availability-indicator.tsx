@@ -1,11 +1,11 @@
 
 import { cn } from "@/lib/utils";
-import { AvailabilityStatus } from "@/utils/media/types";
+import { AvailabilityStatus, stringToAvailabilityStatus } from "@/utils/media/types";
 
 export type { AvailabilityStatus };
 
 export interface AvailabilityIndicatorProps {
-  status: AvailabilityStatus;
+  status: AvailabilityStatus | string;
   className?: string;
   size?: number;
   onClick?: (e: React.MouseEvent) => void;
@@ -17,15 +17,20 @@ export function AvailabilityIndicator({
   size,
   onClick
 }: AvailabilityIndicatorProps) {
+  // Convert string to enum if it's a string
+  const normalizedStatus = typeof status === 'string' 
+    ? stringToAvailabilityStatus(status) 
+    : status;
+  
   return (
     <div 
       className={cn(
         "rounded-full",
-        status === 'online' && "bg-green-500",
-        status === 'offline' && "bg-gray-400",
-        status === 'away' && "bg-yellow-500",
-        status === 'busy' && "bg-red-500",
-        status === 'invisible' && "bg-gray-400 opacity-50", // Handle invisible status
+        normalizedStatus === AvailabilityStatus.ONLINE && "bg-green-500",
+        normalizedStatus === AvailabilityStatus.OFFLINE && "bg-gray-400",
+        normalizedStatus === AvailabilityStatus.AWAY && "bg-yellow-500",
+        normalizedStatus === AvailabilityStatus.BUSY && "bg-red-500",
+        normalizedStatus === AvailabilityStatus.INVISIBLE && "bg-gray-400 opacity-50",
         className
       )}
       style={{

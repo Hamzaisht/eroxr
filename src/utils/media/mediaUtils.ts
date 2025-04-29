@@ -1,252 +1,113 @@
-import { MediaType, MediaSource } from './types';
-import { isVideoUrl, isImageUrl, getCleanUrl } from './urlUtils';
+
 import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
+import { getFileExtension } from './urlUtils';
 
 /**
- * Extract media URL from various source formats
+ * Create a unique file path for storage
+ * @param file File to upload
+ * @param folder Folder to save in storage
+ * @param userId User ID for path creation
+ * @returns Unique path for the file
  */
-export const extractMediaUrl = (source: any): string => {
-  if (!source) return '';
+export const createUniqueFilePath = (
+  file: File, 
+  folder: string = 'media', 
+  userId: string | null = null
+): string => {
+  const timestamp = new Date().getTime();
+  const random = Math.random().toString(36).substring(2, 10);
+  const extension = getFileExtension(file.name);
+  const userPath = userId ? `${userId}/` : '';
   
-  // Direct string URL
-  if (typeof source === 'string') {
-    return source;
-  }
-  
-  // Extract from media object with priority order
-  if (typeof source === 'object') {
-    const extractedUrl = source.video_url || 
-      (Array.isArray(source.video_urls) && source.video_urls.length > 0 ? source.video_urls[0] : '') ||
-      source.media_url || 
-      (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
-      source.url || 
-      source.src || 
-      '';
-    
-    return extractedUrl;
-  }
-  
-  return '';
+  return `${folder}/${userPath}${timestamp}_${random}.${extension}`;
 };
 
 /**
- * Extract thumbnail URL from a media source
+ * Upload a file to storage
+ * @param file File to upload
+ * @param bucket Bucket name
+ * @param userId User ID for path creation
+ * @param options Upload options
+ * @returns Upload result
  */
-export const extractThumbnailUrl = (source: any): string => {
-  if (!source) return '';
-  
-  if (typeof source === 'object') {
-    return source.thumbnail_url || 
-           source.poster || 
-           source.video_thumbnail_url || 
-           (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
-           '';
-  }
-  
-  return '';
-};
-
-/**
- * Determine the media type based on the source
- */
-export const determineMediaType = (source: MediaSource | string): MediaType => {
-  // Handle string URL directly
-  if (typeof source === 'string') {
-    const url = source.toLowerCase();
-    
-    if (isVideoUrl(url)) return MediaType.VIDEO;
-    if (isImageUrl(url)) return MediaType.IMAGE;
-    if (url.match(/\.(mp3|wav|ogg|m4a)($|\?)/i)) return MediaType.AUDIO;
-    if (url.match(/\.(pdf|docx?|xlsx?|pptx?)($|\?)/i)) return MediaType.DOCUMENT;
-    
-    // Default to image if no match
-    return MediaType.UNKNOWN;
-  }
-  
-  // Handle object
-  if (typeof source === 'object' && source !== null) {
-    // Check for explicit type indicator
-    if (source.media_type) return source.media_type;
-    if (source.content_type === 'video') return MediaType.VIDEO;
-    if (source.content_type === 'image') return MediaType.IMAGE;
-    if (source.content_type === 'audio') return MediaType.AUDIO;
-    if (source.content_type === 'document') return MediaType.DOCUMENT;
-    
-    // Check for URL presence
-    if (source.video_url || Array.isArray(source.video_urls) && source.video_urls.length > 0) {
-      return MediaType.VIDEO;
-    }
-    
-    if (source.media_url || Array.isArray(source.media_urls) && source.media_urls.length > 0) {
-      const mediaUrl = source.media_url || source.media_urls[0];
-      return determineMediaType(mediaUrl);
-    }
-    
-    // Check for generic url property
-    if (source.url) {
-      return determineMediaType(source.url);
-    }
-  }
-  
-  return MediaType.UNKNOWN;
-};
-
-/**
- * Generate placeholder image URL for different media types
- */
-export const getPlaceholderForType = (mediaType: MediaType): string => {
-  switch (mediaType) {
-    case MediaType.VIDEO:
-      return '/assets/placeholders/video-placeholder.jpg';
-    case MediaType.AUDIO:
-      return '/assets/placeholders/audio-placeholder.jpg';
-    case MediaType.DOCUMENT:
-      return '/assets/placeholders/document-placeholder.jpg';
-    case MediaType.IMAGE:
-      return '/assets/placeholders/image-placeholder.jpg';
-    default:
-      return '/assets/placeholders/media-placeholder.jpg';
-  }
-};
-
-/**
- * Pre-load an image and return a promise that resolves when loaded
- */
-export const preloadImage = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-    img.src = getCleanUrl(src);
-  });
-};
-
-/**
- * Check if a media URL is accessible
- */
-export const checkMediaAccessibility = async (url: string): Promise<boolean> => {
-  if (!url) return false;
-  
-  // For client-side only
-  if (typeof window === 'undefined') return true;
-  
-  // Skip accessibility check for blob URLs and data URLs
-  if (url.startsWith('blob:') || url.startsWith('data:')) return true;
-  
-  try {
-    const response = await fetch(getCleanUrl(url), { 
-      method: 'HEAD',
-      mode: 'no-cors', // Use no-cors to avoid CORS issues
-      cache: 'no-cache'
-    });
-    
-    return true; // If no error, assume it's accessible (no-cors doesn't give status)
-  } catch (error) {
-    console.error('Media accessibility check failed:', url, error);
-    return false;
-  }
-};
-
-/**
- * Creates a unique file path for uploading to storage
- * Format: userId/timestamp-uuid.extension
- */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  const timestamp = Date.now();
-  const uniqueId = uuidv4().substring(0, 8);
-  const extension = file.name.split('.').pop() || 'unknown';
-  
-  return `${userId}/${timestamp}-${uniqueId}.${extension}`;
-};
-
-/**
- * Upload a file to Supabase storage
- */
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  path?: string;
-  error?: string;
-}
-
 export const uploadFileToStorage = async (
-  bucketName: string,
-  filePath: string,
   file: File,
-  options?: {
+  bucket: string = 'media',
+  userId: string | null = null,
+  options: {
     contentType?: string;
-    cacheControl?: string;
     upsert?: boolean;
+  } = {}
+): Promise<{ success: boolean; url?: string; path?: string; error?: string }> => {
+  if (!file) {
+    return { success: false, error: 'No file provided' };
   }
-): Promise<UploadResult> => {
+
   try {
-    console.log(`Uploading file to ${bucketName}/${filePath}`);
+    const filePath = createUniqueFilePath(file, bucket === 'media' ? 'media' : bucket, userId);
     
-    // Set default options
-    const uploadOptions = {
-      cacheControl: options?.cacheControl || '3600',
-      upsert: options?.upsert !== undefined ? options.upsert : true,
-      contentType: options?.contentType || file.type
-    };
-    
-    // Upload the file
     const { data, error } = await supabase.storage
-      .from(bucketName)
-      .upload(filePath, file, uploadOptions);
-    
+      .from(bucket)
+      .upload(filePath, file, {
+        contentType: options.contentType || file.type,
+        upsert: options.upsert || false,
+      });
+
     if (error) {
-      console.error('Storage upload error:', error);
-      return { 
-        success: false, 
-        error: error.message 
-      };
+      console.error('Error uploading file:', error);
+      return { success: false, error: error.message };
     }
-    
-    if (!data) {
-      return { 
-        success: false, 
-        error: 'Upload completed but no data returned' 
-      };
-    }
-    
-    // Get the public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(data.path);
-    
+
+    const { data: urlData } = await supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
     return {
       success: true,
-      url: publicUrl,
-      path: data.path
+      url: urlData?.publicUrl,
+      path: data?.path || filePath
     };
   } catch (error: any) {
-    console.error('Storage upload error:', error);
-    return { 
-      success: false, 
-      error: error.message || 'An unknown error occurred during upload'
-    };
+    console.error('Failed to upload file:', error);
+    return { success: false, error: error.message || 'Failed to upload file' };
   }
 };
 
 /**
- * Report media loading errors for monitoring
+ * Helper function to determine if the media is valid
  */
-export const reportMediaError = (
-  url: string | null,
-  errorType: string,
-  retryCount: number,
-  mediaType: string,
-  componentName: string
-): void => {
-  // Implement error reporting logic
-  console.error(`Media error in ${componentName}:`, {
-    url: url?.substring(0, 100),
-    errorType,
-    retryCount,
-    mediaType,
-    timestamp: new Date().toISOString()
-  });
+export const isMediaValid = (url: string | undefined | null): boolean => {
+  if (!url) return false;
+  return !url.includes('undefined') && !url.includes('null');
+};
+
+/**
+ * Detect media type based on URL or MediaSource object
+ */
+export const detectMediaType = (source: any): string => {
+  if (!source) return 'unknown';
   
-  // In a real application, you might want to send this to a monitoring service
+  // If it's a string URL
+  if (typeof source === 'string') {
+    if (source.match(/\.(jpeg|jpg|gif|png|webp|avif|svg)$/i)) return 'image';
+    if (source.match(/\.(mp4|webm|ogg|mov|mkv)$/i)) return 'video';
+    if (source.match(/\.(mp3|wav|ogg|flac)$/i)) return 'audio';
+    if (source.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx)$/i)) return 'document';
+    return 'unknown';
+  }
+  
+  // If it's an object with type information
+  if (source.media_type) return source.media_type;
+  if (source.type) return source.type;
+  
+  // Check for video URLs
+  if (source.video_url || source.videoUrl) return 'video';
+  
+  // Check for image URLs
+  if ((source.url || source.src || source.media_url) && 
+     !source.video_url && !source.videoUrl) {
+    return 'image';
+  }
+  
+  return 'unknown';
 };

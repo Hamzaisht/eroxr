@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { MediaSource, MediaType } from '@/utils/media/types';
+import { MediaSource, MediaType, stringToMediaType } from '@/utils/media/types';
 
 interface MediaGridProps {
   media: (string | MediaSource)[];
@@ -37,8 +37,12 @@ const MediaGrid = ({ media, onMediaClick }: MediaGridProps) => {
              mediaItem.toLowerCase().endsWith('.webm');
     }
     
+    if (typeof mediaItem.media_type === 'string') {
+      return mediaItem.media_type.toLowerCase() === 'video' ||
+             stringToMediaType(mediaItem.media_type) === MediaType.VIDEO;
+    }
+    
     return mediaItem.media_type === MediaType.VIDEO || 
-           mediaItem.media_type === 'video' || 
            mediaItem.content_type === 'video' ||
            !!mediaItem.video_url;
   };
@@ -79,15 +83,17 @@ const MediaGrid = ({ media, onMediaClick }: MediaGridProps) => {
               >
                 <img
                   src={thumbnailUrl || undefined}
-                  alt={`Image ${index + 1}`}
+                  alt={`Media ${index + 1}`}
                   className="object-cover rounded-lg"
                 />
               </div>
             )}
-
+            
             {hoveredIndex === index && (
-              <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                {isVideo ? 'Play Video' : 'View Image'}
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+                <div className="text-white">
+                  {isVideo ? 'Play Video' : 'View Image'}
+                </div>
               </div>
             )}
           </div>
