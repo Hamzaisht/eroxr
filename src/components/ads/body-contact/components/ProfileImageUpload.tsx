@@ -5,7 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { uploadFileToStorage } from "@/utils/media/mediaUtils";
 
 interface ProfileImageUploadProps {
   avatarPreview: string;
@@ -41,8 +41,12 @@ export const ProfileImageUpload = ({ avatarPreview, onAvatarChange }: ProfileIma
       };
       reader.readAsDataURL(file);
       
+      // Generate a unique path for this file
+      const userId = session.user.id;
+      const timestamp = new Date().getTime();
+      const path = `${userId}/${timestamp}_avatar.${file.name.split('.').pop()}`;
+      
       // Then upload to Supabase storage
-      const path = createUniqueFilePath(session.user.id, file);
       const result = await uploadFileToStorage('avatars', path, file);
       
       if (!result.success) {

@@ -1,4 +1,3 @@
-
 /**
  * Types for media handling
  */
@@ -105,8 +104,12 @@ export interface FileValidationResult {
 
 /**
  * User availability status
+ * Using string literal union type instead of enum to allow string literals
  */
-export enum AvailabilityStatus {
+export type AvailabilityStatus = 'online' | 'away' | 'busy' | 'offline' | 'invisible';
+
+// For backwards compatibility, also keep the enum
+export enum AvailabilityStatusEnum {
   ONLINE = 'online',
   AWAY = 'away',
   BUSY = 'busy',
@@ -120,7 +123,7 @@ export enum AvailabilityStatus {
 export interface ActiveSurveillanceState {
   active: boolean;
   deviceId?: string | null;
-  startTime: number | string | null;
+  startTime: string | null; // Changed to string only for consistency
   userId?: string;
   targetUserId?: string;
   startedAt?: Date;
@@ -135,21 +138,21 @@ export interface ActiveSurveillanceState {
  */
 export function stringToAvailabilityStatus(status: string): AvailabilityStatus {
   switch(status.toLowerCase()) {
-    case 'online': return AvailabilityStatus.ONLINE;
-    case 'away': return AvailabilityStatus.AWAY;
-    case 'busy': return AvailabilityStatus.BUSY;
-    case 'invisible': return AvailabilityStatus.INVISIBLE;
+    case 'online': return 'online';
+    case 'away': return 'away';
+    case 'busy': return 'busy';
+    case 'invisible': return 'invisible';
     case 'offline':
     default:
-      return AvailabilityStatus.OFFLINE;
+      return 'offline';
   }
 }
 
 /**
  * Helper function to check if a value is a valid AvailabilityStatus
  */
-export function isValidAvailabilityStatus(status: any): boolean {
-  return Object.values(AvailabilityStatus).includes(status as AvailabilityStatus);
+export function isValidAvailabilityStatus(status: any): status is AvailabilityStatus {
+  return ['online', 'away', 'busy', 'offline', 'invisible'].includes(status);
 }
 
 // Add a function to help convert to MediaType enum values

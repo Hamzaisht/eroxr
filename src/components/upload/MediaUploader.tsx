@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ export interface MediaUploaderProps {
   /**
    * Content type category ('story', 'post', etc)
    */
-  context?: UploadOptions['contentCategory'];
+  context?: string;
   
   /**
    * Maximum file size in MB
@@ -81,10 +82,10 @@ export const MediaUploader = ({
     return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
   })();
   
-  const uploadOptions = {
-    contentCategory: context,
+  const uploadOptions: UploadOptions = {
     maxSizeInMB,
     allowedTypes,
+    contentCategory: context, // Now correctly typed in UploadOptions
     autoResetOnCompletion: true,
     resetDelay: 3000,
     onProgress: (progress: number) => {}
@@ -120,7 +121,7 @@ export const MediaUploader = ({
     console.log("File selected:", file.name, file.type, file.size);
     
     const validation = validateFile(file);
-    if (!validation.isValid) {
+    if (!validation.valid) { // Using valid property instead of isValid
       console.error("File validation failed:", validation.error || validation.message);
       if (onError) onError(validation.error || validation.message || "Invalid file");
       return;

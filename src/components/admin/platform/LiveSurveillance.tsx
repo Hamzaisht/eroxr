@@ -70,9 +70,9 @@ export const LiveSurveillance = () => {
         />
         
         <ActiveSessionMonitor
-          isWatching={activeSurveillance.isWatching}
+          isWatching={activeSurveillance.isWatching ?? false}
           session={activeSurveillance.session}
-          startTime={activeSurveillance.startTime}
+          startTime={activeSurveillance.startTime ?? ""}
           onStopWatching={handleStopWatching}
         />
       </div>

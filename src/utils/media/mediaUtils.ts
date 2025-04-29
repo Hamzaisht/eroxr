@@ -5,13 +5,13 @@ import { MediaSource, MediaType } from './types';
 
 /**
  * Create a unique file path for storage
- * @param file File to upload
+ * @param fileOrPath File object or path string to create a unique path for
  * @param folder Folder to save in storage
  * @param userId User ID for path creation
  * @returns Unique path for the file
  */
 export const createUniqueFilePath = (
-  file: File | string, 
+  fileOrPath: File | string, 
   folder: string = 'media', 
   userId: string | null = null
 ): string => {
@@ -19,12 +19,12 @@ export const createUniqueFilePath = (
   const random = Math.random().toString(36).substring(2, 10);
   
   let extension;
-  if (typeof file === 'string') {
+  if (typeof fileOrPath === 'string') {
     // Handle string paths
-    extension = file.split('.').pop()?.toLowerCase() || '';
+    extension = fileOrPath.split('.').pop()?.toLowerCase() || '';
   } else {
     // Handle File objects
-    extension = getFileExtension(file.name);
+    extension = getFileExtension(fileOrPath.name);
   }
   
   const userPath = userId ? `${userId}/` : '';
@@ -36,14 +36,14 @@ export const createUniqueFilePath = (
  * Upload a file to storage
  * @param file File to upload
  * @param bucket Bucket name
- * @param userId User ID for path creation
+ * @param path Path to upload to (or userId for auto path creation)
  * @param options Upload options
  * @returns Upload result
  */
 export const uploadFileToStorage = async (
-  file: File,
   bucket: string = 'media',
-  userId: string | null = null,
+  path: string,
+  file: File,
   options: {
     contentType?: string;
     upsert?: boolean;
@@ -54,11 +54,9 @@ export const uploadFileToStorage = async (
   }
 
   try {
-    const filePath = createUniqueFilePath(file, bucket === 'media' ? 'media' : bucket, userId);
-    
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(filePath, file, {
+      .upload(path, file, {
         contentType: options.contentType || file.type,
         upsert: options.upsert || false,
       });
@@ -70,12 +68,12 @@ export const uploadFileToStorage = async (
 
     const { data: urlData } = await supabase.storage
       .from(bucket)
-      .getPublicUrl(filePath);
+      .getPublicUrl(path);
 
     return {
       success: true,
       url: urlData?.publicUrl,
-      path: data?.path || filePath
+      path: data?.path || path
     };
   } catch (error: any) {
     console.error('Failed to upload file:', error);

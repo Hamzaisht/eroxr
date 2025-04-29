@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { uploadFileToStorage } from "@/utils/media/mediaUtils";
 
 interface UploadState {
   isUploading: boolean;
@@ -74,8 +74,12 @@ export const useVideoUpload = () => {
         });
       }, 300);
       
+      // Generate a unique path for the upload
+      const userId = session.user.id;
+      const timestamp = new Date().getTime();
+      const path = `${userId}/${timestamp}_video.${file.name.split('.').pop()}`;
+      
       // Upload to Supabase storage
-      const path = createUniqueFilePath(session.user.id, file);
       const result = await uploadFileToStorage('shorts', path, file);
       
       clearInterval(progressInterval);

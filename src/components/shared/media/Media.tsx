@@ -1,3 +1,4 @@
+
 import { useState, useEffect, forwardRef } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
@@ -53,8 +54,19 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         setUrl(playableUrl);
 
         // Determine media type
-        const type = determineMediaType(source);
-        setMediaType(type as MediaType); // Added type cast
+        const typeString = determineMediaType(source);
+        // Convert string type to MediaType enum
+        let type: MediaType;
+        switch(typeString) {
+          case 'image': type = MediaType.IMAGE; break;
+          case 'video': type = MediaType.VIDEO; break;
+          case 'audio': type = MediaType.AUDIO; break;
+          case 'document': type = MediaType.DOCUMENT; break;
+          case 'embed': type = MediaType.EMBED; break;
+          case 'file': type = MediaType.FILE; break;
+          default: type = MediaType.UNKNOWN;
+        }
+        setMediaType(type);
       } catch (err) {
         console.error('Error processing media:', err);
         setError('Failed to process media');
@@ -63,16 +75,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
       }
     }, [source]);
 
-    const handleLoad = () => {
-      setIsLoading(false);
-      if (onLoad) onLoad();
-    };
-
-    const handleError = () => {
-      setError('Failed to load media');
-      if (onError) onError();
-    };
-
+    // Custom handler for video time updates
     const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
       if (onTimeUpdate) {
         onTimeUpdate(e.currentTarget.currentTime);
@@ -115,7 +118,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
             onLoadedData={onLoad}
             onError={onError}
             onEnded={onEnded}
-            onTimeUpdate={onTimeUpdate}
+            onTimeUpdate={handleTimeUpdate}
             playsInline
           />
           {showWatermark && (
