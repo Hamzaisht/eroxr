@@ -1,11 +1,12 @@
 
 import { useSession } from "@supabase/auth-helpers-react";
-import { useLocation, Outlet } from "react-router-dom";
+import { useLocation, Outlet, Navigate } from "react-router-dom";
 import { BackgroundEffects } from "./BackgroundEffects";
 import { InteractiveNav } from "./InteractiveNav";
 import { MainContent } from "./components/MainContent";
 import { FloatingActionMenu } from "./FloatingActionMenu";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { LoadingScreen } from "./LoadingScreen";
 
 export const MainLayout = () => {
   const session = useSession();
@@ -13,7 +14,18 @@ export const MainLayout = () => {
   const isErosRoute = location.pathname.includes('/shorts');
   const isMobile = useMediaQuery("(max-width: 768px)");
   
-  if (!session) return null;
+  console.log("MainLayout - session:", session ? "exists" : "null"); // Debug logging
+  
+  // Show loading screen while session is being determined
+  if (session === undefined) {
+    return <LoadingScreen />;
+  }
+  
+  // Redirect to login if not authenticated
+  if (!session) {
+    console.log("No session in MainLayout, redirecting to login");
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-[#0D1117] overflow-x-hidden">

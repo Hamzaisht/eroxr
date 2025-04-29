@@ -10,13 +10,24 @@ export const AuthLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log("AuthLayout - session:", session ? "exists" : "null"); // Debug logging
+
   useEffect(() => {
+    // If we have a session and we're not on the demo page, redirect to home
     if (session && location.pathname !== '/demo') {
+      // Check if there's a redirect path from previous navigation
       const returnPath = location.state?.from || '/home';
+      console.log(`User is authenticated, redirecting to: ${returnPath}`);
       navigate(returnPath, { replace: true });
     }
   }, [session, navigate, location]);
 
+  // Show loading while session is being determined
+  if (session === undefined) {
+    return <LoadingScreen />;
+  }
+
+  // Demo page is accessible regardless of authentication status
   if (location.pathname === '/demo') {
     return <Outlet />;
   }

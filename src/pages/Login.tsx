@@ -1,25 +1,33 @@
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { AuthLayout } from "@/components/auth/layout/AuthLayout";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { motion, AnimatePresence } from "framer-motion";
+import { LoadingScreen } from "@/components/layout/LoadingScreen";
 
 const Login = () => {
   const session = useSession();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (session) {
-      navigate("/home", { replace: true });
-    }
-  }, [session, navigate]);
+  const location = useLocation();
 
   // Add debug logging to help identify issues
   useEffect(() => {
-    console.log("Login page rendering, session:", session);
-  }, [session]);
+    console.log("Login page rendering, session:", session ? "exists" : "null");
+    
+    if (session) {
+      // Get the redirect path from location state or default to home
+      const from = location.state?.from || "/home";
+      console.log("User is logged in, redirecting to:", from);
+      navigate(from, { replace: true });
+    }
+  }, [session, navigate, location]);
+
+  // Show loading while session is being determined
+  if (session === undefined) {
+    return <LoadingScreen />;
+  }
 
   return (
     <AuthLayout>
