@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import ConversationsList from "@/components/messages/ConversationsList";
-import ChatWindow from "@/components/messages/ChatWindow";
-import EmptyChat from "@/components/messages/EmptyChat";
-import NewMessageDialog from "@/components/messages/NewMessageDialog";
+import { ChatWindow } from "@/components/messages/ChatWindow";
+import { EmptyChat } from "@/components/messages/EmptyChat";
+import { NewMessageDialog } from "@/components/messages/NewMessageDialog";
 import ChatDetails from "@/components/messages/ChatDetails";
 import { useMediaQuery } from "@/hooks/use-mobile";
 
@@ -16,6 +17,7 @@ interface ChatWindowProps {
     avatar_url?: string;
   };
   onToggleDetails: () => void;
+  onClose: () => void;
 }
 
 const Messages = () => {
@@ -82,7 +84,6 @@ const Messages = () => {
     <div className="h-screen overflow-hidden">
       <div className="flex h-full">
         <div className="flex-shrink-0 w-[320px] border-r border-luxury-primary/20 bg-luxury-darker overflow-y-auto conversations-list">
-          {/* Pass the correct props to ConversationsList */}
           <ConversationsList 
             onSelectUser={handleSelectUser} 
             onNewMessage={handleNewMessageClick} 
@@ -91,7 +92,6 @@ const Messages = () => {
         
         <div className="flex-grow relative chat-window">
           {selectedUserId ? (
-            // Pass the correct props to ChatWindow
             <ChatWindow
               recipient={{ 
                 id: selectedUserId,
@@ -99,6 +99,7 @@ const Messages = () => {
                 avatar_url: selectedUserInfo?.avatar_url
               }}
               onToggleDetails={handleToggleDetails}
+              onClose={handleBackToList}
             />
           ) : (
             <EmptyChat onNewMessage={handleNewMessageClick} />
@@ -121,7 +122,7 @@ const Messages = () => {
 
       <NewMessageDialog
         open={showNewMessageDialog}
-        onClose={() => setShowNewMessageDialog(false)}
+        onOpenChange={setShowNewMessageDialog}
         onSelectUser={handleSelectUser}
       />
     </div>

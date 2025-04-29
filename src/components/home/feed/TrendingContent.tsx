@@ -84,7 +84,7 @@ export const TrendingContent = () => {
           >
             {page && Array.isArray(page) && 
               page
-                .filter((post: PostType) => post && typeof post === 'object' && post.likes_count && post.likes_count > 50)
+                .filter((post: any) => post && typeof post === 'object' && post.likes_count && post.likes_count > 50)
                 .map((post: PostType) => (
                   <Post
                     key={post.id}

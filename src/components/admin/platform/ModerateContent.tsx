@@ -16,7 +16,8 @@ import {
   Trash2,
   X,
   Check,
-  Info
+  Info,
+  RefreshCw
 } from "lucide-react";
 import { 
   Table, 
@@ -330,7 +331,7 @@ export const ModerateContent = () => {
         description: actionType ? actionMessages[actionType] : "Action completed",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Moderation action failed:", error);
       toast({
         title: "Action failed",

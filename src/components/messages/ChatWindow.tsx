@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,7 @@ interface ChatWindowProps {
     avatar_url: string | null;
   };
   onClose: () => void;
+  onToggleDetails: () => void;
   onSendSuccess?: () => void;
 }
 
@@ -30,6 +32,7 @@ interface Message {
 export const ChatWindow = ({ 
   recipient, 
   onClose,
+  onToggleDetails,
   onSendSuccess 
 }: ChatWindowProps) => {
   const [messageText, setMessageText] = useState("");
@@ -151,9 +154,14 @@ export const ChatWindow = ({
           </Avatar>
           <div className="font-medium">{recipient?.username}</div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          Close
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="ghost" size="sm" onClick={onToggleDetails}>
+            Details
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Close
+          </Button>
+        </div>
       </div>
 
       <ScrollArea className="flex-1 p-4">
@@ -215,3 +223,5 @@ export const ChatWindow = ({
     </div>
   );
 };
+
+export default ChatWindow;

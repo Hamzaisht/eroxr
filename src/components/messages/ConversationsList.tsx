@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,21 +74,14 @@ const ConversationsList = ({ onSelectUser, onNewMessage }: ConversationsListProp
             created_at: conv.created_at,
             user_id_1: conv.user_id_1,
             user_id_2: conv.user_id_2,
-            recipient: conv.recipient && conv.recipient[0] ? {
-              id: conv.recipient[0].id,
-              username: conv.recipient[0].username || "Unknown",
-              avatar_url: conv.recipient[0].avatar_url
-            } : {
-              id: "",
-              username: "Unknown",
-              avatar_url: null
+            recipient: {
+              id: conv.recipient && conv.recipient[0] ? conv.recipient[0].id : "",
+              username: conv.recipient && conv.recipient[0] ? conv.recipient[0].username || "Unknown" : "Unknown",
+              avatar_url: conv.recipient && conv.recipient[0] ? conv.recipient[0].avatar_url : null
             },
-            last_message: conv.last_message && conv.last_message[0] ? {
-              content: conv.last_message[0].content,
-              created_at: conv.last_message[0].created_at
-            } : {
-              content: "No messages",
-              created_at: conv.created_at
+            last_message: {
+              content: conv.last_message && conv.last_message[0] ? conv.last_message[0].content : "No messages",
+              created_at: conv.last_message && conv.last_message[0] ? conv.last_message[0].created_at : conv.created_at
             },
             unread_messages_count: conv.unread_messages_count || 0
           }));

@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -69,3 +70,5 @@ export const NewMessageDialog = ({ open, onOpenChange, onSelectUser }: NewMessag
     </Dialog>
   );
 };
+
+export default NewMessageDialog;

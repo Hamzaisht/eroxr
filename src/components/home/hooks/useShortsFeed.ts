@@ -26,26 +26,29 @@ export const useShortsFeed = (specificShortId?: string | null) => {
   const shorts: Short[] = (data?.pages?.flatMap(page => page) ?? []).map(post => {
     if (!post || typeof post !== 'object') return {} as Short;
     
+    // Use type assertion to safely access properties
+    const postObj = post as Record<string, any>;
+    
     return {
-      id: post.id || '',
+      id: postObj.id || '',
       creator: {
-        id: post.creator?.id || '',
-        username: post.creator?.username || 'Anonymous',
-        avatar_url: post.creator?.avatar_url || null,
-        created_at: post.created_at || '',
-        updated_at: post.created_at || ''
+        id: postObj.creator?.id || '',
+        username: postObj.creator?.username || 'Anonymous',
+        avatar_url: postObj.creator?.avatar_url || null,
+        created_at: postObj.created_at || '',
+        updated_at: postObj.created_at || ''
       },
-      creator_id: post.creator_id || '',
-      content: post.content || '',
-      video_urls: post.video_urls || [],
-      likes_count: post.likes_count || 0,
-      comments_count: post.comments_count || 0,
-      has_liked: !!post.has_liked,
-      has_saved: !!post.has_saved,
-      created_at: post.created_at || '',
-      view_count: post.view_count || 0,
-      visibility: post.visibility || 'public',
-      description: post.content || ''
+      creator_id: postObj.creator_id || '',
+      content: postObj.content || '',
+      video_urls: postObj.video_urls || [],
+      likes_count: postObj.likes_count || 0,
+      comments_count: postObj.comments_count || 0,
+      has_liked: !!postObj.has_liked,
+      has_saved: !!postObj.has_saved,
+      created_at: postObj.created_at || '',
+      view_count: postObj.view_count || 0,
+      visibility: postObj.visibility || 'public',
+      description: postObj.content || ''
     };
   });
 

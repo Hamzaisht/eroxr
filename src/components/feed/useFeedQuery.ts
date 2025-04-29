@@ -10,7 +10,7 @@ export type FeedType = 'feed' | 'popular' | 'recent' | 'shorts';
 export const useFeedQuery = (userId?: string, feedType: FeedType = 'feed') => {
   return useInfiniteQuery({
     queryKey: ["posts", userId, feedType],
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam = 0 }) => {
       const from = (pageParam as number) * POSTS_PER_PAGE;
       const to = from + POSTS_PER_PAGE - 1;
 

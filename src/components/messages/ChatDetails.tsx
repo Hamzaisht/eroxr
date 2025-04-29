@@ -1,6 +1,7 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -70,10 +71,15 @@ export const ChatDetails = ({
         throw error;
       }
 
+      // Safely extract username and avatar_url from nested objects
       return data?.map(msg => ({
         ...msg,
-        sender_username: msg.sender_username?.username,
-        sender_avatar_url: msg.sender_avatar_url?.avatar_url
+        sender_username: msg.sender_username ? 
+          (msg.sender_username as unknown as Record<string, any>)?.username || "Unknown" : 
+          "Unknown",
+        sender_avatar_url: msg.sender_avatar_url ? 
+          (msg.sender_avatar_url as unknown as Record<string, any>)?.avatar_url : 
+          null
       })) as Message[];
     },
     enabled: !!recipientId && !!currentUserId,
@@ -139,7 +145,7 @@ export const ChatDetails = ({
     }
   });
 
-  const isBlocking = blockMutation.isLoading; // Use isLoading instead of isPending
+  const isBlocking = blockMutation.isLoading;
   
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -223,7 +229,7 @@ export const ChatDetails = ({
       <Button
         onClick={() => blockMutation.mutate()}
         variant="destructive"
-        disabled={isBlocking} // Use isLoading instead
+        disabled={isBlocking}
         className="w-full"
       >
         {isBlocking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
