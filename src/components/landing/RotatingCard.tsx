@@ -4,6 +4,8 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { PerspectiveCamera, useTexture, Environment } from "@react-three/drei";
 import { Vector3, Mesh } from "three";
 import { motion } from "framer-motion";
+import { useMediaQuery } from "@/hooks/use-mobile";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 interface RotatingCardProps {
   className?: string;
@@ -12,6 +14,7 @@ interface RotatingCardProps {
 const Card = () => {
   // Reference to the mesh for animations
   const cardRef = useRef<Mesh>(null);
+  const prefersReducedMotion = useReducedMotion();
   
   // Load texture for the card - Remove leading slash for Vite compatibility
   const texture = useTexture("lovable-uploads/1f90ad99-0978-444d-8b83-555a2ae853b0.png");
@@ -29,16 +32,18 @@ const Card = () => {
   const [hoverY, setHoverY] = useState(0);
   
   useEffect(() => {
+    if (prefersReducedMotion) return;
+    
     const interval = setInterval(() => {
       setHoverY((prev) => Math.sin(Date.now() * 0.001) * 0.05);
     }, 16);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [prefersReducedMotion]);
 
   // Handle card rotation animation
   useFrame(({ clock }) => {
-    if (cardRef.current) {
+    if (cardRef.current && !prefersReducedMotion) {
       // Rotate card slowly around Y axis
       cardRef.current.rotation.y = clock.getElapsedTime() * 0.3;
       
@@ -100,11 +105,11 @@ const Card = () => {
   );
 };
 
-// Floor reflection
+// Simpler floor component
 const Floor = () => {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -3, 0]} receiveShadow>
-      <planeGeometry args={[50, 50]} />
+      <planeGeometry args={[30, 30]} />
       <meshStandardMaterial
         color="#000000"
         metalness={0.9}
@@ -117,11 +122,42 @@ const Floor = () => {
 };
 
 export const RotatingCard: React.FC<RotatingCardProps> = ({ className }) => {
-  // Add debug logging to verify component rendering
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const prefersReducedMotion = useReducedMotion();
+  const [rendererReady, setRendererReady] = useState(false);
+  
   useEffect(() => {
     console.log("RotatingCard component mounted");
-    return () => console.log("RotatingCard component unmounted");
+    
+    // Mark renderer as ready after a short delay
+    const timer = setTimeout(() => {
+      setRendererReady(true);
+    }, 100);
+    
+    return () => {
+      console.log("RotatingCard component unmounted");
+      clearTimeout(timer);
+    };
   }, []);
+
+  // Use a simplified version for mobile or reduced motion
+  if ((isMobile || prefersReducedMotion) && rendererReady) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.7 }}
+        className={`relative ${className}`}
+      >
+        <img 
+          src="lovable-uploads/1f90ad99-0978-444d-8b83-555a2ae853b0.png" 
+          alt="EROXR Card" 
+          className="w-full h-full object-contain"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div 
@@ -130,8 +166,8 @@ export const RotatingCard: React.FC<RotatingCardProps> = ({ className }) => {
       transition={{ duration: 1 }}
       className={`w-full aspect-square ${className}`}
     >
-      <Canvas shadows dpr={[1, 2]}>
-        {/* Scene lighting */}
+      <Canvas shadows dpr={[1, Math.min(window.devicePixelRatio, 2)]}>
+        {/* Scene lighting - simplified for performance */}
         <ambientLight intensity={0.4} />
         <spotLight 
           position={[0, 10, 10]} 
@@ -145,11 +181,6 @@ export const RotatingCard: React.FC<RotatingCardProps> = ({ className }) => {
           position={[5, 5, 5]} 
           intensity={0.5} 
           color="#9b87f5" 
-        />
-        <directionalLight 
-          position={[-5, 5, 5]} 
-          intensity={0.5} 
-          color="#d946ef" 
         />
         
         {/* Environment for reflections */}

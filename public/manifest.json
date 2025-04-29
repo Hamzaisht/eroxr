@@ -1,13 +1,13 @@
 
 {
-  "name": "Eroxr",
-  "short_name": "Eroxr",
+  "name": "EROXR - Exclusive Creator Platform",
+  "short_name": "EROXR",
   "description": "Connect with amazing creators and build your community",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0D1117",
   "theme_color": "#0D1117",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -56,6 +56,29 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Login",
+      "short_name": "Login",
+      "description": "Log into your EROXR account",
+      "url": "/login"
+    },
+    {
+      "name": "Register",
+      "short_name": "Register",
+      "description": "Create a new EROXR account",
+      "url": "/register"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "screenshots": [
+    {
+      "src": "/screenshots/screen1.png",
+      "sizes": "1080x1920",
+      "type": "image/png"
     }
   ]
 }

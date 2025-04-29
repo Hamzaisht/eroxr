@@ -1,21 +1,27 @@
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useMediaPlayer } from '@/hooks/useMediaPlayer';
 import { cn } from '@/lib/utils';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 interface BackgroundVideoProps {
   videoUrl: string;
   className?: string;
   fallbackImage?: string;
   overlayOpacity?: number;
+  webmUrl?: string;
 }
 
 export const BackgroundVideo = ({
   videoUrl,
   className,
   fallbackImage,
-  overlayOpacity = 50
+  overlayOpacity = 50,
+  webmUrl
 }: BackgroundVideoProps) => {
+  const [isUnsupported, setIsUnsupported] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  
   const {
     videoRef,
     isLoading,
@@ -28,10 +34,22 @@ export const BackgroundVideo = ({
     loop: true
   });
 
+  // Check for reduced motion preference or mobile devices
+  useEffect(() => {
+    // Check if this is a low-power device or browser that might struggle
+    const isLowPowerMode = window.matchMedia('(prefers-reduced-data: reduce)').matches;
+    const isMobile = window.innerWidth < 768;
+    const shouldDisableVideo = isLowPowerMode || (isMobile && !navigator.connection?.saveData === false);
+    
+    if (shouldDisableVideo) {
+      setIsUnsupported(true);
+    }
+  }, []);
+
   // Ensure video plays as soon as it's loaded
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || prefersReducedMotion) return;
 
     // Try to play the video
     const playPromise = video.play();
@@ -39,9 +57,41 @@ export const BackgroundVideo = ({
     if (playPromise !== undefined) {
       playPromise.catch(error => {
         console.error('Error playing background video:', error);
+        // If autoplay fails, we'll show the fallback
+        setIsUnsupported(true);
       });
     }
-  }, [videoRef, processedUrl]);
+  }, [videoRef, processedUrl, prefersReducedMotion]);
+
+  // If user prefers reduced motion, show static background
+  if (prefersReducedMotion || isUnsupported) {
+    return (
+      <div className={cn(
+        "fixed inset-0 -z-10 overflow-hidden",
+        className
+      )}>
+        {/* Dark gradient background as fallback */}
+        <div 
+          className="absolute inset-0 bg-gradient-to-b from-luxury-dark via-luxury-darker to-black"
+          aria-hidden="true"
+        />
+        
+        {/* Fallback image if provided */}
+        {fallbackImage && (
+          <div
+            className="absolute inset-0 bg-center bg-cover opacity-60"
+            style={{ backgroundImage: `url(${fallbackImage})` }}
+          />
+        )}
+        
+        {/* Consistent overlay */}
+        <div 
+          className={`absolute inset-0 z-10 bg-black/${overlayOpacity}`}
+          aria-hidden="true"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={cn(
@@ -55,24 +105,29 @@ export const BackgroundVideo = ({
       />
       
       {/* Fallback image for error state */}
-      {hasError && fallbackImage && (
+      {(hasError || isLoading) && fallbackImage && (
         <div
           className="absolute inset-0 bg-center bg-cover"
           style={{ backgroundImage: `url(${fallbackImage})` }}
         />
       )}
 
-      {/* Video element */}
+      {/* Video element with multiple sources for better browser support */}
       <video
         ref={videoRef}
-        src={processedUrl}
         className="absolute h-full w-full object-cover"
         autoPlay
         muted
         loop
         playsInline
         aria-hidden="true"
-      />
+        preload="auto"
+      >
+        {/* WebM for Chrome, Firefox, Edge */}
+        {webmUrl && <source src={webmUrl} type="video/webm" />}
+        {/* MP4 for Safari and fallback */}
+        <source src={processedUrl} type="video/mp4" />
+      </video>
     </div>
   );
 };
