@@ -1,146 +1,148 @@
 
-import { MediaType } from './types';
-import { getFileExtension } from './urlUtils';
+import { MediaType, MediaSource } from './types';
+import { isVideoUrl, isImageUrl, getCleanUrl } from './urlUtils';
 
 /**
- * Create a unique file path for storage
+ * Extract media URL from various source formats
  */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  const timestamp = new Date().getTime();
-  const randomString = Math.random().toString(36).substring(2, 10);
-  const extension = file.name.split('.').pop();
+export const extractMediaUrl = (source: any): string => {
+  if (!source) return '';
   
-  return `${userId}/${timestamp}-${randomString}.${extension}`;
+  // Direct string URL
+  if (typeof source === 'string') {
+    return source;
+  }
+  
+  // Extract from media object with priority order
+  if (typeof source === 'object') {
+    const extractedUrl = source.video_url || 
+      (Array.isArray(source.video_urls) && source.video_urls.length > 0 ? source.video_urls[0] : '') ||
+      source.media_url || 
+      (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
+      source.url || 
+      source.src || 
+      '';
+    
+    return extractedUrl;
+  }
+  
+  return '';
 };
 
 /**
- * Upload file to Supabase storage
+ * Extract thumbnail URL from a media source
  */
-export const uploadFileToStorage = async (
-  bucket: string, 
-  path: string, 
-  file: File
-): Promise<{success: boolean, url?: string, error?: string}> => {
-  try {
-    // Import supabase here to avoid circular dependencies
-    const { supabase } = await import('@/integrations/supabase/client');
-    
-    const { data, error } = await supabase
-      .storage
-      .from(bucket)
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-    
-    if (error) {
-      throw error;
-    }
-    
-    // Get public URL
-    const { data: publicUrlData } = supabase
-      .storage
-      .from(bucket)
-      .getPublicUrl(data.path);
-    
-    return {
-      success: true,
-      url: publicUrlData.publicUrl
-    };
-  } catch (error: any) {
-    console.error('Error uploading file:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to upload file'
-    };
+export const extractThumbnailUrl = (source: any): string => {
+  if (!source) return '';
+  
+  if (typeof source === 'object') {
+    return source.thumbnail_url || 
+           source.poster || 
+           source.video_thumbnail_url || 
+           (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
+           '';
   }
+  
+  return '';
 };
 
 /**
- * Determine media type from file extension, URL or content
+ * Determine the media type based on the source
  */
-export const determineMediaType = (media: any): MediaType => {
-  // If MediaType is already determined
-  if (media?.media_type) {
-    return media.media_type;
+export const determineMediaType = (source: MediaSource | string): MediaType => {
+  // Handle string URL directly
+  if (typeof source === 'string') {
+    const url = source.toLowerCase();
+    
+    if (isVideoUrl(url)) return MediaType.VIDEO;
+    if (isImageUrl(url)) return MediaType.IMAGE;
+    if (url.match(/\.(mp3|wav|ogg|m4a)($|\?)/i)) return MediaType.AUDIO;
+    if (url.match(/\.(pdf|docx?|xlsx?|pptx?)($|\?)/i)) return MediaType.DOCUMENT;
+    
+    // Default to image if no match
+    return MediaType.UNKNOWN;
   }
   
-  // Check for video URL first
-  if (media?.video_url) {
-    return MediaType.VIDEO;
-  }
-  
-  // Check media_url (can be string or array)
-  let url = '';
-  
-  if (media?.media_url) {
-    if (Array.isArray(media.media_url) && media.media_url.length > 0) {
-      url = media.media_url[0];
-    } else if (typeof media.media_url === 'string') {
-      url = media.media_url;
+  // Handle object
+  if (typeof source === 'object' && source !== null) {
+    // Check for explicit type indicator
+    if (source.media_type) return source.media_type;
+    if (source.content_type === 'video') return MediaType.VIDEO;
+    if (source.content_type === 'image') return MediaType.IMAGE;
+    if (source.content_type === 'audio') return MediaType.AUDIO;
+    if (source.content_type === 'document') return MediaType.DOCUMENT;
+    
+    // Check for URL presence
+    if (source.video_url || Array.isArray(source.video_urls) && source.video_urls.length > 0) {
+      return MediaType.VIDEO;
     }
-  } else if (typeof media === 'string') {
-    url = media;
-  }
-  
-  if (!url) {
-    return MediaType.UNKNOWN;
-  }
-  
-  // Check file extension
-  const extension = getFileExtension(url);
-  
-  if (!extension) {
-    return MediaType.UNKNOWN;
-  }
-  
-  // Determine type based on extension
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension)) {
-    return MediaType.IMAGE;
-  } else if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'm4v'].includes(extension)) {
-    return MediaType.VIDEO;
-  } else if (['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension)) {
-    return MediaType.AUDIO;
-  } else if (['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'ppt', 'pptx'].includes(extension)) {
-    return MediaType.DOCUMENT;
+    
+    if (source.media_url || Array.isArray(source.media_urls) && source.media_urls.length > 0) {
+      const mediaUrl = source.media_url || source.media_urls[0];
+      return determineMediaType(mediaUrl);
+    }
+    
+    // Check for generic url property
+    if (source.url) {
+      return determineMediaType(source.url);
+    }
   }
   
   return MediaType.UNKNOWN;
 };
 
 /**
- * Extract media URL from various object types
+ * Generate placeholder image URL for different media types
  */
-export const extractMediaUrl = (item: any): string | null => {
-  if (!item) return null;
-  
-  // Handle string directly
-  if (typeof item === 'string') {
-    return item;
+export const getPlaceholderForType = (mediaType: MediaType): string => {
+  switch (mediaType) {
+    case MediaType.VIDEO:
+      return '/assets/placeholders/video-placeholder.jpg';
+    case MediaType.AUDIO:
+      return '/assets/placeholders/audio-placeholder.jpg';
+    case MediaType.DOCUMENT:
+      return '/assets/placeholders/document-placeholder.jpg';
+    case MediaType.IMAGE:
+      return '/assets/placeholders/image-placeholder.jpg';
+    default:
+      return '/assets/placeholders/media-placeholder.jpg';
   }
+};
+
+/**
+ * Pre-load an image and return a promise that resolves when loaded
+ */
+export const preloadImage = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.src = getCleanUrl(src);
+  });
+};
+
+/**
+ * Check if a media URL is accessible
+ */
+export const checkMediaAccessibility = async (url: string): Promise<boolean> => {
+  if (!url) return false;
   
-  // Check for video_url first
-  if (item.video_url) {
-    return item.video_url;
+  // For client-side only
+  if (typeof window === 'undefined') return true;
+  
+  // Skip accessibility check for blob URLs and data URLs
+  if (url.startsWith('blob:') || url.startsWith('data:')) return true;
+  
+  try {
+    const response = await fetch(getCleanUrl(url), { 
+      method: 'HEAD',
+      mode: 'no-cors', // Use no-cors to avoid CORS issues
+      cache: 'no-cache'
+    });
+    
+    return true; // If no error, assume it's accessible (no-cors doesn't give status)
+  } catch (error) {
+    console.error('Media accessibility check failed:', url, error);
+    return false;
   }
-  
-  // Then check media_url
-  if (item.media_url) {
-    // Handle array of URLs
-    if (Array.isArray(item.media_url) && item.media_url.length > 0) {
-      return item.media_url[0];
-    }
-    // Handle string URL
-    if (typeof item.media_url === 'string') {
-      return item.media_url;
-    }
-  }
-  
-  // Check for other common URL field names
-  if (item.url) return item.url;
-  if (item.src) return item.src;
-  if (item.image) return item.image;
-  if (item.thumbnail_url) return item.thumbnail_url;
-  
-  return null;
 };

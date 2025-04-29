@@ -1,29 +1,49 @@
 
+/**
+ * Types for media handling
+ */
+
 export enum MediaType {
+  UNKNOWN = 'unknown',
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
-  FILE = 'file',
-  TEXT = 'text',
   DOCUMENT = 'document',
-  UNKNOWN = 'unknown'
+  EMBED = 'embed'
 }
 
-export interface MediaItem {
-  media_url: string;
-  media_type: MediaType;
-}
-
+/**
+ * Media source can be a string URL or an object with various properties
+ * This interface aims to accommodate different source formats
+ */
 export interface MediaSource {
-  media_url?: string;
-  video_url?: string;
-  thumbnail_url?: string;
-  media_type?: MediaType | string;
-  creator_id?: string;
+  // Basic properties
+  url?: string;
+  src?: string;
+  
+  // Specific media URLs
+  media_url?: string | null;
+  video_url?: string | null;
+  media_urls?: string[] | null;
+  video_urls?: string[] | null;
+  
+  // Media metadata
+  media_type?: MediaType;
   content_type?: string;
-  [key: string]: any; // Allow for additional properties
+  thumbnail_url?: string | null;
+  video_thumbnail_url?: string | null;
+  poster?: string | null;
+  
+  // Creator info
+  creator_id?: string;
+  
+  // Any other properties
+  [key: string]: any;
 }
 
+/**
+ * Options for media components
+ */
 export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
@@ -31,49 +51,9 @@ export interface MediaOptions {
   muted?: boolean;
   loop?: boolean;
   poster?: string;
-  showWatermark?: boolean;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number) => void;
-}
-
-export interface UploadOptions {
-  contentCategory?: string;
-  maxSizeInMB?: number;
-  allowedTypes?: string[];
-  autoResetOnCompletion?: boolean;
-  resetDelay?: number;
-  onProgress?: (progress: number) => void;
-}
-
-export interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  error: null | string;
-  success: boolean;
-  files: File[];
-  previews: string[];
-  isComplete: boolean;
-}
-
-export interface FileValidationResult {
-  isValid: boolean;
-  error?: string;
-  message?: string;
-}
-
-export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'invisible';
-
-export interface ActiveSurveillanceState {
-  active: boolean;
-  userId: string;
-  targetUserId: string;
-  startedAt: Date | undefined;
-  duration: number;
-  sessionId: string;
-  isWatching: boolean;
-  session: any | null;
-  startTime: string | null;
 }

@@ -1,19 +1,23 @@
 
 import { useState, forwardRef } from "react";
-import { useMediaProcessor } from "@/hooks/useMediaProcessor";
-import { MediaType, MediaSource } from "@/utils/media/types";
+import { cn } from "@/lib/utils";
 import { MediaLoadingState } from "./states/MediaLoadingState";
 import { MediaErrorState } from "./states/MediaErrorState";
-import { Loader2 } from "lucide-react";
+import { useMediaHandling } from "@/hooks/useMediaHandling";
+import { MediaType } from "@/utils/media/types";
 
 interface MediaRendererProps {
-  source: MediaSource | string | null;
+  src: string | null | undefined;
+  type?: MediaType;
+  fallbackSrc?: string;
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
   muted?: boolean;
   loop?: boolean;
   poster?: string;
+  alt?: string;
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
   onClick?: () => void;
   onLoad?: () => void;
   onError?: () => void;
@@ -21,156 +25,168 @@ interface MediaRendererProps {
   showLoadingState?: boolean;
   showErrorState?: boolean;
   allowRetry?: boolean;
+  maxRetries?: number;
 }
 
 export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, MediaRendererProps>(({
-  source,
+  src,
+  type = MediaType.UNKNOWN,
+  fallbackSrc,
   className = "",
   autoPlay = false,
   controls = true,
   muted = true,
   loop = false,
   poster,
+  alt = "Media content",
+  objectFit = 'cover',
   onClick,
   onLoad,
   onError,
   onEnded,
   showLoadingState = true,
   showErrorState = true,
-  allowRetry = true
+  allowRetry = true,
+  maxRetries = 2
 }, ref) => {
-  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
-  const [localError, setLocalError] = useState(false);
-
+  const [isMediaVisible, setIsMediaVisible] = useState(false);
+  
   const {
-    mediaUrl,
-    mediaType,
-    isLoading: isProcessing,
-    isError: isProcessingError,
-    retry
-  } = useMediaProcessor(source, { autoLoad: true });
+    currentSrc,
+    status,
+    handleLoad,
+    handleError,
+    retry,
+    isLoading,
+    hasError,
+    retryCount
+  } = useMediaHandling({
+    src,
+    fallbackSrc,
+    onLoad: () => {
+      setIsMediaVisible(true);
+      if (onLoad) onLoad();
+    },
+    onError,
+    maxRetries
+  });
 
-  const isLoading = isProcessing || (!isMediaLoaded && !localError);
-  const isError = isProcessingError || localError;
-
-  const handleLoad = () => {
-    setIsMediaLoaded(true);
-    if (onLoad) onLoad();
+  // Determine media type if not provided
+  const determineType = () => {
+    if (type !== MediaType.UNKNOWN) return type;
+    
+    if (!currentSrc) return MediaType.UNKNOWN;
+    
+    const url = currentSrc.toLowerCase();
+    if (url.match(/\.(mp4|webm|mov|m4v|avi)($|\?)/i)) return MediaType.VIDEO;
+    if (url.match(/\.(jpe?g|png|gif|webp|avif|svg)($|\?)/i)) return MediaType.IMAGE;
+    if (url.match(/\.(mp3|wav|ogg)($|\?)/i)) return MediaType.AUDIO;
+    
+    // If URL contains certain paths that suggest video
+    if (url.includes('/videos/') || url.includes('/video/') || url.includes('stream')) {
+      return MediaType.VIDEO;
+    }
+    
+    return MediaType.IMAGE; // Default to image as fallback
   };
+  
+  const mediaType = determineType();
 
-  const handleError = () => {
-    setLocalError(true);
-    if (onError) onError();
-  };
-
-  const handleRetry = () => {
-    setLocalError(false);
-    setIsMediaLoaded(false);
-    retry();
-  };
-
-  if (!source) {
+  if (!currentSrc) {
     return (
       <div className={`${className} flex items-center justify-center bg-black/10 rounded`}>
-        <span className="text-muted-foreground text-sm">No media</span>
+        <span className="text-muted-foreground text-sm">No media source</span>
       </div>
     );
   }
 
   // Show loading state
   if (isLoading && showLoadingState) {
-    return (
-      <div className={`relative ${className} bg-black/10 flex items-center justify-center rounded`}>
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
-      </div>
-    );
+    return <MediaLoadingState className={className} />;
   }
 
   // Show error state
-  if (isError && showErrorState) {
+  if (hasError && showErrorState) {
     return (
       <MediaErrorState 
-        onRetry={allowRetry ? handleRetry : undefined}
-        accessibleUrl={mediaUrl}
-        retryCount={retry ? 1 : 0}
-        message="Failed to load media"
+        onRetry={allowRetry ? retry : undefined}
+        accessibleUrl={currentSrc}
+        retryCount={retryCount}
+        message="Failed to load media content"
       />
-    );
-  }
-
-  if (!mediaUrl) {
-    return (
-      <div className={`${className} flex items-center justify-center bg-black/10 rounded`}>
-        <span className="text-muted-foreground text-sm">Invalid media source</span>
-      </div>
     );
   }
 
   // Render based on media type
   if (mediaType === MediaType.VIDEO) {
     return (
-      <video
-        ref={ref as React.Ref<HTMLVideoElement>}
-        src={mediaUrl}
-        className={className}
-        autoPlay={autoPlay}
-        controls={controls}
-        muted={muted}
-        loop={loop}
-        poster={poster}
-        onClick={onClick}
-        onLoadedData={handleLoad}
-        onError={handleError}
-        onEnded={onEnded}
-        playsInline
-      />
+      <div className={`relative overflow-hidden ${className}`}>
+        <video
+          ref={ref as React.Ref<HTMLVideoElement>}
+          src={currentSrc}
+          className={cn(
+            "w-full h-full transition-opacity duration-300",
+            isMediaVisible ? "opacity-100" : "opacity-0",
+            objectFit === 'cover' ? "object-cover" : `object-${objectFit}`
+          )}
+          autoPlay={autoPlay}
+          controls={controls}
+          muted={muted}
+          loop={loop}
+          poster={poster}
+          onClick={onClick}
+          onLoadedData={handleLoad}
+          onError={handleError}
+          onEnded={onEnded}
+          playsInline
+        />
+      </div>
     );
   }
 
   if (mediaType === MediaType.IMAGE) {
     return (
-      <img
-        ref={ref as React.Ref<HTMLImageElement>}
-        src={mediaUrl}
-        alt="Media content"
-        className={className}
-        onClick={onClick}
-        onLoad={handleLoad}
-        onError={handleError}
-      />
+      <div className={`relative overflow-hidden ${className}`}>
+        <img
+          ref={ref as React.Ref<HTMLImageElement>}
+          src={currentSrc}
+          alt={alt}
+          className={cn(
+            "w-full h-full transition-opacity duration-300",
+            isMediaVisible ? "opacity-100" : "opacity-0",
+            objectFit === 'cover' ? "object-cover" : `object-${objectFit}`
+          )}
+          onClick={onClick}
+          onLoad={handleLoad}
+          onError={handleError}
+          style={{ objectFit }}
+        />
+      </div>
     );
   }
 
   if (mediaType === MediaType.AUDIO) {
     return (
-      <audio
-        src={mediaUrl}
-        className={className}
-        controls={controls}
-        autoPlay={autoPlay}
-        muted={muted}
-        loop={loop}
-        onLoadedData={handleLoad}
-        onError={handleError}
-        onEnded={onEnded}
-      />
+      <div className={`audio-container ${className}`}>
+        <audio
+          src={currentSrc}
+          className="w-full"
+          controls={controls}
+          autoPlay={autoPlay}
+          muted={muted}
+          loop={loop}
+          onLoadedData={handleLoad}
+          onError={handleError}
+          onEnded={onEnded}
+        />
+      </div>
     );
   }
 
-  if (mediaType === MediaType.DOCUMENT) {
-    return (
-      <iframe
-        src={mediaUrl}
-        className={className}
-        onLoad={handleLoad}
-        onError={handleError}
-      />
-    );
-  }
-
+  // Fallback for unknown types
   return (
     <div className={`${className} flex items-center justify-center bg-black/10 rounded`}>
-      <span className="text-muted-foreground text-sm">Unsupported media type</span>
+      <span className="text-muted-foreground text-sm">Unsupported media format</span>
     </div>
   );
 });

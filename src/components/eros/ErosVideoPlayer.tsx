@@ -1,8 +1,11 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Loader2, AlertCircle, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInView } from "react-intersection-observer";
+import { MediaRenderer } from "@/components/media/MediaRenderer";
+import { MediaType } from "@/utils/media/types";
+import { reportMediaError } from "@/utils/media/mediaMonitoring";
 
 interface ErosVideoPlayerProps {
   videoUrl: string;
@@ -30,75 +33,65 @@ export function ErosVideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(initialMuted);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [loadRetries, setLoadRetries] = useState(0);
   
   const { ref: inViewRef, inView } = useInView({
     threshold: 0.6,
   });
   
   // Clean and prepare video URL
-  const getCleanVideoUrl = () => {
-    if (!videoUrl) return '';
+  const getCleanVideoUrl = (url: string) => {
+    if (!url) return '';
     
     // Handle URL without protocol
-    if (videoUrl.startsWith('//')) {
-      return `https:${videoUrl}`;
+    if (url.startsWith('//')) {
+      return `https:${url}`;
     }
     
     // Add protocol if missing
-    if (!videoUrl.startsWith('http')) {
-      return `https://${videoUrl}`;
+    if (!url.startsWith('http')) {
+      return `https://${url}`;
     }
     
-    return videoUrl;
+    return url;
   };
   
-  const processedVideoUrl = getCleanVideoUrl();
-  const processedThumbnailUrl = thumbnailUrl ? getCleanVideoUrl() : '';
+  const processedVideoUrl = videoUrl ? getCleanVideoUrl(videoUrl) : '';
+  const processedThumbnailUrl = thumbnailUrl ? getCleanVideoUrl(thumbnailUrl) : '';
   
-  // Control video playback based on visibility and active status
+  // Handle video playback based on visibility and active status
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !isLoaded) return;
+    if (!video) return;
     
-    if (isActive && inView) {
-      console.log("Playing video:", processedVideoUrl);
+    const shouldPlay = isActive && inView;
+    
+    if (shouldPlay && video.paused) {
       video.play()
         .then(() => setIsPlaying(true))
         .catch(err => {
           console.error("Error playing video:", err);
           setIsPlaying(false);
         });
-    } else {
+    } else if (!shouldPlay && !video.paused) {
       video.pause();
       setIsPlaying(false);
     }
-  }, [isActive, inView, isLoaded, processedVideoUrl]);
+  }, [isActive, inView]);
 
-  // Handle video loaded
-  const handleVideoLoaded = () => {
-    setIsLoaded(true);
-    setHasError(false);
-    console.log("Video loaded successfully:", processedVideoUrl);
-  };
-  
-  // Handle video error
+  // Handle video error with reporting
   const handleVideoError = () => {
     console.error("Video loading error:", processedVideoUrl);
-    setHasError(true);
     
-    if (loadRetries < 2) {
-      setLoadRetries(prev => prev + 1);
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.load();
-        }
-      }, 1000);
-    } else if (onError) {
-      onError();
-    }
+    // Report error for monitoring
+    reportMediaError(
+      processedVideoUrl,
+      'load_failure',
+      2,
+      'video',
+      'ErosVideoPlayer'
+    );
+    
+    if (onError) onError();
   };
   
   // Toggle play/pause
@@ -122,6 +115,10 @@ export function ErosVideoPlayer({
       e.stopPropagation();
     }
     setIsMuted(prev => !prev);
+    
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+    }
   };
   
   // Handle video end
@@ -145,60 +142,29 @@ export function ErosVideoPlayer({
       )}
       onClick={togglePlay}
     >
-      {/* Actual video element */}
-      {processedVideoUrl && (
-        <video
-          ref={videoRef}
-          src={processedVideoUrl}
-          poster={processedThumbnailUrl}
-          className="w-full h-full object-cover"
-          playsInline
-          loop={loop}
-          muted={isMuted}
-          onLoadedData={handleVideoLoaded}
-          onError={handleVideoError}
-          onEnded={handleVideoEnded}
-          crossOrigin="anonymous"
-        />
-      )}
-      
-      {/* Loading state */}
-      {(!isLoaded && !hasError) && (
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
-          <Loader2 className="w-12 h-12 animate-spin text-luxury-primary" />
-        </div>
-      )}
-      
-      {/* Error state */}
-      {hasError && (
-        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 text-center z-10">
-          <AlertCircle className="w-12 h-12 text-red-500 mb-2" />
-          <p className="text-white mb-4">Failed to load video</p>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setHasError(false);
-              setLoadRetries(0);
-              if (videoRef.current) {
-                videoRef.current.load();
-              }
-            }}
-            className="px-4 py-2 bg-luxury-primary text-white rounded-md"
-          >
-            Retry
-          </button>
-        </div>
-      )}
+      <MediaRenderer
+        ref={videoRef}
+        src={processedVideoUrl}
+        type={MediaType.VIDEO}
+        fallbackSrc={processedThumbnailUrl}
+        poster={processedThumbnailUrl}
+        className="w-full h-full object-cover"
+        autoPlay={autoPlay && isActive}
+        controls={false}
+        muted={isMuted}
+        loop={loop}
+        onError={handleVideoError}
+        onEnded={handleVideoEnded}
+        maxRetries={2}
+      />
       
       {/* Volume control */}
-      {isLoaded && !hasError && (
-        <button
-          onClick={toggleMute}
-          className="absolute bottom-4 right-4 z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all"
-        >
-          {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-        </button>
-      )}
+      <button
+        onClick={toggleMute}
+        className="absolute bottom-4 right-4 z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all"
+      >
+        {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+      </button>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 
 import { useState, useEffect, memo, useCallback } from "react";
-import { useMedia } from "@/hooks/useMedia";
 import { useToast } from "@/hooks/use-toast";
-import { VideoPlayer } from "@/components/video/VideoPlayer";
+import { MediaType } from "@/utils/media/types";
+import { MediaRenderer } from "@/components/media/MediaRenderer";
+import { reportMediaError } from "@/utils/media/mediaMonitoring";
 
 interface ShortVideoPlayerProps {
   videoUrl: string | null;
@@ -22,55 +23,42 @@ export const ShortVideoPlayer = memo(({
   onError 
 }: ShortVideoPlayerProps) => {
   const [loadRetries, setLoadRetries] = useState(0);
-  const [isMediaAvailable, setIsMediaAvailable] = useState(true);
   const { toast } = useToast();
   
-  // Process media URLs using our hook
-  const { 
-    url: processedUrl, 
-    isError: videoError,
-    retry: retryVideoLoad
-  } = useMedia(videoUrl ? { video_url: videoUrl } : null);
+  // Process media URL for safer access
+  const safeVideoUrl = videoUrl || null;
+  const safeThumbnailUrl = thumbnailUrl || null;
   
-  const { 
-    url: processedThumbnail 
-  } = useMedia(thumbnailUrl ? { media_url: thumbnailUrl } : null);
-  
-  // Check if media is available
-  useEffect(() => {
-    if (!processedUrl) {
-      setIsMediaAvailable(false);
-    } else {
-      setIsMediaAvailable(true);
-      setLoadRetries(0);
-    }
-  }, [processedUrl]);
-
   const handleVideoError = useCallback(() => {
-    console.error("Video error for short:", videoUrl);
+    console.error("Video error for short:", safeVideoUrl);
     
-    if (loadRetries < 2) {
-      // Try to reload the video after a short delay
-      setLoadRetries(prev => prev + 1);
-      retryVideoLoad();
-    } else {
-      // After multiple retries, show a toast
-      toast({
-        title: "Video loading error",
-        description: "Unable to load this video. You may want to try again later.",
-        variant: "destructive"
-      });
-      onError();
-    }
-  }, [videoUrl, loadRetries, toast, onError, retryVideoLoad]);
-
-  if (!isMediaAvailable || !processedUrl) {
-    return (
-      <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker">
-        <p className="text-luxury-neutral/70">This video is not available</p>
-      </div>
-    );
-  }
+    setLoadRetries(prev => {
+      const newRetryCount = prev + 1;
+      
+      // Report error for monitoring after multiple failures
+      if (newRetryCount >= 2) {
+        reportMediaError(
+          safeVideoUrl,
+          'load_failure',
+          newRetryCount,
+          'video',
+          'ShortVideoPlayer'
+        );
+        
+        // Show a toast after multiple retries
+        toast({
+          title: "Video loading error",
+          description: "Unable to load this video. You may want to try again later.",
+          variant: "destructive"
+        });
+        
+        // Notify parent component
+        onError();
+      }
+      
+      return newRetryCount;
+    });
+  }, [safeVideoUrl, toast, onError]);
 
   if (isDeleting) {
     return (
@@ -81,13 +69,17 @@ export const ShortVideoPlayer = memo(({
   }
 
   return (
-    <VideoPlayer
-      url={processedUrl}
-      poster={processedThumbnail || undefined}
+    <MediaRenderer
+      src={safeVideoUrl}
+      type={MediaType.VIDEO}
+      fallbackSrc={safeThumbnailUrl}
       className="h-full w-full object-cover"
-      autoPlay={isCurrentVideo && !videoError}
+      autoPlay={isCurrentVideo}
       onError={handleVideoError}
-      creatorId={creatorId}
+      controls={false}
+      loop={true}
+      muted={false}
+      maxRetries={2}
     />
   );
 });
