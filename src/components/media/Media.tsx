@@ -1,4 +1,3 @@
-
 import { forwardRef, useState, useEffect, useCallback } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
@@ -124,7 +123,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         <AlertCircle className="h-8 w-8 text-luxury-neutral/50 mb-2" />
         <p className="text-sm text-luxury-neutral/70">Media unavailable</p>
         <button 
-          onClick={handleRetry} 
+          onClick={() => setRetryCount(prev => prev + 1)} 
           className="mt-2 flex items-center gap-1 px-3 py-1 rounded-md bg-luxury-darker hover:bg-luxury-dark text-luxury-neutral text-sm"
         >
           <RefreshCw size={14} className="mr-1" />
@@ -155,10 +154,10 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         loop={loop}
         poster={poster}
         onClick={onClick}
-        onLoadedData={handleLoad}
-        onError={handleError}
+        onLoadedData={onLoad}
+        onError={onError}
         onEnded={onEnded}
-        onTimeUpdate={handleTimeUpdate}
+        onTimeUpdate={onTimeUpdate}
         playsInline
         crossOrigin="anonymous"
       />
@@ -171,8 +170,8 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
       src={mediaUrl}
       className={className}
       onClick={onClick}
-      onLoad={handleLoad}
-      onError={handleError}
+      onLoad={onLoad}
+      onError={onError}
       alt="Media content"
       crossOrigin="anonymous"
     />

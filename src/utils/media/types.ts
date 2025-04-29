@@ -52,12 +52,12 @@ export interface MediaOptions {
   muted?: boolean;
   loop?: boolean;
   poster?: string;
+  showWatermark?: boolean;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number) => void;
-  showWatermark?: boolean;
 }
 
 /**
@@ -71,7 +71,7 @@ export interface UploadOptions {
   bucket?: string;
   path?: string;
   contentType?: string;
-  contentCategory?: string;
+  contentCategory?: string; // Added to support different upload contexts
   cacheControl?: string;
   upsert?: boolean;
   autoResetOnCompletion?: boolean;
@@ -90,7 +90,7 @@ export interface UploadState {
   success?: boolean;
   files?: any[];
   previews?: string[];
-  isComplete?: boolean;
+  isComplete?: boolean; // Added for compatibility
 }
 
 /**

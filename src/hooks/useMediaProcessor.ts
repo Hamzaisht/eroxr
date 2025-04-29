@@ -47,7 +47,7 @@ export function useMediaProcessor(source: MediaSource | string | null, options: 
       
       // Determine media type
       const type = determineMediaType(source);
-      setMediaType(type);
+      setMediaType(type as MediaType);
     } catch (err: any) {
       console.error('Error processing media:', err);
       setIsError(true);

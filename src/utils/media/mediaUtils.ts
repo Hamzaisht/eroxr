@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { getFileExtension } from './urlUtils';
+import { MediaSource, MediaType } from './types';
 
 /**
  * Create a unique file path for storage
@@ -10,13 +11,22 @@ import { getFileExtension } from './urlUtils';
  * @returns Unique path for the file
  */
 export const createUniqueFilePath = (
-  file: File, 
+  file: File | string, 
   folder: string = 'media', 
   userId: string | null = null
 ): string => {
   const timestamp = new Date().getTime();
   const random = Math.random().toString(36).substring(2, 10);
-  const extension = getFileExtension(file.name);
+  
+  let extension;
+  if (typeof file === 'string') {
+    // Handle string paths
+    extension = file.split('.').pop()?.toLowerCase() || '';
+  } else {
+    // Handle File objects
+    extension = getFileExtension(file.name);
+  }
+  
   const userPath = userId ? `${userId}/` : '';
   
   return `${folder}/${userPath}${timestamp}_${random}.${extension}`;
@@ -110,4 +120,50 @@ export const detectMediaType = (source: any): string => {
   }
   
   return 'unknown';
+};
+
+/**
+ * Alias for detectMediaType to maintain backward compatibility
+ */
+export const determineMediaType = detectMediaType;
+
+/**
+ * Extract media URL from various source formats
+ */
+export const extractMediaUrl = (source: MediaSource | string): string | null => {
+  // If source is already a string URL
+  if (typeof source === 'string') return source;
+  
+  // Handle different source formats
+  return source.video_url || 
+         source.media_url || 
+         source.url || 
+         source.src || 
+         (Array.isArray(source.video_urls) && source.video_urls.length > 0 ? source.video_urls[0] : null) ||
+         (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : null) ||
+         null;
+};
+
+/**
+ * Convert any media source to a standard MediaSource object
+ */
+export const normalizeMediaSource = (source: any): MediaSource => {
+  if (!source) return { media_type: MediaType.UNKNOWN };
+  
+  // If it's already a string, create a basic MediaSource
+  if (typeof source === 'string') {
+    const mediaType = detectMediaType(source);
+    return {
+      url: source,
+      media_type: mediaType as MediaType,
+      media_url: mediaType === 'image' ? source : undefined,
+      video_url: mediaType === 'video' ? source : undefined
+    };
+  }
+  
+  // It's already an object, normalize it
+  return {
+    ...source,
+    media_type: source.media_type || detectMediaType(source)
+  };
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, forwardRef } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
@@ -55,7 +54,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
 
         // Determine media type
         const type = determineMediaType(source);
-        setMediaType(type);
+        setMediaType(type as MediaType); // Added type cast
       } catch (err) {
         console.error('Error processing media:', err);
         setError('Failed to process media');
@@ -113,10 +112,10 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
             loop={loop}
             poster={poster}
             onClick={onClick}
-            onLoadedData={handleLoad}
-            onError={handleError}
+            onLoadedData={onLoad}
+            onError={onError}
             onEnded={onEnded}
-            onTimeUpdate={handleTimeUpdate}
+            onTimeUpdate={onTimeUpdate}
             playsInline
           />
           {showWatermark && (
@@ -137,8 +136,8 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
             src={url}
             className={className}
             onClick={onClick}
-            onLoad={handleLoad}
-            onError={handleError}
+            onLoad={onLoad}
+            onError={onError}
             alt="Media content"
           />
           {showWatermark && (
@@ -160,8 +159,8 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
             autoPlay={autoPlay}
             muted={muted}
             loop={loop}
-            onLoadedData={handleLoad}
-            onError={handleError}
+            onLoadedData={onLoad}
+            onError={onError}
             onEnded={onEnded}
             className="w-full"
           />

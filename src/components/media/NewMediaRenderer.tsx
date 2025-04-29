@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   determineMediaType,
@@ -129,7 +128,7 @@ export const NewMediaRenderer = ({
         <AlertCircle className="h-8 w-8 mb-2" />
         <p className="text-sm">{error || "Media unavailable"}</p>
         <button
-          onClick={handleRetry}
+          onClick={() => setRetryCount(prev => prev + 1)}
           className="mt-2 px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md text-sm"
         >
           Retry
@@ -150,8 +149,14 @@ export const NewMediaRenderer = ({
         loop={loop}
         poster={poster}
         onClick={onClick}
-        onLoadedData={handleLoad}
-        onError={handleError}
+        onLoadedData={() => {
+          setIsLoading(false);
+          if (onLoad) onLoad();
+        }}
+        onError={() => {
+          setError('Failed to load video');
+          if (onError) onError();
+        }}
         onEnded={onEnded}
         playsInline
       />
@@ -164,8 +169,14 @@ export const NewMediaRenderer = ({
       src={url}
       className={className}
       onClick={onClick}
-      onLoad={handleLoad}
-      onError={handleError}
+      onLoad={() => {
+        setIsLoading(false);
+        if (onLoad) onLoad();
+      }}
+      onError={() => {
+        setError('Failed to load image');
+        if (onError) onError();
+      }}
       alt="Media content"
     />
   );
