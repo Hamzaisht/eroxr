@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -15,7 +14,7 @@ import { TrustSection } from "@/components/landing/TrustSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { MegaCTASection } from "@/components/landing/MegaCTASection";
-import { VideoBackground } from "@/components/landing/components/VideoBackground";
+import { BackgroundVideo } from "@/components/video/BackgroundVideo"; // Add the import
 import { RotatingCardSection } from "@/components/landing/RotatingCardSection";
 import CustomCursor from "@/components/landing/components/CustomCursor";
 import "../styles/animations.css";
@@ -104,7 +103,11 @@ const Landing = () => {
       
       {!isMobile && !prefersReducedMotion && <CustomCursor />}
       
-      <VideoBackground />
+      {/* Replace VideoBackground with our new BackgroundVideo component */}
+      <BackgroundVideo 
+        videoUrl="/background.mp4"
+        overlayOpacity={50}
+      />
       
       <Navbar />
       
