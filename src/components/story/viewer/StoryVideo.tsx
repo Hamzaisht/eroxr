@@ -1,8 +1,8 @@
-
 import { useEffect, useRef, forwardRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2, AlertCircle, RefreshCw, VolumeX } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface StoryVideoProps {
   videoUrl: string;
@@ -20,7 +20,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     const mediaItem = {
       video_url: videoUrl,
       creator_id: creatorId,
-      media_type: "video"
+      media_type: MediaType.VIDEO
     };
     
     const handleError = () => {

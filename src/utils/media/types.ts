@@ -9,7 +9,8 @@ export enum MediaType {
   VIDEO = 'video',
   AUDIO = 'audio',
   DOCUMENT = 'document',
-  EMBED = 'embed'
+  EMBED = 'embed',
+  FILE = 'file'
 }
 
 /**
@@ -56,4 +57,56 @@ export interface MediaOptions {
   onError?: () => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number) => void;
+  showWatermark?: boolean;
+}
+
+/**
+ * Options for media uploads
+ */
+export interface UploadOptions {
+  maxFileSize?: number;
+  acceptedFileTypes?: string[];
+  bucket?: string;
+  path?: string;
+  contentType?: string;
+  cacheControl?: string;
+  upsert?: boolean;
+}
+
+/**
+ * Upload state tracking
+ */
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  url: string | null;
+}
+
+/**
+ * File validation result
+ */
+export interface FileValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+/**
+ * User availability status
+ */
+export enum AvailabilityStatus {
+  ONLINE = 'online',
+  AWAY = 'away',
+  BUSY = 'busy',
+  OFFLINE = 'offline',
+  INVISIBLE = 'invisible'
+}
+
+/**
+ * Active surveillance state
+ */
+export interface ActiveSurveillanceState {
+  active: boolean;
+  deviceId: string | null;
+  startTime: number | null;
 }

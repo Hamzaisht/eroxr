@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface VideoPreviewProps {
   videoUrl: string;
@@ -18,7 +18,7 @@ export const VideoPreview = ({ videoUrl, className }: VideoPreviewProps) => {
 
   const mediaItem = {
     video_url: videoUrl,
-    media_type: "video"
+    media_type: MediaType.VIDEO
   };
 
   const handleLoad = () => {

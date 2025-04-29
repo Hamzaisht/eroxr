@@ -1,6 +1,7 @@
-
 import { MediaType, MediaSource } from './types';
 import { isVideoUrl, isImageUrl, getCleanUrl } from './urlUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Extract media URL from various source formats
@@ -145,4 +146,107 @@ export const checkMediaAccessibility = async (url: string): Promise<boolean> => 
     console.error('Media accessibility check failed:', url, error);
     return false;
   }
+};
+
+/**
+ * Creates a unique file path for uploading to storage
+ * Format: userId/timestamp-uuid.extension
+ */
+export const createUniqueFilePath = (userId: string, file: File): string => {
+  const timestamp = Date.now();
+  const uniqueId = uuidv4().substring(0, 8);
+  const extension = file.name.split('.').pop() || 'unknown';
+  
+  return `${userId}/${timestamp}-${uniqueId}.${extension}`;
+};
+
+/**
+ * Upload a file to Supabase storage
+ */
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  path?: string;
+  error?: string;
+}
+
+export const uploadFileToStorage = async (
+  bucketName: string,
+  filePath: string,
+  file: File,
+  options?: {
+    contentType?: string;
+    cacheControl?: string;
+    upsert?: boolean;
+  }
+): Promise<UploadResult> => {
+  try {
+    console.log(`Uploading file to ${bucketName}/${filePath}`);
+    
+    // Set default options
+    const uploadOptions = {
+      cacheControl: options?.cacheControl || '3600',
+      upsert: options?.upsert !== undefined ? options.upsert : true,
+      contentType: options?.contentType || file.type
+    };
+    
+    // Upload the file
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file, uploadOptions);
+    
+    if (error) {
+      console.error('Storage upload error:', error);
+      return { 
+        success: false, 
+        error: error.message 
+      };
+    }
+    
+    if (!data) {
+      return { 
+        success: false, 
+        error: 'Upload completed but no data returned' 
+      };
+    }
+    
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(data.path);
+    
+    return {
+      success: true,
+      url: publicUrl,
+      path: data.path
+    };
+  } catch (error: any) {
+    console.error('Storage upload error:', error);
+    return { 
+      success: false, 
+      error: error.message || 'An unknown error occurred during upload'
+    };
+  }
+};
+
+/**
+ * Report media loading errors for monitoring
+ */
+export const reportMediaError = (
+  url: string | null,
+  errorType: string,
+  retryCount: number,
+  mediaType: string,
+  componentName: string
+): void => {
+  // Implement error reporting logic
+  console.error(`Media error in ${componentName}:`, {
+    url: url?.substring(0, 100),
+    errorType,
+    retryCount,
+    mediaType,
+    timestamp: new Date().toISOString()
+  });
+  
+  // In a real application, you might want to send this to a monitoring service
 };

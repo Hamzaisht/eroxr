@@ -1,136 +1,163 @@
-
 /**
- * Utilities for processing and validating media URLs
+ * Check if URL is a video URL based on extension
  */
-
-/**
- * Clean up a URL to ensure it's properly formatted
- */
-export const getCleanUrl = (url: string | null | undefined): string => {
-  if (!url) return '';
+export const isVideoUrl = (url: string): boolean => {
+  if (!url) return false;
   
-  // Handle special URLs
-  if (url.startsWith('data:') || url.startsWith('blob:')) {
-    return url;
-  }
+  // Check for common video extensions
+  const videoExtensionRegex = /\.(mp4|webm|mov|m4v|avi|wmv|flv|mkv|3gp)($|\?)/i;
+  if (videoExtensionRegex.test(url)) return true;
   
-  // Handle protocol-less URLs (//example.com/image.jpg)
-  if (url.startsWith('//')) {
-    return `https:${url}`;
-  }
+  // Check for common video hosting patterns
+  const videoHostingPatterns = [
+    'youtube.com/watch',
+    'youtu.be/',
+    'vimeo.com/',
+    '/videos/',
+    '/video/',
+    'dailymotion.com/',
+    '.mp4',
+    '.webm'
+  ];
   
-  try {
-    // If it's already a valid URL, just return it stringified
-    if (url.match(/^[a-z]+:\/\//i)) {
-      return new URL(url).toString();
-    }
-    
-    // If no protocol, add https:// and parse
-    if (!url.match(/^[a-z]+:\/\//i)) {
-      return new URL(`https://${url}`).toString();
-    }
-    
-    // Default case
-    return url;
-  } catch (error) {
-    // If URL parsing fails, it might be a relative path
-    console.error('Error cleaning URL:', url, error);
-    
-    // Check if it's a relative path and convert to absolute
-    if (url.startsWith('/')) {
-      return `${window.location.origin}${url}`;
-    }
-    
-    return url;
-  }
+  return videoHostingPatterns.some(pattern => url.includes(pattern));
 };
 
 /**
- * Add cache busting parameter to prevent browser caching
+ * Check if URL is an image URL based on extension
  */
-export const addCacheBuster = (url: string | null | undefined): string => {
-  if (!url) return '';
-  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+export const isImageUrl = (url: string): boolean => {
+  if (!url) return false;
   
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 10000);
-  const cacheBuster = `cb=${timestamp}-${random}`;
+  const imageExtensionRegex = /\.(jpe?g|png|gif|webp|avif|svg|bmp)($|\?)/i;
+  return imageExtensionRegex.test(url);
+};
+
+/**
+ * Clean a URL by removing cache busters and unnecessary parameters
+ */
+export const getCleanUrl = (url: string): string => {
+  if (!url) return '';
   
   try {
-    const urlObj = new URL(getCleanUrl(url));
-    urlObj.searchParams.set('t', `${timestamp}-${random}`);
+    const urlObj = new URL(url);
+    urlObj.searchParams.delete('t');
+    urlObj.searchParams.delete('cb');
+    urlObj.searchParams.delete('cache');
     return urlObj.toString();
-  } catch (error) {
-    // Fallback to simpler cache busting
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}${cacheBuster}`;
+  } catch (e) {
+    // If URL parsing fails, return the original URL
+    return url;
   }
 };
 
 /**
- * Get direct media URL with proper formatting
- * This is the main function that should be used to process media URLs
+ * Get a playable media URL with cache busting if needed
  */
 export const getPlayableMediaUrl = (url: string | null | undefined): string => {
   if (!url) return '';
   
-  // Handle special URLs
-  if (url.startsWith('data:') || url.startsWith('blob:')) {
+  // Check if URL already has cache busting parameters
+  const hasCacheBuster = url.includes('t=') || url.includes('cb=') || url.includes('cache=');
+  
+  // For direct blob URLs or data URLs, return as is
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
     return url;
   }
+  
+  // Add cache buster if needed
+  if (!hasCacheBuster && url.indexOf('?') === -1) {
+    return `${url}?t=${Date.now()}`;
+  } else if (!hasCacheBuster) {
+    return `${url}&t=${Date.now()}`;
+  }
+  
+  return url;
+};
+
+/**
+ * Get file extension from URL
+ */
+export const getFileExtension = (url: string): string => {
+  if (!url) return '';
   
   try {
-    // Clean the URL
-    const cleanUrl = getCleanUrl(url);
-    
-    // Skip cache busting for special URLs
-    if (url.startsWith('blob:') || process.env.NODE_ENV !== 'production') {
-      return cleanUrl;
+    const pathname = new URL(url).pathname;
+    const extension = pathname.split('.').pop() || '';
+    return extension.toLowerCase();
+  } catch (e) {
+    // If URL parsing fails, try basic string manipulation
+    const parts = url.split('.');
+    if (parts.length > 1) {
+      const ext = parts.pop() || '';
+      // Remove query parameters if any
+      return ext.split('?')[0].toLowerCase();
     }
+    return '';
+  }
+};
 
-    // Add cache busting for remote URLs in production
-    return addCacheBuster(cleanUrl);
-  } catch (error) {
-    console.error('Error processing media URL:', error);
+/**
+ * Convert relative URL to absolute URL
+ */
+export const toAbsoluteUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // If already absolute, return as is
+  if (url.startsWith('http://') || url.startsWith('https://') || 
+      url.startsWith('blob:') || url.startsWith('data:')) {
     return url;
   }
+  
+  // If starts with /, assume it's relative to domain root
+  if (url.startsWith('/')) {
+    return `${window.location.origin}${url}`;
+  }
+  
+  // Otherwise, assume it's relative to current path
+  const basePath = window.location.pathname.split('/').slice(0, -1).join('/');
+  return `${window.location.origin}${basePath}/${url}`;
 };
 
 /**
- * Check if URL is likely to be a video
+ * Generate a thumbnail URL from a video URL
  */
-export const isVideoUrl = (url: string | null | undefined): boolean => {
-  if (!url) return false;
-  
-  // Check file extension
-  if (url.match(/\.(mp4|webm|mov|m4v|avi)($|\?)/i)) return true;
-  
-  // Check common video path patterns
-  if (url.includes('/videos/') || 
-      url.includes('/video/') || 
-      url.includes('/shorts/') ||
-      url.includes('stream')) {
-    return true;
+export const generateThumbnailUrl = (videoUrl: string): string => {
+  // For some video services, we can construct thumbnail URLs
+  if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+    const videoId = extractYoutubeId(videoUrl);
+    if (videoId) {
+      return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    }
   }
   
-  return false;
+  // For Vimeo videos
+  if (videoUrl.includes('vimeo.com')) {
+    const videoId = extractVimeoId(videoUrl);
+    if (videoId) {
+      // Note: This is a placeholder. Actual Vimeo thumbnail URLs require API calls
+      return `https://vumbnail.com/${videoId}.jpg`;
+    }
+  }
+  
+  // Default placeholder for other videos
+  return '/assets/placeholders/video-placeholder.jpg';
 };
 
 /**
- * Check if URL is likely to be an image
+ * Extract YouTube video ID from URL
  */
-export const isImageUrl = (url: string | null | undefined): boolean => {
-  if (!url) return false;
-  
-  // Check file extension
-  if (url.match(/\.(jpe?g|png|gif|webp|avif|svg|bmp)($|\?)/i)) return true;
-  
-  // Check common image path patterns
-  if (url.includes('/images/') || 
-      url.includes('/img/') || 
-      url.includes('/photos/')) {
-    return true;
-  }
-  
-  return false;
+const extractYoutubeId = (url: string): string | null => {
+  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[7].length === 11) ? match[7] : null;
+};
+
+/**
+ * Extract Vimeo video ID from URL
+ */
+const extractVimeoId = (url: string): string | null => {
+  const regExp = /vimeo\.com\/(?:video\/|channels\/\w+\/|groups\/[^\/]+\/videos\/|album\/\d+\/video\/|)(\d+)(?:$|\/|\?)/;
+  const match = url.match(regExp);
+  return match ? match[1] : null;
 };

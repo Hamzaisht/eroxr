@@ -1,8 +1,8 @@
-
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface StoryImageProps {
   mediaUrl: string;
@@ -19,7 +19,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const mediaItem = {
     media_url: mediaUrl,
     creator_id: creatorId,
-    media_type: "image"
+    media_type: MediaType.IMAGE
   };
   
   useEffect(() => {
