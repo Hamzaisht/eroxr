@@ -57,12 +57,21 @@ export interface UploadOptions {
     maxWidth?: number;
     maxHeight?: number;
   };
+  // Add missing properties used in components
+  onProgress?: (progress: number) => void;
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
 }
 
 export interface UploadState {
   isUploading: boolean;
   progress: number;
   error: string | null;
+  // Add missing properties used in components
+  success?: boolean;
+  isComplete?: boolean;
+  files?: File[];
+  previews?: string[];
 }
 
 export interface FileValidationResult {

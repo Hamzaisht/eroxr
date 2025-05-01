@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -81,13 +82,12 @@ export const MediaUploader = ({
     return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
   })();
   
-  const uploadOptions = {
+  const uploadOptions: UploadOptions = {
     contentCategory: context,
     maxSizeInMB,
     allowedTypes,
     autoResetOnCompletion: true,
     resetDelay: 3000,
-    // Add an optional onProgress callback
     onProgress: (progress: number) => {}
   };
   

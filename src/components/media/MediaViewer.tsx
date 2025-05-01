@@ -6,6 +6,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Media } from "@/components/shared/media/Media";
 import { useMediaProcessor } from "@/hooks/useMediaProcessor";
 import { useState } from "react";
+import { MediaType } from "@/utils/media/types";
 
 interface MediaViewerProps {
   media: string | null;
@@ -28,7 +29,7 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
     
     const link = document.createElement('a');
     link.href = mediaUrl;
-    link.download = `media-${Date.now()}${mediaType === 'video' ? '.mp4' : '.jpg'}`;
+    link.download = `media-${Date.now()}${mediaType === MediaType.VIDEO ? '.mp4' : '.jpg'}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -53,8 +54,8 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
             <Media
               source={media || ''}
               className={`max-w-full max-h-full object-contain ${isFullscreen ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
-              autoPlay={mediaType === 'video'}
-              controls={mediaType === 'video'}
+              autoPlay={mediaType === MediaType.VIDEO}
+              controls={mediaType === MediaType.VIDEO}
             />
           </motion.div>
           
