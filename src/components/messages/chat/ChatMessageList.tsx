@@ -30,11 +30,11 @@ export const ChatMessageList = ({
 }: ChatMessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const lastScrollPosition = useRef<number>(0);
   const isScrolledToBottomRef = useRef<boolean>(true);
   
   // Auto-scroll to bottom on new messages if already at bottom
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    console.log('Scrolling to bottom');
     messagesEndRef.current?.scrollIntoView({ behavior });
     isScrolledToBottomRef.current = true;
   }, []);
@@ -48,15 +48,21 @@ export const ChatMessageList = ({
     
     // Consider "near bottom" as within 100px of the bottom
     isScrolledToBottomRef.current = scrollPosition < 100;
-    lastScrollPosition.current = scrollTop;
   }, []);
   
   // Scroll to bottom when new messages arrive if already at bottom
   useEffect(() => {
-    if (isScrolledToBottomRef.current) {
+    if (isScrolledToBottomRef.current || messages.some(m => m.is_optimistic)) {
       scrollToBottom();
     }
   }, [messages, scrollToBottom]);
+  
+  // Scroll when typing indicator appears
+  useEffect(() => {
+    if (isTyping && isScrolledToBottomRef.current) {
+      scrollToBottom();
+    }
+  }, [isTyping, scrollToBottom]);
   
   // Initial scroll to bottom
   useEffect(() => {
@@ -81,7 +87,7 @@ export const ChatMessageList = ({
   
   return (
     <ScrollArea 
-      className="flex-1 p-4 overflow-y-auto"
+      className="flex-1 p-4 overflow-y-auto relative"
       onScroll={handleScroll}
       ref={scrollAreaRef}
     >
@@ -148,6 +154,24 @@ export const ChatMessageList = ({
                     {message.is_optimistic && (
                       <div className="text-xs text-luxury-neutral/40 italic">
                         Sending...
+                      </div>
+                    )}
+                    
+                    {message.delivery_status === 'sent' && isCurrentUser && (
+                      <div className="text-xs text-luxury-neutral/40">
+                        Sent
+                      </div>
+                    )}
+                    
+                    {message.delivery_status === 'delivered' && isCurrentUser && (
+                      <div className="text-xs text-luxury-neutral/40">
+                        Delivered
+                      </div>
+                    )}
+                    
+                    {message.delivery_status === 'seen' && isCurrentUser && (
+                      <div className="text-xs text-blue-400 font-medium">
+                        Seen
                       </div>
                     )}
                   </div>

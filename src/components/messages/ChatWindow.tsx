@@ -1,16 +1,15 @@
+
 import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChatInput } from './chat/ChatInput';
-import { MessageBubble } from './MessageBubble';
 import { ChatHeader } from './chat/ChatHeader';
 import { ChatMessageList } from './chat/ChatMessageList';
 import { DirectMessage } from '@/integrations/supabase/types/message';
 import { ConnectionIndicator } from './chat/ConnectionIndicator';
 import { ErrorComponent } from '@/components/ErrorComponent';
-import { useEnhancedRealtime } from '@/hooks/useEnhancedRealtime';
-import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { useRealtimeChat } from '@/hooks/useRealtimeChat';
 import { useChatActions } from './chat/ChatActions';
 
 interface ChatWindowProps {
@@ -26,8 +25,7 @@ interface ChatWindowProps {
 export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowProps) => {
   const session = useSession();
   const queryClient = useQueryClient();
-  const { isTyping, connectionStatus, markAllAsSeen } = useEnhancedRealtime(recipient.id);
-  const { sendTypingStatus } = useTypingIndicator(recipient.id);
+  const { isTyping, connectionStatus, markAllAsSeen, sendTypingStatus } = useRealtimeChat(recipient.id);
   const { handleSendMessage, resendMessage, isUploading } = useChatActions({ recipientId: recipient.id });
   const [sendError, setSendError] = useState<string | null>(null);
   
@@ -44,6 +42,7 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
       if (!session?.user?.id) return [];
       
       try {
+        console.log('Fetching messages for chat with:', recipient.username);
         const { data, error } = await supabase
           .from('direct_messages')
           .select('*')
@@ -52,6 +51,7 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
           
         if (error) throw error;
         
+        console.log('Fetched messages:', data?.length || 0);
         return data as DirectMessage[];
       } catch (err) {
         console.error('Error fetching messages:', err);
@@ -68,6 +68,7 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
     if (messages && messages.length > 0) {
       // Mark messages as seen after a short delay
       const timer = setTimeout(() => {
+        console.log('Marking messages as seen');
         markAllAsSeen();
       }, 1000);
       
@@ -77,6 +78,8 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
   
   const handleSend = async (content: string) => {
     setSendError(null);
+    console.log('Sending message:', content.substring(0, 20) + '...');
+    
     try {
       const result = await handleSendMessage(content);
       if (!result?.success) {
@@ -95,6 +98,7 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
   const handleRetry = async (message: DirectMessage) => {
     try {
       setSendError(null);
+      console.log('Retrying message:', message.id);
       const result = await resendMessage(message);
       return result.success;
     } catch (error: any) {

@@ -22,7 +22,7 @@ export const createOptimisticMessage = (
     recipient_id: recipientId,
     content: content || null,
     media_url: mediaUrls || null,
-    message_type: messageType,
+    message_type: messageType as any,
     delivery_status: "sending",
     created_at: now,
     updated_at: now,
@@ -42,6 +42,8 @@ export const useOptimisticMessaging = () => {
     recipientId: string, 
     message: DirectMessage
   ) => {
+    console.log('Adding optimistic message to UI:', message.id);
+    
     // Add to chat query
     queryClient.setQueryData(
       ["chat", userId, recipientId],
@@ -58,6 +60,8 @@ export const useOptimisticMessaging = () => {
     
     // Function to handle success
     const onSuccess = (newMessage: DirectMessage) => {
+      console.log('Replacing optimistic message with real one:', message.id, '->', newMessage.id);
+      
       queryClient.setQueryData(
         ["chat", userId, recipientId],
         (oldData: DirectMessage[] | undefined) => {
@@ -68,15 +72,22 @@ export const useOptimisticMessaging = () => {
           );
         }
       );
+      
+      // Also invalidate to ensure we're in sync with the server
+      queryClient.invalidateQueries({
+        queryKey: ["chat", userId, recipientId],
+      });
     };
     
     // Function to handle error
     const onError = () => {
+      console.log('Marking optimistic message as failed:', message.id);
+      
       queryClient.setQueryData(
         ["chat", userId, recipientId],
         (oldData: DirectMessage[] | undefined) => {
           if (!oldData) return [];
-          // Mark as error or remove
+          // Mark as error
           return oldData.map((msg) => 
             msg.id === message.id 
               ? { ...msg, delivery_status: "failed" } 

@@ -2,10 +2,10 @@ import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { useOptimisticMessaging, createOptimisticMessage } from "@/utils/messaging/optimisticUpdates";
 import { v4 as uuidv4 } from "uuid";
+import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
 
 interface ChatActionsProps {
   recipientId: string;
@@ -19,10 +19,15 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
   const { addOptimisticMessage } = useOptimisticMessaging();
 
   const handleSendMessage = useCallback(async (content: string) => {
-    if (!content.trim() || !session?.user?.id || !recipientId) return;
+    if (!content.trim() || !session?.user?.id || !recipientId) {
+      console.log('Cannot send message: missing content or user/recipient ID');
+      return { success: false, error: 'Message cannot be empty' };
+    }
+    
+    console.log('Sending message to:', recipientId);
     
     try {
-      // Create optimistic message
+      // Create optimistic message for immediate UI feedback
       const optimisticMessage = createOptimisticMessage(
         session.user.id,
         recipientId,
@@ -52,8 +57,11 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
         .select();
       
       if (error) {
+        console.error('Error sending message:', error);
+        
         // If there's an error, check if it's due to delivery_status column not existing
         if (error.message?.includes('delivery_status')) {
+          console.log('Retrying without delivery_status field');
           delete messageData.delivery_status;
           const { error: secondError, data: fallbackData } = await supabase
             .from('direct_messages')
@@ -61,10 +69,12 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
             .select();
           
           if (secondError) {
+            console.error('Second attempt failed:', secondError);
             onError();
             throw secondError;
           }
           
+          console.log('Message sent successfully (fallback)');
           onSuccess(fallbackData[0] as DirectMessage);
           return { success: true, message: fallbackData[0] };
         } else {
@@ -73,6 +83,7 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
         }
       }
       
+      console.log('Message sent successfully');
       onSuccess(data[0] as DirectMessage);
       return { success: true, message: data[0] };
     } catch (error: any) {
@@ -239,14 +250,68 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
     }
   }, [session?.user?.id, recipientId, toast]);
 
+  const resendMessage = async (message: DirectMessage) => {
+    if (!session?.user?.id || !recipientId) {
+      return { success: false, error: "Not authenticated" };
+    }
+    
+    try {
+      console.log('Resending message:', message.id);
+      
+      if (message.media_url && message.media_url.length > 0) {
+        if (message.message_type === 'snap') {
+          toast({
+            title: "Cannot resend snap",
+            description: "Please create a new snap instead",
+            variant: "destructive"
+          });
+          return { success: false, error: "Cannot resend snaps" };
+        }
+        
+        // Re-use existing media URLs
+        const { error } = await supabase
+          .from('direct_messages')
+          .insert({
+            sender_id: session.user.id,
+            recipient_id: recipientId,
+            media_url: message.media_url,
+            video_url: message.video_url,
+            message_type: message.message_type,
+            created_at: new Date().toISOString(),
+            delivery_status: 'sent'
+          });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Message resent",
+          description: "Media message was resent successfully"
+        });
+        
+        return { success: true };
+      } else if (message.content) {
+        // Simple text message resend
+        return handleSendMessage(message.content);
+      }
+      
+      return { success: false, error: "Invalid message to resend" };
+    } catch (error: any) {
+      console.error('Error resending message:', error);
+      toast({
+        title: "Failed to resend message",
+        description: error.message || "Please try again",
+        variant: "destructive"
+      });
+      return { success: false, error: error.message || "Failed to resend message" };
+    }
+  };
+
   return {
     isUploading,
     handleSendMessage,
     handleMediaSelect,
     handleSnapCapture,
-    resendMessage: async (message: DirectMessage) => {
-      return { success: false };
-    }
+    resendMessage
   };
 };
 
