@@ -17,7 +17,7 @@ interface SurveillanceContextType {
   activeTab: SurveillanceTab;
   setActiveTab: (tab: SurveillanceTab) => void;
   refreshSessions: () => Promise<void>;
-  refreshAlerts: () => Promise<boolean>; // Changed from Promise<void> to Promise<boolean>
+  refreshAlerts: () => Promise<boolean>; // Changed to match implementation
   handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
   fetchLiveSessions: () => Promise<void>;
 }
@@ -38,7 +38,7 @@ export function useSurveillance() {
 interface SurveillanceProviderProps {
   children: ReactNode;
   liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<void>;
+  refreshAlerts: () => Promise<boolean>; // Changed to match implementation
   startSurveillance: (session: LiveSession) => Promise<boolean>;
 }
 

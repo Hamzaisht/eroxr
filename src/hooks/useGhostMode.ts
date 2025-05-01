@@ -2,7 +2,8 @@
 // This is just a stub implementation to fix type errors
 // The actual implementation might be more complex
 import { useState, useCallback } from 'react';
-import { ActiveSurveillanceState, LiveAlert, LiveSession } from '@/utils/media/types';
+import { ActiveSurveillanceState, LiveAlert } from '@/utils/media/types';
+import { LiveSession } from '@/types/surveillance';
 
 export function useGhostMode() {
   const [isGhostMode, setIsGhostMode] = useState(false);
@@ -44,9 +45,9 @@ export function useGhostMode() {
       session,
       startTime: new Date().toISOString(),
       active: true,
-      targetUserId: session.userId || session.user_id || '',
+      targetUserId: session.user_id || '', // Fixed: use user_id instead of userId
       startedAt: new Date(),
-      deviceId: session.deviceId || session.device_id
+      deviceId: null // Device ID is not available in LiveSession type
     }));
     setLoading(false);
     return Promise.resolve(true);
