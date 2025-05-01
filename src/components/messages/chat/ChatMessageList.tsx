@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,6 +5,7 @@ import { DirectMessage } from "@/integrations/supabase/types/message";
 import { MessageBubble } from "../MessageBubble";
 import { Button } from "@/components/ui/button";
 import { ArrowDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ChatMessageListProps {
   messages: DirectMessage[];
