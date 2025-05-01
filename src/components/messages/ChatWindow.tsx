@@ -14,6 +14,7 @@ import { useChatActions } from "./chat/ChatActions";
 import { SnapCaptureModal } from "./chat/SnapCaptureModal";
 import { ChatHeader } from "./chat/ChatHeader"; 
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { BookingDialog } from "./booking/BookingDialog";
 
 interface ChatWindowProps {
   recipient: {
@@ -33,6 +34,8 @@ export const ChatWindow = ({
   onSendSuccess 
 }: ChatWindowProps) => {
   const [showSnapModal, setShowSnapModal] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingType, setBookingType] = useState<'chat' | 'video' | 'voice'>('video');
   const [replyToMessage, setReplyToMessage] = useState<DirectMessage | null>(null);
   const session = useSession();
   const { toast } = useToast();
@@ -119,6 +122,11 @@ export const ChatWindow = ({
     setShowSnapModal(false);
   };
 
+  const handleOpenBookingDialog = (type: 'chat' | 'video' | 'voice') => {
+    setBookingType(type);
+    setShowBookingModal(true);
+  };
+
   const handleSendVoiceMessage = async (audioBlob: Blob) => {
     // Create a File object from the Blob
     const file = new File([audioBlob], `voice-message-${Date.now()}.webm`, { type: 'audio/webm' });
@@ -136,17 +144,11 @@ export const ChatWindow = ({
 
   // Send voice or video call request
   const handleVoiceCall = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Voice calls will be available in a future update!"
-    });
+    handleOpenBookingDialog('voice');
   };
 
   const handleVideoCall = () => {
-    toast({
-      title: "Coming Soon", 
-      description: "Video calls will be available in a future update!"
-    });
+    handleOpenBookingDialog('video');
   };
 
   const recipientProfile = {
@@ -190,6 +192,7 @@ export const ChatWindow = ({
           onMediaSelect={handleOpenFileInput}
           onSnapStart={handleOpenSnapCapture}
           onVoiceMessage={handleSendVoiceMessage}
+          onBookCall={() => handleOpenBookingDialog('chat')}
           isLoading={isUploading}
           recipientId={recipient.id}
           replyToMessage={replyToMessage}
@@ -213,6 +216,14 @@ export const ChatWindow = ({
           onSubmit={handleSnapSubmit}
         />
       )}
+
+      {/* Booking dialog */}
+      <BookingDialog
+        creatorId={recipient.id}
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        bookingType={bookingType}
+      />
     </div>
   );
 };

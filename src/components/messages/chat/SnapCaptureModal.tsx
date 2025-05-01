@@ -1,161 +1,149 @@
 
-import React, { useRef, useState, useEffect } from 'react';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, X } from "lucide-react";
+import { Camera, X, Check } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface SnapCaptureModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (dataUrl: string) => void;
+  onSubmit: (dataURL: string) => void;
 }
 
-export const SnapCaptureModal: React.FC<SnapCaptureModalProps> = ({
-  open,
-  onClose,
-  onSubmit
-}) => {
+export function SnapCaptureModal({ open, onClose, onSubmit }: SnapCaptureModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [isCaptureReady, setCaptureReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-
-  // Start the camera when the modal opens
+  
+  // Start camera when component mounts
   useEffect(() => {
     if (open) {
-      startCamera();
-    } else {
-      stopCamera();
+      initializeCamera();
     }
     
     return () => {
       stopCamera();
     };
   }, [open]);
-
-  const startCamera = async () => {
+  
+  const initializeCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' } 
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false
       });
-      
-      setStream(mediaStream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.onloadedmetadata = () => {
-          setCaptureReady(true);
-        };
       }
+      
+      setStream(mediaStream);
     } catch (err) {
       console.error("Error accessing camera:", err);
     }
   };
-
+  
   const stopCamera = () => {
     if (stream) {
-      stream.getTracks().forEach(track => {
-        track.stop();
-      });
+      const tracks = stream.getTracks();
+      tracks.forEach(track => track.stop());
       setStream(null);
     }
-    setCaptureReady(false);
-    setCapturedImage(null);
   };
-
+  
   const captureImage = () => {
-    if (!canvasRef.current || !videoRef.current) return;
-    
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    
-    // Match canvas size to video dimension
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    // Draw the current video frame on the canvas
-    const context = canvas.getContext('2d');
-    if (context) {
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
       
-      // Convert to data URL
-      const dataUrl = canvas.toDataURL('image/jpeg');
-      setCapturedImage(dataUrl);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageDataURL = canvas.toDataURL('image/jpeg');
+        setCapturedImage(imageDataURL);
+      }
     }
   };
-
-  const handleSubmit = () => {
+  
+  const handleSend = () => {
     if (capturedImage) {
       onSubmit(capturedImage);
-      onClose();
     }
   };
-
-  const retakePhoto = () => {
+  
+  const handleReset = () => {
     setCapturedImage(null);
+  };
+  
+  const handleClose = () => {
+    setCapturedImage(null);
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Capture Snap</h3>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+        <DialogHeader>
+          <DialogTitle>Capture Snap</DialogTitle>
+          <DialogDescription>
+            Take a photo that will disappear after viewing.
+          </DialogDescription>
+        </DialogHeader>
         
-        <div className="relative">
+        <div className="relative aspect-video mt-2 overflow-hidden rounded-md">
           {!capturedImage ? (
-            <div className="aspect-video bg-black rounded-md overflow-hidden">
-              <video 
-                ref={videoRef} 
-                autoPlay 
-                playsInline
-                className="w-full h-full object-cover"
-              />
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <div className="aspect-video bg-black rounded-md overflow-hidden">
-              <img 
-                src={capturedImage}
-                alt="Captured snap" 
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <img 
+              src={capturedImage} 
+              alt="Captured snap" 
+              className="w-full h-full object-cover"
+            />
           )}
         </div>
         
-        <div className="flex justify-center mt-4 space-x-4">
-          {!capturedImage ? (
-            <Button 
-              onClick={captureImage} 
-              disabled={!isCaptureReady}
-              className="bg-luxury-primary hover:bg-luxury-primary/80"
-            >
-              <Camera className="mr-2 h-5 w-5" />
-              Capture
+        <canvas ref={canvasRef} className="hidden" />
+        
+        <DialogFooter className="flex sm:justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={capturedImage ? handleReset : handleClose}
+          >
+            <X className="mr-2 h-4 w-4" />
+            {capturedImage ? "Retake" : "Cancel"}
+          </Button>
+          
+          {capturedImage ? (
+            <Button onClick={handleSend}>
+              <Check className="mr-2 h-4 w-4" />
+              Send Snap
             </Button>
           ) : (
-            <>
-              <Button 
-                onClick={retakePhoto}
-                variant="outline"
-              >
-                Retake
-              </Button>
-              <Button 
-                onClick={handleSubmit}
-                className="bg-luxury-primary hover:bg-luxury-primary/80"
-              >
-                Send Snap
-              </Button>
-            </>
+            <Button onClick={captureImage}>
+              <Camera className="mr-2 h-4 w-4" />
+              Capture
+            </Button>
           )}
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
+}

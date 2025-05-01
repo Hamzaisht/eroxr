@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Smile, X, Paperclip, Camera, Send, Mic, File, Image, Video } from "lucide-react"; 
+import { Smile, X, Paperclip, Camera, Send, Mic, File, Image, Video, Calendar } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
 import { EmojiPicker } from './message-parts/EmojiPicker';
 import { DirectMessage } from '@/integrations/supabase/types/message';
@@ -23,6 +23,7 @@ interface MessageInputProps {
   onMediaSelect?: () => void;
   onSnapStart?: () => void;
   onVoiceMessage?: (audioBlob: Blob) => void;
+  onBookCall?: () => void;
   isLoading?: boolean;
   recipientId: string;
   replyToMessage?: DirectMessage | null;
@@ -34,6 +35,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onMediaSelect,
   onSnapStart,
   onVoiceMessage,
+  onBookCall,
   isLoading = false,
   recipientId,
   replyToMessage,
@@ -156,6 +158,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 <Camera className="mr-2 h-4 w-4" />
                 <span>Snap</span>
               </DropdownMenuItem>
+              {onBookCall && (
+                <DropdownMenuItem onClick={onBookCall} className="cursor-pointer">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  <span>Book Call</span>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -199,7 +207,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Type a message..."
-            className="w-full resize-none rounded-2xl border border-input bg-luxury-darker/50 px-4 py-2 text-sm ring-offset-background placeholder:text-white/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-luxury-primary/50 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full resize-none rounded-2xl border border-input bg-luxury-darker/50 px-4 py-2 text-sm ring-offset-background placeholder:text-white/30 text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-luxury-primary/50 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
             style={{ height: textareaHeight, maxHeight: '120px' }}
             rows={1}
           />

@@ -6,10 +6,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Ban, Loader2 } from "lucide-react";
+import { Send, Ban, Loader2, X, Calendar, Gift } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ChatMediaGallery } from "./chat/ChatMediaGallery";
+import { ChatBookingsOverview } from "./chat/ChatBookingsOverview";
+import { ChatTippingControls } from "./chat/ChatTippingControls";
+import { BookingDialog } from "./booking/BookingDialog";
 
 interface ChatDetailsProps {
   recipient: {
@@ -20,16 +24,6 @@ interface ChatDetailsProps {
   onClose: () => void;
 }
 
-interface Message {
-  id: string;
-  content: string;
-  created_at: string;
-  sender_id: string;
-  recipient_id: string;
-  sender_username: string;
-  sender_avatar_url: string | null;
-}
-
 export const ChatDetails = ({ 
   recipient,
   onClose 
@@ -37,11 +31,45 @@ export const ChatDetails = ({
   const [messageText, setMessageText] = useState("");
   const { id: currentUserId } = useSession()?.user || {};
   const [isBlocked, setIsBlocked] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingType, setBookingType] = useState<'chat' | 'video' | 'voice'>('video');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const recipientId = recipient?.id;
+
+  // Fetch direct messages for the media gallery
+  const { data: directMessages = [] } = useQuery({
+    queryKey: ["chat", currentUserId, recipientId],
+    queryFn: async () => {
+      if (!recipientId || !currentUserId) return [];
+
+      const { data, error } = await supabase
+        .from('direct_messages')
+        .select('*')
+        .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${currentUserId})`)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching messages:", error);
+        return [];
+      }
+
+      return data;
+    },
+    enabled: !!recipientId && !!currentUserId
+  });
+
+  // Handle opening media
+  const handleMediaSelect = (url: string) => {
+    window.open(url, '_blank');
+  };
+
+  // Open booking modal
+  const handleBookCall = () => {
+    setShowBookingModal(true);
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -80,7 +108,7 @@ export const ChatDetails = ({
         sender_avatar_url: msg.sender_avatar_url ? 
           (msg.sender_avatar_url as unknown as Record<string, any>)?.avatar_url : 
           null
-      })) as Message[];
+      }));
     },
     enabled: !!recipientId && !!currentUserId,
   });
@@ -163,78 +191,72 @@ export const ChatDetails = ({
   const recipientAvatar = recipient?.avatar_url || null;
   
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          ←
-        </Button>
-        <Avatar>
-          <AvatarImage src={recipientAvatar || ""} alt={recipientUsername || "User"} />
-          <AvatarFallback>{recipientUsername?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-        </Avatar>
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold">{recipientUsername || "User"}</h2>
-        </div>
-      </div>
-
-      <div className="h-[calc(100vh-300px)] rounded-md border bg-muted p-4">
-        <ScrollArea className="h-full">
-          <div className="space-y-4">
-            {messagesLoading ? (
-              <div>Loading messages...</div>
-            ) : (
-              messages?.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex flex-col ${message.sender_id === currentUserId ? 'items-end' : 'items-start'
-                    }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    {message.sender_id !== currentUserId && (
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={message.sender_avatar_url || ""} alt={message.sender_username || "User"} />
-                        <AvatarFallback>{message.sender_username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-                      </Avatar>
-                    )}
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{message.sender_username}</p>
-                      <p className="text-sm text-muted-foreground">{message.content}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(message.created_at), {
-                          addSuffix: true,
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-            <div ref={bottomRef} />
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="flex items-center justify-between p-4 border-b border-luxury-neutral/20">
+        <div className="flex items-center space-x-3">
+          <Avatar>
+            <AvatarImage src={recipientAvatar || ""} alt={recipientUsername || "User"} />
+            <AvatarFallback>{recipientUsername?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">{recipientUsername || "User"}</h2>
           </div>
-        </ScrollArea>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+        >
+          <X className="h-5 w-5" />
+        </Button>
       </div>
 
-      <div className="flex space-x-2">
-        <Input
-          placeholder="Type your message..."
-          value={messageText}
-          onChange={(e) => setMessageText(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <Button onClick={sendMessage} disabled={sendMessageMutation.isLoading}>
-          {sendMessageMutation.isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+      <div className="px-4 flex-1 overflow-hidden">
+        <Tabs defaultValue="media">
+          <TabsList className="grid grid-cols-3 bg-luxury-darker mb-4">
+            <TabsTrigger value="media">Media</TabsTrigger>
+            <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="tips">Tips</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="media" className="mt-0 h-[calc(100vh-260px)]">
+            <ChatMediaGallery 
+              messages={directMessages} 
+              onMediaSelect={handleMediaSelect} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="bookings" className="mt-0 h-[calc(100vh-260px)]">
+            <ChatBookingsOverview 
+              recipientId={recipientId} 
+              onBookCall={handleBookCall} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="tips" className="mt-0 h-[calc(100vh-260px)]">
+            <ChatTippingControls recipientId={recipientId} />
+          </TabsContent>
+        </Tabs>
+      </div>
+      
+      <div className="p-4 border-t border-luxury-neutral/20 mt-auto">
+        <Button
+          onClick={() => blockMutation.mutate()}
+          variant="destructive"
+          disabled={isBlocking}
+          className="w-full"
+        >
+          {isBlocking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
+          Block User
         </Button>
       </div>
       
-      <Button
-        onClick={() => blockMutation.mutate()}
-        variant="destructive"
-        disabled={isBlocking}
-        className="w-full"
-      >
-        {isBlocking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
-        Block User
-      </Button>
+      <BookingDialog
+        creatorId={recipientId}
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        bookingType={bookingType}
+      />
     </div>
   );
 }
