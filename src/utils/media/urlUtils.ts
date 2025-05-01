@@ -38,6 +38,56 @@ export function isExternalUrl(url: string): boolean {
 }
 
 /**
+ * Gets a playable media URL (handles caching, CDN issues, etc)
+ * This function was missing and causing build errors
+ */
+export function getPlayableMediaUrl(url: string): string {
+  if (!url) return '';
+  
+  // Handle special URLs
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  
+  // Handle already processed URLs
+  if (url.includes('supabase.co/storage/v1/object/public/')) {
+    return url;
+  }
+  
+  // Handle relative URLs
+  if (url.startsWith('/')) {
+    return getAbsoluteUrl(url);
+  }
+  
+  // For other URLs, add cache busting
+  return addCacheBuster(url);
+}
+
+/**
+ * Gets the file extension from a URL or filename
+ */
+export function getFileExtension(filename: string): string {
+  return filename.split('.').pop()?.toLowerCase() || '';
+}
+
+/**
+ * Convert a relative URL to absolute URL
+ */
+export function toAbsoluteUrl(url: string): string {
+  return getAbsoluteUrl(url);
+}
+
+/**
+ * Extracts YouTube video ID from URL
+ */
+export function extractYoutubeId(url: string): string {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  
+  return (match && match[2].length === 11) ? match[2] : '';
+}
+
+/**
  * Extracts thumbnail URL from a video URL
  */
 export function getVideoThumbnail(videoUrl: string): string {
@@ -50,14 +100,4 @@ export function getVideoThumbnail(videoUrl: string): string {
   // For local videos, we could potentially create a thumbnail as a separate process
   // For now just return the video URL
   return videoUrl;
-}
-
-/**
- * Extracts YouTube video ID from URL
- */
-function extractYoutubeId(url: string): string {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  
-  return (match && match[2].length === 11) ? match[2] : '';
 }

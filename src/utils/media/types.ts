@@ -113,3 +113,23 @@ export interface ActiveSurveillanceState {
   sessionId?: string;
   deviceId?: any;
 }
+
+// Add LiveAlert and LiveSession types that are used in useGhostMode.ts
+export interface LiveAlert {
+  id: string;
+  type: string;
+  message: string;
+  timestamp: Date;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  status: 'new' | 'seen' | 'addressed';
+}
+
+export interface LiveSession {
+  id: string;
+  userId?: string;
+  username?: string;
+  deviceId?: string;
+  device_id?: string;
+  startTime?: Date;
+  active?: boolean;
+}

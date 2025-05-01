@@ -75,15 +75,15 @@ export function determineMediaType(item: MediaSource | string): MediaType {
   }
 
   // Otherwise try to determine by checking various properties
-  if (item.video_url || item.video_urls?.length) return MediaType.VIDEO;
-  if (item.media_url || item.media_urls?.length) {
+  if (item.video_url || (item.video_urls && item.video_urls.length > 0)) return MediaType.VIDEO;
+  if (item.media_url || (item.media_urls && item.media_urls.length > 0)) {
     // If media_url is a string, check its extension
     if (typeof item.media_url === 'string') {
       return determineMediaType(item.media_url);
     }
     // If it's an array, check the first item
-    if (Array.isArray(item.media_url) && item.media_url.length > 0) {
-      return determineMediaType(item.media_url[0]);
+    if (Array.isArray(item.media_urls) && item.media_urls.length > 0) {
+      return determineMediaType(item.media_urls[0]);
     }
     return MediaType.IMAGE; // Default to image if we can't determine
   }
