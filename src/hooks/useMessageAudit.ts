@@ -5,8 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 interface MessageActivityLogParams {
   recipient_id: string;
   message_id?: string;
-  activity_type?: string; // Added this field to match the usage in ChatInput
+  activity_type?: string; // Used for the action type
   details?: any;
+  length?: number; // Add this field to support message length tracking
 }
 
 interface MediaUploadLogParams {
@@ -22,7 +23,7 @@ export function useMessageAudit(recipientId: string) {
   const logMessageActivity = async (params: MessageActivityLogParams) => {
     if (!session?.user?.id) return;
     
-    const { recipient_id, message_id, activity_type = 'send', details = {} } = params;
+    const { recipient_id, message_id, activity_type = 'send', details = {}, length } = params;
     
     try {
       await supabase.from('admin_audit_logs').insert({
@@ -32,6 +33,7 @@ export function useMessageAudit(recipientId: string) {
           recipient_id,
           message_id,
           timestamp: new Date().toISOString(),
+          length, // Include message length in the details if provided
           ...details
         }
       });

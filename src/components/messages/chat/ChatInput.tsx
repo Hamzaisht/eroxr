@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { MessageInput } from '../MessageInput';
 import { useChatActions } from './ChatActions'; // Changed from useChatActionsV2
@@ -51,7 +50,8 @@ export const ChatInput = ({
       // Log message activity
       logMessageActivity({
         recipient_id: recipientId,
-        activity_type: 'send', // Changed message_type to activity_type
+        activity_type: 'send',
+        details: { content_preview: content.substring(0, 50) },
         length: content.length
       });
       
