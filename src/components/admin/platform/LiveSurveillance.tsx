@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { SessionList } from "./surveillance/SessionList";
@@ -70,9 +69,9 @@ export const LiveSurveillance = () => {
         />
         
         <ActiveSessionMonitor
-          isWatching={activeSurveillance.isWatching ?? false}
+          isWatching={activeSurveillance.isWatching}
           session={activeSurveillance.session}
-          startTime={activeSurveillance.startTime ?? ""}
+          startTime={activeSurveillance.startTime}
           onStopWatching={handleStopWatching}
         />
       </div>

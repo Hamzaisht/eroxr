@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,13 +22,13 @@ interface UseGhostModeReturn {
 export const useGhostMode = (): UseGhostModeReturn => {
   const [isGhostModeEnabled, setIsGhostModeEnabled] = useState(false);
   const [activeSurveillance, setActiveSurveillance] = useState<ActiveSurveillanceState>({
-    active: false,
-    deviceId: null,
-    startTime: null,
     isWatching: false,
     session: null,
+    startTime: '',
+    active: false,
     targetUserId: '',
-    sessionId: ''
+    startedAt: undefined,
+    userId: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [canUseGhostMode, setCanUseGhostMode] = useState(true); // Default to true
@@ -115,15 +114,15 @@ export const useGhostMode = (): UseGhostModeReturn => {
     }
 
     setActiveSurveillance({
+      isWatching: true,
+      session: sessionObject,
+      startTime: startedAt.toISOString(),
       active: true,
-      deviceId: null,
       targetUserId: targetUserId,
       startedAt: startedAt,
       duration: duration,
       sessionId: sessionId,
-      isWatching: true,
-      session: sessionObject, // Will be populated with actual session data
-      startTime: startedAt.toISOString(),
+      userId: session.user.id
     });
 
     toast({
@@ -141,13 +140,13 @@ export const useGhostMode = (): UseGhostModeReturn => {
 
   const stopSurveillance = useCallback(async (): Promise<boolean> => {
     setActiveSurveillance({
-      active: false,
-      deviceId: null,
-      startTime: null,
       isWatching: false,
       session: null,
+      startTime: '',
+      active: false,
       targetUserId: '',
-      sessionId: ''
+      startedAt: undefined,
+      userId: ''
     });
 
     toast({

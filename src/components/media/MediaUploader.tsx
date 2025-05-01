@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -122,15 +123,14 @@ export const MediaUploader = ({
     console.log("File selected:", file.name, file.type, file.size);
     
     const validation = validateFile(file);
-    if (!validation.isValid) {
-      console.error("File validation failed:", validation.error || validation.message);
-      if (onError) onError(validation.error || validation.message || "Invalid file");
+    if (!validation.valid) { // Changed from isValid to valid
+      console.error("File validation failed:", validation.error);
+      if (onError) onError(validation.error || "Invalid file");
       return;
     }
     
     setSelectedFile(file);
     
-    // Create preview - this should create a local blob URL for immediate display
     console.log("Creating preview for file:", file.name);
     const preview = createPreview(file);
     console.log("Preview created:", preview ? "success" : "failed");
@@ -303,3 +303,5 @@ export const MediaUploader = ({
     </div>
   );
 };
+
+export default MediaUploader;

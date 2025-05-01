@@ -27,6 +27,31 @@ export interface MediaSource {
   description?: string;
   title?: string;
   duration?: number;
+  creator_id?: string; // Added creator_id
+}
+
+// Helper function to convert string to MediaType enum
+export function stringToMediaType(typeString: string | undefined): MediaType {
+  if (!typeString) return MediaType.UNKNOWN;
+  
+  const lowerType = typeString.toLowerCase();
+  
+  switch (lowerType) {
+    case 'image':
+      return MediaType.IMAGE;
+    case 'video':
+      return MediaType.VIDEO;
+    case 'audio':
+      return MediaType.AUDIO;
+    case 'document':
+      return MediaType.DOCUMENT;
+    case 'embed':
+      return MediaType.EMBED;
+    case 'file':
+      return MediaType.FILE;
+    default:
+      return MediaType.UNKNOWN;
+  }
 }
 
 // User presence status
@@ -81,4 +106,10 @@ export interface ActiveSurveillanceState {
   session: any | null;
   startTime: string;
   userId?: string;
+  active?: boolean;
+  targetUserId?: string;
+  startedAt?: Date;
+  duration?: number;
+  sessionId?: string;
+  deviceId?: any;
 }

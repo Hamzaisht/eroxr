@@ -1,7 +1,7 @@
-
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { uploadFileToStorage } from '@/utils/media/mediaUtils';
+import { createUniqueFilePath } from '@/utils/media/mediaUtils';
 import { UploadOptions, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useToast } from './use-toast';
 
@@ -132,7 +132,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       const contentCategory = options?.contentCategory || 'media';
       const bucket = contentCategory === 'shorts' ? 'shorts' : 'media';
       
-      // Create path for upload
+      // Create path for upload - now properly importing createUniqueFilePath
       const path = createUniqueFilePath(session.user.id, file);
       
       // Upload the file using the mediaUtils function
