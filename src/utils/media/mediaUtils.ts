@@ -1,167 +1,125 @@
-
-import { MediaSource, MediaType } from "./types";
-import { addCacheBuster, getFileExtension } from "./urlUtils";
-import { supabase } from "@/integrations/supabase/client";
-
-/**
- * Create a unique file path for uploading
- * 
- * @param userId User ID for the path
- * @param file File to create path for
- * @returns Unique file path
- */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  // Create a unique path based on user ID, timestamp, and original filename
-  const timestamp = new Date().getTime();
-  const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const extension = getFileExtension(filename);
-  
-  // Format: userId/timestamp_randomString.extension
-  const randomString = Math.random().toString(36).substring(2, 8);
-  return `${userId}/${timestamp}_${randomString}.${extension}`;
-};
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import { MediaSource, MediaType } from './types';
+import { inferContentTypeFromExtension } from './formatUtils';
 
 /**
- * Upload a file to storage
- * 
- * @param bucket Storage bucket name
- * @param path File path in storage
- * @param file File to upload
- * @returns Upload result with URL or error
+ * Creates a unique file path for uploads
  */
-export const uploadFileToStorage = async (
+export function createUniqueFilePath(userId: string, file: File): string {
+  const fileExtension = file.name.split('.').pop() || '';
+  const uniqueId = uuidv4();
+  const timestamp = Date.now();
+  return `${userId}/${uniqueId}_${timestamp}.${fileExtension}`;
+}
+
+/**
+ * Uploads a file to Supabase storage
+ */
+export async function uploadFileToStorage(
   bucket: string,
   path: string,
   file: File
-): Promise<{ success: boolean; url?: string; path?: string; error?: string }> => {
-  if (!file || !bucket || !path) {
-    return { success: false, error: "Invalid upload parameters" };
-  }
-
+): Promise<{success: boolean; url?: string; path?: string; error?: string}> {
   try {
-    console.log(`Uploading file to ${bucket}/${path}`);
-
-    // Upload to Supabase storage
+    // Determine content type based on file extension if not provided
+    const contentType = file.type || inferContentTypeFromExtension(file.name);
+    
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
-        contentType: file.type,
-        cacheControl: '3600',
+        contentType,
         upsert: true
       });
 
     if (error) {
-      console.error("Storage upload error:", error);
-      return {
-        success: false,
-        error: error.message || "Upload failed"
-      };
+      console.error('Storage upload error:', error);
+      return { success: false, error: error.message };
     }
 
-    if (!data || !data.path) {
-      return {
-        success: false,
-        error: "Upload succeeded but no path returned"
-      };
-    }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
+    // Get the public URL of the file
+    const { data: { publicUrl } } = supabase.storage
       .from(bucket)
-      .getPublicUrl(data.path);
+      .getPublicUrl(data?.path || path);
 
-    // Add cache buster
-    const publicUrl = addCacheBuster(urlData.publicUrl);
-
-    return {
-      success: true,
-      url: publicUrl,
-      path: data.path
-    };
+    return { success: true, url: publicUrl, path: data?.path || path };
   } catch (error: any) {
-    console.error("File upload error:", error);
-    return {
-      success: false,
-      error: error.message || "An unknown error occurred"
+    console.error('File upload error:', error);
+    return { 
+      success: false, 
+      error: error.message || 'An unknown error occurred during upload'
     };
   }
-};
+}
 
 /**
- * Extract media URL from various sources
+ * Determines the media type from various source formats
  */
-export const extractMediaUrl = (source: MediaSource | string): string => {
-  if (!source) return '';
-  
-  // Handle string URL directly
-  if (typeof source === 'string') {
-    return source;
-  }
-  
-  // Extract URL from media source object
-  const mediaSource = source as MediaSource;
-  
-  // Try to extract URL in order of priority
-  return (
-    mediaSource.video_url ||
-    (Array.isArray(mediaSource.video_urls) && mediaSource.video_urls.length > 0 ? mediaSource.video_urls[0] : '') ||
-    mediaSource.media_url ||
-    (Array.isArray(mediaSource.media_urls) && mediaSource.media_urls.length > 0 ? mediaSource.media_urls[0] : '') ||
-    mediaSource.url ||
-    mediaSource.src ||
-    ''
-  );
-};
-
-/**
- * Determine media type from source
- */
-export const determineMediaType = (source: MediaSource | string): MediaType => {
-  if (!source) return MediaType.UNKNOWN;
-  
-  // Handle string URL directly
-  if (typeof source === 'string') {
-    const url = source.toLowerCase();
-    if (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.mov')) {
-      return MediaType.VIDEO;
-    }
-    if (url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') || url.endsWith('.gif') || url.endsWith('.webp')) {
-      return MediaType.IMAGE;
-    }
-    if (url.endsWith('.mp3') || url.endsWith('.wav') || url.endsWith('.ogg')) {
-      return MediaType.AUDIO;
-    }
-    if (url.endsWith('.pdf') || url.endsWith('.doc') || url.endsWith('.docx')) {
-      return MediaType.DOCUMENT;
-    }
-    // Default to unknown for strings we can't determine
+export function determineMediaType(item: MediaSource | string): MediaType {
+  // If it's a string, determine based on extension
+  if (typeof item === 'string') {
+    const url = item.toLowerCase();
+    if (url.match(/\.(jpg|jpeg|png|gif|webp|avif|bmp)(\?.*)?$/i)) return MediaType.IMAGE;
+    if (url.match(/\.(mp4|webm|mov|avi|wmv|flv|mkv)(\?.*)?$/i)) return MediaType.VIDEO;
+    if (url.match(/\.(mp3|wav|ogg|aac|flac)(\?.*)?$/i)) return MediaType.AUDIO;
+    if (url.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)(\?.*)?$/i)) return MediaType.DOCUMENT;
     return MediaType.UNKNOWN;
   }
-  
-  // Extract from media source object
-  const mediaSource = source as MediaSource;
-  
-  // Explicit type
-  if (mediaSource.media_type) {
-    return mediaSource.media_type as MediaType;
-  }
-  
-  // Infer from properties
-  if (mediaSource.video_url || mediaSource.video_urls) {
-    return MediaType.VIDEO;
-  }
-  
-  if (mediaSource.media_url || mediaSource.media_urls) {
-    // Further determine if it's an image or other media type
-    const url = mediaSource.media_url || 
-                (Array.isArray(mediaSource.media_urls) && mediaSource.media_urls.length > 0 ? 
-                  mediaSource.media_urls[0] : '');
-    
-    if (url) {
-      // Try to determine from URL extension
-      return determineMediaType(url);
+
+  // If it's an object with a media_type property, use that
+  if (item.media_type) {
+    if (typeof item.media_type === 'string') {
+      return MediaType[item.media_type.toUpperCase() as keyof typeof MediaType] || MediaType.UNKNOWN;
     }
+    return item.media_type;
+  }
+
+  // Otherwise try to determine by checking various properties
+  if (item.video_url || item.video_urls?.length) return MediaType.VIDEO;
+  if (item.media_url || item.media_urls?.length) {
+    // If media_url is a string, check its extension
+    if (typeof item.media_url === 'string') {
+      return determineMediaType(item.media_url);
+    }
+    // If it's an array, check the first item
+    if (Array.isArray(item.media_url) && item.media_url.length > 0) {
+      return determineMediaType(item.media_url[0]);
+    }
+    return MediaType.IMAGE; // Default to image if we can't determine
   }
   
   return MediaType.UNKNOWN;
-};
+}
+
+/**
+ * Extracts the media URL from various source formats
+ */
+export function extractMediaUrl(item: MediaSource | string): string | null {
+  if (typeof item === 'string') return item;
+  
+  // Check various properties in order of preference
+  if (item.video_url) return item.video_url;
+  if (item.media_url) {
+    if (typeof item.media_url === 'string') return item.media_url;
+    if (Array.isArray(item.media_url) && item.media_url.length > 0) return item.media_url[0];
+  }
+  if (item.url) return item.url;
+  if (item.src) return item.src;
+  
+  // If video_urls array exists and has items
+  if (item.video_urls && item.video_urls.length > 0) return item.video_urls[0];
+  
+  // If media_urls array exists and has items
+  if (item.media_urls && item.media_urls.length > 0) return item.media_urls[0];
+  
+  return null;
+}
+
+/**
+ * Gets a playable media URL (handles caching, CDN issues, etc)
+ */
+export function getPlayableMediaUrl(url: string): string {
+  // Add any special handling for media URLs here
+  // For example, adding cache busting parameters, CDN tokens, etc.
+  return url;
+}

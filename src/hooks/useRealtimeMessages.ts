@@ -11,8 +11,9 @@ export function useRealtimeMessages(recipientId?: string) {
   useEffect(() => {
     if (!session?.user?.id) return;
     
-    const channel = supabase
-      .channel('message_updates')
+    // Listen for any new messages that involve the current user
+    const messageChannel = supabase
+      .channel('direct-messages')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -30,7 +31,7 @@ export function useRealtimeMessages(recipientId?: string) {
         
         // Always invalidate the conversation list
         queryClient.invalidateQueries({
-          queryKey: ['messages', session.user.id]
+          queryKey: ['conversations', session.user.id]
         });
       })
       .on('postgres_changes', {
@@ -48,13 +49,13 @@ export function useRealtimeMessages(recipientId?: string) {
           });
         }
         queryClient.invalidateQueries({
-          queryKey: ['messages', session.user.id]
+          queryKey: ['conversations', session.user.id]
         });
       })
       .subscribe();
       
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(messageChannel);
     };
   }, [session?.user?.id, recipientId, queryClient]);
 }

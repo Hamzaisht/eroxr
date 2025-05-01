@@ -1,4 +1,3 @@
-
 import { forwardRef, useState, useEffect, useCallback, useMemo, Ref } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
@@ -77,9 +76,9 @@ export const UniversalMedia = forwardRef(({
   }, [item]);
   
   // Handle timeUpdate events for videos
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+  const handleTimeUpdate = (currentTime: number) => {
     if (onTimeUpdate) {
-      onTimeUpdate(e.currentTarget.currentTime);
+      onTimeUpdate(currentTime);
     }
   };
 

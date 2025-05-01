@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,23 +5,25 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
 
-// Define the proper Conversation type interface if needed
+// Define the proper Conversation type interface
 interface Conversation {
   id: string;
   created_at: string;
-  user_id_1: string;
-  user_id_2: string;
+  other_user_id: string;
   recipient: {
     id: string;
     username: string;
     avatar_url: string | null;
   };
   last_message: {
-    content: string;
+    content: string | null;
+    media_url: string[] | null;
+    message_type: string | null;
     created_at: string;
   };
-  unread_messages_count: number;
+  unread_count: number;
 }
 
 export interface ConversationsListProps {
@@ -31,82 +32,117 @@ export interface ConversationsListProps {
 }
 
 const ConversationsList = ({ onSelectUser, onNewMessage }: ConversationsListProps) => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fix the auth.currentUser issue
   const session = useSession();
   const userId = session?.user?.id;
-
-  useEffect(() => {
-    if (!userId) {
-      console.warn("User not logged in.");
-      return;
-    }
-
-    const fetchConversations = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("direct_messages_conversations")
-          .select(
-            `
-            id,
-            created_at,
-            user_id_1,
-            user_id_2,
-            recipient: direct_messages_recipients(id, username, avatar_url),
-            last_message: direct_messages(content, created_at),
-            unread_messages_count
-          `
-          )
-          .or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`)
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Error fetching conversations:", error);
-          setError(error.message);
-        } else {
-          // Fix the type conversion for conversations
-          const typedConversations: Conversation[] = (data || []).map((conv: any) => ({
-            id: conv.id,
-            created_at: conv.created_at,
-            user_id_1: conv.user_id_1,
-            user_id_2: conv.user_id_2,
-            recipient: {
-              id: conv.recipient && conv.recipient[0] ? conv.recipient[0].id : "",
-              username: conv.recipient && conv.recipient[0] ? conv.recipient[0].username || "Unknown" : "Unknown",
-              avatar_url: conv.recipient && conv.recipient[0] ? conv.recipient[0].avatar_url : null
-            },
+  
+  // Use React Query for better data fetching
+  const { data: conversations, isLoading, error } = useQuery({
+    queryKey: ["conversations", userId],
+    queryFn: async () => {
+      if (!userId) throw new Error("User not logged in");
+      
+      // Fetch all direct messages involving this user
+      const { data: messageData, error: messageError } = await supabase
+        .from('direct_messages')
+        .select('*')
+        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+        .order('created_at', { ascending: false });
+        
+      if (messageError) throw messageError;
+      
+      // Group messages by conversation (based on the other user)
+      const conversationMap: Record<string, any> = {};
+      
+      for (const message of messageData || []) {
+        // Determine the other user in the conversation
+        const otherUserId = message.sender_id === userId ? message.recipient_id : message.sender_id;
+        
+        // Skip if no other user (shouldn't happen, but just in case)
+        if (!otherUserId) continue;
+        
+        // If this conversation isn't in our map yet, add it
+        if (!conversationMap[otherUserId]) {
+          conversationMap[otherUserId] = {
+            id: otherUserId, // Using the other user's ID as the conversation ID
+            created_at: message.created_at,
+            other_user_id: otherUserId,
             last_message: {
-              content: conv.last_message && conv.last_message[0] ? conv.last_message[0].content : "No messages",
-              created_at: conv.last_message && conv.last_message[0] ? conv.last_message[0].created_at : conv.created_at
+              content: message.content,
+              media_url: message.media_url,
+              message_type: message.message_type,
+              created_at: message.created_at
             },
-            unread_messages_count: conv.unread_messages_count || 0
-          }));
-          setConversations(typedConversations);
+            unread_count: message.recipient_id === userId && !message.viewed_at ? 1 : 0
+          };
         }
-      } catch (err: any) {
-        console.error("Failed to fetch conversations:", err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
+        
+        // Otherwise, if this message is newer than the last one we've seen, update
+        else if (new Date(message.created_at) > new Date(conversationMap[otherUserId].last_message.created_at)) {
+          conversationMap[otherUserId].last_message = {
+            content: message.content,
+            media_url: message.media_url,
+            message_type: message.message_type,
+            created_at: message.created_at
+          };
+          conversationMap[otherUserId].created_at = message.created_at;
+        }
+        
+        // Count unread messages
+        if (message.recipient_id === userId && !message.viewed_at) {
+          if (conversationMap[otherUserId].created_at !== message.created_at) { // Avoid double counting the last message
+            conversationMap[otherUserId].unread_count += 1;
+          }
+        }
       }
-    };
+      
+      // Fetch profiles for the conversation partners
+      const otherUserIds = Object.keys(conversationMap);
+      
+      if (otherUserIds.length === 0) return [];
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', otherUserIds);
+        
+      if (profilesError) throw profilesError;
+      
+      // Map profiles to conversations
+      const profileMap: Record<string, any> = {};
+      for (const profile of profiles || []) {
+        profileMap[profile.id] = profile;
+      }
+      
+      // Build the final conversations array with profiles
+      return Object.values(conversationMap).map((conv: any) => {
+        return {
+          ...conv,
+          recipient: profileMap[conv.other_user_id] || {
+            id: conv.other_user_id,
+            username: "Unknown User",
+            avatar_url: null
+          }
+        };
+      }).sort((a: any, b: any) => {
+        // Sort by most recent message
+        return new Date(b.last_message.created_at).getTime() - new Date(a.last_message.created_at).getTime();
+      }) as Conversation[];
+    },
+    enabled: !!userId
+  });
 
-    fetchConversations();
-  }, [userId]);
-
-  const getRecipient = (conversation: Conversation) => {
-    if (conversation.recipient) {
-      return conversation.recipient;
+  // Format message preview text based on message type
+  const getMessagePreview = (message: Conversation['last_message']) => {
+    if (message.content) return message.content;
+    
+    switch (message.message_type) {
+      case 'media': return 'Sent a photo';
+      case 'video': return 'Sent a video';
+      case 'audio': return 'Sent a voice message';
+      case 'document': return 'Sent a document';
+      case 'snap': return 'Sent a snap';
+      default: return 'New message';
     }
-    return {
-      id: "unknown",
-      username: "Unknown",
-      avatar_url: null,
-    };
   };
 
   return (
@@ -128,36 +164,33 @@ const ConversationsList = ({ onSelectUser, onNewMessage }: ConversationsListProp
               <Skeleton className="h-10 w-full" />
             </div>
           ) : error ? (
-            <p className="text-red-500 p-4">Error: {error}</p>
-          ) : conversations.length === 0 ? (
+            <p className="text-red-500 p-4">Error: {(error as Error).message}</p>
+          ) : conversations && conversations.length === 0 ? (
             <p className="text-luxury-neutral p-4">No conversations yet.</p>
           ) : (
-            conversations.map((conversation) => {
-              const recipient = getRecipient(conversation);
-              return (
-                <button
-                  key={conversation.id}
-                  onClick={() => onSelectUser(recipient.id)}
-                  className="w-full flex items-center space-x-2 py-3 px-4 hover:bg-luxury-dark transition-colors"
-                >
-                  <Avatar>
-                    <AvatarImage src={recipient.avatar_url || ""} alt={recipient.username} />
-                    <AvatarFallback>{recipient.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-white">{recipient.username}</p>
-                    <p className="text-xs text-luxury-neutral line-clamp-1">
-                      {conversation.last_message?.content || "No messages"}
-                    </p>
-                  </div>
-                  {conversation.unread_messages_count > 0 && (
-                    <Badge variant="secondary">
-                      {conversation.unread_messages_count}
-                    </Badge>
-                  )}
-                </button>
-              );
-            })
+            conversations?.map((conversation) => (
+              <button
+                key={conversation.id}
+                onClick={() => onSelectUser(conversation.recipient.id)}
+                className="w-full flex items-center space-x-2 py-3 px-4 hover:bg-luxury-dark transition-colors"
+              >
+                <Avatar>
+                  <AvatarImage src={conversation.recipient.avatar_url || ""} alt={conversation.recipient.username} />
+                  <AvatarFallback>{conversation.recipient.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-white">{conversation.recipient.username}</p>
+                  <p className="text-xs text-luxury-neutral line-clamp-1">
+                    {getMessagePreview(conversation.last_message)}
+                  </p>
+                </div>
+                {conversation.unread_count > 0 && (
+                  <Badge variant="secondary">
+                    {conversation.unread_count}
+                  </Badge>
+                )}
+              </button>
+            ))
           )}
         </div>
       </ScrollArea>

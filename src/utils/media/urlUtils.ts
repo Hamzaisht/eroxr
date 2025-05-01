@@ -1,47 +1,63 @@
 
 /**
- * Get file extension from a filename
+ * Utility functions for handling media URLs
  */
-export const getFileExtension = (filename: string): string => {
-  return filename.split('.').pop()?.toLowerCase() || '';
-};
 
 /**
- * Make URL playable by various players
+ * Adds a cache busting parameter to a URL
  */
-export const getPlayableMediaUrl = (url: string): string => {
-  // Add proxying, transformations, or other processing here if needed
-  return url;
-};
-
-/**
- * Add cache buster to URL
- */
-export const addCacheBuster = (url: string): string => {
+export function addCacheBuster(url: string): string {
   if (!url) return url;
   
   const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}t=${new Date().getTime()}`;
-};
+  return `${url}${separator}_cb=${Date.now()}`;
+}
 
 /**
- * Convert to absolute URL
+ * Gets the absolute URL for a relative path
  */
-export const toAbsoluteUrl = (url: string): string => {
-  if (!url) return url;
+export function getAbsoluteUrl(path: string): string {
+  if (path.startsWith('http')) return path;
   
-  if (url.startsWith('http')) {
-    return url;
+  const baseUrl = window.location.origin;
+  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
+/**
+ * Determines if a URL is external to the current domain
+ */
+export function isExternalUrl(url: string): boolean {
+  if (!url || !url.startsWith('http')) return false;
+  
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname !== window.location.hostname;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Extracts thumbnail URL from a video URL
+ */
+export function getVideoThumbnail(videoUrl: string): string {
+  // Common video platforms
+  if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+    const videoId = extractYoutubeId(videoUrl);
+    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
   }
   
-  // Convert relative URL to absolute
-  const baseUrl = window.location.origin;
-  return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
-};
+  // For local videos, we could potentially create a thumbnail as a separate process
+  // For now just return the video URL
+  return videoUrl;
+}
 
 /**
- * String type guard for media sources
+ * Extracts YouTube video ID from URL
  */
-export const isStringMediaSource = (source: any): source is string => {
-  return typeof source === 'string';
-};
+function extractYoutubeId(url: string): string {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  
+  return (match && match[2].length === 11) ? match[2] : '';
+}

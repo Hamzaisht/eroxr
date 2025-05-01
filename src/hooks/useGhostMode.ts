@@ -1,195 +1,246 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from './use-toast';
-import { ActiveSurveillanceState, AvailabilityStatus } from '@/utils/media/types';
-import { LiveSession } from '@/types/surveillance';
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "./use-toast";
+import { LiveSession } from "@/types/surveillance";
+import { LiveAlert } from "@/types/alerts";
 
-interface UseGhostModeReturn {
-  isGhostModeEnabled: boolean;
-  isGhostMode: boolean; // Alias for isGhostModeEnabled for backwards compatibility
-  toggleGhostMode: () => Promise<void>;
-  activeSurveillance: ActiveSurveillanceState;
-  formatTime: (state: ActiveSurveillanceState) => string;
-  isLoading: boolean;
-  canUseGhostMode: boolean;
-  startSurveillance: (sessionOrUserId: LiveSession | string, duration?: number) => Promise<boolean>;
-  stopSurveillance: () => Promise<boolean>;
-  liveAlerts: any[] | null;
-  refreshAlerts: () => Promise<void>;
+// Active Surveillance State
+export interface ActiveSurveillanceState {
+  isWatching: boolean;
+  session: any | null;
+  startTime: string;
+  userId?: string;
+  active?: boolean;
+  targetUserId?: string;
+  startedAt?: Date;
+  duration?: number;
+  sessionId?: string;
+  deviceId?: any;
 }
 
-export const useGhostMode = (): UseGhostModeReturn => {
-  const [isGhostModeEnabled, setIsGhostModeEnabled] = useState(false);
+export const useGhostMode = () => {
+  const [isGhostMode, setIsGhostMode] = useState<boolean>(false);
+  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingAlerts, setLoadingAlerts] = useState<boolean>(false);
   const [activeSurveillance, setActiveSurveillance] = useState<ActiveSurveillanceState>({
     isWatching: false,
     session: null,
-    startTime: '',
+    startTime: "",
     active: false,
-    targetUserId: '',
+    userId: undefined,
+    targetUserId: undefined,
     startedAt: undefined,
-    userId: ''
+    duration: undefined,
+    sessionId: undefined,
+    deviceId: undefined
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [canUseGhostMode, setCanUseGhostMode] = useState(true); // Default to true
-  const [liveAlerts, setLiveAlerts] = useState<any[] | null>(null);
-  const session = useSession();
+  
   const { toast } = useToast();
+  const session = useSession();
+  const auth = session;
 
-  // Load initial state from local storage
-  useEffect(() => {
-    const storedGhostMode = localStorage.getItem('ghostMode') === 'true';
-    setIsGhostModeEnabled(storedGhostMode);
-
-    const storedSurveillance = localStorage.getItem('activeSurveillance');
-    if (storedSurveillance) {
-      try {
-        const parsedSurveillance = JSON.parse(storedSurveillance);
-        setActiveSurveillance(parsedSurveillance);
-      } catch (error) {
-        console.error("Error parsing activeSurveillance from localStorage:", error);
-      }
-    }
+  const toggleGhostMode = useCallback(() => {
+    setIsGhostMode((prev) => !prev);
   }, []);
 
-  // Save to local storage on change
-  useEffect(() => {
-    localStorage.setItem('ghostMode', String(isGhostModeEnabled));
-  }, [isGhostModeEnabled]);
-
-  useEffect(() => {
-    localStorage.setItem('activeSurveillance', JSON.stringify(activeSurveillance));
-  }, [activeSurveillance]);
-
-  const toggleGhostMode = useCallback(async () => {
-    if (!session?.user?.id) {
+  const refreshAlerts = useCallback(async () => {
+    setLoadingAlerts(true);
+    try {
+      const { data, error } = await supabase
+        .from("live_alerts")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching alerts:", error);
+        toast({
+          title: "Error fetching alerts",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setLiveAlerts(data || []);
+      }
+    } catch (error: any) {
+      console.error("Unexpected error fetching alerts:", error);
       toast({
-        title: "Authentication required",
-        description: "You must be signed in to use ghost mode.",
+        title: "Unexpected error",
+        description: error.message || "Failed to fetch alerts",
         variant: "destructive",
       });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      setIsGhostModeEnabled(prev => {
-        const newState = !prev;
-        localStorage.setItem('ghostMode', String(newState));
-        return newState;
-      });
-
-      toast({
-        title: "Ghost Mode",
-        description: `Ghost mode ${isGhostModeEnabled ? 'disabled' : 'enabled'}.`,
-      });
     } finally {
-      setIsLoading(false);
+      setLoadingAlerts(false);
     }
-  }, [session?.user?.id, isGhostModeEnabled, toast]);
+  }, [toast]);
 
-  const startSurveillance = useCallback(async (sessionOrUserId: LiveSession | string, duration: number = 30): Promise<boolean> => {
-    if (!session?.user?.id) {
+  const startSurveillance = useCallback(async (session: LiveSession) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("active_surveillance").insert([
+        {
+          user_id: auth?.user?.id,
+          session_id: session.id,
+          target_user_id: session.user_id,
+          start_time: new Date().toISOString(),
+          active: true,
+          device_id: session.device_id,
+        },
+      ]);
+      
+      if (error) {
+        console.error("Error starting surveillance:", error);
+        toast({
+          title: "Error starting surveillance",
+          description: error.message,
+          variant: "destructive",
+        });
+        return false;
+      } else {
+        setActiveSurveillance({
+          isWatching: true,
+          session,
+          startTime: new Date().toISOString(),
+          active: true,
+          userId: auth?.user?.id,
+          targetUserId: session.user_id,
+          startedAt: new Date(),
+          sessionId: session.id
+        });
+        return true;
+      }
+    } catch (error: any) {
+      console.error("Unexpected error starting surveillance:", error);
       toast({
-        title: "Authentication required",
-        description: "You must be signed in to start surveillance.",
+        title: "Unexpected error",
+        description: error.message || "Failed to start surveillance",
         variant: "destructive",
       });
       return false;
+    } finally {
+      setLoading(false);
     }
+  }, [auth?.user?.id, toast]);
 
-    const sessionId = Math.random().toString(36).substring(2, 15);
-    const startedAt = new Date();
-    
-    // Handle both LiveSession objects and direct userId strings
-    let targetUserId: string;
-    let sessionObject: any = null;
-    
-    if (typeof sessionOrUserId === 'string') {
-      targetUserId = sessionOrUserId;
-    } else {
-      // This is a LiveSession object
-      targetUserId = sessionOrUserId.user_id;
-      sessionObject = sessionOrUserId;
+  const stopSurveillance = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("active_surveillance")
+        .update({ active: false })
+        .eq("user_id", auth?.user?.id)
+        .eq("active", true);
+      
+      if (error) {
+        console.error("Error stopping surveillance:", error);
+        toast({
+          title: "Error stopping surveillance",
+          description: error.message,
+          variant: "destructive",
+        });
+        return false;
+      } else {
+        setActiveSurveillance({
+          isWatching: false,
+          session: null,
+          startTime: "",
+          active: false,
+          userId: auth?.user?.id,
+          targetUserId: undefined,
+          startedAt: undefined,
+          sessionId: undefined
+        });
+        return true;
+      }
+    } catch (error: any) {
+      console.error("Unexpected error stopping surveillance:", error);
+      toast({
+        title: "Unexpected error",
+        description: error.message || "Failed to stop surveillance",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setLoading(false);
     }
+  }, [auth?.user?.id, toast]);
 
-    setActiveSurveillance({
-      isWatching: true,
-      session: sessionObject,
-      startTime: startedAt.toISOString(),
-      active: true,
-      targetUserId: targetUserId,
-      startedAt: startedAt,
-      duration: duration,
-      sessionId: sessionId,
-      userId: session.user.id
-    });
+  useEffect(() => {
+    const fetchInitialState = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("active_surveillance")
+          .select("*")
+          .eq("user_id", auth?.user?.id)
+          .eq("active", true)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error fetching active surveillance:", error);
+          toast({
+            title: "Error fetching active surveillance",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else if (data) {
+          // Parse the start_time string into a Date object
+          const startedAt = data.start_time ? new Date(data.start_time) : undefined;
+          
+          // Return parsed data from log
+          const sessionData = {
+            active: activeSurveillance.active,
+            targetUserId: activeSurveillance.targetUserId,
+            startedAt: activeSurveillance.startedAt,
+            duration: activeSurveillance.duration,
+            isWatching: activeSurveillance.isWatching,
+            session: activeSurveillance.session,
+            startTime: activeSurveillance.startTime,
+            userId: activeSurveillance.userId,
+            sessionId: activeSurveillance.sessionId,
+            deviceId: activeSurveillance.deviceId
+          };
+          
+          setActiveSurveillance({
+            isWatching: true,
+            session: data,
+            startTime: data.start_time,
+            active: data.active,
+            userId: data.user_id,
+            targetUserId: data.target_user_id,
+            startedAt: startedAt,
+            sessionId: data.session_id,
+            deviceId: data.device_id
+          });
+        }
+      } catch (error: any) {
+        console.error("Unexpected error fetching active surveillance:", error);
+        toast({
+          title: "Unexpected error",
+          description: error.message || "Failed to fetch active surveillance",
+          variant: "destructive",
+        });
+      }
+    };
 
-    toast({
-      title: "Surveillance Started",
-      description: `Surveillance started on user ${targetUserId}.`,
-    });
-
-    // Automatically stop surveillance after the specified duration
-    setTimeout(() => {
-      stopSurveillance();
-    }, duration * 60 * 1000);
-    
-    return true;
-  }, [session?.user?.id, toast]);
-
-  const stopSurveillance = useCallback(async (): Promise<boolean> => {
-    setActiveSurveillance({
-      isWatching: false,
-      session: null,
-      startTime: '',
-      active: false,
-      targetUserId: '',
-      startedAt: undefined,
-      userId: ''
-    });
-
-    toast({
-      title: "Surveillance Stopped",
-      description: "Surveillance has been stopped.",
-    });
-    
-    return true;
-  }, [toast]);
-
-  const formatTime = (state: ActiveSurveillanceState) => {
-    if (!state.active || !state.targetUserId || !state.startedAt) {
-      return "00:00";
+    if (auth?.user) {
+      fetchInitialState();
     }
-    
-    const start = new Date(state.startedAt);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - start.getTime()) / 1000);
-    
-    const minutes = Math.floor(diffInSeconds / 60);
-    const seconds = diffInSeconds % 60;
-    
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
+  }, [auth?.user, toast]);
 
-  // Mock implementation for refreshAlerts
-  const refreshAlerts = useCallback(async () => {
-    // In a real app, this would fetch real alerts from an API
-    console.log("Refreshing ghost mode alerts");
-    setLiveAlerts([]);
-  }, []);
+  useEffect(() => {
+    refreshAlerts();
+  }, [refreshAlerts]);
 
   return {
-    isGhostModeEnabled,
-    isGhostMode: isGhostModeEnabled, // Alias for backward compatibility
+    isGhostMode,
     toggleGhostMode,
-    activeSurveillance,
-    formatTime,
-    isLoading,
-    canUseGhostMode,
+    liveAlerts,
+    refreshAlerts,
     startSurveillance,
     stopSurveillance,
-    liveAlerts,
-    refreshAlerts
+    activeSurveillance,
+    loading,
+    loadingAlerts,
   };
 };

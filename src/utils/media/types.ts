@@ -27,7 +27,7 @@ export interface MediaSource {
   description?: string;
   title?: string;
   duration?: number;
-  creator_id?: string; // Added creator_id
+  creator_id?: string;
 }
 
 // Helper function to convert string to MediaType enum
