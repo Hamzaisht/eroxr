@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 import { 
   Send, 
   Camera, 
@@ -237,14 +237,14 @@ export const MessageInput = ({
           </Button>
         </div>
         
-        {/* Message input */}
+        {/* Message input - Added text-white class here */}
         <textarea
           ref={inputRef}
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
-          className="flex-1 bg-transparent resize-none p-3 outline-none text-sm"
+          className="flex-1 bg-transparent resize-none p-3 outline-none text-sm text-white"
           rows={1}
           disabled={isLoading || isRecording}
         />
@@ -296,3 +296,4 @@ export const MessageInput = ({
     </form>
   );
 };
+

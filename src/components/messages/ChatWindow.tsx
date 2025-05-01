@@ -1,20 +1,18 @@
 
-import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
-import { DirectMessage } from "@/integrations/supabase/types/message";
-import { useEnhancedRealtime } from "@/hooks/useEnhancedRealtime";
-import { MessageInput } from "./MessageInput";
-import { ChatMessageList } from "./chat/ChatMessageList";
-import { useChatActionsV2 } from "@/hooks/useChatActionsV2";
-import { SnapCaptureModal } from "./chat/SnapCaptureModal";
-import { ChatHeader } from "./chat/ChatHeader"; 
-import { BookingDialog } from "./booking/BookingDialog";
-import { CallDialog } from "./calls/CallDialog"; // We'll create this later
+import { useState, useEffect } from 'react';
+import { useSession } from '@supabase/auth-helpers-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ChatInput } from './chat/ChatInput';
+import { MessageBubble } from './MessageBubble';
+import { ChatHeader } from './chat/ChatHeader';
+import { ChatMessageList } from './chat/ChatMessageList';
+import { DirectMessage } from '@/integrations/supabase/types/message';
+import { ConnectionIndicator } from './chat/ConnectionIndicator';
+import { ErrorComponent } from '@/components/ErrorComponent';
+import { useEnhancedRealtime } from '@/hooks/useEnhancedRealtime';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { useChatActionsV2 } from './chat/ChatActions';
 
 interface ChatWindowProps {
   recipient: {
@@ -22,244 +20,160 @@ interface ChatWindowProps {
     username: string;
     avatar_url?: string;
   };
-  onClose: () => void;
   onToggleDetails: () => void;
-  onSendSuccess?: () => void;
+  onClose: () => void;
 }
 
-export const ChatWindow = ({ 
-  recipient, 
-  onClose,
-  onToggleDetails,
-  onSendSuccess 
-}: ChatWindowProps) => {
-  const [showSnapModal, setShowSnapModal] = useState(false);
-  const [showBookingModal, setShowBookingModal] = useState(false);
-  const [showCallDialog, setShowCallDialog] = useState(false);
-  const [callType, setCallType] = useState<'audio' | 'video'>('video');
-  const [bookingType, setBookingType] = useState<'chat' | 'video' | 'voice'>('video');
-  const [replyToMessage, setReplyToMessage] = useState<DirectMessage | null>(null);
+export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowProps) => {
   const session = useSession();
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const currentUserId = session?.user?.id;
+  const queryClient = useQueryClient();
+  const { isTyping, connectionStatus, markAllAsSeen } = useEnhancedRealtime(recipient.id);
+  const { sendTypingStatus } = useTypingIndicator(recipient.id);
+  const { handleSendMessage, resendMessage, isUploading } = useChatActionsV2({ recipientId: recipient.id });
+  const [sendError, setSendError] = useState<string | null>(null);
   
-  // Use our enhanced realtime system
+  // Get chat messages
   const { 
-    isTyping, 
-    sendTypingStatus, 
-    markAsRead, 
-    markAllAsRead,
-    userPresence 
-  } = useEnhancedRealtime(recipient?.id);
-
-  // Use our enhanced chat actions
-  const { 
-    isUploading, 
-    handleSendMessage, 
-    handleMediaSelect, 
-    handleSnapCapture,
-    resendMessage
-  } = useChatActionsV2({ recipientId: recipient?.id });
-
-  // Fetch messages from direct_messages table
-  const { 
-    data: messages = [],
-    isLoading
+    data: messages = [], 
+    isLoading, 
+    isError, 
+    error, 
+    refetch 
   } = useQuery({
-    queryKey: ["chat", currentUserId, recipient?.id],
+    queryKey: ['chat', session?.user?.id, recipient.id],
     queryFn: async () => {
-      if (!recipient?.id || !currentUserId) return [];
-
-      const { data, error } = await supabase
-        .from('direct_messages')
-        .select('*')
-        .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${recipient.id}),and(sender_id.eq.${recipient.id},recipient_id.eq.${currentUserId})`)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error("Error fetching messages:", error);
-        return [];
+      if (!session?.user?.id) return [];
+      
+      try {
+        const { data, error } = await supabase
+          .from('direct_messages')
+          .select('*')
+          .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${recipient.id}),and(sender_id.eq.${recipient.id},recipient_id.eq.${session.user.id})`)
+          .order('created_at', { ascending: true });
+          
+        if (error) throw error;
+        
+        return data as DirectMessage[];
+      } catch (err) {
+        console.error('Error fetching messages:', err);
+        throw err;
       }
-
-      return data as DirectMessage[];
     },
-    enabled: !!recipient?.id && !!currentUserId
+    enabled: !!session?.user?.id && !!recipient.id,
+    refetchOnWindowFocus: true,
+    staleTime: 30000, // 30 seconds
   });
 
-  // Mark messages as read when they come into view
+  // Mark messages as seen when user views them
   useEffect(() => {
-    if (messages.length > 0 && currentUserId) {
-      // Find messages from recipient that aren't marked as read
-      const unreadMessages = messages.filter(
-        msg => msg.sender_id === recipient.id && 
-              (!msg.viewed_at || msg.delivery_status !== 'seen')
-      );
+    if (messages && messages.length > 0) {
+      // Mark messages as seen after a short delay
+      const timer = setTimeout(() => {
+        markAllAsSeen();
+      }, 1000);
       
-      if (unreadMessages.length > 0) {
-        // Mark all as read
-        markAllAsRead();
-      }
+      return () => clearTimeout(timer);
     }
-  }, [messages, currentUserId, recipient.id, markAllAsRead]);
-
-  // Send typing indicator when user is typing
-  const handleSendWithTypingIndicator = (content: string) => {
-    handleSendMessage(content);
-    sendTypingStatus(false);
-    if (onSendSuccess) onSendSuccess();
+  }, [messages, markAllAsSeen]);
+  
+  const handleSend = async (content: string) => {
+    setSendError(null);
+    try {
+      const result = await handleSendMessage(content);
+      if (!result?.success) {
+        setSendError(result?.error || 'Failed to send message');
+      }
+    } catch (error: any) {
+      console.error('Error in send handler:', error);
+      setSendError(error.message || 'Failed to send message');
+    }
   };
 
-  // Track typing status and send to recipient
   const handleTyping = () => {
     sendTypingStatus(true);
   };
-
-  const handleOpenFileInput = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    
-    await handleMediaSelect(files);
-    
-    // Reset file input
-    if (event.target) {
-      event.target.value = "";
-    }
-    
-    if (onSendSuccess) onSendSuccess();
-  };
-
-  const handleOpenSnapCapture = () => {
-    setShowSnapModal(true);
-  };
-
-  const handleSnapSubmit = async (dataUrl: string) => {
-    await handleSnapCapture(dataUrl);
-    setShowSnapModal(false);
-    if (onSendSuccess) onSendSuccess();
-  };
-
-  const handleOpenBookingDialog = (type: 'chat' | 'video' | 'voice') => {
-    setBookingType(type);
-    setShowBookingModal(true);
-  };
-
-  const handleSendVoiceMessage = async (audioBlob: Blob) => {
-    // Create a File object from the Blob
-    const file = new File([audioBlob], `voice-message-${Date.now()}.webm`, { type: 'audio/webm' });
-    
-    // Create a FileList-like object
-    const fileList = {
-      0: file,
-      length: 1,
-      item: (index: number) => file
-    };
-    
-    // Use the existing media handler
-    await handleMediaSelect(fileList as unknown as FileList);
-    if (onSendSuccess) onSendSuccess();
-  };
-
-  // Initialize direct call
-  const handleInitiateCall = (type: 'audio' | 'video') => {
-    setCallType(type);
-    setShowCallDialog(true);
-  };
-
-  const recipientOnlineStatus = recipient.id ? userPresence[recipient.id] : undefined;
   
-  const recipientProfile = {
-    username: recipient?.username,
-    avatar_url: recipient?.avatar_url,
-    online_status: recipientOnlineStatus
+  const handleRetry = async (message: DirectMessage) => {
+    try {
+      setSendError(null);
+      const result = await resendMessage(message);
+      return result.success;
+    } catch (error: any) {
+      console.error('Error resending message:', error);
+      setSendError(error.message || 'Failed to resend message');
+      return false;
+    }
   };
-
-  if (!currentUserId || !recipient?.id) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center">
-        <p className="text-luxury-neutral/60">Unable to load chat</p>
-      </div>
-    );
-  }
-
+  
+  // Convert recipient object to profile format expected by ChatMessageList
+  const recipientProfile = {
+    username: recipient.username,
+    avatar_url: recipient.avatar_url,
+    online_status: 'unknown' // This would ideally come from a real-time presence system
+  };
+  
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-luxury-dark to-black/95">
-      {/* Chat Header with recipient info */}
+    <div className="flex flex-col h-full bg-luxury-dark">
+      {/* Header */}
       <ChatHeader 
-        recipientProfile={recipientProfile}
-        recipientId={recipient.id}
-        onVoiceCall={() => handleInitiateCall('audio')}
-        onVideoCall={() => handleInitiateCall('video')}
-        onToggleDetails={onToggleDetails}
-        isTyping={isTyping}
+        username={recipient.username}
+        avatarUrl={recipient.avatar_url}
+        onInfoClick={onToggleDetails} 
         onBack={onClose}
       />
-
-      {/* Messages list */}
-      <ChatMessageList 
-        messages={messages}
-        currentUserId={currentUserId}
-        recipientProfile={recipientProfile}
-        isTyping={isTyping}
-        onRetry={resendMessage}
-      />
-
-      {/* Message input area */}
-      <div className="p-2 border-t border-luxury-neutral/20">
-        <MessageInput
-          onSendMessage={handleSendWithTypingIndicator}
-          onMediaSelect={handleOpenFileInput}
-          onSnapStart={handleOpenSnapCapture}
-          onVoiceMessage={handleSendVoiceMessage}
-          onBookCall={() => handleOpenBookingDialog('chat')}
-          isLoading={isUploading}
-          recipientId={recipient.id}
-          replyToMessage={replyToMessage}
-          onReplyCancel={() => setReplyToMessage(null)}
-          onTyping={handleTyping}
+      
+      {/* Connection status indicator */}
+      {connectionStatus !== 'connected' && (
+        <ConnectionIndicator 
+          status={connectionStatus} 
+          className="mx-4 mt-2" 
         />
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileSelect}
-          multiple
-          accept="image/*,video/*,audio/*,application/pdf,application/msword"
+      )}
+      
+      {/* Error display */}
+      {sendError && (
+        <div className="mx-4 mt-2">
+          <ErrorComponent 
+            message={sendError} 
+            onRetry={() => setSendError(null)} 
+          />
+        </div>
+      )}
+      
+      {/* Messages */}
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin h-8 w-8 border-2 border-luxury-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-luxury-neutral/80">Loading messages...</p>
+          </div>
+        </div>
+      ) : isError ? (
+        <div className="flex-1 flex items-center justify-center p-4">
+          <ErrorComponent 
+            message={(error as Error)?.message || "Failed to load messages"}
+            onRetry={() => refetch()}
+          />
+        </div>
+      ) : (
+        <ChatMessageList
+          messages={messages}
+          currentUserId={session?.user?.id || ''}
+          recipientProfile={recipientProfile}
+          isTyping={isTyping}
+          onRetry={handleRetry}
+        />
+      )}
+      
+      {/* Input Area */}
+      <div className="p-3 border-t border-luxury-neutral/20">
+        <ChatInput 
+          onSendMessage={handleSend} 
+          onTyping={handleTyping} 
+          recipientId={recipient.id} 
+          onMessageError={setSendError}
         />
       </div>
-
-      {/* Snap capture modal */}
-      {showSnapModal && (
-        <SnapCaptureModal 
-          open={showSnapModal}
-          onClose={() => setShowSnapModal(false)}
-          onSubmit={handleSnapSubmit}
-        />
-      )}
-
-      {/* Booking dialog */}
-      <BookingDialog
-        creatorId={recipient.id}
-        isOpen={showBookingModal}
-        onClose={() => setShowBookingModal(false)}
-        bookingType={bookingType}
-      />
-      
-      {/* Call dialog */}
-      {showCallDialog && (
-        <CallDialog
-          isOpen={showCallDialog}
-          onClose={() => setShowCallDialog(false)}
-          callType={callType}
-          recipient={recipient}
-        />
-      )}
     </div>
   );
 };
-
-export default ChatWindow;

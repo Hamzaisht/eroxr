@@ -1,32 +1,88 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { MessageInput } from '../MessageInput';
-import { useChatActions } from './ChatActions';
+import { useChatActionsV2 } from './ChatActions';
 import { DirectMessage } from '@/integrations/supabase/types/message';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useMessageAudit } from '@/hooks/useMessageAudit';
+import { useToast } from '@/hooks/use-toast';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
   onTyping: () => void;
   recipientId: string;
+  onMessageSent?: () => void;
+  onMessageError?: (error: string) => void;
 }
 
-export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputProps) => {
+export const ChatInput = ({ 
+  onSendMessage, 
+  onTyping, 
+  recipientId,
+  onMessageSent,
+  onMessageError
+}: ChatInputProps) => {
   const [replyTo, setReplyTo] = useState<DirectMessage | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const session = useSession();
+  const { toast } = useToast();
   
   const { 
     isUploading, 
     handleMediaSelect, 
     handleSnapCapture 
-  } = useChatActions({ recipientId });
+  } = useChatActionsV2({ recipientId });
 
-  const { logMessageActivity, logMediaUpload, logDocumentUpload } = useMessageAudit(recipientId);
+  const { logMessageActivity, logMediaUpload } = useMessageAudit(recipientId);
+  const { sendTypingStatus } = useTypingIndicator(recipientId);
+
+  // Enhanced send message handler
+  const handleSendMessage = useCallback(async (content: string) => {
+    if (!session?.user?.id || content.trim() === '') return;
+    
+    setIsSending(true);
+    
+    try {
+      // Call the parent handler
+      onSendMessage(content);
+      
+      // Log message activity
+      logMessageActivity({
+        message_type: 'text', 
+        recipient_id: recipientId,
+        length: content.length
+      });
+      
+      if (onMessageSent) {
+        onMessageSent();
+      }
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Failed to send message",
+        description: error.message || "Please try again",
+        variant: "destructive"
+      });
+      
+      if (onMessageError) {
+        onMessageError(error.message || "Failed to send message");
+      }
+    } finally {
+      setIsSending(false);
+    }
+  }, [session?.user?.id, recipientId, onSendMessage, logMessageActivity, toast, onMessageSent, onMessageError]);
+
+  const handleTyping = useCallback(() => {
+    sendTypingStatus(true);
+    onTyping();
+  }, [sendTypingStatus, onTyping]);
 
   const handleSendVoiceMessage = async (audioBlob: Blob) => {
     if (!session?.user?.id) return;
+    
+    setIsSending(true);
     
     try {
       // Create a file from the blob
@@ -67,14 +123,35 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
       
       // Clear reply
       setReplyTo(null);
-    } catch (error) {
+      
+      if (onMessageSent) {
+        onMessageSent();
+      }
+      
+      toast({
+        title: "Voice message sent",
+        description: "Your voice message has been sent successfully"
+      });
+    } catch (error: any) {
       console.error('Error sending voice message:', error);
+      
+      toast({
+        title: "Failed to send voice message",
+        description: error.message || "Please try again",
+        variant: "destructive"
+      });
+      
+      if (onMessageError) {
+        onMessageError(error.message || "Failed to send voice message");
+      }
+    } finally {
+      setIsSending(false);
     }
   };
   
   return (
     <MessageInput
-      onSendMessage={onSendMessage}
+      onSendMessage={handleSendMessage}
       onMediaSelect={() => {
         // Create an input element to trigger file selection
         const input = document.createElement('input');
@@ -96,10 +173,11 @@ export const ChatInput = ({ onSendMessage, onTyping, recipientId }: ChatInputPro
         handleSnapCapture(dummyDataUrl);
       }}
       onVoiceMessage={handleSendVoiceMessage}
-      isLoading={isUploading}
+      isLoading={isUploading || isSending}
       recipientId={recipientId}
       replyToMessage={replyTo}
       onReplyCancel={() => setReplyTo(null)}
+      onTyping={handleTyping}
     />
   );
 };

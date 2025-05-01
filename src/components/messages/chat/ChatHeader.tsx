@@ -1,102 +1,94 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, ChevronDown, Info, MoreVertical, Phone, Video } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { 
-  ArrowLeft, 
-  Phone, 
-  Video, 
-  MoreVertical,
-  Circle
-} from "lucide-react";
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 interface ChatHeaderProps {
-  recipientProfile: {
-    username: string;
-    avatar_url?: string;
-    online_status?: string;
-  };
-  recipientId: string;
+  username: string;
+  avatarUrl?: string;
+  isOnline?: boolean;
+  onInfoClick: () => void;
   onBack: () => void;
-  onVoiceCall: () => void;
-  onVideoCall: () => void;
-  onToggleDetails: () => void;
-  isTyping?: boolean;
 }
 
-export const ChatHeader = ({
-  recipientProfile,
-  recipientId,
-  onBack,
-  onVoiceCall,
-  onVideoCall,
-  onToggleDetails,
-  isTyping
-}: ChatHeaderProps) => {
-  const isOnline = recipientProfile.online_status === 'online';
+export const ChatHeader = ({ username, avatarUrl, isOnline, onInfoClick, onBack }: ChatHeaderProps) => {
+  const [menuOpen, setMenuOpen] = useState(false);
   
   return (
-    <div className="bg-luxury-darker border-b border-luxury-neutral/20 p-3 flex items-center justify-between">
+    <div className="flex items-center justify-between p-3 border-b border-luxury-neutral/20 bg-luxury-darker">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden">
-          <ArrowLeft className="h-5 w-5" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="md:hidden h-8 w-8 rounded-full"
+          onClick={onBack}
+        >
+          <ArrowLeft className="h-4 w-4" />
         </Button>
         
         <div className="flex items-center gap-2">
           <div className="relative">
             <Avatar>
-              <AvatarImage src={recipientProfile.avatar_url || ""} />
-              <AvatarFallback>
-                {recipientProfile.username?.[0]?.toUpperCase() || "U"}
-              </AvatarFallback>
+              <AvatarImage src={avatarUrl} alt={username} />
+              <AvatarFallback>{username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
-            
             {isOnline && (
-              <div className="absolute bottom-0 right-0">
-                <Circle className="h-3 w-3 fill-green-500 text-green-500" />
-              </div>
+              <div className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 border-2 border-luxury-darker rounded-full" />
             )}
           </div>
           
           <div className="flex flex-col">
-            <h2 className="text-sm font-medium">{recipientProfile.username}</h2>
-            <div className="text-xs text-luxury-neutral/70">
-              {isTyping ? (
-                <span className="text-luxury-primary/80">Typing...</span>
-              ) : (
-                <span>{isOnline ? 'Online' : 'Offline'}</span>
-              )}
-            </div>
+            <span className="font-medium">{username}</span>
+            <span className="text-xs text-luxury-neutral/60">
+              {isOnline ? 'Online' : 'Offline'}
+            </span>
           </div>
         </div>
       </div>
       
       <div className="flex items-center gap-1">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="rounded-full"
-          onClick={onVoiceCall}
+        {/* Chat details button - Make it more visible */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full border border-luxury-neutral/20 hover:border-luxury-neutral/40 hover:bg-luxury-neutral/10"
+          onClick={onInfoClick}
+          title="Chat details"
         >
-          <Phone className="h-4 w-4" />
+          <Info className="h-4 w-4" />
         </Button>
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="rounded-full"
-          onClick={onVideoCall}
-        >
-          <Video className="h-4 w-4" />
-        </Button>
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="rounded-full"
-          onClick={onToggleDetails}
-        >
-          <MoreVertical className="h-4 w-4" />
-        </Button>
+
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-luxury-darker border-luxury-neutral/20 text-white">
+            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+              <Phone className="h-4 w-4" />
+              <span>Voice call</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+              <Video className="h-4 w-4" />
+              <span>Video call</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-luxury-neutral/20" />
+            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={onInfoClick}>
+              <Info className="h-4 w-4" />
+              <span>View details</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
