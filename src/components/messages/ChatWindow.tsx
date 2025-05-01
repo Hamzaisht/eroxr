@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +11,7 @@ import { ConnectionIndicator } from './chat/ConnectionIndicator';
 import { ErrorComponent } from '@/components/ErrorComponent';
 import { useEnhancedRealtime } from '@/hooks/useEnhancedRealtime';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
-import { useChatActionsV2 } from './chat/ChatActions';
+import { useChatActions } from './chat/ChatActions';
 
 interface ChatWindowProps {
   recipient: {
@@ -29,7 +28,7 @@ export const ChatWindow = ({ recipient, onToggleDetails, onClose }: ChatWindowPr
   const queryClient = useQueryClient();
   const { isTyping, connectionStatus, markAllAsSeen } = useEnhancedRealtime(recipient.id);
   const { sendTypingStatus } = useTypingIndicator(recipient.id);
-  const { handleSendMessage, resendMessage, isUploading } = useChatActionsV2({ recipientId: recipient.id });
+  const { handleSendMessage, resendMessage, isUploading } = useChatActions({ recipientId: recipient.id });
   const [sendError, setSendError] = useState<string | null>(null);
   
   // Get chat messages

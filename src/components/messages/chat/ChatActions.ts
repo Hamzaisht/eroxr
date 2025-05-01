@@ -1,23 +1,41 @@
-
 import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { DirectMessage } from "@/integrations/supabase/types/message";
+import { useOptimisticMessaging, createOptimisticMessage } from "@/utils/messaging/optimisticUpdates";
+import { v4 as uuidv4 } from "uuid";
 
 interface ChatActionsProps {
   recipientId: string;
 }
 
+// Export both function names to support existing imports
 export const useChatActions = ({ recipientId }: ChatActionsProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
+  const { addOptimisticMessage } = useOptimisticMessaging();
 
   const handleSendMessage = useCallback(async (content: string) => {
     if (!content.trim() || !session?.user?.id || !recipientId) return;
     
     try {
+      // Create optimistic message
+      const optimisticMessage = createOptimisticMessage(
+        session.user.id,
+        recipientId,
+        content
+      );
+      
+      // Add optimistic message to UI
+      const { onSuccess, onError } = addOptimisticMessage(
+        session.user.id,
+        recipientId,
+        optimisticMessage
+      );
+      
       // Create message object without delivery_status if it's not supported
       const messageData = {
         sender_id: session.user.id,
@@ -28,23 +46,35 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
         created_at: new Date().toISOString(),
       };
       
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('direct_messages')
-        .insert(messageData);
+        .insert(messageData)
+        .select();
       
       if (error) {
         // If there's an error, check if it's due to delivery_status column not existing
         if (error.message?.includes('delivery_status')) {
           delete messageData.delivery_status;
-          const { error: secondError } = await supabase
+          const { error: secondError, data: fallbackData } = await supabase
             .from('direct_messages')
-            .insert(messageData);
+            .insert(messageData)
+            .select();
           
-          if (secondError) throw secondError;
+          if (secondError) {
+            onError();
+            throw secondError;
+          }
+          
+          onSuccess(fallbackData[0] as DirectMessage);
+          return { success: true, message: fallbackData[0] };
         } else {
+          onError();
           throw error;
         }
       }
+      
+      onSuccess(data[0] as DirectMessage);
+      return { success: true, message: data[0] };
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast({
@@ -52,8 +82,9 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
         description: "Please try again",
         variant: "destructive"
       });
+      return { success: false, error: error.message || "Failed to send message" };
     }
-  }, [session?.user?.id, recipientId, toast]);
+  }, [session?.user?.id, recipientId, toast, addOptimisticMessage]);
 
   const handleMediaSelect = useCallback(async (files: FileList) => {
     if (!files.length || !session?.user?.id || !recipientId) return;
@@ -212,6 +243,12 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
     isUploading,
     handleSendMessage,
     handleMediaSelect,
-    handleSnapCapture
+    handleSnapCapture,
+    resendMessage: async (message: DirectMessage) => {
+      return { success: false };
+    }
   };
 };
+
+// Add this alias to support existing code that imports useChatActionsV2
+export const useChatActionsV2 = useChatActions;

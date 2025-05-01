@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface MessageActivityLogParams {
   recipient_id: string;
   message_id?: string;
-  activity_type?: string;
+  activity_type?: string; // Added this field to match the usage in ChatInput
   details?: any;
 }
 

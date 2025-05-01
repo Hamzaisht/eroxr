@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { MessageInput } from '../MessageInput';
-import { useChatActionsV2 } from './ChatActions';
+import { useChatActions } from './ChatActions'; // Changed from useChatActionsV2
 import { DirectMessage } from '@/integrations/supabase/types/message';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@supabase/auth-helpers-react';
@@ -33,7 +33,7 @@ export const ChatInput = ({
     isUploading, 
     handleMediaSelect, 
     handleSnapCapture 
-  } = useChatActionsV2({ recipientId });
+  } = useChatActions({ recipientId }); // Changed from useChatActionsV2
 
   const { logMessageActivity, logMediaUpload } = useMessageAudit(recipientId);
   const { sendTypingStatus } = useTypingIndicator(recipientId);
@@ -50,8 +50,8 @@ export const ChatInput = ({
       
       // Log message activity
       logMessageActivity({
-        message_type: 'text', 
         recipient_id: recipientId,
+        activity_type: 'send', // Changed message_type to activity_type
         length: content.length
       });
       
