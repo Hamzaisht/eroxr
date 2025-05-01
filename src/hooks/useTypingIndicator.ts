@@ -1,36 +1,38 @@
 
-import { useState, useCallback } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@supabase/auth-helpers-react';
 
-export function useTypingIndicator(recipientId: string | undefined, channel = 'typing-status') {
-  const session = useSession();
+export function useTypingIndicator(recipientId?: string) {
   const [isTyping, setIsTyping] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const session = useSession();
   
-  // Send typing status to other user
-  const sendTypingStatus = useCallback((
-    isTyping: boolean, 
-    targetRecipientId?: string
-  ) => {
-    if (!session?.user?.id || (!recipientId && !targetRecipientId)) return;
+  // Send typing status via channel broadcast
+  const sendTypingStatus = useCallback((typing: boolean) => {
+    if (!session?.user?.id || !recipientId) return;
     
-    const recipient = targetRecipientId || recipientId;
+    const channel = supabase.channel(`typing:${recipientId}:${session.user.id}`);
     
-    supabase.channel(channel).send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: {
-        is_typing: isTyping,
-        user_id: session.user.id,
-        recipient_id: recipient,
-        timestamp: new Date().toISOString()
-      }
-    });
-  }, [session, recipientId, channel]);
+    // Only create subscription if we're sending a typing status
+    if (typing) {
+      channel.subscribe().then(() => {
+        channel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            user_id: session.user.id,
+            is_typing: typing
+          }
+        });
+      });
+    }
+    
+  }, [recipientId, session?.user?.id]);
   
-  return {
-    isTyping,
+  return { 
+    isTyping, 
     setIsTyping,
-    sendTypingStatus
+    sendTypingStatus 
   };
 }

@@ -1,10 +1,13 @@
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { MessageBubble } from "../MessageBubble";
+import { Button } from "@/components/ui/button";
+import { RefreshCcw } from "lucide-react";
 
 interface ChatMessageListProps {
   messages: DirectMessage[];
@@ -12,22 +15,53 @@ interface ChatMessageListProps {
   recipientProfile: {
     username: string;
     avatar_url?: string;
+    online_status?: string;
   };
   isTyping?: boolean;
+  onRetry?: (message: DirectMessage) => Promise<any>;
 }
 
 export const ChatMessageList = ({ 
   messages, 
   currentUserId, 
   recipientProfile,
-  isTyping
+  isTyping,
+  onRetry
 }: ChatMessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const lastScrollPosition = useRef<number>(0);
+  const isScrolledToBottomRef = useRef<boolean>(true);
   
-  // Scroll to bottom of messages when messages update
+  // Auto-scroll to bottom on new messages if already at bottom
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+    isScrolledToBottomRef.current = true;
+  }, []);
+  
+  // Check if user is scrolled to bottom
+  const handleScroll = useCallback(() => {
+    if (!scrollAreaRef.current) return;
+    
+    const { scrollHeight, scrollTop, clientHeight } = scrollAreaRef.current;
+    const scrollPosition = scrollHeight - scrollTop - clientHeight;
+    
+    // Consider "near bottom" as within 100px of the bottom
+    isScrolledToBottomRef.current = scrollPosition < 100;
+    lastScrollPosition.current = scrollTop;
+  }, []);
+  
+  // Scroll to bottom when new messages arrive if already at bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (isScrolledToBottomRef.current) {
+      scrollToBottom();
+    }
+  }, [messages, scrollToBottom]);
+  
+  // Initial scroll to bottom
+  useEffect(() => {
+    scrollToBottom('auto');
+  }, [scrollToBottom]);
 
   // Group messages by date
   const groupedMessages: { [date: string]: DirectMessage[] } = {};
@@ -46,7 +80,11 @@ export const ChatMessageList = ({
   );
   
   return (
-    <ScrollArea className="flex-1 p-4">
+    <ScrollArea 
+      className="flex-1 p-4 overflow-y-auto"
+      onScroll={handleScroll}
+      ref={scrollAreaRef}
+    >
       <div className="space-y-8">
         {sortedDates.map(date => (
           <div key={date} className="space-y-4">
@@ -60,24 +98,25 @@ export const ChatMessageList = ({
               const isCurrentUser = message.sender_id === currentUserId;
               const showAvatar = index === 0 || 
                 groupedMessages[date][index - 1]?.sender_id !== message.sender_id;
+              const isFailedMessage = message.delivery_status === 'failed';
               
               return (
                 <div 
                   key={message.id} 
                   className={cn(
-                    "flex gap-2",
+                    "flex gap-2 group",
                     isCurrentUser ? "flex-row-reverse" : "flex-row"
                   )}
                 >
                   {!isCurrentUser && showAvatar ? (
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-8 w-8 flex-shrink-0">
                       <AvatarImage src={recipientProfile.avatar_url || ""} />
                       <AvatarFallback>
                         {recipientProfile.username?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                   ) : (
-                    <div className="w-8" />
+                    <div className="w-8 flex-shrink-0" />
                   )}
                   
                   <div 
@@ -86,44 +125,31 @@ export const ChatMessageList = ({
                       isCurrentUser && "items-end"
                     )}
                   >
-                    {message.content && (
-                      <div 
-                        className={cn(
-                          "px-4 py-2 rounded-lg text-sm",
-                          isCurrentUser 
-                            ? "bg-luxury-primary/80 text-white rounded-br-none" 
-                            : "bg-luxury-neutral/10 text-white rounded-bl-none"
-                        )}
+                    <MessageBubble 
+                      message={message}
+                      isOwnMessage={isCurrentUser}
+                      currentUserId={currentUserId}
+                      profile={isCurrentUser ? null : recipientProfile}
+                      showAvatar={showAvatar}
+                    />
+                    
+                    {isFailedMessage && onRetry && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 bg-red-900/20 hover:bg-red-900/30 text-red-400 flex items-center gap-1 text-xs"
+                        onClick={() => onRetry(message)}
                       >
-                        {message.content}
-                      </div>
+                        <RefreshCcw size={12} />
+                        Retry
+                      </Button>
                     )}
                     
-                    {message.media_url && message.media_url.length > 0 && (
-                      <div className="space-y-2 max-w-[240px]">
-                        {message.media_url.map((url, i) => (
-                          <div 
-                            key={`${message.id}-media-${i}`}
-                            className="rounded-lg overflow-hidden bg-luxury-neutral/10"
-                          >
-                            {/* Implement media preview component here */}
-                            {/* For simplicity, showing text link */}
-                            <div className="p-2 text-xs text-luxury-neutral/80 underline">
-                              {url.split('/').pop()}
-                            </div>
-                          </div>
-                        ))}
+                    {message.is_optimistic && (
+                      <div className="text-xs text-luxury-neutral/40 italic">
+                        Sending...
                       </div>
                     )}
-                    
-                    <div 
-                      className={cn(
-                        "text-xs text-luxury-neutral/60",
-                        isCurrentUser ? "text-right" : "text-left"
-                      )}
-                    >
-                      {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                    </div>
                   </div>
                 </div>
               );

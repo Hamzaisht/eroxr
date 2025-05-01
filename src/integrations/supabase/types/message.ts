@@ -1,7 +1,7 @@
 
 import { Profile } from './profile';
 
-export type MessageDeliveryStatus = 'sent' | 'delivered' | 'seen' | 'failed';
+export type MessageDeliveryStatus = 'sending' | 'sent' | 'delivered' | 'seen' | 'failed';
 export type MessageType = 'text' | 'media' | 'video' | 'audio' | 'snap' | 'document' | 'location' | 'ad_message';
 
 export interface DirectMessage {
@@ -30,6 +30,9 @@ export interface DirectMessage {
   reactions?: Reaction[];
   reply_to_id?: string;
   reply_to?: DirectMessage;
+  duration?: number; // For audio/video messages
+  is_optimistic?: boolean; // Flag for optimistic UI updates
+  is_expired?: boolean; // Flag for expired content
 }
 
 export interface Reaction {

@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { DirectMessage } from "@/integrations/supabase/types/message";
-import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
+import { useEnhancedRealtime } from "@/hooks/useEnhancedRealtime";
 import { MessageInput } from "./MessageInput";
 import { ChatMessageList } from "./chat/ChatMessageList";
-import { useChatActions } from "./chat/ChatActions";
+import { useChatActionsV2 } from "@/hooks/useChatActionsV2";
 import { SnapCaptureModal } from "./chat/SnapCaptureModal";
 import { ChatHeader } from "./chat/ChatHeader"; 
-import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { BookingDialog } from "./booking/BookingDialog";
+import { CallDialog } from "./calls/CallDialog"; // We'll create this later
 
 interface ChatWindowProps {
   recipient: {
@@ -35,29 +35,37 @@ export const ChatWindow = ({
 }: ChatWindowProps) => {
   const [showSnapModal, setShowSnapModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showCallDialog, setShowCallDialog] = useState(false);
+  const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [bookingType, setBookingType] = useState<'chat' | 'video' | 'voice'>('video');
   const [replyToMessage, setReplyToMessage] = useState<DirectMessage | null>(null);
   const session = useSession();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentUserId = session?.user?.id;
-  const { isTyping, setIsTyping, sendTypingStatus } = useTypingIndicator(recipient?.id);
+  
+  // Use our enhanced realtime system
+  const { 
+    isTyping, 
+    sendTypingStatus, 
+    markAsRead, 
+    markAllAsRead,
+    userPresence 
+  } = useEnhancedRealtime(recipient?.id);
 
-  // Use our realtime messages hook for subscriptions
-  useRealtimeMessages(recipient?.id);
-
+  // Use our enhanced chat actions
   const { 
     isUploading, 
     handleSendMessage, 
     handleMediaSelect, 
-    handleSnapCapture 
-  } = useChatActions({ recipientId: recipient?.id });
+    handleSnapCapture,
+    resendMessage
+  } = useChatActionsV2({ recipientId: recipient?.id });
 
   // Fetch messages from direct_messages table
   const { 
     data: messages = [],
-    isLoading,
-    refetch 
+    isLoading
   } = useQuery({
     queryKey: ["chat", currentUserId, recipient?.id],
     queryFn: async () => {
@@ -79,22 +87,32 @@ export const ChatWindow = ({
     enabled: !!recipient?.id && !!currentUserId
   });
 
+  // Mark messages as read when they come into view
+  useEffect(() => {
+    if (messages.length > 0 && currentUserId) {
+      // Find messages from recipient that aren't marked as read
+      const unreadMessages = messages.filter(
+        msg => msg.sender_id === recipient.id && 
+              (!msg.viewed_at || msg.delivery_status !== 'seen')
+      );
+      
+      if (unreadMessages.length > 0) {
+        // Mark all as read
+        markAllAsRead();
+      }
+    }
+  }, [messages, currentUserId, recipient.id, markAllAsRead]);
+
   // Send typing indicator when user is typing
   const handleSendWithTypingIndicator = (content: string) => {
     handleSendMessage(content);
     sendTypingStatus(false);
+    if (onSendSuccess) onSendSuccess();
   };
 
   // Track typing status and send to recipient
   const handleTyping = () => {
-    setIsTyping(true);
     sendTypingStatus(true);
-    
-    // Automatically reset typing status after a few seconds
-    setTimeout(() => {
-      setIsTyping(false);
-      sendTypingStatus(false);
-    }, 5000);
   };
 
   const handleOpenFileInput = () => {
@@ -111,6 +129,8 @@ export const ChatWindow = ({
     if (event.target) {
       event.target.value = "";
     }
+    
+    if (onSendSuccess) onSendSuccess();
   };
 
   const handleOpenSnapCapture = () => {
@@ -120,6 +140,7 @@ export const ChatWindow = ({
   const handleSnapSubmit = async (dataUrl: string) => {
     await handleSnapCapture(dataUrl);
     setShowSnapModal(false);
+    if (onSendSuccess) onSendSuccess();
   };
 
   const handleOpenBookingDialog = (type: 'chat' | 'video' | 'voice') => {
@@ -140,20 +161,21 @@ export const ChatWindow = ({
     
     // Use the existing media handler
     await handleMediaSelect(fileList as unknown as FileList);
+    if (onSendSuccess) onSendSuccess();
   };
 
-  // Send voice or video call request
-  const handleVoiceCall = () => {
-    handleOpenBookingDialog('voice');
+  // Initialize direct call
+  const handleInitiateCall = (type: 'audio' | 'video') => {
+    setCallType(type);
+    setShowCallDialog(true);
   };
 
-  const handleVideoCall = () => {
-    handleOpenBookingDialog('video');
-  };
-
+  const recipientOnlineStatus = recipient.id ? userPresence[recipient.id] : undefined;
+  
   const recipientProfile = {
     username: recipient?.username,
-    avatar_url: recipient?.avatar_url
+    avatar_url: recipient?.avatar_url,
+    online_status: recipientOnlineStatus
   };
 
   if (!currentUserId || !recipient?.id) {
@@ -170,8 +192,8 @@ export const ChatWindow = ({
       <ChatHeader 
         recipientProfile={recipientProfile}
         recipientId={recipient.id}
-        onVoiceCall={handleVoiceCall}
-        onVideoCall={handleVideoCall}
+        onVoiceCall={() => handleInitiateCall('audio')}
+        onVideoCall={() => handleInitiateCall('video')}
         onToggleDetails={onToggleDetails}
         isTyping={isTyping}
         onBack={onClose}
@@ -183,6 +205,7 @@ export const ChatWindow = ({
         currentUserId={currentUserId}
         recipientProfile={recipientProfile}
         isTyping={isTyping}
+        onRetry={resendMessage}
       />
 
       {/* Message input area */}
@@ -197,6 +220,7 @@ export const ChatWindow = ({
           recipientId={recipient.id}
           replyToMessage={replyToMessage}
           onReplyCancel={() => setReplyToMessage(null)}
+          onTyping={handleTyping}
         />
         <input
           type="file"
@@ -224,6 +248,16 @@ export const ChatWindow = ({
         onClose={() => setShowBookingModal(false)}
         bookingType={bookingType}
       />
+      
+      {/* Call dialog */}
+      {showCallDialog && (
+        <CallDialog
+          isOpen={showCallDialog}
+          onClose={() => setShowCallDialog(false)}
+          callType={callType}
+          recipient={recipient}
+        />
+      )}
     </div>
   );
 };

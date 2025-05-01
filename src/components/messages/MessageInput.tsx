@@ -1,36 +1,37 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Smile, X, Paperclip, Camera, Send, Mic, File, Image, Video, Calendar } from "lucide-react"; 
-import { Button } from "@/components/ui/button";
-import { EmojiPicker } from './message-parts/EmojiPicker';
-import { DirectMessage } from '@/integrations/supabase/types/message';
+import { useState, useRef, useEffect } from 'react';
 import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger
-} from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Send, 
+  Camera, 
+  PaperclipIcon, 
+  Smile, 
+  Mic, 
+  X,
+  Video,
+  StopCircle
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { DirectMessage } from "@/integrations/supabase/types/message";
+import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import Picker from '@emoji-mart/react';
+import data from '@emoji-mart/data';
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
-  onMediaSelect?: () => void;
-  onSnapStart?: () => void;
-  onVoiceMessage?: (audioBlob: Blob) => void;
+  onMediaSelect: () => void;
+  onSnapStart: () => void;
+  onVoiceMessage: (audioBlob: Blob) => void;
   onBookCall?: () => void;
   isLoading?: boolean;
   recipientId: string;
   replyToMessage?: DirectMessage | null;
   onReplyCancel?: () => void;
+  onTyping?: () => void;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({
+export const MessageInput = ({
   onSendMessage,
   onMediaSelect,
   onSnapStart,
@@ -39,236 +40,264 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   isLoading = false,
   recipientId,
   replyToMessage,
-  onReplyCancel
-}) => {
+  onReplyCancel,
+  onTyping
+}: MessageInputProps) => {
   const [message, setMessage] = useState('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [isVoiceRecording, setIsVoiceRecording] = useState(false);
-  const [textareaHeight, setTextareaHeight] = useState('40px');
+  const [isRecording, setIsRecording] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Auto-resize textarea based on content
+  const {
+    startRecording,
+    stopRecording,
+    isRecordingAudio,
+    audioBlob,
+    recordingTime,
+    clearRecording
+  } = useVoiceRecorder();
+  
+  useEffect(() => {
+    if (audioBlob && !isRecordingAudio) {
+      onVoiceMessage(audioBlob);
+      clearRecording();
+    }
+  }, [audioBlob, isRecordingAudio, onVoiceMessage, clearRecording]);
+  
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    if (message.trim() && !isLoading) {
+      onSendMessage(message);
+      setMessage('');
+      
+      // Focus input after sending
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+  
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    
+    // Send typing indicator
+    if (onTyping) {
+      onTyping();
+      
+      // Clear existing timeout and set new one
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      typingTimeoutRef.current = setTimeout(() => {
+        typingTimeoutRef.current = null;
+      }, 2000);
+    }
+  };
+  
+  const handleEmojiSelect = (emoji: any) => {
+    setMessage(prev => prev + emoji.native);
+    inputRef.current?.focus();
+    
+    // Also trigger typing indicator
+    if (onTyping) onTyping();
+  };
+  
+  const handleRecord = () => {
+    if (isRecordingAudio) {
+      stopRecording();
+      setIsRecording(false);
+    } else {
+      startRecording();
+      setIsRecording(true);
+    }
+  };
+  
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  // Auto-resize textarea
   useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.style.height = '40px';
-      const scrollHeight = inputRef.current.scrollHeight;
-      const newHeight = Math.min(120, Math.max(40, scrollHeight)) + 'px';
-      setTextareaHeight(newHeight);
-      inputRef.current.style.height = newHeight;
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
     }
   }, [message]);
   
-  // Focus on textarea when component mounts
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-  
-  // Handle file selection
-  const handleFileUpload = (type: 'image' | 'video' | 'document') => {
-    if (!fileInputRef.current) return;
-    
-    switch (type) {
-      case 'image':
-        fileInputRef.current.accept = 'image/*';
-        break;
-      case 'video':
-        fileInputRef.current.accept = 'video/*';
-        break;
-      case 'document':
-        fileInputRef.current.accept = '.pdf,.doc,.docx,.xls,.xlsx,.txt';
-        break;
-    }
-    
-    fileInputRef.current.click();
-  };
-  
-  // Handle key press for sending message
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (message.trim()) {
-        onSendMessage(message);
-        setMessage('');
-      }
-    }
-  };
-
   return (
-    <div className="p-2 bg-luxury-darker/80 backdrop-blur-md border-t border-white/10">
+    <form onSubmit={handleSubmit} className="relative">
+      {/* Reply UI */}
       {replyToMessage && (
-        <div className="mb-2 bg-white/5 p-2 rounded-lg flex justify-between items-center">
-          <div>
-            <p className="text-xs text-white/60">Replying to:</p>
-            <p className="text-sm truncate">{replyToMessage.content || "Media message"}</p>
+        <div className="bg-luxury-neutral/10 rounded-t-lg p-2 mb-0.5 flex items-center">
+          <div className="flex-1 overflow-hidden text-sm text-luxury-neutral/80">
+            <span className="font-medium text-luxury-primary/90 mr-1">Reply to:</span>
+            <span className="truncate">
+              {replyToMessage.content || (replyToMessage.media_url ? "Media message" : "Message")}
+            </span>
+          </div>
+          {onReplyCancel && (
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0 rounded-full"
+              onClick={onReplyCancel}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      )}
+      
+      {/* Recording UI */}
+      {isRecording && (
+        <div className="bg-red-900/20 rounded-lg p-3 mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="animate-pulse">
+              <Mic className="h-5 w-5 text-red-400" />
+            </div>
+            <span className="text-sm text-red-300">
+              Recording {formatRecordingTime(recordingTime)}
+            </span>
           </div>
           <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-7 w-7 hover:bg-white/10"
-            onClick={onReplyCancel}
+            type="button"
+            size="sm"
+            variant="destructive"
+            className="h-8 px-2"
+            onClick={() => {
+              stopRecording();
+              setIsRecording(false);
+            }}
           >
-            <X className="h-4 w-4" />
+            <StopCircle className="h-4 w-4 mr-1" />
+            Stop
           </Button>
         </div>
       )}
-
-      <div className="flex items-end space-x-2">
-        <DropdownMenu>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    type="button"
-                    className="h-10 w-10 rounded-full hover:bg-white/10"
-                    aria-label="Add attachment"
-                  >
-                    <Paperclip className="h-5 w-5 text-white/70" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                Add attachment
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <DropdownMenuContent 
-            className="bg-black/90 backdrop-blur-md border-white/10 w-56" 
-            align="start"
-            side="top"
-          >
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => handleFileUpload('image')} className="cursor-pointer">
-                <Image className="mr-2 h-4 w-4" />
-                <span>Image</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleFileUpload('video')} className="cursor-pointer">
-                <Video className="mr-2 h-4 w-4" />
-                <span>Video</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleFileUpload('document')} className="cursor-pointer">
-                <File className="mr-2 h-4 w-4" />
-                <span>Document</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onSnapStart} className="cursor-pointer">
-                <Camera className="mr-2 h-4 w-4" />
-                <span>Snap</span>
-              </DropdownMenuItem>
-              {onBookCall && (
-                <DropdownMenuItem onClick={onBookCall} className="cursor-pointer">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  <span>Book Call</span>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
+      
+      <div className={cn(
+        "flex items-center gap-1 bg-luxury-neutral/10 rounded-lg",
+        replyToMessage && "rounded-t-none"
+      )}>
+        <div className="flex items-center gap-1 p-1 pl-2">
+          {/* Emoji picker */}
+          <Popover>
+            <PopoverTrigger asChild>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
-                type="button"
-                className="h-10 w-10 rounded-full hover:bg-white/10"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="h-8 w-8 rounded-full"
               >
-                <Smile className="h-5 w-5 text-white/70" />
+                <Smile className="h-4 w-4 text-luxury-neutral/70" />
               </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              Add emoji
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        {showEmojiPicker && (
-          <div className="absolute bottom-full mb-2 z-10">
-            <EmojiPicker 
-              onEmojiSelect={(emoji) => {
-                setMessage(prev => prev + emoji);
-                setShowEmojiPicker(false);
-                inputRef.current?.focus();
-              }}
-              onClose={() => setShowEmojiPicker(false)}
-            />
-          </div>
-        )}
-
-        <div className="flex-1 relative">
-          <textarea
-            ref={inputRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Type a message..."
-            className="w-full resize-none rounded-2xl border border-input bg-luxury-darker/50 px-4 py-2 text-sm ring-offset-background placeholder:text-white/30 text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-luxury-primary/50 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ height: textareaHeight, maxHeight: '120px' }}
-            rows={1}
-          />
-        </div>
-
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={(e) => {
-            if (e.target.files && e.target.files.length > 0 && onMediaSelect) {
-              onMediaSelect();
-            }
-          }}
-        />
-
-        {isVoiceRecording ? (
-          <div className="flex items-center space-x-2 py-2 px-3 bg-red-500/20 rounded-full">
-            <div className="animate-pulse w-2 h-2 rounded-full bg-red-500"></div>
-            <span className="text-xs text-white/80">Recording...</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 rounded-full bg-red-500/30 hover:bg-red-500/50"
-              onClick={() => setIsVoiceRecording(false)}
+            </PopoverTrigger>
+            <PopoverContent 
+              side="top" 
+              sideOffset={10}
+              className="p-0 border-luxury-neutral/20 bg-luxury-darker w-[320px]"
             >
-              <X className="h-4 w-4 text-white" />
+              <Picker 
+                data={data} 
+                onEmojiSelect={handleEmojiSelect} 
+                theme="dark"
+              />
+            </PopoverContent>
+          </Popover>
+          
+          {/* Media selection button */}
+          <Button 
+            type="button"
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-full"
+            onClick={onMediaSelect}
+            disabled={isLoading}
+          >
+            <PaperclipIcon className="h-4 w-4 text-luxury-neutral/70" />
+          </Button>
+          
+          {/* Snap camera button */}
+          <Button 
+            type="button"
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-full"
+            onClick={onSnapStart}
+            disabled={isLoading}
+          >
+            <Camera className="h-4 w-4 text-luxury-neutral/70" />
+          </Button>
+        </div>
+        
+        {/* Message input */}
+        <textarea
+          ref={inputRef}
+          value={message}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Type a message..."
+          className="flex-1 bg-transparent resize-none p-3 outline-none text-sm"
+          rows={1}
+          disabled={isLoading || isRecording}
+        />
+        
+        <div className="flex items-center p-1">
+          {message.trim() ? (
+            <Button 
+              type="submit" 
+              size="icon" 
+              className="h-8 w-8 rounded-full bg-luxury-primary"
+              disabled={isLoading}
+            >
+              <Send className="h-4 w-4" />
             </Button>
-          </div>
-        ) : (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
+          ) : (
+            <>
+              {/* Record voice message button */}
+              <Button 
+                type="button"
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 rounded-full"
+                onClick={handleRecord}
+                disabled={isLoading}
+              >
+                <Mic className={cn(
+                  "h-4 w-4", 
+                  isRecording ? "text-red-400" : "text-luxury-neutral/70"
+                )} />
+              </Button>
+              
+              {/* Video call button */}
+              {onBookCall && (
                 <Button 
-                  onClick={() => {
-                    if (message.trim()) {
-                      onSendMessage(message);
-                      setMessage('');
-                    } else if (onVoiceMessage) {
-                      setIsVoiceRecording(true);
-                    }
-                  }}
-                  disabled={(!message.trim() && !onVoiceMessage) || isLoading}
-                  variant={message.trim() ? "default" : "ghost"}
-                  size="icon"
-                  className={`h-10 w-10 rounded-full ${message.trim() ? 'bg-luxury-primary hover:bg-luxury-primary/90' : 'hover:bg-white/10'}`}
+                  type="button"
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full"
+                  onClick={onBookCall}
+                  disabled={isLoading}
                 >
-                  {message.trim() ? (
-                    <Send className={`h-5 w-5 ${isLoading ? 'animate-pulse' : ''}`} />
-                  ) : (
-                    <Mic className="h-5 w-5 text-white/70" />
-                  )}
+                  <Video className="h-4 w-4 text-luxury-primary/70" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                {message.trim() ? 'Send message' : 'Record voice message'}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </form>
   );
 };
