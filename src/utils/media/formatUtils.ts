@@ -1,62 +1,72 @@
 
 /**
- * Format duration in seconds to MM:SS format
- */
-export const formatDuration = (seconds: number): string => {
-  if (!seconds || isNaN(seconds)) return '00:00';
-  
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
-
-/**
- * Format file size in bytes to human readable format
- */
-export const formatFileSize = (bytes: number): string => {
-  if (!bytes || isNaN(bytes)) return '0 B';
-  
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  
-  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`;
-};
-
-/**
- * Infer content type from file extension
+ * Infers content type from file extension
+ * 
+ * @param filename The filename with extension
+ * @returns The MIME type
  */
 export const inferContentTypeFromExtension = (filename: string): string => {
-  const extension = filename.split('.').pop()?.toLowerCase() || '';
+  const ext = filename.split('.').pop()?.toLowerCase();
   
-  const mimeTypes: {[key: string]: string} = {
-    // Images
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png', 
-    'gif': 'image/gif',
-    'webp': 'image/webp',
-    'svg': 'image/svg+xml',
-    
-    // Videos
-    'mp4': 'video/mp4',
-    'webm': 'video/webm',
-    'ogg': 'video/ogg',
-    'mov': 'video/quicktime',
-    
-    // Audio
-    'mp3': 'audio/mpeg',
-    'wav': 'audio/wav',
-    
-    // Documents
-    'pdf': 'application/pdf',
-    'doc': 'application/msword',
-    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'txt': 'text/plain',
-    
-    // Default
-    'bin': 'application/octet-stream'
-  };
+  if (!ext) return 'application/octet-stream';
   
-  return mimeTypes[extension] || 'application/octet-stream';
+  // Common image formats
+  if (['jpg', 'jpeg'].includes(ext)) return 'image/jpeg';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'gif') return 'image/gif';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'svg') return 'image/svg+xml';
+  
+  // Common video formats
+  if (ext === 'mp4') return 'video/mp4';
+  if (ext === 'webm') return 'video/webm';
+  if (ext === 'mov') return 'video/quicktime';
+  
+  // Common audio formats
+  if (ext === 'mp3') return 'audio/mpeg';
+  if (ext === 'wav') return 'audio/wav';
+  if (ext === 'ogg') return 'audio/ogg';
+  
+  // Common document formats
+  if (ext === 'pdf') return 'application/pdf';
+  if (['doc', 'docx'].includes(ext)) return 'application/msword';
+  if (['xls', 'xlsx'].includes(ext)) return 'application/vnd.ms-excel';
+  
+  // Default
+  return 'application/octet-stream';
+};
+
+/**
+ * Format file size to human-readable string
+ */
+export const formatFileSize = (sizeInBytes: number): string => {
+  if (sizeInBytes < 1024) {
+    return `${sizeInBytes} B`;
+  }
+  
+  if (sizeInBytes < 1024 * 1024) {
+    return `${(sizeInBytes / 1024).toFixed(1)} KB`;
+  }
+  
+  if (sizeInBytes < 1024 * 1024 * 1024) {
+    return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  
+  return `${(sizeInBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+};
+
+/**
+ * Format seconds to MM:SS string
+ */
+export const formatDuration = (durationInSeconds: number): string => {
+  const minutes = Math.floor(durationInSeconds / 60);
+  const seconds = Math.floor(durationInSeconds % 60);
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
+/**
+ * Detects if running in mobile environment
+ */
+export const isMobileDevice = (): boolean => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };

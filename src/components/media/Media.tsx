@@ -1,3 +1,4 @@
+
 import { forwardRef, useState, useEffect, useCallback } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
@@ -56,9 +57,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
       setMediaType(type);
       console.log('Media type determined:', type);
 
-      const url = typeof source === 'string' 
-        ? source 
-        : extractMediaUrl(source);
+      const url = extractMediaUrl(source);
 
       if (!url) {
         setError('Could not extract media URL');
@@ -102,6 +101,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     if (onError) onError();
   };
 
+  // Fixed handler that properly converts from event to time value
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
     if (onTimeUpdate) {
       const video = e.currentTarget;
@@ -157,7 +157,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         onLoadedData={onLoad}
         onError={onError}
         onEnded={onEnded}
-        onTimeUpdate={onTimeUpdate}
+        onTimeUpdate={handleTimeUpdate}
         playsInline
         crossOrigin="anonymous"
       />

@@ -51,7 +51,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
   ): FileValidationResult => {
     if (!file) {
       const error = 'No file provided';
-      return { valid: false, isValid: false, error, message: error };
+      return { valid: false, error };
     }
 
     const maxSizeMB = options?.maxSizeInMB || defaultOptions?.maxSizeInMB || MAX_FILE_SIZE_DEFAULT;
@@ -59,17 +59,17 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     
     if (file.size > maxSizeBytes) {
       const error = `File size exceeds the ${maxSizeMB}MB limit`;
-      return { valid: false, isValid: false, error, message: error };
+      return { valid: false, error };
     }
 
     const allowedTypes = options?.allowedTypes || defaultOptions?.allowedTypes || DEFAULT_ALLOWED_TYPES;
     
     if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
       const error = `File type '${file.type}' is not supported`;
-      return { valid: false, isValid: false, error, message: error };
+      return { valid: false, error };
     }
 
-    return { valid: true, isValid: true, message: '' };
+    return { valid: true };
   }, [defaultOptions]);
 
   // Upload media function
@@ -93,11 +93,11 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     if (!validation.valid) {
       toast({
         title: 'Invalid File',
-        description: validation.message || validation.error || 'Invalid file',
+        description: validation.error || 'Invalid file',
         variant: 'destructive',
       });
       
-      return { success: false, error: validation.message || validation.error };
+      return { success: false, error: validation.error };
     }
 
     // Begin upload process
@@ -132,11 +132,11 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       const contentCategory = options?.contentCategory || 'media';
       const bucket = contentCategory === 'shorts' ? 'shorts' : 'media';
       
-      // Upload the file using the fileUploadService
-      const result = await uploadFileToStorage(file, bucket, session.user.id, {
-        contentType: file.type,
-        upsert: true
-      });
+      // Create path for upload
+      const path = createUniqueFilePath(session.user.id, file);
+      
+      // Upload the file using the mediaUtils function
+      const result = await uploadFileToStorage(bucket, path, file);
 
       clearInterval(progressInterval);
 

@@ -51,7 +51,7 @@ export const useStorageService = () => {
         // Add a small delay before retry
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Use utility function to create a unique retry file path
+        // Generate a new unique path for retry
         const retryFilePath = createUniqueFilePath(userId, videoFile);
         
         console.log("Retrying upload with path:", retryFilePath);

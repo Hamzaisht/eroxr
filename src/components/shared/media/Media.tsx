@@ -56,17 +56,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         // Determine media type
         const typeString = determineMediaType(source);
         // Convert string type to MediaType enum
-        let type: MediaType;
-        switch(typeString) {
-          case 'image': type = MediaType.IMAGE; break;
-          case 'video': type = MediaType.VIDEO; break;
-          case 'audio': type = MediaType.AUDIO; break;
-          case 'document': type = MediaType.DOCUMENT; break;
-          case 'embed': type = MediaType.EMBED; break;
-          case 'file': type = MediaType.FILE; break;
-          default: type = MediaType.UNKNOWN;
-        }
-        setMediaType(type);
+        setMediaType(typeString);
       } catch (err) {
         console.error('Error processing media:', err);
         setError('Failed to process media');
@@ -75,7 +65,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
       }
     }, [source]);
 
-    // Custom handler for video time updates
+    // Custom handler for video time updates that converts event to time
     const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
       if (onTimeUpdate) {
         onTimeUpdate(e.currentTarget.currentTime);

@@ -38,3 +38,10 @@ export const toAbsoluteUrl = (url: string): string => {
   const baseUrl = window.location.origin;
   return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
 };
+
+/**
+ * String type guard for media sources
+ */
+export const isStringMediaSource = (source: any): source is string => {
+  return typeof source === 'string';
+};
