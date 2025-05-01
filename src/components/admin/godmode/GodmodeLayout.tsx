@@ -7,6 +7,8 @@ import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { SurveillanceProvider } from "@/components/admin/platform/surveillance/SurveillanceContext";
+import { LiveAlert } from "@/types/alerts";
+import { LiveSession } from "@/types/surveillance";
 
 function GodmodeLayout() {
   const session = useSession();
@@ -38,7 +40,7 @@ function GodmodeLayout() {
 
   return (
     <SurveillanceProvider
-      liveAlerts={liveAlerts}
+      liveAlerts={liveAlerts as LiveAlert[] || []}
       refreshAlerts={refreshAlerts}
       startSurveillance={startSurveillance}
     >

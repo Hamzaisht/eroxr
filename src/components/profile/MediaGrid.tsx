@@ -24,11 +24,15 @@ const MediaGrid = ({ media, onMediaClick }: MediaGridProps) => {
     }
     
     // Check all possible URL properties
-    return mediaItem.video_url || 
-           (typeof mediaItem.media_url === 'string' ? mediaItem.media_url : '') || 
-           mediaItem.url || 
-           mediaItem.src || 
-           '';
+    if (mediaItem.video_url) {
+      return typeof mediaItem.video_url === 'string' ? mediaItem.video_url : mediaItem.video_url[0] || '';
+    }
+    
+    if (mediaItem.media_url) {
+      return typeof mediaItem.media_url === 'string' ? mediaItem.media_url : mediaItem.media_url[0] || '';
+    }
+    
+    return mediaItem.url || mediaItem.src || '';
   };
 
   const isVideoMedia = (mediaItem: string | MediaSource): boolean => {

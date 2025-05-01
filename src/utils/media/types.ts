@@ -100,6 +100,9 @@ export interface UploadState {
   isComplete: boolean;
 }
 
+// Import the LiveSessionType from types/surveillance.ts to ensure compatibility
+import { LiveSessionType } from '@/types/surveillance';
+
 // Active Surveillance State
 export interface ActiveSurveillanceState {
   isWatching: boolean;
@@ -114,44 +117,9 @@ export interface ActiveSurveillanceState {
   deviceId?: any;
 }
 
-// LiveAlert and LiveSession types must match the ones in types/alerts.ts and types/surveillance.ts
-export interface LiveAlert {
-  id: string;
-  type: string;
-  alert_type: string;
-  user_id: string;
-  username: string;
-  avatar_url?: string;
-  timestamp: string;
-  created_at: string;
-  content_type: string;
-  reason?: string;
-  severity: 'high' | 'medium' | 'low';
-  content_id?: string;
-  message: string;
-  status: string;
-  title: string;
-  description?: string;
-  is_viewed: boolean;
-  urgent: boolean;
-  session?: LiveSession;
-  reporter?: {
-    id: string;
-    username?: string;
-    avatar_url?: string | null;
-  };
-}
+// Use the same LiveAlert and LiveSession interfaces as in types/alerts.ts and types/surveillance.ts
+import { LiveAlert as AlertsLiveAlert, LiveSession as SurveillanceLiveSession } from '@/types/alerts';
 
-export interface LiveSession {
-  id: string;
-  userId?: string;
-  username?: string;
-  deviceId?: string;
-  device_id?: string;
-  startTime?: Date;
-  active?: boolean;
-  user_id?: string;
-  type?: string;
-  created_at?: string;
-  media_url?: string | string[];
-}
+// Re-export for backward compatibility
+export type LiveAlert = AlertsLiveAlert;
+export type LiveSession = SurveillanceLiveSession;

@@ -9,6 +9,7 @@ import { GhostModePrompt } from "@/components/admin/platform/surveillance/GhostM
 import { useEffect } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useSurveillanceData } from "@/components/admin/platform/surveillance/hooks/useSurveillanceData";
+import { LiveAlert } from "@/types/alerts";
 
 export default function Surveillance() {
   const { isGhostMode, liveAlerts, refreshAlerts, startSurveillance, canUseGhostMode } = useGhostMode();
@@ -71,6 +72,8 @@ export default function Surveillance() {
     );
   }
   
+  const typedAlerts = liveAlerts as LiveAlert[] || [];
+
   return (
     <div className="space-y-4">
       <AdminHeader 
@@ -80,12 +83,12 @@ export default function Surveillance() {
       />
       
       <SurveillanceProvider
-        liveAlerts={liveAlerts || []}
+        liveAlerts={typedAlerts}
         refreshAlerts={refreshAlerts}
         startSurveillance={startSurveillance}
       >
         <SurveillanceTabs 
-          liveAlerts={liveAlerts || []} 
+          liveAlerts={typedAlerts} 
           onSelectAlert={(alert) => {
             if (alert?.session) {
               startSurveillance(alert.session);

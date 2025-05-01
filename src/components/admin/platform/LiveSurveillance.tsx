@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { SessionList } from "./surveillance/SessionList";
@@ -58,11 +59,13 @@ export const LiveSurveillance = () => {
     return <GhostModePrompt />;
   }
 
+  const typedAlerts = liveAlerts as LiveAlert[] || [];
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4">
       <div className="space-y-4">
         <SurveillanceAlerts
-          liveAlerts={liveAlerts}
+          liveAlerts={typedAlerts}
           loadingRefresh={loadingRefresh}
           onRefresh={handleRefresh}
           onSelectAlert={handleSelectAlert}
@@ -78,12 +81,12 @@ export const LiveSurveillance = () => {
       
       <div className="lg:col-span-3 space-y-4">
         <SurveillanceProvider
-          liveAlerts={liveAlerts}
+          liveAlerts={typedAlerts}
           refreshAlerts={refreshAlerts}
           startSurveillance={startSurveillance}
         >
           <SurveillanceTabs 
-            liveAlerts={liveAlerts} 
+            liveAlerts={typedAlerts} 
             onSelectAlert={handleSelectAlert}
           />
           <SessionList 
