@@ -16,11 +16,13 @@ interface ProfileWithInfo {
   avatar_url?: string;
   online_status?: string;
   last_message?: {
-    content: string;
+    content: string | null;
     created_at: string;
-    media_url: string[];
+    media_url: string[] | null;
     message_type: string;
     delivery_status?: string;
+    // Add sender_id to fix the type error
+    sender_id?: string;
   };
   unread_count?: number;
   is_typing?: boolean;
