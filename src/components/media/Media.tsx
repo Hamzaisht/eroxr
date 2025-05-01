@@ -1,3 +1,4 @@
+
 import { forwardRef, Ref } from 'react';
 
 interface ImageProps {
@@ -129,6 +130,10 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
 
 VideoPlayer.displayName = 'VideoPlayer';
 
+// Import the MediaSource type from our types file
+import { MediaSource } from '@/utils/media/types';
+import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+
 interface MediaProps {
   source: string | MediaSource | null | undefined;
   className?: string;
@@ -165,12 +170,42 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     return null;
   }
 
+  // Helper function to extract media URL from source
+  const getMediaUrl = (mediaSource: MediaSource | string): string | null => {
+    if (typeof mediaSource === 'string') {
+      return mediaSource;
+    }
+    
+    // Extract URL from MediaSource object
+    const ms = mediaSource as MediaSource;
+    
+    // Check for video URL first
+    if (ms.video_url) {
+      if (typeof ms.video_url === 'string') return ms.video_url;
+      if (Array.isArray(ms.video_url) && ms.video_url.length > 0) return ms.video_url[0];
+    }
+    
+    // Then check for media URL
+    if (ms.media_url) {
+      if (typeof ms.media_url === 'string') return ms.media_url;
+      if (Array.isArray(ms.media_url) && ms.media_url.length > 0) return ms.media_url[0];
+    }
+    
+    // Try other possible URL sources
+    if (ms.url) return ms.url;
+    if (ms.src) return ms.src;
+    
+    return null;
+  };
+
   if (typeof source === 'string') {
+    const url = getPlayableMediaUrl(source);
+    
     if (source.match(/\.(mp4|webm|ogg)$/i)) {
       return (
         <VideoPlayer
           ref={ref as Ref<HTMLVideoElement>}
-          src={source}
+          src={url}
           poster={poster}
           autoPlay={autoPlay}
           controls={controls}
@@ -189,7 +224,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
       return (
         <Image
           ref={ref as Ref<HTMLImageElement>}
-          src={source}
+          src={url}
           alt="Media content"
           className={className}
           onClick={onClick}
@@ -202,25 +237,24 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     }
   } else if (typeof source === 'object' && source !== null) {
     const mediaSourceObject = source as MediaSource;
-    const videoUrl = mediaSourceObject.video_url && (
-      typeof mediaSourceObject.video_url === 'string' ? mediaSourceObject.video_url : 
-      Array.isArray(mediaSourceObject.video_url) && mediaSourceObject.video_url.length > 0 ? mediaSourceObject.video_url[0] : 
-      undefined
-    );
-    
-    const mediaUrl = mediaSourceObject.media_url && (
-      typeof mediaSourceObject.media_url === 'string' ? mediaSourceObject.media_url : 
-      Array.isArray(mediaSourceObject.media_url) && mediaSourceObject.media_url.length > 0 ? mediaSourceObject.media_url[0] : 
-      undefined
-    );
-    
+    const mediaUrl = getMediaUrl(mediaSourceObject);
     const thumbnailUrl = mediaSourceObject.thumbnail_url || mediaSourceObject.video_thumbnail_url;
     
-    if (videoUrl) {
+    if (!mediaUrl) {
+      return <p>No media URL provided</p>;
+    }
+    
+    const url = getPlayableMediaUrl(mediaUrl);
+    
+    // Check if it's a video or image based on URL or media type
+    if (
+      (mediaSourceObject.media_type === 'video') ||
+      (mediaUrl.match(/\.(mp4|webm|ogg|mov)$/i))
+    ) {
       return (
         <VideoPlayer
           ref={ref as Ref<HTMLVideoElement>}
-          src={videoUrl}
+          src={url}
           poster={poster || thumbnailUrl}
           autoPlay={autoPlay}
           controls={controls}
@@ -235,11 +269,11 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
           onTimeUpdate={onTimeUpdate}
         />
       );
-    } else if (mediaUrl) {
+    } else {
       return (
         <Image
           ref={ref as Ref<HTMLImageElement>}
-          src={mediaUrl}
+          src={url}
           alt={mediaSourceObject.description || "Media content"}
           className={className}
           onClick={onClick}
@@ -247,8 +281,6 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
           onError={onError}
         />
       );
-    } else {
-      return <p>No media URL provided</p>;
     }
   } else {
     return <p>Invalid media source</p>;

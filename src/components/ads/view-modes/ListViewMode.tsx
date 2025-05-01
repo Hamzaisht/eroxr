@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Eye, MapPin, Calendar, User, Clock } from "lucide-react";
@@ -96,6 +95,13 @@ export const ListViewMode = ({ ads, isLoading = false, onMediaClick, userProfile
     }));
   };
 
+  const handleMediaUrl = (url: string | string[]): string => {
+    if (Array.isArray(url)) {
+      return url.length > 0 ? getPlayableMediaUrl(url[0]) : '';
+    }
+    return getPlayableMediaUrl(url);
+  };
+
   const handleMediaClick = (media: string | MediaSource) => {
     const url = typeof media === 'string' ? media : (
       media.media_url || 
@@ -105,7 +111,7 @@ export const ListViewMode = ({ ads, isLoading = false, onMediaClick, userProfile
       media.url || 
       media.src
     );
-    if (url && onMediaClick) onMediaClick(url);
+    if (url && onMediaClick) onMediaClick(handleMediaUrl(url));
   };
 
   const getMatchPercentage = (ad: DatingAd): number | null => {

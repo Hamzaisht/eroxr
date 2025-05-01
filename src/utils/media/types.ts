@@ -1,3 +1,4 @@
+
 // Media types
 export enum MediaType {
   UNKNOWN = 'unknown',
@@ -113,7 +114,7 @@ export interface ActiveSurveillanceState {
   deviceId?: any;
 }
 
-// Add LiveAlert and LiveSession types that are used in useGhostMode.ts
+// LiveAlert and LiveSession types must match the ones in types/alerts.ts and types/surveillance.ts
 export interface LiveAlert {
   id: string;
   type: string;
@@ -150,4 +151,7 @@ export interface LiveSession {
   startTime?: Date;
   active?: boolean;
   user_id?: string;
+  type?: string;
+  created_at?: string;
+  media_url?: string | string[];
 }

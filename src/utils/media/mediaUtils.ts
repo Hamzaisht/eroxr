@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { MediaSource, MediaType } from './types';
@@ -130,5 +131,14 @@ export function extractMediaUrl(item: MediaSource | string): string | null {
 export function getPlayableMediaUrl(url: string): string {
   // Add any special handling for media URLs here
   // For example, adding cache busting parameters, CDN tokens, etc.
-  return url;
+  if (!url) return '';
+  
+  // Special handling for blob URLs and data URLs
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  
+  // Add cache busting for regular URLs
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_cb=${Date.now()}`;
 }

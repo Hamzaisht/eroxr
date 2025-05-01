@@ -39,7 +39,7 @@ export function isExternalUrl(url: string): boolean {
 
 /**
  * Gets a playable media URL (handles caching, CDN issues, etc)
- * This function was missing and causing build errors
+ * This is the main function that was causing import errors
  */
 export function getPlayableMediaUrl(url: string): string {
   if (!url) return '';
