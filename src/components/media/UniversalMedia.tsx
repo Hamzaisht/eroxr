@@ -59,12 +59,12 @@ export const UniversalMedia = forwardRef(({
     if (typeof item !== 'string') {
       const source = item as MediaSource;
       
-      // Set second video as fallback if available
-      if (Array.isArray(source.video_urls) && source.video_urls.length > 1) {
+      // Handle video_urls safely
+      if (source.video_urls && Array.isArray(source.video_urls) && source.video_urls.length > 1) {
         fallback = source.video_urls[1];
-      }
-      // Or set second image as fallback
-      else if (Array.isArray(source.media_urls) && source.media_urls.length > 1) {
+      } 
+      // Handle media_urls safely
+      else if (source.media_urls && Array.isArray(source.media_urls) && source.media_urls.length > 1) {
         fallback = source.media_urls[1];
       }
       // Set thumbnail as fallback for videos

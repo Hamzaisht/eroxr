@@ -1,290 +1,173 @@
 
-import { forwardRef, Ref } from 'react';
-
-interface ImageProps {
-  src: string;
-  alt?: string;
-  className?: string;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: () => void;
-}
-
-const Image = forwardRef<HTMLImageElement, ImageProps>(({
-  src,
-  alt = "Media content",
-  className = '',
-  onClick,
-  onLoad,
-  onError,
-}, ref) => {
-  const handleLoad = () => {
-    if (onLoad) {
-      onLoad();
-    }
-  };
-
-  const handleError = () => {
-    if (onError) {
-      onError();
-    }
-  };
-
-  return (
-    <img
-      ref={ref}
-      src={src}
-      alt={alt}
-      className={className}
-      onClick={onClick}
-      onLoad={handleLoad}
-      onError={handleError}
-    />
-  );
-});
-
-Image.displayName = 'Image';
-
-interface VideoPlayerProps {
-  src: string;
-  poster?: string;
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  className?: string;
-  showWatermark?: boolean;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: () => void;
-  onEnded?: () => void;
-  onTimeUpdate?: (currentTime: number) => void;
-}
-
-const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(({
-  src,
-  poster,
-  autoPlay = false,
-  controls = true,
-  muted = true,
-  loop = false,
-  className = '',
-  showWatermark = false,
-  onClick,
-  onLoad,
-  onError,
-  onEnded,
-  onTimeUpdate,
-}, ref) => {
-  const handleLoad = () => {
-    if (onLoad) {
-      onLoad();
-    }
-  };
-
-  const handleError = () => {
-    if (onError) {
-      onError();
-    }
-  };
-
-  const handleEnded = () => {
-    if (onEnded) {
-      onEnded();
-    }
-  };
-
-  // Handle time update event correctly
-  const handleTimeUpdate = (event: React.SyntheticEvent<HTMLVideoElement>) => {
-    if (onTimeUpdate) {
-      onTimeUpdate(event.currentTarget.currentTime);
-    }
-  };
-
-  return (
-    <div className={`relative ${className}`}>
-      <video
-        ref={ref}
-        src={src}
-        poster={poster}
-        autoPlay={autoPlay}
-        controls={controls}
-        muted={muted}
-        loop={loop}
-        onLoadedData={handleLoad}
-        onError={handleError}
-        onEnded={handleEnded}
-        onClick={onClick}
-        onTimeUpdate={handleTimeUpdate}
-        className="w-full h-full"
-        playsInline
-      />
-      {showWatermark && (
-        <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
-          eroxr
-        </div>
-      )}
-    </div>
-  );
-});
-
-VideoPlayer.displayName = 'VideoPlayer';
-
-// Import the MediaSource type from our types file
-import { MediaSource } from '@/utils/media/types';
+import { useState, useEffect, forwardRef } from 'react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
+import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
-interface MediaProps {
-  source: string | MediaSource | null | undefined;
-  className?: string;
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  poster?: string;
-  showWatermark?: boolean;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: () => void;
-  onEnded?: () => void;
-  onTimeUpdate?: (currentTime: number) => void;
-  ref?: Ref<HTMLVideoElement | HTMLImageElement>;
-}
+type MediaProps = {
+  source: MediaSource | string;
+} & MediaOptions;
 
-export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(({
-  source,
-  className = '',
-  autoPlay = false,
-  controls = true,
-  muted = true,
-  loop = false,
-  poster,
-  showWatermark = false,
-  onClick,
-  onLoad,
-  onError,
-  onEnded,
-  onTimeUpdate,
-}, ref) => {
-  if (!source) {
-    return null;
+export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(
+  (
+    {
+      source,
+      className = '',
+      autoPlay = false,
+      controls = true,
+      muted = true,
+      loop = false,
+      poster,
+      showWatermark = false,
+      onClick,
+      onLoad,
+      onError,
+      onEnded,
+      onTimeUpdate,
+    },
+    ref
+  ) => {
+    const [url, setUrl] = useState<string | null>(null);
+    const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+      if (!source) {
+        setError('No media source provided');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Extract URL from source
+        const extractedUrl = extractMediaUrl(source);
+        if (!extractedUrl) {
+          setError('Could not extract media URL');
+          setIsLoading(false);
+          return;
+        }
+
+        // Get playable URL
+        const playableUrl = getPlayableMediaUrl(extractedUrl);
+        setUrl(playableUrl);
+
+        // Determine media type
+        const typeString = determineMediaType(source);
+        // Convert string type to MediaType enum
+        setMediaType(typeString);
+      } catch (err) {
+        console.error('Error processing media:', err);
+        setError('Failed to process media');
+      } finally {
+        setIsLoading(false);
+      }
+    }, [source]);
+
+    // Custom handler for video time updates that converts event to time
+    const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      if (onTimeUpdate) {
+        onTimeUpdate(e.currentTarget.currentTime);
+      }
+    };
+
+    if (isLoading) {
+      return (
+        <div className={`flex items-center justify-center bg-black/10 ${className}`}>
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      );
+    }
+
+    if (error || !url) {
+      return (
+        <div className={`flex items-center justify-center bg-black/10 ${className}`}>
+          <div className="text-center p-4">
+            <AlertCircle className="mx-auto h-8 w-8 text-red-500 mb-2" />
+            <p className="text-sm text-gray-500">{error || 'Media unavailable'}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // For video content
+    if (mediaType === MediaType.VIDEO) {
+      return (
+        <div className="relative w-full h-full">
+          <video
+            ref={ref as React.RefObject<HTMLVideoElement>}
+            src={url}
+            className={className}
+            autoPlay={autoPlay}
+            controls={controls}
+            muted={muted}
+            loop={loop}
+            poster={poster}
+            onClick={onClick}
+            onLoadedData={onLoad}
+            onError={onError}
+            onEnded={onEnded}
+            onTimeUpdate={handleTimeUpdate}
+            playsInline
+          />
+          {showWatermark && (
+            <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+              eroxr
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // For image content
+    if (mediaType === MediaType.IMAGE) {
+      return (
+        <div className="relative w-full h-full">
+          <img
+            ref={ref as React.RefObject<HTMLImageElement>}
+            src={url}
+            className={className}
+            onClick={onClick}
+            onLoad={onLoad}
+            onError={onError}
+            alt="Media content"
+          />
+          {showWatermark && (
+            <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+              eroxr
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // For audio content
+    if (mediaType === MediaType.AUDIO) {
+      return (
+        <div className={`audio-player ${className}`}>
+          <audio
+            src={url}
+            controls={controls}
+            autoPlay={autoPlay}
+            muted={muted}
+            loop={loop}
+            onLoadedData={onLoad}
+            onError={onError}
+            onEnded={onEnded}
+            className="w-full"
+          />
+        </div>
+      );
+    }
+
+    // For document or unknown content types
+    return (
+      <div className={`flex items-center justify-center bg-black/10 ${className}`}>
+        <p className="text-sm text-gray-500">Unsupported media format</p>
+      </div>
+    );
   }
-
-  // Helper function to extract media URL from source
-  const getMediaUrl = (mediaSource: MediaSource | string): string | null => {
-    if (typeof mediaSource === 'string') {
-      return mediaSource;
-    }
-    
-    // Extract URL from MediaSource object
-    const ms = mediaSource as MediaSource;
-    
-    // Check for video URL first
-    if (ms.video_url) {
-      if (typeof ms.video_url === 'string') return ms.video_url;
-      if (Array.isArray(ms.video_url) && ms.video_url.length > 0) return ms.video_url[0];
-    }
-    
-    // Then check for media URL
-    if (ms.media_url) {
-      if (typeof ms.media_url === 'string') return ms.media_url;
-      if (Array.isArray(ms.media_url) && ms.media_url.length > 0) return ms.media_url[0];
-    }
-    
-    // Try other possible URL sources
-    if (ms.url) return ms.url;
-    if (ms.src) return ms.src as string;
-    
-    return null;
-  };
-
-  if (typeof source === 'string') {
-    const url = getPlayableMediaUrl(source);
-    
-    if (source.match(/\.(mp4|webm|ogg)$/i)) {
-      return (
-        <VideoPlayer
-          ref={ref as Ref<HTMLVideoElement>}
-          src={url}
-          poster={poster}
-          autoPlay={autoPlay}
-          controls={controls}
-          muted={muted}
-          loop={loop}
-          className={className}
-          showWatermark={showWatermark}
-          onClick={onClick}
-          onLoad={onLoad}
-          onError={onError}
-          onEnded={onEnded}
-          onTimeUpdate={onTimeUpdate}
-        />
-      );
-    } else if (source.match(/\.(jpg|jpeg|png|gif)$/i)) {
-      return (
-        <Image
-          ref={ref as Ref<HTMLImageElement>}
-          src={url}
-          alt="Media content"
-          className={className}
-          onClick={onClick}
-          onLoad={onLoad}
-          onError={onError}
-        />
-      );
-    } else {
-      return <p>Unsupported media format</p>;
-    }
-  } else if (typeof source === 'object' && source !== null) {
-    const mediaSourceObject = source as MediaSource;
-    const mediaUrl = getMediaUrl(mediaSourceObject);
-    const thumbnailUrl = mediaSourceObject.thumbnail_url || mediaSourceObject.video_thumbnail_url;
-    
-    if (!mediaUrl) {
-      return <p>No media URL provided</p>;
-    }
-    
-    const url = getPlayableMediaUrl(mediaUrl);
-    
-    // Check if it's a video or image based on URL or media type
-    if (
-      (mediaSourceObject.media_type === 'video') ||
-      (mediaUrl.match(/\.(mp4|webm|ogg|mov)$/i))
-    ) {
-      return (
-        <VideoPlayer
-          ref={ref as Ref<HTMLVideoElement>}
-          src={url}
-          poster={poster || thumbnailUrl}
-          autoPlay={autoPlay}
-          controls={controls}
-          muted={muted}
-          loop={loop}
-          className={className}
-          showWatermark={showWatermark}
-          onClick={onClick}
-          onLoad={onLoad}
-          onError={onError}
-          onEnded={onEnded}
-          onTimeUpdate={onTimeUpdate}
-        />
-      );
-    } else {
-      return (
-        <Image
-          ref={ref as Ref<HTMLImageElement>}
-          src={url}
-          alt={mediaSourceObject.description || "Media content"}
-          className={className}
-          onClick={onClick}
-          onLoad={onLoad}
-          onError={onError}
-        />
-      );
-    }
-  } else {
-    return <p>Invalid media source</p>;
-  }
-});
+);
 
 Media.displayName = 'Media';
