@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Image, Users, CircuitBoard, MessageCircle, Video } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -78,7 +77,7 @@ export const ProfileTabs = ({ profile }: { profile: any }) => {
       value: "media",
       label: "Media",
       icon: Image,
-      content: <MediaGrid media={[]} onMediaClick={() => {}} />
+      content: <MediaGrid mediaItems={[]} onMediaSelect={() => {}} />
     },
     {
       value: "eros",

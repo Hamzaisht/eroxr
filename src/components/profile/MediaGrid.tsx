@@ -154,5 +154,5 @@ export const MediaGrid = ({
   );
 };
 
-// Add default export for backward compatibility
+// Export as both named and default export for backward compatibility
 export default MediaGrid;

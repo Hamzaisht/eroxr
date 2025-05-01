@@ -193,7 +193,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     
     // Try other possible URL sources
     if (ms.url) return ms.url;
-    if (ms.src) return ms.src;
+    if (ms.src) return ms.src as string;
     
     return null;
   };
