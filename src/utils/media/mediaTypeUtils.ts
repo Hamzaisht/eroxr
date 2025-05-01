@@ -41,3 +41,13 @@ export const isVideoUrl = (url: string): boolean => {
   const mimeType = getMimeType(url);
   return mimeType.startsWith('video/');
 };
+
+/**
+ * Convert string to MediaType enum value
+ */
+export { stringToMediaType } from './types';
+
+/**
+ * Re-export AvailabilityStatus enum for consistency
+ */
+export { AvailabilityStatus } from './types';

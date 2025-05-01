@@ -4,6 +4,7 @@ export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
+  FILE = 'file',
   UNKNOWN = 'unknown'
 }
 
@@ -81,3 +82,41 @@ export interface MediaMetadata {
   size?: number;
   type?: string;
 }
+
+// User availability status for profile and messaging
+export enum AvailabilityStatus {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  AWAY = 'away',
+  BUSY = 'busy',
+  INVISIBLE = 'invisible'
+}
+
+// Ghost mode / surveillance related types
+export interface ActiveSurveillanceState {
+  active: boolean;
+  target?: string;
+  startTime?: string;
+}
+
+export interface LiveAlert {
+  id: string;
+  type: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+}
+
+// Helper function to convert string to MediaType
+export const stringToMediaType = (type: string): MediaType => {
+  if (!type) return MediaType.UNKNOWN;
+  
+  const lowerType = type.toLowerCase();
+  
+  if (lowerType.includes('image')) return MediaType.IMAGE;
+  if (lowerType.includes('video')) return MediaType.VIDEO;
+  if (lowerType.includes('audio')) return MediaType.AUDIO;
+  if (lowerType.includes('file') || lowerType.includes('document')) return MediaType.FILE;
+  
+  return MediaType.UNKNOWN;
+};

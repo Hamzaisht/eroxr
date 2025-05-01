@@ -17,18 +17,18 @@ export function AvailabilityIndicator({
   size,
   onClick
 }: AvailabilityIndicatorProps) {
-  // Convert string to the correct type
+  // Convert string to the correct type if needed
   const normalizedStatus = status as AvailabilityStatus;
   
   return (
     <div 
       className={cn(
         "rounded-full",
-        normalizedStatus === 'online' && "bg-green-500",
-        normalizedStatus === 'offline' && "bg-gray-400",
-        normalizedStatus === 'away' && "bg-yellow-500",
-        normalizedStatus === 'busy' && "bg-red-500",
-        normalizedStatus === 'invisible' && "bg-gray-400 opacity-50",
+        normalizedStatus === AvailabilityStatus.ONLINE && "bg-green-500",
+        normalizedStatus === AvailabilityStatus.OFFLINE && "bg-gray-400",
+        normalizedStatus === AvailabilityStatus.AWAY && "bg-yellow-500",
+        normalizedStatus === AvailabilityStatus.BUSY && "bg-red-500",
+        normalizedStatus === AvailabilityStatus.INVISIBLE && "bg-gray-400 opacity-50",
         className
       )}
       style={{
