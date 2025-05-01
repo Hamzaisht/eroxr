@@ -12,6 +12,8 @@ import { MessageInput } from "./MessageInput";
 import { ChatMessageList } from "./chat/ChatMessageList";
 import { useChatActions } from "./chat/ChatActions";
 import { SnapCaptureModal } from "./chat/SnapCaptureModal";
+import { ChatHeader } from "./chat/ChatHeader"; 
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 
 interface ChatWindowProps {
   recipient: {
@@ -31,12 +33,12 @@ export const ChatWindow = ({
   onSendSuccess 
 }: ChatWindowProps) => {
   const [showSnapModal, setShowSnapModal] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState<DirectMessage | null>(null);
   const session = useSession();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentUserId = session?.user?.id;
+  const { isTyping, setIsTyping, sendTypingStatus } = useTypingIndicator(recipient?.id);
 
   // Use our realtime messages hook for subscriptions
   useRealtimeMessages(recipient?.id);
@@ -47,16 +49,6 @@ export const ChatWindow = ({
     handleMediaSelect, 
     handleSnapCapture 
   } = useChatActions({ recipientId: recipient?.id });
-
-  // Set up typing indicator timer
-  useEffect(() => {
-    if (isTyping) {
-      const timer = setTimeout(() => {
-        setIsTyping(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isTyping]);
 
   // Fetch messages from direct_messages table
   const { 
@@ -83,6 +75,24 @@ export const ChatWindow = ({
     },
     enabled: !!recipient?.id && !!currentUserId
   });
+
+  // Send typing indicator when user is typing
+  const handleSendWithTypingIndicator = (content: string) => {
+    handleSendMessage(content);
+    sendTypingStatus(false);
+  };
+
+  // Track typing status and send to recipient
+  const handleTyping = () => {
+    setIsTyping(true);
+    sendTypingStatus(true);
+    
+    // Automatically reset typing status after a few seconds
+    setTimeout(() => {
+      setIsTyping(false);
+      sendTypingStatus(false);
+    }, 5000);
+  };
 
   const handleOpenFileInput = () => {
     fileInputRef.current?.click();
@@ -124,6 +134,21 @@ export const ChatWindow = ({
     await handleMediaSelect(fileList as unknown as FileList);
   };
 
+  // Send voice or video call request
+  const handleVoiceCall = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Voice calls will be available in a future update!"
+    });
+  };
+
+  const handleVideoCall = () => {
+    toast({
+      title: "Coming Soon", 
+      description: "Video calls will be available in a future update!"
+    });
+  };
+
   const recipientProfile = {
     username: recipient?.username,
     avatar_url: recipient?.avatar_url
@@ -138,25 +163,19 @@ export const ChatWindow = ({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="border-b border-luxury-neutral/20 p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Avatar>
-            <AvatarImage src={recipient?.avatar_url || ""} alt={recipient?.username || "User"} />
-            <AvatarFallback>{recipient?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-          </Avatar>
-          <div className="font-medium">{recipient?.username}</div>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="ghost" size="sm" onClick={onToggleDetails}>
-            Details
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col h-full bg-gradient-to-b from-luxury-dark to-black/95">
+      {/* Chat Header with recipient info */}
+      <ChatHeader 
+        recipientProfile={recipientProfile}
+        recipientId={recipient.id}
+        onVoiceCall={handleVoiceCall}
+        onVideoCall={handleVideoCall}
+        onToggleDetails={onToggleDetails}
+        isTyping={isTyping}
+        onBack={onClose}
+      />
 
+      {/* Messages list */}
       <ChatMessageList 
         messages={messages}
         currentUserId={currentUserId}
@@ -164,9 +183,10 @@ export const ChatWindow = ({
         isTyping={isTyping}
       />
 
-      <div className="p-4 border-t border-luxury-neutral/20">
+      {/* Message input area */}
+      <div className="p-2 border-t border-luxury-neutral/20">
         <MessageInput
-          onSendMessage={handleSendMessage}
+          onSendMessage={handleSendWithTypingIndicator}
           onMediaSelect={handleOpenFileInput}
           onSnapStart={handleOpenSnapCapture}
           onVoiceMessage={handleSendVoiceMessage}
@@ -185,6 +205,7 @@ export const ChatWindow = ({
         />
       </div>
 
+      {/* Snap capture modal */}
       {showSnapModal && (
         <SnapCaptureModal 
           open={showSnapModal}

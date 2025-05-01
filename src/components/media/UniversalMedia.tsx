@@ -3,6 +3,7 @@ import { forwardRef, useState, useEffect, useCallback, useMemo, Ref } from 'reac
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+import { Loader2 } from "lucide-react";
 
 interface UniversalMediaProps {
   item: MediaSource | string;
@@ -41,6 +42,8 @@ export const UniversalMedia = forwardRef(({
   onTimeUpdate,
   maxRetries = 2
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   
   // Extract media information from various sources/formats
   const { mediaUrl, mediaType, fallbackUrl } = useMemo(() => {
@@ -75,6 +78,20 @@ export const UniversalMedia = forwardRef(({
     
     return { mediaUrl: url, mediaType: type, fallbackUrl: fallback };
   }, [item]);
+
+  // Handle successful loading
+  const handleLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+    if (onLoad) onLoad();
+  };
+
+  // Handle loading errors
+  const handleError = () => {
+    setIsLoading(false);
+    setHasError(true);
+    if (onError) onError();
+  };
   
   // Handle timeUpdate events for videos
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
@@ -86,11 +103,17 @@ export const UniversalMedia = forwardRef(({
   // Render based on media type
   if (mediaType === MediaType.VIDEO) {
     return (
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full group">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
+            <Loader2 className="h-6 w-6 animate-spin text-white/70" />
+          </div>
+        )}
+        
         <video
           ref={ref as React.RefObject<HTMLVideoElement>}
           src={mediaUrl || undefined}
-          className={className}
+          className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
           style={{ objectFit }}
           autoPlay={autoPlay}
           controls={controls}
@@ -98,15 +121,15 @@ export const UniversalMedia = forwardRef(({
           loop={loop}
           poster={poster || fallbackUrl || undefined}
           onClick={onClick}
-          onLoadedData={onLoad}
-          onError={onError}
+          onLoadedData={handleLoad}
+          onError={handleError}
           onEnded={onEnded}
           onTimeUpdate={handleTimeUpdate}
           playsInline
         />
         
         {showWatermark && (
-          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 group-hover:opacity-100 transition-opacity">
             eroxr
           </div>
         )}
@@ -116,20 +139,26 @@ export const UniversalMedia = forwardRef(({
   
   // For images and other media types
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full group">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
+          <Loader2 className="h-6 w-6 animate-spin text-white/70" />
+        </div>
+      )}
+      
       <img
         ref={ref as React.RefObject<HTMLImageElement>}
         src={mediaUrl || fallbackUrl || undefined}
-        className={className}
+        className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
         style={{ objectFit }}
         onClick={onClick}
-        onLoad={onLoad}
-        onError={onError}
+        onLoad={handleLoad}
+        onError={handleError}
         alt={alt}
       />
       
       {showWatermark && (
-        <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+        <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 group-hover:opacity-100 transition-opacity">
           eroxr
         </div>
       )}

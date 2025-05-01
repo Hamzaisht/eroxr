@@ -1,5 +1,6 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { DirectMessage } from "@/integrations/supabase/types/message";
@@ -11,24 +12,31 @@ import { useMessageEdit } from "@/hooks/useMessageEdit";
 import { useMessageDelete } from "@/hooks/useMessageDelete";
 import { useGhostMode } from "@/hooks/useGhostMode";
 import { Shield, Ghost } from "lucide-react";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { getPlayableMediaUrl } from "@/utils/media/urlUtils";
+import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MessageBubbleProps {
   message: DirectMessage;
   isOwnMessage: boolean;
   currentUserId: string | undefined;
   profile?: any;
+  previousMessage?: DirectMessage;
+  showAvatar?: boolean;
 }
 
 export const MessageBubble = ({ 
   message, 
   isOwnMessage, 
   currentUserId,
-  profile 
+  profile,
+  previousMessage,
+  showAvatar = true
 }: MessageBubbleProps) => {
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [localMessage, setLocalMessage] = useState(message);
   const { isGhostMode = false } = useGhostMode();
+  const messageRef = useRef<HTMLDivElement>(null);
   
   const { 
     isEditing, 
@@ -42,6 +50,11 @@ export const MessageBubble = ({
   } = useMessageEdit(message);
   
   const { isDeleting, handleDelete } = useMessageDelete(message.id);
+
+  // Determine whether to group messages based on sender and timing
+  const shouldGroupWithPrevious = previousMessage && 
+    previousMessage.sender_id === message.sender_id &&
+    new Date(message.created_at).getTime() - new Date(previousMessage.created_at).getTime() < 60000;
 
   useEffect(() => {
     cancelEditing();
@@ -78,6 +91,15 @@ export const MessageBubble = ({
 
   const messageAge = new Date().getTime() - new Date(message.created_at || new Date()).getTime();
   const canEditDelete = messageAge < 24 * 60 * 60 * 1000;
+
+  // Add a smooth scroll into view effect for new messages
+  useEffect(() => {
+    if (message.sender_id === currentUserId && messageRef.current) {
+      setTimeout(() => {
+        messageRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [message.id, message.sender_id, currentUserId]);
 
   const handleMediaView = async (url: string) => {
     if (!url) return;
@@ -124,17 +146,24 @@ export const MessageBubble = ({
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 1, scale: 1 }}
+        ref={messageRef}
+        initial={{ opacity: 0, y: 20 }}
         animate={{
           opacity: isDeleting ? 0 : 1,
-          scale: isDeleting ? 0 : 1,
+          y: isDeleting ? 20 : 0,
+          scale: isDeleting ? 0.95 : 1
         }}
-        exit={{ opacity: 0, scale: 0 }}
+        exit={{ opacity: 0, y: 20, scale: 0.95 }}
         transition={{
-          duration: 0.5,
+          duration: 0.3,
           ease: "easeInOut"
         }}
-        className={`relative flex items-end space-x-2 mb-4 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}
+        className={cn(
+          "relative flex items-end gap-2 mb-1",
+          isOwnMessage ? "flex-row-reverse mr-2" : "ml-2",
+          !shouldGroupWithPrevious && "mt-4",
+          shouldGroupWithPrevious && "mt-1"
+        )}
       >
         {isDeletedSnap && (
           <div className="absolute inset-0 z-10 flex items-center justify-center">
@@ -145,19 +174,26 @@ export const MessageBubble = ({
           </div>
         )}
         
-        {!isOwnMessage && (
-          <div className="relative">
-            <Avatar className="h-6 w-6">
+        {!isOwnMessage && showAvatar && !shouldGroupWithPrevious && (
+          <div className="relative flex-shrink-0">
+            <Avatar className="h-7 w-7">
               <AvatarImage src={profile?.avatar_url} />
               <AvatarFallback>{profile?.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
             </Avatar>
             {profile?.has_stories && (
-              <div className="absolute inset-0 rounded-full animate-pulse-ring bg-gradient-to-tr from-luxury-primary to-luxury-accent opacity-75" />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-luxury-primary to-luxury-accent opacity-75 animate-pulse-ring" />
             )}
           </div>
         )}
+
+        {!isOwnMessage && (!showAvatar || shouldGroupWithPrevious) && (
+          <div className="w-7 flex-shrink-0"></div>
+        )}
         
-        <div className={`group max-w-[70%] space-y-2 ${isOwnMessage ? "items-end" : "items-start"}`}>
+        <div className={cn(
+          "group max-w-[75%] space-y-1", 
+          isOwnMessage ? "items-end" : "items-start"
+        )}>
           <MessageBubbleContent
             message={localMessage}
             isOwnMessage={isOwnMessage}
@@ -187,9 +223,18 @@ export const MessageBubble = ({
         </div>
 
         {isOwnMessage && message.delivery_status === 'seen' && (
-          <div className="text-xs text-blue-400 absolute -bottom-4 right-2">
-            Seen
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-xs text-blue-400 absolute -bottom-4 right-2 font-medium">
+                  Seen
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-black/80 text-white border-white/10">
+                <p>Read {message.viewed_at ? format(new Date(message.viewed_at), 'h:mm a') : ''}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </motion.div>
 

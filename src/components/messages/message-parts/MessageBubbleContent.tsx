@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -5,7 +6,8 @@ import { formatDistanceToNow } from "date-fns";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaType } from "@/utils/media/types";
-import { Video, Play, File, Upload, X, MoreHorizontal } from "lucide-react";
+import { Video, Play, File, Upload, X, MoreHorizontal, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface MessageBubbleContentProps {
   message: DirectMessage;
@@ -60,6 +62,7 @@ export const MessageBubbleContent = ({
   const isVideoMessage = message.message_type === 'video' || hasVideo;
   const isFileMessage = message.message_type === 'document';
   const isAdMessage = message.message_type === 'ad_message';
+  const isAudioMessage = message.message_type === 'audio';
   const isTextMessage = message.content && !isMediaMessage && !isVideoMessage && !isSnapMessage && !isFileMessage && !isAdMessage;
 
   // For JSON content in ad messages
@@ -82,7 +85,9 @@ export const MessageBubbleContent = ({
     ? MediaType.IMAGE 
     : mediaUrl.match(/\.(mp4|webm|mov)$/i) 
       ? MediaType.VIDEO 
-      : MediaType.FILE;
+      : mediaUrl.match(/\.(mp3|m4a|wav|ogg|webm)$/i)
+        ? MediaType.AUDIO
+        : MediaType.FILE;
       
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -99,7 +104,7 @@ export const MessageBubbleContent = ({
     if (!replyToMessage) return null;
     
     return (
-      <div className="message-reply-container flex items-center text-xs text-gray-300">
+      <div className="message-reply-container flex items-center text-xs text-gray-300 bg-white/5 rounded px-2 py-1 mb-1">
         <div className="flex-1 truncate">
           <span className="font-semibold mr-1">
             {isOwnMessage ? "You" : "Them"}:
@@ -124,7 +129,7 @@ export const MessageBubbleContent = ({
     return (
       <div className={cn(
         "relative p-2 rounded-2xl",
-        isOwnMessage ? "bg-luxury-primary/20" : "bg-white/5"
+        isOwnMessage ? "bg-luxury-primary/30" : "bg-white/10"
       )}>
         <input
           type="text"
@@ -133,7 +138,7 @@ export const MessageBubbleContent = ({
           onKeyDown={handleKeyDown}
           ref={inputRef}
           className={cn(
-            "bg-transparent w-full p-2 focus:outline-none text-white resize-none",
+            "bg-transparent w-full p-2 focus:outline-none text-white resize-none rounded",
             isUpdating && "opacity-50"
           )}
           disabled={isUpdating}
@@ -166,8 +171,8 @@ export const MessageBubbleContent = ({
       className={cn(
         "relative overflow-hidden max-w-full",
         isOwnMessage 
-          ? "bg-luxury-primary/20 text-right rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl" 
-          : "bg-white/5 text-left rounded-tr-2xl rounded-tl-sm rounded-br-2xl rounded-bl-2xl",
+          ? "bg-gradient-to-br from-luxury-primary/30 to-luxury-primary/20 rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl" 
+          : "bg-gradient-to-br from-white/10 to-white/5 rounded-tr-2xl rounded-tl-sm rounded-br-2xl rounded-bl-2xl",
       )}
     >
       {renderReplyPreview()}
@@ -214,21 +219,24 @@ export const MessageBubbleContent = ({
       )}
       
       {/* Image message */}
-      {hasMedia && !isVideoMessage && !isFileMessage && (
-        <div className="media-attachment" onClick={() => onMediaSelect(mediaUrl)}>
+      {hasMedia && !isVideoMessage && !isFileMessage && !isAudioMessage && (
+        <div 
+          className="media-attachment overflow-hidden rounded-lg"
+          onClick={() => onMediaSelect(mediaUrl)}
+        >
           <UniversalMedia
             item={{
               media_url: mediaUrl,
-              media_type: mediaType
+              media_type: MediaType.IMAGE
             }}
-            className="max-w-full object-contain cursor-pointer"
+            className="max-w-full h-auto cursor-pointer transition-transform hover:scale-[1.02]"
             controls={false}
             onLoad={handleMediaLoad}
             onError={handleMediaError}
           />
           
           {!isMediaLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
               <div className="animate-spin h-5 w-5 border-2 border-luxury-primary border-t-transparent rounded-full" />
             </div>
           )}
@@ -237,7 +245,10 @@ export const MessageBubbleContent = ({
       
       {/* Video message */}
       {isVideoMessage && (
-        <div className="media-attachment relative" onClick={() => onMediaSelect(message.video_url || mediaUrl)}>
+        <div 
+          className="media-attachment relative rounded-lg overflow-hidden"
+          onClick={() => onMediaSelect(message.video_url || mediaUrl)}
+        >
           <div className="aspect-video bg-black/30 flex items-center justify-center">
             {message.media_url?.[0] && (
               <img 
@@ -246,9 +257,27 @@ export const MessageBubbleContent = ({
                 className="w-full h-auto object-contain"
               />
             )}
-            <div className="play-button absolute">
-              <Play className="h-5 w-5" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-luxury-primary/60 backdrop-blur-md p-3 rounded-full">
+                <Play className="h-6 w-6 text-white" />
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Audio message */}
+      {isAudioMessage && (
+        <div className="p-3">
+          <div className="bg-white/5 p-3 rounded-lg">
+            <audio 
+              src={mediaUrl}
+              controls
+              className="w-full"
+              onLoadedData={handleMediaLoad}
+              onError={handleMediaError}
+            />
+            <div className="text-xs text-white/60 mt-1">Voice message</div>
           </div>
         </div>
       )}
@@ -273,16 +302,24 @@ export const MessageBubbleContent = ({
 
       {/* Message reactions */}
       {message.reactions && message.reactions.length > 0 && (
-        <div className="message-reactions px-3 pb-2">
+        <div className="bg-black/20 px-3 py-1.5 rounded-full absolute -bottom-2 left-4 shadow-md flex items-center space-x-1">
           {message.reactions.map((reaction, index) => (
             <div key={index} className={cn(
-              "message-reaction",
-              reaction.users.includes(message.sender_id) && "active"
+              "px-1 py-0.5 rounded-md text-sm",
+              reaction.users.includes(message.sender_id) && "bg-luxury-primary/20"
             )}>
               <span>{reaction.emoji}</span>
-              <span className="ml-1">{reaction.users.length}</span>
+              <span className="ml-1 text-xs">{reaction.users.length}</span>
             </div>
           ))}
+        </div>
+      )}
+      
+      {/* Encrypted message fallback */}
+      {!isTextMessage && !adContent && !isSnapMessage && !hasMedia && !isVideoMessage && !isFileMessage && !isAudioMessage && (
+        <div className="text-luxury-neutral/50 italic flex items-center justify-center gap-2 p-3">
+          <Lock className="h-3 w-3" />
+          <span className="text-sm">Encrypted message</span>
         </div>
       )}
     </motion.div>
