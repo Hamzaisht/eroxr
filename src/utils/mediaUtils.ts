@@ -1,8 +1,14 @@
 
-// Re-export everything from our modular media utilities
-export * from './media/types';
-export * from './media/mediaUtils';
-export * from './media/formatUtils';
-export * from './media/urlUtils';
-export * from './media/mediaTypeUtils';
+// Re-export functions from nested modules
+export { 
+  uploadFileToStorage, 
+  createUniqueFilePath, 
+  getFileFromStorage, 
+  deleteFileFromStorage,
+  determineMediaType,
+  extractMediaUrl
+} from './media/mediaUtils';
 
+// Only export this from one place to avoid conflicts
+// Remove the duplicate export
+// export { inferContentTypeFromExtension } from './media/mediaUtils';

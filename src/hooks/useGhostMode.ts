@@ -4,6 +4,10 @@ import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { ActiveSurveillanceState, LiveAlert, AvailabilityStatus } from '@/utils/media/types';
+import type { LiveAlert as TypedLiveAlert } from '@/types/alerts';
+import type { LiveSession } from '@/types/surveillance';
+
+type AnyLiveAlert = LiveAlert | TypedLiveAlert;
 
 interface UseGhostModeReturn {
   surveillanceState: ActiveSurveillanceState;
@@ -26,8 +30,8 @@ interface UseGhostModeReturn {
   canUseGhostMode: boolean;
   startSurveillance: (sessionOrUserId: any | string, duration?: number) => Promise<boolean>;
   stopSurveillance: () => Promise<boolean>;
-  liveAlerts: LiveAlert[] | null;
-  refreshAlerts: () => Promise<void>;
+  liveAlerts: AnyLiveAlert[] | null;
+  refreshAlerts: () => Promise<boolean>;
 }
 
 export const useGhostMode = (): UseGhostModeReturn => {
@@ -38,7 +42,7 @@ export const useGhostMode = (): UseGhostModeReturn => {
   const [alerts, setAlerts] = useState<LiveAlert[]>([]);
   const [isGhostMode, setIsGhostMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[] | null>(null);
+  const [liveAlerts, setLiveAlerts] = useState<AnyLiveAlert[] | null>(null);
   const session = useSession();
   const { toast } = useToast();
   
@@ -140,10 +144,11 @@ export const useGhostMode = (): UseGhostModeReturn => {
   }, []);
 
   // Mock implementation for refreshAlerts
-  const refreshAlerts = useCallback(async () => {
+  const refreshAlerts = useCallback(async (): Promise<boolean> => {
     // In a real app, this would fetch real alerts from an API
     console.log("Refreshing ghost mode alerts");
     setLiveAlerts([]);
+    return true;
   }, []);
   
   return {

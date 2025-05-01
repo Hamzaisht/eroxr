@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { MediaSource, MediaType } from '@/utils/media/types';
-import { stringToMediaType } from '@/utils/media/mediaTypeUtils';
+import { stringToMediaType } from '@/utils/media/types';
 
 interface MediaGridProps {
   mediaItems: MediaSource[];
@@ -153,3 +153,6 @@ export const MediaGrid = ({
     </div>
   );
 };
+
+// Add default export for backward compatibility
+export default MediaGrid;

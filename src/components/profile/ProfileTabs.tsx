@@ -4,7 +4,7 @@ import { Heart, Image, Users, CircuitBoard, MessageCircle, Video } from "lucide-
 import { AnimatePresence, motion } from "framer-motion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreatorsFeed } from "@/components/CreatorsFeed";
-import MediaGrid from "./MediaGrid";
+import { MediaGrid } from "./MediaGrid";
 import { EmptyState } from "./EmptyState";
 import { useParams } from "react-router-dom";
 import { VideoProfileCarousel } from "@/components/ads/video-profile-carousel";

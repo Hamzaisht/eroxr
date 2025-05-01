@@ -8,6 +8,15 @@ export enum MediaType {
   UNKNOWN = 'unknown'
 }
 
+// User availability status for profile and messaging
+export enum AvailabilityStatus {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  AWAY = 'away',
+  BUSY = 'busy',
+  INVISIBLE = 'invisible'
+}
+
 // Source object interface for media
 export interface MediaSource {
   id?: string;
@@ -81,15 +90,6 @@ export interface MediaMetadata {
   duration?: number;
   size?: number;
   type?: string;
-}
-
-// User availability status for profile and messaging
-export enum AvailabilityStatus {
-  ONLINE = 'online',
-  OFFLINE = 'offline',
-  AWAY = 'away',
-  BUSY = 'busy',
-  INVISIBLE = 'invisible'
 }
 
 // Ghost mode / surveillance related types

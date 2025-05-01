@@ -22,7 +22,7 @@ export const UserAvatar = ({
   avatarUrl, 
   email, 
   username,
-  status = 'offline',
+  status = AvailabilityStatus.OFFLINE,
   onStatusChange,
   size = 'md',
   showStatus = true
@@ -79,20 +79,20 @@ export const UserAvatar = ({
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onStatusChange('online')}>
-          <AvailabilityIndicator status="online" className="mr-2" />
+        <DropdownMenuItem onClick={() => onStatusChange(AvailabilityStatus.ONLINE)}>
+          <AvailabilityIndicator status={AvailabilityStatus.ONLINE} className="mr-2" />
           <span>Online</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onStatusChange('away')}>
-          <AvailabilityIndicator status="away" className="mr-2" />
+        <DropdownMenuItem onClick={() => onStatusChange(AvailabilityStatus.AWAY)}>
+          <AvailabilityIndicator status={AvailabilityStatus.AWAY} className="mr-2" />
           <span>Away</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onStatusChange('busy')}>
-          <AvailabilityIndicator status="busy" className="mr-2" />
+        <DropdownMenuItem onClick={() => onStatusChange(AvailabilityStatus.BUSY)}>
+          <AvailabilityIndicator status={AvailabilityStatus.BUSY} className="mr-2" />
           <span>Do Not Disturb</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onStatusChange('offline')}>
-          <AvailabilityIndicator status="offline" className="mr-2" />
+        <DropdownMenuItem onClick={() => onStatusChange(AvailabilityStatus.OFFLINE)}>
+          <AvailabilityIndicator status={AvailabilityStatus.OFFLINE} className="mr-2" />
           <span>Appear Offline</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
