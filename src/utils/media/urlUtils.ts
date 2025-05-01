@@ -34,3 +34,13 @@ export function getFileExtension(url: string): string {
   
   return extension.toLowerCase();
 }
+
+/**
+ * Adds a cache-busting parameter to a URL
+ */
+export function addCacheBuster(url: string): string {
+  if (!url) return '';
+  
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}cache=${Date.now()}`;
+}
