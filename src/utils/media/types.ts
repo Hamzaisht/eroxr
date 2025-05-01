@@ -1,4 +1,3 @@
-
 // Media types
 export enum MediaType {
   UNKNOWN = 'unknown',
@@ -118,8 +117,8 @@ export interface ActiveSurveillanceState {
 }
 
 // Use the same LiveAlert and LiveSession interfaces as in types/alerts.ts and types/surveillance.ts
-import { LiveAlert as AlertsLiveAlert, LiveSession as SurveillanceLiveSession } from '@/types/alerts';
+import { LiveAlert } from '@/types/alerts';
+import { LiveSession } from '@/types/surveillance';
 
 // Re-export for backward compatibility
-export type LiveAlert = AlertsLiveAlert;
-export type LiveSession = SurveillanceLiveSession;
+export type { LiveAlert, LiveSession };

@@ -75,7 +75,7 @@ const MediaGrid = ({ media, onMediaClick }: MediaGridProps) => {
                 onClick={() => handleMediaClick(item)}
               >
                 <img
-                  src={thumbnailUrl || undefined}
+                  src={thumbnailUrl}
                   alt={`Video thumbnail ${index + 1}`}
                   className="object-cover rounded-lg"
                 />
@@ -86,7 +86,7 @@ const MediaGrid = ({ media, onMediaClick }: MediaGridProps) => {
                 onClick={() => handleMediaClick(item)}
               >
                 <img
-                  src={thumbnailUrl || undefined}
+                  src={thumbnailUrl}
                   alt={`Media ${index + 1}`}
                   className="object-cover rounded-lg"
                 />

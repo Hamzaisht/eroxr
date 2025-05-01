@@ -38,9 +38,11 @@ function GodmodeLayout() {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
+  const typedAlerts = liveAlerts as LiveAlert[] || [];
+  
   return (
     <SurveillanceProvider
-      liveAlerts={liveAlerts as LiveAlert[] || []}
+      liveAlerts={typedAlerts}
       refreshAlerts={refreshAlerts}
       startSurveillance={startSurveillance}
     >

@@ -17,7 +17,7 @@ interface SurveillanceContextType {
   activeTab: SurveillanceTab;
   setActiveTab: (tab: SurveillanceTab) => void;
   refreshSessions: () => Promise<void>;
-  refreshAlerts: () => Promise<void>;
+  refreshAlerts: () => Promise<boolean>; // Changed from Promise<void> to Promise<boolean>
   handleStartSurveillance: (session: LiveSession) => Promise<boolean>;
   fetchLiveSessions: () => Promise<void>;
 }
