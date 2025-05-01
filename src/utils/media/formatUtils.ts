@@ -46,3 +46,35 @@ export const formatDuration = (seconds: number): string => {
   
   return `${formattedMinutes}:${formattedSeconds}`;
 };
+
+// Infer content type from file extension
+export const inferContentTypeFromExtension = (filename: string): string => {
+  const extension = filename.split('.').pop()?.toLowerCase() || '';
+  
+  switch (extension) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    case 'mp4':
+      return 'video/mp4';
+    case 'webm':
+      return 'video/webm';
+    case 'mov':
+      return 'video/quicktime';
+    case 'mp3':
+      return 'audio/mpeg';
+    case 'wav':
+      return 'audio/wav';
+    case 'ogg':
+      return 'audio/ogg';
+    default:
+      return 'application/octet-stream';
+  }
+};
+

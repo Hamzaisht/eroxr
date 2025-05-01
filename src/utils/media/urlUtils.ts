@@ -23,7 +23,7 @@ export const getAbsoluteUrl = (url: string): string => {
 };
 
 // Get a playable media URL, possibly converting or proxying if needed
-export const getPlayableMediaUrl = (url: string): string => {
+export const getPlayableMediaUrl = (url: string | null): string => {
   if (!url) return '';
   
   // For direct links to videos that might need special handling

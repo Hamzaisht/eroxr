@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause } from "lucide-react";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { getPlayableMediaUrl } from "@/utils/media/urlUtils";
 
 interface VideoPlayerProps {
   url: string;

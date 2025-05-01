@@ -1,7 +1,7 @@
+
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { uploadFileToStorage } from '@/utils/media/mediaUtils';
-import { createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { uploadFileToStorage, createUniqueFilePath } from '@/utils/media/mediaUtils';
 import { UploadOptions, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useToast } from './use-toast';
 
@@ -76,7 +76,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
   const uploadMedia = useCallback(async (
     file: File,
     options?: UploadOptions
-  ): Promise<{success: boolean; url?: string; path?: string; error?: string}> => {
+  ) => {
     if (!session?.user?.id) {
       const errorMessage = 'Authentication required to upload files';
       
@@ -132,7 +132,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       const contentCategory = options?.contentCategory || 'media';
       const bucket = contentCategory === 'shorts' ? 'shorts' : 'media';
       
-      // Create path for upload - now properly importing createUniqueFilePath
+      // Create path for upload
       const path = createUniqueFilePath(session.user.id, file);
       
       // Upload the file using the mediaUtils function
@@ -179,7 +179,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         }, delay);
       }
 
-      // Make sure we're returning url and path properties
+      // Return the result with url and path
       return {
         success: true,
         url: result.url || '',

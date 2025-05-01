@@ -1,62 +1,29 @@
+
 // Media types
 export enum MediaType {
-  UNKNOWN = 'unknown',
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
-  DOCUMENT = 'document',
-  EMBED = 'embed',
-  FILE = 'file'
+  UNKNOWN = 'unknown'
 }
 
-// Media source interface
+// Source object interface for media
 export interface MediaSource {
   id?: string;
-  url?: string;
-  src?: string;
-  media_url?: string | string[];
+  media_url?: string;
+  video_url?: string;
   media_urls?: string[];
-  video_url?: string | string[];
   video_urls?: string[];
+  url?: string;
   thumbnail_url?: string;
   video_thumbnail_url?: string;
-  poster?: string;
-  media_type?: string | MediaType;
+  media_type?: MediaType | string;
   content_type?: string;
-  description?: string;
-  title?: string;
-  duration?: number;
   creator_id?: string;
+  [key: string]: any;
 }
 
-// Helper function to convert string to MediaType enum
-export function stringToMediaType(typeString: string | undefined): MediaType {
-  if (!typeString) return MediaType.UNKNOWN;
-  
-  const lowerType = typeString.toLowerCase();
-  
-  switch (lowerType) {
-    case 'image':
-      return MediaType.IMAGE;
-    case 'video':
-      return MediaType.VIDEO;
-    case 'audio':
-      return MediaType.AUDIO;
-    case 'document':
-      return MediaType.DOCUMENT;
-    case 'embed':
-      return MediaType.EMBED;
-    case 'file':
-      return MediaType.FILE;
-    default:
-      return MediaType.UNKNOWN;
-  }
-}
-
-// User presence status
-export type AvailabilityStatus = 'online' | 'offline' | 'away' | 'busy' | 'invisible';
-
-// Media Options interface
+// Options for media components
 export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
@@ -72,20 +39,16 @@ export interface MediaOptions {
   onTimeUpdate?: (currentTime: number) => void;
 }
 
-// File validation result
-export interface FileValidationResult {
-  valid: boolean;
-  error?: string;
-}
-
-// Upload Options
+// Upload options
 export interface UploadOptions {
   maxSizeInMB?: number;
   allowedTypes?: string[];
-  contentCategory?: string;
+  onProgress?: (progress: number) => void;
+  onComplete?: (url: string) => void;
+  onError?: (error: string) => void;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
-  onProgress?: (progress: number) => void;
+  contentCategory?: string;
 }
 
 // Upload state
@@ -99,26 +62,22 @@ export interface UploadState {
   isComplete: boolean;
 }
 
-// Import the LiveSessionType from types/surveillance.ts to ensure compatibility
-import { LiveSessionType } from '@/types/surveillance';
-
-// Active Surveillance State
-export interface ActiveSurveillanceState {
-  isWatching: boolean;
-  session: any | null;
-  startTime: string;
-  userId?: string;
-  active?: boolean;
-  targetUserId?: string;
-  startedAt?: Date;
-  duration?: number;
-  sessionId?: string;
-  deviceId?: any;
+// File validation result
+export interface FileValidationResult {
+  valid: boolean;
+  error?: string;
 }
 
-// Use the same LiveAlert and LiveSession interfaces as in types/alerts.ts and types/surveillance.ts
-import { LiveAlert } from '@/types/alerts';
-import { LiveSession } from '@/types/surveillance';
+// Export additional types used by the mediaUtils system
+export interface PlaybackOptions {
+  startTime?: number;
+  volume?: number;
+  muted?: boolean;
+}
 
-// Re-export for backward compatibility
-export type { LiveAlert, LiveSession };
+export interface MediaMetadata {
+  dimensions?: { width: number; height: number };
+  duration?: number;
+  size?: number;
+  type?: string;
+}
