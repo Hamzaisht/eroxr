@@ -19,25 +19,30 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
     
     try {
       // Create message object without delivery_status if it's not supported
-      const messageData: any = {
+      const messageData = {
         sender_id: session.user.id,
         recipient_id: recipientId,
         content: content.trim(),
         message_type: 'text',
+        delivery_status: 'sent',
         created_at: new Date().toISOString(),
       };
       
-      // Only add delivery_status if needed
-      try {
-        await supabase.from('direct_messages').insert(messageData);
-      } catch (error: any) {
-        // If the first attempt failed, it might be due to missing delivery_status column
-        // Try again without it
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert(messageData);
+      
+      if (error) {
+        // If there's an error, check if it's due to delivery_status column not existing
         if (error.message?.includes('delivery_status')) {
           delete messageData.delivery_status;
-          await supabase.from('direct_messages').insert(messageData);
+          const { error: secondError } = await supabase
+            .from('direct_messages')
+            .insert(messageData);
+          
+          if (secondError) throw secondError;
         } else {
-          throw error; // Re-throw if it's a different error
+          throw error;
         }
       }
     } catch (error: any) {
@@ -72,13 +77,22 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
       
       // Determine if the media is a video or image
       const isVideo = filesArray.some(file => file.type.startsWith('video/'));
+      const isAudio = filesArray.some(file => file.type.startsWith('audio/'));
+      const isDocument = filesArray.some(file => 
+        file.type.includes('pdf') || 
+        file.type.includes('doc') || 
+        file.type.includes('xls') || 
+        file.type.includes('ppt'));
       
-      // Create the message data object without delivery_status initially
+      // Create the message data object
       const messageData: any = {
         sender_id: session.user.id,
         recipient_id: recipientId,
-        message_type: isVideo && urls.length === 1 ? 'video' : 'media',
+        message_type: isVideo && urls.length === 1 ? 'video' : 
+                     isAudio && urls.length === 1 ? 'audio' :
+                     isDocument && urls.length === 1 ? 'document' : 'media',
         created_at: new Date().toISOString(),
+        delivery_status: 'sent',
       };
       
       // Set the appropriate media field
@@ -89,7 +103,23 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
       }
       
       // Try to create the message
-      await supabase.from('direct_messages').insert(messageData);
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert(messageData);
+      
+      if (error) {
+        // If there's an error, check if it's due to delivery_status column not existing
+        if (error.message?.includes('delivery_status')) {
+          delete messageData.delivery_status;
+          const { error: secondError } = await supabase
+            .from('direct_messages')
+            .insert(messageData);
+          
+          if (secondError) throw secondError;
+        } else {
+          throw error;
+        }
+      }
       
       toast({
         title: "Media sent",
@@ -132,7 +162,7 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
       
-      // Create the snap message without delivery_status initially
+      // Create the snap message
       const messageData: any = {
         sender_id: session.user.id,
         recipient_id: recipientId,
@@ -140,10 +170,27 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
         message_type: 'snap',
         created_at: new Date().toISOString(),
         expires_at: expiresAt.toISOString(),
+        delivery_status: 'sent'
       };
       
       // Try to create the message
-      await supabase.from('direct_messages').insert(messageData);
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert(messageData);
+      
+      if (error) {
+        // If there's an error, check if it's due to delivery_status column not existing
+        if (error.message?.includes('delivery_status')) {
+          delete messageData.delivery_status;
+          const { error: secondError } = await supabase
+            .from('direct_messages')
+            .insert(messageData);
+          
+          if (secondError) throw secondError;
+        } else {
+          throw error;
+        }
+      }
       
       toast({
         title: "Snap sent",

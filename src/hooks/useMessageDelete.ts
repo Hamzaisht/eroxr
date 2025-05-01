@@ -1,18 +1,14 @@
 
-import { useState, useCallback } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from './use-toast';
+import { useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useMessageDelete(messageId: string) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const session = useSession();
   const { toast } = useToast();
   
   const handleDelete = useCallback(async () => {
-    if (!session?.user?.id || !messageId) {
-      return;
-    }
+    if (!messageId) return;
     
     setIsDeleting(true);
     
@@ -20,28 +16,24 @@ export function useMessageDelete(messageId: string) {
       const { error } = await supabase
         .from('direct_messages')
         .delete()
-        .eq('id', messageId)
-        .eq('sender_id', session.user.id);
-        
-      if (error) {
-        throw error;
-      }
+        .eq('id', messageId);
       
-      // Success toast
+      if (error) throw error;
+      
       toast({
         title: "Message deleted",
-        description: "Your message has been removed",
+        description: "The message has been permanently deleted"
       });
-    } catch (err: any) {
-      console.error('Error deleting message:', err);
+    } catch (error: any) {
+      console.error('Error deleting message:', error);
       toast({
         title: "Failed to delete message",
-        description: err.message || "An error occurred",
-        variant: "destructive",
+        description: error.message || "An error occurred while deleting your message",
+        variant: "destructive"
       });
       setIsDeleting(false);
     }
-  }, [session, messageId, toast]);
+  }, [messageId, toast]);
   
   return {
     isDeleting,

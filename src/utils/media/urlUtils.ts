@@ -1,103 +1,46 @@
 
-/**
- * Utility functions for handling media URLs
- */
+import { v4 as uuidv4 } from 'uuid';
 
-/**
- * Adds a cache busting parameter to a URL
- */
-export function addCacheBuster(url: string): string {
-  if (!url) return url;
-  
+// Get file extension from a URL or file path
+export const getFileExtension = (url: string): string => {
+  const parts = url.split('.');
+  return parts.length > 1 ? parts.pop()?.toLowerCase() || '' : '';
+};
+
+// Add a cache buster to a URL to prevent caching
+export const addCacheBuster = (url: string): string => {
   const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}_cb=${Date.now()}`;
-}
+  return `${url}${separator}cache=${uuidv4().substring(0, 8)}`;
+};
 
-/**
- * Gets the absolute URL for a relative path
- */
-export function getAbsoluteUrl(path: string): string {
-  if (path.startsWith('http')) return path;
+// Convert a relative URL to an absolute URL
+export const getAbsoluteUrl = (url: string): string => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
   
-  const baseUrl = window.location.origin;
-  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
-}
+  // Using the current origin
+  return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+};
 
-/**
- * Determines if a URL is external to the current domain
- */
-export function isExternalUrl(url: string): boolean {
-  if (!url || !url.startsWith('http')) return false;
-  
-  try {
-    const urlObj = new URL(url);
-    return urlObj.hostname !== window.location.hostname;
-  } catch (e) {
-    return false;
-  }
-}
-
-/**
- * Gets a playable media URL (handles caching, CDN issues, etc)
- * This is the main function that was causing import errors
- */
-export function getPlayableMediaUrl(url: string): string {
+// Get a playable media URL, possibly converting or proxying if needed
+export const getPlayableMediaUrl = (url: string): string => {
   if (!url) return '';
   
-  // Handle special URLs
-  if (url.startsWith('blob:') || url.startsWith('data:')) {
+  // For direct links to videos that might need special handling
+  const extension = getFileExtension(url);
+  
+  // Special case for m3u8 (HLS) files
+  if (extension === 'm3u8') {
+    // These typically need to be played with a compatible player
     return url;
   }
   
-  // Handle already processed URLs
-  if (url.includes('supabase.co/storage/v1/object/public/')) {
+  // For video formats that need special handling
+  if (['mp4', 'webm', 'mov', 'avi'].includes(extension)) {
+    // We can add specific handling here if needed
     return url;
   }
   
-  // Handle relative URLs
-  if (url.startsWith('/')) {
-    return getAbsoluteUrl(url);
-  }
-  
-  // For other URLs, add cache busting
-  return addCacheBuster(url);
-}
-
-/**
- * Gets the file extension from a URL or filename
- */
-export function getFileExtension(filename: string): string {
-  return filename.split('.').pop()?.toLowerCase() || '';
-}
-
-/**
- * Convert a relative URL to absolute URL
- */
-export function toAbsoluteUrl(url: string): string {
-  return getAbsoluteUrl(url);
-}
-
-/**
- * Extracts YouTube video ID from URL
- */
-export function extractYoutubeId(url: string): string {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  
-  return (match && match[2].length === 11) ? match[2] : '';
-}
-
-/**
- * Extracts thumbnail URL from a video URL
- */
-export function getVideoThumbnail(videoUrl: string): string {
-  // Common video platforms
-  if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-    const videoId = extractYoutubeId(videoUrl);
-    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-  }
-  
-  // For local videos, we could potentially create a thumbnail as a separate process
-  // For now just return the video URL
-  return videoUrl;
-}
+  // Default case
+  return url;
+};

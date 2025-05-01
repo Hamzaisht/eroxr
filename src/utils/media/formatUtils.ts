@@ -1,42 +1,30 @@
 
-/**
- * Infers the content type from a file extension
- */
-export function inferContentTypeFromExtension(filename: string): string {
-  const extension = filename.split('.').pop()?.toLowerCase() || '';
-  
-  // Image types
-  if (['jpg', 'jpeg'].includes(extension)) return 'image/jpeg';
-  if (extension === 'png') return 'image/png';
-  if (extension === 'gif') return 'image/gif';
-  if (extension === 'webp') return 'image/webp';
-  if (extension === 'svg') return 'image/svg+xml';
-  
-  // Video types
-  if (extension === 'mp4') return 'video/mp4';
-  if (extension === 'webm') return 'video/webm';
-  if (extension === 'mov') return 'video/quicktime';
-  if (extension === 'avi') return 'video/x-msvideo';
-  
-  // Audio types
-  if (extension === 'mp3') return 'audio/mpeg';
-  if (extension === 'wav') return 'audio/wav';
-  if (extension === 'ogg') return 'audio/ogg';
-  
-  // Document types
-  if (extension === 'pdf') return 'application/pdf';
-  if (['doc', 'docx'].includes(extension)) return 'application/msword';
-  if (['xls', 'xlsx'].includes(extension)) return 'application/vnd.ms-excel';
-  if (extension === 'txt') return 'text/plain';
-  
-  // Default to octet-stream for unknown types
-  return 'application/octet-stream';
-}
+import { formatDistanceToNow, format } from 'date-fns';
 
-/**
- * Formats file size from bytes to human-readable format
- */
-export function formatFileSize(bytes: number): string {
+// Format a date string to a relative time (e.g., "2 hours ago")
+export const formatRelativeTime = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch (error) {
+    console.error('Error formatting relative time:', error);
+    return 'Invalid date';
+  }
+};
+
+// Format a date string to a specific format
+export const formatDateTime = (dateString: string, formatString: string = 'PPpp'): string => {
+  try {
+    const date = new Date(dateString);
+    return format(date, formatString);
+  } catch (error) {
+    console.error('Error formatting date time:', error);
+    return 'Invalid date';
+  }
+};
+
+// Format file size to human readable format
+export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   
   const k = 1024;
@@ -44,17 +32,17 @@ export function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+};
 
-/**
- * Adds common media-specific URL parameters
- */
-export function addMediaUrlParams(url: string, params: Record<string, string>): string {
-  const urlObj = new URL(url);
+// Format duration in seconds to MM:SS format
+export const formatDuration = (seconds: number): string => {
+  if (!seconds || isNaN(seconds)) return '00:00';
   
-  Object.entries(params).forEach(([key, value]) => {
-    urlObj.searchParams.append(key, value);
-  });
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
   
-  return urlObj.toString();
-}
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+  const formattedSeconds = remainingSeconds.toString().padStart(2, '0');
+  
+  return `${formattedMinutes}:${formattedSeconds}`;
+};

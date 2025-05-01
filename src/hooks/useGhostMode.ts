@@ -45,7 +45,7 @@ export function useGhostMode() {
       session,
       startTime: new Date().toISOString(),
       active: true,
-      targetUserId: session.user_id || '', // Fixed: use user_id instead of userId
+      targetUserId: session.user_id || '', // Use user_id as per LiveSession type
       startedAt: new Date(),
       deviceId: null // Device ID is not available in LiveSession type
     }));
