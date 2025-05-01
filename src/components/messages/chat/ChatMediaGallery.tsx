@@ -83,7 +83,7 @@ export function ChatMediaGallery({ messages, onMediaSelect }: ChatMediaGalleryPr
                     />
                   </div>
                 ))
-              )}
+              ))}
             </div>
           </ScrollArea>
         </TabsContent>
@@ -132,7 +132,7 @@ export function ChatMediaGallery({ messages, onMediaSelect }: ChatMediaGalleryPr
                     <div className="text-sm truncate">{url.split('/').pop()}</div>
                   </div>
                 ))
-              )}
+              ))}
             </div>
           </ScrollArea>
         </TabsContent>
