@@ -1,5 +1,5 @@
 
-import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
+import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { AvailabilityStatus } from "@/utils/media/types";
 
 interface AvatarStatusProps {
   profileId: string;
@@ -71,20 +72,20 @@ export const AvatarStatus = ({
         align="end" 
         className="w-48 bg-black/30 backdrop-blur-2xl border-none shadow-[0_0_15px_rgba(0,0,0,0.3)] rounded-xl"
       >
-        <DropdownMenuItem onClick={() => updateStatus('online')} className="gap-2 hover:bg-white/5">
-          <AvailabilityIndicator status="online" size={10} />
+        <DropdownMenuItem onClick={() => updateStatus(AvailabilityStatus.ONLINE)} className="gap-2 hover:bg-white/5">
+          <AvailabilityIndicator status={AvailabilityStatus.ONLINE} size={10} />
           <span className="text-white/90">Online</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => updateStatus('away')} className="gap-2 hover:bg-white/5">
-          <AvailabilityIndicator status="away" size={10} />
+        <DropdownMenuItem onClick={() => updateStatus(AvailabilityStatus.AWAY)} className="gap-2 hover:bg-white/5">
+          <AvailabilityIndicator status={AvailabilityStatus.AWAY} size={10} />
           <span className="text-white/90">Away</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => updateStatus('busy')} className="gap-2 hover:bg-white/5">
-          <AvailabilityIndicator status="busy" size={10} />
+        <DropdownMenuItem onClick={() => updateStatus(AvailabilityStatus.BUSY)} className="gap-2 hover:bg-white/5">
+          <AvailabilityIndicator status={AvailabilityStatus.BUSY} size={10} />
           <span className="text-white/90">Busy</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => updateStatus('offline')} className="gap-2 hover:bg-white/5">
-          <AvailabilityIndicator status="offline" size={10} />
+        <DropdownMenuItem onClick={() => updateStatus(AvailabilityStatus.OFFLINE)} className="gap-2 hover:bg-white/5">
+          <AvailabilityIndicator status={AvailabilityStatus.OFFLINE} size={10} />
           <span className="text-white/90">Appear Offline</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
-import type { AvailabilityStatus } from "@/utils/media/types";
+import { AvailabilityStatus } from "@/utils/media/types";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -77,8 +77,8 @@ export const UserMenu = () => {
   // Convert AvailabilityStatus to the subset used by the component
   const handleStatusChange = async (newStatus: AvailabilityStatus) => {
     // Make sure we only use statuses compatible with the profile table
-    const safeStatus: 'online' | 'offline' | 'away' | 'busy' = 
-      newStatus === 'invisible' ? 'offline' : newStatus;
+    const safeStatus: AvailabilityStatus = 
+      newStatus === AvailabilityStatus.INVISIBLE ? AvailabilityStatus.OFFLINE : newStatus;
     
     try {
       const { error } = await supabase
@@ -127,6 +127,9 @@ export const UserMenu = () => {
     );
   }
 
+  // Get safe status from profile with fallback to offline
+  const currentStatus = (profile?.status as AvailabilityStatus) || AvailabilityStatus.OFFLINE;
+
   return (
     <div className="flex items-center gap-4">
       <div className="flex flex-col items-end">
@@ -156,10 +159,10 @@ export const UserMenu = () => {
             </Avatar>
             <div className="absolute -bottom-1 -right-1">
               <AvailabilityIndicator 
-                status={(profile?.status as AvailabilityStatus) || 'offline'} 
+                status={currentStatus} 
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleStatusChange(profile?.status === 'online' ? 'offline' : 'online');
+                  handleStatusChange(currentStatus === AvailabilityStatus.ONLINE ? AvailabilityStatus.OFFLINE : AvailabilityStatus.ONLINE);
                 }}
               />
             </div>

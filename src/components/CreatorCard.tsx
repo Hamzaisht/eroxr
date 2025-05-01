@@ -7,7 +7,8 @@ import { CreatorStats } from "./creator/CreatorStats";
 import { CheckCircle } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AvailabilityIndicator, AvailabilityStatus } from "./ui/availability-indicator";
+import { AvailabilityIndicator } from "./ui/availability-indicator";
+import { AvailabilityStatus } from "@/utils/media/types";
 import { useToast } from "./ui/use-toast";
 
 interface CreatorCardProps {
@@ -35,7 +36,7 @@ export const CreatorCard = ({
   const [subscribers, setSubscribers] = useState(initialSubscribers);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [availability, setAvailability] = useState<AvailabilityStatus>('offline');
+  const [availability, setAvailability] = useState<AvailabilityStatus>(AvailabilityStatus.OFFLINE);
   const session = useSession();
   const { toast } = useToast();
 
@@ -73,10 +74,10 @@ export const CreatorCard = ({
         const userState = state[creatorId] as PresenceState[];
         
         if (userState && userState.length > 0) {
-          const status = userState[0]?.status || "offline";
-          setAvailability(status as AvailabilityStatus);
+          const status = userState[0]?.status || AvailabilityStatus.OFFLINE;
+          setAvailability(status);
         } else {
-          setAvailability("offline");
+          setAvailability(AvailabilityStatus.OFFLINE);
         }
       })
       .subscribe();

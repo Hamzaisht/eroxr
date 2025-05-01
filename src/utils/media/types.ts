@@ -97,6 +97,13 @@ export interface ActiveSurveillanceState {
   active: boolean;
   target?: string;
   startTime?: string;
+  userId?: string;
+  targetUserId?: string;
+  duration?: number;
+  sessionId?: string;
+  isWatching?: boolean;
+  session?: any;
+  startedAt?: Date;
 }
 
 export interface LiveAlert {
@@ -105,6 +112,7 @@ export interface LiveAlert {
   content: string;
   created_at: string;
   user_id: string;
+  session?: any;
 }
 
 // Helper function to convert string to MediaType

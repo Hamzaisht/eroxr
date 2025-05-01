@@ -8,7 +8,7 @@ const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const PRESENCE_INTERVAL = 30 * 1000; // 30 seconds
 
 export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresenceReturn => {
-  const [availability, setAvailability] = useState<AvailabilityStatus>('offline');
+  const [availability, setAvailability] = useState<AvailabilityStatus>(AvailabilityStatus.OFFLINE);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [lastActive, setLastActive] = useState<string>();
   const [isInCall, setIsInCall] = useState(false);
@@ -25,14 +25,14 @@ export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresen
       const currentTime = Date.now();
       const timeSinceLastActivity = currentTime - lastActivity;
       
-      let newStatus: AvailabilityStatus = 'online';
+      let newStatus: AvailabilityStatus = AvailabilityStatus.ONLINE;
 
       if (isInCall) {
-        newStatus = 'busy';
+        newStatus = AvailabilityStatus.BUSY;
       } else if (isMessaging) {
-        newStatus = 'away';
+        newStatus = AvailabilityStatus.AWAY;
       } else if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
-        newStatus = 'offline';
+        newStatus = AvailabilityStatus.OFFLINE;
       }
 
       if (newStatus !== availability) {
@@ -44,8 +44,8 @@ export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresen
     if (isOwnProfile) {
       handleActivity = () => {
         setLastActivity(Date.now());
-        if (availability === 'offline') {
-          setAvailability('online');
+        if (availability === AvailabilityStatus.OFFLINE) {
+          setAvailability(AvailabilityStatus.ONLINE);
         }
       };
 
@@ -58,7 +58,7 @@ export const usePresence = (profileId: string, isOwnProfile: boolean): UsePresen
       presenceInterval = setInterval(updatePresence, PRESENCE_INTERVAL);
       inactivityTimeout = setTimeout(() => {
         if (!isInCall && !isMessaging) {
-          setAvailability('offline');
+          setAvailability(AvailabilityStatus.OFFLINE);
         }
       }, INACTIVITY_TIMEOUT);
     }

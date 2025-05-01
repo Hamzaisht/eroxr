@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
@@ -9,7 +10,7 @@ interface UserAvatarProps {
   onStatusChange?: (status: AvailabilityStatus) => void;
 }
 
-export const UserAvatar = ({ avatarUrl, email, status = 'offline', onStatusChange }: UserAvatarProps) => {
+export const UserAvatar = ({ avatarUrl, email, status = AvailabilityStatus.OFFLINE, onStatusChange }: UserAvatarProps) => {
   return (
     <Button 
       variant="ghost" 
@@ -31,7 +32,7 @@ export const UserAvatar = ({ avatarUrl, email, status = 'offline', onStatusChang
             status={status} 
             onClick={(e) => {
               e.stopPropagation();
-              onStatusChange(status === 'online' ? 'offline' : 'online');
+              onStatusChange(status === AvailabilityStatus.ONLINE ? AvailabilityStatus.OFFLINE : AvailabilityStatus.ONLINE);
             }}
           />
         </div>
