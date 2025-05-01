@@ -81,7 +81,11 @@ export function determineMediaType(item: MediaSource | string): MediaType {
     if (typeof item.media_url === 'string') {
       return determineMediaType(item.media_url);
     }
-    // If it's an array, check the first item
+    // If media_url is an array, check the first item
+    if (Array.isArray(item.media_url) && item.media_url.length > 0) {
+      return determineMediaType(item.media_url[0]);
+    }
+    // Check media_urls array
     if (Array.isArray(item.media_urls) && item.media_urls.length > 0) {
       return determineMediaType(item.media_urls[0]);
     }
@@ -98,11 +102,16 @@ export function extractMediaUrl(item: MediaSource | string): string | null {
   if (typeof item === 'string') return item;
   
   // Check various properties in order of preference
-  if (item.video_url) return item.video_url;
+  if (item.video_url) {
+    if (typeof item.video_url === 'string') return item.video_url;
+    if (Array.isArray(item.video_url) && item.video_url.length > 0) return item.video_url[0];
+  }
+  
   if (item.media_url) {
     if (typeof item.media_url === 'string') return item.media_url;
     if (Array.isArray(item.media_url) && item.media_url.length > 0) return item.media_url[0];
   }
+  
   if (item.url) return item.url;
   if (item.src) return item.src;
   

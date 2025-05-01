@@ -24,6 +24,7 @@ export function useGhostMode() {
 
   const toggleGhostMode = useCallback(() => {
     setIsGhostMode(prev => !prev);
+    return Promise.resolve(true);
   }, []);
 
   const refreshAlerts = useCallback(async () => {
@@ -31,7 +32,7 @@ export function useGhostMode() {
     // Simulate fetching alerts
     await new Promise(resolve => setTimeout(resolve, 500));
     setLoadingAlerts(false);
-    return Promise.resolve();
+    return Promise.resolve(true);
   }, []);
 
   const startSurveillance = useCallback(async (session: LiveSession) => {
@@ -43,12 +44,12 @@ export function useGhostMode() {
       session,
       startTime: new Date().toISOString(),
       active: true,
-      targetUserId: session.userId || '',
+      targetUserId: session.userId || session.user_id || '',
       startedAt: new Date(),
       deviceId: session.deviceId || session.device_id
     }));
     setLoading(false);
-    return Promise.resolve();
+    return Promise.resolve(true);
   }, []);
 
   const stopSurveillance = useCallback(async () => {
@@ -61,7 +62,7 @@ export function useGhostMode() {
       active: false
     }));
     setLoading(false);
-    return Promise.resolve();
+    return Promise.resolve(true);
   }, []);
 
   return {

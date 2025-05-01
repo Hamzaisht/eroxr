@@ -201,12 +201,27 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
       return <p>Unsupported media format</p>;
     }
   } else if (typeof source === 'object' && source !== null) {
-    if (source.video_url) {
+    const mediaSourceObject = source as MediaSource;
+    const videoUrl = mediaSourceObject.video_url && (
+      typeof mediaSourceObject.video_url === 'string' ? mediaSourceObject.video_url : 
+      Array.isArray(mediaSourceObject.video_url) && mediaSourceObject.video_url.length > 0 ? mediaSourceObject.video_url[0] : 
+      undefined
+    );
+    
+    const mediaUrl = mediaSourceObject.media_url && (
+      typeof mediaSourceObject.media_url === 'string' ? mediaSourceObject.media_url : 
+      Array.isArray(mediaSourceObject.media_url) && mediaSourceObject.media_url.length > 0 ? mediaSourceObject.media_url[0] : 
+      undefined
+    );
+    
+    const thumbnailUrl = mediaSourceObject.thumbnail_url || mediaSourceObject.video_thumbnail_url;
+    
+    if (videoUrl) {
       return (
         <VideoPlayer
           ref={ref as Ref<HTMLVideoElement>}
-          src={source.video_url}
-          poster={poster || source.thumbnail_url}
+          src={videoUrl}
+          poster={poster || thumbnailUrl}
           autoPlay={autoPlay}
           controls={controls}
           muted={muted}
@@ -220,12 +235,12 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
           onTimeUpdate={onTimeUpdate}
         />
       );
-    } else if (source.media_url) {
+    } else if (mediaUrl) {
       return (
         <Image
           ref={ref as Ref<HTMLImageElement>}
-          src={source.media_url}
-          alt={source.description || "Media content"}
+          src={mediaUrl}
+          alt={mediaSourceObject.description || "Media content"}
           className={className}
           onClick={onClick}
           onLoad={onLoad}
