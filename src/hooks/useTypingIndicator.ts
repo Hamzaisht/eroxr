@@ -16,15 +16,16 @@ export function useTypingIndicator(recipientId?: string) {
     
     // Only create subscription if we're sending a typing status
     if (typing) {
-      channel.subscribe().then(() => {
-        channel.send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            user_id: session.user.id,
-            is_typing: typing
-          }
-        });
+      channel.subscribe();
+      
+      // Send the typing event after subscription
+      channel.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          user_id: session.user.id,
+          is_typing: typing
+        }
       });
     }
     

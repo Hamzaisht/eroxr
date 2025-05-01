@@ -15,8 +15,7 @@ import { cn } from "@/lib/utils";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import Picker from '@emoji-mart/react';
-import data from '@emoji-mart/data';
+import { EmojiPickerSimple } from './EmojiPickerSimple';
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -103,7 +102,7 @@ export const MessageInput = ({
     }
   };
   
-  const handleEmojiSelect = (emoji: any) => {
+  const handleEmojiSelect = (emoji: { native: string }) => {
     setMessage(prev => prev + emoji.native);
     inputRef.current?.focus();
     
@@ -207,13 +206,9 @@ export const MessageInput = ({
             <PopoverContent 
               side="top" 
               sideOffset={10}
-              className="p-0 border-luxury-neutral/20 bg-luxury-darker w-[320px]"
+              className="p-0 border-luxury-neutral/20 bg-luxury-darker w-auto"
             >
-              <Picker 
-                data={data} 
-                onEmojiSelect={handleEmojiSelect} 
-                theme="dark"
-              />
+              <EmojiPickerSimple onEmojiSelect={handleEmojiSelect} />
             </PopoverContent>
           </Popover>
           

@@ -1,321 +1,316 @@
-import { useEffect, useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow } from 'date-fns';
-import { Circle, Search, UserPlus, CheckCheck, Check, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
-// Define the proper Conversation type interface
-interface Conversation {
+import { useState, useEffect } from 'react';
+import { useSession } from '@supabase/auth-helpers-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Search, MessageSquarePlus, CheckCheck } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { DirectMessage } from '@/integrations/supabase/types/message';
+
+interface ProfileWithInfo {
   id: string;
-  created_at: string;
-  other_user_id: string;
-  recipient: {
-    id: string;
-    username: string;
-    avatar_url: string | null;
-  };
-  last_message: {
-    id: string;
-    content: string | null;
-    media_url: string[] | null;
-    message_type: string | null;
+  username: string;
+  avatar_url?: string;
+  online_status?: string;
+  last_message?: {
+    content: string;
     created_at: string;
+    media_url: string[];
+    message_type: string;
     delivery_status?: string;
   };
-  unread_count: number;
+  unread_count?: number;
+  is_typing?: boolean;
 }
 
-export interface ConversationsListProps {
+interface ConversationsListProps {
   onSelectUser: (userId: string) => void;
   onNewMessage: () => void;
 }
 
 const ConversationsList = ({ onSelectUser, onNewMessage }: ConversationsListProps) => {
-  const session = useSession();
-  const userId = session?.user?.id;
+  const [conversations, setConversations] = useState<ProfileWithInfo[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [onlineUsers, setOnlineUsers] = useState<Record<string, boolean>>({});
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const session = useSession();
   
-  // Track online users
+  // Format the timestamp to a readable time
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const isYesterday = new Date(now.setDate(now.getDate() - 1)).toDateString() === date.toDateString();
+    
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (isYesterday) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  };
+
+  // Truncate message content for preview
+  const truncateMessage = (message: string | null | undefined, maxLength = 25) => {
+    if (!message) return '';
+    return message.length > maxLength ? message.substring(0, maxLength) + '...' : message;
+  };
+  
+  const getMessagePreview = (message: ProfileWithInfo['last_message']) => {
+    if (!message) return '';
+    
+    if (message.content) {
+      return truncateMessage(message.content);
+    }
+    
+    if (message.media_url && message.media_url.length > 0) {
+      switch (message.message_type) {
+        case 'image':
+          return '📷 Image';
+        case 'video':
+          return '🎥 Video';
+        case 'audio':
+          return '🎵 Voice message';
+        case 'snap':
+          return '👻 Snap';
+        default:
+          return '📎 Media';
+      }
+    }
+    
+    return '';
+  };
+  
+  // Get user conversations
   useEffect(() => {
-    if (!userId) return;
-    
-    const presenceChannel = supabase.channel('online-users');
-    
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
-        const onlineUserMap: Record<string, boolean> = {};
+    const getConversations = async () => {
+      if (!session?.user?.id) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const userId = session.user.id;
         
-        for (const [key, presences] of Object.entries(state)) {
-          const presenceUserId = (presences as any[])[0].user_id;
-          onlineUserMap[presenceUserId] = true;
+        // Get all unique user IDs the current user has chatted with
+        const { data: messageData, error: messageError } = await supabase
+          .from('direct_messages')
+          .select('sender_id, recipient_id, created_at')
+          .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+          .order('created_at', { ascending: false });
+          
+        if (messageError) throw messageError;
+        
+        // Get unique user IDs (excluding current user)
+        const uniqueUserIds = new Set<string>();
+        messageData?.forEach(msg => {
+          if (msg.sender_id === userId) {
+            uniqueUserIds.add(msg.recipient_id);
+          } else {
+            uniqueUserIds.add(msg.sender_id);
+          }
+        });
+        
+        // Get profile information for each user
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url, online_status')
+          .in('id', Array.from(uniqueUserIds));
+          
+        if (profilesError) throw profilesError;
+        
+        // Get last message for each conversation
+        const conversationsWithMessages: ProfileWithInfo[] = [];
+        
+        for (const profile of profilesData || []) {
+          // Get last message between users
+          const { data: lastMessageData, error: lastMessageError } = await supabase
+            .from('direct_messages')
+            .select('content, created_at, media_url, message_type, delivery_status')
+            .or(`and(sender_id.eq.${userId},recipient_id.eq.${profile.id}),and(sender_id.eq.${profile.id},recipient_id.eq.${userId})`)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+            
+          if (lastMessageError && lastMessageError.code !== 'PGRST116') {
+            console.error('Error fetching last message:', lastMessageError);
+          }
+          
+          // Get unread count
+          const { count, error: countError } = await supabase
+            .from('direct_messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('sender_id', profile.id)
+            .eq('recipient_id', userId)
+            .is('viewed_at', null);
+            
+          if (countError) {
+            console.error('Error counting unread messages:', countError);
+          }
+          
+          conversationsWithMessages.push({
+            ...profile,
+            last_message: lastMessageData || undefined,
+            unread_count: count || 0
+          });
         }
         
-        setOnlineUsers(onlineUserMap);
+        // Sort by most recent message
+        conversationsWithMessages.sort((a, b) => {
+          const dateA = a.last_message?.created_at ? new Date(a.last_message.created_at) : new Date(0);
+          const dateB = b.last_message?.created_at ? new Date(b.last_message.created_at) : new Date(0);
+          return dateB.getTime() - dateA.getTime();
+        });
+        
+        setConversations(conversationsWithMessages);
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    getConversations();
+    
+    // Setup realtime subscription
+    const channel = supabase
+      .channel('chat_updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `recipient_id=eq.${session?.user?.id}`
+      }, () => {
+        getConversations();
       })
       .subscribe();
-    
+      
     return () => {
-      supabase.removeChannel(presenceChannel);
+      supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [session?.user?.id]);
   
-  // Use React Query for better data fetching
-  const { data: conversations, isLoading, error } = useQuery({
-    queryKey: ["conversations", userId],
-    queryFn: async () => {
-      if (!userId) throw new Error("User not logged in");
-      
-      // Fetch all direct messages involving this user
-      const { data: messageData, error: messageError } = await supabase
-        .from('direct_messages')
-        .select('*')
-        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
-        .order('created_at', { ascending: false });
-        
-      if (messageError) throw messageError;
-      
-      // Group messages by conversation (based on the other user)
-      const conversationMap: Record<string, any> = {};
-      
-      for (const message of messageData || []) {
-        // Determine the other user in the conversation
-        const otherUserId = message.sender_id === userId ? message.recipient_id : message.sender_id;
-        
-        // Skip if no other user (shouldn't happen, but just in case)
-        if (!otherUserId) continue;
-        
-        // If this conversation isn't in our map yet, add it
-        if (!conversationMap[otherUserId]) {
-          conversationMap[otherUserId] = {
-            id: otherUserId, // Using the other user's ID as the conversation ID
-            created_at: message.created_at,
-            other_user_id: otherUserId,
-            last_message: {
-              id: message.id,
-              content: message.content,
-              media_url: message.media_url,
-              message_type: message.message_type,
-              created_at: message.created_at,
-              delivery_status: message.delivery_status
-            },
-            unread_count: message.recipient_id === userId && !message.viewed_at ? 1 : 0
-          };
-        }
-        
-        // Otherwise, if this message is newer than the last one we've seen, update
-        else if (new Date(message.created_at) > new Date(conversationMap[otherUserId].last_message.created_at)) {
-          conversationMap[otherUserId].last_message = {
-            id: message.id,
-            content: message.content,
-            media_url: message.media_url,
-            message_type: message.message_type,
-            created_at: message.created_at,
-            delivery_status: message.delivery_status
-          };
-          conversationMap[otherUserId].created_at = message.created_at;
-        }
-        
-        // Count unread messages
-        if (message.recipient_id === userId && !message.viewed_at) {
-          if (conversationMap[otherUserId].created_at !== message.created_at) { // Avoid double counting the last message
-            conversationMap[otherUserId].unread_count += 1;
-          }
-        }
-      }
-      
-      // Fetch profiles for the conversation partners
-      const otherUserIds = Object.keys(conversationMap);
-      
-      if (otherUserIds.length === 0) return [];
-      
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .in('id', otherUserIds);
-        
-      if (profilesError) throw profilesError;
-      
-      // Map profiles to conversations
-      const profileMap: Record<string, any> = {};
-      for (const profile of profiles || []) {
-        profileMap[profile.id] = profile;
-      }
-      
-      // Build the final conversations array with profiles
-      return Object.values(conversationMap).map((conv: any) => {
-        return {
-          ...conv,
-          recipient: profileMap[conv.other_user_id] || {
-            id: conv.other_user_id,
-            username: "Unknown User",
-            avatar_url: null
-          }
-        };
-      }).sort((a: any, b: any) => {
-        // Sort by most recent message
-        return new Date(b.last_message.created_at).getTime() - new Date(a.last_message.created_at).getTime();
-      }) as Conversation[];
-    },
-    enabled: !!userId,
-    refetchInterval: 60000 // Refetch every minute
-  });
-
-  // Format message preview text based on message type
-  const getMessagePreview = (message: Conversation['last_message']) => {
-    if (message.content) return message.content;
-    
-    switch (message.message_type) {
-      case 'media': return '📷 Photo';
-      case 'video': return '🎥 Video';
-      case 'audio': return '🎤 Voice message';
-      case 'document': return '📄 Document';
-      case 'snap': return '👻 Snap';
-      default: return 'New message';
-    }
-  };
-  
-  // Format time relative to now
-  const getFormattedTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    
-    // If same day, return time
-    if (date.toDateString() === now.toDateString()) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    // If within past week, return day name
-    if (now.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
-      return date.toLocaleDateString([], { weekday: 'short' });
-    }
-    
-    // Otherwise return short date
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  };
-  
-  // Get message status icon
-  const getMessageStatusIcon = (conversation: Conversation) => {
-    // Only show status for messages sent by current user
-    if (conversation.last_message.delivery_status && 
-        conversation.other_user_id === conversation.last_message.recipient_id) {
-      switch (conversation.last_message.delivery_status) {
-        case 'sent':
-          return <Check className="h-3 w-3 text-gray-400" />;
-        case 'delivered':
-          return <CheckCheck className="h-3 w-3 text-gray-400" />;
-        case 'seen':
-          return <CheckCheck className="h-3 w-3 text-blue-400" />;
-        case 'failed':
-          return <X className="h-3 w-3 text-red-400" />;
-        default:
-          return null;
-      }
-    }
-    return null;
-  };
-  
-  // Filter conversations based on search term
-  const filteredConversations = conversations?.filter(conversation => 
-    conversation.recipient.username.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter conversations by search term
+  const filteredConversations = conversations.filter(conversation => 
+    conversation.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  
+  const handleSelectUser = (userId: string) => {
+    setSelectedId(userId);
+    onSelectUser(userId);
+  };
+  
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-luxury-primary/20">
-        <div className="flex flex-col gap-3">
-          <Button
+    <div className="flex flex-col h-full bg-luxury-darker border-r border-luxury-neutral/20">
+      {/* Header */}
+      <div className="p-3 border-b border-luxury-neutral/20 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Messages</h2>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full"
             onClick={onNewMessage}
-            className="w-full py-2 text-sm text-white bg-luxury-primary rounded-md hover:bg-luxury-primary/80 transition-colors"
           >
-            <UserPlus className="h-4 w-4 mr-2" />
-            New Message
+            <MessageSquarePlus className="h-5 w-5" />
           </Button>
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-luxury-neutral/50" />
-            <Input
-              placeholder="Search conversations..."
-              className="pl-10 bg-luxury-neutral/5 border-luxury-neutral/20"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        </div>
+        
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search contacts..."
+            className="pl-9 bg-luxury-neutral/5"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
+      
+      {/* Conversations List */}
       <ScrollArea className="flex-1 overflow-y-auto">
-        <div className="py-2">
-          {isLoading ? (
-            <div className="space-y-3 p-4">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : error ? (
-            <p className="text-red-500 p-4">Error: {(error as Error).message}</p>
-          ) : filteredConversations && filteredConversations.length === 0 ? (
-            searchTerm ? (
-              <p className="text-luxury-neutral p-4">No conversations match your search.</p>
-            ) : (
-              <p className="text-luxury-neutral p-4">No conversations yet.</p>
-            )
-          ) : (
-            filteredConversations?.map((conversation) => {
-              const isOnline = onlineUsers[conversation.other_user_id];
+        {loading ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            Loading conversations...
+          </div>
+        ) : filteredConversations.length > 0 ? (
+          filteredConversations.map((contact) => (
+            <button
+              key={contact.id}
+              className={cn(
+                "w-full px-3 py-3 flex items-center gap-3 hover:bg-luxury-neutral/5 transition-colors",
+                selectedId === contact.id && "bg-luxury-dark",
+                contact.unread_count && contact.unread_count > 0 ? "bg-luxury-neutral/10" : ""
+              )}
+              onClick={() => handleSelectUser(contact.id)}
+            >
+              <div className="relative">
+                <Avatar className={cn(
+                  "h-10 w-10 border",
+                  contact.unread_count && contact.unread_count > 0 
+                    ? "border-luxury-primary" 
+                    : "border-transparent"
+                )}>
+                  <AvatarImage src={contact.avatar_url || ""} alt={contact.username} />
+                  <AvatarFallback>
+                    {contact.username?.[0]?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                
+                {contact.online_status === 'online' && (
+                  <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-luxury-darker" />
+                )}
+              </div>
               
-              return (
-                <button
-                  key={conversation.id}
-                  onClick={() => onSelectUser(conversation.recipient.id)}
-                  className="w-full flex items-center space-x-3 py-3 px-4 hover:bg-luxury-dark transition-colors border-b border-luxury-neutral/10 last:border-b-0"
-                >
-                  <div className="relative">
-                    <Avatar>
-                      <AvatarImage src={conversation.recipient.avatar_url || ""} alt={conversation.recipient.username} />
-                      <AvatarFallback>{conversation.recipient.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    
-                    {isOnline && (
-                      <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 border-2 border-luxury-darker" />
+              <div className="flex-1 text-left flex flex-col min-w-0">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium truncate">{contact.username}</span>
+                  {contact.last_message && (
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {formatTime(contact.last_message.created_at)}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex justify-between gap-1">
+                  <div className="text-sm text-muted-foreground truncate flex items-center gap-1 max-w-[80%]">
+                    {contact.is_typing ? (
+                      <span className="text-luxury-primary text-xs">Typing...</span>
+                    ) : (
+                      <>
+                        {contact.last_message && contact.last_message.sender_id === session?.user?.id && (
+                          <CheckCheck className={cn(
+                            "h-3.5 w-3.5", 
+                            contact.last_message.delivery_status === 'seen' 
+                              ? "text-luxury-primary" 
+                              : "text-muted-foreground"
+                          )} />
+                        )}
+                        <span className="truncate">
+                          {getMessagePreview(contact.last_message)}
+                        </span>
+                      </>
                     )}
                   </div>
                   
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="flex justify-between items-baseline">
-                      <h4 className="text-sm font-medium text-white truncate">
-                        {conversation.recipient.username}
-                      </h4>
-                      <span className="text-xs text-luxury-neutral flex items-center gap-1">
-                        {getMessageStatusIcon(conversation)}
-                        {getFormattedTime(conversation.last_message.created_at)}
-                      </span>
+                  {contact.unread_count && contact.unread_count > 0 && (
+                    <div className="bg-luxury-primary rounded-full h-5 min-w-5 flex items-center justify-center px-1.5 text-xs font-medium">
+                      {contact.unread_count}
                     </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-luxury-neutral line-clamp-1 max-w-[70%]">
-                        {getMessagePreview(conversation.last_message)}
-                      </p>
-                      
-                      {conversation.unread_count > 0 && (
-                        <Badge variant="secondary" className="ml-auto bg-luxury-primary">
-                          {conversation.unread_count}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
+                  )}
+                </div>
+              </div>
+            </button>
+          ))
+        ) : (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            {searchTerm ? "No contacts match your search" : "No conversations yet"}
+          </div>
+        )}
       </ScrollArea>
     </div>
   );
