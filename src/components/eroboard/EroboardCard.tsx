@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, MessageSquare, Share2 } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaItem } from "./types";
+import { MediaType } from "@/utils/media/types";
 
 interface EroboardCardProps {
   item: MediaItem;
@@ -36,7 +37,7 @@ export const EroboardCard = ({ item, view }: EroboardCardProps) => {
             media_url: item.type === "image" ? item.url : undefined,
             video_url: item.type === "video" ? item.url : undefined,
             thumbnail_url: item.thumbnail,
-            media_type: item.type
+            media_type: item.type === "image" ? MediaType.IMAGE : MediaType.VIDEO
           }}
           className="w-full h-full object-cover"
           controls={item.type === "video"}

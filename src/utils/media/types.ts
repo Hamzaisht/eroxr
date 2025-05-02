@@ -10,10 +10,10 @@ export interface MediaSource {
   video_urls?: string[];
   creator_id?: string;
   thumbnail_url?: string;
+  video_thumbnail_url?: string;
   media_type?: MediaType;
   src?: string;
   poster?: string;
-  video_thumbnail_url?: string;
 }
 
 /**
@@ -92,6 +92,10 @@ export interface UploadState {
   progress: number;
   error: string | null;
   result: StorageUploadResult | null;
+  files?: File[]; // Adding missing files property
+  previews?: string[];
+  isComplete?: boolean; // Adding missing isComplete property
+  success?: boolean;
 }
 
 /**
@@ -100,6 +104,7 @@ export interface UploadState {
 export interface FileValidationResult {
   valid: boolean;
   message?: string;
+  error?: string; // Adding missing error property
 }
 
 /**
