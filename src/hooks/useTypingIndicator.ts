@@ -16,7 +16,8 @@ export function useTypingIndicator(recipientId: string) {
     
     channel
       .subscribe()
-      .broadcast({
+      .send({
+        type: 'broadcast',
         event: 'typing',
         payload: { user_id: session.user.id, is_typing: isTyping }
       })
