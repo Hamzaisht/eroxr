@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { LiveAlert, LiveSession } from '@/types/surveillance';
+import { LiveAlert, LiveSession, ModerationAction } from '@/types/surveillance';
 
 // Define the active surveillance state interface
 interface ActiveSurveillanceState {
