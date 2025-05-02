@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { SurveillanceContentItem, ContentType } from "@/types/surveillance";
@@ -84,6 +85,7 @@ export function useContentSurveillance() {
       const transformedPosts: SurveillanceContentItem[] = (postsData || []).map(post => ({
         id: post.id,
         content_type: "post",
+        user_id: post.creator_id, // Set user_id to creator_id
         creator_id: post.creator_id,
         created_at: post.created_at,
         media_url: post.media_url || [],
@@ -101,7 +103,6 @@ export function useContentSurveillance() {
         views: post.views || 0,
         likes: post.likes || 0,
         comments: post.comments || 0,
-        user_id: post.creator_id,
         is_ppv: post.is_ppv || false,
         ppv_amount: post.ppv_amount,
         status: post.status || "active"
@@ -110,6 +111,7 @@ export function useContentSurveillance() {
       const transformedStories: SurveillanceContentItem[] = (storiesData || []).map(story => ({
         id: story.id,
         content_type: "story",
+        user_id: story.creator_id, // Set user_id to creator_id
         creator_id: story.creator_id,
         created_at: story.created_at,
         media_url: story.media_url || [],
@@ -126,11 +128,13 @@ export function useContentSurveillance() {
         views: story.views || 0,
         likes: story.likes || 0,
         comments: story.comments || 0,
+        status: story.status || "active"
       }));
       
       const transformedVideos: SurveillanceContentItem[] = (videosData || []).map(video => ({
         id: video.id,
         content_type: "video",
+        user_id: video.creator_id, // Set user_id to creator_id
         creator_id: video.creator_id,
         created_at: video.created_at,
         media_url: video.media_url || [],
@@ -147,11 +151,13 @@ export function useContentSurveillance() {
         views: video.views || 0,
         likes: video.likes || 0,
         comments: video.comments || 0,
+        status: video.status || "active"
       }));
       
       const transformedAudios: SurveillanceContentItem[] = (audiosData || []).map(audio => ({
         id: audio.id,
         content_type: "audio",
+        user_id: audio.creator_id, // Set user_id to creator_id
         creator_id: audio.creator_id,
         created_at: audio.created_at,
         media_url: audio.media_url || [],
@@ -168,6 +174,7 @@ export function useContentSurveillance() {
         views: audio.views || 0,
         likes: audio.likes || 0,
         comments: audio.comments || 0,
+        status: audio.status || "active"
       }));
       
       setPosts(transformedPosts);

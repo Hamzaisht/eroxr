@@ -28,7 +28,7 @@ export interface LiveSession {
   type: LiveSessionType;
   user_id: string;
   username?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   started_at: string;
   title?: string;
   description?: string;
@@ -44,7 +44,7 @@ export interface LiveSession {
   is_paused?: boolean;
   recipient_id?: string;
   recipient_username?: string;
-  recipient_avatar?: string;
+  recipient_avatar?: string | null;
   message_type?: string;
   
   // For bodycontact sessions
@@ -52,10 +52,21 @@ export interface LiveSession {
   last_active?: string;
   updated_at?: string;
   
+  // For streams and messages
+  viewer_count?: number;
+  participants?: number;
+  sender_username?: string;
+  
+  // For content and social features
+  tags?: string[];
+  
   // For video content
   video_url?: string;
   video_thumbnail_url?: string;
   duration?: number;
+  
+  // For internal use during type conversion
+  creator_id?: string;
 }
 
 // Interface for content items in surveillance
@@ -65,9 +76,9 @@ export interface SurveillanceContentItem {
   user_id: string;
   creator_id: string;
   creator_username: string;
-  creator_avatar_url?: string;
+  creator_avatar_url?: string | null;
   username?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   created_at: string;
   updated_at?: string;
   title: string;
@@ -82,4 +93,5 @@ export interface SurveillanceContentItem {
   comments?: number;
   location?: string;
   is_paused?: boolean;
+  type?: string; // Added for compatibility with some components
 }

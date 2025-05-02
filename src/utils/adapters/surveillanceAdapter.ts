@@ -49,7 +49,8 @@ export function convertMessageToSession(messageData: any): LiveSession {
     recipient_id: messageData.recipient_id,
     recipient_username: messageData.recipient_username,
     recipient_avatar: messageData.recipient_avatar_url,
-    message_type: messageData.message_type
+    message_type: messageData.message_type,
+    sender_username: messageData.sender_username
   };
 }
 
@@ -72,6 +73,7 @@ export function convertStreamToSession(streamData: any): LiveSession {
     is_active: streamData.status === 'live',
     media_url: streamData.playback_url ? [streamData.playback_url] : [],
     created_at: streamData.created_at,
-    content_type: 'stream'
+    content_type: 'stream',
+    viewer_count: streamData.viewer_count || 0
   };
 }

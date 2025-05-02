@@ -21,9 +21,11 @@ export function useSurveillanceQueries() {
       user_id: stream.creator_id,
       username: stream.creator?.username || "Unknown",
       created_at: stream.created_at,
+      started_at: stream.started_at || stream.created_at,
       title: stream.title,
       description: stream.description,
       status: stream.status,
+      is_active: stream.status === 'live',
       media_url: stream.playback_url ? [stream.playback_url] : []
     })) || [];
   };
@@ -45,9 +47,12 @@ export function useSurveillanceQueries() {
       username: msg.sender?.username || "Unknown",
       recipient_username: msg.recipient?.username,
       created_at: msg.created_at,
+      started_at: msg.created_at,
       content: msg.content,
       status: "active", // Set a default status for chats
-      media_url: msg.media_url ? (Array.isArray(msg.media_url) ? msg.media_url : [msg.media_url]) : []
+      is_active: true,
+      media_url: msg.media_url ? (Array.isArray(msg.media_url) ? msg.media_url : [msg.media_url]) : [],
+      sender_username: msg.sender?.username
     })) || [];
   };
 

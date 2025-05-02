@@ -92,6 +92,10 @@ export function SurveillanceProvider({
       // Ensure all items comply with the LiveSession interface
       const validatedData = data.map(item => ({
         ...item,
+        // Set default values for required fields if they're missing
+        started_at: item.started_at || item.created_at || new Date().toISOString(),
+        is_active: item.is_active !== undefined ? item.is_active : 
+                  (item.status === 'live' || item.status === 'active'),
         media_url: Array.isArray(item.media_url) ? item.media_url : 
                    item.media_url ? [item.media_url] : [],
         created_at: item.created_at || item.started_at || new Date().toISOString(),

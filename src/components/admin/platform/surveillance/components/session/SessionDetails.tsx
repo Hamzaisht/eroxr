@@ -2,7 +2,7 @@
 import { Clock, Users, User } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { LiveSession } from "../../types";
+import { LiveSession } from "@/types/surveillance";
 import { SessionBadge } from "./SessionBadge";
 
 interface SessionDetailsProps {

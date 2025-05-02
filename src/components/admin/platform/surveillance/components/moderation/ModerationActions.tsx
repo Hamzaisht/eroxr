@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { MoreHorizontal, Flag, Ban, EyeOff, Trash2, Edit, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -116,7 +115,6 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
         id: contentItem.id,
         type: 'content' as LiveSessionType,
         user_id: contentItem.user_id || '',
-        creator_id: contentItem.creator_id || contentItem.user_id || '',
         created_at: contentItem.created_at,
         content: contentItem.content,
         media_url: contentItem.media_url || [],
@@ -125,7 +123,9 @@ export const SessionModerationActions: React.FC<{ session: LiveSession | Surveil
         content_type: contentItem.content_type,
         title: contentItem.title || '',
         description: contentItem.description || '',
-        status: contentItem.visibility || contentItem.status
+        status: contentItem.visibility || contentItem.status || 'public',
+        started_at: contentItem.created_at, // Required field
+        is_active: true, // Required field
       };
     }
   };

@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { SurveillanceContentItem } from "../types";
+import { SurveillanceContentItem } from "@/types/surveillance";
 import { useCallback, useEffect, useState } from "react";
 import { useModerationActions } from "@/hooks/useModerationActions";
 import { FileText, Video, Image, Clock, DollarSign, File } from "lucide-react";
