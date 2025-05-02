@@ -3,7 +3,17 @@
  * Comprehensive media URL handling utilities
  */
 
-import { addCacheBuster } from '../mediaHelpers';
+/**
+ * Adds cache busting parameter to URL
+ * @param url - The URL to add the cache buster to
+ * @returns The URL with a cache buster parameter
+ */
+export function addCacheBuster(url: string): string {
+  if (!url) return url;
+  
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}cb=${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
 
 /**
  * Clean and normalize a URL to ensure it's properly formatted

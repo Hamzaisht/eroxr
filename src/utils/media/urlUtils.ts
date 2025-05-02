@@ -77,12 +77,26 @@ export function revokeObjectUrl(url: string): void {
 
 /**
  * Gets a playable media URL with cache busting if needed
+ * Self-contained implementation that doesn't rely on external imports
  * @param url - The URL to process
  * @returns The processed URL ready for playback
  */
 export function getPlayableMediaUrl(url: string | undefined | null): string {
   if (!url) return '';
   
+  // Clean and normalize URL
+  let processedUrl = url;
+  
+  // Handle URL without protocol
+  if (processedUrl.startsWith('//')) {
+    processedUrl = `https:${processedUrl}`;
+  }
+  
+  // Add protocol if missing
+  if (!processedUrl.startsWith('http') && !processedUrl.startsWith('blob:') && !processedUrl.startsWith('data:')) {
+    processedUrl = `https://${processedUrl}`;
+  }
+  
   // Add cache busting to help with media loading issues
-  return addCacheBuster(url);
+  return addCacheBuster(processedUrl);
 }

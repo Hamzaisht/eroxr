@@ -1,6 +1,4 @@
 
-import { getPlayableMediaUrl as getPlayableUrl } from './media/urlUtils';
-
 /**
  * Helper function to safely get a playable URL from a string or array of strings
  * This can be used throughout the app to handle media URLs correctly
@@ -9,10 +7,10 @@ export function getPlayableMediaUrl(url: string | string[] | undefined | null): 
   if (!url) return '';
   
   if (Array.isArray(url)) {
-    return url.length > 0 ? getPlayableUrl(url[0]) : '';
+    return url.length > 0 ? processMediaUrl(url[0]) : '';
   }
   
-  return getPlayableUrl(url);
+  return processMediaUrl(url);
 }
 
 /**
@@ -81,4 +79,25 @@ export function addCacheBuster(url: string): string {
   return url.includes('?') 
     ? `${url}&t=${timestamp}&r=${random}` 
     : `${url}?t=${timestamp}&r=${random}`;
+}
+
+/**
+ * Process media URL to make it playable
+ * This is the core function for URL processing to avoid circular dependencies
+ */
+function processMediaUrl(url: string): string {
+  if (!url) return '';
+  
+  // Handle URL without protocol
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+  
+  // Add protocol if missing
+  if (!url.startsWith('http') && !url.startsWith('blob:') && !url.startsWith('data:')) {
+    return `https://${url}`;
+  }
+  
+  // Add cache buster to help with media loading issues
+  return addCacheBuster(url);
 }

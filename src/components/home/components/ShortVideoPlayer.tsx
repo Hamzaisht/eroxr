@@ -68,11 +68,13 @@ export const ShortVideoPlayer = memo(({
     );
   }
 
+  console.log("Rendering ShortVideoPlayer with:", { safeVideoUrl, safeThumbnailUrl });
+
   return (
     <MediaRenderer
       src={safeVideoUrl}
       type={MediaType.VIDEO}
-      fallbackSrc={safeThumbnailUrl}
+      fallbackSrc={safeThumbnailUrl} 
       className="h-full w-full object-cover"
       autoPlay={isCurrentVideo}
       onError={handleVideoError}
