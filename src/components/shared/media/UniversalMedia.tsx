@@ -1,6 +1,6 @@
 
 import { forwardRef, Ref } from 'react';
-import { Media } from '@/components/shared/media/Media';
+import { MediaRenderer } from '@/components/media/MediaRenderer';
 import { MediaSource, MediaOptions } from '@/utils/media/types';
 
 interface UniversalMediaProps extends MediaOptions {
@@ -23,14 +23,9 @@ export const UniversalMedia = forwardRef(({
   onEnded,
   onTimeUpdate
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  // Handle the onTimeUpdate prop properly
-  const handleTimeUpdate = onTimeUpdate ? (currentTime: number) => {
-    onTimeUpdate(currentTime);
-  } : undefined;
-  
   return (
-    <Media
-      source={item}
+    <MediaRenderer
+      src={item}
       className={className}
       autoPlay={autoPlay}
       controls={controls}
@@ -42,8 +37,10 @@ export const UniversalMedia = forwardRef(({
       onLoad={onLoad}
       onError={onError}
       onEnded={onEnded}
-      onTimeUpdate={handleTimeUpdate}
+      onTimeUpdate={onTimeUpdate}
       ref={ref}
+      allowRetry={true}
+      maxRetries={2}
     />
   );
 });

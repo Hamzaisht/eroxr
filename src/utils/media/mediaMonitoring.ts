@@ -1,126 +1,62 @@
 
-// Define the types of errors we'll track
-type MediaErrorType = 'load_failure' | 'format_unsupported' | 'corruption' | 'timeout' | 'other';
-
-// Structure for error report
-interface MediaErrorReport {
+interface MediaErrorEvent {
   url: string;
-  errorType: MediaErrorType;
-  timestamp: number;
+  errorType: string;
   retryCount: number;
-  userAgent: string;
   mediaType: string;
-  context?: string;
+  componentName: string;
+  timestamp: string;
+  userAgent?: string;
+  referrer?: string;
 }
 
-// In-memory storage for errors (will be cleared on page refresh)
-const errorLog: MediaErrorReport[] = [];
-const ERROR_LOG_LIMIT = 100; // Prevent memory issues by limiting number of errors stored
+const ERROR_LIMIT = 10; // Maximum number of errors to store
+let errorCache: MediaErrorEvent[] = [];
 
 /**
- * Reports a media error for monitoring and analysis
+ * Report a media error for tracking and debugging
  */
-export const reportMediaError = (
-  url: string | null | undefined,
-  errorType: MediaErrorType,
+export function reportMediaError(
+  url: string,
+  errorType: string,
   retryCount: number = 0,
   mediaType: string = 'unknown',
-  context?: string
-) => {
-  if (!url) return;
-  
-  // Don't report localhost or blob URLs in production
-  if (process.env.NODE_ENV === 'production') {
-    if (url.startsWith('blob:') || url.includes('localhost') || url.includes('127.0.0.1')) {
-      return;
-    }
-  }
-  
-  // Create error report
-  const report: MediaErrorReport = {
+  componentName: string = 'unknown'
+) {
+  // Create error event
+  const errorEvent: MediaErrorEvent = {
     url,
     errorType,
-    timestamp: Date.now(),
     retryCount,
-    userAgent: navigator.userAgent,
     mediaType,
-    context
+    componentName,
+    timestamp: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    referrer: document.referrer || window.location.href
   };
   
-  // Add to in-memory log (removing oldest if at limit)
-  if (errorLog.length >= ERROR_LOG_LIMIT) {
-    errorLog.shift();
-  }
-  errorLog.push(report);
+  // Add to local cache (limited size)
+  errorCache = [errorEvent, ...errorCache.slice(0, ERROR_LIMIT - 1)];
   
-  // Log to console in development
-  if (process.env.NODE_ENV !== 'production') {
-    console.error(`Media Error [${errorType}]: ${url}`, report);
-  }
+  // Log to console for development
+  console.error('Media Error:', errorEvent);
   
-  // In production we could send this to an analytics service or backend
+  // In production, you could send this to an error tracking service
   if (process.env.NODE_ENV === 'production') {
-    // Sample implementation - send to your analytics/monitoring service
-    // sendToAnalytics('media_error', report);
-    
-    // Alternatively, save to localStorage for later batch processing
-    try {
-      const existingErrors = JSON.parse(localStorage.getItem('media_errors') || '[]');
-      if (existingErrors.length >= 50) existingErrors.shift();
-      existingErrors.push(report);
-      localStorage.setItem('media_errors', JSON.stringify(existingErrors));
-    } catch (e) {
-      // Silent fail if localStorage isn't available
-    }
+    // Example: sendToErrorTrackingService(errorEvent);
   }
-};
+}
 
 /**
- * Get all logged media errors (for admin/debugging purposes)
+ * Get all recorded media errors for debugging
  */
-export const getMediaErrors = (): MediaErrorReport[] => {
-  return [...errorLog];
-};
+export function getMediaErrors(): MediaErrorEvent[] {
+  return [...errorCache];
+}
 
 /**
- * Clear the error log
+ * Clear the media error cache
  */
-export const clearMediaErrors = (): void => {
-  errorLog.length = 0;
-  
-  try {
-    localStorage.removeItem('media_errors');
-  } catch (e) {
-    // Silent fail
-  }
-};
-
-/**
- * Check if media URL is likely to be valid
- */
-export const validateMediaUrl = (url: string | null | undefined): boolean => {
-  if (!url) return false;
-  
-  // Validate URL format
-  try {
-    new URL(url);
-  } catch (e) {
-    return false;
-  }
-  
-  // Check for common patterns that indicate invalid media URLs
-  const invalidPatterns = [
-    'undefined', 
-    'null', 
-    'NaN',
-    '[object Object]',
-    'data:,',
-    'about:blank',
-  ];
-  
-  for (const pattern of invalidPatterns) {
-    if (url.includes(pattern)) return false;
-  }
-  
-  return true;
-};
+export function clearMediaErrors(): void {
+  errorCache = [];
+}

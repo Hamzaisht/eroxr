@@ -1,13 +1,17 @@
 
 /**
- * Utilities for processing and validating media URLs
+ * Comprehensive media URL handling utilities
  */
 
+import { addCacheBuster } from '../mediaHelpers';
+
 /**
- * Clean up a URL to ensure it's properly formatted
+ * Clean and normalize a URL to ensure it's properly formatted
+ * @param url - The URL to clean
+ * @returns A cleaned and normalized URL
  */
-export const getCleanUrl = (url: string): string => {
-  if (!url) return '';
+export function normalizeMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
   
   // Handle special URLs
   if (url.startsWith('data:') || url.startsWith('blob:')) {
@@ -15,86 +19,51 @@ export const getCleanUrl = (url: string): string => {
   }
   
   try {
+    // Try to create a proper URL object
     const urlObj = new URL(url);
     return urlObj.toString();
   } catch (error) {
-    // If URL parsing fails, it might be a relative path
-    console.error('Error cleaning URL:', url, error);
+    // If invalid URL, attempt to fix common issues
     
-    // Check if it's a relative path and convert to absolute
+    // Check if it's a relative path
     if (url.startsWith('/')) {
       return `${window.location.origin}${url}`;
     }
-
-    // Try prepending https:// if no protocol
+    
+    // Add protocol if missing
     if (!url.match(/^[a-z]+:\/\//i)) {
       return `https://${url}`;
     }
     
+    console.warn('Could not normalize URL:', url);
     return url;
   }
-};
+}
 
 /**
- * Add cache busting parameter to prevent browser caching
+ * Builds a media URL with proper parameters for playback and viewing
+ * @param url - The source URL to process
+ * @returns A fully prepared media URL ready for display
  */
-export const addCacheBuster = (url: string): string => {
-  if (!url) return '';
-  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+export function buildPlayableMediaUrl(url: string | null | undefined): string {
+  const normalized = normalizeMediaUrl(url);
+  if (!normalized) return '';
   
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 10000);
-  
-  try {
-    const urlObj = new URL(getCleanUrl(url));
-    urlObj.searchParams.set('t', `${timestamp}-${random}`);
-    return urlObj.toString();
-  } catch (error) {
-    console.error('Error adding cache buster:', error);
-    
-    // Fallback to simpler cache busting
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}t=${timestamp}-${random}`;
+  // Skip cache busting for local blob URLs and data URLs
+  if (normalized.startsWith('blob:') || normalized.startsWith('data:')) {
+    return normalized;
   }
-};
+  
+  // Add cache buster to help with media loading issues
+  return addCacheBuster(normalized);
+}
 
 /**
- * Get direct media URL with proper formatting
+ * Extract a direct media URL from various source formats
+ * @param source - The source object or string
+ * @returns The extracted URL or empty string
  */
-export const getDirectMediaUrl = (url: string | null | undefined): string => {
-  if (!url) return '';
-  
-  // Handle special URLs
-  if (url.startsWith('data:') || url.startsWith('blob:')) {
-    return url;
-  }
-  
-  try {
-    // Clean the URL
-    const cleanUrl = getCleanUrl(url);
-    console.log(`getDirectMediaUrl - Original: ${url}`);
-    console.log(`getDirectMediaUrl - Cleaned: ${cleanUrl}`);
-    
-    // Skip cache busting for local preview URLs
-    if (url.startsWith('blob:')) {
-      return cleanUrl;
-    }
-
-    // Add cache busting for remote URLs
-    const finalUrl = addCacheBuster(cleanUrl);
-    console.log(`getDirectMediaUrl - Final: ${finalUrl}`);
-    return finalUrl;
-  } catch (error) {
-    console.error('Error processing media URL:', error);
-    return url;
-  }
-};
-
-/**
- * Extract a direct media URL from a variety of sources
- * Used by components to get URLs from various source formats
- */
-export const extractMediaUrl = (source: any): string => {
+export function extractMediaUrl(source: any): string {
   if (!source) return '';
   
   // Direct string URL
@@ -103,72 +72,104 @@ export const extractMediaUrl = (source: any): string => {
   }
   
   // Extract from media object with priority order
-  const extractedUrl = source.video_url || 
+  const extractedUrl = 
+    // Try video URLs first
+    (source.video_url) || 
     (Array.isArray(source.video_urls) && source.video_urls.length > 0 ? source.video_urls[0] : '') ||
-    source.media_url || 
+    // Then try media URLs
+    (source.media_url) || 
     (Array.isArray(source.media_urls) && source.media_urls.length > 0 ? source.media_urls[0] : '') ||
-    source.url || 
-    source.src || 
+    // Finally try generic URL properties
+    (source.url) || 
+    (source.src) || 
     '';
     
-  console.log(`extractMediaUrl - Source type: ${typeof source}, Extracted URL: ${extractedUrl}`);
   return extractedUrl;
-};
+}
 
 /**
- * Check if URL is accessible and return status details
- * Override CORS issues by assuming local URLs are always accessible
+ * Get a complete playable media URL
+ * @param source - Any media source (string, object, etc.)
+ * @returns A ready-to-use media URL
  */
-export const checkUrlAccessibility = async (url: string): Promise<{ 
-  accessible: boolean; 
-  status?: number;
-  contentType?: string;
-  error?: string;
-}> => {
-  if (!url) return { accessible: false, error: 'No URL provided' };
+export function getPlayableUrl(source: any): string {
+  // Extract the URL from the source
+  const extractedUrl = extractMediaUrl(source);
   
-  // Special handling for data and blob URLs - they are always accessible
-  if (url.startsWith('data:') || url.startsWith('blob:')) {
-    console.log(`URL accessibility check - Special URL (${url.substring(0, 20)}...): accessible`);
-    return { accessible: true };
-  }
-  
-  // For development purposes, assume all URLs are accessible
-  // This bypasses CORS issues that might happen during development
-  if (process.env.NODE_ENV === 'development' || 
-      url.includes('localhost') || 
-      url.includes('127.0.0.1')) {
-    console.log(`URL accessibility check - Development environment or local URL: assuming accessible`);
-    return { accessible: true };
-  }
-  
-  console.log(`Checking URL accessibility: ${url}`);
-  
-  // Security measure to ensure we're not sending credentials to other origins
-  const requestOptions: RequestInit = {
-    method: 'HEAD',
-    cache: 'no-store',
-    credentials: 'omit', // Don't send credentials for cross-origin requests
-    mode: 'no-cors', // Try with no-cors to avoid CORS issues
-  };
+  // Build the final playable URL
+  return buildPlayableMediaUrl(extractedUrl);
+}
+
+/**
+ * Handle fallbacks for failed media loading
+ * @param primary - The primary media URL
+ * @param fallbacks - Array of fallback URLs to try
+ * @returns The first working URL or the primary URL
+ */
+export async function getWithFallbacks(
+  primary: string,
+  fallbacks: string[] = []
+): Promise<string> {
+  // Always return the primary URL without checking if there are no fallbacks
+  if (!fallbacks.length) return primary;
   
   try {
-    // First try with HEAD request for efficiency
-    const response = await fetch(url, requestOptions);
+    // Try to load the primary URL
+    const response = await fetch(primary, { 
+      method: 'HEAD', 
+      cache: 'no-store',
+      mode: 'no-cors'
+    });
     
-    console.log(`URL accessibility check for ${url}: status ${response.status}`);
+    if (response.ok) {
+      return primary;
+    }
     
-    return { 
-      accessible: response.ok, 
-      status: response.status,
-      contentType: response.headers.get('content-type') || undefined
-    };
-  } catch (error) {
-    console.error('Error checking URL accessibility:', url, error);
-    
-    // For error during fetch, assume the URL is still accessible
-    // This helps bypass CORS errors
-    console.log(`Assuming URL is accessible despite fetch error: ${url}`);
-    return { accessible: true };
+    // Try each fallback
+    for (const fallback of fallbacks) {
+      if (!fallback) continue;
+      
+      try {
+        const fallbackResponse = await fetch(fallback, { 
+          method: 'HEAD', 
+          cache: 'no-store',
+          mode: 'no-cors'
+        });
+        
+        if (fallbackResponse.ok) {
+          return fallback;
+        }
+      } catch (e) {
+        // Continue to next fallback
+        console.warn('Fallback URL failed:', fallback);
+      }
+    }
+  } catch (e) {
+    // Fetch failed, just return the primary URL
+    console.warn('URL check failed:', e);
   }
-};
+  
+  // Return the primary URL if all checks fail
+  return primary;
+}
+
+/**
+ * Check if a URL points to a valid media resource
+ * @param url - The URL to check
+ * @returns Promise resolving to a boolean indicating if the URL is valid
+ */
+export async function isValidMediaUrl(url: string): Promise<boolean> {
+  if (!url) return false;
+  
+  try {
+    const response = await fetch(url, { 
+      method: 'HEAD', 
+      mode: 'no-cors',
+      cache: 'no-store' 
+    });
+    return true; // If no-cors didn't throw, assume it's valid
+  } catch (e) {
+    console.error('Media URL validation failed:', e);
+    return false;
+  }
+}

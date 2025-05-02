@@ -1,194 +1,211 @@
 
-import { useState, forwardRef } from "react";
-import { cn } from "@/lib/utils";
-import { MediaLoadingState } from "./states/MediaLoadingState";
-import { MediaErrorState } from "./states/MediaErrorState";
-import { useMediaHandling } from "@/hooks/useMediaHandling";
-import { MediaType } from "@/utils/media/types";
+import { useState, useEffect, forwardRef, Ref } from 'react';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { MediaType } from '@/utils/media/types';
+import { useMediaService } from '@/hooks/useMediaService';
+import { cn } from '@/lib/utils';
 
 interface MediaRendererProps {
-  src: string | null | undefined;
-  type?: MediaType;
-  fallbackSrc?: string;
+  src: string | any; // Accept string or object with media properties
+  type?: MediaType | string;
   className?: string;
-  autoPlay?: boolean;
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
   controls?: boolean;
+  autoPlay?: boolean;
   muted?: boolean;
   loop?: boolean;
   poster?: string;
-  alt?: string;
-  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
-  onClick?: () => void;
+  showWatermark?: boolean;
+  allowRetry?: boolean;
+  maxRetries?: number;
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
-  showLoadingState?: boolean;
-  showErrorState?: boolean;
-  allowRetry?: boolean;
-  maxRetries?: number;
+  onTimeUpdate?: (time: number) => void;
+  onClick?: () => void;
+  alt?: string;
 }
 
-export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, MediaRendererProps>(({
-  src,
-  type = MediaType.UNKNOWN,
-  fallbackSrc,
-  className = "",
-  autoPlay = false,
-  controls = true,
-  muted = true,
-  loop = false,
-  poster,
-  alt = "Media content",
-  objectFit = 'cover',
-  onClick,
-  onLoad,
-  onError,
-  onEnded,
-  showLoadingState = true,
-  showErrorState = true,
-  allowRetry = true,
-  maxRetries = 2
-}, ref) => {
-  const [isMediaVisible, setIsMediaVisible] = useState(false);
-  
-  const {
-    currentSrc,
-    status,
-    handleLoad,
-    handleError,
-    retry,
-    isLoading,
-    hasError,
-    retryCount
-  } = useMediaHandling({
+export const MediaRenderer = forwardRef((
+  { 
     src,
-    fallbackSrc,
-    onLoad: () => {
-      setIsMediaVisible(true);
-      if (onLoad) onLoad();
-    },
+    type,
+    className = '',
+    objectFit = 'cover',
+    controls = true,
+    autoPlay = false,
+    muted = true,
+    loop = false,
+    poster,
+    showWatermark = false,
+    allowRetry = true,
+    maxRetries = 2,
+    onLoad,
     onError,
-    maxRetries
+    onEnded,
+    onTimeUpdate,
+    onClick,
+    alt = 'Media content'
+  }: MediaRendererProps,
+  ref: Ref<HTMLVideoElement | HTMLImageElement>
+) => {
+  const [errorShown, setErrorShown] = useState<boolean>(false);
+
+  // Use our centralized media service
+  const media = useMediaService(src, {
+    maxRetries,
+    onLoad,
+    onError: () => {
+      setErrorShown(true);
+      if (onError) onError();
+    }
   });
 
-  // Determine media type if not provided
-  const determineType = () => {
-    if (type !== MediaType.UNKNOWN) return type;
-    
-    if (!currentSrc) return MediaType.UNKNOWN;
-    
-    const url = currentSrc.toLowerCase();
-    if (url.match(/\.(mp4|webm|mov|m4v|avi)($|\?)/i)) return MediaType.VIDEO;
-    if (url.match(/\.(jpe?g|png|gif|webp|avif|svg)($|\?)/i)) return MediaType.IMAGE;
-    if (url.match(/\.(mp3|wav|ogg)($|\?)/i)) return MediaType.AUDIO;
-    
-    // If URL contains certain paths that suggest video
-    if (url.includes('/videos/') || url.includes('/video/') || url.includes('stream')) {
-      return MediaType.VIDEO;
-    }
-    
-    return MediaType.IMAGE; // Default to image as fallback
-  };
-  
-  const mediaType = determineType();
+  // Force the media type if provided
+  const mediaType = type ? 
+    (typeof type === 'string' ? type as MediaType : type) : 
+    media.mediaType;
 
-  if (!currentSrc) {
+  // Clear error shown state on new source
+  useEffect(() => {
+    setErrorShown(false);
+  }, [src]);
+
+  // Handle video time update
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (onTimeUpdate) {
+      onTimeUpdate(e.currentTarget.currentTime);
+    }
+  };
+
+  // Loading state
+  if (media.isLoading) {
     return (
-      <div className={`${className} flex items-center justify-center bg-black/10 rounded`}>
-        <span className="text-muted-foreground text-sm">No media source</span>
+      <div className={cn("flex items-center justify-center bg-black/20 rounded", className)}>
+        <Loader2 className="h-8 w-8 animate-spin text-white/70" />
       </div>
     );
   }
 
-  // Show loading state
-  if (isLoading && showLoadingState) {
-    return <MediaLoadingState className={className} />;
-  }
-
-  // Show error state
-  if (hasError && showErrorState) {
+  // Error state with retry button
+  if ((media.hasError && errorShown) || !media.url) {
     return (
-      <MediaErrorState 
-        onRetry={allowRetry ? retry : undefined}
-        accessibleUrl={currentSrc}
-        retryCount={retryCount}
-        message="Failed to load media content"
-      />
+      <div className={cn("flex flex-col items-center justify-center bg-black/20 p-4 rounded", className)}>
+        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+        <p className="text-sm text-gray-500 mb-3 text-center">
+          {media.errorMessage || 'Failed to load media'}
+        </p>
+        {allowRetry && (
+          <button
+            onClick={() => {
+              setErrorShown(false);
+              media.retry();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 hover:bg-primary text-white text-sm rounded-md"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Retry
+          </button>
+        )}
+      </div>
     );
   }
 
-  // Render based on media type
+  // Render video content
   if (mediaType === MediaType.VIDEO) {
     return (
-      <div className={`relative overflow-hidden ${className}`}>
+      <div className="relative w-full h-full">
         <video
-          ref={ref as React.Ref<HTMLVideoElement>}
-          src={currentSrc}
-          className={cn(
-            "w-full h-full transition-opacity duration-300",
-            isMediaVisible ? "opacity-100" : "opacity-0",
-            objectFit === 'cover' ? "object-cover" : `object-${objectFit}`
-          )}
+          ref={ref as React.RefObject<HTMLVideoElement>}
+          src={media.url || undefined}
+          className={className}
+          style={{ objectFit }}
+          poster={poster || media.thumbnailUrl || undefined}
           autoPlay={autoPlay}
           controls={controls}
           muted={muted}
           loop={loop}
-          poster={poster}
-          onClick={onClick}
-          onLoadedData={handleLoad}
-          onError={handleError}
-          onEnded={onEnded}
           playsInline
+          onClick={onClick}
+          onLoadedData={() => {
+            if (onLoad) onLoad();
+          }}
+          onError={() => {
+            media.retryWithBackoff();
+            setErrorShown(true);
+            if (onError) onError();
+          }}
+          onEnded={onEnded}
+          onTimeUpdate={handleTimeUpdate}
         />
+        {showWatermark && (
+          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+            eroxr
+          </div>
+        )}
       </div>
     );
   }
 
+  // Render image content
   if (mediaType === MediaType.IMAGE) {
     return (
-      <div className={`relative overflow-hidden ${className}`}>
+      <div className="relative w-full h-full">
         <img
-          ref={ref as React.Ref<HTMLImageElement>}
-          src={currentSrc}
-          alt={alt}
-          className={cn(
-            "w-full h-full transition-opacity duration-300",
-            isMediaVisible ? "opacity-100" : "opacity-0",
-            objectFit === 'cover' ? "object-cover" : `object-${objectFit}`
-          )}
-          onClick={onClick}
-          onLoad={handleLoad}
-          onError={handleError}
+          ref={ref as React.RefObject<HTMLImageElement>}
+          src={media.url || undefined}
+          className={className}
           style={{ objectFit }}
+          onClick={onClick}
+          onLoad={() => {
+            if (onLoad) onLoad();
+          }}
+          onError={() => {
+            media.retryWithBackoff();
+            setErrorShown(true);
+            if (onError) onError();
+          }}
+          alt={alt}
         />
+        {showWatermark && (
+          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+            eroxr
+          </div>
+        )}
       </div>
     );
   }
 
+  // Render audio content
   if (mediaType === MediaType.AUDIO) {
     return (
-      <div className={`audio-container ${className}`}>
+      <div className={cn("audio-player", className)}>
         <audio
-          src={currentSrc}
-          className="w-full"
+          src={media.url || undefined}
           controls={controls}
           autoPlay={autoPlay}
           muted={muted}
           loop={loop}
-          onLoadedData={handleLoad}
-          onError={handleError}
+          onLoadedData={() => {
+            if (onLoad) onLoad();
+          }}
+          onError={() => {
+            media.retryWithBackoff(); 
+            if (onError) onError();
+          }}
           onEnded={onEnded}
+          className="w-full"
         />
       </div>
     );
   }
 
-  // Fallback for unknown types
+  // Fallback for unsupported types
   return (
-    <div className={`${className} flex items-center justify-center bg-black/10 rounded`}>
-      <span className="text-muted-foreground text-sm">Unsupported media format</span>
+    <div className={cn("flex items-center justify-center bg-black/10", className)}>
+      <p className="text-sm text-gray-500">Unsupported media format</p>
     </div>
   );
 });
 
-MediaRenderer.displayName = "MediaRenderer";
+MediaRenderer.displayName = 'MediaRenderer';
