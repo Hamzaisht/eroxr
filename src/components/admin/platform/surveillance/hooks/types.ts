@@ -1,5 +1,5 @@
 
-import { LiveSession, SurveillanceTab } from "@/types/surveillance";
+import { LiveSession, SurveillanceTab, SurveillanceContentItem } from "@/types/surveillance";
 
 export interface SurveillanceData {
   liveSessions: LiveSession[];

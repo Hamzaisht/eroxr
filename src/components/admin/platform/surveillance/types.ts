@@ -1,5 +1,5 @@
 
-// First import all types from central location
+// Import all types from central location
 import type { 
   SurveillanceTab,
   LiveSessionType,

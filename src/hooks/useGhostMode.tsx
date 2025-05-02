@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ActiveSurveillanceState, LiveAlert } from '@/utils/media/types';
@@ -119,9 +118,9 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Start surveillance on a user
+  // Update the startSurveillance function to use the LiveSession interface
   const startSurveillance = async (session: LiveSession): Promise<boolean> => {
-    if (!session?.user?.id || !hasGhostAccess) return false;
+    if (!session || !hasGhostAccess) return false;
     
     setIsLoading(true);
     
@@ -134,7 +133,7 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       setActiveSurveillance({
         isActive: true,
         lastUpdated: new Date(),
-        userId: session.user.id,
+        userId: session.user?.id,
         targetUserId: session.user_id,
         startedAt: new Date(),
         sessionId,
@@ -150,7 +149,7 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         .from('admin_surveillance')
         .insert({
           session_id: sessionId,
-          admin_id: session.user.id,
+          admin_id: session.user?.id,
           target_user_id: session.user_id,
           started_at: timestamp,
           status: 'active'
