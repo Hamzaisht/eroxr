@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { LiveAlert } from '@/types/alerts';
-import { LiveSession } from '@/types/surveillance';
+import { LiveAlert, LiveSession } from '@/types/surveillance';
 
 // Define the active surveillance state interface
 interface ActiveSurveillanceState {
@@ -204,7 +203,7 @@ export function useGhostMode() {
       
       // Log the surveillance action - Fix here: Using user_id instead of user
       await supabase.from('admin_logs').insert({
-        admin_id: session?.user_id,
+        admin_id: session.user_id,
         action: 'start_surveillance',
         action_type: 'surveillance',
         details: {

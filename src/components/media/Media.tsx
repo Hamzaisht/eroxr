@@ -1,13 +1,24 @@
-
 import { useState, useEffect, forwardRef } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
+import { MediaType } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
-type MediaProps = {
-  source: MediaSource | string;
-} & MediaOptions;
+interface MediaProps {
+  source: any;
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  showWatermark?: boolean;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: () => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (time: number) => void;
+}
 
 export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(
   (
