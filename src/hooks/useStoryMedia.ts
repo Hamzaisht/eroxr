@@ -1,8 +1,9 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { MediaOptions } from '@/utils/media/types';
-import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
 
 interface UseStoryMediaOptions extends MediaOptions {
   onComplete?: () => void;

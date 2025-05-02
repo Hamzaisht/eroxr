@@ -1,6 +1,6 @@
 
 import { VideoPlayer } from "@/components/video/VideoPlayer";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { getPlayableMediaUrl } from "@/utils/media/mediaUrlUtils";
 
 interface VideoThumbnailProps {
   videoUrl?: string;
