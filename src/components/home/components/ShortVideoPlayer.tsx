@@ -1,5 +1,5 @@
 
-import { useState, useEffect, memo, useCallback } from "react";
+import { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { MediaType } from "@/utils/media/types";
 import { MediaRenderer } from "@/components/media/MediaRenderer";
@@ -25,7 +25,17 @@ export const ShortVideoPlayer = memo(({
   const [loadRetries, setLoadRetries] = useState(0);
   const { toast } = useToast();
   
-  console.log("ShortVideoPlayer props:", { videoUrl, thumbnailUrl, isCurrentVideo });
+  // Create a stable media source object reference that won't change on every render
+  const mediaSource = useMemo(() => {
+    if (!videoUrl) return null;
+    
+    return {
+      video_url: videoUrl,
+      thumbnail_url: thumbnailUrl,
+      creator_id: creatorId,
+      media_type: MediaType.VIDEO
+    };
+  }, [videoUrl, thumbnailUrl, creatorId]);
   
   // Handle video error with improved retry mechanism
   const handleVideoError = useCallback(() => {
@@ -75,17 +85,7 @@ export const ShortVideoPlayer = memo(({
       </div>
     );
   }
-
-  // Create media source object for MediaRenderer
-  const mediaSource = videoUrl ? {
-    video_url: videoUrl,
-    thumbnail_url: thumbnailUrl,
-    creator_id: creatorId,
-    media_type: MediaType.VIDEO
-  } : null;
-
-  console.log("Rendering ShortVideoPlayer with:", { videoUrl, thumbnailUrl, isCurrentVideo, mediaSource });
-
+  
   return (
     <MediaRenderer
       src={mediaSource}

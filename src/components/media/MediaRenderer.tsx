@@ -1,5 +1,5 @@
 
-import { useState, useEffect, forwardRef, Ref } from 'react';
+import { useState, useEffect, forwardRef, Ref, useRef, memo, useCallback } from 'react';
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { MediaType } from '@/utils/media/types';
 import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
@@ -26,7 +26,7 @@ interface MediaRendererProps {
   maxRetries?: number;
 }
 
-export const MediaRenderer = forwardRef(({
+export const MediaRenderer = memo(forwardRef(({
   src,
   type: initialType,
   className = "",
@@ -51,34 +51,34 @@ export const MediaRenderer = forwardRef(({
   const [url, setUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<MediaType>(initialType || MediaType.UNKNOWN);
   const [loadStartTime, setLoadStartTime] = useState(Date.now());
+  const processedRef = useRef<boolean>(false);
+  const sourceRef = useRef(src);
   
-  // Debug log the source
-  console.log("MediaRenderer source:", src, "initial type:", initialType);
-  
-  // Process the source URL on component mount or when source changes
+  // Process the source URL on component mount or when source significantly changes
   useEffect(() => {
-    if (!src) {
-      console.error("MediaRenderer: No source provided");
-      setHasError(true);
-      setIsLoading(false);
-      return;
+    const currentSrc = JSON.stringify(src);
+    const prevSrc = JSON.stringify(sourceRef.current);
+    const hasSourceChanged = currentSrc !== prevSrc;
+    
+    if (!hasSourceChanged && processedRef.current) {
+      return; // Skip if source hasn't changed and we've already processed it
     }
-
+    
+    sourceRef.current = src;
     setIsLoading(true);
     setHasError(false);
     setLoadStartTime(Date.now());
+    processedRef.current = true;
 
     try {
       // Determine media type if not explicitly provided
       if (!initialType) {
         const detectedType = determineMediaType(src);
-        console.log("MediaRenderer detected type:", detectedType);
         setMediaType(detectedType);
       }
 
       // Get a playable URL (handles various formats, cache busting, etc)
       const processedUrl = getPlayableMediaUrl(src);
-      console.log("MediaRenderer processed URL:", processedUrl);
       setUrl(processedUrl);
     } catch (err) {
       console.error('Error processing media:', err);
@@ -101,12 +101,10 @@ export const MediaRenderer = forwardRef(({
   }, [src, initialType, fallbackSrc, retryCount]);
 
   // Handle successful media load
-  const handleLoad = () => {
+  const handleLoad = useCallback(() => {
     const loadTime = Date.now() - loadStartTime;
     setIsLoading(false);
     setHasError(false);
-    
-    console.log(`MediaRenderer: ${mediaType} loaded successfully:`, url);
     
     // Report successful media load for monitoring
     try {
@@ -116,14 +114,12 @@ export const MediaRenderer = forwardRef(({
     }
     
     if (onLoad) onLoad();
-  };
+  }, [loadStartTime, url, mediaType, onLoad]);
 
   // Handle media loading error
-  const handleError = () => {
+  const handleError = useCallback(() => {
     setIsLoading(false);
     setHasError(true);
-    
-    console.error(`MediaRenderer: Failed to load ${mediaType}:`, url);
     
     // Report media error for monitoring
     try {
@@ -149,27 +145,26 @@ export const MediaRenderer = forwardRef(({
     }
     
     if (onError) onError();
-  };
+  }, [url, fallbackSrc, retryCount, mediaType, onError]);
 
   // Handle media retry
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     if (retryCount >= maxRetries) {
       console.warn(`Max retries (${maxRetries}) reached for media:`, url);
       return;
     }
     
-    console.log(`MediaRenderer: Retrying (${retryCount + 1}/${maxRetries})`);
     setRetryCount(prev => prev + 1);
     setIsLoading(true);
     setHasError(false);
-  };
+  }, [retryCount, maxRetries, url]);
 
   // Handle video time updates
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+  const handleTimeUpdate = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
     if (onTimeUpdate) {
       onTimeUpdate(e.currentTarget.currentTime);
     }
-  };
+  }, [onTimeUpdate]);
 
   // Show loading indicator
   if (isLoading) {
@@ -202,7 +197,6 @@ export const MediaRenderer = forwardRef(({
 
   // Render video player
   if (mediaType === MediaType.VIDEO) {
-    console.log("MediaRenderer rendering VIDEO with URL:", url);
     return (
       <div className="relative w-full h-full">
         {url ? (
@@ -221,6 +215,7 @@ export const MediaRenderer = forwardRef(({
             onError={handleError}
             onEnded={onEnded}
             onTimeUpdate={handleTimeUpdate}
+            key={`video-${url}`}
           />
         ) : (
           <div className="flex items-center justify-center bg-black/50 w-full h-full">
@@ -238,7 +233,6 @@ export const MediaRenderer = forwardRef(({
 
   // Render image
   if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
-    console.log("MediaRenderer rendering IMAGE with URL:", url);
     return (
       <div className="relative w-full h-full">
         {url ? (
@@ -250,6 +244,7 @@ export const MediaRenderer = forwardRef(({
             onClick={onClick}
             onLoad={handleLoad}
             onError={handleError}
+            key={`image-${url}`}
           />
         ) : (
           <div className="flex items-center justify-center bg-black/50 w-full h-full">
@@ -296,6 +291,6 @@ export const MediaRenderer = forwardRef(({
       <p className="text-sm text-gray-500">Unsupported media format</p>
     </div>
   );
-});
+}));
 
 MediaRenderer.displayName = 'MediaRenderer';

@@ -1,8 +1,7 @@
 
-import { forwardRef, useState, useEffect, useMemo, Ref } from 'react';
+import { forwardRef, useState, useEffect, useMemo, useCallback, Ref, memo } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
-import { useMediaService } from '@/hooks/useMediaService';
-import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { MediaRenderer } from './MediaRenderer';
 
 interface UniversalMediaProps {
   item: MediaSource | string | null;
@@ -23,7 +22,7 @@ interface UniversalMediaProps {
   maxRetries?: number;
 }
 
-export const UniversalMedia = forwardRef(({
+export const UniversalMedia = memo(forwardRef(({
   item,
   className = "",
   autoPlay = false,
@@ -41,140 +40,63 @@ export const UniversalMedia = forwardRef(({
   onTimeUpdate,
   maxRetries = 2
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  const [loadAttempt, setLoadAttempt] = useState(0);
-
-  // Debug log the incoming item
-  console.log("UniversalMedia rendering with item:", item);
-
-  // Use our media service to handle all media processing
-  const media = useMediaService(item, {
-    maxRetries,
-    onError: () => {
-      if (onError) onError();
-    },
-    onLoad: () => {
-      if (onLoad) onLoad();
+  // Create a stable object for the item
+  const stableItem = useMemo(() => {
+    // If string, just use it directly
+    if (typeof item === 'string') {
+      return item;
     }
-  });
-
-  console.log("Media service processed:", { 
-    url: media.url, 
-    mediaType: media.mediaType, 
-    hasError: media.hasError, 
-    isLoading: media.isLoading 
-  });
-
-  // Handle retry attempts
-  const handleRetry = () => {
-    setLoadAttempt(prev => prev + 1);
-    media.retry();
-  };
-
-  // Handle time updates for videos
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    if (onTimeUpdate) {
-      onTimeUpdate(e.currentTarget.currentTime);
+    
+    // For object items, create a stable reference
+    if (item) {
+      return { ...item };
     }
-  };
-
-  // Loading state
-  if (media.isLoading) {
-    return (
-      <div className="relative w-full h-full flex items-center justify-center bg-black/20">
-        <Loader2 className="h-8 w-8 animate-spin text-white/70" />
-      </div>
-    );
-  }
-
-  // Error state
-  if (media.hasError) {
-    return (
-      <div className="relative w-full h-full flex flex-col items-center justify-center bg-black/20 p-4">
-        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-        <p className="text-sm text-gray-500 mb-3 text-center">
-          {media.errorMessage || 'Failed to load media'}
-        </p>
-        <button
-          onClick={handleRetry}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 hover:bg-primary text-white text-sm rounded-md"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  // Video rendering
-  if (media.mediaType === MediaType.VIDEO) {
-    console.log("Rendering VIDEO with URL:", media.url);
-    return (
-      <div className="relative w-full h-full">
-        <video
-          ref={ref as React.RefObject<HTMLVideoElement>}
-          src={media.url || undefined}
-          className={className}
-          style={{ objectFit }}
-          poster={poster || media.thumbnailUrl || undefined}
-          autoPlay={autoPlay}
-          controls={controls}
-          muted={muted}
-          loop={loop}
-          playsInline
-          onClick={onClick}
-          onEnded={onEnded}
-          onTimeUpdate={handleTimeUpdate}
-          key={`video-${loadAttempt}`} // Key to force re-render on retry
-          crossOrigin="anonymous"
-          onError={(e) => {
-            console.error("Video error:", e, "URL:", media.url);
-            media.handleError();
-          }}
-          onLoadedData={() => {
-            console.log("Video loaded successfully:", media.url);
-            media.handleLoad();
-          }}
-        />
-        
-        {showWatermark && (
-          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
-            eroxr
-          </div>
-        )}
-      </div>
-    );
-  }
+    
+    return null;
+  }, [item]);
   
-  // Image rendering
-  console.log("Rendering IMAGE with URL:", media.url);
+  // Memoized callbacks to prevent rerenders
+  const handleLoad = useCallback(() => {
+    if (onLoad) onLoad();
+  }, [onLoad]);
+  
+  const handleError = useCallback(() => {
+    if (onError) onError();
+  }, [onError]);
+  
+  const handleEnded = useCallback(() => {
+    if (onEnded) onEnded();
+  }, [onEnded]);
+  
+  const handleTimeUpdate = useCallback((time: number) => {
+    if (onTimeUpdate) onTimeUpdate(time);
+  }, [onTimeUpdate]);
+
+  // Determine object fit styling
+  const styleProps = useMemo(() => ({
+    style: { objectFit }
+  }), [objectFit]);
+
   return (
-    <div className="relative w-full h-full">
-      <img
-        ref={ref as React.RefObject<HTMLImageElement>}
-        src={media.url || undefined}
-        className={className}
-        style={{ objectFit }}
-        alt={alt}
-        onClick={onClick}
-        key={`image-${loadAttempt}`} // Key to force re-render on retry
-        crossOrigin="anonymous"
-        onError={(e) => {
-          console.error("Image error:", e, "URL:", media.url);
-          media.handleError();
-        }}
-        onLoad={() => {
-          console.log("Image loaded successfully:", media.url);
-          media.handleLoad();
-        }}
-      />
-      
-      {showWatermark && (
-        <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
-          eroxr
-        </div>
-      )}
-    </div>
+    <MediaRenderer
+      ref={ref}
+      src={stableItem}
+      className={className}
+      autoPlay={autoPlay}
+      controls={controls}
+      muted={muted}
+      loop={loop}
+      poster={poster}
+      showWatermark={showWatermark}
+      onClick={onClick}
+      onLoad={handleLoad}
+      onError={handleError}
+      onEnded={handleEnded}
+      onTimeUpdate={handleTimeUpdate}
+      maxRetries={maxRetries}
+      {...styleProps}
+    />
   );
-});
+}));
 
 UniversalMedia.displayName = 'UniversalMedia';
