@@ -1,9 +1,9 @@
-
 import { motion } from "framer-motion";
 import { Story } from "@/integrations/supabase/types/story";
 import { useRef, memo, useCallback } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { useStoryMedia } from "@/hooks/useStoryMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface StoryContentProps {
   story: Story;
@@ -15,7 +15,7 @@ export const StoryContent = memo(({ story, onNext, isPaused }: StoryContentProps
   const videoRef = useRef<HTMLVideoElement>(null);
   
   // Determine if this is a video or image story
-  const isVideo = !!story.video_url || story.media_type === 'video' || story.content_type === 'video';
+  const isVideo = !!story.video_url || story.media_type === MediaType.VIDEO || story.content_type === 'video';
   const mediaUrl = isVideo ? story.video_url : story.media_url;
   const mediaType = isVideo ? 'video' : 'image';
   

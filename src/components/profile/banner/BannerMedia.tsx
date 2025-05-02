@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
+import { MediaType } from "@/utils/media/types";
 
 interface BannerMediaProps {
   mediaUrl?: string;
@@ -23,7 +24,11 @@ export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProp
     const item = {
       media_url: mediaType === 'image' || mediaType === 'gif' ? mediaUrl : null,
       video_url: mediaType === 'video' ? mediaUrl : null,
-      media_type: mediaType,
+      media_type: mediaType === 'video' 
+        ? MediaType.VIDEO 
+        : mediaType === 'gif'
+          ? MediaType.GIF
+          : MediaType.IMAGE,
     };
     
     setFinalMediaItem(item);
