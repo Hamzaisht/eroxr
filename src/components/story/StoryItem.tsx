@@ -37,7 +37,7 @@ export const StoryItem = ({
   // Determine if story is a video
   const isVideo = 
     story.content_type === "video" || 
-    story.media_type === "video" || 
+    story.media_type === MediaType.VIDEO || 
     !!story.video_url;
 
   const handleLoad = () => {

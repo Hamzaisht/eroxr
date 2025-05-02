@@ -1,4 +1,6 @@
 
+import { MediaType } from "@/utils/media/types";
+
 export interface Creator {
   id: string;
   name: string;
@@ -8,7 +10,7 @@ export interface Creator {
 export interface MediaItem {
   id: string;
   title: string;
-  type: "image" | "video";
+  type: MediaType;
   url: string;
   thumbnail?: string;
   creator: Creator;

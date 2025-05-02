@@ -4,6 +4,7 @@ import { Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DatingAd } from '../types/dating';
 import { UniversalMedia } from '@/components/media/UniversalMedia';
+import { MediaType } from '@/utils/media/types';
 
 interface VideoContentProps {
   ad: DatingAd;
@@ -29,7 +30,10 @@ export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: V
           transition={{ duration: 0.5 }}
         >
           <UniversalMedia
-            item={ad}
+            item={{
+              ...ad,
+              media_type: MediaType.VIDEO
+            }}
             className={cn(
               "w-full h-full object-cover"
             )}

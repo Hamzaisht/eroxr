@@ -201,7 +201,7 @@ export const MediaRenderer = forwardRef(({
   }
 
   // Render image
-  if (mediaType === MediaType.IMAGE) {
+  if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
     return (
       <div className="relative w-full h-full">
         <img

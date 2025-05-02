@@ -5,7 +5,7 @@ import { MediaType } from '@/utils/media/types';
 
 interface WatermarkedMediaProps {
   src: string;
-  type: 'image' | 'video';
+  type: MediaType;
   creatorId: string;
   className?: string;
   videoProps?: React.VideoHTMLAttributes<HTMLVideoElement>;
@@ -21,9 +21,9 @@ export const WatermarkedMedia: React.FC<WatermarkedMediaProps> = ({
   imageProps
 }) => {
   const mediaItem = {
-    media_url: type === 'image' ? src : undefined,
-    video_url: type === 'video' ? src : undefined,
-    media_type: type === 'video' ? MediaType.VIDEO : MediaType.IMAGE,
+    media_url: type === MediaType.IMAGE ? src : undefined,
+    video_url: type === MediaType.VIDEO ? src : undefined,
+    media_type: type,
     creator_id: creatorId,
   };
   

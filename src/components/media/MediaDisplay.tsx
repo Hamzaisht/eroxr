@@ -11,7 +11,7 @@ interface MediaDisplayProps extends MediaOptions {
   /**
    * The type of media being displayed
    */
-  mediaType: MediaType | string;
+  mediaType: MediaType;
 }
 
 /**
@@ -48,7 +48,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
         }
       : undefined;
         
-    if (mediaType === MediaType.VIDEO || mediaType === 'video') {
+    if (mediaType === MediaType.VIDEO) {
       return (
         <video
           ref={ref as React.RefObject<HTMLVideoElement>}
@@ -69,7 +69,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
       );
     }
 
-    if (mediaType === MediaType.IMAGE || mediaType === 'image') {
+    if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
       return (
         <img
           ref={ref as React.RefObject<HTMLImageElement>}

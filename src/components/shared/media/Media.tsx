@@ -55,9 +55,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         setUrl(playableUrl);
 
         // Determine media type
-        const typeString = determineMediaType(source);
-        // Convert string type to MediaType enum
-        setMediaType(typeString);
+        setMediaType(determineMediaType(source));
       } catch (err) {
         console.error('Error processing media:', err);
         setError('Failed to process media');
@@ -122,7 +120,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     }
 
     // For image content
-    if (mediaType === MediaType.IMAGE) {
+    if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
       return (
         <div className="relative w-full h-full">
           <img
