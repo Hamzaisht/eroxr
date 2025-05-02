@@ -13,6 +13,14 @@ interface MediaErrorReport {
   timestamp: number;
 }
 
+interface MediaSuccessReport {
+  url?: string | null;
+  loadTime: number;
+  mediaType?: string;
+  component?: string;
+  timestamp: number;
+}
+
 /**
  * Reports a media error for monitoring and analytics
  * 
@@ -56,4 +64,41 @@ export function reportMediaError(
   // 1. Send to analytics/monitoring service
   // 2. Store locally for periodic batch uploads
   // 3. Trigger fallback mechanisms based on error patterns
+}
+
+/**
+ * Reports successful media loading for monitoring and analytics
+ * 
+ * @param url The URL of the media that was successfully loaded
+ * @param loadTime Time taken to load the media in milliseconds
+ * @param mediaType The type of media (image, video, audio)
+ * @param component The component where the media was loaded
+ */
+export function reportMediaSuccess(
+  url: string | null | undefined,
+  loadTime: number,
+  mediaType: string = 'unknown',
+  component: string = 'unknown'
+): void {
+  console.log(`Media Loaded Successfully [${mediaType}] in ${component}:`, {
+    url,
+    loadTime: `${loadTime}ms`,
+  });
+  
+  // Here you would normally send this data to your monitoring service
+  // For example:
+  // analyticsService.trackMediaSuccess({...})
+  
+  const successReport: MediaSuccessReport = {
+    url,
+    loadTime,
+    mediaType,
+    component,
+    timestamp: Date.now()
+  };
+  
+  // This data can be used for:
+  // 1. Performance monitoring
+  // 2. Content delivery optimization
+  // 3. User experience analytics
 }
