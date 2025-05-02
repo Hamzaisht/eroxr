@@ -202,9 +202,9 @@ export function useGhostMode() {
         startTime: new Date().toISOString()
       });
       
-      // Log the surveillance action
+      // Log the surveillance action - Fix here: Using user_id instead of user
       await supabase.from('admin_logs').insert({
-        admin_id: session?.user?.id,
+        admin_id: session?.user_id,
         action: 'start_surveillance',
         action_type: 'surveillance',
         details: {
