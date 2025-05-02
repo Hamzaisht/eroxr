@@ -53,6 +53,7 @@ export const MediaRenderer = forwardRef((
 ) => {
   const [errorShown, setErrorShown] = useState<boolean>(false);
   const [useFallback, setUseFallback] = useState<boolean>(false);
+  const [loadAttempt, setLoadAttempt] = useState<number>(0);
 
   // Use our centralized media service
   const media = useMediaService(src, {
@@ -77,6 +78,7 @@ export const MediaRenderer = forwardRef((
   useEffect(() => {
     setErrorShown(false);
     setUseFallback(false);
+    setLoadAttempt(0);
   }, [src]);
 
   // Handle video time update
@@ -84,6 +86,15 @@ export const MediaRenderer = forwardRef((
     if (onTimeUpdate) {
       onTimeUpdate(e.currentTarget.currentTime);
     }
+  };
+
+  // Handle retry attempt
+  const handleRetry = () => {
+    console.log("Retry clicked, resetting error state");
+    setErrorShown(false);
+    setUseFallback(false);
+    setLoadAttempt(prev => prev + 1);
+    media.retry();
   };
 
   // Loading state
@@ -141,12 +152,7 @@ export const MediaRenderer = forwardRef((
         </p>
         {allowRetry && (
           <button
-            onClick={() => {
-              console.log("Retry clicked, resetting error state");
-              setErrorShown(false);
-              setUseFallback(false);
-              media.retry();
-            }}
+            onClick={handleRetry}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 hover:bg-primary text-white text-sm rounded-md"
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -186,6 +192,8 @@ export const MediaRenderer = forwardRef((
           }}
           onEnded={onEnded}
           onTimeUpdate={handleTimeUpdate}
+          key={`video-${loadAttempt}`} // Key to force re-render on retry
+          crossOrigin="anonymous" // Add CORS support
         />
         {showWatermark && (
           <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
@@ -218,6 +226,8 @@ export const MediaRenderer = forwardRef((
             if (onError) onError();
           }}
           alt={alt}
+          key={`image-${loadAttempt}`} // Key to force re-render on retry
+          crossOrigin="anonymous" // Add CORS support
         />
         {showWatermark && (
           <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
@@ -249,6 +259,8 @@ export const MediaRenderer = forwardRef((
           }}
           onEnded={onEnded}
           className="w-full"
+          key={`audio-${loadAttempt}`} // Key to force re-render on retry
+          crossOrigin="anonymous" // Add CORS support
         />
       </div>
     );

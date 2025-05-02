@@ -1,70 +1,102 @@
 
+/**
+ * Media type enum for consistent type identification
+ */
 export enum MediaType {
-  IMAGE = 'image',
-  VIDEO = 'video',
-  AUDIO = 'audio',
-  FILE = 'file',
-  UNKNOWN = 'unknown'
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
+  AUDIO = 'AUDIO',
+  FILE = 'FILE',
+  UNKNOWN = 'UNKNOWN',
 }
 
-export enum AvailabilityStatus {
-  ONLINE = 'online',
-  OFFLINE = 'offline',
-  AWAY = 'away',
-  BUSY = 'busy',
-  INVISIBLE = 'invisible'
+/**
+ * Converts a string to MediaType enum value
+ */
+export function stringToMediaType(type: string | null | undefined): MediaType {
+  if (!type) return MediaType.UNKNOWN;
+  
+  const normalizedType = type.toUpperCase();
+  switch (normalizedType) {
+    case 'IMAGE':
+      return MediaType.IMAGE;
+    case 'VIDEO':
+      return MediaType.VIDEO;
+    case 'AUDIO':
+      return MediaType.AUDIO;
+    case 'FILE':
+      return MediaType.FILE;
+    default:
+      return MediaType.UNKNOWN;
+  }
 }
 
-export interface MediaItem {
-  media_url: string;
-  media_type: MediaType;
-  thumbnail_url?: string;
-  duration?: number;
-  size?: number;
-  width?: number;
-  height?: number;
-  metadata?: Record<string, any>;
-}
-
-export interface UploadOptions {
-  contentCategory: string;
-  maxSizeInMB: number;
-  allowedTypes: string[];
-  autoResetOnCompletion?: boolean;
-  resetDelay?: number;
-  onProgress?: (progress: number) => void;
-}
-
-export interface UploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-  thumbnailUrl?: string;
-  path?: string;
-}
-
-export interface MediaUploadState {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
-  isComplete: boolean;
-  mediaUrl: string | null;
-}
-
+/**
+ * Media source interface for flexible media handling
+ */
 export interface MediaSource {
-  creator_id?: string;
+  // Content URLs
   media_url?: string;
   media_urls?: string[];
   video_url?: string;
   video_urls?: string[];
-  thumbnail_url?: string;
-  poster?: string;
-  video_thumbnail_url?: string;
-  media_type?: MediaType | string;
   url?: string;
   src?: string;
+  
+  // Media metadata
+  media_type?: MediaType | string;
+  content_type?: string;
+  mime_type?: string;
+  
+  // Thumbnails and fallbacks
+  thumbnail_url?: string;
+  video_thumbnail_url?: string;
+  poster?: string;
+  
+  // Creator information
+  creator_id?: string;
+  
+  // Media status
+  is_loading?: boolean;
+  has_error?: boolean;
 }
 
+/**
+ * Media availability status
+ */
+export enum AvailabilityStatus {
+  AVAILABLE = 'available',
+  PROCESSING = 'processing',
+  FAILED = 'failed',
+  RESTRICTED = 'restricted',
+  UNKNOWN = 'unknown',
+}
+
+/**
+ * Media error types
+ */
+export enum MediaErrorType {
+  LOAD_FAILURE = 'load_failure',
+  PROCESSING_ERROR = 'processing_error',
+  PERMISSION_ERROR = 'permission_error',
+  TIMEOUT = 'timeout',
+  NETWORK_ERROR = 'network_error',
+  UNKNOWN = 'unknown',
+}
+
+/**
+ * Storage upload result
+ */
+export interface StorageUploadResult {
+  success: boolean;
+  url: string;
+  path: string;
+  error: string | null;
+}
+
+/**
+ * Media options for media renderers and players
+ */
 export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
@@ -72,90 +104,13 @@ export interface MediaOptions {
   muted?: boolean;
   loop?: boolean;
   poster?: string;
-  showWatermark?: boolean;
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  showControls?: boolean;
+  allowFullscreen?: boolean;
+  playOnHover?: boolean;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
-  onTimeUpdate?: (currentTime: number) => void;
-}
-
-// Additional types needed for hooks
-export interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
-  files: File[];
-  previews: string[];
-  success: boolean;
-  isComplete: boolean;
-}
-
-export interface FileValidationResult {
-  valid: boolean;
-  error?: string;
-}
-
-export interface ActiveSurveillanceState {
-  isActive: boolean;
-  lastUpdated: Date | null;
-  userId?: string;
-  targetUserId?: string;
-  startedAt?: Date;
-  duration?: number;
-  sessionId?: string;
-  isWatching?: boolean;
-  session?: any;
-  startTime?: string | null;
-}
-
-// Align LiveAlert with the one in types/alerts.ts
-export interface LiveAlert {
-  id: string;
-  type: string;
-  alert_type?: 'violation' | 'risk' | 'information';
-  user_id: string;
-  username: string;
-  avatar_url?: string;
-  timestamp: string | Date;
-  created_at: string;
-  content_type: string;
-  reason?: string;
-  severity: 'high' | 'medium' | 'low';
-  content_id?: string;
-  message: string;
-  status: string;
-  title: string;
-  description?: string;
-  is_viewed: boolean;
-  urgent: boolean;
-  session?: any;
-  reporter?: {
-    id: string;
-    username?: string;
-    avatar_url?: string | null;
-  };
-}
-
-export interface StorageUploadResult {
-  path: string;
-  url: string;
-  success: boolean;
-  error: string | null;
-}
-
-// Convert string to MediaType enum
-export function stringToMediaType(typeStr: string): MediaType {
-  switch (typeStr.toLowerCase()) {
-    case 'image':
-      return MediaType.IMAGE;
-    case 'video':
-      return MediaType.VIDEO;
-    case 'audio':
-      return MediaType.AUDIO;
-    case 'file':
-      return MediaType.FILE;
-    default:
-      return MediaType.UNKNOWN;
-  }
+  onTimeUpdate?: (time: number) => void;
 }

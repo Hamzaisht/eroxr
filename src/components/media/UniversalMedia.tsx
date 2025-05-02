@@ -1,9 +1,8 @@
 
-import { forwardRef, useState, useEffect, useCallback, useMemo, Ref } from 'react';
+import { forwardRef, useState, useEffect, useMemo, Ref } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
-import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
-import { Loader2 } from "lucide-react";
+import { useMediaService } from '@/hooks/useMediaService';
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 interface UniversalMediaProps {
   item: MediaSource | string | null;
@@ -42,94 +41,84 @@ export const UniversalMedia = forwardRef(({
   onTimeUpdate,
   maxRetries = 2
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  
-  // Extract media information from various sources/formats
-  const { mediaUrl, mediaType, fallbackUrl } = useMemo(() => {
-    if (!item) return { mediaUrl: null, mediaType: MediaType.UNKNOWN, fallbackUrl: null };
-    
-    // Determine media type using the utility function
-    const type = determineMediaType(item);
-    
-    // Extract URL
-    const url = extractMediaUrl(item);
-    
-    // Extract fallback URL if available
-    let fallback: string | null = null;
-    
-    // If it's a media source object, look for fallbacks
-    if (typeof item !== 'string' && item !== null) {
-      const source = item as MediaSource;
-      
-      // Handle video_urls safely
-      if (source.video_urls && Array.isArray(source.video_urls) && source.video_urls.length > 1) {
-        fallback = source.video_urls[1];
-      } 
-      // Handle media_urls safely
-      else if (source.media_urls && Array.isArray(source.media_urls) && source.media_urls.length > 1) {
-        fallback = source.media_urls[1];
-      }
-      // Set thumbnail as fallback for videos
-      else if (type === MediaType.VIDEO) {
-        fallback = source.video_thumbnail_url || source.thumbnail_url || source.poster || null;
-      }
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+  // Use our media service to handle all media processing
+  const media = useMediaService(item, {
+    maxRetries,
+    onError: () => {
+      if (onError) onError();
+    },
+    onLoad: () => {
+      if (onLoad) onLoad();
     }
-    
-    return { mediaUrl: url, mediaType: type, fallbackUrl: fallback };
-  }, [item]);
+  });
 
-  // Handle successful loading
-  const handleLoad = () => {
-    setIsLoading(false);
-    setHasError(false);
-    if (onLoad) onLoad();
+  // Handle retry attempts
+  const handleRetry = () => {
+    setLoadAttempt(prev => prev + 1);
+    media.retry();
   };
 
-  // Handle loading errors
-  const handleError = () => {
-    setIsLoading(false);
-    setHasError(true);
-    if (onError) onError();
-  };
-  
-  // Handle timeUpdate events for videos
+  // Handle time updates for videos
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     if (onTimeUpdate) {
       onTimeUpdate(e.currentTarget.currentTime);
     }
   };
 
-  // Render based on media type
-  if (mediaType === MediaType.VIDEO) {
+  // Loading state
+  if (media.isLoading) {
     return (
-      <div className="relative w-full h-full group">
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
-            <Loader2 className="h-6 w-6 animate-spin text-white/70" />
-          </div>
-        )}
-        
+      <div className="relative w-full h-full flex items-center justify-center bg-black/20">
+        <Loader2 className="h-8 w-8 animate-spin text-white/70" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (media.hasError) {
+    return (
+      <div className="relative w-full h-full flex flex-col items-center justify-center bg-black/20 p-4">
+        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+        <p className="text-sm text-gray-500 mb-3 text-center">
+          {media.errorMessage || 'Failed to load media'}
+        </p>
+        <button
+          onClick={handleRetry}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 hover:bg-primary text-white text-sm rounded-md"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Video rendering
+  if (media.mediaType === MediaType.VIDEO) {
+    return (
+      <div className="relative w-full h-full">
         <video
           ref={ref as React.RefObject<HTMLVideoElement>}
-          src={mediaUrl || undefined}
-          className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          src={media.url || undefined}
+          className={className}
           style={{ objectFit }}
+          poster={poster || media.thumbnailUrl || undefined}
           autoPlay={autoPlay}
           controls={controls}
           muted={muted}
           loop={loop}
-          poster={poster || fallbackUrl || undefined}
+          playsInline
           onClick={onClick}
-          onLoadedData={handleLoad}
-          onError={handleError}
           onEnded={onEnded}
           onTimeUpdate={handleTimeUpdate}
-          playsInline
+          key={`video-${loadAttempt}`} // Key to force re-render on retry
+          crossOrigin="anonymous"
         />
         
         {showWatermark && (
-          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 group-hover:opacity-100 transition-opacity">
+          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
             eroxr
           </div>
         )}
@@ -137,28 +126,22 @@ export const UniversalMedia = forwardRef(({
     );
   }
   
-  // For images and other media types
+  // Image rendering
   return (
-    <div className="relative w-full h-full group">
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
-          <Loader2 className="h-6 w-6 animate-spin text-white/70" />
-        </div>
-      )}
-      
+    <div className="relative w-full h-full">
       <img
         ref={ref as React.RefObject<HTMLImageElement>}
-        src={mediaUrl || fallbackUrl || undefined}
-        className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        src={media.url || undefined}
+        className={className}
         style={{ objectFit }}
-        onClick={onClick}
-        onLoad={handleLoad}
-        onError={handleError}
         alt={alt}
+        onClick={onClick}
+        key={`image-${loadAttempt}`} // Key to force re-render on retry
+        crossOrigin="anonymous"
       />
       
       {showWatermark && (
-        <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
           eroxr
         </div>
       )}

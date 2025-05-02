@@ -25,12 +25,9 @@ export const ShortVideoPlayer = memo(({
   const [loadRetries, setLoadRetries] = useState(0);
   const { toast } = useToast();
   
-  // Process media URL for safer access
-  const safeVideoUrl = videoUrl || null;
-  const safeThumbnailUrl = thumbnailUrl || null;
-  
+  // Handle video error with improved retry mechanism
   const handleVideoError = useCallback(() => {
-    console.error("Video error for short:", safeVideoUrl);
+    console.error("Video error for short:", videoUrl);
     
     setLoadRetries(prev => {
       const newRetryCount = prev + 1;
@@ -38,7 +35,7 @@ export const ShortVideoPlayer = memo(({
       // Report error for monitoring after multiple failures
       if (newRetryCount >= 2) {
         reportMediaError(
-          safeVideoUrl,
+          videoUrl,
           'load_failure',
           newRetryCount,
           'video',
@@ -58,7 +55,12 @@ export const ShortVideoPlayer = memo(({
       
       return newRetryCount;
     });
-  }, [safeVideoUrl, toast, onError]);
+  }, [videoUrl, toast, onError]);
+
+  // Reset retry count when video URL changes
+  useEffect(() => {
+    setLoadRetries(0);
+  }, [videoUrl]);
 
   if (isDeleting) {
     return (
@@ -68,13 +70,21 @@ export const ShortVideoPlayer = memo(({
     );
   }
 
-  console.log("Rendering ShortVideoPlayer with:", { safeVideoUrl, safeThumbnailUrl });
+  // Create media source object for MediaRenderer
+  const mediaSource = videoUrl ? {
+    video_url: videoUrl,
+    thumbnail_url: thumbnailUrl,
+    creator_id: creatorId,
+    media_type: MediaType.VIDEO
+  } : null;
+
+  console.log("Rendering ShortVideoPlayer with:", { videoUrl, thumbnailUrl, isCurrentVideo });
 
   return (
     <MediaRenderer
-      src={safeVideoUrl}
+      src={mediaSource}
       type={MediaType.VIDEO}
-      fallbackSrc={safeThumbnailUrl} 
+      fallbackSrc={thumbnailUrl} 
       className="h-full w-full object-cover"
       autoPlay={isCurrentVideo}
       onError={handleVideoError}

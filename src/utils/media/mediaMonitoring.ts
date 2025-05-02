@@ -1,62 +1,81 @@
 
-interface MediaErrorEvent {
-  url: string;
-  errorType: string;
+import { MediaErrorType } from './types';
+
+interface MediaErrorReport {
+  url: string | null;
+  type: MediaErrorType;
+  component: string;
   retryCount: number;
-  mediaType: string;
-  componentName: string;
-  timestamp: string;
-  userAgent?: string;
-  referrer?: string;
+  timestamp: number;
+  mediaType: 'image' | 'video' | 'audio' | 'unknown';
+  additionalInfo?: Record<string, any>;
 }
 
-const ERROR_LIMIT = 10; // Maximum number of errors to store
-let errorCache: MediaErrorEvent[] = [];
+// Track errors for potential reporting and analysis
+const mediaErrors: MediaErrorReport[] = [];
 
 /**
- * Report a media error for tracking and debugging
+ * Report a media error for monitoring and potential intervention
  */
 export function reportMediaError(
-  url: string,
+  url: string | null,
   errorType: string,
   retryCount: number = 0,
-  mediaType: string = 'unknown',
-  componentName: string = 'unknown'
-) {
-  // Create error event
-  const errorEvent: MediaErrorEvent = {
+  mediaType: 'image' | 'video' | 'audio' | 'unknown' = 'unknown',
+  component: string = 'unknown',
+  additionalInfo: Record<string, any> = {}
+): void {
+  const errorReport: MediaErrorReport = {
     url,
-    errorType,
+    type: errorType as MediaErrorType || MediaErrorType.UNKNOWN,
+    component,
     retryCount,
+    timestamp: Date.now(),
     mediaType,
-    componentName,
-    timestamp: new Date().toISOString(),
-    userAgent: navigator.userAgent,
-    referrer: document.referrer || window.location.href
+    additionalInfo
   };
   
-  // Add to local cache (limited size)
-  errorCache = [errorEvent, ...errorCache.slice(0, ERROR_LIMIT - 1)];
+  console.error('Media error:', errorReport);
   
-  // Log to console for development
-  console.error('Media Error:', errorEvent);
-  
-  // In production, you could send this to an error tracking service
-  if (process.env.NODE_ENV === 'production') {
-    // Example: sendToErrorTrackingService(errorEvent);
-  }
+  // Store the error report for potential analysis
+  mediaErrors.push(errorReport);
 }
 
 /**
- * Get all recorded media errors for debugging
+ * Get media error statistics
  */
-export function getMediaErrors(): MediaErrorEvent[] {
-  return [...errorCache];
+export function getMediaErrorStats(): { 
+  total: number, 
+  byType: Record<string, number>,
+  byComponent: Record<string, number>
+} {
+  const stats = {
+    total: mediaErrors.length,
+    byType: {} as Record<string, number>,
+    byComponent: {} as Record<string, number>
+  };
+  
+  // Compute stats
+  mediaErrors.forEach(error => {
+    // By error type
+    if (!stats.byType[error.type]) {
+      stats.byType[error.type] = 0;
+    }
+    stats.byType[error.type]++;
+    
+    // By component
+    if (!stats.byComponent[error.component]) {
+      stats.byComponent[error.component] = 0;
+    }
+    stats.byComponent[error.component]++;
+  });
+  
+  return stats;
 }
 
 /**
- * Clear the media error cache
+ * Reset error tracking (e.g., after analyzing or reporting)
  */
-export function clearMediaErrors(): void {
-  errorCache = [];
+export function clearMediaErrorTracking(): void {
+  mediaErrors.length = 0;
 }

@@ -1,6 +1,7 @@
 
 /**
- * Comprehensive media URL handling utilities
+ * Comprehensive media URL utilities
+ * This is the single source of truth for URL processing in the application
  */
 
 /**
@@ -12,64 +13,88 @@ export function addCacheBuster(url: string): string {
   if (!url) return url;
   
   const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}cb=${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 9);
+  return `${url}${separator}cb=${timestamp}-${random}`;
 }
 
 /**
- * Clean and normalize a URL to ensure it's properly formatted
- * @param url - The URL to clean
- * @returns A cleaned and normalized URL
+ * Normalizes a URL to ensure it has a proper protocol
+ * @param url - The URL to normalize
+ * @returns A normalized URL with proper protocol
  */
-export function normalizeMediaUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
+export function normalizeUrl(url: string | null | undefined): string {
+  if (!url) return '';
   
   // Handle special URLs
   if (url.startsWith('data:') || url.startsWith('blob:')) {
     return url;
   }
   
-  try {
-    // Try to create a proper URL object
-    const urlObj = new URL(url);
-    return urlObj.toString();
-  } catch (error) {
-    // If invalid URL, attempt to fix common issues
-    
-    // Check if it's a relative path
-    if (url.startsWith('/')) {
-      return `${window.location.origin}${url}`;
-    }
-    
-    // Add protocol if missing
-    if (!url.match(/^[a-z]+:\/\//i)) {
-      return `https://${url}`;
-    }
-    
-    console.warn('Could not normalize URL:', url);
-    return url;
+  // Handle URL without protocol
+  if (url.startsWith('//')) {
+    return `https:${url}`;
   }
+  
+  // Add protocol if missing
+  if (!url.startsWith('http') && !url.startsWith('blob:') && !url.startsWith('data:')) {
+    return `https://${url}`;
+  }
+  
+  return url;
 }
 
 /**
- * Builds a media URL with proper parameters for playback and viewing
- * @param url - The source URL to process
- * @returns A fully prepared media URL ready for display
+ * Extracts the file extension from a URL
+ * @param url - The URL to extract the extension from
+ * @returns The file extension or empty string if none found
  */
-export function buildPlayableMediaUrl(url: string | null | undefined): string {
-  const normalized = normalizeMediaUrl(url);
-  if (!normalized) return '';
+export function getFileExtension(url: string | null | undefined): string {
+  if (!url) return '';
   
-  // Skip cache busting for local blob URLs and data URLs
-  if (normalized.startsWith('blob:') || normalized.startsWith('data:')) {
-    return normalized;
-  }
+  const parts = url.split('.');
+  if (parts.length <= 1) return '';
   
-  // Add cache buster to help with media loading issues
-  return addCacheBuster(normalized);
+  // Get the last part and remove any query parameters
+  const lastPart = parts[parts.length - 1].split('?')[0].split('#')[0];
+  return lastPart.toLowerCase();
 }
 
 /**
- * Extract a direct media URL from various source formats
+ * Determines if a URL is likely an image based on its extension
+ * @param url - The URL to check
+ * @returns True if the URL is likely an image, false otherwise
+ */
+export function isImageUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const ext = getFileExtension(url);
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+}
+
+/**
+ * Determines if a URL is likely a video based on its extension
+ * @param url - The URL to check
+ * @returns True if the URL is likely a video, false otherwise
+ */
+export function isVideoUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const ext = getFileExtension(url);
+  return ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv'].includes(ext);
+}
+
+/**
+ * Determines if a URL is likely an audio file based on its extension
+ * @param url - The URL to check
+ * @returns True if the URL is likely an audio file, false otherwise
+ */
+export function isAudioUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const ext = getFileExtension(url);
+  return ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'].includes(ext);
+}
+
+/**
+ * Extracts a media URL from various source formats
  * @param source - The source object or string
  * @returns The extracted URL or empty string
  */
@@ -98,88 +123,21 @@ export function extractMediaUrl(source: any): string {
 }
 
 /**
- * Get a complete playable media URL
- * @param source - Any media source (string, object, etc.)
- * @returns A ready-to-use media URL
+ * Gets a playable media URL with proper formatting and cache busting
+ * This is the definitive function for preparing media URLs across the app
+ * @param source - The source to get the URL from (string or object)
+ * @returns A fully processed URL ready for playback
  */
-export function getPlayableUrl(source: any): string {
+export function getPlayableMediaUrl(source: any): string {
   // Extract the URL from the source
   const extractedUrl = extractMediaUrl(source);
+  if (!extractedUrl) return '';
   
-  // Build the final playable URL
-  return buildPlayableMediaUrl(extractedUrl);
+  // Normalize the URL (ensure proper protocol)
+  const normalizedUrl = normalizeUrl(extractedUrl);
+  
+  // Add cache busting to help with media loading issues
+  return addCacheBuster(normalizedUrl);
 }
 
-/**
- * Handle fallbacks for failed media loading
- * @param primary - The primary media URL
- * @param fallbacks - Array of fallback URLs to try
- * @returns The first working URL or the primary URL
- */
-export async function getWithFallbacks(
-  primary: string,
-  fallbacks: string[] = []
-): Promise<string> {
-  // Always return the primary URL without checking if there are no fallbacks
-  if (!fallbacks.length) return primary;
-  
-  try {
-    // Try to load the primary URL
-    const response = await fetch(primary, { 
-      method: 'HEAD', 
-      cache: 'no-store',
-      mode: 'no-cors'
-    });
-    
-    if (response.ok) {
-      return primary;
-    }
-    
-    // Try each fallback
-    for (const fallback of fallbacks) {
-      if (!fallback) continue;
-      
-      try {
-        const fallbackResponse = await fetch(fallback, { 
-          method: 'HEAD', 
-          cache: 'no-store',
-          mode: 'no-cors'
-        });
-        
-        if (fallbackResponse.ok) {
-          return fallback;
-        }
-      } catch (e) {
-        // Continue to next fallback
-        console.warn('Fallback URL failed:', fallback);
-      }
-    }
-  } catch (e) {
-    // Fetch failed, just return the primary URL
-    console.warn('URL check failed:', e);
-  }
-  
-  // Return the primary URL if all checks fail
-  return primary;
-}
-
-/**
- * Check if a URL points to a valid media resource
- * @param url - The URL to check
- * @returns Promise resolving to a boolean indicating if the URL is valid
- */
-export async function isValidMediaUrl(url: string): Promise<boolean> {
-  if (!url) return false;
-  
-  try {
-    const response = await fetch(url, { 
-      method: 'HEAD', 
-      mode: 'no-cors',
-      cache: 'no-store' 
-    });
-    return true; // If no-cors didn't throw, assume it's valid
-  } catch (e) {
-    console.error('Media URL validation failed:', e);
-    return false;
-  }
-}
+export default getPlayableMediaUrl;
