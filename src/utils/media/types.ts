@@ -40,6 +40,7 @@ export interface UploadResult {
   url?: string;
   error?: string;
   thumbnailUrl?: string;
+  path?: string; // Adding this to fix the path error
 }
 
 export interface MediaUploadState {
@@ -85,6 +86,9 @@ export interface UploadState {
   progress: number;
   error: string | null;
   files: File[];
+  previews: string[];
+  success: boolean; // Added success property
+  isComplete: boolean; // Added isComplete property
 }
 
 export interface FileValidationResult {

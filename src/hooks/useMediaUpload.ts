@@ -22,10 +22,10 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     isUploading: false,
     progress: 0,
     error: null,
-    success: false,
     files: [],
     previews: [],
-    isComplete: false
+    isComplete: false,
+    success: false
   });
 
   const session = useSession();
@@ -37,10 +37,10 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       isUploading: false,
       progress: 0,
       error: null,
-      success: false,
       files: [],
       previews: [],
-      isComplete: false
+      isComplete: false,
+      success: false
     });
   }, []);
 
@@ -105,10 +105,10 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       isUploading: true,
       progress: 0,
       error: null,
-      success: false,
       files: [],
       previews: [],
-      isComplete: false
+      isComplete: false,
+      success: false
     });
 
     // Simulate progress for better UX
@@ -145,10 +145,10 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
           isUploading: false,
           progress: 0,
           error: result.error || 'Upload failed',
-          success: false,
           files: [],
           previews: [],
-          isComplete: false
+          isComplete: false,
+          success: false
         });
         
         toast({
@@ -165,10 +165,10 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         isUploading: false,
         progress: 100,
         error: null,
-        success: true,
         files: [],
         previews: [],
-        isComplete: true
+        isComplete: true,
+        success: true
       });
       
       // Auto-reset if configured
@@ -195,10 +195,10 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         isUploading: false,
         progress: 0,
         error: errorMessage,
-        success: false,
         files: [],
         previews: [],
-        isComplete: false
+        isComplete: false,
+        success: false
       });
       
       toast({

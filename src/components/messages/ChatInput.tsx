@@ -168,8 +168,22 @@ export const ChatInput = ({
     setShowMediaDialog(false);
   };
   
+  // Fixed to handle both string arrays and FileList
   const handleMediaUpload = (files: FileList | string[]) => {
-    handleMediaSelect(files);
+    // If it's a FileList, pass it directly
+    if ('item' in files) {
+      handleMediaSelect(files);
+    } 
+    // If it's a string array, create a FileList-like object
+    else if (Array.isArray(files)) {
+      // Here we would normally fetch the files from URLs or convert Data URLs
+      // For now, just log a message and close the dialog
+      console.log('String array media not supported yet:', files);
+      toast({
+        title: "Media not supported",
+        description: "This media type is not supported yet."
+      });
+    }
   };
   
   return (

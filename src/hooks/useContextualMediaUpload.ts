@@ -1,74 +1,87 @@
 
+import { useState, useCallback } from 'react';
 import { useMediaUpload } from './useMediaUpload';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useToast } from '@/hooks/use-toast';
-import { UploadOptions } from '@/utils/media/types';
+import { useToast } from './use-toast';
 
-interface UploadResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-}
-
-type MediaContext = string;
-
-/**
- * Hook for handling contextual media uploads (posts, stories, etc.)
- */
-export const useContextualMediaUpload = (context: MediaContext) => {
-  const { uploadMedia, uploadState } = useMediaUpload();
-  const session = useSession();
+export const useContextualMediaUpload = (contextId: string, contextType: string = 'message') => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const { uploadMedia } = useMediaUpload();
   const { toast } = useToast();
 
-  /**
-   * Upload a media file in the given context
-   */
-  const uploadFile = async (file: File): Promise<UploadResult> => {
-    if (!session) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to upload media.",
-        variant: "destructive"
-      });
-      return { success: false, error: "Not authenticated" };
-    }
-    
+  // Function to upload a single file
+  const uploadSingleFile = useCallback(async (file: File) => {
     try {
-      // Using the updated UploadOptions interface
-      const result = await uploadMedia(file, { 
-        contentCategory: context,
-        maxSizeInMB: 50
+      setIsUploading(true);
+      
+      const contentCategory = contextType === 'post' ? 'posts' : 'messages';
+      
+      const result = await uploadMedia(file, {
+        contentCategory,
+        maxSizeInMB: 100,
+        allowedTypes: [
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'image/webp',
+          'video/mp4',
+          'video/webm',
+          'video/quicktime'
+        ]
       });
       
-      if (!result.success) {
-        toast({
-          title: "Upload Failed",
-          description: "Could not upload your media file.",
-          variant: "destructive"
-        });
-        return { success: false, error: result.error };
+      if (!result.success || !result.url) {
+        throw new Error(result.error || 'Upload failed');
       }
       
+      return result.url;
+    } catch (error: any) {
+      console.error('Error uploading file:', error);
       toast({
-        title: "Upload Complete",
-        description: "Your media has been uploaded successfully."
+        title: 'Upload Failed',
+        description: error.message || 'Failed to upload media',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [uploadMedia, contextType, toast]);
+  
+  // Function to handle uploading multiple files
+  const uploadFiles = useCallback(async (files: FileList | File[]) => {
+    if (!files.length) return [];
+    
+    try {
+      setIsUploading(true);
+      
+      const uploadPromises = Array.from(files).map(file => uploadSingleFile(file));
+      const urls = await Promise.all(uploadPromises);
+      
+      setMediaUrls(prev => [...prev, ...urls]);
+      
+      toast({
+        title: 'Upload Complete',
+        description: `Successfully uploaded ${urls.length} file${urls.length > 1 ? 's' : ''}`,
       });
       
-      return { success: true, url: result.url };
-    } catch (error: any) {
-      toast({
-        title: "Upload Error",
-        description: error.message || "An error occurred during upload.",
-        variant: "destructive"
-      });
-      return { success: false, error: error.message || "Unknown error" };
+      return urls;
+    } catch (error) {
+      console.error('Error in batch upload:', error);
+      return [];
+    } finally {
+      setIsUploading(false);
     }
-  };
-
+  }, [uploadSingleFile, toast]);
+  
+  // Reset the media urls
+  const resetMedia = useCallback(() => {
+    setMediaUrls([]);
+  }, []);
+  
   return {
-    uploadFile,
-    isUploading: uploadState.isUploading,
-    progress: uploadState.progress,
-    error: uploadState.error
+    isUploading,
+    mediaUrls,
+    uploadSingleFile,
+    uploadFiles,
+    resetMedia
   };
 };

@@ -69,3 +69,15 @@ export function createObjectUrl(file: File | Blob): string {
 export function revokeObjectUrl(url: string): void {
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Gets a playable media URL with cache busting if needed
+ * @param url - The URL to process
+ * @returns The processed URL ready for playback
+ */
+export function getPlayableMediaUrl(url: string | undefined | null): string {
+  if (!url) return '';
+  
+  // Add cache busting to help with media loading issues
+  return addCacheBuster(url);
+}
