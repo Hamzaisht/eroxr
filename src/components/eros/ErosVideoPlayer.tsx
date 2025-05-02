@@ -146,8 +146,8 @@ export function ErosVideoPlayer({
         ref={videoRef}
         src={processedVideoUrl}
         type={MediaType.VIDEO}
-        fallbackSrc={processedThumbnailUrl}
         poster={processedThumbnailUrl}
+        fallbackSrc={processedThumbnailUrl}
         className="w-full h-full object-cover"
         autoPlay={autoPlay && isActive}
         controls={false}

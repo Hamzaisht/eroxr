@@ -15,6 +15,7 @@ interface MediaRendererProps {
   muted?: boolean;
   loop?: boolean;
   poster?: string;
+  fallbackSrc?: string; // Add fallbackSrc prop
   showWatermark?: boolean;
   allowRetry?: boolean;
   maxRetries?: number;
@@ -37,6 +38,7 @@ export const MediaRenderer = forwardRef((
     muted = true,
     loop = false,
     poster,
+    fallbackSrc, // Add fallbackSrc prop
     showWatermark = false,
     allowRetry = true,
     maxRetries = 2,
@@ -89,6 +91,23 @@ export const MediaRenderer = forwardRef((
 
   // Error state with retry button
   if ((media.hasError && errorShown) || !media.url) {
+    // Try to use fallbackSrc if available
+    if (fallbackSrc) {
+      return (
+        <div className="relative w-full h-full">
+          <img
+            src={fallbackSrc}
+            className={className}
+            style={{ objectFit }}
+            alt={alt}
+            onError={() => {
+              if (onError) onError();
+            }}
+          />
+        </div>
+      );
+    }
+    
     return (
       <div className={cn("flex flex-col items-center justify-center bg-black/20 p-4 rounded", className)}>
         <AlertCircle className="h-8 w-8 text-red-500 mb-2" />

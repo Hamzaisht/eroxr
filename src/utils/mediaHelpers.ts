@@ -67,3 +67,18 @@ export function hasMediaAttachment(message: any): boolean {
     message.video_urls?.length
   );
 }
+
+/**
+ * Adds cache busting parameters to a URL
+ * @param url - The URL to add the cache buster to
+ * @returns The URL with a cache buster parameter
+ */
+export function addCacheBuster(url: string): string {
+  if (!url) return url;
+  
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 9);
+  return url.includes('?') 
+    ? `${url}&t=${timestamp}&r=${random}` 
+    : `${url}?t=${timestamp}&r=${random}`;
+}
