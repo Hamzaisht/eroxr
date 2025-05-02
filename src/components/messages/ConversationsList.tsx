@@ -16,14 +16,13 @@ interface ProfileWithInfo {
   id: string;
   username: string;
   avatar_url?: string;
-  online_status?: string;
+  status?: string; // Changed from online_status to status to match database schema
   last_message?: {
     content: string | null;
     created_at: string;
     media_url: string[] | null;
     message_type: string;
     delivery_status?: string;
-    // Add sender_id to fix the type error
     sender_id?: string;
   };
   unread_count?: number;
@@ -124,12 +123,16 @@ const ConversationsList = ({ onSelectUser, onNewMessage, onToggleDetails }: Conv
         });
         
         // Get profile information for each user
+        // Updated to use 'status' instead of 'online_status' to match the database schema
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, username, avatar_url, online_status')
+          .select('id, username, avatar_url, status')
           .in('id', Array.from(uniqueUserIds));
           
-        if (profilesError) throw profilesError;
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          throw profilesError;
+        }
         
         // Get last message for each conversation
         const conversationsWithMessages: ProfileWithInfo[] = [];
@@ -268,7 +271,7 @@ const ConversationsList = ({ onSelectUser, onNewMessage, onToggleDetails }: Conv
           </div>
         ) : error ? (
           <ErrorComponent 
-            message="Failed to load conversations" 
+            message={`Failed to load conversations: ${error}`}
             className="m-4" 
             onRetry={handleRetry}
           />
@@ -300,7 +303,8 @@ const ConversationsList = ({ onSelectUser, onNewMessage, onToggleDetails }: Conv
                       </AvatarFallback>
                     </Avatar>
                     
-                    {contact.online_status === 'online' && (
+                    {/* Updated to use status instead of online_status */}
+                    {contact.status === 'online' && (
                       <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-luxury-darker" />
                     )}
                   </div>
@@ -345,7 +349,7 @@ const ConversationsList = ({ onSelectUser, onNewMessage, onToggleDetails }: Conv
                   </div>
                 </button>
                 
-                {/* Chat details button - Added here */}
+                {/* Chat details button */}
                 {onToggleDetails && (
                   <Button
                     variant="ghost"
