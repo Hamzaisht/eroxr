@@ -1,80 +1,63 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { MediaType, UploadResult } from './types';
-import { getFileExtension } from './urlUtils';
-
-/**
- * Creates a unique file path for storage
- * @param userId - The user ID
- * @param file - The file to create a path for
- * @returns A unique file path
- */
-export function createUniqueFilePath(userId: string, file: File): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-  return `${userId}/${timestamp}-${random}/${sanitizedFileName}`;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
+import { compressImage } from './imageCompression';
+import { MediaType } from "./types";
 
 /**
  * Uploads a file to Supabase storage
- * @param bucket - The storage bucket
- * @param path - The file path
  * @param file - The file to upload
- * @returns The upload result
+ * @param bucket - The bucket to upload to
+ * @param folderPath - The folder path within the bucket
+ * @returns The uploaded file's path and URL
  */
-export async function uploadFileToStorage(bucket: string, path: string, file: File): Promise<UploadResult> {
+export async function uploadFileToStorage(file: File, bucket: string, folderPath: string = '') {
   try {
-    // Perform the upload
+    const filePath = createUniqueFilePath(file.name, folderPath);
+    
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: true,
-        contentType: file.type
-      });
+      .upload(filePath, file);
     
     if (error) {
-      console.error('Storage upload error:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Upload failed'
-      };
+      throw error;
     }
     
-    if (!data || !data.path) {
-      return { 
-        success: false, 
-        error: 'No data returned from upload'
-      };
-    }
-    
-    // Get the public URL
-    const { data: publicUrlData } = supabase.storage
+    const { data: urlData } = supabase.storage
       .from(bucket)
-      .getPublicUrl(data.path);
-    
+      .getPublicUrl(filePath);
+      
     return {
-      success: true,
-      url: publicUrlData.publicUrl,
-      path: data.path
+      path: filePath,
+      url: urlData?.publicUrl
     };
-  } catch (error: any) {
-    console.error('Upload error:', error);
-    return {
-      success: false,
-      error: error.message || 'An unknown error occurred'
-    };
+  } catch (error) {
+    console.error('Error uploading file to storage:', error);
+    throw error;
   }
 }
 
 /**
- * Gets a file from Supabase storage
- * @param bucket - The storage bucket
+ * Creates a unique file path for storage
+ * @param fileName - The original file name
+ * @param folderPath - The folder path to prepend
+ * @returns A unique file path
+ */
+export function createUniqueFilePath(fileName: string, folderPath: string = ''): string {
+  const ext = fileName.split('.').pop() || '';
+  const uniqueId = uuidv4();
+  const basePath = folderPath ? `${folderPath}/` : '';
+  
+  return `${basePath}${uniqueId}.${ext}`;
+}
+
+/**
+ * Fetches a file from storage
  * @param path - The file path
+ * @param bucket - The bucket name
  * @returns The file data
  */
-export async function getFileFromStorage(bucket: string, path: string): Promise<any> {
+export async function getFileFromStorage(path: string, bucket: string) {
   try {
     const { data, error } = await supabase.storage
       .from(bucket)
@@ -92,12 +75,11 @@ export async function getFileFromStorage(bucket: string, path: string): Promise<
 }
 
 /**
- * Deletes a file from Supabase storage
- * @param bucket - The storage bucket
+ * Deletes a file from storage
  * @param path - The file path
- * @returns Success status
+ * @param bucket - The bucket name
  */
-export async function deleteFileFromStorage(bucket: string, path: string): Promise<boolean> {
+export async function deleteFileFromStorage(path: string, bucket: string) {
   try {
     const { error } = await supabase.storage
       .from(bucket)
@@ -110,117 +92,157 @@ export async function deleteFileFromStorage(bucket: string, path: string): Promi
     return true;
   } catch (error) {
     console.error('Error deleting file from storage:', error);
-    return false;
+    throw error;
   }
 }
 
 /**
- * Determines the media type from a URL or MediaSource object
- * @param source - The media source (URL or object)
- * @returns The media type
+ * Determines the media type from a file or URL
+ * @param fileOrUrl - A file object or URL string
+ * @returns The determined media type
  */
-export function determineMediaType(source: any): MediaType {
-  if (!source) return MediaType.UNKNOWN;
-  
-  // If it's a string URL
-  if (typeof source === 'string') {
-    const url = source.toLowerCase();
+export function determineMediaType(fileOrUrl: File | string): MediaType {
+  // Handle File objects
+  if (fileOrUrl instanceof File) {
+    const type = fileOrUrl.type;
     
-    // Check by extension
-    if (url.match(/\.(jpe?g|png|gif|webp|svg)($|\?)/i)) return MediaType.IMAGE;
-    if (url.match(/\.(mp4|webm|mov|avi|mkv)($|\?)/i)) return MediaType.VIDEO;
-    if (url.match(/\.(mp3|wav|ogg|aac|m4a)($|\?)/i)) return MediaType.AUDIO;
-    
-    // Check by path patterns
-    if (url.includes('/images/') || url.includes('/img/') || url.includes('/photos/')) {
+    if (type.startsWith('image/')) {
       return MediaType.IMAGE;
     }
-    if (url.includes('/videos/') || url.includes('/video/')) {
+    
+    if (type.startsWith('video/')) {
       return MediaType.VIDEO;
     }
-    if (url.includes('/audio/') || url.includes('/sound/')) {
+    
+    if (type.startsWith('audio/')) {
       return MediaType.AUDIO;
     }
     
-    return MediaType.UNKNOWN;
+    return MediaType.FILE;
   }
   
-  // If it's a MediaSource object, try to determine from properties
-  const mediaType = source.media_type;
-  if (mediaType) {
-    if (typeof mediaType === 'string') {
-      switch (mediaType.toLowerCase()) {
-        case 'image': return MediaType.IMAGE;
-        case 'video': return MediaType.VIDEO;
-        case 'audio': return MediaType.AUDIO;
-        case 'file': return MediaType.FILE;
-        default: break;
-      }
-    } else if (typeof MediaType === 'object' && mediaType as MediaType) {
-      return mediaType as MediaType;
-    }
+  // Handle URLs
+  const url = fileOrUrl.toLowerCase();
+  const ext = url.split('.').pop()?.split('?')[0] || '';
+  
+  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+  const videoExts = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv'];
+  const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'];
+  
+  if (imageExts.includes(ext)) {
+    return MediaType.IMAGE;
   }
   
-  // Check for specific URL properties
-  if (source.video_url || source.video_urls) return MediaType.VIDEO;
-  if (source.media_url && typeof source.media_url === 'string') {
-    return determineMediaType(source.media_url);
+  if (videoExts.includes(ext)) {
+    return MediaType.VIDEO;
   }
   
-  return MediaType.UNKNOWN;
+  if (audioExts.includes(ext)) {
+    return MediaType.AUDIO;
+  }
+  
+  return MediaType.FILE;
 }
 
 /**
- * Extracts the media URL from a string or MediaSource object
- * @param source - The source to extract URL from
- * @returns The extracted URL or null if not found
+ * Extracts a media URL from various data structures
+ * @param data - The data to extract from
+ * @returns The extracted URL or empty string
  */
-export function extractMediaUrl(source: any): string | null {
-  if (!source) return null;
+export function extractMediaUrl(data: any): string {
+  if (!data) return '';
   
-  // If it's a string, return it directly
-  if (typeof source === 'string') return source;
+  if (typeof data === 'string') {
+    return data;
+  }
   
-  // Try to extract from various properties
-  return source.media_url || 
-         source.video_url || 
-         source.src || 
-         source.url || 
-         (source.media_urls && source.media_urls[0]) ||
-         (source.video_urls && source.video_urls[0]) ||
-         null;
+  if (Array.isArray(data) && data.length > 0) {
+    return typeof data[0] === 'string' ? data[0] : '';
+  }
+  
+  // Handle common properties that might contain URLs
+  if (data.media_url) {
+    return Array.isArray(data.media_url) ? data.media_url[0] : data.media_url;
+  }
+  
+  if (data.url) return data.url;
+  if (data.src) return data.src;
+  if (data.video_url) return data.video_url;
+  if (data.image) return data.image;
+  
+  return '';
 }
 
 /**
- * Optimizes an image for upload
+ * Optimizes an image by resizing and compressing it
  * @param file - The image file to optimize
- * @param maxWidth - Maximum width of the optimized image
+ * @param maxWidth - Maximum width in pixels
+ * @param maxHeight - Maximum height in pixels
  * @param quality - JPEG quality (0-1)
- * @returns A promise resolving to the optimized blob
+ * @returns A promise that resolves to the optimized blob
  */
-export async function optimizeImage(file: File, maxWidth: number = 1200, quality: number = 0.8): Promise<Blob> {
+export async function optimizeImage(
+  file: File,
+  maxWidth: number = 1200,
+  maxHeight: number = 1200,
+  quality: number = 0.85
+): Promise<Blob> {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Not an image file');
+  }
+  
+  try {
+    // Use the imported compressImage function
+    return await compressImage(file, { maxWidth, maxHeight, quality });
+  } catch (error) {
+    console.error('Error optimizing image:', error);
+    throw error;
+  }
+}
+
+/**
+ * Creates a thumbnail from a video file
+ * @param videoFile - The video file
+ * @param seekTo - Seconds into the video to capture the thumbnail
+ * @returns A promise that resolves to the thumbnail blob
+ */
+export async function createVideoThumbnail(
+  videoFile: File, 
+  seekTo: number = 1
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
+    try {
+      // Create video element
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
+      
+      // Create object URL for video
+      const videoUrl = URL.createObjectURL(videoFile);
+      
+      // Set up event handlers
+      video.onloadedmetadata = () => {
+        // Seek to the specified time
+        video.currentTime = Math.min(seekTo, video.duration * 0.25);
+      };
+      
+      video.onseeked = () => {
+        // Create canvas at video dimensions
         const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+        const ctx = canvas.getContext('2d');
         
-        // Calculate new dimensions
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
         }
         
-        canvas.width = width;
-        canvas.height = height;
+        // Set canvas size
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
         
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
+        // Draw the video frame on the canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         // Convert to blob
         canvas.toBlob(
@@ -228,61 +250,26 @@ export async function optimizeImage(file: File, maxWidth: number = 1200, quality
             if (blob) {
               resolve(blob);
             } else {
-              reject(new Error('Failed to optimize image'));
+              reject(new Error('Failed to create thumbnail blob'));
             }
+            
+            // Clean up
+            URL.revokeObjectURL(videoUrl);
           },
-          file.type,
-          quality
+          'image/jpeg',
+          0.8
         );
       };
-      img.onerror = () => reject(new Error('Failed to load image'));
-    };
-    reader.onerror = () => reject(new Error('Failed to read file'));
-  });
-}
-
-/**
- * Creates a thumbnail from a video file
- * @param videoFile - The video file
- * @param seekTime - Timestamp to capture (in seconds)
- * @returns A promise resolving to a blob of the thumbnail
- */
-export async function createVideoThumbnail(videoFile: File, seekTime: number = 1): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const videoURL = URL.createObjectURL(videoFile);
-    const video = document.createElement('video');
-    
-    video.src = videoURL;
-    video.currentTime = seekTime;
-    video.muted = true;
-    
-    video.onloadeddata = () => {
-      // Create canvas and draw video frame
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
       
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      video.onerror = () => {
+        URL.revokeObjectURL(videoUrl);
+        reject(new Error('Error loading video'));
+      };
       
-      // Convert to blob
-      canvas.toBlob(
-        (blob) => {
-          URL.revokeObjectURL(videoURL);
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Failed to create video thumbnail'));
-          }
-        },
-        'image/jpeg',
-        0.7
-      );
-    };
-    
-    video.onerror = () => {
-      URL.revokeObjectURL(videoURL);
-      reject(new Error('Failed to load video'));
-    };
+      // Start loading video
+      video.src = videoUrl;
+    } catch (error) {
+      reject(error);
+    }
   });
 }
