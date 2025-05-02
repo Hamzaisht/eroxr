@@ -40,7 +40,7 @@ export interface UploadResult {
   url?: string;
   error?: string;
   thumbnailUrl?: string;
-  path?: string; // Adding this to fix the path error
+  path?: string;
 }
 
 export interface MediaUploadState {
@@ -87,8 +87,8 @@ export interface UploadState {
   error: string | null;
   files: File[];
   previews: string[];
-  success: boolean; // Added success property
-  isComplete: boolean; // Added isComplete property
+  success: boolean;
+  isComplete: boolean;
 }
 
 export interface FileValidationResult {
@@ -99,6 +99,14 @@ export interface FileValidationResult {
 export interface ActiveSurveillanceState {
   isActive: boolean;
   lastUpdated: Date | null;
+  userId?: string;
+  targetUserId?: string;
+  startedAt?: Date;
+  duration?: number;
+  sessionId?: string;
+  isWatching?: boolean;
+  session?: any;
+  startTime?: string | null;
 }
 
 export interface LiveAlert {

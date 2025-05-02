@@ -6,9 +6,10 @@ export {
   getFileFromStorage, 
   deleteFileFromStorage,
   determineMediaType,
-  extractMediaUrl
+  extractMediaUrl,
+  optimizeImage,
+  createVideoThumbnail
 } from './media/mediaUtils';
 
-// Only export this from one place to avoid conflicts
-// Remove the duplicate export
-// export { inferContentTypeFromExtension } from './media/mediaUtils';
+// Ensure we export getPlayableMediaUrl correctly
+export { getPlayableMediaUrl } from './media/urlUtils';

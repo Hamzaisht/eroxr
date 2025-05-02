@@ -1,186 +1,164 @@
 
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { createUniqueFilePath, optimizeImage, createVideoThumbnail } from '@/utils/media/mediaUtils';
-import { isImageFile, isVideoFile } from '@/utils/upload/validators';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import { optimizeImage, createVideoThumbnail } from '@/utils/mediaUtils';
 
-interface UseChatActionsParams {
+interface UseChatActionsProps {
   recipientId: string;
 }
 
-export function useChatActions({ recipientId }: UseChatActionsParams) {
+export function useChatActions({ recipientId }: UseChatActionsProps) {
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const session = useSession();
   const { toast } = useToast();
 
-  // Handle media file selection
-  const handleMediaSelect = useCallback(async (files: FileList | File[]) => {
-    if (!session?.user) return;
-    if (!files || files.length === 0) return;
-    
+  // Handle media selection
+  const handleMediaSelect = useCallback(async (files: FileList) => {
+    if (!files.length || !session?.user?.id || !recipientId) {
+      return false;
+    }
+
     setIsUploading(true);
-    setUploadProgress(0);
-    
+
     try {
-      const mediaUrls: string[] = [];
-      const totalFiles = files.length;
-      
-      // Process each file
-      for (let i = 0; i < totalFiles; i++) {
-        const file = files[i];
-        const currentProgress = Math.round((i / totalFiles) * 100);
-        setUploadProgress(currentProgress);
-        
-        // Process based on file type
-        if (isImageFile(file) && file.size > 1024 * 1024) { // Optimize if over 1MB
-          const optimizedFile = await optimizeImage(file);
-          const url = await uploadFile(optimizedFile);
-          if (url) mediaUrls.push(url);
-        } else if (isVideoFile(file)) {
-          // Generate thumbnail for video
-          const thumbnail = await createVideoThumbnail(file);
-          
-          // Upload video
-          const videoUrl = await uploadFile(file);
-          
-          // Upload thumbnail if available
-          let thumbnailUrl = '';
-          if (thumbnail) {
-            thumbnailUrl = await uploadFile(thumbnail, 'thumbnails');
+      // Upload each file
+      const uploadPromises = Array.from(files).map(async file => {
+        // Optimize images before upload
+        let fileToUpload: File | Blob = file;
+        if (file.type.startsWith('image/')) {
+          try {
+            const optimizedBlob = await optimizeImage(file);
+            fileToUpload = new File([optimizedBlob], file.name, { type: file.type });
+          } catch (err) {
+            console.warn('Failed to optimize image, uploading original:', err);
           }
-          
-          if (videoUrl) {
-            // Store video with thumbnail reference
-            await supabase.from('direct_messages').insert({
-              sender_id: session.user.id,
-              recipient_id: recipientId,
-              video_url: videoUrl,
-              media_url: thumbnailUrl ? [thumbnailUrl] : null,
-              message_type: 'video',
-              created_at: new Date().toISOString(),
-            });
-          }
-        } else {
-          // Standard upload for other files
-          const url = await uploadFile(file);
-          if (url) mediaUrls.push(url);
         }
-      }
+
+        // Create unique file path
+        const fileExt = file.name.split('.').pop() || '';
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const filePath = `${session.user.id}/${fileName}`;
+
+        const { error } = await supabase.storage
+          .from('messages')
+          .upload(filePath, fileToUpload);
+
+        if (error) {
+          throw error;
+        }
+
+        const { data } = supabase.storage
+          .from('messages')
+          .getPublicUrl(filePath);
+
+        return data.publicUrl;
+      });
+
+      const urls = await Promise.all(uploadPromises);
       
-      // Only insert message if we have media URLs and not just processed videos
-      if (mediaUrls.length > 0) {
-        await supabase.from('direct_messages').insert({
+      // Create message with the uploaded media
+      const { error } = await supabase
+        .from('direct_messages')
+        .insert({
           sender_id: session.user.id,
           recipient_id: recipientId,
-          media_url: mediaUrls,
+          media_url: urls,
           message_type: 'media',
           created_at: new Date().toISOString(),
         });
+
+      if (error) {
+        throw error;
       }
-      
+
       toast({
         title: "Media sent",
-        description: "Your media has been sent successfully"
+        description: `Successfully sent ${urls.length} file${urls.length === 1 ? '' : 's'}`
       });
-      
-      setUploadProgress(100);
-      
-    } catch (error) {
+
+      return true;
+    } catch (error: any) {
       console.error("Error uploading media:", error);
+      
       toast({
-        title: "Upload failed",
-        description: "Failed to upload media. Please try again.",
+        title: "Upload Failed",
+        description: error.message || "Failed to send media",
         variant: "destructive"
       });
+      
+      return false;
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
     }
-  }, [session, recipientId, toast]);
-  
-  // Handle snap capture
-  const handleSnapCapture = useCallback(async (dataUrl: string) => {
-    if (!session?.user) return;
-    
+  }, [session?.user?.id, recipientId, toast]);
+
+  // Handle camera snap capture
+  const handleSnapCapture = useCallback(async (dataURL: string) => {
+    if (!session?.user?.id || !recipientId) return false;
+
     setIsUploading(true);
-    
+
     try {
-      // Convert data URL to file
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
+      // Convert data URL to blob
+      const response = await fetch(dataURL);
+      const blob = await response.blob();
+      
+      // Create a file from the blob
       const file = new File([blob], `snap-${Date.now()}.jpg`, { type: 'image/jpeg' });
       
       // Upload the file
-      const url = await uploadFile(file);
+      const filePath = `${session.user.id}/snaps/${uuidv4()}.jpg`;
       
-      if (url) {
-        // Create a snap message that expires
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiration
+      const { error } = await supabase.storage
+        .from('messages')
+        .upload(filePath, file);
         
-        await supabase.from('direct_messages').insert({
-          sender_id: session.user.id,
-          recipient_id: recipientId,
-          media_url: [url],
-          message_type: 'snap',
-          expires_at: expiresAt.toISOString(),
-          created_at: new Date().toISOString(),
-        });
-        
-        toast({
-          title: "Snap sent",
-          description: "Your snap will disappear after being viewed"
-        });
+      if (error) {
+        throw error;
       }
-    } catch (error) {
-      console.error("Error sending snap:", error);
+      
+      // Get public URL
+      const { data } = supabase.storage
+        .from('messages')
+        .getPublicUrl(filePath);
+        
+      // Create message with the uploaded image
+      await supabase.from('direct_messages').insert({
+        sender_id: session.user.id,
+        recipient_id: recipientId,
+        media_url: [data.publicUrl],
+        message_type: 'snap',
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
+      
       toast({
-        title: "Snap failed",
-        description: "Failed to send snap. Please try again.",
+        title: "Snap Sent",
+        description: "Your snap has been sent"
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error sending snap:", error);
+      
+      toast({
+        title: "Snap Failed",
+        description: error.message || "Failed to send snap",
         variant: "destructive"
       });
+      
+      return false;
     } finally {
       setIsUploading(false);
     }
-  }, [session, recipientId, toast]);
-  
-  // Helper function to upload a file
-  const uploadFile = useCallback(async (file: File, folder: string = 'messages'): Promise<string | null> => {
-    if (!session?.user) return null;
-    
-    try {
-      const filePath = createUniqueFilePath(session.user.id, file);
-      
-      // Upload file to storage
-      const { error, data } = await supabase.storage
-        .from(folder)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-      
-      if (error) throw error;
-      
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from(folder)
-        .getPublicUrl(filePath);
-      
-      return urlData.publicUrl;
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      return null;
-    }
-  }, [session]);
-  
+  }, [session?.user?.id, recipientId, toast]);
+
   return {
     isUploading,
-    uploadProgress,
     handleMediaSelect,
     handleSnapCapture
   };
 }
-

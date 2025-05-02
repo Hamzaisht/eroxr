@@ -7,13 +7,14 @@ import { ActiveSurveillanceState } from '@/utils/media/types';
 import { LiveSession } from '@/types/surveillance';
 
 interface UseGhostModeReturn {
-  isGhostModeEnabled: boolean;
-  isGhostMode: boolean; // Alias for isGhostModeEnabled for backwards compatibility
+  isGhostMode: boolean;
+  isGhostModeEnabled: boolean; // Alias for backwards compatibility
+  hasGhostAccess: boolean;
+  canUseGhostMode: boolean; // Alias for hasGhostAccess
   toggleGhostMode: () => Promise<void>;
   activeSurveillance: ActiveSurveillanceState;
   formatTime: (state: ActiveSurveillanceState) => string;
   isLoading: boolean;
-  canUseGhostMode: boolean;
   startSurveillance: (sessionOrUserId: LiveSession | string, duration?: number) => Promise<boolean>;
   stopSurveillance: () => Promise<boolean>;
   liveAlerts: any[] | null;
@@ -23,20 +24,52 @@ interface UseGhostModeReturn {
 export const useGhostMode = (): UseGhostModeReturn => {
   const [isGhostModeEnabled, setIsGhostModeEnabled] = useState(false);
   const [activeSurveillance, setActiveSurveillance] = useState<ActiveSurveillanceState>({
-    active: false,
+    isActive: false,
     userId: '',
     duration: 0,
     isWatching: false,
     session: null,
     startTime: null,
     targetUserId: '',
-    startedAt: undefined,
+    lastUpdated: null
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [canUseGhostMode, setCanUseGhostMode] = useState(true); // Default to true
+  const [hasGhostAccess, setHasGhostAccess] = useState(true); // Default to true
   const [liveAlerts, setLiveAlerts] = useState<any[] | null>(null);
   const session = useSession();
   const { toast } = useToast();
+
+  // Check if user has ghost mode access
+  useEffect(() => {
+    const checkGhostAccess = async () => {
+      if (!session?.user?.id) {
+        setHasGhostAccess(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('admin_roles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('role', 'ghost_mode')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error checking ghost mode access:', error);
+          setHasGhostAccess(false);
+          return;
+        }
+
+        setHasGhostAccess(!!data);
+      } catch (err) {
+        console.error('Failed to check ghost mode access:', err);
+        setHasGhostAccess(false);
+      }
+    };
+
+    checkGhostAccess();
+  }, [session?.user?.id]);
 
   // Load initial state from local storage
   useEffect(() => {
@@ -47,7 +80,10 @@ export const useGhostMode = (): UseGhostModeReturn => {
     if (storedSurveillance) {
       try {
         const parsedSurveillance = JSON.parse(storedSurveillance);
-        setActiveSurveillance(parsedSurveillance);
+        setActiveSurveillance({
+          ...parsedSurveillance,
+          isActive: parsedSurveillance.isActive || parsedSurveillance.active || false
+        });
       } catch (error) {
         console.error("Error parsing activeSurveillance from localStorage:", error);
       }
@@ -73,6 +109,15 @@ export const useGhostMode = (): UseGhostModeReturn => {
       return;
     }
 
+    if (!hasGhostAccess) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to use ghost mode.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       setIsGhostModeEnabled(prev => {
@@ -88,7 +133,7 @@ export const useGhostMode = (): UseGhostModeReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, isGhostModeEnabled, toast]);
+  }, [session?.user?.id, hasGhostAccess, isGhostModeEnabled, toast]);
 
   const startSurveillance = useCallback(async (sessionOrUserId: LiveSession | string, duration: number = 30): Promise<boolean> => {
     if (!session?.user?.id) {
@@ -101,7 +146,7 @@ export const useGhostMode = (): UseGhostModeReturn => {
     }
 
     const sessionId = Math.random().toString(36).substring(2, 15);
-    const startedAt = new Date();
+    const startTime = new Date().toISOString();
     
     // Handle both LiveSession objects and direct userId strings
     let targetUserId: string;
@@ -116,15 +161,16 @@ export const useGhostMode = (): UseGhostModeReturn => {
     }
 
     setActiveSurveillance({
-      active: true,
+      isActive: true,
       userId: session.user.id,
       targetUserId: targetUserId,
-      startedAt: startedAt,
+      startedAt: new Date(),
       duration: duration,
       sessionId: sessionId,
       isWatching: true,
-      session: sessionObject, // Will be populated with actual session data
-      startTime: startedAt.toISOString(),
+      session: sessionObject,
+      startTime: startTime,
+      lastUpdated: new Date()
     });
 
     toast({
@@ -142,14 +188,14 @@ export const useGhostMode = (): UseGhostModeReturn => {
 
   const stopSurveillance = useCallback(async (): Promise<boolean> => {
     setActiveSurveillance({
-      active: false,
+      isActive: false,
       userId: '',
       duration: 0,
       isWatching: false,
       session: null,
       startTime: null,
       targetUserId: '',
-      startedAt: undefined,
+      lastUpdated: new Date()
     });
 
     toast({
@@ -161,11 +207,11 @@ export const useGhostMode = (): UseGhostModeReturn => {
   }, [toast]);
 
   const formatTime = (state: ActiveSurveillanceState) => {
-    if (!state.active || !state.targetUserId || !state.startedAt) {
+    if (!state.isActive || !state.targetUserId || !state.startTime) {
       return "00:00";
     }
     
-    const start = new Date(state.startedAt);
+    const start = new Date(state.startTime);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - start.getTime()) / 1000);
     
@@ -175,21 +221,23 @@ export const useGhostMode = (): UseGhostModeReturn => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Mock implementation for refreshAlerts
+  // Implementation for refreshAlerts
   const refreshAlerts = useCallback(async () => {
     // In a real app, this would fetch real alerts from an API
     console.log("Refreshing ghost mode alerts");
     setLiveAlerts([]);
+    return Promise.resolve();
   }, []);
 
   return {
+    isGhostMode: isGhostModeEnabled,
     isGhostModeEnabled,
-    isGhostMode: isGhostModeEnabled, // Alias for backward compatibility
+    hasGhostAccess,
+    canUseGhostMode: hasGhostAccess, // Alias for consistency
     toggleGhostMode,
     activeSurveillance,
     formatTime,
     isLoading,
-    canUseGhostMode,
     startSurveillance,
     stopSurveillance,
     liveAlerts,
