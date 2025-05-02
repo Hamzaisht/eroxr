@@ -13,7 +13,7 @@ import { useStories } from "./story/hooks/useStories";
 import { StoryLoadingState } from "./story/components/StoryLoadingState";
 import { StoryErrorState } from "./story/components/StoryErrorState";
 import { StoryReelHeader } from "./story/components/StoryReelHeader";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { getPlayableMediaUrl } from "@/utils/media/mediaUrlUtils";
 
 interface GroupedStories {
   [creatorId: string]: Story[];

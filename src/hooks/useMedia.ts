@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { getPlayableMediaUrl } from '@/utils/media/getPlayableMediaUrl';
+import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
 import { MediaSource } from '@/utils/media/types';
 
 interface UseMediaOptions {

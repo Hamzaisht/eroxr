@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Eye, MapPin, Calendar, User, Clock } from "lucide-react";
@@ -13,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import { getPlayableMediaUrl } from "@/utils/media/getPlayableMediaUrl";
+import { getPlayableMediaUrl } from "@/utils/media/mediaUrlUtils";
 import { MediaSource } from "@/utils/media/types";
 import { calculateMatchPercentage } from "@/components/dating/utils/matchCalculator";
 
