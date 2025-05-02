@@ -1,4 +1,6 @@
 
+import { MediaType, AvailabilityStatus } from "./types";
+
 /**
  * Get the MIME type for a file or URL
  */

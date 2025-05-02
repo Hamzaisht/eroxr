@@ -17,7 +17,7 @@ export function AvailabilityIndicator({
   size,
   onClick
 }: AvailabilityIndicatorProps) {
-  // Convert string to the correct type if needed
+  // Convert string to the correct enum value if needed
   const normalizedStatus = status as AvailabilityStatus;
   
   return (

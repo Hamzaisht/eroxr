@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
@@ -19,7 +20,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const mediaItem = {
     media_url: mediaUrl,
     creator_id: creatorId,
-    media_type: MediaType.IMAGE
+    media_type: "image" as MediaType
   };
   
   useEffect(() => {

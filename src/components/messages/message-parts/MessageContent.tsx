@@ -72,7 +72,7 @@ export const MessageContent = ({
               item={{
                 media_url: url,
                 creator_id: message.sender_id,
-                media_type: MediaType.IMAGE
+                media_type: "image" as MediaType
               }}
               className="w-full max-h-60 object-cover"
               showWatermark={false}
@@ -100,7 +100,7 @@ export const MessageContent = ({
             item={{
               video_url: message.video_url,
               creator_id: message.sender_id,
-              media_type: MediaType.VIDEO
+              media_type: "video" as MediaType
             }}
             className="w-full max-h-60 object-cover"
             showWatermark={false}
