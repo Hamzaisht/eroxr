@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ActiveSurveillanceState, LiveAlert } from '@/utils/media/types';
@@ -119,8 +120,8 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Update the startSurveillance function to use the LiveSession interface
-  const startSurveillance = async (session: LiveSession): Promise<boolean> => {
-    if (!session || !hasGhostAccess) return false;
+  const startSurveillance = async (liveSession: LiveSession): Promise<boolean> => {
+    if (!liveSession || !hasGhostAccess) return false;
     
     setIsLoading(true);
     
@@ -128,30 +129,30 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       // Create a new surveillance session
       const sessionId = crypto.randomUUID();
       const timestamp = new Date().toISOString();
-      const currentUserId = session?.user?.id; // Get the current user's ID
+      const currentUserId = session?.user?.id; // Get the current logged-in user's ID
       
       // Update local state
       setActiveSurveillance({
         isActive: true,
         lastUpdated: new Date(),
-        userId: currentUserId, // Use the current session user ID, not from the LiveSession
-        targetUserId: session.user_id, // This should be from the LiveSession
+        userId: currentUserId, // Use the current logged-in user ID
+        targetUserId: liveSession.user_id, // This should be from the LiveSession
         startedAt: new Date(),
         sessionId,
         isWatching: true,
-        session: session,
+        session: liveSession,
         startTime: timestamp
       });
       
-      setActiveSession(session);
+      setActiveSession(liveSession);
       
       // Record in database
       const { error } = await supabase
         .from('admin_surveillance')
         .insert({
           session_id: sessionId,
-          admin_id: currentUserId, // Use the current session user ID, not from the LiveSession
-          target_user_id: session.user_id, // This should be from the LiveSession
+          admin_id: currentUserId, // Use the current logged-in user ID
+          target_user_id: liveSession.user_id, // This should be from the LiveSession
           started_at: timestamp,
           status: 'active'
         });
