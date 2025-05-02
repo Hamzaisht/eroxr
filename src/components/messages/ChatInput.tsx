@@ -1,7 +1,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { MessageInput } from '../MessageInput';
-import { useChatActions } from './ChatActions'; // Changed from useChatActionsV2
+import { MessageInput } from './MessageInput';
+import { useChatActions } from './chat/ChatActions';
 import { DirectMessage } from '@/integrations/supabase/types/message';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@supabase/auth-helpers-react';
@@ -35,7 +35,7 @@ export const ChatInput = ({
     isUploading, 
     handleMediaSelect, 
     handleSnapCapture 
-  } = useChatActions({ recipientId }); // Changed from useChatActionsV2
+  } = useChatActions({ recipientId });
 
   const { logMessageActivity, logMediaUpload } = useMessageAudit(recipientId);
   const { sendTypingStatus } = useTypingIndicator(recipientId);
@@ -169,7 +169,7 @@ export const ChatInput = ({
   };
   
   const handleMediaUpload = (files: FileList | string[]) => {
-    handleMediaSelect(files instanceof FileList ? files : new DataTransfer().files);
+    handleMediaSelect(files);
   };
   
   return (

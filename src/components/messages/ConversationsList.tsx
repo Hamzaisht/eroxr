@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -191,42 +192,10 @@ const ConversationsList = ({ onSelectUser, onNewMessage, onToggleDetails }: Conv
       }
     };
     
-    const typingChannels: any[] = [];
-    
     getConversations();
     
     // Setup typing indicator subscriptions for each conversation
-    for (const contact of conversationsWithMessages) {
-      // Listen for typing indicators from each contact
-      const typingChannel = supabase
-        .channel(`typing:${session.user.id}:${contact.id}`)
-        .on('broadcast', { event: 'typing' }, (payload) => {
-          if (payload.payload && payload.payload.user_id === contact.id) {
-            setConversations(prev => 
-              prev.map(conv => 
-                conv.id === contact.id 
-                  ? { ...conv, is_typing: payload.payload.is_typing } 
-                  : conv
-              )
-            );
-            
-            // Auto-clear typing indicator after 3 seconds if still typing
-            if (payload.payload.is_typing) {
-              setTimeout(() => {
-                setConversations(prev => 
-                  prev.map(conv => 
-                    conv.id === contact.id ? { ...conv, is_typing: false } : conv
-                  )
-                );
-              }, 3000);
-            }
-          }
-        })
-        .subscribe();
-        
-      // Store channel for cleanup
-      typingChannels.push(typingChannel);
-    }
+    const typingChannels: any[] = [];
     
     // Setup realtime subscription
     const channel = supabase

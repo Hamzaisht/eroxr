@@ -1,5 +1,4 @@
 
-
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
@@ -61,6 +60,8 @@ export interface MediaSource {
   poster?: string;
   video_thumbnail_url?: string;
   media_type?: MediaType | string;
+  url?: string;
+  src?: string;
 }
 
 export interface MediaOptions {
@@ -78,6 +79,31 @@ export interface MediaOptions {
   onTimeUpdate?: (currentTime: number) => void;
 }
 
+// Additional types needed for hooks
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  files: File[];
+}
+
+export interface FileValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+export interface ActiveSurveillanceState {
+  isActive: boolean;
+  lastUpdated: Date | null;
+}
+
+export interface LiveAlert {
+  id: string;
+  type: string;
+  message: string;
+  timestamp: Date;
+}
+
 // Convert string to MediaType enum
 export function stringToMediaType(typeStr: string): MediaType {
   switch (typeStr.toLowerCase()) {
@@ -93,4 +119,3 @@ export function stringToMediaType(typeStr: string): MediaType {
       return MediaType.UNKNOWN;
   }
 }
-

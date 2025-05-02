@@ -1,48 +1,71 @@
 
-export function isVideoUrl(url: string): boolean {
-  const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.wmv', '.flv', '.mkv'];
-  const lowercaseUrl = url.toLowerCase();
-  return videoExtensions.some(ext => lowercaseUrl.endsWith(ext));
+/**
+ * Adds a cache busting parameter to a URL
+ * @param url - The URL to add the cache buster to
+ * @returns The URL with a cache buster parameter
+ */
+export function addCacheBuster(url: string): string {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}cb=${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/**
+ * Extracts the file extension from a URL
+ * @param url - The URL to extract the extension from
+ * @returns The file extension or empty string if none found
+ */
+export function getFileExtension(url: string): string {
+  const parts = url.split('.');
+  if (parts.length <= 1) return '';
+  
+  // Get the last part and remove any query parameters
+  const lastPart = parts[parts.length - 1].split('?')[0].split('#')[0];
+  return lastPart.toLowerCase();
+}
+
+/**
+ * Determines if a URL is likely an image based on its extension
+ * @param url - The URL to check
+ * @returns True if the URL is likely an image, false otherwise
+ */
 export function isImageUrl(url: string): boolean {
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
-  const lowercaseUrl = url.toLowerCase();
-  return imageExtensions.some(ext => lowercaseUrl.endsWith(ext));
+  const ext = getFileExtension(url);
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
 }
 
+/**
+ * Determines if a URL is likely a video based on its extension
+ * @param url - The URL to check
+ * @returns True if the URL is likely a video, false otherwise
+ */
+export function isVideoUrl(url: string): boolean {
+  const ext = getFileExtension(url);
+  return ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv'].includes(ext);
+}
+
+/**
+ * Determines if a URL is likely an audio file based on its extension
+ * @param url - The URL to check
+ * @returns True if the URL is likely an audio file, false otherwise
+ */
 export function isAudioUrl(url: string): boolean {
-  const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac'];
-  const lowercaseUrl = url.toLowerCase();
-  return audioExtensions.some(ext => lowercaseUrl.endsWith(ext));
+  const ext = getFileExtension(url);
+  return ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'].includes(ext);
 }
 
-export function isDocumentUrl(url: string): boolean {
-  const docExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'];
-  const lowercaseUrl = url.toLowerCase();
-  return docExtensions.some(ext => lowercaseUrl.endsWith(ext));
+/**
+ * Creates a URL for a file object
+ * @param file - The file to create a URL for
+ * @returns A URL for the file
+ */
+export function createObjectUrl(file: File | Blob): string {
+  return URL.createObjectURL(file);
 }
 
-export function getPlayableMediaUrl(url: string): string {
-  // Some services like Cloudinary need manipulations to make videos playable
-  // For now, we'll just return the original URL
-  return url;
-}
-
-export function getMediaType(url: string): string {
-  if (isVideoUrl(url)) return 'video';
-  if (isImageUrl(url)) return 'image';
-  if (isAudioUrl(url)) return 'audio';
-  if (isDocumentUrl(url)) return 'document';
-  return 'unknown';
-}
-
-export function getThumbnailUrl(url: string): string {
-  // If it's a video URL, we might want to get a thumbnail
-  if (isVideoUrl(url)) {
-    // This is a simple example that assumes a thumbnail with the same name but jpg extension
-    // In a real app, you'd have a more robust solution or use a service that provides thumbnails
-    return url.replace(/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i, '.jpg');
-  }
-  return url;
+/**
+ * Revokes a URL created with URL.createObjectURL
+ * @param url - The URL to revoke
+ */
+export function revokeObjectUrl(url: string): void {
+  URL.revokeObjectURL(url);
 }
