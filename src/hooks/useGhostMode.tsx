@@ -128,13 +128,14 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
       // Create a new surveillance session
       const sessionId = crypto.randomUUID();
       const timestamp = new Date().toISOString();
+      const currentUserId = session?.user?.id; // Get the current user's ID
       
       // Update local state
       setActiveSurveillance({
         isActive: true,
         lastUpdated: new Date(),
-        userId: session.user?.id,
-        targetUserId: session.user_id,
+        userId: currentUserId, // Use the current session user ID, not from the LiveSession
+        targetUserId: session.user_id, // This should be from the LiveSession
         startedAt: new Date(),
         sessionId,
         isWatching: true,
@@ -149,8 +150,8 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         .from('admin_surveillance')
         .insert({
           session_id: sessionId,
-          admin_id: session.user?.id,
-          target_user_id: session.user_id,
+          admin_id: currentUserId, // Use the current session user ID, not from the LiveSession
+          target_user_id: session.user_id, // This should be from the LiveSession
           started_at: timestamp,
           status: 'active'
         });

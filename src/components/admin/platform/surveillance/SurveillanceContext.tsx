@@ -78,11 +78,23 @@ export function SurveillanceProvider({
           break;
           
         case 'chats':
-          data = await fetchChatSessions();
+          // Add required LiveSession properties to chat sessions
+          const chatSessions = await fetchChatSessions();
+          data = chatSessions.map(session => ({
+            ...session,
+            started_at: session.created_at || new Date().toISOString(),
+            is_active: session.status === 'active' || session.status === 'live',
+          }));
           break;
           
         case 'bodycontact':
-          data = await fetchBodyContact();
+          // Add required LiveSession properties to bodycontact sessions
+          const bodyContactSessions = await fetchBodyContact();
+          data = bodyContactSessions.map(session => ({
+            ...session,
+            started_at: session.created_at || session.last_active || new Date().toISOString(),
+            is_active: session.status === 'active' || session.status === 'live' || true,
+          }));
           break;
           
         default:

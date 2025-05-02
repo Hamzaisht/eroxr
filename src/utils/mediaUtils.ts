@@ -3,8 +3,6 @@
 export { 
   uploadFileToStorage, 
   createUniqueFilePath, 
-  getFileFromStorage, 
-  deleteFileFromStorage,
   determineMediaType,
   extractMediaUrl,
   optimizeImage,
@@ -13,3 +11,15 @@ export {
 
 // Ensure we export getPlayableMediaUrl correctly
 export { getPlayableMediaUrl } from './media/urlUtils';
+
+// Function for getting files from storage (stub for missing function)
+export const getFileFromStorage = async (bucket: string, path: string) => {
+  console.warn('getFileFromStorage not implemented');
+  return null;
+};
+
+// Function for deleting files from storage (stub for missing function)
+export const deleteFileFromStorage = async (bucket: string, path: string): Promise<boolean> => {
+  console.warn('deleteFileFromStorage not implemented');
+  return false;
+};

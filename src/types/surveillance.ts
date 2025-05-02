@@ -65,8 +65,9 @@ export interface LiveSession {
   video_thumbnail_url?: string;
   duration?: number;
   
-  // For internal use during type conversion
+  // For surveillance
   creator_id?: string;
+  is_private?: boolean;
 }
 
 // Interface for content items in surveillance
