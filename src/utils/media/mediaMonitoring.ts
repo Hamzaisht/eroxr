@@ -1,81 +1,61 @@
 
-import { MediaErrorType } from './types';
+/**
+ * Media error reporting and monitoring utilities
+ */
 
-interface MediaErrorReport {
-  url: string | null;
-  type: MediaErrorType;
-  component: string;
-  retryCount: number;
-  timestamp: number;
-  mediaType: 'image' | 'video' | 'audio' | 'unknown';
-  additionalInfo?: Record<string, any>;
-}
+type MediaErrorType = 
+  | 'load_failure' 
+  | 'processing_error' 
+  | 'playback_error'
+  | 'invalid_format'
+  | 'decode_error'
+  | 'timeout'
+  | 'network_error'
+  | 'unknown';
 
-// Track errors for potential reporting and analysis
-const mediaErrors: MediaErrorReport[] = [];
+type MediaType = 'image' | 'video' | 'audio' | 'unknown';
 
 /**
- * Report a media error for monitoring and potential intervention
+ * Reports a media error for monitoring and debugging
+ * @param url - The URL of the media that caused the error
+ * @param errorType - The type of error that occurred
+ * @param retryCount - The number of retry attempts made
+ * @param mediaType - The type of media that caused the error
+ * @param componentName - The component where the error occurred
  */
 export function reportMediaError(
-  url: string | null,
-  errorType: string,
+  url: string | null | undefined,
+  errorType: MediaErrorType,
   retryCount: number = 0,
-  mediaType: 'image' | 'video' | 'audio' | 'unknown' = 'unknown',
-  component: string = 'unknown',
-  additionalInfo: Record<string, any> = {}
+  mediaType: MediaType = 'unknown',
+  componentName: string = 'unknown'
 ): void {
-  const errorReport: MediaErrorReport = {
-    url,
-    type: errorType as MediaErrorType || MediaErrorType.UNKNOWN,
-    component,
-    retryCount,
-    timestamp: Date.now(),
+  // Sanitize URL for logging (remove sensitive parts)
+  const sanitizedUrl = url ? url.split('?')[0] : 'null-url';
+  
+  console.error(`Media ${errorType} in ${componentName}:`, {
     mediaType,
-    additionalInfo
-  };
-  
-  console.error('Media error:', errorReport);
-  
-  // Store the error report for potential analysis
-  mediaErrors.push(errorReport);
-}
-
-/**
- * Get media error statistics
- */
-export function getMediaErrorStats(): { 
-  total: number, 
-  byType: Record<string, number>,
-  byComponent: Record<string, number>
-} {
-  const stats = {
-    total: mediaErrors.length,
-    byType: {} as Record<string, number>,
-    byComponent: {} as Record<string, number>
-  };
-  
-  // Compute stats
-  mediaErrors.forEach(error => {
-    // By error type
-    if (!stats.byType[error.type]) {
-      stats.byType[error.type] = 0;
-    }
-    stats.byType[error.type]++;
-    
-    // By component
-    if (!stats.byComponent[error.component]) {
-      stats.byComponent[error.component] = 0;
-    }
-    stats.byComponent[error.component]++;
+    retryCount,
+    url: sanitizedUrl
   });
   
-  return stats;
+  // In a production app, you would send this data to a monitoring service
+  // For now, we just log it to the console
 }
 
 /**
- * Reset error tracking (e.g., after analyzing or reporting)
+ * Reports successful media loads (for monitoring performance)
+ * @param url - The URL of the media that was loaded
+ * @param loadTimeMs - The time it took to load in milliseconds
+ * @param mediaType - The type of media that was loaded
  */
-export function clearMediaErrorTracking(): void {
-  mediaErrors.length = 0;
+export function reportMediaSuccess(
+  url: string | null | undefined,
+  loadTimeMs: number,
+  mediaType: MediaType = 'unknown'
+): void {
+  // Only log in development to avoid console spam
+  if (process.env.NODE_ENV === 'development') {
+    console.info(`Media loaded successfully (${mediaType}): ${loadTimeMs}ms`);
+  }
 }

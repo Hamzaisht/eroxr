@@ -1,7 +1,7 @@
 
 import { MediaType, MediaSource, StorageUploadResult } from './types';
 import { supabase } from '@/integrations/supabase/client';
-import { getFileExtension, isImageUrl, isVideoUrl, isAudioUrl } from './urlUtils';
+import { getFileExtension, isImageUrl, isVideoUrl, isAudioUrl } from './mediaUrlUtils';
 
 /**
  * Determines the media type (image, video, etc.) from various input formats
@@ -162,10 +162,7 @@ export async function uploadFileToStorage(bucket: string, path: string, fileOrUr
     // Upload the file to storage
     const { error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(path, file, { 
-        cacheControl: '3600', 
-        upsert: true 
-      });
+      .upload(path, file);
 
     if (uploadError) {
       return {
@@ -177,9 +174,7 @@ export async function uploadFileToStorage(bucket: string, path: string, fileOrUr
     }
 
     // Get the public URL
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
 
     return {
       path,
@@ -188,157 +183,11 @@ export async function uploadFileToStorage(bucket: string, path: string, fileOrUr
       error: null
     };
   } catch (err) {
-    console.error('Storage upload error:', err);
     return {
       path: '',
       url: '',
       success: false,
-      error: err instanceof Error ? err.message : 'Unknown upload error'
+      error: `Unexpected error: ${err instanceof Error ? err.message : String(err)}`
     };
   }
 }
-
-/**
- * Helper function to optimize an image before uploading
- * @param file - Original image file to optimize
- * @param maxWidth - Maximum width in pixels
- * @param quality - JPEG quality (0-1)
- * @returns Promise with the optimized file
- */
-export const optimizeImage = async (
-  file: File, 
-  maxWidth = 1920, 
-  quality = 0.8
-): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    try {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        if (!ctx) {
-          reject(new Error('Could not get canvas context'));
-          return;
-        }
-        
-        // Calculate dimensions maintaining aspect ratio
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > maxWidth) {
-          height = Math.round(height * (maxWidth / width));
-          width = maxWidth;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Draw and compress image
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error('Failed to create blob from canvas'));
-              return;
-            }
-            
-            const optimizedFile = new File(
-              [blob],
-              file.name,
-              { type: 'image/jpeg', lastModified: Date.now() }
-            );
-            
-            resolve(optimizedFile);
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('Failed to load image'));
-      };
-      
-      img.src = url;
-    } catch (err) {
-      reject(err);
-    }
-  });
-};
-
-/**
- * Creates a thumbnail for a video file
- * @param videoFile - Video file to create thumbnail from
- * @returns Promise with the thumbnail as a File object
- */
-export const createVideoThumbnail = async (
-  videoFile: File
-): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    try {
-      const video = document.createElement('video');
-      const url = URL.createObjectURL(videoFile);
-      
-      video.onloadedmetadata = () => {
-        // Seek to 25% of the video duration for thumbnail
-        video.currentTime = video.duration * 0.25;
-      };
-      
-      video.onseeked = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            URL.revokeObjectURL(url);
-            reject(new Error('Could not get canvas context'));
-            return;
-          }
-          
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          URL.revokeObjectURL(url);
-          
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('Failed to create thumbnail blob'));
-                return;
-              }
-              
-              const thumbnailFile = new File(
-                [blob],
-                videoFile.name.replace(/\.[^/.]+$/, '') + '_thumbnail.jpg',
-                { type: 'image/jpeg', lastModified: Date.now() }
-              );
-              
-              resolve(thumbnailFile);
-            },
-            'image/jpeg',
-            0.7
-          );
-        } catch (err) {
-          URL.revokeObjectURL(url);
-          reject(err);
-        }
-      };
-      
-      video.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('Error loading video'));
-      };
-      
-      video.src = url;
-    } catch (err) {
-      reject(err);
-    }
-  });
-};
