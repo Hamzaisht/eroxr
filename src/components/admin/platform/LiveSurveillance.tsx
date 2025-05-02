@@ -51,7 +51,7 @@ export const LiveSurveillance = () => {
 
   const handleSelectAlert = (alert: LiveAlert) => {
     if (alert.session) {
-      handleStartWatching(alert.session);
+      handleStartWatching(alert.session as LiveSession);
     }
   };
 
@@ -59,13 +59,21 @@ export const LiveSurveillance = () => {
     return <GhostModePrompt />;
   }
 
-  const typedAlerts = liveAlerts as LiveAlert[] || [];
+  // Format alerts to match LiveAlert type from alerts.ts
+  const formattedAlerts = liveAlerts.map(alert => ({
+    ...alert,
+    alert_type: alert.alert_type || (alert.type === 'violation' ? 'violation' : 
+                alert.type === 'risk' ? 'risk' : 'information') as 'violation' | 'risk' | 'information',
+    user_id: alert.user_id || '',
+    username: alert.username || 'Unknown',
+    created_at: typeof alert.created_at === 'string' ? alert.created_at : new Date().toISOString(),
+  })) as unknown as LiveAlert[];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4">
       <div className="space-y-4">
         <SurveillanceAlerts
-          liveAlerts={typedAlerts}
+          liveAlerts={formattedAlerts}
           loadingRefresh={loadingRefresh}
           onRefresh={handleRefresh}
           onSelectAlert={handleSelectAlert}
@@ -81,12 +89,17 @@ export const LiveSurveillance = () => {
       
       <div className="lg:col-span-3 space-y-4">
         <SurveillanceProvider
-          liveAlerts={typedAlerts}
-          refreshAlerts={refreshAlerts}
-          startSurveillance={startSurveillance}
+          liveAlerts={formattedAlerts}
+          refreshAlerts={async () => {
+            const success = await refreshAlerts();
+            return success;
+          }}
+          startSurveillance={async (session: LiveSession) => {
+            return await startSurveillance(session);
+          }}
         >
           <SurveillanceTabs 
-            liveAlerts={typedAlerts} 
+            liveAlerts={formattedAlerts} 
             onSelectAlert={handleSelectAlert}
           />
           <SessionList 

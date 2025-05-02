@@ -72,7 +72,15 @@ export default function Surveillance() {
     );
   }
   
-  const typedAlerts = liveAlerts as LiveAlert[] || [];
+  // Format alerts to match LiveAlert type from alerts.ts
+  const formattedAlerts = liveAlerts.map(alert => ({
+    ...alert,
+    alert_type: alert.alert_type || (alert.type === 'violation' ? 'violation' : 
+                alert.type === 'risk' ? 'risk' : 'information') as 'violation' | 'risk' | 'information',
+    user_id: alert.user_id || '',
+    username: alert.username || 'Unknown',
+    created_at: typeof alert.created_at === 'string' ? alert.created_at : new Date().toISOString(),
+  })) as unknown as LiveAlert[];
 
   return (
     <div className="space-y-4">
@@ -83,15 +91,20 @@ export default function Surveillance() {
       />
       
       <SurveillanceProvider
-        liveAlerts={typedAlerts}
-        refreshAlerts={refreshAlerts}
-        startSurveillance={startSurveillance}
+        liveAlerts={formattedAlerts}
+        refreshAlerts={async () => {
+          const success = await refreshAlerts();
+          return success;
+        }}
+        startSurveillance={async (session: LiveSession) => {
+          return await startSurveillance(session);
+        }}
       >
         <SurveillanceTabs 
-          liveAlerts={typedAlerts} 
+          liveAlerts={formattedAlerts} 
           onSelectAlert={(alert) => {
             if (alert?.session) {
-              startSurveillance(alert.session);
+              startSurveillance(alert.session as LiveSession);
             }
           }}
         />

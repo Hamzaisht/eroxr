@@ -38,13 +38,26 @@ function GodmodeLayout() {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  const typedAlerts = liveAlerts as LiveAlert[] || [];
+  // Instead of trying to cast, adapt the API return to match what SurveillanceProvider expects
+  const formattedAlerts = liveAlerts.map(alert => ({
+    ...alert,
+    alert_type: alert.alert_type || (alert.type === 'violation' ? 'violation' : 
+                alert.type === 'risk' ? 'risk' : 'information') as 'violation' | 'risk' | 'information',
+    user_id: alert.user_id || '',
+    username: alert.username || 'Unknown',
+    created_at: typeof alert.created_at === 'string' ? alert.created_at : new Date().toISOString(),
+  })) as unknown as LiveAlert[];
   
   return (
     <SurveillanceProvider
-      liveAlerts={typedAlerts}
-      refreshAlerts={refreshAlerts}
-      startSurveillance={startSurveillance}
+      liveAlerts={formattedAlerts}
+      refreshAlerts={async () => { 
+        const success = await refreshAlerts();
+        return success;
+      }}
+      startSurveillance={async (session: LiveSession) => {
+        return await startSurveillance(session);
+      }}
     >
       <div className="flex min-h-screen w-full bg-[#0D1117]">
         <GodmodeSidebar />

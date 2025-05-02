@@ -2,6 +2,7 @@
 import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ActiveSurveillanceState, LiveAlert } from '@/utils/media/types';
+import { LiveSession } from '@/types/surveillance';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from './use-toast';
 
@@ -11,11 +12,15 @@ interface GhostModeContextType {
   isLoading: boolean;
   canUseGhostMode: boolean;
   toggleGhostMode: () => void;
-  activeSurveillance: ActiveSurveillanceState;
-  startSurveillance: (targetUserId: string) => Promise<boolean>;
-  stopSurveillance: () => Promise<void>;
+  activeSurveillance: {
+    isWatching: boolean;
+    session: LiveSession | null;
+    startTime: string | null;
+  };
+  startSurveillance: (session: LiveSession) => Promise<boolean>;
+  stopSurveillance: () => Promise<boolean>;
   liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<void>;
+  refreshAlerts: () => Promise<boolean>;
 }
 
 const GhostModeContext = createContext<GhostModeContextType>({
@@ -25,13 +30,14 @@ const GhostModeContext = createContext<GhostModeContextType>({
   canUseGhostMode: false,
   toggleGhostMode: () => {},
   activeSurveillance: {
-    isActive: false,
-    lastUpdated: null,
+    isWatching: false,
+    session: null,
+    startTime: null
   },
   startSurveillance: async () => false,
-  stopSurveillance: async () => {},
+  stopSurveillance: async () => false,
   liveAlerts: [],
-  refreshAlerts: async () => {},
+  refreshAlerts: async () => false,
 });
 
 export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
@@ -43,6 +49,7 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
     lastUpdated: null,
   });
   const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
+  const [activeSession, setActiveSession] = useState<LiveSession | null>(null);
   const session = useSession();
   const { toast } = useToast();
 
@@ -113,7 +120,7 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Start surveillance on a user
-  const startSurveillance = async (targetUserId: string): Promise<boolean> => {
+  const startSurveillance = async (session: LiveSession): Promise<boolean> => {
     if (!session?.user?.id || !hasGhostAccess) return false;
     
     setIsLoading(true);
@@ -128,11 +135,15 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         isActive: true,
         lastUpdated: new Date(),
         userId: session.user.id,
-        targetUserId,
+        targetUserId: session.user_id,
         startedAt: new Date(),
         sessionId,
+        isWatching: true,
+        session: session,
         startTime: timestamp
       });
+      
+      setActiveSession(session);
       
       // Record in database
       const { error } = await supabase
@@ -140,7 +151,7 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         .insert({
           session_id: sessionId,
           admin_id: session.user.id,
-          target_user_id: targetUserId,
+          target_user_id: session.user_id,
           started_at: timestamp,
           status: 'active'
         });
@@ -186,8 +197,8 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Stop active surveillance
-  const stopSurveillance = async (): Promise<void> => {
-    if (!activeSurveillance.isActive || !activeSurveillance.sessionId) return;
+  const stopSurveillance = async (): Promise<boolean> => {
+    if (!activeSurveillance.isActive || !activeSurveillance.sessionId) return false;
     
     try {
       // Update database record
@@ -205,18 +216,23 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         lastUpdated: new Date()
       });
       
+      setActiveSession(null);
+      
       toast({
         title: "Surveillance Ended",
         description: "Monitoring session has been terminated",
       });
+      
+      return true;
     } catch (error) {
       console.error('Error stopping surveillance:', error);
+      return false;
     }
   };
 
   // Fetch live alerts
-  const refreshAlerts = async (): Promise<void> => {
-    if (!session?.user?.id || !hasGhostAccess) return;
+  const refreshAlerts = async (): Promise<boolean> => {
+    if (!session?.user?.id || !hasGhostAccess) return false;
     
     try {
       const { data, error } = await supabase
@@ -227,21 +243,39 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
         
       if (error) {
         console.error('Error fetching alerts:', error);
-        return;
+        return false;
       }
       
       if (data) {
-        setLiveAlerts(
-          data.map(alert => ({
-            id: alert.id,
-            type: alert.type,
-            message: alert.message,
-            timestamp: new Date(alert.created_at)
-          }))
-        );
+        const formattedAlerts: LiveAlert[] = data.map(alert => ({
+          id: alert.id,
+          type: alert.type || 'information',
+          alert_type: (alert.type === 'violation' ? 'violation' : 
+                      alert.type === 'risk' ? 'risk' : 'information') as 'violation' | 'risk' | 'information',
+          user_id: alert.user_id || '',
+          username: alert.username || 'Anonymous',
+          avatar_url: alert.avatar_url,
+          timestamp: new Date(alert.created_at),
+          created_at: alert.created_at,
+          content_type: alert.content_type || '',
+          reason: alert.reason,
+          severity: (alert.severity as 'high' | 'medium' | 'low') || 'medium',
+          content_id: alert.content_id,
+          message: alert.message || '',
+          status: alert.status || 'pending',
+          title: alert.title || 'Alert',
+          description: alert.description,
+          is_viewed: alert.is_viewed || false,
+          urgent: alert.urgent || false,
+          session: alert.session
+        }));
+        
+        setLiveAlerts(formattedAlerts);
       }
+      return true;
     } catch (error) {
       console.error('Error in refreshAlerts:', error);
+      return false;
     }
   };
 
@@ -273,7 +307,8 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
             targetUserId: data.target_user_id,
             startedAt: new Date(data.started_at),
             sessionId: data.session_id,
-            startTime: data.started_at
+            startTime: data.started_at,
+            isWatching: true
           });
           
           // Make sure ghost mode is active
@@ -288,7 +323,7 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
     refreshAlerts();
     
     // Set up interval to refresh alerts
-    const intervalId = setInterval(refreshAlerts, 30000); // refresh every 30 seconds
+    const intervalId = setInterval(() => refreshAlerts(), 30000); // refresh every 30 seconds
     
     return () => {
       clearInterval(intervalId);
@@ -297,13 +332,19 @@ export const GhostModeProvider = ({ children }: { children: ReactNode }) => {
   
   const canUseGhostMode = hasGhostAccess && !isLoading;
 
+  const surveillanceState = {
+    isWatching: activeSurveillance.isActive || false,
+    session: activeSession,
+    startTime: activeSurveillance.startTime || null
+  };
+
   const contextValue = {
     isGhostMode,
     hasGhostAccess,
     isLoading,
     canUseGhostMode,
     toggleGhostMode,
-    activeSurveillance,
+    activeSurveillance: surveillanceState,
     startSurveillance,
     stopSurveillance,
     liveAlerts,

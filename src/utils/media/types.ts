@@ -109,11 +109,32 @@ export interface ActiveSurveillanceState {
   startTime?: string | null;
 }
 
+// Align LiveAlert with the one in types/alerts.ts
 export interface LiveAlert {
   id: string;
   type: string;
+  alert_type?: 'violation' | 'risk' | 'information';
+  user_id: string;
+  username: string;
+  avatar_url?: string;
+  timestamp: string | Date;
+  created_at: string;
+  content_type: string;
+  reason?: string;
+  severity: 'high' | 'medium' | 'low';
+  content_id?: string;
   message: string;
-  timestamp: Date;
+  status: string;
+  title: string;
+  description?: string;
+  is_viewed: boolean;
+  urgent: boolean;
+  session?: any;
+  reporter?: {
+    id: string;
+    username?: string;
+    avatar_url?: string | null;
+  };
 }
 
 export interface StorageUploadResult {
