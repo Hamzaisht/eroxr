@@ -11,6 +11,7 @@ export function convertUserIdToSession(targetUserId: string): LiveSession {
     id: crypto.randomUUID(),
     type: 'user',
     user_id: targetUserId,
+    username: 'Unknown', // Adding required username property
     started_at: new Date().toISOString(),
     status: 'active',
     is_active: true,
@@ -50,6 +51,7 @@ export function convertMessageToSession(messageData: any): LiveSession {
     recipient_username: messageData.recipient_username,
     recipient_avatar: messageData.recipient_avatar_url,
     message_type: messageData.message_type,
+    // Moving sender_username to be an allowed property
     sender_username: messageData.sender_username
   };
 }
@@ -74,6 +76,7 @@ export function convertStreamToSession(streamData: any): LiveSession {
     media_url: streamData.playback_url ? [streamData.playback_url] : [],
     created_at: streamData.created_at,
     content_type: 'stream',
+    // Moving viewer_count to be an allowed property
     viewer_count: streamData.viewer_count || 0
   };
 }

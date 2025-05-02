@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -143,18 +142,18 @@ export function useGhostMode() {
     try {
       // Fetch alerts from relevant tables
       const { data: reportsData, error: reportsError } = await supabase
-        .from('reports')
-        .select('*, reporter:reporter_id(username, avatar_url), reported:reported_id(username, avatar_url)')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false })
+        .from("reports")
+        .select("*, reporter:reporter_id(username, avatar_url), reported:reported_id(username, avatar_url)")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
         .limit(20);
-        
+      
       if (reportsError) {
         console.error('Error fetching reports:', reportsError);
       }
       
       // Transform reports to alerts
-      const reportAlerts = (reportsData || []).map(report => ({
+      const reportAlerts: LiveAlert[] = (reportsData || []).map(report => ({
         id: report.id,
         type: "violation",
         alert_type: "violation",

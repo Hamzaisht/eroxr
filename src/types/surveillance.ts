@@ -42,6 +42,12 @@ export interface LiveSession {
   recipient_avatar?: string | null;
   message_type?: string;
   is_paused?: boolean;
+  // Additional properties needed by SessionDetails
+  participants?: number;
+  sender_username?: string;
+  location?: string;
+  tags?: string[];
+  viewer_count?: number;
 }
 
 export interface LiveAlert {
@@ -68,6 +74,7 @@ export interface LiveAlert {
 export interface SurveillanceContentItem {
   id: string;
   content_type: string;
+  type?: string; // Added missing type property
   user_id: string;
   creator_id: string;
   creator_username: string;
