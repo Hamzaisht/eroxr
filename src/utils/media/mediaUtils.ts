@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import { compressImage } from './imageCompression';
@@ -11,9 +10,17 @@ import { MediaType } from "./types";
  * @param folderPath - The folder path within the bucket
  * @returns The uploaded file's path and URL
  */
-export async function uploadFileToStorage(file: File, bucket: string, folderPath: string = '') {
+export async function uploadFileToStorage(file: File, bucket: string, folderPath: string | File = '') {
   try {
-    const filePath = createUniqueFilePath(file.name, folderPath);
+    // Handle if folderPath is actually a File (due to parameter order confusion in some calls)
+    let actualFolderPath = '';
+    if (typeof folderPath === 'string') {
+      actualFolderPath = folderPath;
+    } else if (folderPath instanceof File) {
+      console.warn('uploadFileToStorage: folderPath parameter is a File, using empty string instead');
+    }
+
+    const filePath = createUniqueFilePath(file.name, actualFolderPath);
     
     const { data, error } = await supabase.storage
       .from(bucket)
@@ -29,11 +36,18 @@ export async function uploadFileToStorage(file: File, bucket: string, folderPath
       
     return {
       path: filePath,
-      url: urlData?.publicUrl
+      url: urlData?.publicUrl,
+      success: true,
+      error: null
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error uploading file to storage:', error);
-    throw error;
+    return {
+      path: '',
+      url: '',
+      success: false,
+      error: error.message || 'Unknown error during upload'
+    };
   }
 }
 
@@ -101,7 +115,13 @@ export async function deleteFileFromStorage(path: string, bucket: string) {
  * @param fileOrUrl - A file object or URL string
  * @returns The determined media type
  */
-export function determineMediaType(fileOrUrl: File | string): MediaType {
+export function determineMediaType(fileOrUrl: File | string | null | undefined): MediaType {
+  // Handle null or undefined input
+  if (fileOrUrl === null || fileOrUrl === undefined) {
+    console.warn('determineMediaType called with null or undefined value');
+    return MediaType.UNKNOWN;
+  }
+  
   // Handle File objects
   if (fileOrUrl instanceof File) {
     const type = fileOrUrl.type;
@@ -121,27 +141,33 @@ export function determineMediaType(fileOrUrl: File | string): MediaType {
     return MediaType.FILE;
   }
   
-  // Handle URLs
-  const url = fileOrUrl.toLowerCase();
-  const ext = url.split('.').pop()?.split('?')[0] || '';
-  
-  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
-  const videoExts = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv'];
-  const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'];
-  
-  if (imageExts.includes(ext)) {
-    return MediaType.IMAGE;
+  // Handle URLs - ensure it's a string
+  if (typeof fileOrUrl === 'string') {
+    const url = fileOrUrl.toLowerCase();
+    const ext = url.split('.').pop()?.split('?')[0] || '';
+    
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+    const videoExts = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv'];
+    const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'];
+    
+    if (imageExts.includes(ext)) {
+      return MediaType.IMAGE;
+    }
+    
+    if (videoExts.includes(ext)) {
+      return MediaType.VIDEO;
+    }
+    
+    if (audioExts.includes(ext)) {
+      return MediaType.AUDIO;
+    }
+    
+    return MediaType.FILE;
   }
   
-  if (videoExts.includes(ext)) {
-    return MediaType.VIDEO;
-  }
-  
-  if (audioExts.includes(ext)) {
-    return MediaType.AUDIO;
-  }
-  
-  return MediaType.FILE;
+  // If it's neither a File nor a string, return UNKNOWN
+  console.warn('determineMediaType called with invalid type:', typeof fileOrUrl);
+  return MediaType.UNKNOWN;
 }
 
 /**

@@ -14,7 +14,9 @@ export function addCacheBuster(url: string): string {
  * @param url - The URL to extract the extension from
  * @returns The file extension or empty string if none found
  */
-export function getFileExtension(url: string): string {
+export function getFileExtension(url: string | null | undefined): string {
+  if (!url) return '';
+  
   const parts = url.split('.');
   if (parts.length <= 1) return '';
   
@@ -28,7 +30,8 @@ export function getFileExtension(url: string): string {
  * @param url - The URL to check
  * @returns True if the URL is likely an image, false otherwise
  */
-export function isImageUrl(url: string): boolean {
+export function isImageUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
   const ext = getFileExtension(url);
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
 }
@@ -38,7 +41,8 @@ export function isImageUrl(url: string): boolean {
  * @param url - The URL to check
  * @returns True if the URL is likely a video, false otherwise
  */
-export function isVideoUrl(url: string): boolean {
+export function isVideoUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
   const ext = getFileExtension(url);
   return ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv'].includes(ext);
 }
@@ -48,7 +52,8 @@ export function isVideoUrl(url: string): boolean {
  * @param url - The URL to check
  * @returns True if the URL is likely an audio file, false otherwise
  */
-export function isAudioUrl(url: string): boolean {
+export function isAudioUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
   const ext = getFileExtension(url);
   return ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'].includes(ext);
 }

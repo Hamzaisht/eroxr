@@ -116,6 +116,13 @@ export interface LiveAlert {
   timestamp: Date;
 }
 
+export interface StorageUploadResult {
+  path: string;
+  url: string;
+  success: boolean;
+  error: string | null;
+}
+
 // Convert string to MediaType enum
 export function stringToMediaType(typeStr: string): MediaType {
   switch (typeStr.toLowerCase()) {

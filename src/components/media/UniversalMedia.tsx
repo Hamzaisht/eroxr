@@ -6,7 +6,7 @@ import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 import { Loader2 } from "lucide-react";
 
 interface UniversalMediaProps {
-  item: MediaSource | string;
+  item: MediaSource | string | null;
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
@@ -59,7 +59,7 @@ export const UniversalMedia = forwardRef(({
     let fallback: string | null = null;
     
     // If it's a media source object, look for fallbacks
-    if (typeof item !== 'string') {
+    if (typeof item !== 'string' && item !== null) {
       const source = item as MediaSource;
       
       // Handle video_urls safely
