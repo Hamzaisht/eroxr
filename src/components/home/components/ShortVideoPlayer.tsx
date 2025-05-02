@@ -75,7 +75,7 @@ export const ShortVideoPlayer = memo(({
     video_url: videoUrl,
     thumbnail_url: thumbnailUrl,
     creator_id: creatorId,
-    media_type: "video" as MediaType
+    media_type: MediaType.VIDEO
   } : null;
 
   console.log("Rendering ShortVideoPlayer with:", { videoUrl, thumbnailUrl, isCurrentVideo });
@@ -83,7 +83,7 @@ export const ShortVideoPlayer = memo(({
   return (
     <MediaRenderer
       src={mediaSource}
-      type="video" as MediaType
+      type={MediaType.VIDEO}
       fallbackSrc={thumbnailUrl} 
       className="h-full w-full object-cover"
       autoPlay={isCurrentVideo}

@@ -54,7 +54,7 @@ export function getPlayableMediaUrl(url: string | MediaSource | null): string {
 /**
  * Adds a cache buster to a URL to prevent caching issues
  */
-function addCacheBuster(url: string): string {
+export function addCacheBuster(url: string): string {
   const separator = url.includes('?') ? '&' : '?';
   return `${url}${separator}cb=${Date.now()}`;
 }
@@ -74,6 +74,38 @@ export function getVideoPoster(videoUrl: string | null): string {
  */
 export function formatMediaUrl(url: string | MediaSource | null): string {
   return getPlayableMediaUrl(url);
+}
+
+/**
+ * Extracts file extension from a URL or path
+ */
+export function getFileExtension(url: string): string | undefined {
+  if (!url) return undefined;
+  return url.split('.').pop()?.toLowerCase();
+}
+
+/**
+ * Check if URL points to an image
+ */
+export function isImageUrl(url: string): boolean {
+  const extension = getFileExtension(url);
+  return !!extension && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+}
+
+/**
+ * Check if URL points to a video
+ */
+export function isVideoUrl(url: string): boolean {
+  const extension = getFileExtension(url);
+  return !!extension && ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension);
+}
+
+/**
+ * Check if URL points to an audio file
+ */
+export function isAudioUrl(url: string): boolean {
+  const extension = getFileExtension(url);
+  return !!extension && ['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension);
 }
 
 /**

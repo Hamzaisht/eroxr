@@ -1,9 +1,9 @@
 
 /**
- * Compresses an image using canvas
+ * Compresses an image file to reduce size while maintaining acceptable quality
  * @param file - The image file to compress
  * @param options - Compression options
- * @returns Promise resolving to the compressed image as a Blob
+ * @returns A Promise that resolves to the compressed image as a Blob
  */
 export async function compressImage(
   file: File,
@@ -12,62 +12,103 @@ export async function compressImage(
   return new Promise((resolve, reject) => {
     const { maxWidth, maxHeight, quality } = options;
     
-    // Create an image element to load the file
-    const img = new Image();
+    // Create file reader to read the file
     const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      img.src = e.target?.result as string;
-    };
-    
-    img.onload = () => {
-      // Calculate new dimensions preserving aspect ratio
-      let width = img.width;
-      let height = img.height;
-      
-      if (width > maxWidth) {
-        height = (height * maxWidth) / width;
-        width = maxWidth;
-      }
-      
-      if (height > maxHeight) {
-        width = (width * maxHeight) / height;
-        height = maxHeight;
-      }
-      
-      // Create a canvas to draw the resized image
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      
-      // Draw the resized image on the canvas
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Could not get 2D context from canvas'));
-        return;
-      }
-      
-      ctx.drawImage(img, 0, 0, width, height);
-      
-      // Convert the canvas to a blob
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Failed to create blob from canvas'));
-          }
-        },
-        'image/jpeg',
-        quality
-      );
-    };
-    
-    img.onerror = () => {
-      reject(new Error('Failed to load image for compression'));
-    };
-    
-    // Read the file as data URL
     reader.readAsDataURL(file);
+    
+    // Handle file load
+    reader.onload = (event) => {
+      // Create an image to get dimensions
+      const img = new Image();
+      img.src = event.target?.result as string;
+      
+      // Once image is loaded, resize and compress it
+      img.onload = () => {
+        // Calculate new dimensions maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+        
+        // Create canvas for resizing
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw image to canvas with new dimensions
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to blob with specified quality
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Compression failed'));
+              return;
+            }
+            resolve(blob);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      
+      // Handle image load error
+      img.onerror = () => {
+        reject(new Error('Failed to load image for compression'));
+      };
+    };
+    
+    // Handle reader error
+    reader.onerror = () => {
+      reject(new Error('Failed to read file for compression'));
+    };
+  });
+}
+
+/**
+ * Gets dimensions of an image file
+ * @param file - The image file
+ * @returns Promise resolving to the image dimensions
+ */
+export async function getImageDimensions(
+  file: File
+): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      
+      img.onload = () => {
+        resolve({
+          width: img.width,
+          height: img.height
+        });
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image'));
+      };
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'));
+    };
   });
 }

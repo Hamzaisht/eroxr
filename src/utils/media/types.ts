@@ -12,6 +12,8 @@ export interface MediaSource {
   thumbnail_url?: string;
   media_type?: MediaType;
   src?: string;
+  poster?: string;
+  video_thumbnail_url?: string;
 }
 
 /**
@@ -22,6 +24,7 @@ export enum MediaType {
   VIDEO = 'video',
   AUDIO = 'audio',
   DOCUMENT = 'document',
+  FILE = 'file',
   UNKNOWN = 'unknown'
 }
 
@@ -65,6 +68,38 @@ export interface UploadOptions {
     maxHeight?: number;
     quality?: number;
   };
+  contentCategory?: string;
+  onProgress?: (progress: number) => void;
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
+}
+
+/**
+ * Result of a storage upload operation
+ */
+export interface StorageUploadResult {
+  path: string;
+  url: string;
+  success: boolean;
+  error: string | null;
+}
+
+/**
+ * Upload state tracking
+ */
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  result: StorageUploadResult | null;
+}
+
+/**
+ * File validation result
+ */
+export interface FileValidationResult {
+  valid: boolean;
+  message?: string;
 }
 
 /**
@@ -96,6 +131,8 @@ export const stringToMediaType = (type?: string): MediaType => {
     case 'doc':
     case 'docx':
       return MediaType.DOCUMENT;
+    case 'file':
+      return MediaType.FILE;
     default:
       return MediaType.UNKNOWN;
   }

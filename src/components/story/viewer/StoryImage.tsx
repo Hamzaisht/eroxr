@@ -20,7 +20,7 @@ export const StoryImage = ({ mediaUrl, username, isPaused, creatorId, onError }:
   const mediaItem = {
     media_url: mediaUrl,
     creator_id: creatorId,
-    media_type: "image" as MediaType
+    media_type: MediaType.IMAGE
   };
   
   useEffect(() => {
