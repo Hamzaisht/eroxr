@@ -1,9 +1,19 @@
 
+
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
-  FILE = 'file'
+  FILE = 'file',
+  UNKNOWN = 'unknown'
+}
+
+export enum AvailabilityStatus {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  AWAY = 'away',
+  BUSY = 'busy',
+  INVISIBLE = 'invisible'
 }
 
 export interface MediaItem {
@@ -40,3 +50,47 @@ export interface MediaUploadState {
   isComplete: boolean;
   mediaUrl: string | null;
 }
+
+export interface MediaSource {
+  creator_id?: string;
+  media_url?: string;
+  media_urls?: string[];
+  video_url?: string;
+  video_urls?: string[];
+  thumbnail_url?: string;
+  poster?: string;
+  video_thumbnail_url?: string;
+  media_type?: MediaType | string;
+}
+
+export interface MediaOptions {
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  showWatermark?: boolean;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: () => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (currentTime: number) => void;
+}
+
+// Convert string to MediaType enum
+export function stringToMediaType(typeStr: string): MediaType {
+  switch (typeStr.toLowerCase()) {
+    case 'image':
+      return MediaType.IMAGE;
+    case 'video':
+      return MediaType.VIDEO;
+    case 'audio':
+      return MediaType.AUDIO;
+    case 'file':
+      return MediaType.FILE;
+    default:
+      return MediaType.UNKNOWN;
+  }
+}
+

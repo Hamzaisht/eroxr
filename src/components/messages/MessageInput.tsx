@@ -1,31 +1,25 @@
 
-import { useState, useRef, useEffect } from "react";
-import { 
-  Send, 
-  Camera, 
-  PaperclipIcon, 
-  Smile, 
-  Mic, 
-  X,
-  Video,
-  StopCircle
-} from "lucide-react";
+import React, { useState, useRef, useEffect } from 'react';
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Smile, Paperclip, Camera, Mic, Send } from "lucide-react";
 import { DirectMessage } from "@/integrations/supabase/types/message";
-import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { EmojiPickerSimple } from './EmojiPickerSimple';
-import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
-  onMediaSelect: () => void;
-  onSnapStart: () => void;
-  onVoiceMessage: (audioBlob: Blob) => void;
-  onBookCall?: () => void;
+  onMediaSelect?: () => void;
+  onSnapStart?: () => void;
+  onVoiceMessage?: (audioBlob: Blob) => void;
   isLoading?: boolean;
-  recipientId: string;
+  recipientId?: string;
   replyToMessage?: DirectMessage | null;
   onReplyCancel?: () => void;
   onTyping?: () => void;
@@ -36,295 +30,282 @@ export const MessageInput = ({
   onMediaSelect,
   onSnapStart,
   onVoiceMessage,
-  onBookCall,
   isLoading = false,
   recipientId,
   replyToMessage,
   onReplyCancel,
   onTyping
 }: MessageInputProps) => {
-  const [message, setMessage] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [message, setMessage] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const {
+    isRecording,
+    recordingDuration,
     startRecording,
     stopRecording,
-    isRecordingAudio,
-    audioBlob,
-    recordingTime,
-    clearRecording
+    cancelRecording,
+    audioBlob
   } = useVoiceRecorder();
-  
+
+  // Focus textarea when reply is set
   useEffect(() => {
-    if (audioBlob && !isRecordingAudio) {
+    if (replyToMessage && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [replyToMessage]);
+  
+  // Submit when audio recording completes
+  useEffect(() => {
+    if (!isRecording && audioBlob && onVoiceMessage) {
       onVoiceMessage(audioBlob);
-      clearRecording();
     }
-  }, [audioBlob, isRecordingAudio, onVoiceMessage, clearRecording]);
-  
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    
-    if (message.trim() && !isLoading) {
-      onSendMessage(message);
-      setMessage('');
-      
-      // Focus input after sending
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
-    }
-  };
-  
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-  
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  }, [isRecording, audioBlob, onVoiceMessage]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
     
-    // Send typing indicator
+    // Notify that user is typing
     if (onTyping) {
       onTyping();
       
-      // Clear existing timeout and set new one
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
+      // Clear existing timer
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
       }
       
-      typingTimeoutRef.current = setTimeout(() => {
-        typingTimeoutRef.current = null;
+      // Set new timer
+      typingTimerRef.current = setTimeout(() => {
+        // Timer has expired, user stopped typing
+        typingTimerRef.current = null;
       }, 2000);
     }
   };
-  
-  const handleEmojiSelect = (emoji: { native: string }) => {
-    setMessage(prev => prev + emoji.native);
-    inputRef.current?.focus();
-    
-    // Also trigger typing indicator
-    if (onTyping) onTyping();
-    
-    // Close emoji picker after selection
-    setEmojiPickerOpen(false);
+
+  const handleSend = () => {
+    if (message.trim() && !isLoading) {
+      onSendMessage(message.trim());
+      setMessage("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
+    }
   };
-  
-  const handleRecord = () => {
-    if (isRecordingAudio) {
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleVoiceButtonClick = () => {
+    if (isRecording) {
       stopRecording();
-      setIsRecording(false);
     } else {
       startRecording();
-      setIsRecording(true);
     }
   };
-  
-  const formatRecordingTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-  
+
   // Auto-resize textarea
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.style.height = 'auto';
-      inputRef.current.style.height = `${Math.min(120, inputRef.current.scrollHeight)}px`;
+  const handleTextareaResize = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
     }
-  }, [message]);
-  
-  // Focus the input when the component mounts
+  };
+
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-  
+    handleTextareaResize();
+  }, [message]);
+
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      {/* Reply UI */}
-      <AnimatePresence>
-        {replyToMessage && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-luxury-neutral/10 backdrop-blur-sm rounded-t-lg p-2 mb-0.5 flex items-center"
-          >
-            <div className="flex-1 overflow-hidden text-sm text-luxury-neutral/80">
-              <span className="font-medium text-luxury-primary/90 mr-1">Reply to:</span>
-              <span className="truncate">
-                {replyToMessage.content || (replyToMessage.media_url ? "Media message" : "Message")}
-              </span>
-            </div>
-            {onReplyCancel && (
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 w-6 p-0 rounded-full"
-                onClick={onReplyCancel}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Recording UI */}
-      <AnimatePresence>
-        {isRecording && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-red-900/20 backdrop-blur-sm rounded-lg p-3 mb-2 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2">
-              <motion.div 
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-              >
-                <Mic className="h-5 w-5 text-red-400" />
-              </motion.div>
-              <span className="text-sm text-red-300">
-                Recording {formatRecordingTime(recordingTime)}
-              </span>
-            </div>
+    <div className="relative">
+      {/* Reply preview */}
+      {replyToMessage && (
+        <div className="bg-luxury-dark/50 backdrop-blur-sm p-2 mb-2 rounded-md border border-luxury-primary/20 flex items-center justify-between">
+          <div className="flex-1 truncate pl-2">
+            <span className="text-xs text-luxury-neutral/70">
+              Replying to message
+            </span>
+            <p className="text-sm truncate">
+              {replyToMessage.content || "Media message"}
+            </p>
+          </div>
+          {onReplyCancel && (
             <Button 
-              type="button"
-              size="sm"
-              variant="destructive"
-              className="h-8 px-2"
-              onClick={() => {
-                stopRecording();
-                setIsRecording(false);
-              }}
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6" 
+              onClick={onReplyCancel}
             >
-              <StopCircle className="h-4 w-4 mr-1" />
-              Stop
+              <span className="sr-only">Cancel reply</span>
+              <X className="h-4 w-4" />
             </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      <div className={cn(
-        "flex items-center gap-1 bg-luxury-neutral/10 backdrop-blur-sm rounded-lg border border-white/5",
-        replyToMessage && "rounded-t-none"
-      )}>
-        <div className="flex items-center gap-1 p-1 pl-2">
-          {/* Emoji picker */}
-          <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
-            <PopoverTrigger asChild>
-              <Button 
-                type="button"
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
-              >
-                <Smile className="h-4 w-4 text-luxury-neutral/70" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              side="top" 
-              sideOffset={10}
-              className="p-0 border-luxury-neutral/20 bg-luxury-darker w-auto"
-            >
-              <EmojiPickerSimple onEmojiSelect={handleEmojiSelect} />
-            </PopoverContent>
-          </Popover>
-          
-          {/* Media selection button */}
-          <Button 
-            type="button"
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
-            onClick={onMediaSelect}
-            disabled={isLoading}
-          >
-            <PaperclipIcon className="h-4 w-4 text-luxury-neutral/70" />
-          </Button>
-          
-          {/* Snap camera button */}
-          <Button 
-            type="button"
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
-            onClick={onSnapStart}
-            disabled={isLoading}
-          >
-            <Camera className="h-4 w-4 text-luxury-neutral/70" />
-          </Button>
-        </div>
-        
-        {/* Message input - Added text-white class here */}
-        <textarea
-          ref={inputRef}
-          value={message}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
-          className="flex-1 bg-transparent resize-none p-3 outline-none text-sm text-white max-h-[120px]"
-          rows={1}
-          disabled={isLoading || isRecording}
-        />
-        
-        <div className="flex items-center p-1">
-          {message.trim() ? (
-            <motion.div whileTap={{ scale: 0.9 }}>
-              <Button 
-                type="submit" 
-                size="icon" 
-                className="h-8 w-8 rounded-full bg-luxury-primary hover:bg-luxury-primary/90 transition-colors"
-                disabled={isLoading}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </motion.div>
-          ) : (
-            <>
-              {/* Record voice message button */}
-              <Button 
-                type="button"
-                variant="ghost" 
-                size="icon" 
-                className={cn(
-                  "h-8 w-8 rounded-full hover:bg-white/10 transition-colors",
-                  isRecording && "bg-red-500/20"
-                )}
-                onClick={handleRecord}
-                disabled={isLoading}
-              >
-                <Mic className={cn(
-                  "h-4 w-4", 
-                  isRecording ? "text-red-400" : "text-luxury-neutral/70"
-                )} />
-              </Button>
-              
-              {/* Video call button */}
-              {onBookCall && (
-                <Button 
-                  type="button"
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
-                  onClick={onBookCall}
-                  disabled={isLoading}
-                >
-                  <Video className="h-4 w-4 text-luxury-primary/70" />
-                </Button>
-              )}
-            </>
           )}
         </div>
+      )}
+      
+      {/* Voice recording UI */}
+      {isRecording && (
+        <div className="absolute inset-0 bg-luxury-dark/95 flex items-center justify-between p-3 z-10 rounded-md animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+            <span className="font-medium">Recording: {recordingDuration}s</span>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={cancelRecording}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={stopRecording}
+            >
+              Send
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      <div className={cn(
+        "flex items-end gap-2 bg-luxury-darker p-2 rounded-md border border-luxury-neutral/10",
+        isLoading && "opacity-70 pointer-events-none"
+      )}>
+        <div className="flex-1 relative">
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message..."
+            className={cn(
+              "resize-none w-full border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 py-3 px-4 max-h-32",
+              isLoading && "cursor-not-allowed"
+            )}
+            disabled={isLoading || isRecording}
+            rows={1}
+          />
+        </div>
+
+        <div className="flex items-center gap-1 pr-1">
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9 rounded-full text-luxury-neutral hover:text-white hover:bg-luxury-neutral/20"
+                  onClick={() => {}}
+                  disabled={isLoading || isRecording}
+                >
+                  <Smile className="h-5 w-5" />
+                  <span className="sr-only">Emoji</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Emoji</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9 rounded-full text-luxury-neutral hover:text-white hover:bg-luxury-neutral/20"
+                  onClick={onMediaSelect}
+                  disabled={isLoading || isRecording}
+                >
+                  <Paperclip className="h-5 w-5" />
+                  <span className="sr-only">Attach files</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Attach files</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9 rounded-full text-luxury-neutral hover:text-white hover:bg-luxury-neutral/20" 
+                  onClick={onSnapStart}
+                  disabled={isLoading || isRecording}
+                >
+                  <Camera className="h-5 w-5" />
+                  <span className="sr-only">Take photo</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Take photo</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={isRecording ? "destructive" : "ghost"}
+                  className={cn(
+                    "h-9 w-9 rounded-full",
+                    !isRecording && "text-luxury-neutral hover:text-white hover:bg-luxury-neutral/20",
+                    isRecording && "animate-pulse"
+                  )}
+                  onClick={handleVoiceButtonClick}
+                  disabled={isLoading}
+                >
+                  <Mic className="h-5 w-5" />
+                  <span className="sr-only">
+                    {isRecording ? "Stop recording" : "Voice message"}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {isRecording ? "Stop recording" : "Voice message"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "h-9 w-9 rounded-full transition-colors",
+              message.trim() 
+                ? "text-luxury-primary hover:bg-luxury-primary/20" 
+                : "text-luxury-neutral/50 cursor-default"
+            )}
+            onClick={handleSend}
+            disabled={!message.trim() || isLoading || isRecording}
+          >
+            <Send className="h-5 w-5" />
+            <span className="sr-only">Send message</span>
+          </Button>
+        </div>
       </div>
-    </form>
+      
+      {isLoading && (
+        <div className="absolute inset-y-0 right-12 flex items-center">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-luxury-primary border-t-transparent"></div>
+        </div>
+      )}
+    </div>
   );
 };
+
+export default MessageInput;
+

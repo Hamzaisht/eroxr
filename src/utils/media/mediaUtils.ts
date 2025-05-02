@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { MediaType, MediaSource } from './types';
 
 // Create a unique file path for storage
 export const createUniqueFilePath = (userId: string, file: File): string => {
@@ -54,6 +55,44 @@ export const uploadFileToStorage = async (
       success: false,
       error: error.message || 'An unexpected error occurred'
     };
+  }
+};
+
+// Get a file from storage
+export const getFileFromStorage = async (bucketName: string, filePath: string): Promise<Blob | null> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .download(filePath);
+
+    if (error) {
+      console.error('Error downloading file:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error downloading file:', error);
+    return null;
+  }
+};
+
+// Delete a file from storage
+export const deleteFileFromStorage = async (bucketName: string, filePath: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase.storage
+      .from(bucketName)
+      .remove([filePath]);
+
+    if (error) {
+      console.error('Error deleting file:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Unexpected error deleting file:', error);
+    return false;
   }
 };
 
@@ -185,3 +224,65 @@ export const createVideoThumbnail = async (
     }
   });
 };
+
+// Determine media type from source
+export function determineMediaType(source: MediaSource | string): MediaType {
+  // If it's a string, determine type from URL extension
+  if (typeof source === 'string') {
+    const url = source.toLowerCase();
+    if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i)) return MediaType.IMAGE;
+    if (url.match(/\.(mp4|webm|mov|avi|wmv)($|\?)/i)) return MediaType.VIDEO;
+    if (url.match(/\.(mp3|wav|ogg|m4a)($|\?)/i)) return MediaType.AUDIO;
+    return MediaType.FILE;
+  }
+  
+  // If it's a MediaSource object
+  if (source.media_type) {
+    // If media_type is already a MediaType enum value, return it
+    if (typeof source.media_type === 'string') {
+      return source.media_type as MediaType;
+    }
+  }
+  
+  // Try to infer from available URLs
+  if (source.video_url || source.video_urls) {
+    return MediaType.VIDEO;
+  }
+  
+  if (source.media_url) {
+    const url = source.media_url.toLowerCase();
+    if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i)) return MediaType.IMAGE;
+    if (url.match(/\.(mp4|webm|mov|avi|wmv)($|\?)/i)) return MediaType.VIDEO;
+    if (url.match(/\.(mp3|wav|ogg|m4a)($|\?)/i)) return MediaType.AUDIO;
+  }
+  
+  // Default to FILE when uncertain
+  return MediaType.FILE;
+}
+
+// Extract media URL from various source formats
+export function extractMediaUrl(source: MediaSource | string): string | null {
+  if (typeof source === 'string') {
+    return source;
+  }
+  
+  // Extract from MediaSource object
+  if (source.media_url) {
+    return source.media_url;
+  }
+  
+  if (source.video_url) {
+    return source.video_url;
+  }
+  
+  if (source.media_urls && source.media_urls.length > 0) {
+    return source.media_urls[0];
+  }
+  
+  if (source.video_urls && source.video_urls.length > 0) {
+    return source.video_urls[0];
+  }
+  
+  return null;
+}
+

@@ -1,61 +1,60 @@
 
-import { AlertCircle, RefreshCw } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { AlertCircle, ExternalLink, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface MediaErrorStateProps {
-  message?: string;
   className?: string;
+  message?: string;
   onRetry?: () => void;
-  accessibleUrl?: string | null;
+  accessibleUrl?: string;
   retryCount?: number;
-  showDebugInfo?: boolean;
+  maxRetries?: number;
 }
 
-export const MediaErrorState = ({ 
+export const MediaErrorState = ({
+  className,
   message = "Failed to load media",
-  className = "",
   onRetry,
   accessibleUrl,
   retryCount = 0,
-  showDebugInfo = false
+  maxRetries = 2
 }: MediaErrorStateProps) => {
-  // Generate a unique truncated version of the URL for display
-  const displayUrl = accessibleUrl && accessibleUrl.length > 30
-    ? accessibleUrl.substring(0, 15) + '...' + accessibleUrl.substring(accessibleUrl.length - 15)
-    : accessibleUrl;
+  const canRetry = onRetry && (maxRetries === 0 || retryCount < maxRetries);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className={cn(
-        "flex flex-col items-center justify-center bg-luxury-darker/80 h-full w-full rounded p-4",
-        className
-      )}
-    >
-      <AlertCircle className="h-8 w-8 text-luxury-neutral/70 mb-2" />
-      <p className="text-sm text-luxury-neutral/90 text-center mb-2">{message}</p>
+    <div className={cn(
+      "flex flex-col items-center justify-center h-full w-full bg-black/10 rounded p-4 text-center",
+      className
+    )}>
+      <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+      <p className="text-sm text-muted-foreground mb-2">{message}</p>
       
-      {onRetry && (
-        <motion.button 
-          onClick={onRetry}
-          className="mt-2 flex items-center gap-1 px-3 py-1.5 rounded-md bg-luxury-darker hover:bg-luxury-dark text-luxury-neutral text-sm"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <RefreshCw size={14} className="mr-1" />
-          Try Again
-        </motion.button>
-      )}
-      
-      {(process.env.NODE_ENV === 'development' || showDebugInfo) && accessibleUrl && (
-        <div className="mt-4 text-xs text-luxury-neutral/50 max-w-[200px] truncate break-all">
-          <p title={accessibleUrl}>URL: {displayUrl}</p>
-          <p>Retries: {retryCount}</p>
-        </div>
-      )}
-    </motion.div>
+      <div className="flex gap-2 mt-2">
+        {canRetry && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs"
+            onClick={onRetry}
+          >
+            <RefreshCcw className="h-3 w-3 mr-1" />
+            Retry
+          </Button>
+        )}
+        
+        {accessibleUrl && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs"
+            onClick={() => window.open(accessibleUrl, '_blank')}
+          >
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Open in new tab
+          </Button>
+        )}
+      </div>
+    </div>
   );
 };
