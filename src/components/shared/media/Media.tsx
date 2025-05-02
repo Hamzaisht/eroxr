@@ -7,6 +7,7 @@ import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 
 type MediaProps = {
   source: MediaSource | string;
+  showWatermark?: boolean;
 } & MediaOptions;
 
 export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(

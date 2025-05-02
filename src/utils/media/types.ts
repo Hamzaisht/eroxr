@@ -70,6 +70,11 @@ export enum AvailabilityStatus {
   FAILED = 'failed',
   RESTRICTED = 'restricted',
   UNKNOWN = 'unknown',
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  AWAY = 'away',
+  BUSY = 'busy',
+  INVISIBLE = 'invisible'
 }
 
 /**
@@ -108,9 +113,64 @@ export interface MediaOptions {
   showControls?: boolean;
   allowFullscreen?: boolean;
   playOnHover?: boolean;
+  showWatermark?: boolean;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
   onTimeUpdate?: (time: number) => void;
+}
+
+/**
+ * File validation result
+ */
+export interface FileValidationResult {
+  valid: boolean;
+  error?: string | null;
+}
+
+/**
+ * Upload options for media upload
+ */
+export interface UploadOptions {
+  contentCategory?: string;
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
+  onProgress?: (progress: number) => void;
+}
+
+/**
+ * Upload state for tracking media uploads
+ */
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  files: File[];
+  previews: string[];
+  isComplete: boolean;
+  success: boolean;
+}
+
+/**
+ * Active surveillance state for admin features
+ */
+export interface ActiveSurveillanceState {
+  isActive: boolean;
+  targetUserId?: string;
+  startTime?: number;
+}
+
+/**
+ * Live alert interface for monitoring
+ */
+export interface LiveAlert {
+  id: string;
+  type: string;
+  message: string;
+  timestamp: number;
+  severity: 'info' | 'warning' | 'critical';
+  userId?: string;
 }
