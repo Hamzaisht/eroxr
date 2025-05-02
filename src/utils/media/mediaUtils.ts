@@ -1,7 +1,7 @@
-
 import { MediaType, MediaSource, StorageUploadResult } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { getFileExtension, isImageUrl, isVideoUrl, isAudioUrl } from './mediaUrlUtils';
+import { compressImage } from './imageCompression';
 
 /**
  * Determines the media type (image, video, etc.) from various input formats
@@ -190,4 +190,138 @@ export async function uploadFileToStorage(bucket: string, path: string, fileOrUr
       error: `Unexpected error: ${err instanceof Error ? err.message : String(err)}`
     };
   }
+}
+
+/**
+ * Optimizes an image for upload by resizing and compressing it
+ * @param file - The image file to optimize
+ * @param options - Options for optimization (maxWidth, maxHeight, quality)
+ * @returns A Promise that resolves to the optimized image as a File
+ */
+export async function optimizeImage(
+  file: File,
+  options = { maxWidth: 1920, maxHeight: 1920, quality: 0.85 }
+): Promise<File> {
+  try {
+    // If file is not an image, return it as-is
+    if (!file.type.startsWith('image/')) {
+      console.log('Not optimizing non-image file:', file.type);
+      return file;
+    }
+
+    // If file is small enough, return it as-is
+    const fileSizeInMB = file.size / (1024 * 1024);
+    if (fileSizeInMB <= 1) {
+      console.log('Not optimizing already small image:', fileSizeInMB.toFixed(2) + 'MB');
+      return file;
+    }
+
+    // Compress the image using our compression utility
+    console.log('Optimizing image:', file.name, fileSizeInMB.toFixed(2) + 'MB');
+    const compressedBlob = await compressImage(file, options);
+    
+    // Create a new File from the compressed blob
+    const optimizedFile = new File([compressedBlob], file.name, {
+      type: 'image/jpeg', // Convert all images to JPEG for consistency
+      lastModified: Date.now()
+    });
+    
+    console.log('Image optimized:', optimizedFile.size / (1024 * 1024) + 'MB');
+    return optimizedFile;
+  } catch (err) {
+    console.warn('Image optimization failed, using original file:', err);
+    return file;
+  }
+}
+
+/**
+ * Creates a thumbnail from a video file
+ * @param videoFile - The video file to create thumbnail from
+ * @param maxSize - Maximum thumbnail dimension
+ * @returns A Promise that resolves to the thumbnail as a Blob
+ */
+export async function createVideoThumbnail(
+  videoFile: File,
+  maxSize = 480
+): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    try {
+      // Create video element to capture frame
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      // Create a blob URL for the video
+      const videoUrl = URL.createObjectURL(videoFile);
+      
+      video.onloadedmetadata = () => {
+        // Seek to 1/3 through the video for a representative frame
+        video.currentTime = video.duration / 3;
+      };
+      
+      video.oncanplay = () => {
+        // Create a canvas to draw the thumbnail
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          console.error('Failed to get 2D context for thumbnail creation');
+          URL.revokeObjectURL(videoUrl);
+          resolve(null);
+          return;
+        }
+        
+        // Calculate dimensions maintaining aspect ratio
+        let width = video.videoWidth;
+        let height = video.videoHeight;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = height * (maxSize / width);
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = width * (maxSize / height);
+            height = maxSize;
+          }
+        }
+        
+        // Set canvas size and draw video frame
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(video, 0, 0, width, height);
+        
+        // Convert to blob
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(videoUrl);
+            resolve(blob);
+          },
+          'image/jpeg',
+          0.85
+        );
+      };
+      
+      video.onerror = () => {
+        console.error('Error creating video thumbnail');
+        URL.revokeObjectURL(videoUrl);
+        resolve(null);
+      };
+      
+      // Start loading the video
+      video.src = videoUrl;
+      
+      // Set a timeout in case the video never loads/errors
+      setTimeout(() => {
+        if (!video.duration) {
+          console.warn('Video thumbnail creation timed out');
+          URL.revokeObjectURL(videoUrl);
+          resolve(null);
+        }
+      }, 5000);
+    } catch (err) {
+      console.error('Error in thumbnail creation:', err);
+      resolve(null);
+    }
+  });
 }

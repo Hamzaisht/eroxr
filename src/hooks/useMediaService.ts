@@ -1,47 +1,42 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { MediaType } from '@/utils/media/types';
-import { getPlayableMediaUrl, extractMediaUrl, normalizeUrl } from '@/utils/media/mediaUrlUtils';
-import { determineMediaType } from '@/utils/media/mediaUtils';
+import { MediaType, MediaSource } from '@/utils/media/types';
+import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
+import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
 import { reportMediaError } from '@/utils/media/mediaMonitoring';
 
 interface MediaServiceOptions {
-  autoLoad?: boolean;
   maxRetries?: number;
-  retryDelay?: number;
-  onError?: (error: string) => void;
   onLoad?: () => void;
+  onError?: () => void;
 }
 
 /**
- * Comprehensive hook for handling media loading, processing, and error handling
+ * Hook for handling media processing, loading states, and errors
+ * @param source - The media source (URL, object, or file)
+ * @param options - Configuration options
+ * @returns Media service object with url, states, and control methods
  */
-export function useMediaService(source: any, options: MediaServiceOptions = {}) {
-  const {
-    autoLoad = true,
-    maxRetries = 2,
-    retryDelay = 1500,
-    onError,
-    onLoad
-  } = options;
+export const useMediaService = (
+  source: MediaSource | string | null | undefined,
+  options: MediaServiceOptions = {}
+) => {
+  const { maxRetries = 2, onLoad, onError } = options;
 
   const [url, setUrl] = useState<string | null>(null);
-  const [normalizedUrl, setNormalizedUrl] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
-  const [isLoading, setIsLoading] = useState(autoLoad);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
-  // Process the media source to get the final URL
-  const processMedia = useCallback(async () => {
+  // Process the source URL and determine media type
+  useEffect(() => {
     if (!source) {
-      setIsLoading(false);
-      setHasError(true);
       setErrorMessage('No media source provided');
-      if (onError) onError('No media source provided');
+      setHasError(true);
+      setIsLoading(false);
       return;
     }
 
@@ -50,119 +45,89 @@ export function useMediaService(source: any, options: MediaServiceOptions = {}) 
     setErrorMessage(null);
 
     try {
-      // Extract the raw URL
-      const extractedUrl = extractMediaUrl(source);
-      
-      if (!extractedUrl) {
-        setIsLoading(false);
-        setHasError(true);
-        setErrorMessage('Could not extract media URL');
-        if (onError) onError('Could not extract media URL');
-        return;
+      // Extract and process the URL
+      const sourceUrl = typeof source === 'string' ? source : extractMediaUrl(source);
+      if (!sourceUrl) {
+        throw new Error('Could not extract media URL');
       }
-
-      // Normalize the URL
-      const normalized = normalizeUrl(extractedUrl);
-      setNormalizedUrl(normalized);
       
-      // Get playable URL with cache busting
-      const playableUrl = getPlayableMediaUrl(extractedUrl);
-      setUrl(playableUrl);
+      // Process the URL for playback
+      const processedUrl = getPlayableMediaUrl(sourceUrl);
+      setUrl(processedUrl);
       
-      console.log('Media URL processed:', { 
-        original: extractedUrl,
-        normalized,
-        playable: playableUrl
-      });
+      // Set the thumbnail URL if available
+      if (typeof source === 'object' && source) {
+        const thumbUrl = source.thumbnail_url || 
+                        source.poster || 
+                        source.video_thumbnail_url;
+        if (thumbUrl) {
+          setThumbnailUrl(getPlayableMediaUrl(thumbUrl));
+        }
+      }
       
       // Determine the media type
       const type = determineMediaType(source);
       setMediaType(type);
       
-      // Get thumbnail for video content
-      if (type === MediaType.VIDEO && typeof source === 'object') {
-        const thumbnail = source.thumbnail_url || 
-                         source.video_thumbnail_url || 
-                         source.poster || 
-                         null;
-                         
-        if (thumbnail) {
-          setThumbnailUrl(normalizeUrl(thumbnail));
-        }
-      }
-
-      setIsLoading(false);
-      setHasError(false);
-      
-      if (onLoad) onLoad();
     } catch (err: any) {
-      console.error('Error processing media:', err);
-      
-      setIsLoading(false);
-      setHasError(true);
+      console.error('Error processing media source:', err);
       setErrorMessage(err.message || 'Failed to process media');
-      
-      if (onError) onError(err.message || 'Failed to process media');
+      setHasError(true);
       
       // Report the error
       reportMediaError(
-        extractMediaUrl(source), 
+        typeof source === 'string' ? source : JSON.stringify(source),
         'processing_error',
         retryCount,
-        mediaType === MediaType.IMAGE ? 'image' : 
-          mediaType === MediaType.VIDEO ? 'video' : 
-          mediaType === MediaType.AUDIO ? 'audio' : 'unknown',
+        'unknown',
         'useMediaService'
       );
+      
+      if (onError) onError();
+    } finally {
+      setIsLoading(false);
     }
-  }, [source, onError, onLoad, retryCount, mediaType]);
+  }, [source, retryCount, onError]);
 
-  // Handle retries with exponential backoff
-  const retryWithBackoff = useCallback(() => {
+  // Method to handle successful media load
+  const handleLoad = useCallback(() => {
+    setIsLoading(false);
+    setHasError(false);
+    
+    if (onLoad) onLoad();
+  }, [onLoad]);
+
+  // Method to handle media loading error
+  const handleError = useCallback(() => {
+    setIsLoading(false);
+    setHasError(true);
+    setErrorMessage('Failed to load media');
+    
+    if (onError) onError();
+  }, [onError]);
+
+  // Method to retry loading media
+  const retry = useCallback(() => {
     if (retryCount >= maxRetries) {
-      console.error(`Maximum retry attempts (${maxRetries}) reached for media:`, source);
+      console.warn(`Max retries (${maxRetries}) reached for media:`, source);
       return;
     }
-
-    setIsRetrying(true);
+    
     setRetryCount(prev => prev + 1);
-
-    // Calculate exponential backoff delay
-    const delay = retryDelay * Math.pow(2, retryCount);
-    
-    console.log(`Retrying media load (attempt ${retryCount + 1}/${maxRetries}) after ${delay}ms delay`);
-    
-    setTimeout(() => {
-      processMedia();
-      setIsRetrying(false);
-    }, delay);
-  }, [retryCount, maxRetries, retryDelay, source, processMedia]);
-
-  // Process media on mount or when source changes
-  useEffect(() => {
-    if (autoLoad) {
-      processMedia();
-    }
-  }, [processMedia, autoLoad]);
-
-  // Manual retry function
-  const retry = useCallback(() => {
-    setRetryCount(0);
-    processMedia();
-  }, [processMedia]);
+    setIsLoading(true);
+    setHasError(false);
+    setErrorMessage(null);
+  }, [retryCount, maxRetries, source]);
 
   return {
     url,
-    normalizedUrl,
+    thumbnailUrl,
     mediaType,
     isLoading,
     hasError,
     errorMessage,
-    retryCount,
-    isRetrying,
-    thumbnailUrl,
-    processMedia,
     retry,
-    retryWithBackoff
+    handleLoad,
+    handleError,
   };
-}
+};

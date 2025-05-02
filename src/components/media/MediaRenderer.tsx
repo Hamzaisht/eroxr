@@ -1,156 +1,164 @@
 
 import { useState, useEffect, forwardRef, Ref } from 'react';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { MediaType } from '@/utils/media/types';
-import { useMediaService } from '@/hooks/useMediaService';
-import { cn } from '@/lib/utils';
+import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
+import { determineMediaType } from '@/utils/media/mediaUtils';
+import { reportMediaError, reportMediaSuccess } from '@/utils/media/mediaMonitoring';
 
 interface MediaRendererProps {
-  src: string | any; // Accept string or object with media properties
-  type?: MediaType | string;
+  src: string | any | null;
+  type?: MediaType;
   className?: string;
-  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
-  controls?: boolean;
+  fallbackSrc?: string;
   autoPlay?: boolean;
+  controls?: boolean;
   muted?: boolean;
   loop?: boolean;
   poster?: string;
-  fallbackSrc?: string; // Explicit fallback source for media loading failures
   showWatermark?: boolean;
-  allowRetry?: boolean;
-  maxRetries?: number;
+  onClick?: () => void;
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
-  onTimeUpdate?: (time: number) => void;
-  onClick?: () => void;
-  alt?: string;
+  onTimeUpdate?: (currentTime: number) => void;
+  allowRetry?: boolean;
+  maxRetries?: number;
 }
 
-export const MediaRenderer = forwardRef((
-  { 
-    src,
-    type,
-    className = '',
-    objectFit = 'cover',
-    controls = true,
-    autoPlay = false,
-    muted = true,
-    loop = false,
-    poster,
-    fallbackSrc, // Explicit fallback source prop
-    showWatermark = false,
-    allowRetry = true,
-    maxRetries = 2,
-    onLoad,
-    onError,
-    onEnded,
-    onTimeUpdate,
-    onClick,
-    alt = 'Media content'
-  }: MediaRendererProps,
-  ref: Ref<HTMLVideoElement | HTMLImageElement>
-) => {
-  const [errorShown, setErrorShown] = useState<boolean>(false);
-  const [useFallback, setUseFallback] = useState<boolean>(false);
-  const [loadAttempt, setLoadAttempt] = useState<number>(0);
-
-  // Use our centralized media service
-  const media = useMediaService(src, {
-    maxRetries,
-    onLoad,
-    onError: () => {
-      console.log("Media error occurred, setting errorShown and potentially switching to fallback");
-      setErrorShown(true);
-      if (fallbackSrc) {
-        setUseFallback(true);
-      }
-      if (onError) onError();
-    }
-  });
-
-  // Force the media type if provided
-  const mediaType = type ? 
-    (typeof type === 'string' ? type as MediaType : type) : 
-    media.mediaType;
-
-  // Clear error shown state on new source
+export const MediaRenderer = forwardRef(({
+  src,
+  type: initialType,
+  className = "",
+  fallbackSrc,
+  autoPlay = false,
+  controls = true,
+  muted = true,
+  loop = false,
+  poster,
+  showWatermark = false,
+  onClick,
+  onLoad,
+  onError,
+  onEnded,
+  onTimeUpdate,
+  allowRetry = true,
+  maxRetries = 2
+}: MediaRendererProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [url, setUrl] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<MediaType>(initialType || MediaType.UNKNOWN);
+  const [loadStartTime, setLoadStartTime] = useState(Date.now());
+  
+  // Process the source URL on component mount or when source changes
   useEffect(() => {
-    setErrorShown(false);
-    setUseFallback(false);
-    setLoadAttempt(0);
-  }, [src]);
+    if (!src) {
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
 
-  // Handle video time update
+    setIsLoading(true);
+    setHasError(false);
+    setLoadStartTime(Date.now());
+
+    try {
+      // Determine media type if not explicitly provided
+      if (!initialType) {
+        const detectedType = determineMediaType(src);
+        setMediaType(detectedType);
+      }
+
+      // Get a playable URL (handles various formats, cache busting, etc)
+      const processedUrl = getPlayableMediaUrl(src);
+      setUrl(processedUrl);
+    } catch (err) {
+      console.error('Error processing media:', err);
+      setHasError(true);
+      
+      if (onError) onError();
+      
+      // Try fallback if available
+      if (fallbackSrc) {
+        setUrl(fallbackSrc);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [src, initialType, fallbackSrc, retryCount]);
+
+  // Handle successful media load
+  const handleLoad = () => {
+    const loadTime = Date.now() - loadStartTime;
+    setIsLoading(false);
+    setHasError(false);
+    
+    // Report successful media load for monitoring
+    reportMediaSuccess(url, loadTime, mediaType === MediaType.VIDEO ? 'video' : 'image');
+    
+    if (onLoad) onLoad();
+  };
+
+  // Handle media loading error
+  const handleError = () => {
+    setIsLoading(false);
+    setHasError(true);
+    
+    // Report media error for monitoring
+    reportMediaError(
+      url,
+      'load_failure',
+      retryCount,
+      mediaType === MediaType.VIDEO ? 'video' : 'image',
+      'MediaRenderer'
+    );
+    
+    // Try fallback if available
+    if (fallbackSrc && !url?.includes(fallbackSrc)) {
+      setUrl(fallbackSrc);
+    }
+    
+    if (onError) onError();
+  };
+
+  // Handle media retry
+  const handleRetry = () => {
+    if (retryCount >= maxRetries) {
+      console.warn(`Max retries (${maxRetries}) reached for media:`, url);
+      return;
+    }
+    
+    setRetryCount(prev => prev + 1);
+    setIsLoading(true);
+    setHasError(false);
+  };
+
+  // Handle video time updates
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     if (onTimeUpdate) {
       onTimeUpdate(e.currentTarget.currentTime);
     }
   };
 
-  // Handle retry attempt
-  const handleRetry = () => {
-    console.log("Retry clicked, resetting error state");
-    setErrorShown(false);
-    setUseFallback(false);
-    setLoadAttempt(prev => prev + 1);
-    media.retry();
-  };
-
-  // Loading state
-  if (media.isLoading && !useFallback) {
+  // Show loading indicator
+  if (isLoading) {
     return (
-      <div className={cn("flex items-center justify-center bg-black/20 rounded", className)}>
-        <Loader2 className="h-8 w-8 animate-spin text-white/70" />
+      <div className="flex items-center justify-center bg-black/10 w-full h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
       </div>
     );
   }
 
-  // Handle fallback for errors
-  if ((media.hasError && errorShown) || !media.url || useFallback) {
-    // Use fallback if available
-    if (fallbackSrc) {
-      if (mediaType === MediaType.VIDEO) {
-        return (
-          <div className="relative w-full h-full">
-            <video
-              ref={ref as React.RefObject<HTMLVideoElement>}
-              src={undefined}
-              poster={fallbackSrc}
-              className={className}
-              style={{ objectFit }}
-              onClick={onClick}
-            />
-          </div>
-        );
-      } else {
-        return (
-          <div className="relative w-full h-full">
-            <img
-              ref={ref as React.RefObject<HTMLImageElement>}
-              src={fallbackSrc}
-              className={className}
-              style={{ objectFit }}
-              alt={alt}
-              onClick={onClick}
-              onError={() => {
-                console.error("Even fallback image failed to load:", fallbackSrc);
-                if (onError) onError();
-              }}
-            />
-          </div>
-        );
-      }
-    }
-    
-    // Error state with retry button if no fallback available
+  // Show error with retry button
+  if (hasError) {
     return (
-      <div className={cn("flex flex-col items-center justify-center bg-black/20 p-4 rounded", className)}>
+      <div className="flex flex-col items-center justify-center bg-black/10 w-full h-full p-4">
         <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-        <p className="text-sm text-gray-500 mb-3 text-center">
-          {media.errorMessage || 'Failed to load media'}
-        </p>
-        {allowRetry && (
+        <p className="text-sm text-gray-500 mb-3 text-center">Failed to load media</p>
+        
+        {allowRetry && retryCount < maxRetries && (
           <button
             onClick={handleRetry}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 hover:bg-primary text-white text-sm rounded-md"
@@ -163,40 +171,28 @@ export const MediaRenderer = forwardRef((
     );
   }
 
-  // Render video content
+  // Render video player
   if (mediaType === MediaType.VIDEO) {
     return (
       <div className="relative w-full h-full">
         <video
           ref={ref as React.RefObject<HTMLVideoElement>}
-          src={media.url || undefined}
+          src={url || undefined}
           className={className}
-          style={{ objectFit }}
-          poster={poster || media.thumbnailUrl || undefined}
+          poster={poster}
           autoPlay={autoPlay}
           controls={controls}
           muted={muted}
           loop={loop}
           playsInline
           onClick={onClick}
-          onLoadedData={() => {
-            console.log("Video loaded successfully:", media.url);
-            if (onLoad) onLoad();
-          }}
-          onError={(e) => {
-            console.error("Video error occurred for URL:", media.url, e);
-            media.retryWithBackoff();
-            setErrorShown(true);
-            if (fallbackSrc) setUseFallback(true);
-            if (onError) onError();
-          }}
+          onLoadedData={handleLoad}
+          onError={handleError}
           onEnded={onEnded}
           onTimeUpdate={handleTimeUpdate}
-          key={`video-${loadAttempt}`} // Key to force re-render on retry
-          crossOrigin="anonymous" // Add CORS support
         />
         {showWatermark && (
-          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
             eroxr
           </div>
         )}
@@ -204,33 +200,21 @@ export const MediaRenderer = forwardRef((
     );
   }
 
-  // Render image content
+  // Render image
   if (mediaType === MediaType.IMAGE) {
     return (
       <div className="relative w-full h-full">
         <img
           ref={ref as React.RefObject<HTMLImageElement>}
-          src={media.url || undefined}
+          src={url || undefined}
           className={className}
-          style={{ objectFit }}
+          alt="Media content"
           onClick={onClick}
-          onLoad={() => {
-            console.log("Image loaded successfully:", media.url);
-            if (onLoad) onLoad();
-          }}
-          onError={() => {
-            console.error("Image error occurred for URL:", media.url);
-            media.retryWithBackoff();
-            setErrorShown(true);
-            if (fallbackSrc) setUseFallback(true);
-            if (onError) onError();
-          }}
-          alt={alt}
-          key={`image-${loadAttempt}`} // Key to force re-render on retry
-          crossOrigin="anonymous" // Add CORS support
+          onLoad={handleLoad}
+          onError={handleError}
         />
         {showWatermark && (
-          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
+          <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
             eroxr
           </div>
         )}
@@ -238,37 +222,28 @@ export const MediaRenderer = forwardRef((
     );
   }
 
-  // Render audio content
+  // For audio files
   if (mediaType === MediaType.AUDIO) {
     return (
-      <div className={cn("audio-player", className)}>
+      <div className="audio-player w-full">
         <audio
-          src={media.url || undefined}
+          src={url || undefined}
+          className="w-full"
           controls={controls}
           autoPlay={autoPlay}
           muted={muted}
           loop={loop}
-          onLoadedData={() => {
-            console.log("Audio loaded successfully:", media.url);
-            if (onLoad) onLoad();
-          }}
-          onError={() => {
-            console.error("Audio error occurred for URL:", media.url);
-            media.retryWithBackoff(); 
-            if (onError) onError();
-          }}
+          onLoadedData={handleLoad}
+          onError={handleError}
           onEnded={onEnded}
-          className="w-full"
-          key={`audio-${loadAttempt}`} // Key to force re-render on retry
-          crossOrigin="anonymous" // Add CORS support
         />
       </div>
     );
   }
 
-  // Fallback for unsupported types
+  // Fallback for unsupported or unknown types
   return (
-    <div className={cn("flex items-center justify-center bg-black/10", className)}>
+    <div className="flex items-center justify-center bg-black/10 w-full h-full">
       <p className="text-sm text-gray-500">Unsupported media format</p>
     </div>
   );

@@ -10,7 +10,7 @@ export {
 } from './media/mediaUtils';
 
 // Ensure we export getPlayableMediaUrl correctly
-export { getPlayableMediaUrl } from './media/urlUtils';
+export { getPlayableMediaUrl } from './media/mediaUrlUtils';
 
 // Implement missing functions for file storage operations
 /**
