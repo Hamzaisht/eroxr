@@ -2,191 +2,88 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Gets the first valid URL from an array of URLs
+ * Gets the public URL for a file in Supabase Storage
+ * @param bucket The storage bucket name
+ * @param path The file path within the bucket
+ * @returns The public URL for the file
  */
-export const getFirstValidUrl = (urls: string[]): string | null => {
-  if (!urls || !Array.isArray(urls) || urls.length === 0) return null;
-  
-  // Find first non-empty URL
-  return urls.find(url => !!url) || null;
-};
-
-/**
- * Converts a storage path to a public URL
- * Handles various formats of storage paths
- */
-export const getStoragePublicUrl = (path: string): string | null => {
-  if (!path) return null;
-  
-  // If it's already a full URL, return it
-  if (path.startsWith('http')) return path;
-
-  // If it's a blob or data URL, return as is
-  if (path.startsWith('blob:') || path.startsWith('data:')) return path;
-
-  // Ensure the path doesn't start with /
-  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-  
-  // Determine bucket from path if possible
-  let bucket = 'media';
-  const possibleBuckets = ['stories', 'posts', 'videos', 'avatars', 'banners', 'media', 'shorts'];
-  
-  for (const b of possibleBuckets) {
-    if (cleanPath.startsWith(`${b}/`) || cleanPath.includes(`/${b}/`)) {
-      bucket = b;
-      break;
-    }
-  }
-  
-  // Make sure we have a clean path that doesn't include the bucket name at the start
-  let finalPath = cleanPath;
-  if (finalPath.startsWith(`${bucket}/`)) {
-    finalPath = finalPath.substring(bucket.length + 1);
-  }
-  
+export async function getStoragePublicUrl(bucket: string, path: string): Promise<string | null> {
   try {
-    // Get a public URL - direct approach
-    const { data } = supabase.storage.from(bucket).getPublicUrl(finalPath);
-    
-    console.log(`Generated storage URL for bucket ${bucket}, path ${finalPath}:`, data?.publicUrl);
-    
-    // Return the URL immediately for synchronous use
-    return data?.publicUrl ?? null;
-  } catch (e) {
-    console.error(`Failed to get public URL for ${path} in bucket ${bucket}:`, e);
-    
-    // Try all buckets as a last resort
-    for (const fallbackBucket of possibleBuckets) {
-      if (fallbackBucket === bucket) continue; // Skip the one we already tried
-      
-      try {
-        const { data } = supabase.storage.from(fallbackBucket).getPublicUrl(cleanPath);
-        if (data?.publicUrl) {
-          console.log(`Found URL in fallback bucket ${fallbackBucket}:`, data.publicUrl);
-          return data.publicUrl;
-        }
-      } catch (fallbackError) {
-        // Ignore fallback errors
-      }
-    }
-    
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    return data.publicUrl;
+  } catch (error) {
+    console.error(`Error getting public URL for ${bucket}/${path}:`, error);
     return null;
   }
-};
+}
 
 /**
- * Gets an authenticated URL for protected resources
+ * Checks if a file exists in Supabase Storage
+ * @param bucket The storage bucket name
+ * @param path The file path to check
+ * @returns True if the file exists, false otherwise
  */
-export const getAuthenticatedUrl = async (path: string): Promise<string | null> => {
-  if (!path) return null;
-  
-  // If it's already a full URL, return it
-  if (path.startsWith('http')) return path;
-  
-  // If it's a blob or data URL, return as is
-  if (path.startsWith('blob:') || path.startsWith('data:')) return path;
-  
-  // Clean the path and determine bucket
-  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-  
-  // Determine bucket from path if possible
-  let bucket = 'media';
-  const possibleBuckets = ['stories', 'posts', 'videos', 'avatars', 'banners', 'media', 'shorts'];
-  
-  for (const b of possibleBuckets) {
-    if (cleanPath.startsWith(`${b}/`) || cleanPath.includes(`/${b}/`)) {
-      bucket = b;
-      break;
-    }
-  }
-  
-  // Clean up path to remove bucket prefix
-  let finalPath = cleanPath;
-  if (finalPath.startsWith(`${bucket}/`)) {
-    finalPath = finalPath.substring(bucket.length + 1);
-  }
-  
+export async function checkFileExists(bucket: string, path: string): Promise<boolean> {
   try {
-    // Try to get a signed URL for better access
+    // Get the folder path
+    const folderPath = path.split('/').slice(0, -1).join('/');
+    const fileName = path.split('/').pop();
+    
+    // List files in the folder and check if our file exists
     const { data, error } = await supabase.storage
       .from(bucket)
-      .createSignedUrl(finalPath, 60 * 60); // 1 hour expiry
-      
-    if (data?.signedUrl && !error) {
-      console.log(`Created signed URL for ${bucket}/${finalPath}:`, data.signedUrl);
-      return data.signedUrl;
-    }
-    
-    // Fall back to public URL
-    const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(finalPath);
-    console.log(`Falling back to public URL for ${bucket}/${finalPath}:`, publicUrlData?.publicUrl);
-    return publicUrlData?.publicUrl ?? null;
-  } catch (e) {
-    console.error(`Failed to get URL for ${path}:`, e);
-    
-    // Try all buckets as a last resort
-    for (const fallbackBucket of possibleBuckets) {
-      if (fallbackBucket === bucket) continue; // Skip the one we already tried
-      
-      try {
-        const { data } = supabase.storage.from(fallbackBucket).getPublicUrl(cleanPath);
-        if (data?.publicUrl) {
-          console.log(`Found URL in fallback bucket ${fallbackBucket}:`, data.publicUrl);
-          return data.publicUrl;
-        }
-      } catch (fallbackError) {
-        // Ignore fallback errors
-      }
-    }
-    
-    return null;
-  }
-};
-
-/**
- * Check if a storage bucket exists
- */
-export const checkBucketExists = async (bucketName: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase.storage.getBucket(bucketName);
-    return !error && !!data;
-  } catch (e) {
-    console.error(`Error checking bucket ${bucketName}:`, e);
-    return false;
-  }
-};
-
-/**
- * Create a storage bucket if it doesn't exist
- */
-export const ensureBucketExists = async (
-  bucketName: string, 
-  isPublic = true
-): Promise<boolean> => {
-  try {
-    // First check if bucket exists
-    const exists = await checkBucketExists(bucketName);
-    
-    if (exists) {
-      console.log(`Bucket ${bucketName} already exists`);
-      return true;
-    }
-    
-    // Create bucket if it doesn't exist
-    const { error } = await supabase.storage.createBucket(bucketName, {
-      public: isPublic,
-      fileSizeLimit: 100 * 1024 * 1024 // 100MB
-    });
+      .list(folderPath, {
+        limit: 100,
+        offset: 0,
+        sortBy: { column: 'name', order: 'asc' }
+      });
     
     if (error) {
-      console.error(`Failed to create bucket ${bucketName}:`, error);
+      console.error(`Error checking if file exists ${bucket}/${path}:`, error);
       return false;
     }
     
-    console.log(`Successfully created bucket ${bucketName}`);
-    return true;
-  } catch (e) {
-    console.error(`Error ensuring bucket ${bucketName} exists:`, e);
+    return data.some(item => item.name === fileName);
+  } catch (error) {
+    console.error(`Exception checking if file exists ${bucket}/${path}:`, error);
     return false;
   }
-};
+}
+
+/**
+ * Updates a file in Supabase Storage
+ * @param bucket The storage bucket name
+ * @param path The file path
+ * @param file The file to upload
+ * @param options Additional options for the update
+ * @returns True if the update succeeded, false otherwise
+ */
+export async function updateStorageFile(
+  bucket: string, 
+  path: string, 
+  file: File,
+  options?: {
+    contentType?: string;
+    cacheControl?: string;
+  }
+): Promise<boolean> {
+  try {
+    const { error } = await supabase.storage
+      .from(bucket)
+      .update(path, file, {
+        contentType: options?.contentType || file.type,
+        cacheControl: options?.cacheControl || '3600',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error(`Error updating file ${bucket}/${path}:`, error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Exception updating file ${bucket}/${path}:`, error);
+    return false;
+  }
+}
