@@ -38,18 +38,32 @@ export function ErosVideoPlayer({
     threshold: 0.5,
   });
   
+  console.log("ErosVideoPlayer props:", { 
+    videoUrl, 
+    thumbnailUrl, 
+    isActive, 
+    autoPlay, 
+    loop, 
+    muted
+  });
+  
   const shouldPlay = isActive && inView;
   
   const handleError = () => {
+    console.error("ErosVideoPlayer error:", videoUrl);
     setLoadError(true);
     
-    reportMediaError(
-      videoUrl,
-      'load_failure',
-      0,
-      'video',
-      'ErosVideoPlayer'
-    );
+    try {
+      reportMediaError(
+        videoUrl,
+        'load_failure',
+        0,
+        'video',
+        'ErosVideoPlayer'
+      );
+    } catch (error) {
+      console.error("Error reporting media error:", error);
+    }
     
     if (onError) onError();
   };
@@ -62,15 +76,20 @@ export function ErosVideoPlayer({
     setIsPlaying(false);
     if (onVideoEnd) onVideoEnd();
   };
+
+  const videoSource = {
+    video_url: videoUrl,
+    thumbnail_url: thumbnailUrl,
+    media_type: MediaType.VIDEO
+  };
+  
+  console.log("ErosVideoPlayer rendering with source:", videoSource);
   
   return (
     <div ref={ref} className={cn("relative w-full h-full overflow-hidden", className)}>
       <MediaRenderer
-        src={{
-          video_url: videoUrl,
-          thumbnail_url: thumbnailUrl,
-          media_type: MediaType.VIDEO
-        }}
+        src={videoSource}
+        type={MediaType.VIDEO}
         className="w-full h-full object-cover"
         poster={thumbnailUrl}
         autoPlay={shouldPlay}

@@ -52,9 +52,13 @@ export const MediaRenderer = forwardRef(({
   const [mediaType, setMediaType] = useState<MediaType>(initialType || MediaType.UNKNOWN);
   const [loadStartTime, setLoadStartTime] = useState(Date.now());
   
+  // Debug log the source
+  console.log("MediaRenderer source:", src, "initial type:", initialType);
+  
   // Process the source URL on component mount or when source changes
   useEffect(() => {
     if (!src) {
+      console.error("MediaRenderer: No source provided");
       setHasError(true);
       setIsLoading(false);
       return;
@@ -68,11 +72,13 @@ export const MediaRenderer = forwardRef(({
       // Determine media type if not explicitly provided
       if (!initialType) {
         const detectedType = determineMediaType(src);
+        console.log("MediaRenderer detected type:", detectedType);
         setMediaType(detectedType);
       }
 
       // Get a playable URL (handles various formats, cache busting, etc)
       const processedUrl = getPlayableMediaUrl(src);
+      console.log("MediaRenderer processed URL:", processedUrl);
       setUrl(processedUrl);
     } catch (err) {
       console.error('Error processing media:', err);
@@ -95,8 +101,14 @@ export const MediaRenderer = forwardRef(({
     setIsLoading(false);
     setHasError(false);
     
+    console.log(`MediaRenderer: ${mediaType} loaded successfully:`, url);
+    
     // Report successful media load for monitoring
-    reportMediaSuccess(url, loadTime, mediaType === MediaType.VIDEO ? 'video' : 'image');
+    try {
+      reportMediaSuccess(url, loadTime, mediaType === MediaType.VIDEO ? 'video' : 'image');
+    } catch (error) {
+      console.error("Error reporting media success:", error);
+    }
     
     if (onLoad) onLoad();
   };
@@ -106,14 +118,20 @@ export const MediaRenderer = forwardRef(({
     setIsLoading(false);
     setHasError(true);
     
+    console.error(`MediaRenderer: Failed to load ${mediaType}:`, url);
+    
     // Report media error for monitoring
-    reportMediaError(
-      url,
-      'load_failure',
-      retryCount,
-      mediaType === MediaType.VIDEO ? 'video' : 'image',
-      'MediaRenderer'
-    );
+    try {
+      reportMediaError(
+        url,
+        'load_failure',
+        retryCount,
+        mediaType === MediaType.VIDEO ? 'video' : 'image',
+        'MediaRenderer'
+      );
+    } catch (error) {
+      console.error("Error reporting media error:", error);
+    }
     
     // Try fallback if available
     if (fallbackSrc && !url?.includes(fallbackSrc)) {
@@ -130,6 +148,7 @@ export const MediaRenderer = forwardRef(({
       return;
     }
     
+    console.log(`MediaRenderer: Retrying (${retryCount + 1}/${maxRetries})`);
     setRetryCount(prev => prev + 1);
     setIsLoading(true);
     setHasError(false);
@@ -173,6 +192,7 @@ export const MediaRenderer = forwardRef(({
 
   // Render video player
   if (mediaType === MediaType.VIDEO) {
+    console.log("MediaRenderer rendering VIDEO with URL:", url);
     return (
       <div className="relative w-full h-full">
         <video
@@ -202,6 +222,7 @@ export const MediaRenderer = forwardRef(({
 
   // Render image
   if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
+    console.log("MediaRenderer rendering IMAGE with URL:", url);
     return (
       <div className="relative w-full h-full">
         <img

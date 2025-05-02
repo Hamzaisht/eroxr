@@ -56,10 +56,28 @@ export function isAudioUrl(url: string): boolean {
  * Transforms URL for playback if needed (e.g., CDN optimizations, etc.)
  */
 export function getPlayableMediaUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
+  if (!url) {
+    console.warn("getPlayableMediaUrl called with null or undefined URL");
+    return null;
+  }
+  
+  // Debug log
+  console.log("Processing URL in getPlayableMediaUrl:", url);
   
   // Add any URL transformation logic here
   // For example, handling specialized CDN URLs, proxy URLs, etc.
   
-  return url;
+  // Make sure URL is properly formatted with protocol
+  if (url.startsWith('//')) {
+    url = `https:${url}`;
+    console.log("Added https protocol to URL:", url);
+  }
+  
+  // Add cache-busting parameter to avoid caching issues
+  const separator = url.includes('?') ? '&' : '?';
+  const cacheBuster = `cb=${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+  const finalUrl = `${url}${separator}${cacheBuster}`;
+  
+  console.log("Final playable URL:", finalUrl);
+  return finalUrl;
 }

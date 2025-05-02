@@ -25,6 +25,8 @@ export const ShortVideoPlayer = memo(({
   const [loadRetries, setLoadRetries] = useState(0);
   const { toast } = useToast();
   
+  console.log("ShortVideoPlayer props:", { videoUrl, thumbnailUrl, isCurrentVideo });
+  
   // Handle video error with improved retry mechanism
   const handleVideoError = useCallback(() => {
     console.error("Video error for short:", videoUrl);
@@ -34,13 +36,17 @@ export const ShortVideoPlayer = memo(({
       
       // Report error for monitoring after multiple failures
       if (newRetryCount >= 2) {
-        reportMediaError(
-          videoUrl,
-          'load_failure',
-          newRetryCount,
-          'video',
-          'ShortVideoPlayer'
-        );
+        try {
+          reportMediaError(
+            videoUrl,
+            'load_failure',
+            newRetryCount,
+            'video',
+            'ShortVideoPlayer'
+          );
+        } catch (error) {
+          console.error("Error reporting media error:", error);
+        }
         
         // Show a toast after multiple retries
         toast({
@@ -78,7 +84,7 @@ export const ShortVideoPlayer = memo(({
     media_type: MediaType.VIDEO
   } : null;
 
-  console.log("Rendering ShortVideoPlayer with:", { videoUrl, thumbnailUrl, isCurrentVideo });
+  console.log("Rendering ShortVideoPlayer with:", { videoUrl, thumbnailUrl, isCurrentVideo, mediaSource });
 
   return (
     <MediaRenderer

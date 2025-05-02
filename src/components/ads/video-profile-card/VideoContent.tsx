@@ -19,6 +19,8 @@ export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: V
     active: { scale: 1, opacity: 1 }
   };
 
+  console.log("VideoContent - video_url:", ad.video_url);
+
   return (
     <div className="relative aspect-video w-full h-[60vh] overflow-hidden bg-black">
       {ad.video_url ? (
@@ -32,6 +34,7 @@ export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: V
           <UniversalMedia
             item={{
               ...ad,
+              video_url: ad.video_url,
               media_type: MediaType.VIDEO
             }}
             className={cn(

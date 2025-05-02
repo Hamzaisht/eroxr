@@ -43,6 +43,9 @@ export const UniversalMedia = forwardRef(({
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
   const [loadAttempt, setLoadAttempt] = useState(0);
 
+  // Debug log the incoming item
+  console.log("UniversalMedia rendering with item:", item);
+
   // Use our media service to handle all media processing
   const media = useMediaService(item, {
     maxRetries,
@@ -52,6 +55,13 @@ export const UniversalMedia = forwardRef(({
     onLoad: () => {
       if (onLoad) onLoad();
     }
+  });
+
+  console.log("Media service processed:", { 
+    url: media.url, 
+    mediaType: media.mediaType, 
+    hasError: media.hasError, 
+    isLoading: media.isLoading 
   });
 
   // Handle retry attempts
@@ -97,6 +107,7 @@ export const UniversalMedia = forwardRef(({
 
   // Video rendering
   if (media.mediaType === MediaType.VIDEO) {
+    console.log("Rendering VIDEO with URL:", media.url);
     return (
       <div className="relative w-full h-full">
         <video
@@ -115,6 +126,14 @@ export const UniversalMedia = forwardRef(({
           onTimeUpdate={handleTimeUpdate}
           key={`video-${loadAttempt}`} // Key to force re-render on retry
           crossOrigin="anonymous"
+          onError={(e) => {
+            console.error("Video error:", e, "URL:", media.url);
+            media.handleError();
+          }}
+          onLoadedData={() => {
+            console.log("Video loaded successfully:", media.url);
+            media.handleLoad();
+          }}
         />
         
         {showWatermark && (
@@ -127,6 +146,7 @@ export const UniversalMedia = forwardRef(({
   }
   
   // Image rendering
+  console.log("Rendering IMAGE with URL:", media.url);
   return (
     <div className="relative w-full h-full">
       <img
@@ -138,6 +158,14 @@ export const UniversalMedia = forwardRef(({
         onClick={onClick}
         key={`image-${loadAttempt}`} // Key to force re-render on retry
         crossOrigin="anonymous"
+        onError={(e) => {
+          console.error("Image error:", e, "URL:", media.url);
+          media.handleError();
+        }}
+        onLoad={() => {
+          console.log("Image loaded successfully:", media.url);
+          media.handleLoad();
+        }}
       />
       
       {showWatermark && (

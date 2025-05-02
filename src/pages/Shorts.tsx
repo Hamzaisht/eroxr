@@ -11,7 +11,8 @@ const Shorts = () => {
   // Set page title
   useEffect(() => {
     document.title = "Shorts - Short Videos";
-  }, []);
+    console.log("Shorts page mounted, videoId:", videoId);
+  }, [videoId]);
 
   return (
     <div className="min-h-screen bg-black">

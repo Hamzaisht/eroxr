@@ -44,9 +44,12 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
     // Create event handlers that adapt our React events to our component's API
     const handleError = onError 
       ? (e: React.SyntheticEvent<HTMLVideoElement | HTMLImageElement, Event>) => {
+          console.error("MediaDisplay error:", e, "URL:", mediaUrl, "Type:", mediaType);
           onError();
         }
       : undefined;
+    
+    console.log("MediaDisplay rendering:", { mediaUrl, mediaType });
         
     if (mediaType === MediaType.VIDEO) {
       return (

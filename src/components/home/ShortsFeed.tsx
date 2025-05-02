@@ -1,194 +1,140 @@
-import { useState, useRef, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
-import { useShortsPagination } from "@/hooks/useShortsPagination";
-import { ShortsLoadingIndicator } from "./components/ShortsLoadingIndicator";
-import { ShortNavigationButtons } from "./components/ShortNavigationButtons";
-import { EmptyShortsState } from "./components/EmptyShortsState";
-import { ErrorState } from "@/components/ui/ErrorState";
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { ShortItem } from "./components/ShortItem";
-import { UploadShortButton } from "@/components/home/UploadShortButton";
 
-export const ShortsFeed = ({ specificShortId }) => {
-  // State
-  const [isMuted, setIsMuted] = useState(true);
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { ShortVideoPlayer } from "./components/ShortVideoPlayer";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MediaType } from "@/utils/media/types";
+
+interface ShortsFeedProps {
+  specificShortId: string | null;
+}
+
+// Debug helper to visualize the media source structure
+const MediaDebug = ({ src }: { src: any }) => {
+  const [expanded, setExpanded] = useState(false);
   
-  // Hooks
-  const { 
-    shorts, 
-    currentIndex, 
-    setCurrentIndex, 
-    isLoading, 
-    error,
-    hasMore,
-    loadMore,
-    refresh,
-    handleLike,
-    handleSave,
-    handleShare
-  } = useShortsPagination({
-    initialShortId: specificShortId,
-    pageSize: 5
-  });
+  if (!src) return (
+    <div className="fixed top-4 right-4 bg-red-500/90 text-white p-2 rounded-md z-50">
+      <AlertCircle className="h-4 w-4" />
+      <span className="text-xs">No Media Source</span>
+    </div>
+  );
   
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const feedContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Handle scroll navigation
-  const handleScroll = (event: React.WheelEvent<HTMLDivElement>) => {
-    if (event.deltaY > 0 && currentIndex < shorts.length - 1) {
-      // Scrolling down
-      setCurrentIndex(currentIndex + 1);
-    } else if (event.deltaY < 0 && currentIndex > 0) {
-      // Scrolling up
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
-  
-  // Handle touch navigation for mobile
-  const [touchStart, setTouchStart] = useState(0);
-  
-  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    setTouchStart(event.touches[0].clientY);
-  };
-  
-  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
-    const touchEnd = event.changedTouches[0].clientY;
-    const diff = touchStart - touchEnd;
-    
-    if (diff > 50 && currentIndex < shorts.length - 1) {
-      // Swipe up
-      setCurrentIndex(currentIndex + 1);
-    } else if (diff < -50 && currentIndex > 0) {
-      // Swipe down
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
-  
-  // Scroll to current video when index changes
-  useEffect(() => {
-    if (feedContainerRef.current && shorts.length > 0) {
-      const container = feedContainerRef.current;
-      const videoHeight = container.clientHeight;
-      container.scrollTo({
-        top: currentIndex * videoHeight,
-        behavior: 'smooth'
-      });
+  return (
+    <div className="fixed top-4 right-4 bg-black/90 text-white p-2 rounded-md z-50 max-w-xs">
+      <div className="flex items-center justify-between">
+        <span className="font-bold text-xs">Media Debug</span>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-5 w-5 p-0 text-white" 
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+      </div>
       
-      // Load more videos when approaching the end
-      if (currentIndex >= shorts.length - 2 && !isLoading && hasMore) {
-        loadMore();
-      }
-    }
-  }, [currentIndex, shorts.length, isLoading, hasMore, loadMore]);
+      {expanded && (
+        <pre className="text-xs mt-2 overflow-auto max-h-40">
+          {JSON.stringify(src, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+};
+
+export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [shorts, setShorts] = useState<any[]>([]);
+  const [showDebug, setShowDebug] = useState(true);
   
-  // Handle manual navigation
-  const handleNextVideo = () => {
-    if (currentIndex < shorts.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+  // Mock shorts data for demonstration (replace with actual data fetching)
+  useEffect(() => {
+    // Simulating data fetching
+    setTimeout(() => {
+      const mockShorts = [
+        {
+          id: "short1",
+          videoUrl: "https://example.com/video1.mp4",
+          thumbnailUrl: "https://example.com/thumb1.jpg",
+          mediaType: MediaType.VIDEO,
+          creator: { id: "creator1", name: "Creator One" }
+        },
+        {
+          id: "short2",
+          videoUrl: "https://example.com/video2.mp4", 
+          thumbnailUrl: "https://example.com/thumb2.jpg",
+          mediaType: MediaType.VIDEO,
+          creator: { id: "creator2", name: "Creator Two" }
+        }
+      ];
+      
+      setShorts(mockShorts);
+      setIsLoading(false);
+      
+      // If specificShortId is provided, find and set the current index
+      if (specificShortId) {
+        const index = mockShorts.findIndex(short => short.id === specificShortId);
+        if (index !== -1) {
+          setCurrentIndex(index);
+        }
+      }
+    }, 1000);
+  }, [specificShortId]);
+
+  const handleError = useCallback((index: number) => {
+    console.error(`Error loading short at index ${index}`);
+  }, []);
+
+  const toggleDebug = () => {
+    setShowDebug(!showDebug);
   };
 
-  const handlePrevVideo = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
-
-  // Render initial loading state
-  if (isLoading && shorts.length === 0) {
+  if (isLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black">
-        <ShortsLoadingIndicator isLoading={true} type="fullscreen" />
+      <div className="flex items-center justify-center h-screen bg-black">
+        <LoadingState />
       </div>
     );
   }
 
-  // Render error state
-  if (error && shorts.length === 0) {
+  if (shorts.length === 0) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black">
-        <ErrorState 
-          title="Failed to load videos" 
-          description={error || "We couldn't load videos. Please try again."} 
-          onRetry={refresh}
-        />
+      <div className="flex flex-col items-center justify-center h-screen bg-black text-white">
+        <AlertCircle className="h-12 w-12 mb-4" />
+        <h2 className="text-2xl font-bold">No shorts available</h2>
+        <p className="text-gray-400 mt-2">Check back later for new content</p>
       </div>
     );
   }
 
-  // Render empty state
-  if (!isLoading && shorts.length === 0) {
-    return <EmptyShortsState />;
-  }
+  const currentShort = shorts[currentIndex];
 
   return (
-    <div 
-      className="fixed inset-0 bg-black"
-      onWheel={handleScroll}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      ref={feedContainerRef}
-    >
-      <div className="h-full snap-y snap-mandatory overflow-y-auto overflow-x-hidden scrollbar-hide">
-        <AnimatePresence initial={false}>
-          {shorts.map((short, index) => (
-            <ShortItem 
-              key={short.id}
-              short={{
-                id: short.id,
-                creator: {
-                  username: short.creator.username,
-                  avatar_url: short.creator.avatarUrl,
-                  id: short.creator.id
-                },
-                creator_id: short.creator.id,
-                content: short.description || "",
-                description: short.description || "",
-                video_urls: [short.url],
-                video_thumbnail_url: short.thumbnailUrl,
-                likes_count: short.stats.likes,
-                comments_count: short.stats.comments,
-                view_count: short.stats.views,
-                has_liked: short.hasLiked,
-                has_saved: short.hasSaved,
-                created_at: short.createdAt,
-                visibility: 'public'
-              }}
-              isCurrentVideo={index === currentIndex}
-              index={index}
-              currentVideoIndex={currentIndex}
-            />
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {/* Navigation buttons for desktop */}
-      {!isMobile && shorts.length > 0 && (
-        <ShortNavigationButtons
-          currentVideoIndex={currentIndex}
-          totalShorts={shorts.length}
-          onNextClick={handleNextVideo}
-          onPrevClick={handlePrevVideo}
-        />
-      )}
+    <>
+      {showDebug && <MediaDebug src={currentShort} />}
       
-      {/* Loading indicator */}
-      {isLoading && shorts.length > 0 && (
-        <ShortsLoadingIndicator isLoading={true} type="more" />
-      )}
+      <Button 
+        onClick={toggleDebug} 
+        className="fixed top-4 left-4 z-50 bg-black/50 hover:bg-black/70"
+        size="sm"
+      >
+        {showDebug ? "Hide Debug" : "Show Debug"}
+      </Button>
       
-      {/* Mobile swipe hint */}
-      {isMobile && shorts.length > 0 && (
-        <div className="fixed top-1/2 right-4 -translate-y-1/2 z-30 flex flex-col gap-2 items-center">
-          <div className="text-white/70 text-xs bg-black/30 rounded-full px-2 py-1 backdrop-blur-sm">
-            Swipe to navigate
-          </div>
+      <div className="h-screen w-full bg-black">
+        <div className="relative h-full w-full">
+          <ShortVideoPlayer
+            videoUrl={currentShort.videoUrl}
+            thumbnailUrl={currentShort.thumbnailUrl}
+            creatorId={currentShort.creator.id}
+            isCurrentVideo={true}
+            onError={() => handleError(currentIndex)}
+          />
         </div>
-      )}
-      
-      {/* Upload button */}
-      <UploadShortButton />
-    </div>
+      </div>
+    </>
   );
 };

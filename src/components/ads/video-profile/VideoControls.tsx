@@ -12,14 +12,19 @@ interface VideoControlsProps {
 
 export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsProps) => {
   const { toast } = useToast();
+  
+  console.log("VideoControls props:", { videoUrl, avatarUrl, isActive });
 
   const mediaItem = {
     video_url: videoUrl,
     media_url: avatarUrl,
     media_type: MediaType.VIDEO
   };
+  
+  console.log("VideoControls media item:", mediaItem);
 
   const handleError = () => {
+    console.error("VideoControls error:", videoUrl);
     toast({
       title: "Video Error",
       description: "Failed to play video content. Please try again.",
