@@ -23,6 +23,7 @@ export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
+  GIF = 'gif',
   DOCUMENT = 'document',
   FILE = 'file',
   UNKNOWN = 'unknown'
@@ -92,10 +93,10 @@ export interface UploadState {
   progress: number;
   error: string | null;
   result: StorageUploadResult | null;
-  files?: File[]; // Adding missing files property
+  files: File[];
   previews?: string[];
-  isComplete?: boolean; // Adding missing isComplete property
-  success?: boolean;
+  isComplete: boolean;
+  success: boolean;
 }
 
 /**
@@ -104,7 +105,7 @@ export interface UploadState {
 export interface FileValidationResult {
   valid: boolean;
   message?: string;
-  error?: string; // Adding missing error property
+  error?: string;
 }
 
 /**

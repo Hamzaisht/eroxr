@@ -1,62 +1,59 @@
 
 /**
- * Report a media-related error for monitoring and analytics
- * @param mediaUrl - The URL of the media that encountered an error
- * @param errorType - The type of error that occurred
- * @param retryCount - How many retries were attempted
- * @param mediaType - The type of media (video, image, etc)
- * @param componentName - The component where the error occurred
+ * Media monitoring utilities for tracking and reporting media errors
  */
-export function reportMediaError(
-  mediaUrl: string | null | undefined,
-  errorType: string,
-  retryCount: number,
-  mediaType: string,
-  componentName: string
-): void {
-  console.error(`[MediaError] ${componentName} - ${mediaType} error (${errorType}) after ${retryCount} retries:`, mediaUrl);
-  
-  // TODO: Implement actual error reporting to your analytics service
-  // Example: send to a monitoring service
-  try {
-    // This is just a placeholder for actual implementation
-    const errorData = {
-      mediaUrl,
-      errorType,
-      retryCount,
-      mediaType,
-      componentName,
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-    };
-    
-    console.debug('Media error data:', errorData);
-    
-    // In a real implementation, you might send this to a server
-    // await fetch('/api/media-error-reporting', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(errorData)
-    // });
-  } catch (err) {
-    // Don't let the error reporter itself cause more errors
-    console.error('Failed to report media error:', err);
-  }
+
+interface MediaErrorReport {
+  url?: string | null;
+  errorType: string;
+  retryCount?: number;
+  mediaType?: string;
+  component?: string;
+  details?: any;
+  timestamp: number;
 }
 
 /**
- * Report successful media loading for monitoring and performance tracking
- * @param mediaUrl - The URL of the media
- * @param loadTime - Time in milliseconds it took to load
- * @param mediaType - The type of media (video, image, etc)
+ * Reports a media error for monitoring and analytics
+ * 
+ * @param url The URL of the media that caused the error
+ * @param errorType The type of error that occurred
+ * @param retryCount Number of retry attempts (if applicable)
+ * @param mediaType The type of media (image, video, audio)
+ * @param component The component where the error occurred
+ * @param details Any additional details about the error
  */
-export function reportMediaSuccess(
-  mediaUrl: string | null | undefined,
-  loadTime: number,
-  mediaType: string
+export function reportMediaError(
+  url: string | null | undefined,
+  errorType: string,
+  retryCount: number = 0,
+  mediaType: string = 'unknown',
+  component: string = 'unknown',
+  details?: any
 ): void {
-  // This is a stub for performance monitoring
-  console.debug(`[MediaSuccess] ${mediaType} loaded in ${loadTime}ms:`, mediaUrl);
+  console.error(`Media Error [${errorType}] in ${component}:`, {
+    url, 
+    mediaType,
+    retryCount,
+    details
+  });
   
-  // TODO: Implement actual success reporting to your analytics service
+  // Here you would normally send this data to your monitoring service
+  // For example:
+  // analyticsService.trackMediaError({...})
+  
+  const errorReport: MediaErrorReport = {
+    url,
+    errorType,
+    retryCount,
+    mediaType,
+    component,
+    details,
+    timestamp: Date.now()
+  };
+  
+  // In the future, we could implement:
+  // 1. Send to analytics/monitoring service
+  // 2. Store locally for periodic batch uploads
+  // 3. Trigger fallback mechanisms based on error patterns
 }

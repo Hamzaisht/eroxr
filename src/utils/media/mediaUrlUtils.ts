@@ -1,135 +1,65 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { MediaSource } from "./types";
+/**
+ * Utility functions for handling media URLs
+ */
 
 /**
- * Processes a media URL to ensure it's playable in browsers
- * Handles various URL formats including Supabase storage URLs
+ * Gets the file extension from a URL or path
  */
-export function getPlayableMediaUrl(url: string | MediaSource | null): string {
-  if (!url) return '';
+export function getFileExtension(url: string): string | null {
+  if (!url) return null;
   
-  // Handle MediaSource object
-  if (typeof url !== 'string') {
-    const mediaUrl = url.media_url || url.video_url || url.url || '';
-    return getPlayableMediaUrl(mediaUrl);
-  }
+  // Extract filename from URL or path
+  const filename = url.split('/').pop() || '';
   
-  // Already a data URL or blob URL
-  if (url.startsWith('data:') || url.startsWith('blob:')) {
-    return url;
-  }
-
-  // If it's already a proper URL, add cache busting
-  if (url.startsWith('http')) {
-    return addCacheBuster(url);
-  }
+  // Extract extension
+  const parts = filename.split('.');
+  if (parts.length <= 1) return null;
   
-  // Handle potential storage paths
-  if (url.includes('/')) {
-    // Try to extract bucket and path
-    const parts = url.split('/');
-    const possibleBuckets = ['shorts', 'videos', 'stories', 'media', 'messages', 'posts'];
-    
-    // Check if the first part is a recognized bucket
-    if (possibleBuckets.includes(parts[0])) {
-      const bucket = parts[0];
-      const objectPath = parts.slice(1).join('/');
-      
-      try {
-        const { data } = supabase.storage.from(bucket).getPublicUrl(objectPath);
-        if (data.publicUrl) {
-          return addCacheBuster(data.publicUrl);
-        }
-      } catch (e) {
-        console.error(`Failed to get public URL for ${bucket}/${objectPath}:`, e);
-      }
-    }
-  }
-  
-  // Default: return the URL as-is with cache buster
-  return addCacheBuster(url);
+  return parts.pop()?.toLowerCase() || null;
 }
 
 /**
- * Adds a cache buster to a URL to prevent caching issues
- */
-export function addCacheBuster(url: string): string {
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}cb=${Date.now()}`;
-}
-
-/**
- * Gets the appropriate video poster image for a video URL
- */
-export function getVideoPoster(videoUrl: string | null): string {
-  if (!videoUrl) return '';
-  
-  // TODO: Implement thumbnail generation if needed
-  return '';
-}
-
-/**
- * Creates a properly formatted URL for media display
- */
-export function formatMediaUrl(url: string | MediaSource | null): string {
-  return getPlayableMediaUrl(url);
-}
-
-/**
- * Extracts file extension from a URL or path
- */
-export function getFileExtension(url: string): string | undefined {
-  if (!url) return undefined;
-  return url.split('.').pop()?.toLowerCase();
-}
-
-/**
- * Check if URL points to an image
+ * Checks if a URL is an image URL based on extension
  */
 export function isImageUrl(url: string): boolean {
   const extension = getFileExtension(url);
-  return !!extension && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+  if (!extension) return false;
+  
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'];
+  return imageExtensions.includes(extension);
 }
 
 /**
- * Check if URL points to a video
+ * Checks if a URL is a video URL based on extension
  */
 export function isVideoUrl(url: string): boolean {
   const extension = getFileExtension(url);
-  return !!extension && ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension);
+  if (!extension) return false;
+  
+  const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'flv', 'mkv'];
+  return videoExtensions.includes(extension);
 }
 
 /**
- * Check if URL points to an audio file
+ * Checks if a URL is an audio URL based on extension
  */
 export function isAudioUrl(url: string): boolean {
   const extension = getFileExtension(url);
-  return !!extension && ['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension);
+  if (!extension) return false;
+  
+  const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'];
+  return audioExtensions.includes(extension);
 }
 
 /**
- * Updates metadata for a file in storage
+ * Transforms URL for playback if needed (e.g., CDN optimizations, etc.)
  */
-export async function updateFileMetadata(bucket: string, path: string, metadata: Record<string, string>): Promise<boolean> {
-  try {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .update(path, undefined, {
-        upsert: false,
-        duplex: 'half',
-        contentType: metadata.contentType,
-        cacheControl: metadata.cacheControl || '3600',
-      });
-    
-    if (error) {
-      console.error('Error updating file metadata:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (err) {
-    console.error('Exception updating file metadata:', err);
-    return false;
-  }
+export function getPlayableMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  
+  // Add any URL transformation logic here
+  // For example, handling specialized CDN URLs, proxy URLs, etc.
+  
+  return url;
 }

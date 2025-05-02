@@ -34,13 +34,13 @@ export const EroboardCard = ({ item, view }: EroboardCardProps) => {
       <div className={`relative ${imageHeight} overflow-hidden`}>
         <UniversalMedia
           item={{
-            media_url: item.type === "image" ? item.url : undefined,
-            video_url: item.type === "video" ? item.url : undefined,
+            media_url: item.type === MediaType.IMAGE ? item.url : undefined,
+            video_url: item.type === MediaType.VIDEO ? item.url : undefined,
             thumbnail_url: item.thumbnail,
-            media_type: item.type === "image" ? MediaType.IMAGE : MediaType.VIDEO
+            media_type: item.type
           }}
           className="w-full h-full object-cover"
-          controls={item.type === "video"}
+          controls={item.type === MediaType.VIDEO}
           muted={true}
           autoPlay={false}
         />
