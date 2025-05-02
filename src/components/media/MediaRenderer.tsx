@@ -88,7 +88,12 @@ export const MediaRenderer = forwardRef(({
       
       // Try fallback if available
       if (fallbackSrc) {
-        setUrl(fallbackSrc);
+        try {
+          const fallbackUrl = getPlayableMediaUrl(fallbackSrc);
+          setUrl(fallbackUrl);
+        } catch (fallbackErr) {
+          console.error('Error processing fallback media:', fallbackErr);
+        }
       }
     } finally {
       setIsLoading(false);
@@ -135,7 +140,12 @@ export const MediaRenderer = forwardRef(({
     
     // Try fallback if available
     if (fallbackSrc && !url?.includes(fallbackSrc)) {
-      setUrl(fallbackSrc);
+      try {
+        const fallbackUrl = getPlayableMediaUrl(fallbackSrc);
+        setUrl(fallbackUrl);
+      } catch (fallbackErr) {
+        console.error('Error processing fallback media:', fallbackErr);
+      }
     }
     
     if (onError) onError();
@@ -195,22 +205,28 @@ export const MediaRenderer = forwardRef(({
     console.log("MediaRenderer rendering VIDEO with URL:", url);
     return (
       <div className="relative w-full h-full">
-        <video
-          ref={ref as React.RefObject<HTMLVideoElement>}
-          src={url || undefined}
-          className={className}
-          poster={poster}
-          autoPlay={autoPlay}
-          controls={controls}
-          muted={muted}
-          loop={loop}
-          playsInline
-          onClick={onClick}
-          onLoadedData={handleLoad}
-          onError={handleError}
-          onEnded={onEnded}
-          onTimeUpdate={handleTimeUpdate}
-        />
+        {url ? (
+          <video
+            ref={ref as React.RefObject<HTMLVideoElement>}
+            src={url}
+            className={className}
+            poster={poster}
+            autoPlay={autoPlay}
+            controls={controls}
+            muted={muted}
+            loop={loop}
+            playsInline
+            onClick={onClick}
+            onLoadedData={handleLoad}
+            onError={handleError}
+            onEnded={onEnded}
+            onTimeUpdate={handleTimeUpdate}
+          />
+        ) : (
+          <div className="flex items-center justify-center bg-black/50 w-full h-full">
+            <p className="text-white/80">No video source available</p>
+          </div>
+        )}
         {showWatermark && (
           <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
             eroxr
@@ -225,15 +241,21 @@ export const MediaRenderer = forwardRef(({
     console.log("MediaRenderer rendering IMAGE with URL:", url);
     return (
       <div className="relative w-full h-full">
-        <img
-          ref={ref as React.RefObject<HTMLImageElement>}
-          src={url || undefined}
-          className={className}
-          alt="Media content"
-          onClick={onClick}
-          onLoad={handleLoad}
-          onError={handleError}
-        />
+        {url ? (
+          <img
+            ref={ref as React.RefObject<HTMLImageElement>}
+            src={url}
+            className={className}
+            alt="Media content"
+            onClick={onClick}
+            onLoad={handleLoad}
+            onError={handleError}
+          />
+        ) : (
+          <div className="flex items-center justify-center bg-black/50 w-full h-full">
+            <p className="text-white/80">No image source available</p>
+          </div>
+        )}
         {showWatermark && (
           <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
             eroxr
@@ -247,17 +269,23 @@ export const MediaRenderer = forwardRef(({
   if (mediaType === MediaType.AUDIO) {
     return (
       <div className="audio-player w-full">
-        <audio
-          src={url || undefined}
-          className="w-full"
-          controls={controls}
-          autoPlay={autoPlay}
-          muted={muted}
-          loop={loop}
-          onLoadedData={handleLoad}
-          onError={handleError}
-          onEnded={onEnded}
-        />
+        {url ? (
+          <audio
+            src={url}
+            className="w-full"
+            controls={controls}
+            autoPlay={autoPlay}
+            muted={muted}
+            loop={loop}
+            onLoadedData={handleLoad}
+            onError={handleError}
+            onEnded={onEnded}
+          />
+        ) : (
+          <div className="flex items-center justify-center bg-black/50 w-full h-full p-2">
+            <p className="text-white/80">No audio source available</p>
+          </div>
+        )}
       </div>
     );
   }

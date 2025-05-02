@@ -48,7 +48,7 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [shorts, setShorts] = useState<any[]>([]);
-  const [showDebug, setShowDebug] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
   
   // Mock shorts data for demonstration (replace with actual data fetching)
   useEffect(() => {

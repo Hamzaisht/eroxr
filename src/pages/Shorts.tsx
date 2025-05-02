@@ -17,6 +17,10 @@ const Shorts = () => {
   return (
     <div className="min-h-screen bg-black">
       <ShortsFeed specificShortId={videoId || null} />
+      {/* Add upload button at the bottom right */}
+      <div className="fixed bottom-4 right-4">
+        <UploadShortButton />
+      </div>
     </div>
   );
 };
