@@ -1,228 +1,187 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
-import { MediaType, MediaSource } from './types';
 
-interface UploadResult {
-  success: boolean;
-  url?: string;
-  path?: string;
-  error?: string;
-}
-
-// Create a unique file path for uploads
+// Create a unique file path for storage
 export const createUniqueFilePath = (userId: string, file: File): string => {
+  const timestamp = new Date().getTime();
+  const random = Math.floor(Math.random() * 1000);
   const fileExt = file.name.split('.').pop();
-  const fileName = `${uuidv4()}.${fileExt}`;
-  return `${userId}/${fileName}`;
+  return `${userId}/${timestamp}-${random}.${fileExt}`;
 };
 
-// Upload file to storage
+// Upload file to Supabase storage
 export const uploadFileToStorage = async (
-  bucket: string,
-  path: string,
+  bucketName: string,
+  filePath: string,
   file: File
-): Promise<UploadResult> => {
+): Promise<{ success: boolean; error?: string; url?: string }> => {
   try {
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(path, file);
+    // Upload the file
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
 
-    if (uploadError) {
-      throw uploadError;
+    if (error) {
+      console.error('Error uploading file:', error);
+      return {
+        success: false,
+        error: error.message
+      };
     }
 
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
 
-    return { 
-      success: true, 
-      url: data?.publicUrl,
-      path: path
+    if (!urlData || !urlData.publicUrl) {
+      return {
+        success: false,
+        error: 'Failed to get public URL'
+      };
+    }
+
+    return {
+      success: true,
+      url: urlData.publicUrl
     };
   } catch (error: any) {
-    console.error('Upload error:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to upload file' 
+    console.error('Unexpected error uploading file:', error);
+    return {
+      success: false,
+      error: error.message || 'An unexpected error occurred'
     };
   }
 };
 
-// Get file from storage
-export const getFileFromStorage = async (
-  bucket: string,
-  path: string
-): Promise<Blob | null> => {
-  try {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .download(path);
+// Helper function to optimize an image before upload
+export const optimizeImage = async (
+  file: File,
+  maxWidth = 1200,
+  quality = 0.8
+): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
 
-    if (error) {
-      throw error;
-    }
+        // Calculate new dimensions if needed
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
 
-    return data;
-  } catch (error) {
-    console.error('Download error:', error);
-    return null;
-  }
-};
-
-// Delete file from storage
-export const deleteFileFromStorage = async (
-  bucket: string,
-  path: string
-): Promise<boolean> => {
-  try {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([path]);
-
-    if (error) {
-      throw error;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Delete error:', error);
-    return false;
-  }
-};
-
-// NEW FUNCTION: Determine media type based on source
-export const determineMediaType = (source: MediaSource | string): MediaType => {
-  // If it's a string, try to determine by URL/extension
-  if (typeof source === 'string') {
-    const url = source.toLowerCase();
-    
-    // Check for video extensions and paths
-    if (
-      url.endsWith('.mp4') || 
-      url.endsWith('.webm') || 
-      url.endsWith('.mov') ||
-      url.includes('videos/') ||
-      url.includes('/video/')
-    ) {
-      return MediaType.VIDEO;
-    }
-    
-    // Check for audio extensions
-    if (
-      url.endsWith('.mp3') || 
-      url.endsWith('.wav') || 
-      url.endsWith('.ogg') ||
-      url.includes('/audio/')
-    ) {
-      return MediaType.AUDIO;
-    }
-    
-    // Default to image for unknown URLs
-    return MediaType.IMAGE;
-  }
-  
-  // Handle MediaSource object
-  const mediaSource = source as MediaSource;
-  
-  // Check explicit media_type property
-  if (mediaSource.media_type) {
-    if (typeof mediaSource.media_type === 'string') {
-      const type = mediaSource.media_type.toLowerCase();
-      if (type === 'video') return MediaType.VIDEO;
-      if (type === 'audio') return MediaType.AUDIO;
-      if (type === 'image') return MediaType.IMAGE;
-    } else {
-      return mediaSource.media_type; // If it's already a MediaType enum
-    }
-  }
-  
-  // Check for content_type
-  if (mediaSource.content_type) {
-    const contentType = mediaSource.content_type.toLowerCase();
-    if (contentType.includes('video')) return MediaType.VIDEO;
-    if (contentType.includes('audio')) return MediaType.AUDIO;
-    if (contentType.includes('image')) return MediaType.IMAGE;
-  }
-  
-  // Check for video-related properties
-  if (mediaSource.video_url || mediaSource.video_urls || mediaSource.video_thumbnail_url) {
-    return MediaType.VIDEO;
-  }
-  
-  // Check for image-related properties (default case)
-  return MediaType.IMAGE;
-};
-
-// NEW FUNCTION: Extract media URL from different source formats
-export const extractMediaUrl = (source: MediaSource | string): string | null => {
-  if (!source) return null;
-  
-  // If source is already a string URL
-  if (typeof source === 'string') {
-    return source;
-  }
-  
-  // Handle MediaSource object
-  const mediaSource = source as MediaSource;
-  
-  // Try to get URL from various possible properties
-  return mediaSource.media_url || 
-         mediaSource.video_url || 
-         (Array.isArray(mediaSource.media_urls) && mediaSource.media_urls.length > 0 ? mediaSource.media_urls[0] : null) ||
-         (Array.isArray(mediaSource.video_urls) && mediaSource.video_urls.length > 0 ? mediaSource.video_urls[0] : null) ||
-         mediaSource.thumbnail_url ||
-         mediaSource.url ||
-         null;
-};
-
-// Add inferContentTypeFromExtension function to fix import errors in other files
-export const inferContentTypeFromExtension = (filename: string): string => {
-  const extension = filename.split('.').pop()?.toLowerCase() || '';
-  
-  switch (extension) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'gif':
-      return 'image/gif';
-    case 'webp':
-      return 'image/webp';
-    case 'mp4':
-      return 'video/mp4';
-    case 'webm':
-      return 'video/webm';
-    case 'mov':
-      return 'video/quicktime';
-    case 'mp3':
-      return 'audio/mpeg';
-    case 'wav':
-      return 'audio/wav';
-    case 'ogg':
-      return 'audio/ogg';
-    default:
-      return 'application/octet-stream';
-  }
-};
-
-// Report media errors for analytics or debugging
-export const reportMediaError = (
-  url: string,
-  errorType: 'load_failure' | 'playback_error' | 'format_error',
-  retryCount: number,
-  mediaType: 'video' | 'image' | 'audio',
-  componentName: string
-) => {
-  console.error(`Media error in ${componentName}:`, {
-    url,
-    errorType,
-    retryCount,
-    mediaType,
-    timestamp: new Date().toISOString()
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to blob
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Could not create blob'));
+              return;
+            }
+            
+            // Create a new file from the blob
+            const optimizedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now()
+            });
+            
+            resolve(optimizedFile);
+          },
+          file.type,
+          quality
+        );
+      };
+      img.onerror = () => {
+        reject(new Error('Error loading image'));
+      };
+    };
+    reader.onerror = () => {
+      reject(new Error('Error reading file'));
+    };
   });
-  
-  // This function could be expanded to send errors to an analytics service
+};
+
+// Helper function to create a video thumbnail from a video file
+export const createVideoThumbnail = async (
+  file: File,
+  seekTo = 1.0
+): Promise<File | null> => {
+  return new Promise((resolve) => {
+    try {
+      const videoUrl = URL.createObjectURL(file);
+      const video = document.createElement('video');
+      video.src = videoUrl;
+      
+      // Seek to the specified time to capture thumbnail
+      video.currentTime = seekTo;
+      
+      // Once metadata is loaded, seek to the specified time
+      video.addEventListener('loadedmetadata', () => {
+        video.currentTime = Math.min(seekTo, video.duration / 2);
+      });
+      
+      // When the frame at the seek position is available
+      video.addEventListener('seeked', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+        
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+          // Clean up
+          URL.revokeObjectURL(videoUrl);
+          
+          if (!blob) {
+            resolve(null);
+            return;
+          }
+          
+          // Create a thumbnail file
+          const thumbnailFile = new File([blob], `${file.name.split('.')[0]}.jpg`, {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          
+          resolve(thumbnailFile);
+        }, 'image/jpeg', 0.7);
+      });
+      
+      // Handle errors
+      video.addEventListener('error', () => {
+        URL.revokeObjectURL(videoUrl);
+        resolve(null);
+      });
+      
+    } catch (error) {
+      console.error('Error creating video thumbnail:', error);
+      resolve(null);
+    }
+  });
 };

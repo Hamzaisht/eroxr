@@ -1,13 +1,14 @@
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaType } from "@/utils/media/types";
-import { Video, Play, File, Upload, X, MoreHorizontal, Lock } from "lucide-react";
+import { Video, Play, File, Upload, X, MoreHorizontal, Lock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MessageBubbleContentProps {
   message: DirectMessage;
@@ -41,14 +42,23 @@ export const MessageBubbleContent = ({
   onReplyCancel
 }: MessageBubbleContentProps) => {
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+  const [isMediaLoadError, setIsMediaLoadError] = useState(false);
   
   const handleMediaLoad = () => {
     setIsMediaLoaded(true);
+    setIsMediaLoadError(false);
   };
   
   const handleMediaError = () => {
     setIsMediaLoaded(true); // Still set to true to hide loader
+    setIsMediaLoadError(true);
   };
+
+  // Reset state when message changes
+  useEffect(() => {
+    setIsMediaLoaded(false);
+    setIsMediaLoadError(false);
+  }, [message.id]);
 
   // Determine if message contains media (image or video)
   const hasMedia = message.media_url && message.media_url.length > 0;
@@ -127,10 +137,14 @@ export const MessageBubbleContent = ({
   // Editing mode
   if (isEditing) {
     return (
-      <div className={cn(
-        "relative p-2 rounded-2xl",
-        isOwnMessage ? "bg-luxury-primary/30" : "bg-white/10"
-      )}>
+      <motion.div 
+        initial={{ opacity: 0.7 }}
+        animate={{ opacity: 1 }}
+        className={cn(
+          "relative p-2 rounded-2xl",
+          isOwnMessage ? "bg-luxury-primary/30" : "bg-white/10"
+        )}
+      >
         <input
           type="text"
           value={editedContent}
@@ -159,7 +173,7 @@ export const MessageBubbleContent = ({
             {isUpdating ? "Saving..." : "Save"}
           </button>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -168,11 +182,15 @@ export const MessageBubbleContent = ({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
+      transition={{ 
+        duration: 0.2, 
+        ease: "easeOut" 
+      }}
       className={cn(
         "relative overflow-hidden max-w-full",
         isOwnMessage 
-          ? "bg-gradient-to-br from-luxury-primary/30 to-luxury-primary/20 rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl" 
-          : "bg-gradient-to-br from-white/10 to-white/5 rounded-tr-2xl rounded-tl-sm rounded-br-2xl rounded-bl-2xl",
+          ? "bg-gradient-to-br from-luxury-primary/30 to-luxury-primary/20 rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl border border-white/5" 
+          : "bg-gradient-to-br from-white/10 to-white/5 rounded-tr-2xl rounded-tl-sm rounded-br-2xl rounded-bl-2xl border border-white/5",
       )}
     >
       {renderReplyPreview()}
@@ -205,12 +223,17 @@ export const MessageBubbleContent = ({
       {/* Snap message */}
       {isSnapMessage && !message.viewed_at && (
         <div 
-          className="cursor-pointer p-3 flex items-center space-x-2"
+          className="cursor-pointer p-3 flex items-center space-x-2 hover:bg-black/10 transition-colors"
           onClick={onSnapView}
         >
-          <div className="bg-luxury-primary/20 p-3 rounded-full">
+          <motion.div 
+            className="bg-luxury-primary/20 p-3 rounded-full"
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.2 }}
+          >
             <Video className="w-5 h-5 text-luxury-primary" />
-          </div>
+          </motion.div>
           <div className="text-sm">
             <div className="font-medium">Snap</div>
             <div className="text-xs text-white/60">Tap to view • Disappears after viewing</div>
@@ -218,108 +241,154 @@ export const MessageBubbleContent = ({
         </div>
       )}
       
-      {/* Image message */}
-      {hasMedia && !isVideoMessage && !isFileMessage && !isAudioMessage && (
-        <div 
-          className="media-attachment overflow-hidden rounded-lg"
-          onClick={() => onMediaSelect(mediaUrl)}
-        >
-          <UniversalMedia
-            item={{
-              media_url: mediaUrl,
-              media_type: MediaType.IMAGE
-            }}
-            className="max-w-full h-auto cursor-pointer transition-transform hover:scale-[1.02]"
-            controls={false}
-            onLoad={handleMediaLoad}
+      {/* Audio message */}
+      {isAudioMessage && message.media_url && message.media_url[0] && (
+        <div className="p-2">
+          <audio
+            controls
+            src={message.media_url[0]}
+            className="w-full"
+            onLoadedData={handleMediaLoad}
             onError={handleMediaError}
-          />
+          >
+            Your browser does not support audio playback
+          </audio>
           
           {!isMediaLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+            <div className="h-12 w-full bg-white/5 rounded flex items-center justify-center">
               <div className="animate-spin h-5 w-5 border-2 border-luxury-primary border-t-transparent rounded-full" />
             </div>
           )}
         </div>
       )}
       
-      {/* Video message */}
-      {isVideoMessage && (
+      {/* Image message */}
+      {hasMedia && !isVideoMessage && !isFileMessage && !isAudioMessage && (
         <div 
-          className="media-attachment relative rounded-lg overflow-hidden"
-          onClick={() => onMediaSelect(message.video_url || mediaUrl)}
+          className="media-attachment overflow-hidden cursor-pointer"
+          onClick={() => onMediaSelect(mediaUrl)}
         >
-          <div className="aspect-video bg-black/30 flex items-center justify-center">
-            {message.media_url?.[0] && (
-              <img 
-                src={message.media_url[0].replace(/\.(mp4|webm|mov)$/i, '.jpg')} 
-                alt="Video thumbnail" 
-                className="w-full h-auto object-contain"
-              />
-            )}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-luxury-primary/60 backdrop-blur-md p-3 rounded-full">
-                <Play className="h-6 w-6 text-white" />
-              </div>
+          {!isMediaLoaded && !isMediaLoadError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-10">
+              <div className="animate-spin h-5 w-5 border-2 border-luxury-primary border-t-transparent rounded-full" />
             </div>
-          </div>
+          )}
+          
+          {isMediaLoadError ? (
+            <div className="h-40 flex flex-col items-center justify-center bg-black/20 p-4">
+              <div className="text-red-400 mb-2">
+                <AlertCircle className="h-8 w-8" />
+              </div>
+              <p className="text-sm text-center text-white/70">
+                Failed to load media
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => window.open(mediaUrl, '_blank')}
+              >
+                Open in new tab
+              </Button>
+            </div>
+          ) : (
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            >
+              <UniversalMedia
+                item={{
+                  media_url: mediaUrl,
+                  media_type: MediaType.IMAGE
+                }}
+                className="max-w-full h-auto transition-transform"
+                controls={false}
+                onLoad={handleMediaLoad}
+                onError={handleMediaError}
+              />
+            </motion.div>
+          )}
         </div>
       )}
       
-      {/* Audio message */}
-      {isAudioMessage && (
-        <div className="p-3">
-          <div className="bg-white/5 p-3 rounded-lg">
-            <audio 
-              src={mediaUrl}
-              controls
-              className="w-full"
-              onLoadedData={handleMediaLoad}
-              onError={handleMediaError}
-            />
-            <div className="text-xs text-white/60 mt-1">Voice message</div>
-          </div>
+      {/* Video message */}
+      {isVideoMessage && (
+        <div
+          className="relative overflow-hidden cursor-pointer"
+          onClick={() => onMediaSelect(message.video_url || mediaUrl)}
+        >
+          {!isMediaLoaded && !isMediaLoadError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-10">
+              <div className="animate-spin h-5 w-5 border-2 border-luxury-primary border-t-transparent rounded-full" />
+            </div>
+          )}
+          
+          {isMediaLoadError ? (
+            <div className="h-48 flex flex-col items-center justify-center bg-black/20 p-4">
+              <div className="text-red-400 mb-2">
+                <AlertCircle className="h-8 w-8" />
+              </div>
+              <p className="text-sm text-center text-white/70">
+                Failed to load video preview
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => window.open(message.video_url || mediaUrl, '_blank')}
+              >
+                Open in new tab
+              </Button>
+            </div>
+          ) : (
+            <div className="relative">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+                className="relative"
+              >
+                <UniversalMedia
+                  item={{
+                    media_url: mediaUrl,
+                    media_type: MediaType.IMAGE
+                  }}
+                  className="max-w-full h-auto max-h-80 object-contain"
+                  controls={false}
+                  onLoad={handleMediaLoad}
+                  onError={handleMediaError}
+                />
+                
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <div className="bg-white/10 p-3 rounded-full backdrop-blur-sm">
+                    <Play className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
         </div>
       )}
       
       {/* File message */}
-      {isFileMessage && (
-        <div 
-          className="p-3 flex items-center space-x-2 cursor-pointer"
-          onClick={() => onMediaSelect(message.document_url || '')}
-        >
-          <div className="bg-luxury-primary/10 p-2 rounded">
-            <File className="h-5 w-5 text-luxury-primary/80" />
-          </div>
-          <div className="overflow-hidden">
-            <div className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-              {message.document_url?.split('/').pop() || 'Document'}
+      {isFileMessage && mediaUrl && (
+        <div className="p-4">
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            className="bg-white/5 p-3 rounded-lg flex items-center space-x-3 cursor-pointer"
+            onClick={() => window.open(mediaUrl, '_blank')}
+          >
+            <div className="bg-luxury-primary/20 p-2 rounded">
+              <File className="h-6 w-6 text-white" />
             </div>
-            <div className="text-xs text-white/60">Click to open</div>
-          </div>
-        </div>
-      )}
-
-      {/* Message reactions */}
-      {message.reactions && message.reactions.length > 0 && (
-        <div className="bg-black/20 px-3 py-1.5 rounded-full absolute -bottom-2 left-4 shadow-md flex items-center space-x-1">
-          {message.reactions.map((reaction, index) => (
-            <div key={index} className={cn(
-              "px-1 py-0.5 rounded-md text-sm",
-              reaction.users.includes(message.sender_id) && "bg-luxury-primary/20"
-            )}>
-              <span>{reaction.emoji}</span>
-              <span className="ml-1 text-xs">{reaction.users.length}</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">
+                {mediaUrl.split('/').pop() || 'File'}
+              </div>
+              <div className="text-xs text-white/60">
+                Click to download
+              </div>
             </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Encrypted message fallback */}
-      {!isTextMessage && !adContent && !isSnapMessage && !hasMedia && !isVideoMessage && !isFileMessage && !isAudioMessage && (
-        <div className="text-luxury-neutral/50 italic flex items-center justify-center gap-2 p-3">
-          <Lock className="h-3 w-3" />
-          <span className="text-sm">Encrypted message</span>
+          </motion.div>
         </div>
       )}
     </motion.div>

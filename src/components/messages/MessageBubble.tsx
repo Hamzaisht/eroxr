@@ -96,7 +96,7 @@ export const MessageBubble = ({
   useEffect(() => {
     if (message.sender_id === currentUserId && messageRef.current) {
       setTimeout(() => {
-        messageRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }, 100);
     }
   }, [message.id, message.sender_id, currentUserId]);
@@ -142,22 +142,60 @@ export const MessageBubble = ({
   };
 
   const isDeletedSnap = message.message_type === 'snap' && message.viewed_at && isGhostMode;
+  
+  // Animation variants
+  const bubbleVariants = {
+    initial: { 
+      opacity: 0, 
+      y: 20,
+      scale: 0.95
+    },
+    animate: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.25,
+        ease: [0.22, 1, 0.36, 1]
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      y: 10,
+      scale: 0.95,
+      transition: {
+        duration: 0.15,
+        ease: "easeIn"
+      }
+    },
+    deleting: {
+      opacity: 0,
+      scale: 0.9,
+      x: isOwnMessage ? 50 : -50,
+      transition: {
+        duration: 0.25
+      }
+    }
+  };
+  
+  const statusVariants = {
+    initial: { opacity: 0, y: 10 },
+    animate: { 
+      opacity: 1, 
+      y: 0,
+      transition: { delay: 0.2, duration: 0.2 }
+    }
+  };
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
         ref={messageRef}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{
-          opacity: isDeleting ? 0 : 1,
-          y: isDeleting ? 20 : 0,
-          scale: isDeleting ? 0.95 : 1
-        }}
-        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-        transition={{
-          duration: 0.3,
-          ease: "easeInOut"
-        }}
+        layout
+        initial="initial"
+        animate={isDeleting ? "deleting" : "animate"}
+        exit="exit"
+        variants={bubbleVariants}
         className={cn(
           "relative flex items-end gap-2 mb-1",
           isOwnMessage ? "flex-row-reverse mr-2" : "ml-2",
@@ -167,10 +205,14 @@ export const MessageBubble = ({
       >
         {isDeletedSnap && (
           <div className="absolute inset-0 z-10 flex items-center justify-center">
-            <div className="bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs text-white border border-red-500/30 shadow-lg flex items-center space-x-1">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs text-white border border-red-500/30 shadow-lg flex items-center space-x-1"
+            >
               <Ghost className="h-3.5 w-3.5 text-purple-400" />
               <span>Deleted snap - Ghost view</span>
-            </div>
+            </motion.div>
           </div>
         )}
         
@@ -223,18 +265,24 @@ export const MessageBubble = ({
         </div>
 
         {isOwnMessage && message.delivery_status === 'seen' && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-xs text-blue-400 absolute -bottom-4 right-2 font-medium">
-                  Seen
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="bg-black/80 text-white border-white/10">
-                <p>Read {message.viewed_at ? format(new Date(message.viewed_at), 'h:mm a') : ''}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <motion.div
+            initial="initial"
+            animate="animate"
+            variants={statusVariants}
+          >
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-xs text-blue-400 absolute -bottom-4 right-2 font-medium">
+                    Seen
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-black/80 text-white border-white/10">
+                  <p>Read {message.viewed_at ? format(new Date(message.viewed_at), 'h:mm a') : ''}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </motion.div>
         )}
       </motion.div>
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { DirectMessage } from '@/integrations/supabase/types/message';
 import { useToast } from '@/hooks/use-toast';
 import { ErrorComponent } from '@/components/ErrorComponent';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProfileWithInfo {
   id: string;
@@ -191,7 +191,42 @@ const ConversationsList = ({ onSelectUser, onNewMessage, onToggleDetails }: Conv
       }
     };
     
+    const typingChannels: any[] = [];
+    
     getConversations();
+    
+    // Setup typing indicator subscriptions for each conversation
+    for (const contact of conversationsWithMessages) {
+      // Listen for typing indicators from each contact
+      const typingChannel = supabase
+        .channel(`typing:${session.user.id}:${contact.id}`)
+        .on('broadcast', { event: 'typing' }, (payload) => {
+          if (payload.payload && payload.payload.user_id === contact.id) {
+            setConversations(prev => 
+              prev.map(conv => 
+                conv.id === contact.id 
+                  ? { ...conv, is_typing: payload.payload.is_typing } 
+                  : conv
+              )
+            );
+            
+            // Auto-clear typing indicator after 3 seconds if still typing
+            if (payload.payload.is_typing) {
+              setTimeout(() => {
+                setConversations(prev => 
+                  prev.map(conv => 
+                    conv.id === contact.id ? { ...conv, is_typing: false } : conv
+                  )
+                );
+              }, 3000);
+            }
+          }
+        })
+        .subscribe();
+        
+      // Store channel for cleanup
+      typingChannels.push(typingChannel);
+    }
     
     // Setup realtime subscription
     const channel = supabase
@@ -208,6 +243,8 @@ const ConversationsList = ({ onSelectUser, onNewMessage, onToggleDetails }: Conv
       
     return () => {
       supabase.removeChannel(channel);
+      // Clean up typing channels
+      typingChannels.forEach(ch => supabase.removeChannel(ch));
     };
   }, [session?.user?.id, toast]);
   
@@ -276,93 +313,114 @@ const ConversationsList = ({ onSelectUser, onNewMessage, onToggleDetails }: Conv
             onRetry={handleRetry}
           />
         ) : filteredConversations.length > 0 ? (
-          filteredConversations.map((contact) => (
-            <div
-              key={contact.id}
-              className={cn(
-                "px-3 py-3 hover:bg-luxury-neutral/5 transition-colors border-b border-luxury-neutral/10",
-                selectedId === contact.id && "bg-luxury-dark",
-                contact.unread_count && contact.unread_count > 0 ? "bg-luxury-neutral/10" : ""
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <button
-                  className="flex flex-grow items-center gap-3 text-left"
-                  onClick={() => handleSelectUser(contact.id)}
-                >
-                  <div className="relative">
-                    <Avatar className={cn(
-                      "h-10 w-10 border",
-                      contact.unread_count && contact.unread_count > 0 
-                        ? "border-luxury-primary" 
-                        : "border-transparent"
-                    )}>
-                      <AvatarImage src={contact.avatar_url || ""} alt={contact.username} />
-                      <AvatarFallback>
-                        {contact.username?.[0]?.toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    {/* Updated to use status instead of online_status */}
-                    {contact.status === 'online' && (
-                      <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-luxury-darker" />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium truncate">{contact.username}</span>
-                      {contact.last_message && (
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatTime(contact.last_message.created_at)}
-                        </span>
+          <AnimatePresence>
+            {filteredConversations.map((contact) => (
+              <motion.div
+                key={contact.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className={cn(
+                  "px-3 py-3 hover:bg-luxury-neutral/5 transition-colors border-b border-luxury-neutral/10",
+                  selectedId === contact.id && "bg-luxury-dark",
+                  contact.unread_count && contact.unread_count > 0 ? "bg-luxury-neutral/10" : ""
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <button
+                    className="flex flex-grow items-center gap-3 text-left"
+                    onClick={() => handleSelectUser(contact.id)}
+                  >
+                    <div className="relative">
+                      <Avatar className={cn(
+                        "h-10 w-10 border",
+                        contact.unread_count && contact.unread_count > 0 
+                          ? "border-luxury-primary" 
+                          : "border-transparent"
+                      )}>
+                        <AvatarImage src={contact.avatar_url || ""} alt={contact.username} />
+                        <AvatarFallback>
+                          {contact.username?.[0]?.toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      {/* Updated to use status instead of online_status */}
+                      {contact.status === 'online' && (
+                        <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-luxury-darker" />
                       )}
                     </div>
                     
-                    <div className="flex justify-between gap-1">
-                      <div className="text-sm text-muted-foreground truncate flex items-center gap-1 max-w-[80%]">
-                        {contact.is_typing ? (
-                          <span className="text-luxury-primary text-xs">Typing...</span>
-                        ) : (
-                          <>
-                            {contact.last_message && contact.last_message.sender_id === session?.user?.id && (
-                              <CheckCheck className={cn(
-                                "h-3.5 w-3.5", 
-                                contact.last_message.delivery_status === 'seen' 
-                                  ? "text-luxury-primary" 
-                                  : "text-muted-foreground"
-                              )} />
-                            )}
-                            <span className="truncate">
-                              {getMessagePreview(contact.last_message)}
-                            </span>
-                          </>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium truncate">{contact.username}</span>
+                        {contact.last_message && (
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatTime(contact.last_message.created_at)}
+                          </span>
                         )}
                       </div>
                       
-                      {contact.unread_count && contact.unread_count > 0 && (
-                        <div className="bg-luxury-primary rounded-full h-5 min-w-5 flex items-center justify-center px-1.5 text-xs font-medium">
-                          {contact.unread_count}
+                      <div className="flex justify-between gap-1">
+                        <div className="text-sm text-muted-foreground truncate flex items-center gap-1 max-w-[80%]">
+                          {contact.is_typing ? (
+                            <motion.span 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="text-luxury-primary text-xs font-medium flex items-center"
+                            >
+                              <span>Typing</span>
+                              <motion.span
+                                animate={{ opacity: [0, 1, 0] }}
+                                transition={{ repeat: Infinity, duration: 1.5 }}
+                                className="inline-block ml-0.5"
+                              >...</motion.span>
+                            </motion.span>
+                          ) : (
+                            <>
+                              {contact.last_message && contact.last_message.sender_id === session?.user?.id && (
+                                <CheckCheck className={cn(
+                                  "h-3.5 w-3.5", 
+                                  contact.last_message.delivery_status === 'seen' 
+                                    ? "text-luxury-primary" 
+                                    : "text-muted-foreground"
+                                )} />
+                              )}
+                              <span className="truncate">
+                                {getMessagePreview(contact.last_message)}
+                              </span>
+                            </>
+                          )}
                         </div>
-                      )}
+                        
+                        {contact.unread_count && contact.unread_count > 0 && (
+                          <motion.div 
+                            initial={{ scale: 0.8 }}
+                            animate={{ scale: 1 }}
+                            className="bg-luxury-primary rounded-full h-5 min-w-5 flex items-center justify-center px-1.5 text-xs font-medium"
+                          >
+                            {contact.unread_count}
+                          </motion.div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </button>
-                
-                {/* Chat details button */}
-                {onToggleDetails && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 rounded-full flex-shrink-0"
-                    onClick={() => handleToggleDetails(contact.id)}
-                  >
-                    <Info className="h-4 w-4 text-luxury-neutral/70" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))
+                  </button>
+                  
+                  {/* Chat details button */}
+                  {onToggleDetails && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 rounded-full flex-shrink-0"
+                      onClick={() => handleToggleDetails(contact.id)}
+                    >
+                      <Info className="h-4 w-4 text-luxury-neutral/70" />
+                    </Button>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         ) : (
           <div className="p-4 text-center text-sm text-muted-foreground">
             {searchTerm ? "No contacts match your search" : "No conversations yet"}

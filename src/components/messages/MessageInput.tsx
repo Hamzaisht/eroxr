@@ -16,6 +16,7 @@ import { DirectMessage } from "@/integrations/supabase/types/message";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EmojiPickerSimple } from './EmojiPickerSimple';
+import { motion, AnimatePresence } from "framer-motion";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -44,6 +45,7 @@ export const MessageInput = ({
 }: MessageInputProps) => {
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -108,6 +110,9 @@ export const MessageInput = ({
     
     // Also trigger typing indicator
     if (onTyping) onTyping();
+    
+    // Close emoji picker after selection
+    setEmojiPickerOpen(false);
   };
   
   const handleRecord = () => {
@@ -130,75 +135,97 @@ export const MessageInput = ({
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
-      inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+      inputRef.current.style.height = `${Math.min(120, inputRef.current.scrollHeight)}px`;
     }
   }, [message]);
+  
+  // Focus the input when the component mounts
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
   
   return (
     <form onSubmit={handleSubmit} className="relative">
       {/* Reply UI */}
-      {replyToMessage && (
-        <div className="bg-luxury-neutral/10 rounded-t-lg p-2 mb-0.5 flex items-center">
-          <div className="flex-1 overflow-hidden text-sm text-luxury-neutral/80">
-            <span className="font-medium text-luxury-primary/90 mr-1">Reply to:</span>
-            <span className="truncate">
-              {replyToMessage.content || (replyToMessage.media_url ? "Media message" : "Message")}
-            </span>
-          </div>
-          {onReplyCancel && (
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="sm" 
-              className="h-6 w-6 p-0 rounded-full"
-              onClick={onReplyCancel}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-      )}
+      <AnimatePresence>
+        {replyToMessage && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-luxury-neutral/10 backdrop-blur-sm rounded-t-lg p-2 mb-0.5 flex items-center"
+          >
+            <div className="flex-1 overflow-hidden text-sm text-luxury-neutral/80">
+              <span className="font-medium text-luxury-primary/90 mr-1">Reply to:</span>
+              <span className="truncate">
+                {replyToMessage.content || (replyToMessage.media_url ? "Media message" : "Message")}
+              </span>
+            </div>
+            {onReplyCancel && (
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0 rounded-full"
+                onClick={onReplyCancel}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Recording UI */}
-      {isRecording && (
-        <div className="bg-red-900/20 rounded-lg p-3 mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="animate-pulse">
-              <Mic className="h-5 w-5 text-red-400" />
-            </div>
-            <span className="text-sm text-red-300">
-              Recording {formatRecordingTime(recordingTime)}
-            </span>
-          </div>
-          <Button 
-            type="button"
-            size="sm"
-            variant="destructive"
-            className="h-8 px-2"
-            onClick={() => {
-              stopRecording();
-              setIsRecording(false);
-            }}
+      <AnimatePresence>
+        {isRecording && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-red-900/20 backdrop-blur-sm rounded-lg p-3 mb-2 flex items-center justify-between"
           >
-            <StopCircle className="h-4 w-4 mr-1" />
-            Stop
-          </Button>
-        </div>
-      )}
+            <div className="flex items-center gap-2">
+              <motion.div 
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+              >
+                <Mic className="h-5 w-5 text-red-400" />
+              </motion.div>
+              <span className="text-sm text-red-300">
+                Recording {formatRecordingTime(recordingTime)}
+              </span>
+            </div>
+            <Button 
+              type="button"
+              size="sm"
+              variant="destructive"
+              className="h-8 px-2"
+              onClick={() => {
+                stopRecording();
+                setIsRecording(false);
+              }}
+            >
+              <StopCircle className="h-4 w-4 mr-1" />
+              Stop
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <div className={cn(
-        "flex items-center gap-1 bg-luxury-neutral/10 rounded-lg",
+        "flex items-center gap-1 bg-luxury-neutral/10 backdrop-blur-sm rounded-lg border border-white/5",
         replyToMessage && "rounded-t-none"
       )}>
         <div className="flex items-center gap-1 p-1 pl-2">
           {/* Emoji picker */}
-          <Popover>
+          <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
             <PopoverTrigger asChild>
               <Button 
                 type="button"
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 rounded-full"
+                className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
               >
                 <Smile className="h-4 w-4 text-luxury-neutral/70" />
               </Button>
@@ -217,7 +244,7 @@ export const MessageInput = ({
             type="button"
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 rounded-full"
+            className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
             onClick={onMediaSelect}
             disabled={isLoading}
           >
@@ -229,7 +256,7 @@ export const MessageInput = ({
             type="button"
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 rounded-full"
+            className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
             onClick={onSnapStart}
             disabled={isLoading}
           >
@@ -244,21 +271,23 @@ export const MessageInput = ({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
-          className="flex-1 bg-transparent resize-none p-3 outline-none text-sm text-white"
+          className="flex-1 bg-transparent resize-none p-3 outline-none text-sm text-white max-h-[120px]"
           rows={1}
           disabled={isLoading || isRecording}
         />
         
         <div className="flex items-center p-1">
           {message.trim() ? (
-            <Button 
-              type="submit" 
-              size="icon" 
-              className="h-8 w-8 rounded-full bg-luxury-primary"
-              disabled={isLoading}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            <motion.div whileTap={{ scale: 0.9 }}>
+              <Button 
+                type="submit" 
+                size="icon" 
+                className="h-8 w-8 rounded-full bg-luxury-primary hover:bg-luxury-primary/90 transition-colors"
+                disabled={isLoading}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </motion.div>
           ) : (
             <>
               {/* Record voice message button */}
@@ -266,7 +295,10 @@ export const MessageInput = ({
                 type="button"
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 rounded-full"
+                className={cn(
+                  "h-8 w-8 rounded-full hover:bg-white/10 transition-colors",
+                  isRecording && "bg-red-500/20"
+                )}
                 onClick={handleRecord}
                 disabled={isLoading}
               >
@@ -282,7 +314,7 @@ export const MessageInput = ({
                   type="button"
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 rounded-full"
+                  className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
                   onClick={onBookCall}
                   disabled={isLoading}
                 >
@@ -296,4 +328,3 @@ export const MessageInput = ({
     </form>
   );
 };
-
