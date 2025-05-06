@@ -13,6 +13,7 @@ interface MediaRequest {
   retries: number;
   priority: number;
   requestCount: number;
+  loadPromise?: Promise<void>;
 }
 
 // Stable media cache to prevent unnecessary re-renders
@@ -23,10 +24,49 @@ class MediaOrchestrator {
   private isProcessing = false;
   private maxConcurrent = 4;
   private activeRequests = 0;
+  private preloadTimeouts = new Map<string, NodeJS.Timeout>();
+  
+  // Debug mode can be enabled to troubleshoot issues
+  private debug = false;
+  
+  constructor() {
+    if (typeof window !== 'undefined') {
+      // Add debug controls to window object in development
+      if (process.env.NODE_ENV === 'development') {
+        (window as any).__MEDIA_DEBUG__ = {
+          enableDebug: () => { this.debug = true; console.log('Media debug mode enabled'); },
+          disableDebug: () => { this.debug = false; console.log('Media debug mode disabled'); },
+          getRequestMap: () => Array.from(this.requestMap.entries()),
+          getUrlCache: () => Array.from(this.stableUrlCache.entries()),
+          clearCache: () => this.clearCache(),
+          forceCompleteAll: () => this.forceCompleteAllRequests()
+        };
+      }
+    }
+  }
+
+  // Force complete all pending requests (useful for debugging)
+  private forceCompleteAllRequests() {
+    console.log('Forcing completion of all media requests');
+    this.requestMap.forEach((request) => {
+      if (request.status === 'pending' || request.status === 'loading') {
+        request.status = 'success';
+        // Clear any existing timeouts
+        if (this.preloadTimeouts.has(request.id)) {
+          clearTimeout(this.preloadTimeouts.get(request.id)!);
+          this.preloadTimeouts.delete(request.id);
+        }
+      }
+    });
+    // Clear processing queue and reset active requests
+    this.processingQueue = [];
+    this.activeRequests = 0;
+    this.isProcessing = false;
+  }
 
   // Create a stable unique ID for a media source
-  public createMediaId(source: string | MediaSource): string {
-    if (!source) return '';
+  public createMediaId(source: string | MediaSource | null | undefined): string {
+    if (!source) return 'null-source';
     
     if (typeof source === 'string') {
       return this.hashString(source);
@@ -50,6 +90,8 @@ class MediaOrchestrator {
   
   // Simple string hash function for creating stable IDs
   private hashString(str: string): string {
+    if (!str) return 'empty-string';
+    
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
@@ -60,7 +102,7 @@ class MediaOrchestrator {
   }
   
   // Get a stable, cacheable URL for a media source
-  public getStableUrl(source: string | MediaSource | null, cacheBuster = true): string | null {
+  public getStableUrl(source: string | MediaSource | null | undefined, cacheBuster = true): string | null {
     if (!source) return null;
     
     const mediaId = this.createMediaId(source);
@@ -110,7 +152,9 @@ class MediaOrchestrator {
   }
   
   // Register a media request and prioritize its loading
-  public registerMediaRequest(source: string | MediaSource): MediaRequest {
+  public registerMediaRequest(source: string | MediaSource | null | undefined): MediaRequest | null {
+    if (!source) return null;
+    
     const mediaId = this.createMediaId(source);
     const url = this.getStableUrl(source);
     const type = typeof source === 'object' ? (source.media_type || determineMediaType(source)) : determineMediaType(source);
@@ -177,8 +221,14 @@ class MediaOrchestrator {
   
   // Process the queue of media requests
   private async processQueue() {
-    if (this.processingQueue.length === 0 || this.activeRequests >= this.maxConcurrent) {
+    if (this.processingQueue.length === 0) {
       this.isProcessing = false;
+      return;
+    }
+    
+    if (this.activeRequests >= this.maxConcurrent) {
+      // Already at max concurrent requests, will be called again when a request completes
+      this.isProcessing = true;
       return;
     }
     
@@ -188,7 +238,7 @@ class MediaOrchestrator {
     const mediaId = this.processingQueue.shift();
     if (!mediaId || !this.requestMap.has(mediaId)) {
       // Skip and process next
-      this.processQueue();
+      setTimeout(() => this.processQueue(), 0);
       return;
     }
     
@@ -196,7 +246,7 @@ class MediaOrchestrator {
     
     // Skip if already processed
     if (request.status === 'success' || request.status === 'error') {
-      this.processQueue();
+      setTimeout(() => this.processQueue(), 0);
       return;
     }
     
@@ -205,75 +255,126 @@ class MediaOrchestrator {
     this.activeRequests++;
     
     try {
-      // Simulate preloading the media
-      await this.preloadMedia(request.url, request.type);
+      // Create a preload promise if it doesn't exist yet
+      if (!request.loadPromise) {
+        request.loadPromise = this.preloadMedia(request.url, request.type, mediaId);
+      }
       
-      // Mark as successful
+      // Wait for preload to complete with a 5-second safety timeout
+      await Promise.race([
+        request.loadPromise,
+        new Promise<void>((resolve) => {
+          const timeout = setTimeout(() => {
+            if (this.debug) {
+              console.warn(`Media preload timed out for ${request.url}`);
+            }
+            resolve();
+          }, 5000);
+          this.preloadTimeouts.set(mediaId, timeout);
+        })
+      ]);
+      
+      // Clear the timeout
+      if (this.preloadTimeouts.has(mediaId)) {
+        clearTimeout(this.preloadTimeouts.get(mediaId)!);
+        this.preloadTimeouts.delete(mediaId);
+      }
+      
+      // Mark as successful (even if timed out)
       request.status = 'success';
     } catch (error) {
       // Mark as failed
       request.status = 'error';
+      if (this.debug) {
+        console.error(`Media preload error for ${request.url}:`, error);
+      }
       
       // Retry if under limit
-      if (request.retries < 2) {
+      if (request.retries < 1) {
         request.retries++;
         request.status = 'pending';
+        request.loadPromise = undefined; // Clear the failed promise
         this.addToProcessingQueue(mediaId);
       }
     } finally {
       this.activeRequests--;
       
       // Process next
-      this.processQueue();
+      setTimeout(() => this.processQueue(), 0);
     }
   }
   
   // Preload media content before showing
-  private async preloadMedia(url: string | null, type: MediaType): Promise<void> {
+  private async preloadMedia(url: string | null, type: MediaType, mediaId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!url) {
         reject(new Error('No URL provided'));
         return;
       }
       
+      // Add a maximum wait time for media preloading (8 seconds)
       const timeout = setTimeout(() => {
-        reject(new Error('Media preload timed out'));
-      }, 15000); // 15 second timeout
+        if (this.debug) {
+          console.warn(`Media preload force-resolved after timeout: ${url}`);
+        }
+        resolve();
+      }, 8000);
       
+      const handleSuccess = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      
+      const handleError = (err: any) => {
+        clearTimeout(timeout);
+        if (this.debug) {
+          console.error(`Media preload error: ${url}`, err);
+        }
+        reject(err);
+      };
+      
+      // Skip preloading for already cached content - just resolve immediately
+      if (url.startsWith('data:') || url.startsWith('blob:')) {
+        handleSuccess();
+        return;
+      }
+      
+      // For blob URLs or data URLs, we can assume they're already available
       if (type === MediaType.IMAGE || type === MediaType.GIF) {
+        // Create image element to preload
         const img = new Image();
         
-        img.onload = () => {
-          clearTimeout(timeout);
-          resolve();
-        };
+        img.onload = handleSuccess;
+        img.onerror = handleError;
         
-        img.onerror = () => {
-          clearTimeout(timeout);
-          reject(new Error('Image failed to load'));
-        };
-        
+        // Set source to start loading
         img.src = url;
       } else if (type === MediaType.VIDEO) {
+        // For videos, just preload metadata
         const video = document.createElement('video');
         
         video.preload = 'metadata';
         
-        video.onloadedmetadata = () => {
-          clearTimeout(timeout);
-          resolve();
-        };
+        video.onloadedmetadata = handleSuccess;
+        video.onerror = handleError;
         
-        video.onerror = () => {
-          clearTimeout(timeout);
-          reject(new Error('Video failed to load'));
-        };
-        
-        video.src = url;
+        // For videos that might be cross-origin
+        try {
+          video.crossOrigin = 'anonymous';
+          video.src = url;
+        } catch (err) {
+          // If setting src fails, try as an object
+          try {
+            const source = document.createElement('source');
+            source.src = url;
+            video.appendChild(source);
+          } catch (sourceErr) {
+            handleError(sourceErr);
+          }
+        }
       } else {
         // For other types, just resolve immediately
-        clearTimeout(timeout);
-        resolve();
+        handleSuccess();
       }
     });
   }
@@ -288,6 +389,11 @@ class MediaOrchestrator {
     this.requestMap.clear();
     this.stableUrlCache.clear();
     this.processingQueue = [];
+    this.activeRequests = 0;
+    
+    // Clear all timeouts
+    this.preloadTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.preloadTimeouts.clear();
   }
 }
 

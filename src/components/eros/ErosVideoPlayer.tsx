@@ -39,44 +39,24 @@ export function ErosVideoPlayer({
     threshold: 0.5,
   });
   
-  // Generate a stable media ID
-  const mediaId = useMemo(() => 
-    mediaOrchestrator.createMediaId({
-      video_url: videoUrl,
-      thumbnail_url: thumbnailUrl,
-      media_type: MediaType.VIDEO
-    }), 
-  [videoUrl, thumbnailUrl]);
+  const shouldPlay = isActive && inView;
   
-  // Stable video source object reference
+  // Create a stable media source reference
   const videoSource = useMemo(() => ({
     video_url: videoUrl,
     thumbnail_url: thumbnailUrl,
     media_type: MediaType.VIDEO,
-    mediaId // Include the mediaId for even more stability
-  }), [mediaId]);
+  }), [videoUrl, thumbnailUrl]);
   
-  // Register the video with our orchestrator
+  // Register the video with our orchestrator when it becomes active
   useEffect(() => {
-    if (isActive) {
+    if (isActive && videoSource) {
       mediaOrchestrator.registerMediaRequest(videoSource);
     }
   }, [isActive, videoSource]);
   
-  console.log("ErosVideoPlayer props:", { 
-    videoUrl, 
-    thumbnailUrl, 
-    isActive, 
-    autoPlay, 
-    loop, 
-    muted,
-    mediaId
-  });
-  
-  const shouldPlay = isActive && inView;
-  
   const handleError = () => {
-    console.error("ErosVideoPlayer error:", videoUrl, "mediaId:", mediaId);
+    console.error("ErosVideoPlayer error:", videoUrl);
     setLoadError(true);
     
     try {
@@ -117,13 +97,13 @@ export function ErosVideoPlayer({
         onError={handleError}
         onEnded={handleEnded}
         allowRetry={true}
-        maxRetries={2}
+        maxRetries={1}
       />
       
       {!loadError && (
         <button
           onClick={toggleMute}
-          className="absolute bottom-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors"
+          className="absolute bottom-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors z-10"
         >
           {isMuted ? (
             <VolumeX className="h-5 w-5 text-white" />

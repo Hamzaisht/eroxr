@@ -23,94 +23,67 @@ export const ShortVideoPlayer = memo(({
   isDeleting, 
   onError 
 }: ShortVideoPlayerProps) => {
-  const [loadRetries, setLoadRetries] = useState(0);
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
   const { toast } = useToast();
   
-  // Create a stable media ID for this video
-  const mediaId = useMemo(() => 
-    videoUrl ? mediaOrchestrator.createMediaId({
+  // Create a stable media source object
+  const mediaSource = useMemo(() => {
+    if (!videoUrl) return null;
+    
+    return {
       video_url: videoUrl,
       thumbnail_url: thumbnailUrl,
       creator_id: creatorId,
       media_type: MediaType.VIDEO
-    }) : null,
-  [videoUrl, thumbnailUrl, creatorId]);
-  
-  // Create a stable media source object reference that won't change on every render
-  const mediaSource = useMemo(() => {
-    if (!videoUrl) return null;
-    
-    const source = {
-      video_url: videoUrl,
-      thumbnail_url: thumbnailUrl,
-      creator_id: creatorId,
-      media_type: MediaType.VIDEO,
-      mediaId // Include the mediaId for stability
     };
-    
-    // Register this media with our orchestrator if it's the current video
-    if (isCurrentVideo && !isDeleting) {
-      mediaOrchestrator.registerMediaRequest(source);
-    }
-    
-    return source;
-  }, [mediaId, isCurrentVideo, isDeleting]);
+  }, [videoUrl, thumbnailUrl, creatorId]);
   
-  // Reset retry count when video URL changes
+  // Reset playing state when video URL changes
   useEffect(() => {
-    setLoadRetries(0);
     setHasStartedPlaying(false);
   }, [videoUrl]);
   
   // Preload video when it's about to be played
   useEffect(() => {
-    if (isCurrentVideo && mediaSource && !hasStartedPlaying) {
-      // Register this video with high priority
+    if (isCurrentVideo && mediaSource) {
+      // Register this video with the orchestrator
       mediaOrchestrator.registerMediaRequest(mediaSource);
     }
-  }, [isCurrentVideo, mediaSource, hasStartedPlaying]);
+  }, [isCurrentVideo, mediaSource]);
   
   // Handle video loading success
   const handleVideoLoad = useCallback(() => {
     setHasStartedPlaying(true);
   }, []);
   
-  // Handle video error with improved retry mechanism
+  // Handle video error with improved error reporting
   const handleVideoError = useCallback(() => {
-    console.error("Video error for short:", videoUrl, "mediaId:", mediaId);
+    console.error("Video error for short:", videoUrl);
     
-    setLoadRetries(prev => {
-      const newRetryCount = prev + 1;
-      
-      // Report error for monitoring after multiple failures
-      if (newRetryCount >= 2) {
-        try {
-          reportMediaError(
-            videoUrl,
-            'load_failure',
-            newRetryCount,
-            'video',
-            'ShortVideoPlayer'
-          );
-        } catch (error) {
-          console.error("Error reporting media error:", error);
-        }
-        
-        // Show a toast after multiple retries
-        toast({
-          title: "Video loading error",
-          description: "Unable to load this video. You may want to try again later.",
-          variant: "destructive"
-        });
-        
-        // Notify parent component
-        onError();
+    if (videoUrl) {
+      try {
+        reportMediaError(
+          videoUrl,
+          'load_failure',
+          0,
+          'video',
+          'ShortVideoPlayer'
+        );
+      } catch (error) {
+        console.error("Error reporting media error:", error);
       }
-      
-      return newRetryCount;
+    }
+    
+    // Show a toast for user feedback
+    toast({
+      title: "Video loading error",
+      description: "Unable to load this video. You may want to try again later.",
+      variant: "destructive"
     });
-  }, [videoUrl, toast, onError, mediaId]);
+    
+    // Notify parent component
+    onError();
+  }, [videoUrl, toast, onError]);
 
   if (isDeleting) {
     return (
@@ -140,7 +113,7 @@ export const ShortVideoPlayer = memo(({
       controls={false}
       loop={true}
       muted={false}
-      maxRetries={2}
+      maxRetries={1}
     />
   );
 });

@@ -54,6 +54,8 @@ export const MediaRenderer = memo(forwardRef(({
   const [mediaType, setMediaType] = useState<MediaType>(initialType || MediaType.UNKNOWN);
   const [loadStartTime, setLoadStartTime] = useState(Date.now());
   const [mediaId, setMediaId] = useState<string>("");
+  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [forceDisplay, setForceDisplay] = useState(false);
   
   const processedRef = useRef<boolean>(false);
   const sourceRef = useRef(src);
@@ -73,10 +75,36 @@ export const MediaRenderer = memo(forwardRef(({
       return; // Skip if source hasn't changed and we already have an ID
     }
     
-    const newMediaId = mediaOrchestrator.createMediaId(stableSource);
-    setMediaId(newMediaId);
-    sourceRef.current = stableSource;
+    try {
+      const newMediaId = mediaOrchestrator.createMediaId(stableSource);
+      setMediaId(newMediaId);
+      sourceRef.current = stableSource;
+    } catch (error) {
+      console.error('Error creating media ID:', error);
+    }
   }, [stableSource, mediaId]);
+  
+  // Set a timeout to force display content even if orchestration is slow
+  useEffect(() => {
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+    }
+    
+    // After 4 seconds, display content anyway even if not fully loaded
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('Media load timeout - forcing display:', url);
+        setIsLoading(false);
+        setForceDisplay(true);
+      }
+    }, 4000);
+    
+    setLoadingTimeout(timeout);
+    
+    return () => {
+      if (loadingTimeout) clearTimeout(loadingTimeout);
+    };
+  }, [url, isLoading]);
   
   // Process the source URL on component mount or when source significantly changes
   useEffect(() => {
@@ -96,7 +124,7 @@ export const MediaRenderer = memo(forwardRef(({
 
       // Register the source with the orchestrator and get a playable URL
       mediaOrchestrator.registerMediaRequest(stableSource);
-      const processedUrl = mediaOrchestrator.getStableUrl(stableSource);
+      const processedUrl = stableSource ? mediaOrchestrator.getStableUrl(stableSource) : null;
       
       // Only update URL if it's different to prevent unnecessary re-renders
       if (processedUrl !== previousUrl.current) {
@@ -104,10 +132,12 @@ export const MediaRenderer = memo(forwardRef(({
         setUrl(processedUrl);
         setIsLoading(true);
         setHasError(false);
+        setForceDisplay(false);
       }
     } catch (err) {
       console.error('Error processing media:', err);
       setHasError(true);
+      setIsLoading(false);
       
       // Try fallback if available
       if (fallbackSrc) {
@@ -118,6 +148,7 @@ export const MediaRenderer = memo(forwardRef(({
             setUrl(fallbackUrl);
             setIsLoading(true);
             setHasError(false);
+            setForceDisplay(false);
           }
         } catch (fallbackErr) {
           console.error('Error processing fallback media:', fallbackErr);
@@ -136,7 +167,9 @@ export const MediaRenderer = memo(forwardRef(({
     
     // Report successful media load for monitoring
     try {
-      reportMediaSuccess(url, loadTime, mediaType === MediaType.VIDEO ? 'video' : 'image');
+      if (url) {
+        reportMediaSuccess(url, loadTime, mediaType === MediaType.VIDEO ? 'video' : 'image');
+      }
     } catch (error) {
       console.error("Error reporting media success:", error);
     }
@@ -152,19 +185,21 @@ export const MediaRenderer = memo(forwardRef(({
     
     // Report media error for monitoring
     try {
-      reportMediaError(
-        url,
-        'load_failure',
-        retryCount,
-        mediaType === MediaType.VIDEO ? 'video' : 'image',
-        'MediaRenderer'
-      );
+      if (url) {
+        reportMediaError(
+          url,
+          'load_failure',
+          retryCount,
+          mediaType === MediaType.VIDEO ? 'video' : 'image',
+          'MediaRenderer'
+        );
+      }
     } catch (error) {
       console.error("Error reporting media error:", error);
     }
     
     // Try fallback if available
-    if (fallbackSrc && !url?.includes(fallbackSrc)) {
+    if (fallbackSrc && url && !url.includes(fallbackSrc)) {
       try {
         const fallbackUrl = mediaOrchestrator.getStableUrl(fallbackSrc);
         if (fallbackUrl !== previousUrl.current) {
@@ -191,6 +226,7 @@ export const MediaRenderer = memo(forwardRef(({
     setRetryCount(prev => prev + 1);
     setIsLoading(true);
     setHasError(false);
+    setForceDisplay(false);
     previousUrl.current = null; // Clear previous URL to force a refresh
   }, [retryCount, maxRetries, url]);
 
@@ -201,7 +237,61 @@ export const MediaRenderer = memo(forwardRef(({
     }
   }, [onTimeUpdate]);
 
-  // Show loading indicator
+  // If we have a media ID but media orchestrator is having issues, force display after timeout
+  if (!isLoading && forceDisplay && url) {
+    if (mediaType === MediaType.VIDEO) {
+      return (
+        <div className="relative w-full h-full">
+          <video
+            ref={ref as React.RefObject<HTMLVideoElement>}
+            src={url}
+            className={className}
+            poster={poster}
+            autoPlay={autoPlay}
+            controls={controls}
+            muted={muted}
+            loop={loop}
+            playsInline
+            onClick={onClick}
+            onLoadedData={handleLoad}
+            onError={handleError}
+            onEnded={onEnded}
+            onTimeUpdate={handleTimeUpdate}
+            key={`video-forced-${mediaId}-${retryCount}`}
+            style={stableObjectFit}
+          />
+          {showWatermark && (
+            <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
+              eroxr
+            </div>
+          )}
+        </div>
+      );
+    } else if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
+      return (
+        <div className="relative w-full h-full">
+          <img
+            ref={ref as React.RefObject<HTMLImageElement>}
+            src={url}
+            className={className}
+            alt="Media content"
+            onClick={onClick}
+            onLoad={handleLoad}
+            onError={handleError}
+            key={`image-forced-${mediaId}-${retryCount}`}
+            style={stableObjectFit}
+          />
+          {showWatermark && (
+            <div className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded opacity-70 hover:opacity-100 transition-opacity">
+              eroxr
+            </div>
+          )}
+        </div>
+      );
+    }
+  }
+
+  // Show loading indicator (with timeout)
   if (isLoading) {
     return (
       <div className="flex items-center justify-center bg-black/10 w-full h-full">
@@ -330,17 +420,22 @@ export const MediaRenderer = memo(forwardRef(({
   );
 }), (prevProps, nextProps) => {
   // Enhanced equality check with media IDs for better stability
-  const prevId = mediaOrchestrator.createMediaId(prevProps.src);
-  const nextId = mediaOrchestrator.createMediaId(nextProps.src);
-  
-  // If IDs are different, we need to re-render
-  if (prevId !== nextId) return false;
-  
-  // Otherwise, check other props that would require re-render
-  return prevProps.className === nextProps.className &&
-         prevProps.autoPlay === nextProps.autoPlay &&
-         prevProps.muted === nextProps.muted &&
-         prevProps.controls === nextProps.controls;
+  try {
+    const prevId = mediaOrchestrator.createMediaId(prevProps.src);
+    const nextId = mediaOrchestrator.createMediaId(nextProps.src);
+    
+    // If IDs are different, we need to re-render
+    if (prevId !== nextId) return false;
+    
+    // Otherwise, check other props that would require re-render
+    return prevProps.className === nextProps.className &&
+           prevProps.autoPlay === nextProps.autoPlay &&
+           prevProps.muted === nextProps.muted &&
+           prevProps.controls === nextProps.controls;
+  } catch (error) {
+    // If there's an error in comparison, force re-render
+    return false;
+  }
 });
 
 MediaRenderer.displayName = 'MediaRenderer';

@@ -24,41 +24,45 @@ export const UniversalMedia = forwardRef(({
   onEnded,
   onTimeUpdate
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  // Generate a stable media ID using our orchestrator
   const mediaId = useMemo(() => mediaOrchestrator.createMediaId(item), [item]);
   
-  // Create stable media item reference
+  // Create a minimal stable reference for the media item to prevent re-renders
   const mediaItem = useMemo(() => {
+    // Skip processing if we got a string
     if (typeof item === 'string') {
       return item;
     }
     
-    // Create a minimal stable reference to prevent unnecessary re-renders
+    // Determine media type
     const mediaType = item.media_type || 
                      (item.video_url ? MediaType.VIDEO : 
                      item.media_url ? MediaType.IMAGE : MediaType.UNKNOWN);
-                     
-    // Return only the essential properties needed
+    
+    // Create a stable minimal reference with only the essential properties
     if (mediaType === MediaType.VIDEO) {
       return {
         video_url: item.video_url || (item.video_urls && item.video_urls[0]),
         media_type: MediaType.VIDEO,
         creator_id: item.creator_id,
-        thumbnail_url: item.thumbnail_url
+        thumbnail_url: item.thumbnail_url,
+        mediaId // Include our stable ID
       };
     } else {
       return {
         media_url: item.media_url || item.url || (item.media_urls && item.media_urls[0]),
         media_type: mediaType,
-        creator_id: item.creator_id
+        creator_id: item.creator_id,
+        mediaId // Include our stable ID
       };
     }
-  }, [mediaId]); // Use mediaId as dependency instead of item to ensure stable references
+  }, [item, mediaId]);
 
-  // Register this media with our orchestrator
+  // Register with the orchestrator to preload
   useMemo(() => {
-    mediaOrchestrator.registerMediaRequest(mediaItem);
-  }, [mediaItem]);
+    if (mediaId) {
+      mediaOrchestrator.registerMediaRequest(mediaItem);
+    }
+  }, [mediaItem, mediaId]);
 
   return (
     <MediaRenderer
@@ -77,7 +81,7 @@ export const UniversalMedia = forwardRef(({
       onTimeUpdate={onTimeUpdate}
       ref={ref}
       allowRetry={true}
-      maxRetries={2}
+      maxRetries={1} // Reduce retries to prevent too many loading attempts
     />
   );
 });
