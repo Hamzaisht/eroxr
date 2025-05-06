@@ -26,12 +26,15 @@ export const ShortVideoPlayer = memo(({
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
   const { toast } = useToast();
   
-  // Create a stable media source object
+  // Create a stable media source object with multiple URL properties
   const mediaSource = useMemo(() => {
     if (!videoUrl) return null;
     
     return {
       video_url: videoUrl,
+      url: videoUrl, // Add all possible URL properties 
+      media_url: videoUrl,
+      src: videoUrl,
       thumbnail_url: thumbnailUrl,
       creator_id: creatorId,
       media_type: MediaType.VIDEO

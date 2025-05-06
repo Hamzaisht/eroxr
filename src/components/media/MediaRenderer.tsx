@@ -1,3 +1,4 @@
+
 import { useState, useEffect, forwardRef, Ref, useRef, memo, useCallback, useMemo } from 'react';
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { MediaType } from '@/utils/media/types';
@@ -62,6 +63,31 @@ export const MediaRenderer = memo(forwardRef(({
   const previousUrl = useRef<string | null>(null);
   const stableObjectFit = useMemo(() => ({ objectFit: style.objectFit || 'cover' }), [style.objectFit]);
   
+  // Extract URL directly for improved source handling - CRITICAL FIX
+  const extractMediaUrl = (source: any): string | null => {
+    if (!source) return null;
+    
+    // Handle string sources
+    if (typeof source === 'string') return source;
+    
+    // Extract from object using a comprehensive priority order
+    const resolvedUrl = 
+      source.url || 
+      source.media_url || 
+      source.video_url ||
+      source.src ||
+      (source.video_urls && source.video_urls.length > 0 ? source.video_urls[0] : null) ||
+      (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : null) ||
+      source.thumbnail_url || // Fallback to thumbnail if no primary media
+      "";
+    
+    if (!resolvedUrl) {
+      console.error('No media URL found in source:', source);
+    }
+    
+    return resolvedUrl;
+  };
+  
   // Stable source object reference that won't change on every render
   const stableSource = useMemo(() => {
     if (typeof src === 'string') return src;
@@ -122,6 +148,21 @@ export const MediaRenderer = memo(forwardRef(({
         setMediaType(initialType);
       }
 
+      // Extract URL directly using our comprehensive method
+      const directUrl = extractMediaUrl(stableSource);
+      
+      // Safety check - if no URL was found in the source
+      if (!directUrl) {
+        console.error('No media URL could be extracted from source:', stableSource);
+        setHasError(true);
+        setIsLoading(false);
+        
+        if (onError) {
+          onError();
+        }
+        return;
+      }
+
       // Register the source with the orchestrator and get a playable URL
       mediaOrchestrator.registerMediaRequest(stableSource);
       const processedUrl = stableSource ? mediaOrchestrator.getStableUrl(stableSource) : null;
@@ -157,7 +198,7 @@ export const MediaRenderer = memo(forwardRef(({
     } finally {
       processedRef.current = true;
     }
-  }, [stableSource, initialType, fallbackSrc, retryCount, mediaId]);
+  }, [stableSource, initialType, fallbackSrc, retryCount, mediaId, onError]);
 
   // Handle successful media load
   const handleLoad = useCallback(() => {
@@ -236,6 +277,16 @@ export const MediaRenderer = memo(forwardRef(({
       onTimeUpdate(e.currentTarget.currentTime);
     }
   }, [onTimeUpdate]);
+
+  // Safety check - if no URL is available after processing
+  if (!url && !isLoading && !hasError) {
+    return (
+      <div className="flex flex-col items-center justify-center bg-black/10 w-full h-full p-4">
+        <AlertCircle className="h-8 w-8 text-yellow-500 mb-2" />
+        <p className="text-sm text-gray-500 mb-3 text-center">Media source missing</p>
+      </div>
+    );
+  }
 
   // If we have a media ID but media orchestrator is having issues, force display after timeout
   if (!isLoading && forceDisplay && url) {

@@ -41,9 +41,12 @@ export function ErosVideoPlayer({
   
   const shouldPlay = isActive && inView;
   
-  // Create a stable media source reference
+  // Create a stable media source reference with all required fields
   const videoSource = useMemo(() => ({
     video_url: videoUrl,
+    url: videoUrl, // Add this for more reliable detection
+    media_url: videoUrl, // Add this for more reliable detection
+    src: videoUrl, // Add this for more reliable detection
     thumbnail_url: thumbnailUrl,
     media_type: MediaType.VIDEO,
   }), [videoUrl, thumbnailUrl]);

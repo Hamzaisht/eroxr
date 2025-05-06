@@ -45,14 +45,23 @@ export const UniversalMedia = forwardRef(({
         media_type: MediaType.VIDEO,
         creator_id: item.creator_id,
         thumbnail_url: item.thumbnail_url,
-        mediaId // Include our stable ID
+        mediaId, // Include our stable ID
+        // Include all possible URL properties to ensure compatibility
+        url: item.url,
+        media_url: item.media_url,
+        src: item.src
       };
     } else {
       return {
         media_url: item.media_url || item.url || (item.media_urls && item.media_urls[0]),
         media_type: mediaType,
         creator_id: item.creator_id,
-        mediaId // Include our stable ID
+        mediaId, // Include our stable ID
+        // Include video-related properties as fallbacks
+        video_url: item.video_url,
+        thumbnail_url: item.thumbnail_url,
+        url: item.url,
+        src: item.src
       };
     }
   }, [item, mediaId]);
