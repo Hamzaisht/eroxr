@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { createUniqueFilePath, uploadFileToStorage } from '@/utils/media/mediaUtils';
+import { createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UploadState {
   isUploading: boolean;
@@ -47,6 +48,25 @@ export const usePostMediaUpload = () => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
+        // Debug file
+        console.log("FILE DEBUG:", {
+          file,
+          isFile: file instanceof File,
+          type: file?.type,
+          size: file?.size,
+          name: file?.name
+        });
+        
+        // Validate file
+        if (!(file instanceof File)) {
+          throw new Error("Invalid file object");
+        }
+        
+        const isValidType = file.type.startsWith("image/") || file.type.startsWith("video/");
+        if (!isValidType) {
+          throw new Error(`Invalid file type: ${file.type}. Only images and videos are allowed.`);
+        }
+        
         // Update progress
         setState(prev => ({
           ...prev,
@@ -56,14 +76,25 @@ export const usePostMediaUpload = () => {
         // Create unique path
         const path = createUniqueFilePath(session.user.id, file);
         
-        // Upload to storage - this returns UploadResult, not just a URL string
-        const result = await uploadFileToStorage('posts', path, file);
+        // Upload directly to Supabase with explicit content type
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('posts')
+          .upload(path, file, {
+            contentType: file.type,
+            cacheControl: '3600',
+            upsert: true
+          });
         
-        if (!result.success || !result.url) {
-          throw new Error(`Failed to upload file: ${file.name}`);
+        if (uploadError || !uploadData) {
+          throw new Error(`Failed to upload file: ${file.name} - ${uploadError?.message || 'Unknown error'}`);
         }
         
-        uploadedUrls.push(result.url);
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('posts')
+          .getPublicUrl(uploadData.path);
+        
+        uploadedUrls.push(publicUrl);
       }
       
       // Success

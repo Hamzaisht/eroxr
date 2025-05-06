@@ -159,10 +159,40 @@ export async function uploadFileToStorage(bucket: string, path: string, fileOrUr
       file = fileOrUrl;
     }
 
-    // Upload the file to storage
+    // Validate file
+    console.log("FILE DEBUG:", {
+      file,
+      isFile: file instanceof File,
+      type: file?.type,
+      size: file?.size,
+      name: file?.name
+    });
+    
+    if (!(file instanceof File)) {
+      return {
+        path: '',
+        url: '',
+        success: false,
+        error: 'Invalid file object'
+      };
+    }
+
+    // Validate content type
+    const contentType = file.type;
+    const isValidContentType = contentType.startsWith("image/") || contentType.startsWith("video/");
+    
+    if (!isValidContentType) {
+      console.warn(`Potentially invalid content type: ${contentType}`);
+    }
+
+    // Upload the file to storage with explicit content type
     const { error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(path, file);
+      .upload(path, file, {
+        contentType: contentType,
+        cacheControl: '3600',
+        upsert: true
+      });
 
     if (uploadError) {
       return {
@@ -175,6 +205,8 @@ export async function uploadFileToStorage(bucket: string, path: string, fileOrUr
 
     // Get the public URL
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    
+    console.log("Upload successful, URL:", data.publicUrl);
 
     return {
       path,

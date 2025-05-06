@@ -38,7 +38,34 @@ export const uploadMedia = async (
     return { url: null, path: null, error: 'No file provided', mimeType: null };
   }
 
-  const { folder = '', contentType, maxSizeInMB = 100, userId } = options;
+  // Debug logging
+  console.log("FILE DEBUG:", {
+    file,
+    isFile: file instanceof File,
+    type: file?.type,
+    size: file?.size,
+    name: file?.name
+  });
+  
+  // Validate file object
+  if (!(file instanceof File)) {
+    return { url: null, path: null, error: 'Invalid file object', mimeType: null };
+  }
+  
+  // Validate content type
+  const contentType = file.type;
+  const isValidContentType = contentType.startsWith("image/") || contentType.startsWith("video/");
+  
+  if (!isValidContentType) {
+    return { 
+      url: null, 
+      path: null, 
+      error: `Invalid file type: ${contentType}. Only images and videos are allowed.`, 
+      mimeType: contentType 
+    };
+  }
+
+  const { folder = '', maxSizeInMB = 100, userId } = options;
   
   // Validate file size
   const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
@@ -59,13 +86,15 @@ export const uploadMedia = async (
     const fileExt = file.name.split('.').pop();
     const fileName = `${userPrefix}${folderPrefix}${timestamp}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
     
-    // Upload the file
+    console.log(`Uploading file to ${bucketName}/${fileName} with content type: ${contentType}`);
+    
+    // Upload the file with explicit content type
     const { data, error } = await supabase.storage
       .from(bucketName)
       .upload(fileName, file, {
         cacheControl: '3600',
-        contentType: contentType || file.type,
-        upsert: false
+        contentType: contentType,
+        upsert: true
       });
       
     if (error) {
@@ -78,6 +107,8 @@ export const uploadMedia = async (
       .from(bucketName)
       .getPublicUrl(data.path);
       
+    console.log('Upload successful, URL:', publicUrl);
+    
     return {
       url: publicUrl,
       path: data.path,

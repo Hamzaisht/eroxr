@@ -51,8 +51,22 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     file: File,
     options?: UploadOptions
   ): FileValidationResult => {
+    // Debug file info
+    console.log("FILE DEBUG:", {
+      file,
+      isFile: file instanceof File,
+      type: file?.type,
+      size: file?.size,
+      name: file?.name
+    });
+    
     if (!file) {
       const error = 'No file provided';
+      return { valid: false, error };
+    }
+    
+    if (!(file instanceof File)) {
+      const error = 'Invalid file object';
       return { valid: false, error };
     }
 
@@ -138,10 +152,20 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       // Create path for upload
       const path = createUniqueFilePath(session.user.id, file);
       
+      console.log("Uploading file:", {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        bucket: bucket,
+        path: path
+      });
+      
       // Upload the file using the mediaUtils function
       const result = await uploadFileToStorage(bucket, path, file);
 
       clearInterval(progressInterval);
+
+      console.log("Upload result:", result);
 
       if (!result.success) {
         setUploadState({

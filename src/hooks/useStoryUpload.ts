@@ -52,8 +52,45 @@ export const useStoryUpload = () => {
       };
     }
     
-    // Determine media type early based on file mime type
-    const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+    // Validate and debug file
+    console.log("FILE DEBUG:", {
+      file,
+      isFile: file instanceof File,
+      type: file?.type,
+      size: file?.size,
+      name: file?.name
+    });
+    
+    if (!(file instanceof File)) {
+      const error = "Invalid file object";
+      setState(prev => ({ ...prev, error }));
+      return { 
+        success: false, 
+        url: null, 
+        mediaType: null, 
+        error 
+      };
+    }
+    
+    // Determine media type based on file mime type
+    const contentType = file.type;
+    let mediaType: 'image' | 'video' | null = null;
+    
+    if (contentType.startsWith('image/')) {
+      mediaType = 'image';
+    } else if (contentType.startsWith('video/')) {
+      mediaType = 'video';
+    } else {
+      const error = `Invalid file type: ${contentType}. Only images and videos are allowed.`;
+      setState(prev => ({ ...prev, error }));
+      return { 
+        success: false, 
+        url: null, 
+        mediaType: null, 
+        error 
+      };
+    }
+    
     let progressInterval: ReturnType<typeof setInterval>;
     
     try {
@@ -75,11 +112,13 @@ export const useStoryUpload = () => {
       // Create unique storage path for the file
       const path = createUniqueFilePath(session.user.id, file);
       
-      // Upload to Supabase storage
+      console.log(`Uploading ${mediaType} story with content type: ${contentType}`);
+      
+      // Upload to Supabase storage with explicit content type
       const { data, error: uploadError } = await supabase.storage
         .from('stories')
         .upload(path, file, {
-          contentType: file.type,
+          contentType: contentType,
           upsert: true,
           cacheControl: '3600'
         });
@@ -102,7 +141,7 @@ export const useStoryUpload = () => {
       console.log("Story upload successful:", {
         publicUrl,
         mediaType,
-        contentType: file.type,
+        contentType,
         path: data.path
       });
       

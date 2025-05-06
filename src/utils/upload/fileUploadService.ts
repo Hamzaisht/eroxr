@@ -36,22 +36,40 @@ export const uploadFile = async (
     return { success: false, error: "No file provided" };
   }
   
+  // File validation check
+  console.log("FILE DEBUG:", {
+    file,
+    isFile: file instanceof File,
+    type: file?.type,
+    size: file?.size,
+    name: file?.name
+  });
+  
+  if (!(file instanceof File)) {
+    return { success: false, error: "Invalid file object" };
+  }
+  
+  const isValidContentType = file.type.startsWith("image/") || file.type.startsWith("video/");
+  if (!isValidContentType) {
+    return { success: false, error: "Invalid file type. Only images and videos are allowed." };
+  }
+  
   try {
     // Create a unique file path
     const filePath = createUniqueFilePath(userId, file);
     
-    // Determine content type
-    const contentType = options?.contentType || file.type || inferContentTypeFromExtension(file.name);
+    // Determine content type - explicitly use the file's type
+    const contentType = file.type;
     
     console.log(`Uploading ${file.name} (${contentType}) to ${bucket}/${filePath}`);
     
-    // Upload to Supabase
+    // Upload to Supabase with explicit content type
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(filePath, file, {
-        contentType,
+        contentType: contentType,
         cacheControl: '3600',
-        upsert: options?.upsert ?? false
+        upsert: options?.upsert ?? true
       });
       
     if (error) {
@@ -76,6 +94,8 @@ export const uploadFile = async (
       
     // Add cache buster
     const publicUrl = addCacheBuster(urlData.publicUrl);
+    
+    console.log("Upload successful, URL:", publicUrl);
     
     return {
       success: true,

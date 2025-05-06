@@ -23,7 +23,24 @@ export const useAdMediaUpload = () => {
     try {
       // Video Upload Process
       if (videoFile) {
-        console.log("Processing video file:", videoFile.name, videoFile.size);
+        // Debug file info
+        console.log("FILE DEBUG:", {
+          file: videoFile,
+          isFile: videoFile instanceof File,
+          type: videoFile?.type,
+          size: videoFile?.size,
+          name: videoFile?.name
+        });
+        
+        // Validate file type
+        if (!(videoFile instanceof File)) {
+          throw new Error("Invalid video file object");
+        }
+        
+        const isValidVideoType = videoFile.type.startsWith("video/");
+        if (!isValidVideoType) {
+          throw new Error(`Invalid file type: ${videoFile.type}. Only videos are allowed.`);
+        }
         
         // Validate video format
         const isValidVideo = await validateVideoFormat(videoFile);
@@ -42,11 +59,13 @@ export const useAdMediaUpload = () => {
         const videoFileName = `${session.user.id}/${Date.now()}_video.mp4`;
         console.log("Uploading video to path:", videoFileName);
         
+        // Upload with explicit content type
         const { error: videoError, data: videoData } = await supabase.storage
           .from('dating-videos')
           .upload(videoFileName, videoFile, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
+            contentType: videoFile.type
           });
 
         if (videoError) {
@@ -66,16 +85,34 @@ export const useAdMediaUpload = () => {
 
       // Avatar Upload Process
       if (avatarFile) {
-        console.log("Uploading avatar file:", avatarFile.name, avatarFile.size);
+        // Debug file info
+        console.log("FILE DEBUG:", {
+          file: avatarFile,
+          isFile: avatarFile instanceof File,
+          type: avatarFile?.type,
+          size: avatarFile?.size,
+          name: avatarFile?.name
+        });
+        
+        // Validate file type
+        if (!(avatarFile instanceof File)) {
+          throw new Error("Invalid avatar file object");
+        }
+        
+        const isValidImageType = avatarFile.type.startsWith("image/");
+        if (!isValidImageType) {
+          throw new Error(`Invalid file type: ${avatarFile.type}. Only images are allowed for avatars.`);
+        }
         
         const avatarFileName = `${session.user.id}/${Date.now()}_avatar.jpg`;
         
+        // Upload with explicit content type
         const { error: avatarError, data: avatarData } = await supabase.storage
           .from('avatars')
           .upload(avatarFileName, avatarFile, {
             cacheControl: '3600',
             upsert: false,
-            contentType: 'image/jpeg'
+            contentType: avatarFile.type
           });
 
         if (avatarError) {

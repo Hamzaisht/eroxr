@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UploadState {
   isUploading: boolean;
@@ -51,6 +51,25 @@ export const useVideoUpload = () => {
     }
 
     try {
+      // Debug file info
+      console.log("FILE DEBUG:", {
+        file,
+        isFile: file instanceof File,
+        type: file?.type,
+        size: file?.size,
+        name: file?.name
+      });
+      
+      // Validate file
+      if (!(file instanceof File)) {
+        throw new Error("Invalid file object");
+      }
+      
+      const isValidVideoType = file.type.startsWith("video/");
+      if (!isValidVideoType) {
+        throw new Error(`Invalid file type: ${file.type}. Only videos are allowed.`);
+      }
+      
       setUploadState({
         isUploading: true,
         progress: 0,
@@ -77,28 +96,57 @@ export const useVideoUpload = () => {
       // Generate a unique path for the upload
       const userId = session.user.id;
       const timestamp = new Date().getTime();
-      const path = `${userId}/${timestamp}_video.${file.name.split('.').pop()}`;
+      const fileExt = file.name.split('.').pop() || 'mp4';
+      const path = `${userId}/${timestamp}_video.${fileExt}`;
       
-      // Upload to Supabase storage
-      const result = await uploadFileToStorage('shorts', path, file);
+      console.log(`Uploading video to path: shorts/${path} with content type: ${file.type}`);
+      
+      // Upload directly to Supabase with explicit content type
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('shorts')
+        .upload(path, file, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: true
+        });
       
       clearInterval(progressInterval);
       
-      if (!result.success) {
+      if (uploadError) {
         setUploadState({
           isUploading: false,
           progress: 0,
           isComplete: false,
-          error: result.error || "Upload failed"
+          error: uploadError.message
         });
         
         return { 
           success: false, 
-          error: result.error 
+          error: uploadError.message 
         };
       }
       
-      if (!result.url) {
+      if (!uploadData) {
+        const errorMsg = "Upload completed but no data returned";
+        setUploadState({
+          isUploading: false,
+          progress: 0,
+          isComplete: false,
+          error: errorMsg
+        });
+        
+        return { 
+          success: false, 
+          error: errorMsg
+        };
+      }
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('shorts')
+        .getPublicUrl(path);
+      
+      if (!publicUrl) {
         const errorMsg = "Upload completed but no URL returned";
         setUploadState({
           isUploading: false,
@@ -113,6 +161,8 @@ export const useVideoUpload = () => {
         };
       }
       
+      console.log("Upload successful, URL:", publicUrl);
+      
       // Upload complete
       setUploadState({
         isUploading: false,
@@ -123,7 +173,7 @@ export const useVideoUpload = () => {
       
       return { 
         success: true, 
-        videoUrl: result.url
+        videoUrl: publicUrl
       };
       
     } catch (error: any) {

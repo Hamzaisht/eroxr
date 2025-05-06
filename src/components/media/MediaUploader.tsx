@@ -118,7 +118,28 @@ export const MediaUploader = ({
     const file = e.target.files?.[0];
     if (!file) return;
     
-    console.log("File selected:", file.name, file.type, file.size);
+    console.log("FILE DEBUG:", {
+      file,
+      isFile: file instanceof File,
+      type: file?.type,
+      size: file?.size,
+      name: file?.name
+    });
+    
+    // Validate file is an actual File object
+    if (!(file instanceof File)) {
+      console.error("Invalid file object selected");
+      if (onError) onError("Invalid file object");
+      return;
+    }
+    
+    // Validate file type
+    const isValidType = file.type.startsWith("image/") || file.type.startsWith("video/");
+    if (!isValidType) {
+      console.error("Invalid file type:", file.type);
+      if (onError) onError(`Invalid file type: ${file.type}. Only images and videos are allowed.`);
+      return;
+    }
     
     const validation = validateFile(file);
     if (!validation.valid) { 
@@ -145,11 +166,15 @@ export const MediaUploader = ({
   };
   
   const handleUpload = async (file: File) => {
+    console.log("Starting upload for file:", file.name, file.type);
+    
     const result = await uploadMedia(file, uploadOptions);
     
     if (result.success && result.url) {
+      console.log("Upload completed successfully:", result.url);
       if (onComplete) onComplete(result.url);
     } else {
+      console.error("Upload failed:", result.error);
       if (onError) onError(result.error || "Upload failed");
     }
   };

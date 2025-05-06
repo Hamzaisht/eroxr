@@ -36,6 +36,36 @@ export const useFileUploader = ({
   const handleUpload = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
     
+    // Validate files
+    for (const file of files) {
+      console.log("FILE DEBUG:", {
+        file,
+        isFile: file instanceof File,
+        type: file?.type,
+        size: file?.size,
+        name: file?.name
+      });
+      
+      if (!(file instanceof File)) {
+        toast({
+          title: "Invalid File",
+          description: "One of the selected files is not a valid file object.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const isValidType = file.type.startsWith("image/") || file.type.startsWith("video/");
+      if (!isValidType) {
+        toast({
+          title: "Invalid File Type",
+          description: `File "${file.name}" has an unsupported file type: ${file.type}`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     setUploadState(prev => ({
       ...prev,
       isUploading: true,
@@ -80,7 +110,26 @@ export const useFileUploader = ({
   const handleDrop = useCallback((acceptedFiles: File[]) => {
     const filesArray = Array.from(acceptedFiles);
     
+    // Debug files
+    console.log("FILES DEBUG:", filesArray.map(file => ({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      isFile: file instanceof File
+    })));
+    
     const validFiles = filesArray.filter(file => {
+      // Check file is actual File object
+      if (!(file instanceof File)) {
+        toast({
+          title: "Invalid File",
+          description: "One of the selected files is not a valid file object.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      // Check file size
       if (file.size > maxSizeInBytes) {
         toast({
           title: "File Too Large",
@@ -89,14 +138,17 @@ export const useFileUploader = ({
         });
         return false;
       }
+      
+      // Check file type
       if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Invalid File Type",
-          description: `File "${file.name}" has an unsupported file type.`,
+          description: `File "${file.name}" has an unsupported file type: ${file.type}`,
           variant: "destructive",
         });
         return false;
       }
+      
       return true;
     });
     
