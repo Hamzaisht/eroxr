@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createUniqueFilePath } from "@/utils/media/mediaUtils";
 import { inferContentTypeFromExtension } from "@/utils/media/formatUtils";
 import { addCacheBuster } from "@/utils/media/urlUtils";
+import { getSupabaseUrl } from "@/utils/media/supabaseUrlUtils";
 
 interface FileUploadOptions {
   contentType?: string;
@@ -87,19 +88,27 @@ export const uploadFile = async (
       };
     }
     
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(data.path);
-      
-    // Add cache buster
-    const publicUrl = addCacheBuster(urlData.publicUrl);
+    // Get the URL using our new utility function
+    const { url: mediaUrl, error: urlError } = await getSupabaseUrl(bucket, data.path, {
+      useSignedUrls: true // Change this to false for public buckets
+    });
     
-    console.log("Upload successful, URL:", publicUrl);
+    if (urlError) {
+      console.warn("Warning getting URL:", urlError);
+    }
+    
+    if (!mediaUrl) {
+      return {
+        success: false,
+        error: "Failed to get media URL"
+      };
+    }
+    
+    console.log("Upload successful, URL:", mediaUrl);
     
     return {
       success: true,
-      url: publicUrl,
+      url: mediaUrl,
       path: data.path
     };
   } catch (error: any) {

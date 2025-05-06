@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseUrl } from "./supabaseUrlUtils";
 
 /**
  * Gets the public URL for a file in Supabase Storage
@@ -9,8 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function getStoragePublicUrl(bucket: string, path: string): Promise<string | null> {
   try {
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return data.publicUrl;
+    const { url, error } = await getSupabaseUrl(bucket, path, {
+      useSignedUrls: true // Change this to false for public buckets
+    });
+    
+    if (error) {
+      console.error(`Error getting URL for ${bucket}/${path}:`, error);
+    }
+    
+    return url;
   } catch (error) {
     console.error(`Error getting public URL for ${bucket}/${path}:`, error);
     return null;

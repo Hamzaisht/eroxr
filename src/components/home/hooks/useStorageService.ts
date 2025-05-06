@@ -2,19 +2,25 @@
 import { supabase } from '@/integrations/supabase/client';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 import { createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { getSupabaseUrl } from '@/utils/media/supabaseUrlUtils';
 
 export const useStorageService = () => {
   /**
    * Gets a public URL for a file in Supabase storage
    */
-  const getFullPublicUrl = (bucket: string, path: string): string => {
+  const getFullPublicUrl = async (bucket: string, path: string): Promise<string> => {
     if (!path) return '';
     
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
+    // Use our new utility function for getting URLs
+    const { url, error } = await getSupabaseUrl(bucket, path, {
+      useSignedUrls: true // Change this to false for public buckets
+    });
     
-    return data.publicUrl;
+    if (error) {
+      console.error("Error getting URL:", error);
+    }
+    
+    return url || '';
   };
 
   /**
@@ -90,15 +96,15 @@ export const useStorageService = () => {
       
       console.log("Upload successful, path:", uploadData.path);
       
-      // Generate the full public URL using Supabase's getPublicUrl method
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(uploadData.path);
+      // Use our new utility to get the URL (supports both signed and public URLs)
+      const { url: mediaUrl } = await getSupabaseUrl(bucketName, uploadData.path, {
+        useSignedUrls: true // Change to false for public buckets
+      });
         
-      console.log("Public URL:", publicUrl);
+      console.log("Media URL:", mediaUrl);
       
       // Use our utility to add cache busting as needed
-      const processedUrl = getPlayableMediaUrl(publicUrl);
+      const processedUrl = mediaUrl ? getPlayableMediaUrl(mediaUrl) : '';
       
       return { 
         success: true, 

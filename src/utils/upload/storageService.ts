@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { inferContentTypeFromExtension } from "../media/formatUtils";
+import { getSupabaseUrl } from "../media/supabaseUrlUtils";
 
 interface UploadResult {
   success: boolean;
@@ -42,12 +43,23 @@ export const uploadToStorage = async (
       return { success: false, error: error.message };
     }
 
-    // Get the public URL of the file
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(data?.path || path);
+    // Get the URL using our new utility
+    const { url: mediaUrl, error: urlError } = await getSupabaseUrl(bucket, data?.path || path, {
+      useSignedUrls: true // Change this to false for public buckets
+    });
+    
+    if (urlError) {
+      console.warn("Warning getting URL:", urlError);
+    }
+    
+    if (!mediaUrl) {
+      return {
+        success: false,
+        error: "Failed to get media URL"
+      };
+    }
 
-    return { success: true, url: publicUrl };
+    return { success: true, url: mediaUrl };
   } catch (error: any) {
     console.error('File upload error:', error);
     return { 
@@ -123,12 +135,12 @@ export const deleteFromStorage = async (
  * @param path Path within bucket
  * @returns Public URL string
  */
-export const getPublicUrl = (bucket: string, path: string): string => {
-  const { data } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(path);
-
-  return data.publicUrl;
+export const getPublicUrl = async (bucket: string, path: string): Promise<string> => {
+  const { url } = await getSupabaseUrl(bucket, path, {
+    useSignedUrls: true // Change this to false for public buckets
+  });
+  
+  return url || '';
 };
 
 /**

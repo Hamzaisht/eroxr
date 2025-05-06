@@ -4,6 +4,7 @@ import { useSession } from '@supabase/auth-helpers-react';
 import { uploadFileToStorage, createUniqueFilePath } from '@/utils/media/mediaUtils';
 import { UploadOptions, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useToast } from './use-toast';
+import { getSupabaseUrl } from '@/utils/media/supabaseUrlUtils';
 
 // Helper constants for file validation
 const MAX_FILE_SIZE_DEFAULT = 50; // MB
@@ -187,13 +188,23 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         
         return { success: false, error: result.error };
       }
+      
+      // Get URL using our new utility if needed
+      let mediaUrl = result.url;
+      
+      if (!mediaUrl && result.path) {
+        const { url } = await getSupabaseUrl(bucket, result.path, { 
+          useSignedUrls: true // Change this to false for public buckets
+        });
+        mediaUrl = url || '';
+      }
 
       // Upload successful
       setUploadState({
         isUploading: false,
         progress: 100,
         error: null,
-        result: result,
+        result: { ...result, url: mediaUrl },
         files: [],
         previews: [],
         isComplete: true,
@@ -211,7 +222,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       // Return the result with url and path
       return {
         success: true,
-        url: result.url || '',
+        url: mediaUrl || '',
         path: result.path || ''
       };
     } catch (error: any) {
