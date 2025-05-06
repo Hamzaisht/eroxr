@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { ShortVideoPlayer } from "./components/ShortVideoPlayer";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
@@ -21,6 +21,15 @@ const MediaDebug = ({ src }: { src: any }) => {
     </div>
   );
   
+  // Extract the most important pieces of information
+  const mediaInfo = {
+    id: src.id,
+    mediaType: src.mediaType,
+    videoUrl: src.videoUrl,
+    thumbnailUrl: src.thumbnailUrl,
+    creator: src.creator ? { id: src.creator.id } : undefined
+  };
+  
   return (
     <div className="fixed top-4 right-4 bg-black/90 text-white p-2 rounded-md z-50 max-w-xs">
       <div className="flex items-center justify-between">
@@ -37,7 +46,7 @@ const MediaDebug = ({ src }: { src: any }) => {
       
       {expanded && (
         <pre className="text-xs mt-2 overflow-auto max-h-40">
-          {JSON.stringify(src, null, 2)}
+          {JSON.stringify(mediaInfo, null, 2)}
         </pre>
       )}
     </div>
@@ -84,13 +93,18 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
     }, 1000);
   }, [specificShortId]);
 
+  // Create a stable reference to the current short to prevent re-renders
+  const currentShort = useMemo(() => {
+    return shorts[currentIndex] || null;
+  }, [shorts, currentIndex]);
+
   const handleError = useCallback((index: number) => {
     console.error(`Error loading short at index ${index}`);
   }, []);
 
-  const toggleDebug = () => {
-    setShowDebug(!showDebug);
-  };
+  const toggleDebug = useCallback(() => {
+    setShowDebug(prev => !prev);
+  }, []);
 
   if (isLoading) {
     return (
@@ -110,11 +124,9 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
     );
   }
 
-  const currentShort = shorts[currentIndex];
-
   return (
     <>
-      {showDebug && <MediaDebug src={currentShort} />}
+      {showDebug && currentShort && <MediaDebug src={currentShort} />}
       
       <Button 
         onClick={toggleDebug} 
@@ -126,13 +138,15 @@ export const ShortsFeed = ({ specificShortId }: ShortsFeedProps) => {
       
       <div className="h-screen w-full bg-black">
         <div className="relative h-full w-full">
-          <ShortVideoPlayer
-            videoUrl={currentShort.videoUrl}
-            thumbnailUrl={currentShort.thumbnailUrl}
-            creatorId={currentShort.creator.id}
-            isCurrentVideo={true}
-            onError={() => handleError(currentIndex)}
-          />
+          {currentShort && (
+            <ShortVideoPlayer
+              videoUrl={currentShort.videoUrl}
+              thumbnailUrl={currentShort.thumbnailUrl}
+              creatorId={currentShort.creator?.id}
+              isCurrentVideo={true}
+              onError={() => handleError(currentIndex)}
+            />
+          )}
         </div>
       </div>
     </>

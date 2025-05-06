@@ -1,7 +1,7 @@
 
-import { forwardRef, Ref } from 'react';
+import { forwardRef, Ref, useMemo } from 'react';
 import { MediaRenderer } from '@/components/media/MediaRenderer';
-import { MediaSource, MediaOptions } from '@/utils/media/types';
+import { MediaSource, MediaOptions, MediaType } from '@/utils/media/types';
 
 interface UniversalMediaProps extends MediaOptions {
   item: MediaSource | string;
@@ -23,9 +23,22 @@ export const UniversalMedia = forwardRef(({
   onEnded,
   onTimeUpdate
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
+  // Create stable media item reference
+  const mediaItem = useMemo(() => {
+    if (typeof item === 'string') {
+      return item;
+    }
+    return {
+      ...item,
+      media_type: item.media_type || 
+                 (item.video_url ? MediaType.VIDEO : 
+                 item.media_url ? MediaType.IMAGE : MediaType.UNKNOWN)
+    };
+  }, [item]);
+
   return (
     <MediaRenderer
-      src={item}
+      src={mediaItem}
       className={className}
       autoPlay={autoPlay}
       controls={controls}

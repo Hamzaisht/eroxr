@@ -37,6 +37,11 @@ export const ShortVideoPlayer = memo(({
     };
   }, [videoUrl, thumbnailUrl, creatorId]);
   
+  // Reset retry count when video URL changes
+  useEffect(() => {
+    setLoadRetries(0);
+  }, [videoUrl]);
+  
   // Handle video error with improved retry mechanism
   const handleVideoError = useCallback(() => {
     console.error("Video error for short:", videoUrl);
@@ -72,11 +77,6 @@ export const ShortVideoPlayer = memo(({
       return newRetryCount;
     });
   }, [videoUrl, toast, onError]);
-
-  // Reset retry count when video URL changes
-  useEffect(() => {
-    setLoadRetries(0);
-  }, [videoUrl]);
 
   if (isDeleting) {
     return (

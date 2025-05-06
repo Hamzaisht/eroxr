@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInView } from "react-intersection-observer";
@@ -37,6 +37,13 @@ export function ErosVideoPlayer({
   const { ref, inView } = useInView({
     threshold: 0.5,
   });
+  
+  // Stable video source object reference
+  const videoSource = useMemo(() => ({
+    video_url: videoUrl,
+    thumbnail_url: thumbnailUrl,
+    media_type: MediaType.VIDEO
+  }), [videoUrl, thumbnailUrl]);
   
   console.log("ErosVideoPlayer props:", { 
     videoUrl, 
@@ -76,14 +83,6 @@ export function ErosVideoPlayer({
     setIsPlaying(false);
     if (onVideoEnd) onVideoEnd();
   };
-
-  const videoSource = {
-    video_url: videoUrl,
-    thumbnail_url: thumbnailUrl,
-    media_type: MediaType.VIDEO
-  };
-  
-  console.log("ErosVideoPlayer rendering with source:", videoSource);
   
   return (
     <div ref={ref} className={cn("relative w-full h-full overflow-hidden", className)}>

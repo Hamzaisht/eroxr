@@ -1,5 +1,5 @@
 
-import { useState, useEffect, forwardRef, Ref, useRef, memo, useCallback } from 'react';
+import { useState, useEffect, forwardRef, Ref, useRef, memo, useCallback, useMemo } from 'react';
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { MediaType } from '@/utils/media/types';
 import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
@@ -24,6 +24,7 @@ interface MediaRendererProps {
   onTimeUpdate?: (currentTime: number) => void;
   allowRetry?: boolean;
   maxRetries?: number;
+  style?: React.CSSProperties;
 }
 
 export const MediaRenderer = memo(forwardRef(({
@@ -43,7 +44,8 @@ export const MediaRenderer = memo(forwardRef(({
   onEnded,
   onTimeUpdate,
   allowRetry = true,
-  maxRetries = 2
+  maxRetries = 2,
+  style = {}
 }: MediaRendererProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -53,52 +55,67 @@ export const MediaRenderer = memo(forwardRef(({
   const [loadStartTime, setLoadStartTime] = useState(Date.now());
   const processedRef = useRef<boolean>(false);
   const sourceRef = useRef(src);
+  const previousUrl = useRef<string | null>(null);
+  const stableObjectFit = useMemo(() => ({ objectFit: style.objectFit || 'cover' }), [style.objectFit]);
+  
+  // Stable source object reference that won't change on every render
+  const stableSource = useMemo(() => {
+    if (typeof src === 'string') return src;
+    if (!src) return null;
+    return src;
+  }, [src]);
   
   // Process the source URL on component mount or when source significantly changes
   useEffect(() => {
-    const currentSrc = JSON.stringify(src);
-    const prevSrc = JSON.stringify(sourceRef.current);
-    const hasSourceChanged = currentSrc !== prevSrc;
-    
-    if (!hasSourceChanged && processedRef.current) {
-      return; // Skip if source hasn't changed and we've already processed it
+    // Skip if the source is identical to avoid unnecessary processing
+    if (stableSource === sourceRef.current && processedRef.current && url) {
+      return;
     }
     
-    sourceRef.current = src;
-    setIsLoading(true);
-    setHasError(false);
+    sourceRef.current = stableSource;
     setLoadStartTime(Date.now());
-    processedRef.current = true;
-
+    
     try {
       // Determine media type if not explicitly provided
       if (!initialType) {
-        const detectedType = determineMediaType(src);
+        const detectedType = determineMediaType(stableSource);
         setMediaType(detectedType);
+      } else {
+        setMediaType(initialType);
       }
 
       // Get a playable URL (handles various formats, cache busting, etc)
-      const processedUrl = getPlayableMediaUrl(src);
-      setUrl(processedUrl);
+      const processedUrl = getPlayableMediaUrl(stableSource);
+      
+      // Only update URL if it's different to prevent unnecessary re-renders
+      if (processedUrl !== previousUrl.current) {
+        previousUrl.current = processedUrl;
+        setUrl(processedUrl);
+        setIsLoading(true);
+        setHasError(false);
+      }
     } catch (err) {
       console.error('Error processing media:', err);
       setHasError(true);
-      
-      if (onError) onError();
       
       // Try fallback if available
       if (fallbackSrc) {
         try {
           const fallbackUrl = getPlayableMediaUrl(fallbackSrc);
-          setUrl(fallbackUrl);
+          if (fallbackUrl !== previousUrl.current) {
+            previousUrl.current = fallbackUrl;
+            setUrl(fallbackUrl);
+            setIsLoading(true);
+            setHasError(false);
+          }
         } catch (fallbackErr) {
           console.error('Error processing fallback media:', fallbackErr);
         }
       }
     } finally {
-      setIsLoading(false);
+      processedRef.current = true;
     }
-  }, [src, initialType, fallbackSrc, retryCount]);
+  }, [stableSource, initialType, fallbackSrc, retryCount, url]);
 
   // Handle successful media load
   const handleLoad = useCallback(() => {
@@ -118,6 +135,7 @@ export const MediaRenderer = memo(forwardRef(({
 
   // Handle media loading error
   const handleError = useCallback(() => {
+    console.error(`Media loading error: ${url}, type: ${mediaType}`);
     setIsLoading(false);
     setHasError(true);
     
@@ -138,7 +156,12 @@ export const MediaRenderer = memo(forwardRef(({
     if (fallbackSrc && !url?.includes(fallbackSrc)) {
       try {
         const fallbackUrl = getPlayableMediaUrl(fallbackSrc);
-        setUrl(fallbackUrl);
+        if (fallbackUrl !== previousUrl.current) {
+          previousUrl.current = fallbackUrl;
+          setUrl(fallbackUrl);
+          setIsLoading(true);
+          setHasError(false);
+        }
       } catch (fallbackErr) {
         console.error('Error processing fallback media:', fallbackErr);
       }
@@ -157,6 +180,7 @@ export const MediaRenderer = memo(forwardRef(({
     setRetryCount(prev => prev + 1);
     setIsLoading(true);
     setHasError(false);
+    previousUrl.current = null; // Clear previous URL to force a refresh
   }, [retryCount, maxRetries, url]);
 
   // Handle video time updates
@@ -216,6 +240,7 @@ export const MediaRenderer = memo(forwardRef(({
             onEnded={onEnded}
             onTimeUpdate={handleTimeUpdate}
             key={`video-${url}`}
+            style={stableObjectFit}
           />
         ) : (
           <div className="flex items-center justify-center bg-black/50 w-full h-full">
@@ -245,6 +270,7 @@ export const MediaRenderer = memo(forwardRef(({
             onLoad={handleLoad}
             onError={handleError}
             key={`image-${url}`}
+            style={stableObjectFit}
           />
         ) : (
           <div className="flex items-center justify-center bg-black/50 w-full h-full">
@@ -291,6 +317,27 @@ export const MediaRenderer = memo(forwardRef(({
       <p className="text-sm text-gray-500">Unsupported media format</p>
     </div>
   );
-}));
+}), (prevProps, nextProps) => {
+  // Custom equality check for the memoization
+  // Prevent unnecessary re-renders when props haven't meaningfully changed
+  if (typeof prevProps.src === 'string' && typeof nextProps.src === 'string') {
+    return prevProps.src === nextProps.src && 
+           prevProps.className === nextProps.className &&
+           prevProps.autoPlay === nextProps.autoPlay &&
+           prevProps.muted === nextProps.muted;
+  }
+  
+  if (prevProps.src === null && nextProps.src === null) return true;
+  if (!prevProps.src || !nextProps.src) return false;
+  
+  // If both are objects, do a more detailed comparison
+  const prevUrl = prevProps.src?.video_url || prevProps.src?.media_url || prevProps.src?.url;
+  const nextUrl = nextProps.src?.video_url || nextProps.src?.media_url || nextProps.src?.url;
+  
+  return prevUrl === nextUrl &&
+         prevProps.className === nextProps.className &&
+         prevProps.autoPlay === nextProps.autoPlay &&
+         prevProps.muted === nextProps.muted;
+});
 
 MediaRenderer.displayName = 'MediaRenderer';

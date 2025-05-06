@@ -54,13 +54,30 @@ export function isAudioUrl(url: string): boolean {
   return audioExtensions.includes(extension);
 }
 
-// Cache for URL processing to prevent excessive re-rendering
+// Stable cache for URL processing to prevent excessive re-renders
 const processedUrlCache = new Map<string, string>();
-const processingTimestamps = new Map<string, number>();
-const CACHE_EXPIRY = 300000; // 5 minutes in milliseconds
+const urlContentHashMap = new Map<string, number>();
+const CACHE_DURATION = 3600000; // 1 hour in milliseconds
 
 /**
- * Transforms URL for playback if needed (e.g., CDN optimizations, etc.)
+ * Creates a more stable hash for a URL to use as part of the cache key
+ */
+function getUrlContentHash(url: string): number {
+  if (urlContentHashMap.has(url)) {
+    return urlContentHashMap.get(url)!;
+  }
+  
+  // Create a simple numeric hash
+  const hash = url.split('').reduce((acc, char, index) => {
+    return acc + char.charCodeAt(0) * (index + 1);
+  }, 0);
+  
+  urlContentHashMap.set(url, hash);
+  return hash;
+}
+
+/**
+ * Transforms URL for playback with stable cache-busting
  * Enhanced to accept both string URLs and MediaSource objects
  */
 export function getPlayableMediaUrl(urlOrSource: string | MediaSource | null | undefined): string | null {
@@ -97,11 +114,7 @@ export function getPlayableMediaUrl(urlOrSource: string | MediaSource | null | u
   
   // Check cache first to prevent reprocessing the same URL
   if (processedUrlCache.has(cacheKey)) {
-    const timestamp = processingTimestamps.get(cacheKey) || 0;
-    // Only use cache if it hasn't expired
-    if (Date.now() - timestamp < CACHE_EXPIRY) {
-      return processedUrlCache.get(cacheKey) || null;
-    }
+    return processedUrlCache.get(cacheKey) || null;
   }
   
   // Make sure URL is properly formatted with protocol
@@ -115,19 +128,45 @@ export function getPlayableMediaUrl(urlOrSource: string | MediaSource | null | u
   }
   
   // Add stable cache-busting parameter that won't change on every render
-  // Use the current hour as part of the cache buster to balance caching and freshness
-  const currentHour = Math.floor(Date.now() / 3600000);
-  const stableId = cacheKey.split('').reduce((a, b) => {
-    return a + b.charCodeAt(0);
-  }, 0);
+  // Generate a stable hash based on the URL's content
+  const contentHash = getUrlContentHash(url);
+  
+  // Use a stable hour-based timestamp (changes only once per hour)
+  const hourTimestamp = Math.floor(Date.now() / CACHE_DURATION);
   
   const separator = url.includes('?') ? '&' : '?';
-  const cacheBuster = `cb=${currentHour}-${stableId}`;
+  const cacheBuster = `cb=${hourTimestamp}-${contentHash}`;
   const finalUrl = `${url}${separator}${cacheBuster}`;
   
   // Store in cache
   processedUrlCache.set(cacheKey, finalUrl);
-  processingTimestamps.set(cacheKey, Date.now());
   
   return finalUrl;
+}
+
+/**
+ * Adds a cache busting parameter to a URL
+ * @param url - The URL to add the cache buster to
+ * @returns The URL with a cache buster parameter
+ */
+export function addCacheBuster(url: string): string {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}cb=${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/**
+ * Creates a URL for a file object
+ * @param file - The file to create a URL for
+ * @returns A URL for the file
+ */
+export function createObjectUrl(file: File | Blob): string {
+  return URL.createObjectURL(file);
+}
+
+/**
+ * Revokes a URL created with URL.createObjectURL
+ * @param url - The URL to revoke
+ */
+export function revokeObjectUrl(url: string): void {
+  URL.revokeObjectURL(url);
 }
