@@ -4,6 +4,7 @@
  */
 import { MediaSource } from './types';
 import { extractMediaUrl } from './mediaUtils';
+import { mediaOrchestrator } from './mediaOrchestrator';
 
 /**
  * Gets the file extension from a URL or path
@@ -54,94 +55,16 @@ export function isAudioUrl(url: string): boolean {
   return audioExtensions.includes(extension);
 }
 
-// Stable cache for URL processing to prevent excessive re-renders
-const processedUrlCache = new Map<string, string>();
-const urlContentHashMap = new Map<string, number>();
+// Constants for cache management
 const CACHE_DURATION = 3600000; // 1 hour in milliseconds
 
 /**
- * Creates a more stable hash for a URL to use as part of the cache key
- */
-function getUrlContentHash(url: string): number {
-  if (urlContentHashMap.has(url)) {
-    return urlContentHashMap.get(url)!;
-  }
-  
-  // Create a simple numeric hash
-  const hash = url.split('').reduce((acc, char, index) => {
-    return acc + char.charCodeAt(0) * (index + 1);
-  }, 0);
-  
-  urlContentHashMap.set(url, hash);
-  return hash;
-}
-
-/**
  * Transforms URL for playback with stable cache-busting
- * Enhanced to accept both string URLs and MediaSource objects
+ * Enhanced to use the global media orchestrator for stable references
  */
 export function getPlayableMediaUrl(urlOrSource: string | MediaSource | null | undefined): string | null {
-  // Handle null or undefined
-  if (!urlOrSource) {
-    return null;
-  }
-  
-  let url: string | null = null;
-  let cacheKey: string;
-  
-  // Extract URL from MediaSource object if needed
-  if (typeof urlOrSource === 'object') {
-    // Try to find a usable URL in the MediaSource object
-    url = urlOrSource.video_url || 
-          urlOrSource.media_url || 
-          urlOrSource.url || 
-          urlOrSource.src ||
-          (urlOrSource.video_urls && urlOrSource.video_urls.length > 0 ? urlOrSource.video_urls[0] : null) ||
-          (urlOrSource.media_urls && urlOrSource.media_urls.length > 0 ? urlOrSource.media_urls[0] : null);
-    
-    // Generate a stable cache key from the object
-    cacheKey = url || JSON.stringify(urlOrSource);
-  } else {
-    // It's already a string URL
-    url = urlOrSource;
-    cacheKey = url;
-  }
-  
-  // If we couldn't extract a URL, return null
-  if (!url) {
-    return null;
-  }
-  
-  // Check cache first to prevent reprocessing the same URL
-  if (processedUrlCache.has(cacheKey)) {
-    return processedUrlCache.get(cacheKey) || null;
-  }
-  
-  // Make sure URL is properly formatted with protocol
-  if (url.startsWith('//')) {
-    url = `https:${url}`;
-  }
-  
-  // Add protocol if missing
-  if (!url.startsWith('http') && !url.startsWith('blob:') && !url.startsWith('data:')) {
-    url = `https://${url}`;
-  }
-  
-  // Add stable cache-busting parameter that won't change on every render
-  // Generate a stable hash based on the URL's content
-  const contentHash = getUrlContentHash(url);
-  
-  // Use a stable hour-based timestamp (changes only once per hour)
-  const hourTimestamp = Math.floor(Date.now() / CACHE_DURATION);
-  
-  const separator = url.includes('?') ? '&' : '?';
-  const cacheBuster = `cb=${hourTimestamp}-${contentHash}`;
-  const finalUrl = `${url}${separator}${cacheBuster}`;
-  
-  // Store in cache
-  processedUrlCache.set(cacheKey, finalUrl);
-  
-  return finalUrl;
+  // Use the orchestrator to get a stable URL
+  return mediaOrchestrator.getStableUrl(urlOrSource);
 }
 
 /**

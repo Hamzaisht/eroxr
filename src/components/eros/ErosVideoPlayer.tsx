@@ -6,6 +6,7 @@ import { useInView } from "react-intersection-observer";
 import { MediaRenderer } from "@/components/media/MediaRenderer";
 import { MediaType } from "@/utils/media/types";
 import { reportMediaError } from "@/utils/media/mediaMonitoring";
+import { mediaOrchestrator } from "@/utils/media/mediaOrchestrator";
 
 interface ErosVideoPlayerProps {
   videoUrl: string;
@@ -38,12 +39,29 @@ export function ErosVideoPlayer({
     threshold: 0.5,
   });
   
+  // Generate a stable media ID
+  const mediaId = useMemo(() => 
+    mediaOrchestrator.createMediaId({
+      video_url: videoUrl,
+      thumbnail_url: thumbnailUrl,
+      media_type: MediaType.VIDEO
+    }), 
+  [videoUrl, thumbnailUrl]);
+  
   // Stable video source object reference
   const videoSource = useMemo(() => ({
     video_url: videoUrl,
     thumbnail_url: thumbnailUrl,
-    media_type: MediaType.VIDEO
-  }), [videoUrl, thumbnailUrl]);
+    media_type: MediaType.VIDEO,
+    mediaId // Include the mediaId for even more stability
+  }), [mediaId]);
+  
+  // Register the video with our orchestrator
+  useEffect(() => {
+    if (isActive) {
+      mediaOrchestrator.registerMediaRequest(videoSource);
+    }
+  }, [isActive, videoSource]);
   
   console.log("ErosVideoPlayer props:", { 
     videoUrl, 
@@ -51,13 +69,14 @@ export function ErosVideoPlayer({
     isActive, 
     autoPlay, 
     loop, 
-    muted
+    muted,
+    mediaId
   });
   
   const shouldPlay = isActive && inView;
   
   const handleError = () => {
-    console.error("ErosVideoPlayer error:", videoUrl);
+    console.error("ErosVideoPlayer error:", videoUrl, "mediaId:", mediaId);
     setLoadError(true);
     
     try {
@@ -97,6 +116,8 @@ export function ErosVideoPlayer({
         loop={loop}
         onError={handleError}
         onEnded={handleEnded}
+        allowRetry={true}
+        maxRetries={2}
       />
       
       {!loadError && (

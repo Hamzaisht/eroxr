@@ -1,10 +1,10 @@
-
 import { useState, useEffect, forwardRef, Ref, useRef, memo, useCallback, useMemo } from 'react';
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { MediaType } from '@/utils/media/types';
 import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
 import { determineMediaType } from '@/utils/media/mediaUtils';
 import { reportMediaError, reportMediaSuccess } from '@/utils/media/mediaMonitoring';
+import { mediaOrchestrator } from '@/utils/media/mediaOrchestrator';
 
 interface MediaRendererProps {
   src: string | any | null;
@@ -53,6 +53,8 @@ export const MediaRenderer = memo(forwardRef(({
   const [url, setUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<MediaType>(initialType || MediaType.UNKNOWN);
   const [loadStartTime, setLoadStartTime] = useState(Date.now());
+  const [mediaId, setMediaId] = useState<string>("");
+  
   const processedRef = useRef<boolean>(false);
   const sourceRef = useRef(src);
   const previousUrl = useRef<string | null>(null);
@@ -65,14 +67,22 @@ export const MediaRenderer = memo(forwardRef(({
     return src;
   }, [src]);
   
-  // Process the source URL on component mount or when source significantly changes
+  // Generate a stable media ID on mount or when source significantly changes
   useEffect(() => {
-    // Skip if the source is identical to avoid unnecessary processing
-    if (stableSource === sourceRef.current && processedRef.current && url) {
-      return;
+    if (stableSource === sourceRef.current && mediaId) {
+      return; // Skip if source hasn't changed and we already have an ID
     }
     
+    const newMediaId = mediaOrchestrator.createMediaId(stableSource);
+    setMediaId(newMediaId);
     sourceRef.current = stableSource;
+  }, [stableSource, mediaId]);
+  
+  // Process the source URL on component mount or when source significantly changes
+  useEffect(() => {
+    // Skip if we don't have a mediaId yet
+    if (!mediaId) return;
+    
     setLoadStartTime(Date.now());
     
     try {
@@ -84,8 +94,9 @@ export const MediaRenderer = memo(forwardRef(({
         setMediaType(initialType);
       }
 
-      // Get a playable URL (handles various formats, cache busting, etc)
-      const processedUrl = getPlayableMediaUrl(stableSource);
+      // Register the source with the orchestrator and get a playable URL
+      mediaOrchestrator.registerMediaRequest(stableSource);
+      const processedUrl = mediaOrchestrator.getStableUrl(stableSource);
       
       // Only update URL if it's different to prevent unnecessary re-renders
       if (processedUrl !== previousUrl.current) {
@@ -101,7 +112,7 @@ export const MediaRenderer = memo(forwardRef(({
       // Try fallback if available
       if (fallbackSrc) {
         try {
-          const fallbackUrl = getPlayableMediaUrl(fallbackSrc);
+          const fallbackUrl = mediaOrchestrator.getStableUrl(fallbackSrc);
           if (fallbackUrl !== previousUrl.current) {
             previousUrl.current = fallbackUrl;
             setUrl(fallbackUrl);
@@ -115,7 +126,7 @@ export const MediaRenderer = memo(forwardRef(({
     } finally {
       processedRef.current = true;
     }
-  }, [stableSource, initialType, fallbackSrc, retryCount, url]);
+  }, [stableSource, initialType, fallbackSrc, retryCount, mediaId]);
 
   // Handle successful media load
   const handleLoad = useCallback(() => {
@@ -135,7 +146,7 @@ export const MediaRenderer = memo(forwardRef(({
 
   // Handle media loading error
   const handleError = useCallback(() => {
-    console.error(`Media loading error: ${url}, type: ${mediaType}`);
+    console.error(`Media loading error: ${url}, type: ${mediaType}, mediaId: ${mediaId}`);
     setIsLoading(false);
     setHasError(true);
     
@@ -155,7 +166,7 @@ export const MediaRenderer = memo(forwardRef(({
     // Try fallback if available
     if (fallbackSrc && !url?.includes(fallbackSrc)) {
       try {
-        const fallbackUrl = getPlayableMediaUrl(fallbackSrc);
+        const fallbackUrl = mediaOrchestrator.getStableUrl(fallbackSrc);
         if (fallbackUrl !== previousUrl.current) {
           previousUrl.current = fallbackUrl;
           setUrl(fallbackUrl);
@@ -168,7 +179,7 @@ export const MediaRenderer = memo(forwardRef(({
     }
     
     if (onError) onError();
-  }, [url, fallbackSrc, retryCount, mediaType, onError]);
+  }, [url, fallbackSrc, retryCount, mediaType, onError, mediaId]);
 
   // Handle media retry
   const handleRetry = useCallback(() => {
@@ -239,7 +250,7 @@ export const MediaRenderer = memo(forwardRef(({
             onError={handleError}
             onEnded={onEnded}
             onTimeUpdate={handleTimeUpdate}
-            key={`video-${url}`}
+            key={`video-${mediaId}-${retryCount}`}
             style={stableObjectFit}
           />
         ) : (
@@ -269,7 +280,7 @@ export const MediaRenderer = memo(forwardRef(({
             onClick={onClick}
             onLoad={handleLoad}
             onError={handleError}
-            key={`image-${url}`}
+            key={`image-${mediaId}-${retryCount}`}
             style={stableObjectFit}
           />
         ) : (
@@ -318,26 +329,18 @@ export const MediaRenderer = memo(forwardRef(({
     </div>
   );
 }), (prevProps, nextProps) => {
-  // Custom equality check for the memoization
-  // Prevent unnecessary re-renders when props haven't meaningfully changed
-  if (typeof prevProps.src === 'string' && typeof nextProps.src === 'string') {
-    return prevProps.src === nextProps.src && 
-           prevProps.className === nextProps.className &&
-           prevProps.autoPlay === nextProps.autoPlay &&
-           prevProps.muted === nextProps.muted;
-  }
+  // Enhanced equality check with media IDs for better stability
+  const prevId = mediaOrchestrator.createMediaId(prevProps.src);
+  const nextId = mediaOrchestrator.createMediaId(nextProps.src);
   
-  if (prevProps.src === null && nextProps.src === null) return true;
-  if (!prevProps.src || !nextProps.src) return false;
+  // If IDs are different, we need to re-render
+  if (prevId !== nextId) return false;
   
-  // If both are objects, do a more detailed comparison
-  const prevUrl = prevProps.src?.video_url || prevProps.src?.media_url || prevProps.src?.url;
-  const nextUrl = nextProps.src?.video_url || nextProps.src?.media_url || nextProps.src?.url;
-  
-  return prevUrl === nextUrl &&
-         prevProps.className === nextProps.className &&
+  // Otherwise, check other props that would require re-render
+  return prevProps.className === nextProps.className &&
          prevProps.autoPlay === nextProps.autoPlay &&
-         prevProps.muted === nextProps.muted;
+         prevProps.muted === nextProps.muted &&
+         prevProps.controls === nextProps.controls;
 });
 
 MediaRenderer.displayName = 'MediaRenderer';
