@@ -3,8 +3,7 @@ import { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { MediaType } from "@/utils/media/types";
 import { MediaRenderer } from "@/components/media/MediaRenderer";
-import { reportMediaError } from "@/utils/media/mediaMonitoring";
-import { mediaOrchestrator } from "@/utils/media/mediaOrchestrator";
+import { extractMediaUrl } from "@/utils/media/urlUtils";
 
 interface ShortVideoPlayerProps {
   videoUrl: string | null;
@@ -26,13 +25,18 @@ export const ShortVideoPlayer = memo(({
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
   const { toast } = useToast();
   
-  // Create a stable media source object with multiple URL properties
+  // Reset playing state when video URL changes
+  useEffect(() => {
+    setHasStartedPlaying(false);
+  }, [videoUrl]);
+  
+  // Create a stable comprehensive media source with all URL properties
   const mediaSource = useMemo(() => {
     if (!videoUrl) return null;
     
     return {
       video_url: videoUrl,
-      url: videoUrl, // Add all possible URL properties 
+      url: videoUrl,
       media_url: videoUrl,
       src: videoUrl,
       thumbnail_url: thumbnailUrl,
@@ -41,18 +45,12 @@ export const ShortVideoPlayer = memo(({
     };
   }, [videoUrl, thumbnailUrl, creatorId]);
   
-  // Reset playing state when video URL changes
+  // Debug log for video URL
   useEffect(() => {
-    setHasStartedPlaying(false);
-  }, [videoUrl]);
-  
-  // Preload video when it's about to be played
-  useEffect(() => {
-    if (isCurrentVideo && mediaSource) {
-      // Register this video with the orchestrator
-      mediaOrchestrator.registerMediaRequest(mediaSource);
+    if (!videoUrl && isCurrentVideo) {
+      console.warn("ShortVideoPlayer: No video URL provided for current video");
     }
-  }, [isCurrentVideo, mediaSource]);
+  }, [videoUrl, isCurrentVideo]);
   
   // Handle video loading success
   const handleVideoLoad = useCallback(() => {
@@ -62,20 +60,6 @@ export const ShortVideoPlayer = memo(({
   // Handle video error with improved error reporting
   const handleVideoError = useCallback(() => {
     console.error("Video error for short:", videoUrl);
-    
-    if (videoUrl) {
-      try {
-        reportMediaError(
-          videoUrl,
-          'load_failure',
-          0,
-          'video',
-          'ShortVideoPlayer'
-        );
-      } catch (error) {
-        console.error("Error reporting media error:", error);
-      }
-    }
     
     // Show a toast for user feedback
     toast({
@@ -88,6 +72,9 @@ export const ShortVideoPlayer = memo(({
     onError();
   }, [videoUrl, toast, onError]);
 
+  // Check if we have a valid URL
+  const hasValidUrl = mediaSource ? !!extractMediaUrl(mediaSource) : false;
+
   if (isDeleting) {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker/80">
@@ -96,7 +83,7 @@ export const ShortVideoPlayer = memo(({
     );
   }
   
-  if (!videoUrl || !mediaSource) {
+  if (!hasValidUrl || !mediaSource) {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-luxury-darker/80">
         <p className="text-luxury-neutral">Video unavailable</p>
@@ -117,6 +104,7 @@ export const ShortVideoPlayer = memo(({
       loop={true}
       muted={false}
       maxRetries={1}
+      allowRetry={true}
     />
   );
 });

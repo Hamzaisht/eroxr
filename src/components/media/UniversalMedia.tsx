@@ -2,6 +2,7 @@
 import { forwardRef, useState, useEffect, useMemo, useCallback, Ref, memo } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { MediaRenderer } from './MediaRenderer';
+import { extractMediaUrl } from '@/utils/media/urlUtils';
 
 interface UniversalMediaProps {
   item: MediaSource | string | null;
@@ -40,42 +41,54 @@ export const UniversalMedia = memo(forwardRef(({
   onTimeUpdate,
   maxRetries = 2
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
-  // Create a stable memoized object for the item to prevent re-renders
-  const stableItem = useMemo(() => {
+  // Create a stable media source object with all possible URL formats
+  const mediaSource = useMemo(() => {
+    // If item is null or undefined, return empty source
+    if (!item) return null;
+    
+    // If item is a string, assume it's a direct URL
     if (typeof item === 'string') {
-      return item;
+      return {
+        url: item,
+        media_url: item,
+        video_url: item,
+        media_type: item.match(/\.(mp4|webm|mov|ogv)($|\?)/i) ? MediaType.VIDEO : MediaType.IMAGE
+      };
     }
     
-    if (item) {
-      // Return a new object with only the necessary properties
-      if (item.media_type === MediaType.VIDEO || 
-          (item.video_url || (item.video_urls && item.video_urls.length > 0))) {
-        return {
-          video_url: item.video_url || (item.video_urls && item.video_urls[0]),
-          media_type: MediaType.VIDEO,
-          creator_id: item.creator_id,
-          thumbnail_url: item.thumbnail_url || item.poster
-        };
-      } else {
-        return {
-          media_url: item.media_url || item.url || (item.media_urls && item.media_urls[0]),
-          media_type: item.media_type || MediaType.IMAGE,
-          creator_id: item.creator_id
-        };
-      }
-    }
-    
-    return null;
+    // Create a comprehensive object with all possible URL properties
+    // This ensures maximum compatibility with different components
+    return {
+      // Video URLs
+      video_url: item.video_url || (item.video_urls && item.video_urls[0]),
+      // Image URLs
+      media_url: item.media_url || (item.media_urls && item.media_urls[0]),
+      // Generic URLs
+      url: item.url || item.src,
+      // Thumbnail for fallback
+      thumbnail_url: item.thumbnail_url,
+      // Media type - determine from available URLs if not specified
+      media_type: item.media_type || 
+                 (item.video_url || (item.video_urls && item.video_urls.length > 0) ? MediaType.VIDEO : 
+                 (item.media_url || (item.media_urls && item.media_urls.length > 0) ? MediaType.IMAGE : 
+                 MediaType.UNKNOWN)),
+      // Additional metadata that might be needed
+      creator_id: item.creator_id
+    };
   }, [item]);
+
+  // Check if we have any valid URL
+  const hasValidUrl = useMemo(() => {
+    if (!mediaSource) return false;
+    return !!extractMediaUrl(mediaSource);
+  }, [mediaSource]);
   
-  const mediaType = useMemo(() => {
-    if (typeof stableItem === 'object' && stableItem !== null) {
-      return stableItem.media_type || 
-            (stableItem.video_url ? MediaType.VIDEO : 
-            (stableItem.media_url ? MediaType.IMAGE : MediaType.UNKNOWN));
+  // Log debug info in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && !hasValidUrl) {
+      console.warn('UniversalMedia: No valid URL found in item:', item);
     }
-    return undefined;
-  }, [stableItem]);
+  }, [hasValidUrl, item]);
   
   // Memoized callbacks to prevent rerenders
   const handleLoad = useCallback(() => {
@@ -93,35 +106,32 @@ export const UniversalMedia = memo(forwardRef(({
   const handleTimeUpdate = useCallback((time: number) => {
     if (onTimeUpdate) onTimeUpdate(time);
   }, [onTimeUpdate]);
-
-  // Determine object fit styling
+  
+  // Create style object for object-fit property
   const styleProps = useMemo(() => ({
     style: { objectFit }
   }), [objectFit]);
 
-  // Debug logging to help identify issues
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('UniversalMedia render with:', {
-        itemType: typeof item,
-        mediaType,
-        hasVideoUrl: typeof item === 'object' && item !== null && !!item.video_url,
-        hasMediaUrl: typeof item === 'object' && item !== null && !!item.media_url
-      });
-    }
-  }, [item, mediaType]);
+  // If no valid media source, show empty state
+  if (!mediaSource || !hasValidUrl) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-black/20`}>
+        <p className="text-sm text-gray-400">Media not available</p>
+      </div>
+    );
+  }
 
   return (
     <MediaRenderer
       ref={ref}
-      src={stableItem}
-      type={mediaType}
+      src={mediaSource}
+      type={mediaSource.media_type}
       className={className}
       autoPlay={autoPlay}
       controls={controls}
       muted={muted}
       loop={loop}
-      poster={poster}
+      poster={poster || mediaSource.thumbnail_url}
       showWatermark={showWatermark}
       onClick={onClick}
       onLoad={handleLoad}
@@ -129,6 +139,7 @@ export const UniversalMedia = memo(forwardRef(({
       onEnded={handleEnded}
       onTimeUpdate={handleTimeUpdate}
       maxRetries={maxRetries}
+      allowRetry={true}
       {...styleProps}
     />
   );
@@ -141,27 +152,16 @@ export const UniversalMedia = memo(forwardRef(({
   }
   
   if (!prevProps.item || !nextProps.item) {
-    return prevProps.item === nextProps.item;
+    return !prevProps.item && !nextProps.item;
   }
   
-  if (typeof prevProps.item === 'object' && typeof nextProps.item === 'object') {
-    const prevVideo = prevProps.item.video_url || (prevProps.item.video_urls && prevProps.item.video_urls[0]);
-    const nextVideo = nextProps.item.video_url || (nextProps.item.video_urls && nextProps.item.video_urls[0]);
-    
-    if (prevVideo || nextVideo) {
-      return prevVideo === nextVideo && 
-             prevProps.autoPlay === nextProps.autoPlay &&
-             prevProps.className === nextProps.className;
-    }
-    
-    const prevMedia = prevProps.item.media_url || prevProps.item.url || (prevProps.item.media_urls && prevProps.item.media_urls[0]);
-    const nextMedia = nextProps.item.media_url || nextProps.item.url || (nextProps.item.media_urls && nextProps.item.media_urls[0]);
-    
-    return prevMedia === nextMedia && 
-           prevProps.className === nextProps.className;
-  }
+  // For object types, check the key URL properties
+  const prevUrl = extractMediaUrl(prevProps.item);
+  const nextUrl = extractMediaUrl(nextProps.item);
   
-  return false;
+  return prevUrl === nextUrl && 
+         prevProps.autoPlay === nextProps.autoPlay &&
+         prevProps.className === nextProps.className;
 });
 
 UniversalMedia.displayName = 'UniversalMedia';

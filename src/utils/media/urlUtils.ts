@@ -1,102 +1,43 @@
 
 /**
- * Adds a cache busting parameter to a URL
- * @param url - The URL to add the cache buster to
- * @returns The URL with a cache buster parameter
+ * Extracts the best available URL from a media object with different possible URL formats
+ * 
+ * @param media The media object or string URL
+ * @returns The resolved URL or null if none found
  */
-export function addCacheBuster(url: string): string {
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}cb=${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-/**
- * Extracts the file extension from a URL
- * @param url - The URL to extract the extension from
- * @returns The file extension or empty string if none found
- */
-export function getFileExtension(url: string | null | undefined): string {
-  if (!url) return '';
+export const extractMediaUrl = (media: any): string | null => {
+  if (!media) return null;
   
-  const parts = url.split('.');
-  if (parts.length <= 1) return '';
+  // Handle if media is a simple string URL
+  if (typeof media === 'string') return media;
   
-  // Get the last part and remove any query parameters
-  const lastPart = parts[parts.length - 1].split('?')[0].split('#')[0];
-  return lastPart.toLowerCase();
-}
+  // Try to extract URL from object with various URL properties
+  const url = media.url || 
+              media.media_url || 
+              media.video_url ||
+              media.src ||
+              (media.video_urls && media.video_urls[0]) ||
+              (media.media_urls && media.media_urls[0]) ||
+              media.thumbnail_url;
+              
+  return url || null;
+};
 
 /**
- * Determines if a URL is likely an image based on its extension
- * @param url - The URL to check
- * @returns True if the URL is likely an image, false otherwise
- */
-export function isImageUrl(url: string | null | undefined): boolean {
-  if (!url) return false;
-  const ext = getFileExtension(url);
-  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
-}
-
-/**
- * Determines if a URL is likely a video based on its extension
- * @param url - The URL to check
- * @returns True if the URL is likely a video, false otherwise
- */
-export function isVideoUrl(url: string | null | undefined): boolean {
-  if (!url) return false;
-  const ext = getFileExtension(url);
-  return ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv'].includes(ext);
-}
-
-/**
- * Determines if a URL is likely an audio file based on its extension
- * @param url - The URL to check
- * @returns True if the URL is likely an audio file, false otherwise
- */
-export function isAudioUrl(url: string | null | undefined): boolean {
-  if (!url) return false;
-  const ext = getFileExtension(url);
-  return ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'].includes(ext);
-}
-
-/**
- * Creates a URL for a file object
- * @param file - The file to create a URL for
- * @returns A URL for the file
- */
-export function createObjectUrl(file: File | Blob): string {
-  return URL.createObjectURL(file);
-}
-
-/**
- * Revokes a URL created with URL.createObjectURL
- * @param url - The URL to revoke
- */
-export function revokeObjectUrl(url: string): void {
-  URL.revokeObjectURL(url);
-}
-
-/**
- * Gets a playable media URL with cache busting if needed
- * Self-contained implementation that doesn't rely on external imports
- * @param url - The URL to process
+ * Gets a playable media URL, adding cache-busting or other parameters as needed
+ * 
+ * @param url The raw media URL
  * @returns The processed URL ready for playback
  */
-export function getPlayableMediaUrl(url: string | undefined | null): string {
+export const getPlayableMediaUrl = (url: string | null): string => {
   if (!url) return '';
   
-  // Clean and normalize URL
-  let processedUrl = url;
-  
-  // Handle URL without protocol
-  if (processedUrl.startsWith('//')) {
-    processedUrl = `https:${processedUrl}`;
+  // Add cache busting for development environment
+  if (process.env.NODE_ENV === 'development') {
+    const cacheBuster = `_cb=${Date.now()}`;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}${cacheBuster}`;
   }
   
-  // Add protocol if missing
-  if (!processedUrl.startsWith('http') && !processedUrl.startsWith('blob:') && !processedUrl.startsWith('data:')) {
-    processedUrl = `https://${processedUrl}`;
-  }
-  
-  // Add cache busting to help with media loading issues
-  return addCacheBuster(processedUrl);
-}
+  return url;
+};

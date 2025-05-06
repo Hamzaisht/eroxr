@@ -5,8 +5,7 @@ import { cn } from "@/lib/utils";
 import { useInView } from "react-intersection-observer";
 import { MediaRenderer } from "@/components/media/MediaRenderer";
 import { MediaType } from "@/utils/media/types";
-import { reportMediaError } from "@/utils/media/mediaMonitoring";
-import { mediaOrchestrator } from "@/utils/media/mediaOrchestrator";
+import { extractMediaUrl } from '@/utils/media/urlUtils';
 
 interface ErosVideoPlayerProps {
   videoUrl: string;
@@ -39,41 +38,28 @@ export function ErosVideoPlayer({
     threshold: 0.5,
   });
   
+  // Validate video URL
+  useEffect(() => {
+    if (!videoUrl) {
+      console.warn("ErosVideoPlayer: No video URL provided");
+    }
+  }, [videoUrl]);
+  
   const shouldPlay = isActive && inView;
   
-  // Create a stable media source reference with all required fields
+  // Create a comprehensive media source with all URL properties
   const videoSource = useMemo(() => ({
     video_url: videoUrl,
-    url: videoUrl, // Add this for more reliable detection
-    media_url: videoUrl, // Add this for more reliable detection
-    src: videoUrl, // Add this for more reliable detection
+    url: videoUrl,
+    media_url: videoUrl,
+    src: videoUrl,
     thumbnail_url: thumbnailUrl,
     media_type: MediaType.VIDEO,
   }), [videoUrl, thumbnailUrl]);
   
-  // Register the video with our orchestrator when it becomes active
-  useEffect(() => {
-    if (isActive && videoSource) {
-      mediaOrchestrator.registerMediaRequest(videoSource);
-    }
-  }, [isActive, videoSource]);
-  
   const handleError = () => {
     console.error("ErosVideoPlayer error:", videoUrl);
     setLoadError(true);
-    
-    try {
-      reportMediaError(
-        videoUrl,
-        'load_failure',
-        0,
-        'video',
-        'ErosVideoPlayer'
-      );
-    } catch (error) {
-      console.error("Error reporting media error:", error);
-    }
-    
     if (onError) onError();
   };
   
@@ -85,6 +71,17 @@ export function ErosVideoPlayer({
     setIsPlaying(false);
     if (onVideoEnd) onVideoEnd();
   };
+
+  // Check if we have a valid URL
+  const hasValidUrl = !!extractMediaUrl(videoSource);
+  
+  if (!hasValidUrl) {
+    return (
+      <div className={cn("relative w-full h-full flex items-center justify-center bg-black/50", className)}>
+        <p className="text-gray-300">Video unavailable</p>
+      </div>
+    );
+  }
   
   return (
     <div ref={ref} className={cn("relative w-full h-full overflow-hidden", className)}>
