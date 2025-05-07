@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { getPlayableMediaUrl, extractMediaUrl } from "@/utils/media/urlUtils";
 
@@ -9,6 +10,8 @@ interface VideoThumbnailProps {
 }
 
 export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnailProps) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  
   // Process and validate video URL
   const url = videoUrl ? extractMediaUrl({ url: videoUrl }) : null;
   const processedUrl = url ? getPlayableMediaUrl(url) : null;
@@ -21,6 +24,10 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
     );
   }
 
+  const handleError = () => {
+    console.error("Video thumbnail error:", videoUrl);
+  };
+
   if (isMobile) {
     return (
       <VideoPlayer 
@@ -28,7 +35,9 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
         className="w-full h-full"
         autoPlay={isHovered}
         playOnHover={false}
-        onError={() => console.error("Video thumbnail error:", videoUrl)}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onError={handleError}
       />
     );
   }
@@ -54,7 +63,9 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
         className="w-full h-full"
         playOnHover={true}
         autoPlay={isHovered}
-        onError={() => console.error("Video player error:", videoUrl)}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onError={handleError}
       />
     </>
   );
