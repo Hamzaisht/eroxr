@@ -28,7 +28,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
         className="w-full h-full"
         autoPlay={isHovered}
         playOnHover={false}
-        onError={(e) => console.error("Video thumbnail error:", videoUrl, e)}
+        onError={() => console.error("Video thumbnail error:", videoUrl)}
       />
     );
   }
@@ -54,7 +54,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
         className="w-full h-full"
         playOnHover={true}
         autoPlay={isHovered}
-        onError={(e) => console.error("Video player error:", videoUrl, e)}
+        onError={() => console.error("Video player error:", videoUrl)}
       />
     </>
   );
