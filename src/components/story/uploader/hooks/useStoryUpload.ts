@@ -158,6 +158,16 @@ export const useStoryUpload = () => {
       return { success: false, error: 'Empty file' };
     }
 
+    // Log file details right before upload
+    console.log("Final upload check - File object:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      isBlob: file instanceof Blob,
+      isFile: file instanceof File,
+      lastModified: file.lastModified
+    });
+
     setIsUploading(true);
     setProgress(0);
     setError(null);

@@ -37,6 +37,15 @@ export const StoryUploader = () => {
       return;
     }
     
+    // Log file details before processing
+    console.log("Uploading real File object:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      isBlob: file instanceof Blob,
+      isFile: file instanceof File
+    });
+    
     // Use the hook's validation and selection
     const success = await handleFileSelect(file);
     if (success) {
