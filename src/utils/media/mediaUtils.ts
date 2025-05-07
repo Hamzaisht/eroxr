@@ -129,6 +129,35 @@ export function createUniqueFilePath(userId: string, file: File | string): strin
 }
 
 /**
+ * Validates a file before upload to ensure it's a valid File object with content
+ * @param file - File object to validate
+ * @returns Validation result with success flag and potential error message
+ */
+export function validateFileForUpload(file: unknown): { valid: boolean; error?: string } {
+  if (!file) {
+    return { valid: false, error: 'No file provided' };
+  }
+  
+  if (!(file instanceof File)) {
+    return { valid: false, error: 'Invalid file object' };
+  }
+  
+  if (file.size === 0) {
+    return { valid: false, error: `File "${file.name}" is empty (0 bytes)` };
+  }
+  
+  if (!file.type) {
+    return { valid: false, error: 'File has no content type' };
+  }
+  
+  if (!file.name) {
+    return { valid: false, error: 'File has no name' };
+  }
+  
+  return { valid: true };
+}
+
+/**
  * Upload a file to storage, handling both File objects and string URLs
  * @param bucket - Storage bucket name
  * @param path - Path for storage
@@ -144,6 +173,16 @@ export async function uploadFileToStorage(bucket: string, path: string, fileOrUr
       try {
         const response = await fetch(fileOrUrl);
         const blob = await response.blob();
+        
+        if (blob.size === 0) {
+          return {
+            path: '',
+            url: '',
+            success: false,
+            error: 'Fetched blob is empty (0 bytes)'
+          };
+        }
+        
         const fileName = fileOrUrl.split('/').pop() || 'file';
         file = new File([blob], fileName, { type: blob.type });
       } catch (err) {
@@ -159,67 +198,88 @@ export async function uploadFileToStorage(bucket: string, path: string, fileOrUr
       file = fileOrUrl;
     }
 
-    // Validate file
-    console.log("FILE DEBUG:", {
-      file,
-      isFile: file instanceof File,
-      type: file?.type,
-      size: file?.size,
-      name: file?.name
-    });
-    
-    if (!(file instanceof File)) {
+    // Enhanced validation
+    const validation = validateFileForUpload(file);
+    if (!validation.valid) {
+      console.error("File validation failed:", validation.error, {
+        file,
+        isFile: file instanceof File,
+        type: file?.type,
+        size: file?.size,
+        name: file?.name,
+        lastModified: file?.lastModified
+      });
+      
       return {
         path: '',
         url: '',
         success: false,
-        error: 'Invalid file object'
+        error: validation.error || 'Invalid file'
       };
     }
 
     // Validate content type
     const contentType = file.type;
-    const isValidContentType = contentType.startsWith("image/") || contentType.startsWith("video/");
+    const isValidContentType = contentType.startsWith("image/") || contentType.startsWith("video/") || contentType.startsWith("audio/");
     
     if (!isValidContentType) {
       console.warn(`Potentially invalid content type: ${contentType}`);
     }
 
-    // Upload the file to storage with explicit content type
-    const { error: uploadError } = await supabase.storage
+    console.log("Uploading to storage:", {
+      bucket,
+      path,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+    });
+
+    // Upload to storage
+    const { data, error } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
-        contentType: contentType,
+        contentType: file.type,
         cacheControl: '3600',
         upsert: true
       });
 
-    if (uploadError) {
+    if (error) {
+      console.error('Storage upload error:', error);
       return {
         path: '',
         url: '',
         success: false,
-        error: uploadError.message
+        error: error.message
+      };
+    }
+
+    if (!data || !data.path) {
+      return {
+        path: '',
+        url: '',
+        success: false,
+        error: 'Upload successful but no path returned'
       };
     }
 
     // Get the public URL
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    
-    console.log("Upload successful, URL:", data.publicUrl);
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
 
     return {
-      path,
-      url: data.publicUrl,
+      path: data.path,
+      url: urlData.publicUrl,
       success: true,
       error: null
     };
   } catch (err) {
+    console.error('Storage upload error:', err);
     return {
       path: '',
       url: '',
       success: false,
-      error: `Unexpected error: ${err instanceof Error ? err.message : String(err)}`
+      error: err instanceof Error ? err.message : String(err)
     };
   }
 }

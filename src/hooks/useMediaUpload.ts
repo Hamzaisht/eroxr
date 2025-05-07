@@ -53,13 +53,14 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     file: File,
     options?: UploadOptions
   ): FileValidationResult => {
-    // CRITICAL: Debug file info
-    console.log("FILE DEBUG:", {
+    // CRITICAL: Enhanced file validation
+    console.log("FILE VALIDATION:", {
       file,
       isFile: file instanceof File,
       type: file?.type,
       size: file?.size,
-      name: file?.name
+      name: file?.name,
+      lastModified: file?.lastModified
     });
     
     if (!file) {
@@ -69,6 +70,11 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     
     if (!(file instanceof File)) {
       const error = 'Invalid file object';
+      return { valid: false, error };
+    }
+
+    if (file.size === 0) {
+      const error = `File "${file.name}" is empty (0 bytes)`;
       return { valid: false, error };
     }
 
@@ -87,6 +93,17 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       return { valid: false, error };
     }
 
+    // Additional validation to ensure file has content
+    if (!file.type) {
+      const error = 'File has no content type';
+      return { valid: false, error };
+    }
+
+    if (!file.name) {
+      const error = 'File has no name';
+      return { valid: false, error };
+    }
+
     return { valid: true };
   }, [defaultOptions]);
 
@@ -100,6 +117,33 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       
       toast({
         title: 'Authentication Required',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      
+      return { success: false, error: errorMessage };
+    }
+
+    // CRITICAL: Strict validation before proceeding
+    if (!file || !(file instanceof File)) {
+      const errorMessage = 'Invalid file object provided';
+      console.error(errorMessage, file);
+      
+      toast({
+        title: 'Invalid File',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      
+      return { success: false, error: errorMessage };
+    }
+
+    if (file.size === 0) {
+      const errorMessage = `File "${file.name}" is empty (0 bytes)`;
+      console.error(errorMessage, file);
+      
+      toast({
+        title: 'Empty File',
         description: errorMessage,
         variant: 'destructive',
       });

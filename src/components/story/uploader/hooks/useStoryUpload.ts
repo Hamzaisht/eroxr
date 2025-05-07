@@ -37,6 +37,21 @@ export const useStoryUpload = () => {
 
   // Validate file before upload
   const validateFile = useCallback((file: File): { valid: boolean; message?: string } => {
+    // CRITICAL: Enhanced validation
+    if (!file || !(file instanceof File)) {
+      return { 
+        valid: false, 
+        message: 'Invalid file object' 
+      };
+    }
+    
+    if (file.size === 0) {
+      return { 
+        valid: false, 
+        message: `File "${file.name}" is empty (0 bytes)` 
+      };
+    }
+    
     // Check if file is an image or video
     if (!isImageFile(file) && !isVideoFile(file)) {
       return { 
@@ -62,6 +77,29 @@ export const useStoryUpload = () => {
     try {
       // Reset any previous state
       resetState();
+      
+      // CRITICAL: Enhanced validation
+      if (!file || !(file instanceof File)) {
+        setError('Invalid file object');
+        console.error("Invalid file object:", file);
+        toast({
+          title: 'Invalid file',
+          description: 'The selected file is not valid',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      
+      if (file.size === 0) {
+        setError(`File "${file.name}" is empty (0 bytes)`);
+        console.error("Empty file:", file.name);
+        toast({
+          title: 'Empty file',
+          description: 'The selected file has no content',
+          variant: 'destructive',
+        });
+        return false;
+      }
       
       // Validate file
       const validationResult = validateFile(file);
@@ -97,6 +135,27 @@ export const useStoryUpload = () => {
         variant: 'destructive',
       });
       return { success: false, error: 'Authentication required' };
+    }
+
+    // CRITICAL: Final validation before upload
+    if (!file || !(file instanceof File)) {
+      setError('Invalid file object');
+      toast({
+        title: 'Invalid file',
+        description: 'The selected file is not valid',
+        variant: 'destructive',
+      });
+      return { success: false, error: 'Invalid file object' };
+    }
+    
+    if (file.size === 0) {
+      setError(`File "${file.name}" is empty (0 bytes)`);
+      toast({
+        title: 'Empty file',
+        description: 'The selected file has no content',
+        variant: 'destructive',
+      });
+      return { success: false, error: 'Empty file' };
     }
 
     setIsUploading(true);
