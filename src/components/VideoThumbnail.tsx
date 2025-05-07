@@ -28,6 +28,12 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
     console.error("Video thumbnail error:", videoUrl);
   };
 
+  // The VideoPlayer component accepts an onLoadedData callback
+  const handleLoadedData = () => {
+    // We can log that the video is ready to play
+    console.log("Video loaded, ready to play");
+  };
+
   if (isMobile) {
     return (
       <VideoPlayer 
@@ -35,9 +41,8 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
         className="w-full h-full"
         autoPlay={isHovered}
         playOnHover={false}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
         onError={handleError}
+        onLoadedData={handleLoadedData}
       />
     );
   }
@@ -63,9 +68,8 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
         className="w-full h-full"
         playOnHover={true}
         autoPlay={isHovered}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
         onError={handleError}
+        onLoadedData={handleLoadedData}
       />
     </>
   );
