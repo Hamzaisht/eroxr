@@ -23,7 +23,7 @@ export const useAdMediaUpload = () => {
     try {
       // Video Upload Process
       if (videoFile) {
-        // Debug file info
+        // CRITICAL: Debug file info
         console.log("FILE DEBUG:", {
           file: videoFile,
           isFile: videoFile instanceof File,
@@ -59,12 +59,12 @@ export const useAdMediaUpload = () => {
         const videoFileName = `${session.user.id}/${Date.now()}_video.mp4`;
         console.log("Uploading video to path:", videoFileName);
         
-        // Upload with explicit content type
+        // CRITICAL: Upload with explicit content type and upsert: true
         const { error: videoError, data: videoData } = await supabase.storage
           .from('dating-videos')
           .upload(videoFileName, videoFile, {
             cacheControl: '3600',
-            upsert: false,
+            upsert: true,
             contentType: videoFile.type
           });
 
@@ -75,6 +75,7 @@ export const useAdMediaUpload = () => {
 
         console.log("Video upload successful:", videoData);
         
+        // Test the upload with getPublicUrl
         const { data: { publicUrl } } = supabase.storage
           .from('dating-videos')
           .getPublicUrl(videoFileName);
@@ -85,7 +86,7 @@ export const useAdMediaUpload = () => {
 
       // Avatar Upload Process
       if (avatarFile) {
-        // Debug file info
+        // CRITICAL: Debug file info
         console.log("FILE DEBUG:", {
           file: avatarFile,
           isFile: avatarFile instanceof File,
@@ -106,12 +107,12 @@ export const useAdMediaUpload = () => {
         
         const avatarFileName = `${session.user.id}/${Date.now()}_avatar.jpg`;
         
-        // Upload with explicit content type
+        // CRITICAL: Upload with explicit content type and upsert: true
         const { error: avatarError, data: avatarData } = await supabase.storage
           .from('avatars')
           .upload(avatarFileName, avatarFile, {
             cacheControl: '3600',
-            upsert: false,
+            upsert: true,
             contentType: avatarFile.type
           });
 
@@ -122,6 +123,7 @@ export const useAdMediaUpload = () => {
 
         console.log("Avatar upload successful:", avatarData);
         
+        // Test the upload with getPublicUrl
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
           .getPublicUrl(avatarFileName);

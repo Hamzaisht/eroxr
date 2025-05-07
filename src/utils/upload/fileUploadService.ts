@@ -37,7 +37,7 @@ export const uploadFile = async (
     return { success: false, error: "No file provided" };
   }
   
-  // File validation check
+  // CRITICAL: File validation check
   console.log("FILE DEBUG:", {
     file,
     isFile: file instanceof File,
@@ -59,18 +59,18 @@ export const uploadFile = async (
     // Create a unique file path
     const filePath = createUniqueFilePath(userId, file);
     
-    // Determine content type - explicitly use the file's type
+    // CRITICAL: Explicitly use the file's type
     const contentType = file.type;
     
     console.log(`Uploading ${file.name} (${contentType}) to ${bucket}/${filePath}`);
     
-    // Upload to Supabase with explicit content type
+    // CRITICAL: Upload to Supabase with explicit content type and upsert: true
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(filePath, file, {
         contentType: contentType,
         cacheControl: '3600',
-        upsert: options?.upsert ?? true
+        upsert: true  // CRITICAL: Allow overwrites to prevent failed uploads
       });
       
     if (error) {
@@ -88,7 +88,14 @@ export const uploadFile = async (
       };
     }
     
-    // Get the URL using our new utility function
+    // Test upload with getPublicUrl
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+      
+    console.log("Uploaded URL:", urlData.publicUrl);
+    
+    // Get the URL using our utility function
     const { url: mediaUrl, error: urlError } = await getSupabaseUrl(bucket, data.path, {
       useSignedUrls: true // Change this to false for public buckets
     });

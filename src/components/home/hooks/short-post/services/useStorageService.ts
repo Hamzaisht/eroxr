@@ -25,6 +25,34 @@ export const useStorageService = () => {
     videoFile: File
   ): Promise<{ success: boolean; path?: string; url?: string; error?: string }> => {
     try {
+      // CRITICAL: Debug file info
+      console.log("FILE DEBUG:", {
+        file: videoFile,
+        isFile: videoFile instanceof File,
+        type: videoFile?.type,
+        size: videoFile?.size,
+        name: videoFile?.name
+      });
+      
+      // Validate file
+      if (!(videoFile instanceof File)) {
+        return { 
+          success: false, 
+          error: 'Invalid file object'
+        };
+      }
+      
+      // Validate content type
+      const contentType = videoFile.type;
+      const isValidVideo = contentType.startsWith("video/");
+      
+      if (!isValidVideo) {
+        return { 
+          success: false, 
+          error: `Invalid file type: ${contentType}. Only videos are allowed.` 
+        };
+      }
+      
       // Use utility function to create a unique file path
       const filePath = createUniqueFilePath(userId, videoFile);
       const bucketName = 'shorts';
@@ -32,52 +60,25 @@ export const useStorageService = () => {
       console.log("Uploading to path:", filePath, "in bucket:", bucketName);
       console.log("File type:", videoFile.type);
       
-      // First upload attempt with explicit content type
-      let uploadResult = await supabase.storage
+      // CRITICAL: Upload with explicit content type and upsert: true
+      const uploadResult = await supabase.storage
         .from(bucketName)
         .upload(filePath, videoFile, {
           cacheControl: '3600',
           upsert: true,
-          contentType: videoFile.type // Explicitly set content type
+          contentType: contentType
         });
 
-      let uploadData = uploadResult.data;
-      let uploadError = uploadResult.error;
+      const uploadData = uploadResult.data;
+      const uploadError = uploadResult.error;
 
-      // Handle upload error with retry
+      // Handle upload error
       if (uploadError) {
-        console.error("First upload attempt failed:", uploadError);
-        
-        // Add a small delay before retry
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Generate a new unique path for retry
-        const retryFilePath = createUniqueFilePath(userId, videoFile);
-        
-        console.log("Retrying upload with path:", retryFilePath);
-        console.log("Retry with content type:", videoFile.type);
-        
-        // Retry with slightly different options
-        const retryResult = await supabase.storage
-          .from(bucketName)
-          .upload(retryFilePath, videoFile, {
-            cacheControl: '3600',
-            upsert: true,
-            contentType: videoFile.type
-          });
-        
-        uploadData = retryResult.data;
-        uploadError = retryResult.error;
-        
-        if (uploadError) {
-          console.error("Retry upload failed:", uploadError);
-          return { 
-            success: false, 
-            error: `Upload failed after retry: ${uploadError.message}` 
-          };
-        }
-        
-        console.log("Retry upload successful");
+        console.error("Upload failed:", uploadError);
+        return { 
+          success: false, 
+          error: `Upload failed: ${uploadError.message}` 
+        };
       }
       
       if (!uploadData || !uploadData.path) {
@@ -89,7 +90,14 @@ export const useStorageService = () => {
       
       console.log("Upload successful, path:", uploadData.path);
       
-      // Generate the full public URL using Supabase's getPublicUrl method
+      // Test the upload with getPublicUrl
+      const { data: urlData } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(uploadData.path);
+      
+      console.log("Public URL test:", urlData.publicUrl);
+      
+      // Get the public URL using Supabase's getPublicUrl method
       const { data: { publicUrl } } = supabase.storage
         .from(bucketName)
         .getPublicUrl(uploadData.path);

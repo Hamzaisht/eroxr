@@ -5,6 +5,7 @@ import { uploadFileToStorage, createUniqueFilePath } from '@/utils/media/mediaUt
 import { UploadOptions, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useToast } from './use-toast';
 import { getSupabaseUrl } from '@/utils/media/supabaseUrlUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 // Helper constants for file validation
 const MAX_FILE_SIZE_DEFAULT = 50; // MB
@@ -52,7 +53,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     file: File,
     options?: UploadOptions
   ): FileValidationResult => {
-    // Debug file info
+    // CRITICAL: Debug file info
     console.log("FILE DEBUG:", {
       file,
       isFile: file instanceof File,
@@ -161,18 +162,25 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         path: path
       });
       
-      // Upload the file using the mediaUtils function
-      const result = await uploadFileToStorage(bucket, path, file);
+      // CRITICAL: Direct Supabase upload with explicit content type
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(path, file, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: true
+        });
 
       clearInterval(progressInterval);
-
-      console.log("Upload result:", result);
-
-      if (!result.success) {
+      
+      // CRITICAL: Proper error handling
+      if (error) {
+        console.error("Upload error:", error);
+        
         setUploadState({
           isUploading: false,
           progress: 0,
-          error: result.error || 'Upload failed',
+          error: error.message || 'Upload failed',
           result: null,
           files: [],
           previews: [],
@@ -182,21 +190,59 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         
         toast({
           title: 'Upload Failed',
-          description: result.error || 'Failed to upload file',
+          description: error.message || 'Failed to upload file',
           variant: 'destructive',
         });
         
-        return { success: false, error: result.error };
+        return { success: false, error: error.message };
       }
       
-      // Get URL using our new utility if needed
-      let mediaUrl = result.url;
-      
-      if (!mediaUrl && result.path) {
-        const { url } = await getSupabaseUrl(bucket, result.path, { 
-          useSignedUrls: true // Change this to false for public buckets
+      if (!data || !data.path) {
+        const errorMsg = "Upload completed but no file path returned";
+        console.error(errorMsg);
+        
+        setUploadState({
+          isUploading: false,
+          progress: 0,
+          error: errorMsg,
+          result: null,
+          files: [],
+          previews: [],
+          isComplete: false,
+          success: false
         });
-        mediaUrl = url || '';
+        
+        return { success: false, error: errorMsg };
+      }
+      
+      // Test the upload with getPublicUrl
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
+      
+      console.log("Uploaded URL:", urlData.publicUrl);
+      
+      // Get URL using our utility
+      const { url: mediaUrl } = await getSupabaseUrl(bucket, data.path, { 
+        useSignedUrls: true // Change this to false for public buckets
+      });
+      
+      if (!mediaUrl) {
+        const errorMsg = "Failed to get media URL";
+        console.error(errorMsg);
+        
+        setUploadState({
+          isUploading: false,
+          progress: 0,
+          error: errorMsg,
+          result: null,
+          files: [],
+          previews: [],
+          isComplete: false,
+          success: false
+        });
+        
+        return { success: false, error: errorMsg };
       }
 
       // Upload successful
@@ -204,7 +250,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         isUploading: false,
         progress: 100,
         error: null,
-        result: { ...result, url: mediaUrl },
+        result: { path: data.path, url: mediaUrl },
         files: [],
         previews: [],
         isComplete: true,
@@ -223,7 +269,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       return {
         success: true,
         url: mediaUrl || '',
-        path: result.path || ''
+        path: data.path || ''
       };
     } catch (error: any) {
       clearInterval(progressInterval);

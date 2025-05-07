@@ -51,7 +51,7 @@ export const useVideoUpload = () => {
     }
 
     try {
-      // Debug file info
+      // CRITICAL: Debug file info
       console.log("FILE DEBUG:", {
         file,
         isFile: file instanceof File,
@@ -101,7 +101,7 @@ export const useVideoUpload = () => {
       
       console.log(`Uploading video to path: shorts/${path} with content type: ${file.type}`);
       
-      // Upload directly to Supabase with explicit content type
+      // CRITICAL: Upload directly to Supabase with explicit content type and upsert: true
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('shorts')
         .upload(path, file, {
@@ -113,6 +113,8 @@ export const useVideoUpload = () => {
       clearInterval(progressInterval);
       
       if (uploadError) {
+        console.error("Video upload error:", uploadError);
+        
         setUploadState({
           isUploading: false,
           progress: 0,
@@ -128,6 +130,8 @@ export const useVideoUpload = () => {
       
       if (!uploadData) {
         const errorMsg = "Upload completed but no data returned";
+        console.error(errorMsg);
+        
         setUploadState({
           isUploading: false,
           progress: 0,
@@ -141,13 +145,15 @@ export const useVideoUpload = () => {
         };
       }
       
-      // Get public URL
+      // Test upload with getPublicUrl
       const { data: { publicUrl } } = supabase.storage
         .from('shorts')
         .getPublicUrl(path);
       
       if (!publicUrl) {
         const errorMsg = "Upload completed but no URL returned";
+        console.error(errorMsg);
+        
         setUploadState({
           isUploading: false,
           progress: 0,

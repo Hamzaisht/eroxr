@@ -52,7 +52,7 @@ export const useStoryUpload = () => {
       };
     }
     
-    // Validate and debug file
+    // CRITICAL: Validate and debug file
     console.log("FILE DEBUG:", {
       file,
       isFile: file instanceof File,
@@ -114,18 +114,30 @@ export const useStoryUpload = () => {
       
       console.log(`Uploading ${mediaType} story with content type: ${contentType}`);
       
-      // Upload to Supabase storage with explicit content type
+      // CRITICAL: Upload to Supabase storage with explicit content type and upsert: true
       const { data, error: uploadError } = await supabase.storage
         .from('stories')
         .upload(path, file, {
-          contentType: contentType,
-          upsert: true,
+          contentType: contentType,  // CRITICAL: Set correct content type
+          upsert: true,              // CRITICAL: Allow overwrites
           cacheControl: '3600'
         });
       
       if (uploadError) {
+        console.error("Story upload error:", uploadError);
         throw new Error(uploadError.message);
       }
+      
+      if (!data || !data.path) {
+        throw new Error("Supabase returned no path for uploaded story media");
+      }
+      
+      // Test the upload with getPublicUrl
+      const { data: urlData } = supabase.storage
+        .from('stories')
+        .getPublicUrl(data.path);
+      
+      console.log("Story upload URL:", urlData.publicUrl);
       
       // Get the public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage
