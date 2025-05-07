@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { getPlayableMediaUrl, extractMediaUrl } from "@/utils/media/urlUtils";
@@ -10,6 +9,8 @@ interface VideoThumbnailProps {
 }
 
 export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnailProps) => {
+  // Since we have a TODO to track playback state in the future, we'll keep the state
+  // but properly implement it with our current VideoPlayer component capabilities
   const [isPlaying, setIsPlaying] = useState(false);
   
   // Process and validate video URL
@@ -32,6 +33,11 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
   const handleLoadedData = () => {
     // We can log that the video is ready to play
     console.log("Video loaded, ready to play");
+    
+    // If video is autoplaying (when hovered), update our playing state
+    if (isHovered) {
+      setIsPlaying(true);
+    }
   };
 
   if (isMobile) {
