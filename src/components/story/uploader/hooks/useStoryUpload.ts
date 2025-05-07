@@ -159,13 +159,14 @@ export const useStoryUpload = () => {
     }
 
     // Log file details right before upload
-    console.log("Final upload check - File object:", {
+    console.log("FILE DEBUG >>>", {
       name: file.name,
       size: file.size,
       type: file.type,
       isBlob: file instanceof Blob,
       isFile: file instanceof File,
-      lastModified: file.lastModified
+      lastModified: file.lastModified,
+      preview: URL.createObjectURL(file)
     });
 
     setIsUploading(true);

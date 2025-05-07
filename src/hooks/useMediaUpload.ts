@@ -54,7 +54,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
     options?: UploadOptions
   ): FileValidationResult => {
     // CRITICAL: Enhanced file validation
-    console.log("FILE VALIDATION:", {
+    console.log("FILE DEBUG >>>", {
       file,
       isFile: file instanceof File,
       type: file?.type,
@@ -104,6 +104,17 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       return { valid: false, error };
     }
 
+    // Try creating a preview URL as an additional validation
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      URL.revokeObjectURL(previewUrl);
+      console.log("Preview URL validation successful");
+    } catch (err) {
+      console.error("Failed to create preview URL - file may be invalid:", err);
+      const error = 'File cannot be previewed - it may be corrupted';
+      return { valid: false, error };
+    }
+
     return { valid: true };
   }, [defaultOptions]);
 
@@ -150,6 +161,17 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       
       return { success: false, error: errorMessage };
     }
+
+    // Log file details right before validation
+    console.log("FILE DEBUG >>>", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      isBlob: file instanceof Blob,
+      isFile: file instanceof File,
+      lastModified: file.lastModified,
+      preview: URL.createObjectURL(file)
+    });
 
     const validation = validateFile(file, options);
     if (!validation.valid) {
@@ -287,6 +309,18 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         });
         
         return { success: false, error: errorMsg };
+      }
+
+      // Final verification - test if the uploaded file can be accessed
+      try {
+        const response = await fetch(mediaUrl, { method: 'HEAD' });
+        if (!response.ok) {
+          console.warn(`Upload verification check failed: ${response.status} ${response.statusText}`);
+        } else {
+          console.log("Upload verification successful - URL is accessible");
+        }
+      } catch (verifyError) {
+        console.warn("Could not verify uploaded file URL:", verifyError);
       }
 
       // Upload successful

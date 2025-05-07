@@ -118,12 +118,13 @@ export const MediaUploader = ({
     const file = e.target.files?.[0];
     if (!file) return;
     
-    console.log("FILE DEBUG:", {
-      file,
+    console.log("FILE DEBUG >>>", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      isBlob: file instanceof Blob,
       isFile: file instanceof File,
-      type: file?.type,
-      size: file?.size,
-      name: file?.name
+      preview: URL.createObjectURL(file)
     });
     
     // Validate file is an actual File object
@@ -166,15 +167,20 @@ export const MediaUploader = ({
   };
   
   const handleUpload = async (file: File) => {
-    console.log("Starting upload for file:", file.name, file.type);
+    console.log("FILE DEBUG >>>", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      isBlob: file instanceof Blob,
+      isFile: file instanceof File,
+      preview: URL.createObjectURL(file)
+    });
     
     const result = await uploadMedia(file, uploadOptions);
     
     if (result.success && result.url) {
-      console.log("Upload completed successfully:", result.url);
       if (onComplete) onComplete(result.url);
     } else {
-      console.error("Upload failed:", result.error);
       if (onError) onError(result.error || "Upload failed");
     }
   };

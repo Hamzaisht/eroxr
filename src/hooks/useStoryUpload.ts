@@ -53,16 +53,28 @@ export const useStoryUpload = () => {
     }
     
     // CRITICAL: Validate and debug file
-    console.log("FILE DEBUG:", {
+    console.log("FILE DEBUG >>>", {
       file,
       isFile: file instanceof File,
       type: file?.type,
       size: file?.size,
-      name: file?.name
+      name: file?.name,
+      preview: file ? URL.createObjectURL(file) : null
     });
     
     if (!(file instanceof File)) {
       const error = "Invalid file object";
+      setState(prev => ({ ...prev, error }));
+      return { 
+        success: false, 
+        url: null, 
+        mediaType: null, 
+        error 
+      };
+    }
+    
+    if (file.size === 0) {
+      const error = "Empty file (0 bytes)";
       setState(prev => ({ ...prev, error }));
       return { 
         success: false, 
@@ -148,6 +160,18 @@ export const useStoryUpload = () => {
       
       if (!publicUrl) {
         throw new Error("Failed to get public URL for story media");
+      }
+      
+      // Verification check - test if the URL is accessible
+      try {
+        const response = await fetch(publicUrl, { method: 'HEAD' });
+        if (!response.ok) {
+          console.warn(`Upload verification failed: ${response.status} ${response.statusText}`);
+        } else {
+          console.log("Upload verification successful - URL is accessible");
+        }
+      } catch (verifyError) {
+        console.warn("Could not verify uploaded file URL:", verifyError);
       }
       
       console.log("Story upload successful:", {

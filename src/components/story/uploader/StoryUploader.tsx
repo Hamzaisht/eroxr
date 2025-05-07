@@ -38,17 +38,19 @@ export const StoryUploader = () => {
     }
     
     // Log file details before processing
-    console.log("Uploading real File object:", {
+    console.log("FILE DEBUG >>>", {
       name: file.name,
       size: file.size,
       type: file.type,
       isBlob: file instanceof Blob,
-      isFile: file instanceof File
+      isFile: file instanceof File,
+      preview: URL.createObjectURL(file)
     });
     
     // Use the hook's validation and selection
     const success = await handleFileSelect(file);
     if (success) {
+      // IMPORTANT: Pass the original file object directly to upload without serialization
       await uploadFile(file);
     }
   };
