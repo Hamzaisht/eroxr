@@ -250,7 +250,7 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         isUploading: false,
         progress: 100,
         error: null,
-        result: { path: data.path, url: mediaUrl },
+        result: { path: data.path, url: mediaUrl, success: true, error: null },
         files: [],
         previews: [],
         isComplete: true,
@@ -265,9 +265,10 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         }, delay);
       }
 
-      // Return the result with url and path
+      // Return the result with url and path - fixing the type mismatch
       return {
         success: true,
+        error: null,
         url: mediaUrl || '',
         path: data.path || ''
       };
