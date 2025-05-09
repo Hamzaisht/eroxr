@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 interface UploadState {
   isUploading: boolean;
@@ -50,6 +51,25 @@ export const useVideoUpload = () => {
       };
     }
 
+    // CRITICAL: Run comprehensive file diagnostic
+    runFileDiagnostic(file);
+    
+    // CRITICAL: Strict file validation before upload
+    if (!file || !(file instanceof File) || file.size === 0) {
+      const errorMessage = "Only raw File instances with data can be uploaded";
+      console.error("❌ Invalid File passed to uploader", file);
+      
+      setUploadState(prev => ({
+        ...prev,
+        error: errorMessage
+      }));
+      
+      return { 
+        success: false, 
+        error: errorMessage
+      };
+    }
+
     try {
       // CRITICAL: Debug file info
       console.log("FILE DEBUG:", {
@@ -60,11 +80,7 @@ export const useVideoUpload = () => {
         name: file?.name
       });
       
-      // Validate file
-      if (!(file instanceof File)) {
-        throw new Error("Invalid file object");
-      }
-      
+      // Validate file type
       const isValidVideoType = file.type.startsWith("video/");
       if (!isValidVideoType) {
         throw new Error(`Invalid file type: ${file.type}. Only videos are allowed.`);
@@ -145,14 +161,17 @@ export const useVideoUpload = () => {
         };
       }
       
-      // Test upload with getPublicUrl
+      // Get public URL and verify it exists
       const { data: { publicUrl } } = supabase.storage
         .from('shorts')
         .getPublicUrl(path);
       
-      if (!publicUrl) {
+      // CRITICAL: Verify and log the result
+      if (publicUrl) {
+        console.log("✅ Supabase URL:", publicUrl);
+      } else {
         const errorMsg = "Upload completed but no URL returned";
-        console.error(errorMsg);
+        console.error("❌ Supabase URL missing");
         
         setUploadState({
           isUploading: false,
@@ -165,6 +184,18 @@ export const useVideoUpload = () => {
           success: false, 
           error: errorMsg
         };
+      }
+      
+      // Verify URL is accessible
+      try {
+        const response = await fetch(publicUrl, { method: 'HEAD' });
+        if (!response.ok) {
+          console.warn(`Upload verification failed: ${response.status} ${response.statusText}`);
+        } else {
+          console.log("Upload verification successful - URL is accessible");
+        }
+      } catch (verifyError) {
+        console.warn("Could not verify uploaded file URL:", verifyError);
       }
       
       console.log("Upload successful, URL:", publicUrl);

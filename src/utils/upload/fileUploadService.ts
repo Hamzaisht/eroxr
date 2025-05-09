@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { createUniqueFilePath } from "@/utils/media/mediaUtils";
+import { createUniqueFilePath, runFileDiagnostic } from "@/utils/upload/fileUtils";
 import { inferContentTypeFromExtension } from "@/utils/media/formatUtils";
 import { addCacheBuster } from "@/utils/media/urlUtils";
 import { getSupabaseUrl } from "@/utils/media/supabaseUrlUtils";
@@ -32,9 +32,17 @@ export const uploadFile = async (
   bucket: string,
   userId: string,
   options?: FileUploadOptions
-): Promise<FileUploadResult> => {
-  if (!file) {
-    return { success: false, error: "No file provided" };
+): Promise<FileUploadResult> {
+  // CRITICAL: Run comprehensive file diagnostic
+  runFileDiagnostic(file);
+  
+  // CRITICAL: Strict file validation before upload
+  if (!file || !(file instanceof File) || file.size === 0) {
+    console.error("❌ Invalid File passed to uploader", file);
+    return { 
+      success: false, 
+      error: "Only raw File instances with data can be uploaded" 
+    };
   }
   
   // CRITICAL: File validation check
@@ -45,15 +53,6 @@ export const uploadFile = async (
     size: file?.size,
     name: file?.name
   });
-  
-  if (!(file instanceof File)) {
-    return { success: false, error: "Invalid file object" };
-  }
-  
-  const isValidContentType = file.type.startsWith("image/") || file.type.startsWith("video/");
-  if (!isValidContentType) {
-    return { success: false, error: "Invalid file type. Only images and videos are allowed." };
-  }
   
   try {
     // Create a unique file path
@@ -93,7 +92,12 @@ export const uploadFile = async (
       .from(bucket)
       .getPublicUrl(data.path);
       
-    console.log("Uploaded URL:", urlData.publicUrl);
+    // CRITICAL: Verify and log the result
+    if (urlData?.publicUrl) {
+      console.log("✅ Supabase URL:", urlData.publicUrl);
+    } else {
+      console.error("❌ Supabase URL missing");
+    }
     
     // Get the URL using our utility function
     const { url: mediaUrl, error: urlError } = await getSupabaseUrl(bucket, data.path, {
@@ -125,7 +129,7 @@ export const uploadFile = async (
       error: error.message || "An unknown error occurred"
     };
   }
-};
+}
 
 /**
  * Create a local preview URL for a file

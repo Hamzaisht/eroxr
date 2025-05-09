@@ -4,7 +4,7 @@ import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { useStories } from '@/components/story/hooks/useStories';
 import { isImageFile, isVideoFile, validateFileForUpload } from '@/utils/upload/validators';
-import { createFilePreview, revokeFilePreview } from '@/utils/upload/fileUtils';
+import { createFilePreview, revokeFilePreview, runFileDiagnostic } from '@/utils/upload/fileUtils';
 
 export const useStoryUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -28,6 +28,18 @@ export const useStoryUpload = () => {
 
   // Validate file before upload
   const validateFile = useCallback((file: File): { valid: boolean; message?: string } => {
+    // CRITICAL: Run comprehensive file diagnostic
+    runFileDiagnostic(file);
+    
+    // CRITICAL: Strict file validation
+    if (!file || !(file instanceof File) || file.size === 0) {
+      console.error("❌ Invalid File passed to uploader", file);
+      return { 
+        valid: false, 
+        message: "Only raw File instances with data can be uploaded"
+      };
+    }
+    
     // Basic validation
     const validation = validateFileForUpload(file);
     if (!validation.valid) {
@@ -59,6 +71,9 @@ export const useStoryUpload = () => {
     try {
       // Reset any previous state
       resetState();
+      
+      // CRITICAL: Run comprehensive file diagnostic
+      runFileDiagnostic(file);
       
       // Validate file
       const validationResult = validateFile(file);
@@ -94,6 +109,22 @@ export const useStoryUpload = () => {
         variant: 'destructive',
       });
       return { success: false, error: 'Authentication required' };
+    }
+
+    // CRITICAL: Run comprehensive file diagnostic
+    runFileDiagnostic(file);
+    
+    // CRITICAL: Strict file validation
+    if (!file || !(file instanceof File) || file.size === 0) {
+      const errorMessage = "Only raw File instances with data can be uploaded";
+      console.error("❌ Invalid File passed to uploader", file);
+      setError(errorMessage);
+      toast({
+        title: 'Invalid file',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      return { success: false, error: errorMessage };
     }
 
     // Final validation before upload

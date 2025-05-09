@@ -3,6 +3,7 @@ import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { RefObject } from "react";
+import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 interface VideoFileSelectorProps {
   fileInputRef: RefObject<HTMLInputElement>;
@@ -15,6 +16,33 @@ export const VideoFileSelector = ({
   isSubmitting,
   onFileSelect
 }: VideoFileSelectorProps) => {
+  // Enhanced file selection handler with validation
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    
+    // CRITICAL: Validate file before processing
+    if (!file) {
+      console.error("❌ No file selected");
+      return;
+    }
+    
+    if (!(file instanceof File)) {
+      console.error("❌ Invalid file object:", file);
+      return;
+    }
+    
+    if (file.size === 0) {
+      console.error("❌ File has zero size:", file.name);
+      return;
+    }
+    
+    // Run diagnostic on the raw file
+    runFileDiagnostic(file);
+    
+    // Pass the original event to parent handler
+    onFileSelect(e);
+  };
+
   return (
     <motion.div 
       className="flex flex-col items-center"
@@ -27,7 +55,7 @@ export const VideoFileSelector = ({
         id="video"
         type="file"
         accept="video/mp4,video/webm,video/quicktime"
-        onChange={onFileSelect}
+        onChange={handleFileChange}
         className="hidden"
       />
       <Button

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
-import { createUniqueFilePath } from '@/utils/upload/fileUtils';
+import { createUniqueFilePath, runFileDiagnostic } from '@/utils/upload/fileUtils';
 import { validateFileForUpload } from '@/utils/upload/validators';
 
 interface UploadState {
@@ -50,6 +50,22 @@ export const useStoryUpload = () => {
         url: null, 
         mediaType: null, 
         error 
+      };
+    }
+    
+    // CRITICAL: Run comprehensive file diagnostic
+    runFileDiagnostic(file);
+    
+    // CRITICAL: Strict file validation before upload
+    if (!file || !(file instanceof File) || file.size === 0) {
+      const error = "Only raw File instances with data can be uploaded";
+      console.error("❌ Invalid File passed to uploader", file);
+      setState(prev => ({ ...prev, error }));
+      return { 
+        success: false, 
+        url: null, 
+        mediaType: null, 
+        error
       };
     }
     
@@ -143,7 +159,11 @@ export const useStoryUpload = () => {
         
       clearInterval(progressInterval);
       
-      if (!publicUrl) {
+      // CRITICAL: Verify and log the result
+      if (publicUrl) {
+        console.log("✅ Supabase URL:", publicUrl);
+      } else {
+        console.error("❌ Supabase URL missing");
         throw new Error("Failed to get public URL for story media");
       }
       

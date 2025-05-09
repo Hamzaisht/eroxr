@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { validateFileForUpload } from "./validators";
+import { validateFileForUpload, runFileDiagnostic } from "./validators";
 import { logFileDebugInfo } from "./fileUtils";
 
 /**
@@ -22,6 +22,18 @@ export async function uploadFileToStorage(
   file: File
 ): Promise<UploadResult> {
   try {
+    // CRITICAL: Run comprehensive file diagnostic
+    runFileDiagnostic(file);
+    
+    // CRITICAL: Strict file validation before upload
+    if (!file || !(file instanceof File) || file.size === 0) {
+      console.error("❌ Invalid File passed to uploader", file);
+      return {
+        success: false,
+        error: "Only raw File instances with data can be uploaded"
+      };
+    }
+    
     // Validate file before upload
     const validation = validateFileForUpload(file);
     if (!validation.valid) {
@@ -63,7 +75,12 @@ export async function uploadFileToStorage(
       .from(bucket)
       .getPublicUrl(data.path);
     
-    console.log("Public Supabase URL:", urlData.publicUrl);
+    // CRITICAL: Verify and log the result
+    if (urlData?.publicUrl) {
+      console.log("✅ Supabase URL:", urlData.publicUrl);
+    } else {
+      console.error("❌ Supabase URL missing");
+    }
     
     // Verify URL is accessible
     try {

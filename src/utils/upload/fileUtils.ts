@@ -40,3 +40,68 @@ export function createUniqueFilePath(userId: string, file: File): string {
   
   return `${userId}/${timestamp}-${random}.${fileExt}`;
 }
+
+/**
+ * Run comprehensive file diagnostic to validate file integrity
+ * CRITICAL: Call this before every upload to validate file integrity
+ */
+export function runFileDiagnostic(file: File | Blob | any): void {
+  try {
+    // Attempt to create a URL to verify we can access the file data
+    let previewUrl = null;
+    try {
+      previewUrl = file ? URL.createObjectURL(file) : "FAILED";
+    } catch (err) {
+      console.error("🚨 Failed to create object URL from file:", err);
+    }
+
+    console.log("🧬 FILE DIAGNOSTIC", {
+      name: file?.name,
+      size: file?.size,
+      type: file?.type,
+      isFile: file instanceof File,
+      isBlob: file instanceof Blob,
+      url: previewUrl,
+      lastModified: file?.lastModified,
+      toString: Object.prototype.toString.call(file),
+    });
+    
+    // Clean up the URL we created
+    if (previewUrl && previewUrl !== "FAILED") {
+      URL.revokeObjectURL(previewUrl);
+    }
+  } catch (err) {
+    console.error("🧬 FILE DIAGNOSTIC FAILED:", err);
+  }
+}
+
+/**
+ * Validate that the file is suitable for upload
+ * CRITICAL: Call this before every upload to prevent invalid file uploads
+ */
+export function validateFileForUpload(file: any): { valid: boolean; message?: string } {
+  if (!file) {
+    return { valid: false, message: "No file provided" };
+  }
+  
+  if (!(file instanceof File)) {
+    return { valid: false, message: "Invalid file object. The provided data is not a File instance." };
+  }
+  
+  if (file.size === 0) {
+    return { valid: false, message: `File "${file.name}" is empty (0 bytes)` };
+  }
+  
+  // Check if we can create a preview URL as a test of file integrity
+  try {
+    const previewUrl = URL.createObjectURL(file);
+    URL.revokeObjectURL(previewUrl); // Clean up immediately
+  } catch (err) {
+    return { 
+      valid: false, 
+      message: "File data is corrupted or inaccessible" 
+    };
+  }
+  
+  return { valid: true };
+}

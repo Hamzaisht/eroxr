@@ -2,6 +2,7 @@
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { validateVideoFormat, getVideoDuration } from "@/utils/videoProcessing";
+import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 interface MediaUploadResult {
   videoUrl: string | null;
@@ -23,6 +24,15 @@ export const useAdMediaUpload = () => {
     try {
       // Video Upload Process
       if (videoFile) {
+        // CRITICAL: Run comprehensive file diagnostic
+        runFileDiagnostic(videoFile);
+        
+        // CRITICAL: Strict file validation
+        if (!videoFile || !(videoFile instanceof File) || videoFile.size === 0) {
+          console.error("❌ Invalid Video File passed to uploader", videoFile);
+          throw new Error("Only raw File instances with data can be uploaded");
+        }
+        
         // CRITICAL: Debug file info
         console.log("FILE DEBUG:", {
           file: videoFile,
@@ -33,10 +43,6 @@ export const useAdMediaUpload = () => {
         });
         
         // Validate file type
-        if (!(videoFile instanceof File)) {
-          throw new Error("Invalid video file object");
-        }
-        
         const isValidVideoType = videoFile.type.startsWith("video/");
         if (!isValidVideoType) {
           throw new Error(`Invalid file type: ${videoFile.type}. Only videos are allowed.`);
@@ -80,12 +86,29 @@ export const useAdMediaUpload = () => {
           .from('dating-videos')
           .getPublicUrl(videoFileName);
         
-        videoUrl = publicUrl;
+        // CRITICAL: Verify and log the result
+        if (publicUrl) {
+          console.log("✅ Supabase Video URL:", publicUrl);
+          videoUrl = publicUrl;
+        } else {
+          console.error("❌ Supabase Video URL missing");
+          throw new Error("Failed to get public URL for video");
+        }
+        
         console.log("Generated video URL:", videoUrl);
       }
 
       // Avatar Upload Process
       if (avatarFile) {
+        // CRITICAL: Run comprehensive file diagnostic
+        runFileDiagnostic(avatarFile);
+        
+        // CRITICAL: Strict file validation
+        if (!avatarFile || !(avatarFile instanceof File) || avatarFile.size === 0) {
+          console.error("❌ Invalid Avatar File passed to uploader", avatarFile);
+          throw new Error("Only raw File instances with data can be uploaded");
+        }
+        
         // CRITICAL: Debug file info
         console.log("FILE DEBUG:", {
           file: avatarFile,
@@ -96,10 +119,6 @@ export const useAdMediaUpload = () => {
         });
         
         // Validate file type
-        if (!(avatarFile instanceof File)) {
-          throw new Error("Invalid avatar file object");
-        }
-        
         const isValidImageType = avatarFile.type.startsWith("image/");
         if (!isValidImageType) {
           throw new Error(`Invalid file type: ${avatarFile.type}. Only images are allowed for avatars.`);
@@ -128,7 +147,15 @@ export const useAdMediaUpload = () => {
           .from('avatars')
           .getPublicUrl(avatarFileName);
         
-        avatarUrl = publicUrl;
+        // CRITICAL: Verify and log the result
+        if (publicUrl) {
+          console.log("✅ Supabase Avatar URL:", publicUrl);
+          avatarUrl = publicUrl;
+        } else {
+          console.error("❌ Supabase Avatar URL missing");
+          throw new Error("Failed to get public URL for avatar");
+        }
+        
         console.log("Generated avatar URL:", avatarUrl);
       }
 

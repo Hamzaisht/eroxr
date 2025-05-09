@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Camera, Upload, X } from "lucide-react";
 import { useStoryUpload } from './hooks/useStoryUpload';
+import { runFileDiagnostic } from '@/utils/upload/fileUtils';
 
 export const StoryUploader = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -19,7 +20,7 @@ export const StoryUploader = () => {
   } = useStoryUpload();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Get file directly from input event
+    // CRITICAL: Get file directly from input event, not from state
     const file = e.target.files?.[0];
     
     // CRITICAL: Enhanced validation before proceeding
@@ -38,15 +39,8 @@ export const StoryUploader = () => {
       return;
     }
     
-    // Log file details before processing
-    console.log("FILE DEBUG >>>", {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      isBlob: file instanceof Blob,
-      isFile: file instanceof File,
-      preview: URL.createObjectURL(file)
-    });
+    // CRITICAL: Run comprehensive file diagnostic
+    runFileDiagnostic(file);
     
     // Use the hook's validation and selection
     const success = await handleFileSelect(file);

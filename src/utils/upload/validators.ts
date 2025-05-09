@@ -22,6 +22,7 @@ export function isAudioFile(file: File): boolean {
 
 /**
  * Validates file before upload to ensure it's valid
+ * CRITICAL: Enhanced with stricter validation
  */
 export function validateFileForUpload(file: unknown): { valid: boolean, message?: string } {
   if (!file) {
@@ -34,6 +35,19 @@ export function validateFileForUpload(file: unknown): { valid: boolean, message?
   
   if (file.size === 0) {
     return { valid: false, message: `File "${file.name}" is empty (0 bytes)` };
+  }
+  
+  // Check for valid file type
+  if (!file.type) {
+    return { valid: false, message: 'File has no content type' };
+  }
+  
+  // Try creating a URL to ensure file data is accessible
+  try {
+    const url = URL.createObjectURL(file);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    return { valid: false, message: 'File data is inaccessible or corrupted' };
   }
   
   return { valid: true };

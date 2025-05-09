@@ -115,8 +115,33 @@ export const MediaUploader = ({
   }, [filePreviewError]);
   
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // CRITICAL: Get file directly from input event
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // CRITICAL: Run comprehensive file diagnostic
+    runFileDiagnostic(file);
+    
+    // CRITICAL: Strict file validation
+    if (!(file instanceof File)) {
+      console.error("❌ Invalid file object:", file);
+      if (onError) onError("Invalid file object");
+      return;
+    }
+    
+    if (file.size === 0) {
+      console.error("❌ File has zero size:", file.name);
+      if (onError) onError("File is empty (0 bytes)");
+      return;
+    }
+    
+    // Validate file type
+    const isValidType = file.type.startsWith("image/") || file.type.startsWith("video/");
+    if (!isValidType) {
+      console.error("❌ Invalid file type:", file.type);
+      if (onError) onError(`Invalid file type: ${file.type}. Only images and videos are allowed.`);
+      return;
+    }
     
     console.log("FILE DEBUG >>>", {
       name: file.name,
@@ -126,21 +151,6 @@ export const MediaUploader = ({
       isFile: file instanceof File,
       preview: URL.createObjectURL(file)
     });
-    
-    // Validate file is an actual File object
-    if (!(file instanceof File)) {
-      console.error("Invalid file object selected");
-      if (onError) onError("Invalid file object");
-      return;
-    }
-    
-    // Validate file type
-    const isValidType = file.type.startsWith("image/") || file.type.startsWith("video/");
-    if (!isValidType) {
-      console.error("Invalid file type:", file.type);
-      if (onError) onError(`Invalid file type: ${file.type}. Only images and videos are allowed.`);
-      return;
-    }
     
     const validation = validateFile(file);
     if (!validation.valid) { 
@@ -167,6 +177,16 @@ export const MediaUploader = ({
   };
   
   const handleUpload = async (file: File) => {
+    // CRITICAL: Run comprehensive file diagnostic again right before upload
+    runFileDiagnostic(file);
+    
+    // CRITICAL: Strict file validation again right before upload
+    if (!file || !(file instanceof File) || file.size === 0) {
+      console.error("❌ Invalid File passed to uploader", file);
+      if (onError) onError("Only raw File instances with data can be uploaded");
+      return;
+    }
+    
     console.log("FILE DEBUG >>>", {
       name: file.name,
       size: file.size,
