@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { MediaUploader } from "./MediaUploader";
+import { MediaUploader } from "@/components/shared/MediaUploader";
 import { MultiFileUploader } from "./MultiFileUploader";
 import { Upload, Image, FileVideo } from "lucide-react";
 
