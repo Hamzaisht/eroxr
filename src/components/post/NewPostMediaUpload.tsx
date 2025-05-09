@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { MediaUploader } from "@/components/media/MediaUploader";
+import { MediaUploader } from "@/components/shared/MediaUploader";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
