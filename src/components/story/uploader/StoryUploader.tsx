@@ -19,6 +19,7 @@ export const StoryUploader = () => {
   } = useStoryUpload();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Get file directly from input event
     const file = e.target.files?.[0];
     
     // CRITICAL: Enhanced validation before proceeding
@@ -74,7 +75,7 @@ export const StoryUploader = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="absolute top-1 right-1 rounded-full bg-black/40 hover:bg-black/60 text-white"
+              className="absolute top-1 right-1 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full"
               onClick={resetState}
               disabled={isUploading}
             >
