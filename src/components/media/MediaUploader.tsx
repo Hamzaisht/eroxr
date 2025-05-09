@@ -6,6 +6,7 @@ import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { useFilePreview } from '@/hooks/useFilePreview';
 import { isVideoFile, isImageFile, SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '@/utils/upload/validators';
 import { UploadOptions } from '@/utils/media/types';
+import { runFileDiagnostic } from '@/utils/upload/fileUtils';
 
 export interface MediaUploaderProps {
   /**

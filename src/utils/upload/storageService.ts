@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { validateFileForUpload, runFileDiagnostic } from "./validators";
-import { logFileDebugInfo } from "./fileUtils";
+import { validateFileForUpload } from "./validators";
+import { runFileDiagnostic, logFileDebugInfo } from "./fileUtils";
 
 /**
  * Result of a storage upload operation

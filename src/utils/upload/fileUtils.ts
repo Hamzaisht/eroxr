@@ -74,34 +74,3 @@ export function runFileDiagnostic(file: File | Blob | any): void {
     console.error("🧬 FILE DIAGNOSTIC FAILED:", err);
   }
 }
-
-/**
- * Validate that the file is suitable for upload
- * CRITICAL: Call this before every upload to prevent invalid file uploads
- */
-export function validateFileForUpload(file: any): { valid: boolean; message?: string } {
-  if (!file) {
-    return { valid: false, message: "No file provided" };
-  }
-  
-  if (!(file instanceof File)) {
-    return { valid: false, message: "Invalid file object. The provided data is not a File instance." };
-  }
-  
-  if (file.size === 0) {
-    return { valid: false, message: `File "${file.name}" is empty (0 bytes)` };
-  }
-  
-  // Check if we can create a preview URL as a test of file integrity
-  try {
-    const previewUrl = URL.createObjectURL(file);
-    URL.revokeObjectURL(previewUrl); // Clean up immediately
-  } catch (err) {
-    return { 
-      valid: false, 
-      message: "File data is corrupted or inaccessible" 
-    };
-  }
-  
-  return { valid: true };
-}
