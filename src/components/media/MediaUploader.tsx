@@ -58,6 +58,12 @@ export interface MediaUploaderProps {
    * Whether to auto-upload on file selection
    */
   autoUpload?: boolean;
+  
+  /**
+   * Function to capture the raw File object reference 
+   * before any processing or serialization
+   */
+  onFileCapture?: (file: File) => void;
 }
 
 export const MediaUploader = ({
@@ -70,14 +76,15 @@ export const MediaUploader = ({
   buttonVariant = 'default',
   className = '',
   showPreview = true,
-  autoUpload = true
+  autoUpload = true,
+  onFileCapture
 }: MediaUploaderProps) => {
   // CRITICAL: Use useRef instead of useState for file storage to prevent data corruption
   const fileRef = useRef<File | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Keep selectedFile state only for triggering UI updates, not for storing the actual file
+  // Keep selectedFileInfo state only for triggering UI updates, not for storing the actual file
   const [selectedFileInfo, setSelectedFileInfo] = useState<{name: string, type: string, size: number} | null>(null);
   
   const allowedTypes = (() => {
@@ -172,6 +179,11 @@ export const MediaUploader = ({
       type: file.type,
       size: file.size
     });
+    
+    // Pass the raw File reference to parent if onFileCapture is provided
+    if (onFileCapture) {
+      onFileCapture(file);
+    }
     
     console.log("Creating preview for file:", file.name);
     const preview = createPreview(file);
