@@ -8,6 +8,7 @@ import { createFilePreview, revokeFilePreview, runFileDiagnostic } from '@/utils
 
 export const useStoryUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Add missing state variable
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -21,6 +22,7 @@ export const useStoryUpload = () => {
       revokeFilePreview(previewUrl);
     }
     setIsUploading(false);
+    setIsSubmitting(false); // Reset the submitting state too
     setProgress(0);
     setError(null);
     setPreviewUrl(null);
@@ -140,6 +142,7 @@ export const useStoryUpload = () => {
     }
 
     setIsUploading(true);
+    setIsSubmitting(true); // Set submitting state to true at the beginning
     setProgress(0);
     setError(null);
 
