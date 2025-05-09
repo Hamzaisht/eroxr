@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
-import { createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { createUniqueFilePath } from '@/utils/upload/fileUtils';
+import { validateFileForUpload } from '@/utils/upload/validators';
 
 interface UploadState {
   isUploading: boolean;
@@ -52,37 +53,28 @@ export const useStoryUpload = () => {
       };
     }
     
-    // CRITICAL: Validate and debug file
+    // CRITICAL: Validate file before upload
+    const validation = validateFileForUpload(file);
+    if (!validation.valid) {
+      setState(prev => ({ ...prev, error: validation.message }));
+      return { 
+        success: false, 
+        url: null, 
+        mediaType: null, 
+        error: validation.message || 'Invalid file' 
+      };
+    }
+    
+    // Log file debug info
     console.log("FILE DEBUG >>>", {
-      file,
+      name: file.name,
+      size: file.size,
+      type: file.type,
       isFile: file instanceof File,
-      type: file?.type,
-      size: file?.size,
-      name: file?.name,
-      preview: file ? URL.createObjectURL(file) : null
+      isBlob: file instanceof Blob,
+      lastModified: file.lastModified,
+      preview: URL.createObjectURL(file)
     });
-    
-    if (!(file instanceof File)) {
-      const error = "Invalid file object";
-      setState(prev => ({ ...prev, error }));
-      return { 
-        success: false, 
-        url: null, 
-        mediaType: null, 
-        error 
-      };
-    }
-    
-    if (file.size === 0) {
-      const error = "Empty file (0 bytes)";
-      setState(prev => ({ ...prev, error }));
-      return { 
-        success: false, 
-        url: null, 
-        mediaType: null, 
-        error 
-      };
-    }
     
     // Determine media type based on file mime type
     const contentType = file.type;
@@ -126,12 +118,12 @@ export const useStoryUpload = () => {
       
       console.log(`Uploading ${mediaType} story with content type: ${contentType}`);
       
-      // CRITICAL: Upload to Supabase storage with explicit content type and upsert: true
+      // Upload to Supabase storage with explicit content type and upsert: true
       const { data, error: uploadError } = await supabase.storage
         .from('stories')
         .upload(path, file, {
           contentType: contentType,  // CRITICAL: Set correct content type
-          upsert: true,              // CRITICAL: Allow overwrites
+          upsert: true,              // Allow overwrites
           cacheControl: '3600'
         });
       
@@ -143,13 +135,6 @@ export const useStoryUpload = () => {
       if (!data || !data.path) {
         throw new Error("Supabase returned no path for uploaded story media");
       }
-      
-      // Test the upload with getPublicUrl
-      const { data: urlData } = supabase.storage
-        .from('stories')
-        .getPublicUrl(data.path);
-      
-      console.log("Story upload URL:", urlData.publicUrl);
       
       // Get the public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage
@@ -181,7 +166,7 @@ export const useStoryUpload = () => {
         path: data.path
       });
       
-      // Create story entry in database with improved field handling
+      // Create story entry in database
       const { error: dbError } = await supabase
         .from('stories')
         .insert({
@@ -218,7 +203,7 @@ export const useStoryUpload = () => {
         error: null
       };
     } catch (error: any) {
-      clearInterval(progressInterval);
+      clearInterval(progressInterval!);
       
       const errorMessage = error.message || "An unknown error occurred";
       console.error("Story upload error:", error);

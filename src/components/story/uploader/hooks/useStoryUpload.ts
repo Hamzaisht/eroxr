@@ -3,7 +3,8 @@ import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { useStories } from '@/components/story/hooks/useStories';
-import { isImageFile, isVideoFile } from '@/utils/upload/validators';
+import { isImageFile, isVideoFile, validateFileForUpload } from '@/utils/upload/validators';
+import { createFilePreview, revokeFilePreview } from '@/utils/upload/fileUtils';
 
 export const useStoryUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -17,7 +18,7 @@ export const useStoryUpload = () => {
   // Clear state and preview
   const resetState = useCallback(() => {
     if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+      revokeFilePreview(previewUrl);
     }
     setIsUploading(false);
     setProgress(0);
@@ -25,31 +26,12 @@ export const useStoryUpload = () => {
     setPreviewUrl(null);
   }, [previewUrl]);
 
-  // Create preview for selected file
-  const createPreview = useCallback((file: File): string => {
-    try {
-      return URL.createObjectURL(file);
-    } catch (err) {
-      console.error('Error creating preview:', err);
-      return '';
-    }
-  }, []);
-
   // Validate file before upload
   const validateFile = useCallback((file: File): { valid: boolean; message?: string } => {
-    // CRITICAL: Enhanced validation
-    if (!file || !(file instanceof File)) {
-      return { 
-        valid: false, 
-        message: 'Invalid file object' 
-      };
-    }
-    
-    if (file.size === 0) {
-      return { 
-        valid: false, 
-        message: `File "${file.name}" is empty (0 bytes)` 
-      };
+    // Basic validation
+    const validation = validateFileForUpload(file);
+    if (!validation.valid) {
+      return validation;
     }
     
     // Check if file is an image or video
@@ -78,29 +60,6 @@ export const useStoryUpload = () => {
       // Reset any previous state
       resetState();
       
-      // CRITICAL: Enhanced validation
-      if (!file || !(file instanceof File)) {
-        setError('Invalid file object');
-        console.error("Invalid file object:", file);
-        toast({
-          title: 'Invalid file',
-          description: 'The selected file is not valid',
-          variant: 'destructive',
-        });
-        return false;
-      }
-      
-      if (file.size === 0) {
-        setError(`File "${file.name}" is empty (0 bytes)`);
-        console.error("Empty file:", file.name);
-        toast({
-          title: 'Empty file',
-          description: 'The selected file has no content',
-          variant: 'destructive',
-        });
-        return false;
-      }
-      
       // Validate file
       const validationResult = validateFile(file);
       if (!validationResult.valid) {
@@ -114,7 +73,7 @@ export const useStoryUpload = () => {
       }
       
       // Create preview
-      const preview = createPreview(file);
+      const preview = createFilePreview(file);
       setPreviewUrl(preview);
       
       return true;
@@ -123,7 +82,7 @@ export const useStoryUpload = () => {
       setError('Error processing file');
       return false;
     }
-  }, [resetState, validateFile, createPreview, toast]);
+  }, [resetState, validateFile, toast]);
 
   // Upload story
   const uploadFile = useCallback(async (file: File) => {
@@ -137,37 +96,17 @@ export const useStoryUpload = () => {
       return { success: false, error: 'Authentication required' };
     }
 
-    // CRITICAL: Final validation before upload
-    if (!file || !(file instanceof File)) {
-      setError('Invalid file object');
+    // Final validation before upload
+    const validation = validateFileForUpload(file);
+    if (!validation.valid) {
+      setError(validation.message || 'Invalid file');
       toast({
         title: 'Invalid file',
-        description: 'The selected file is not valid',
+        description: validation.message || 'The selected file is not valid',
         variant: 'destructive',
       });
-      return { success: false, error: 'Invalid file object' };
+      return { success: false, error: validation.message };
     }
-    
-    if (file.size === 0) {
-      setError(`File "${file.name}" is empty (0 bytes)`);
-      toast({
-        title: 'Empty file',
-        description: 'The selected file has no content',
-        variant: 'destructive',
-      });
-      return { success: false, error: 'Empty file' };
-    }
-
-    // Log file details right before upload
-    console.log("FILE DEBUG >>>", {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      isBlob: file instanceof Blob,
-      isFile: file instanceof File,
-      lastModified: file.lastModified,
-      preview: URL.createObjectURL(file)
-    });
 
     setIsUploading(true);
     setProgress(0);
@@ -179,7 +118,7 @@ export const useStoryUpload = () => {
         setProgress(prev => Math.min(prev + 5, 90));
       }, 200);
       
-      // Upload using the stories hook - passing only the file parameter
+      // Upload using the stories hook
       const result = await uploadStory(file);
       
       clearInterval(progressInterval);
