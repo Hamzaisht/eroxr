@@ -1,3 +1,4 @@
+
 /**
  * Run comprehensive diagnostics on a File object to verify its integrity
  * This helps identify corrupted or detached File objects before upload

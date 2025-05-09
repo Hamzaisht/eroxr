@@ -181,7 +181,7 @@ export const useStoryUpload = () => {
       
       return { success: false, error: err.message };
     } finally {
-      setIsUploading(false);
+      setIsSubmitting(false);
     }
   }, [session, toast, resetState, uploadStory]);
 
