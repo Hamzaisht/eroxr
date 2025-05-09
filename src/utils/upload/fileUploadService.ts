@@ -32,7 +32,7 @@ export const uploadFile = async (
   bucket: string,
   userId: string,
   options?: FileUploadOptions
-): Promise<FileUploadResult> {
+): Promise<FileUploadResult> => {
   // CRITICAL: Run comprehensive file diagnostic
   runFileDiagnostic(file);
   
@@ -87,6 +87,8 @@ export const uploadFile = async (
       };
     }
     
+    console.log("Upload successful, path:", data.path);
+    
     // Test upload with getPublicUrl
     const { data: urlData } = supabase.storage
       .from(bucket)
@@ -129,7 +131,7 @@ export const uploadFile = async (
       error: error.message || "An unknown error occurred"
     };
   }
-}
+};
 
 /**
  * Create a local preview URL for a file
