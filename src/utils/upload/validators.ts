@@ -46,3 +46,13 @@ export function validateFileSize(file: File, maxSizeMB: number): boolean {
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   return file.size <= maxSizeBytes;
 }
+
+/**
+ * Supported image types
+ */
+export const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+/**
+ * Supported video types
+ */
+export const SUPPORTED_VIDEO_TYPES = ["video/mp4", "video/webm"];
