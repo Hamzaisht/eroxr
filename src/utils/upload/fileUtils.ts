@@ -1,4 +1,3 @@
-
 /**
  * Run comprehensive diagnostics on a File object to verify its integrity
  * This helps identify corrupted or detached File objects before upload
@@ -89,5 +88,49 @@ export const revokeFilePreview = (previewUrl: string | null): void => {
     } catch (error) {
       console.error("Error revoking preview URL:", error);
     }
+  }
+};
+
+/**
+ * Log detailed file debug information to help diagnose upload issues
+ * @param file The file to log diagnostic information for
+ */
+export const logFileDebugInfo = async (file: File): Promise<void> => {
+  if (!file) {
+    console.error("❌ FILE DEBUG: No file provided");
+    return;
+  }
+  
+  try {
+    console.log("🧬 FILE DEBUG", {
+      type: file?.type,
+      name: file?.name,
+      size: file?.size,
+      isFile: file instanceof File,
+      isBlob: file instanceof Blob,
+      lastModified: file.lastModified,
+      hasArrayBuffer: 'arrayBuffer' in file,
+      hasStream: 'stream' in file,
+      hasText: 'text' in file
+    });
+    
+    // Try to create preview URL as a diagnostic
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      console.log("✅ Preview URL created:", previewUrl ? "Success" : "Failed");
+      URL.revokeObjectURL(previewUrl);
+    } catch (err) {
+      console.error("❌ Preview URL creation failed:", err);
+    }
+    
+    // Try to read the first few bytes to verify content integrity
+    try {
+      const headBytes = await file.slice(0, 100).text();
+      console.log("✅ Head bytes read successfully, length:", headBytes.length);
+    } catch (err) {
+      console.error("❌ Head bytes read failed:", err);
+    }
+  } catch (err) {
+    console.error("❌ FILE DEBUG ERROR:", err);
   }
 };
