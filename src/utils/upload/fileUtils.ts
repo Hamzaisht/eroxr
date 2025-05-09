@@ -1,76 +1,93 @@
 
 /**
- * Creates a preview URL for a file
+ * Run comprehensive diagnostics on a File object to verify its integrity
+ * This helps identify corrupted or detached File objects before upload
  */
-export function createFilePreview(file: File): string {
-  return URL.createObjectURL(file);
-}
-
-/**
- * Revokes a file preview URL to free memory
- */
-export function revokeFilePreview(url: string | null): void {
-  if (url && url.startsWith('blob:')) {
-    URL.revokeObjectURL(url);
+export const runFileDiagnostic = async (file: File | null): Promise<void> => {
+  if (!file) {
+    console.error("❌ FILE DIAGNOSTIC: No file provided");
+    return;
   }
-}
-
-/**
- * Logs detailed file information for debugging
- */
-export function logFileDebugInfo(file: File): void {
-  console.log("FILE DEBUG >>>", {
-    name: file.name,
-    size: file.size,
-    type: file.type,
-    isFile: file instanceof File,
-    isBlob: file instanceof Blob,
-    lastModified: file.lastModified,
-    preview: URL.createObjectURL(file)
-  });
-}
-
-/**
- * Generates a unique file path for storage
- */
-export function createUniqueFilePath(userId: string, file: File): string {
-  const timestamp = new Date().getTime();
-  const random = Math.random().toString(36).substring(2, 10);
-  const fileExt = file.name.split('.').pop() || '';
   
-  return `${userId}/${timestamp}-${random}.${fileExt}`;
-}
-
-/**
- * Run comprehensive file diagnostic to validate file integrity
- * CRITICAL: Call this before every upload to validate file integrity
- */
-export function runFileDiagnostic(file: File | Blob | any): void {
   try {
-    // Attempt to create a URL to verify we can access the file data
-    let previewUrl = null;
-    try {
-      previewUrl = file ? URL.createObjectURL(file) : "FAILED";
-    } catch (err) {
-      console.error("🚨 Failed to create object URL from file:", err);
-    }
-
-    console.log("🧬 FILE DIAGNOSTIC", {
-      name: file?.name,
-      size: file?.size,
-      type: file?.type,
+    // Basic file validation
+    const diagnostic = {
       isFile: file instanceof File,
       isBlob: file instanceof Blob,
-      url: previewUrl,
-      lastModified: file?.lastModified,
-      toString: Object.prototype.toString.call(file),
-    });
+      type: file.type,
+      name: file.name,
+      size: file.size,
+      lastModified: file.lastModified,
+      hasArrayBuffer: 'arrayBuffer' in file,
+      hasStream: 'stream' in file,
+      hasText: 'text' in file,
+    };
     
-    // Clean up the URL we created
-    if (previewUrl && previewUrl !== "FAILED") {
+    // Add preview URL
+    let previewUrl: string | null = null;
+    try {
+      previewUrl = URL.createObjectURL(file);
+      diagnostic['previewUrl'] = previewUrl ? 'Created successfully' : 'Failed';
+    } catch (err) {
+      diagnostic['previewUrl'] = `Error: ${err.message}`;
+    }
+    
+    // Attempt to read the first few bytes to verify content integrity
+    try {
+      const headBytes = await file.slice(0, 100).text();
+      diagnostic['headBytesLength'] = headBytes.length;
+      diagnostic['headBytesStart'] = headBytes.substring(0, 20);
+    } catch (err) {
+      diagnostic['headBytesError'] = err.message;
+    }
+    
+    // Log the comprehensive diagnostic
+    console.log("🧬 FILE DIAGNOSTIC:", diagnostic);
+    
+    // Clean up preview URL
+    if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
   } catch (err) {
-    console.error("🧬 FILE DIAGNOSTIC FAILED:", err);
+    console.error("❌ FILE DIAGNOSTIC ERROR:", err);
   }
-}
+};
+
+/**
+ * Create a unique file path for storage
+ */
+export const createUniqueFilePath = (userId: string, file: File): string => {
+  const timestamp = new Date().getTime();
+  const randomString = Math.random().toString(36).substring(2, 10);
+  const fileExt = file.name.split('.').pop() || 'file';
+  
+  return `${userId}/${timestamp}-${randomString}.${fileExt}`;
+};
+
+/**
+ * Create a preview URL for a file
+ * @param file File to create preview for
+ * @returns Object URL for the file
+ */
+export const createFilePreview = (file: File): string => {
+  try {
+    return URL.createObjectURL(file);
+  } catch (error) {
+    console.error("Error creating preview URL:", error);
+    return "";
+  }
+};
+
+/**
+ * Revoke a file preview URL
+ * @param previewUrl URL to revoke
+ */
+export const revokeFilePreview = (previewUrl: string | null): void => {
+  if (previewUrl && previewUrl.startsWith('blob:')) {
+    try {
+      URL.revokeObjectURL(previewUrl);
+    } catch (error) {
+      console.error("Error revoking preview URL:", error);
+    }
+  }
+};

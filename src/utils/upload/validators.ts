@@ -1,72 +1,72 @@
 
 /**
- * Validates if a file is an image
+ * Supported image file types
  */
-export function isImageFile(file: File): boolean {
-  return file.type.startsWith('image/');
-}
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'image/bmp',
+  'image/tiff'
+];
 
 /**
- * Validates if a file is a video
+ * Supported video file types
  */
-export function isVideoFile(file: File): boolean {
-  return file.type.startsWith('video/');
-}
+export const SUPPORTED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/x-ms-wmv',
+  'video/x-flv'
+];
 
 /**
- * Validates if a file is an audio file
+ * Check if file is an image
  */
-export function isAudioFile(file: File): boolean {
-  return file.type.startsWith('audio/');
-}
+export const isImageFile = (file: File): boolean => {
+  return SUPPORTED_IMAGE_TYPES.includes(file.type);
+};
 
 /**
- * Validates file before upload to ensure it's valid
- * CRITICAL: Enhanced with stricter validation
+ * Check if file is a video
  */
-export function validateFileForUpload(file: unknown): { valid: boolean, message?: string } {
-  if (!file) {
-    return { valid: false, message: 'No file provided' };
-  }
-  
-  if (!(file instanceof File)) {
+export const isVideoFile = (file: File): boolean => {
+  return SUPPORTED_VIDEO_TYPES.includes(file.type);
+};
+
+/**
+ * Validate file for upload
+ * @param file The file to validate
+ * @returns Object with validation result and optional error message
+ */
+export const validateFileForUpload = (file: File): { valid: boolean; message?: string } => {
+  // Check if file exists and is a File instance
+  if (!file || !(file instanceof File)) {
     return { valid: false, message: 'Invalid file object' };
   }
-  
+
+  // Check if file has content
   if (file.size === 0) {
-    return { valid: false, message: `File "${file.name}" is empty (0 bytes)` };
+    return { valid: false, message: 'File is empty (0 bytes)' };
   }
-  
-  // Check for valid file type
-  if (!file.type) {
-    return { valid: false, message: 'File has no content type' };
+
+  // Check if file is too large (default: 100MB)
+  const maxSize = 100 * 1024 * 1024; // 100MB
+  if (file.size > maxSize) {
+    const sizeMB = Math.round(file.size / (1024 * 1024));
+    return { valid: false, message: `File is too large (${sizeMB}MB). Maximum size is 100MB.` };
   }
-  
-  // Try creating a URL to ensure file data is accessible
-  try {
-    const url = URL.createObjectURL(file);
-    URL.revokeObjectURL(url);
-  } catch (e) {
-    return { valid: false, message: 'File data is inaccessible or corrupted' };
+
+  // Check if file type is supported
+  const isValidType = isImageFile(file) || isVideoFile(file);
+  if (!isValidType) {
+    return { valid: false, message: `File type '${file.type}' is not supported` };
   }
-  
+
   return { valid: true };
-}
-
-/**
- * Validates file size
- */
-export function validateFileSize(file: File, maxSizeMB: number): boolean {
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
-  return file.size <= maxSizeBytes;
-}
-
-/**
- * Supported image types
- */
-export const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
-/**
- * Supported video types
- */
-export const SUPPORTED_VIDEO_TYPES = ["video/mp4", "video/webm"];
+};
