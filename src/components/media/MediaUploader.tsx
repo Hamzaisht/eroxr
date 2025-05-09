@@ -72,9 +72,13 @@ export const MediaUploader = ({
   showPreview = true,
   autoUpload = true
 }: MediaUploaderProps) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // CRITICAL: Use useRef instead of useState for file storage to prevent data corruption
+  const fileRef = useRef<File | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Keep selectedFile state only for triggering UI updates, not for storing the actual file
+  const [selectedFileInfo, setSelectedFileInfo] = useState<{name: string, type: string, size: number} | null>(null);
   
   const allowedTypes = (() => {
     if (mediaTypes === 'image') return SUPPORTED_IMAGE_TYPES;
@@ -160,7 +164,14 @@ export const MediaUploader = ({
       return;
     }
     
-    setSelectedFile(file);
+    // CRITICAL: Store file in useRef instead of useState to prevent data corruption
+    fileRef.current = file;
+    // Store only metadata in state for UI updates
+    setSelectedFileInfo({
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
     
     console.log("Creating preview for file:", file.name);
     const preview = createPreview(file);
@@ -172,8 +183,8 @@ export const MediaUploader = ({
   };
   
   const handleUploadClick = async () => {
-    if (selectedFile) {
-      handleUpload(selectedFile);
+    if (fileRef.current) {
+      handleUpload(fileRef.current);
     }
   };
   
@@ -207,7 +218,8 @@ export const MediaUploader = ({
   };
   
   const handleClear = () => {
-    setSelectedFile(null);
+    fileRef.current = null;
+    setSelectedFileInfo(null);
     clearPreview();
     setPreviewError(null);
     
@@ -215,6 +227,9 @@ export const MediaUploader = ({
       fileInputRef.current.value = '';
     }
   };
+  
+  // Helper function to determine if we have a selected file
+  const hasSelectedFile = fileRef.current !== null && selectedFileInfo !== null;
   
   return (
     <div className={`relative space-y-4 ${className}`}>
@@ -228,7 +243,7 @@ export const MediaUploader = ({
         disabled={isUploading}
       />
       
-      {showPreview && selectedFile && previewUrl && (
+      {showPreview && hasSelectedFile && previewUrl && (
         <div className="relative border rounded-md overflow-hidden bg-black/5">
           <Button
             variant="ghost"
@@ -240,7 +255,7 @@ export const MediaUploader = ({
             <X size={16} />
           </Button>
           
-          {isImageFile(selectedFile) ? (
+          {fileRef.current && isImageFile(fileRef.current) ? (
             <img 
               src={previewUrl} 
               alt="Preview" 
@@ -251,7 +266,7 @@ export const MediaUploader = ({
                 setPreviewError("Failed to load image preview");
               }}
             />
-          ) : isVideoFile(selectedFile) ? (
+          ) : fileRef.current && isVideoFile(fileRef.current) ? (
             <video 
               src={previewUrl} 
               className="w-full h-auto max-h-64"
@@ -265,7 +280,7 @@ export const MediaUploader = ({
           ) : (
             <div className="flex items-center justify-center h-32 bg-muted">
               <p className="text-sm text-muted-foreground">
-                {selectedFile.name}
+                {selectedFileInfo?.name}
               </p>
             </div>
           )}
@@ -280,7 +295,7 @@ export const MediaUploader = ({
       )}
       
       {/* Preview loading state */}
-      {showPreview && selectedFile && previewLoading && (
+      {showPreview && hasSelectedFile && previewLoading && (
         <div className="relative border rounded-md overflow-hidden bg-black/5 h-64 flex items-center justify-center">
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
@@ -290,17 +305,17 @@ export const MediaUploader = ({
       )}
       
       {/* Debug Info (in development mode) */}
-      {process.env.NODE_ENV === 'development' && selectedFile && (
+      {process.env.NODE_ENV === 'development' && hasSelectedFile && (
         <div className="bg-muted/30 p-2 rounded text-xs font-mono overflow-auto max-h-40">
-          <p>File: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)</p>
-          <p>Type: {selectedFile.type}</p>
+          <p>File: {selectedFileInfo?.name} ({Math.round(selectedFileInfo?.size || 0 / 1024)} KB)</p>
+          <p>Type: {selectedFileInfo?.type}</p>
           <p>Preview URL: {previewUrl ? "Created" : "None"}</p>
           <p>Preview Loading: {previewLoading ? "Yes" : "No"}</p>
           <p>Preview Error: {previewError || "None"}</p>
         </div>
       )}
       
-      {!selectedFile ? (
+      {!hasSelectedFile ? (
         <Button
           variant={buttonVariant}
           onClick={() => fileInputRef.current?.click()}
@@ -326,7 +341,7 @@ export const MediaUploader = ({
           className="w-full"
         >
           <Upload className="h-4 w-4 mr-2" />
-          Upload {selectedFile.name}
+          Upload {selectedFileInfo?.name}
         </Button>
       ) : null}
       

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,10 +7,15 @@ import { Button } from "@/components/ui/button";
 import { MediaUploader } from "@/components/upload/MediaUploader";
 import { NewMediaRenderer } from "@/components/media/NewMediaRenderer";
 import { Loader2, X } from "lucide-react";
+import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 export const NewStoryUploader: React.FC = () => {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // CRITICAL: Use ref for file storage instead of state
+  const fileRef = useRef<File | null>(null);
+  
   const session = useSession();
   const { toast } = useToast();
 
@@ -37,6 +42,11 @@ export const NewStoryUploader: React.FC = () => {
       return;
     }
     
+    // CRITICAL: Verify file integrity once more before publishing
+    if (fileRef.current) {
+      runFileDiagnostic(fileRef.current);
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -61,6 +71,7 @@ export const NewStoryUploader: React.FC = () => {
       
       // Reset form
       setMediaUrl(null);
+      fileRef.current = null;
     } catch (error: any) {
       console.error("Story submission error:", error);
       toast({
@@ -75,6 +86,12 @@ export const NewStoryUploader: React.FC = () => {
 
   const handleClearMedia = () => {
     setMediaUrl(null);
+    fileRef.current = null;
+  };
+  
+  // Modified MediaUploader to capture the file reference
+  const handleFileCapture = (file: File) => {
+    fileRef.current = file;
   };
 
   return (
@@ -101,6 +118,7 @@ export const NewStoryUploader: React.FC = () => {
           context="story"
           onComplete={handleMediaComplete}
           buttonText="Upload Story Media"
+          onFileCapture={handleFileCapture} // Prop to capture file reference
         />
       )}
       

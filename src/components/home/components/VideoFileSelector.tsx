@@ -2,7 +2,7 @@
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { RefObject } from "react";
+import { RefObject, useRef } from "react";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 interface VideoFileSelectorProps {
@@ -16,6 +16,9 @@ export const VideoFileSelector = ({
   isSubmitting,
   onFileSelect
 }: VideoFileSelectorProps) => {
+  // CRITICAL: Use ref for file storage instead of state
+  const fileRef = useRef<File | null>(null);
+  
   // Enhanced file selection handler with validation
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,6 +38,9 @@ export const VideoFileSelector = ({
       console.error("❌ File has zero size:", file.name);
       return;
     }
+    
+    // CRITICAL: Store in ref, not state
+    fileRef.current = file;
     
     // Run diagnostic on the raw file
     runFileDiagnostic(file);

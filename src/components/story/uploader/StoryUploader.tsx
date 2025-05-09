@@ -9,6 +9,8 @@ import { runFileDiagnostic } from '@/utils/upload/fileUtils';
 
 export const StoryUploader = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<File | null>(null); // CRITICAL: Use ref for file storage instead of state
+  
   const {
     isUploading,
     progress,
@@ -41,6 +43,9 @@ export const StoryUploader = () => {
     
     // CRITICAL: Run comprehensive file diagnostic
     runFileDiagnostic(file);
+    
+    // CRITICAL: Store in ref, not in state
+    fileRef.current = file;
     
     // Use the hook's validation and selection
     const success = await handleFileSelect(file);

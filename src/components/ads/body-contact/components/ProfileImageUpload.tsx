@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 interface ProfileImageUploadProps {
   avatarPreview: string;
@@ -14,12 +15,22 @@ interface ProfileImageUploadProps {
 
 export const ProfileImageUpload = ({ avatarPreview, onAvatarChange }: ProfileImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  
+  // CRITICAL: Use ref for file storage instead of state
+  const fileRef = useRef<File | null>(null);
+  
   const session = useSession();
   const { toast } = useToast();
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !session?.user?.id) return;
+
+    // CRITICAL: Run file diagnostic
+    runFileDiagnostic(file);
+    
+    // CRITICAL: Store file in ref, not state
+    fileRef.current = file;
 
     if (file.size > 5 * 1024 * 1024) { // 5MB limit
       toast({
@@ -46,8 +57,14 @@ export const ProfileImageUpload = ({ avatarPreview, onAvatarChange }: ProfileIma
       const timestamp = new Date().getTime();
       const path = `${userId}/${timestamp}_avatar.${file.name.split('.').pop()}`;
       
+      // CRITICAL: Use the reference from useRef for upload
+      const uploadFile = fileRef.current;
+      
+      // Run diagnostic again right before upload
+      runFileDiagnostic(uploadFile);
+      
       // Then upload to Supabase storage
-      const result = await uploadFileToStorage('avatars', path, file);
+      const result = await uploadFileToStorage('avatars', path, uploadFile);
       
       if (!result.success) {
         throw new Error(result.error || "Upload failed");
