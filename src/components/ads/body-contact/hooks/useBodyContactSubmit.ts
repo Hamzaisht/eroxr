@@ -69,7 +69,8 @@ export const useBodyContactSubmit = ({
       const saveResult = await saveAd(
         values, 
         mediaResult.videoUrl, 
-        mediaResult.avatarUrl
+        mediaResult.avatarUrl,
+        isSuperAdmin
       );
       
       if (!saveResult.success || !saveResult.data) {
@@ -77,7 +78,11 @@ export const useBodyContactSubmit = ({
       }
 
       // 5. Record ad media
-      await saveAdMedia(saveResult.data.id, mediaResult.videoUrl, mediaResult.avatarUrl);
+      await saveAdMedia(
+        saveResult.data.id, 
+        mediaResult.videoUrl, 
+        mediaResult.avatarUrl
+      );
 
       // 6. Update user profile avatar if provided
       if (mediaResult.avatarUrl) {

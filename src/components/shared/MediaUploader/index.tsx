@@ -7,6 +7,7 @@ import { getAllowedTypes, validateFile } from "./utils";
 import { toast } from "@/components/ui/use-toast";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { MediaTypes, MediaUploaderProps } from "./types";
+import { UploadResult } from "@/types/media";
 
 export const MediaUploader = ({
   onComplete,
@@ -137,8 +138,11 @@ export const MediaUploader = ({
         throw new Error(result.error || "Upload failed");
       }
       
-      if (result.url) {
-        onComplete(result.url);
+      // Make sure we're working with a properly typed result
+      const uploadResult = result as UploadResult;
+      
+      if (uploadResult.url) {
+        onComplete(uploadResult.url);
         
         toast({
           title: "Upload successful",

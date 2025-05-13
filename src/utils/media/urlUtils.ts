@@ -72,3 +72,68 @@ export async function checkUrlExists(url: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Checks if a URL points to an image
+ * @param url - URL to check
+ * @returns True if URL points to an image, false otherwise
+ */
+export function isImageUrl(url: string): boolean {
+  if (!url) return false;
+  
+  const extension = getFileExtension(url).toLowerCase();
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+  
+  return imageExtensions.includes(extension);
+}
+
+/**
+ * Checks if a URL points to a video
+ * @param url - URL to check
+ * @returns True if URL points to a video, false otherwise
+ */
+export function isVideoUrl(url: string): boolean {
+  if (!url) return false;
+  
+  const extension = getFileExtension(url).toLowerCase();
+  const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'flv', 'm4v', 'mkv'];
+  
+  return videoExtensions.includes(extension);
+}
+
+/**
+ * Checks if a URL points to an audio file
+ * @param url - URL to check
+ * @returns True if URL points to an audio file, false otherwise
+ */
+export function isAudioUrl(url: string): boolean {
+  if (!url) return false;
+  
+  const extension = getFileExtension(url).toLowerCase();
+  const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'];
+  
+  return audioExtensions.includes(extension);
+}
+
+/**
+ * Extracts a file extension from a URL
+ * @param url - URL to extract extension from
+ * @returns The file extension or an empty string
+ */
+export function getFileExtension(url: string): string {
+  if (!url) return '';
+  
+  // Extract the filename from the URL
+  const filename = url.split('/').pop() || '';
+  
+  // If there's a query string, remove it
+  const filenameWithoutQuery = filename.split('?')[0];
+  
+  // Extract extension
+  const parts = filenameWithoutQuery.split('.');
+  if (parts.length > 1) {
+    return parts.pop() || '';
+  }
+  
+  return '';
+}

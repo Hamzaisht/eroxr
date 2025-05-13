@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useMediaUpload } from './useMediaUpload';
 import { useToast } from './use-toast';
+import { UploadResult } from '@/types/media';
 
 export const useContextualMediaUpload = (contextId: string, contextType: string = 'message') => {
   const [isUploading, setIsUploading] = useState(false);
@@ -17,29 +18,23 @@ export const useContextualMediaUpload = (contextId: string, contextType: string 
       const contentCategory = contextType === 'post' ? 'posts' : 'messages';
       
       const result = await uploadMedia(file, {
-        contentCategory,
-        maxSizeInMB: 100,
-        allowedTypes: [
-          'image/jpeg',
-          'image/png',
-          'image/gif',
-          'image/webp',
-          'video/mp4',
-          'video/webm',
-          'video/quicktime'
-        ]
+        bucket: contentCategory,
+        maxSizeInMB: 100
       });
       
       if (!result.success) {
         throw new Error(result.error || 'Upload failed');
       }
       
+      // Ensure properly typed result
+      const uploadResult = result as UploadResult;
+      
       // Handle the possibility that url might be undefined
-      if (!result.url) {
+      if (!uploadResult.url) {
         throw new Error('Upload succeeded but no URL returned');
       }
       
-      return result.url;
+      return uploadResult.url;
     } catch (error: any) {
       console.error('Error uploading file:', error);
       toast({

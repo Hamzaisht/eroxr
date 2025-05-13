@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
@@ -15,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, Loader2 } from "lucide-react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { UploadOptions } from "@/utils/media/types";
+import { UploadResult } from "@/types/media";
 
 interface FileUploadDialogProps {
   open: boolean;
@@ -56,10 +58,9 @@ export const FileUploadDialog = ({
     setIsUploading(true);
 
     try {
-      const uploadOptions = {
-        contentCategory: fileCategory,
-        maxSizeInMB: maxFileSizeMB,
-        allowedTypes: acceptedFileTypes
+      const uploadOptions: UploadOptions = {
+        bucket: fileCategory,
+        maxSizeInMB: maxFileSizeMB
       };
 
       const result = await uploadMedia(selectedFile, uploadOptions);
@@ -68,9 +69,12 @@ export const FileUploadDialog = ({
         throw new Error(result.error || "Upload failed");
       }
 
-      if (result.url) {
-        setUploadedUrl(result.url);
-        onSuccess?.(result.url, selectedFile);
+      // Ensure properly typed result
+      const uploadResult = result as UploadResult;
+      
+      if (uploadResult.url) {
+        setUploadedUrl(uploadResult.url);
+        onSuccess?.(uploadResult.url, selectedFile);
 
         toast({
           title: "Upload successful",
