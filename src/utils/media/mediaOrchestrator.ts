@@ -1,3 +1,4 @@
+
 import { MediaType, MediaSource } from './types';
 import { determineMediaType, extractMediaUrl } from './mediaUtils';
 import { getFileExtension } from './mediaUrlUtils';
@@ -80,8 +81,16 @@ class MediaOrchestrator {
                       (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : '');
     
     const creatorId = source.creator_id || '';
-    const mediaType: MediaType = source.media_type as MediaType || 
-                              (source.video_url ? MediaType.VIDEO : MediaType.IMAGE);
+    
+    // For object sources, make sure to check if media_type exists before using it
+    let mediaType: MediaType = MediaType.UNKNOWN;
+    if (typeof source.media_type === 'string') {
+      mediaType = source.media_type as MediaType;
+    } else if (source.video_url) {
+      mediaType = MediaType.VIDEO;
+    } else {
+      mediaType = MediaType.IMAGE;
+    }
     
     // Create a composite key
     const compositeKey = `${primaryUrl}|${creatorId}|${mediaType}`;
@@ -157,8 +166,29 @@ class MediaOrchestrator {
     
     const mediaId = this.createMediaId(source);
     const url = this.getStableUrl(source);
-    const type: MediaType = source.media_type as MediaType || 
-                          (source.video_url ? MediaType.VIDEO : MediaType.IMAGE);
+    
+    // Determine media type based on source type
+    let type: MediaType = MediaType.UNKNOWN;
+    
+    if (typeof source === 'string') {
+      // For string sources, determine type from the URL
+      if (source.match(/\.(mp4|webm|ogv|mov)($|\?)/i)) {
+        type = MediaType.VIDEO;
+      } else if (source.match(/\.(jpg|jpeg|png|webp|gif)($|\?)/i)) {
+        type = MediaType.IMAGE;
+      } else {
+        type = MediaType.UNKNOWN;
+      }
+    } else {
+      // For object sources, use the media_type property if available
+      if (source.media_type) {
+        type = source.media_type as MediaType;
+      } else if (source.video_url) {
+        type = MediaType.VIDEO;
+      } else {
+        type = MediaType.IMAGE;
+      }
+    }
     
     // Check if request already exists
     if (this.requestMap.has(mediaId)) {
@@ -400,3 +430,4 @@ class MediaOrchestrator {
 
 // Singleton instance
 export const mediaOrchestrator = new MediaOrchestrator();
+
