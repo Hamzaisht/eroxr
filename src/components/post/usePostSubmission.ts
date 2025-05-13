@@ -1,36 +1,54 @@
-import { useState } from "react";
+
+import { useState, useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 export const usePostSubmission = (onSuccess: () => void) => {
   const [isLoading, setIsLoading] = useState(false);
   const session = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Critical: Use ref for files
+  const filesRef = useRef<File[]>([]);
 
-  const cleanupUserFiles = async (userId: string) => {
-    // List all files in user's folder
-    const { data: files, error: listError } = await supabase.storage
-      .from('posts')
-      .list(userId);
-
-    if (listError) {
-      console.error('Error listing files:', listError);
-      return;
+  const uploadFiles = async (files: FileList | null): Promise<string[]> => {
+    if (!files || !files.length || !session?.user?.id) {
+      return [];
     }
-
-    if (files && files.length > 0) {
-      // Delete all files in the folder
-      const filePaths = files.map(file => `${userId}/${file.name}`);
-      const { error: deleteError } = await supabase.storage
-        .from('posts')
-        .remove(filePaths);
-
-      if (deleteError) {
-        console.error('Error deleting files:', deleteError);
-      }
+    
+    // Store files in ref
+    filesRef.current = Array.from(files);
+    
+    try {
+      // Upload each file and collect URLs
+      const mediaUrls = await Promise.all(
+        Array.from(files).map(async (file) => {
+          // Run diagnostic on each file
+          runFileDiagnostic(file);
+          
+          // Generate unique path
+          const filePath = createUniqueFilePath(session.user.id, file);
+          
+          // Upload to storage
+          const result = await uploadFileToStorage('posts', filePath, file);
+          
+          if (!result.success || !result.url) {
+            throw new Error(result.error || "Failed to upload file");
+          }
+          
+          return result.url;
+        })
+      );
+      
+      return mediaUrls;
+    } catch (error: any) {
+      console.error('Media upload error:', error);
+      throw error;
     }
   };
 
@@ -84,29 +102,7 @@ export const usePostSubmission = (onSuccess: () => void) => {
       let mediaUrls: string[] = [];
 
       if (selectedFiles && selectedFiles.length > 0 && isPayingCustomer) {
-        // Clean up any existing files in user's folder
-        await cleanupUserFiles(session.user.id);
-
-        const files = Array.from(selectedFiles);
-        mediaUrls = await Promise.all(
-          files.map(async (file) => {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `${session.user.id}/${fileName}`;
-
-            const { error: uploadError, data } = await supabase.storage
-              .from('posts')
-              .upload(filePath, file);
-
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = supabase.storage
-              .from('posts')
-              .getPublicUrl(filePath);
-
-            return publicUrl;
-          })
-        );
+        mediaUrls = await uploadFiles(selectedFiles);
       }
 
       const { error } = await supabase
@@ -132,7 +128,10 @@ export const usePostSubmission = (onSuccess: () => void) => {
 
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       onSuccess();
-    } catch (error) {
+      
+      // Clear the files ref
+      filesRef.current = [];
+    } catch (error: any) {
       console.error('Post submission error:', error);
       toast({
         title: "Error",

@@ -1,372 +1,189 @@
 
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { supabase } from "@/integrations/supabase/client";
-import { createUniqueFilePath, runFileDiagnostic } from '@/utils/upload/fileUtils';
-import { UploadOptions, UploadState, FileValidationResult } from '@/utils/media/types';
-import { useToast } from './use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { uploadFileToStorage, createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { validateFileForUpload } from '@/utils/upload/validators';
+import { UploadOptions } from '@/utils/media/types';
 
-// Helper constants for file validation
-const MAX_FILE_SIZE_DEFAULT = 50; // MB
-const DEFAULT_ALLOWED_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'video/mp4',
-  'video/webm',
-  'video/quicktime'
-];
+interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  isComplete: boolean;
+}
 
 export const useMediaUpload = (defaultOptions?: UploadOptions) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
     error: null,
-    result: null,
-    files: [],
-    previews: [],
-    isComplete: false,
-    success: false
+    isComplete: false
   });
-
+  
   const session = useSession();
   const { toast } = useToast();
-
-  // Reset the upload state
+  
+  // Reset upload state
   const resetUploadState = useCallback(() => {
     setUploadState({
       isUploading: false,
       progress: 0,
       error: null,
-      result: null,
-      files: [],
-      previews: [],
-      isComplete: false,
-      success: false
+      isComplete: false
     });
   }, []);
-
+  
   // Validate file before upload
-  const validateFile = useCallback((
-    file: File,
-    options?: UploadOptions
-  ): FileValidationResult => {
-    // CRITICAL: Enhanced file validation
-    console.log("FILE DEBUG >>>", {
-      file,
-      isFile: file instanceof File,
-      type: file?.type,
-      size: file?.size,
-      name: file?.name,
-      lastModified: file?.lastModified
-    });
-    
-    if (!file) {
-      const error = 'No file provided';
-      return { valid: false, error };
-    }
-    
-    if (!(file instanceof File)) {
-      const error = 'Invalid file object';
-      return { valid: false, error };
-    }
-
-    if (file.size === 0) {
-      const error = `File "${file.name}" is empty (0 bytes)`;
-      return { valid: false, error };
-    }
-
-    const maxSizeMB = options?.maxSizeInMB || defaultOptions?.maxSizeInMB || MAX_FILE_SIZE_DEFAULT;
-    const maxSizeBytes = maxSizeMB * 1024 * 1024;
-    
-    if (file.size > maxSizeBytes) {
-      const error = `File size exceeds the ${maxSizeMB}MB limit`;
-      return { valid: false, error };
-    }
-
-    const allowedTypes = options?.allowedTypes || defaultOptions?.allowedTypes || DEFAULT_ALLOWED_TYPES;
-    
-    if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
-      const error = `File type '${file.type}' is not supported`;
-      return { valid: false, error };
-    }
-
-    // Try creating a preview URL as an additional validation
-    try {
-      const previewUrl = URL.createObjectURL(file);
-      URL.revokeObjectURL(previewUrl);
-      console.log("Preview URL validation successful");
-    } catch (err) {
-      console.error("Failed to create preview URL - file may be invalid:", err);
-      const error = 'File cannot be previewed - it may be corrupted';
-      return { valid: false, error };
-    }
-
-    return { valid: true };
-  }, [defaultOptions]);
-
-  // Upload media function
+  const validateFile = useCallback((file: File, options?: UploadOptions) => {
+    const maxSizeInMB = options?.maxSizeInMB || defaultOptions?.maxSizeInMB || 100;
+    return validateFileForUpload(file, maxSizeInMB);
+  }, [defaultOptions?.maxSizeInMB]);
+  
+  // Upload media file
   const uploadMedia = useCallback(async (
     file: File,
     options?: UploadOptions
   ) => {
     if (!session?.user?.id) {
-      const errorMessage = 'Authentication required to upload files';
-      
-      toast({
-        title: 'Authentication Required',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      
-      return { success: false, error: errorMessage };
+      return { 
+        success: false, 
+        error: "Authentication required" 
+      };
     }
-
-    // CRITICAL: Strict validation before proceeding
-    if (!file || !(file instanceof File)) {
-      const errorMessage = 'Invalid file object provided';
-      console.error(errorMessage, file);
+    
+    // Combine default options with provided options
+    const finalOptions = {
+      ...defaultOptions,
+      ...options
+    };
+    
+    // Validate file
+    const fileValidation = validateFile(file, finalOptions);
+    if (!fileValidation.valid) {
+      setUploadState(prev => ({
+        ...prev,
+        error: fileValidation.error || "Invalid file"
+      }));
       
-      toast({
-        title: 'Invalid File',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      if (fileValidation.error) {
+        toast({
+          title: "Upload Error",
+          description: fileValidation.error,
+          variant: "destructive"
+        });
+      }
       
-      return { success: false, error: errorMessage };
+      return { success: false, error: fileValidation.error };
     }
-
-    if (file.size === 0) {
-      const errorMessage = `File "${file.name}" is empty (0 bytes)`;
-      console.error(errorMessage, file);
-      
-      toast({
-        title: 'Empty File',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      
-      return { success: false, error: errorMessage };
-    }
-
-    // CRITICAL: Run comprehensive file diagnostic
-    runFileDiagnostic(file);
-
-    const validation = validateFile(file, options);
-    if (!validation.valid) {
-      toast({
-        title: 'Invalid File',
-        description: validation.error || 'Invalid file',
-        variant: 'destructive',
-      });
-      
-      return { success: false, error: validation.error };
-    }
-
-    // Begin upload process
+    
+    // Set uploading state
     setUploadState({
       isUploading: true,
       progress: 0,
       error: null,
-      result: null,
-      files: [],
-      previews: [],
-      isComplete: false,
-      success: false
+      isComplete: false
     });
-
-    // Simulate progress for better UX
-    const progressInterval = setInterval(() => {
-      setUploadState(prev => {
-        // Cap progress at 90% until actual completion
-        const newProgress = Math.min(prev.progress + Math.random() * 10, 90);
-        
-        if (options?.onProgress) {
-          options.onProgress(newProgress);
-        }
-        
-        return {
-          ...prev,
-          progress: newProgress,
-        };
-      });
-    }, 300);
-
+    
     try {
-      const contentCategory = options?.contentCategory || 'media';
-      
-      // Determine which bucket to use based on content category
-      let bucket = 'media'; // default
-      
-      if (contentCategory === 'profile') bucket = 'avatars';
-      else if (contentCategory === 'post') bucket = 'media';
-      else if (contentCategory === 'story') bucket = 'stories';
-      else if (contentCategory === 'message') bucket = 'messages';
-      else if (contentCategory === 'shorts') bucket = 'shorts';
-      
-      // Create path for upload
-      const path = createUniqueFilePath(session.user.id, file);
-      
-      console.log(`Uploading to bucket "${bucket}" at path "${path}":`, {
-        name: file.name,
-        type: file.type,
-        size: file.size
-      });
-      
-      // CRITICAL: Direct Supabase upload with explicit content type
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(path, file, {
-          contentType: file.type,
-          cacheControl: '3600',
-          upsert: true
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setUploadState(prev => {
+          const newProgress = Math.min(prev.progress + 5, 90);
+          
+          if (finalOptions?.onProgress) {
+            finalOptions.onProgress(newProgress);
+          }
+          
+          return {
+            ...prev,
+            progress: newProgress
+          };
         });
-
+      }, 200);
+      
+      // Create bucket path based on content category
+      let bucketName = finalOptions?.contentCategory || 'media';
+      
+      // Map generic categories to actual bucket names
+      switch (bucketName) {
+        case 'avatar':
+        case 'profile':
+          bucketName = 'avatars';
+          break;
+        case 'post':
+          bucketName = 'posts';
+          break;
+        case 'story':
+          bucketName = 'stories';
+          break;
+        case 'dating':
+        case 'video-ad':
+          bucketName = 'dating-videos';
+          break;
+        case 'chat':
+          bucketName = 'messages';
+          break;
+        default:
+          // Use the provided name or default to 'media'
+          break;
+      }
+      
+      // Generate unique file path
+      const filePath = createUniqueFilePath(session.user.id, file);
+      
+      // Upload to storage
+      const result = await uploadFileToStorage(bucketName, filePath, file);
+      
+      // Clear progress interval
       clearInterval(progressInterval);
       
-      // CRITICAL: Proper error handling
-      if (error) {
-        console.error("Upload error:", error);
-        
-        setUploadState({
-          isUploading: false,
-          progress: 0,
-          error: error.message || 'Upload failed',
-          result: null,
-          files: [],
-          previews: [],
-          isComplete: false,
-          success: false
-        });
-        
-        toast({
-          title: 'Upload Failed',
-          description: error.message || 'Failed to upload file',
-          variant: 'destructive',
-        });
-        
-        return { success: false, error: error.message };
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
       
-      if (!data || !data.path) {
-        const errorMsg = "Upload completed but no file path returned";
-        console.error(errorMsg);
-        
-        setUploadState({
-          isUploading: false,
-          progress: 0,
-          error: errorMsg,
-          result: null,
-          files: [],
-          previews: [],
-          isComplete: false,
-          success: false
-        });
-        
-        return { success: false, error: errorMsg };
-      }
-      
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path);
-      
-      if (!urlData.publicUrl) {
-        const errorMsg = "Failed to get media URL";
-        console.error(errorMsg);
-        
-        setUploadState({
-          isUploading: false,
-          progress: 0,
-          error: errorMsg,
-          result: null,
-          files: [],
-          previews: [],
-          isComplete: false,
-          success: false
-        });
-        
-        return { success: false, error: errorMsg };
-      }
-
-      console.log("Upload successful, URL:", urlData.publicUrl);
-      
-      // Final verification - test if the uploaded file can be accessed
-      try {
-        const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
-        if (!response.ok) {
-          console.warn(`Upload verification check failed: ${response.status} ${response.statusText}`);
-        } else {
-          console.log("Upload verification successful - URL is accessible");
-        }
-      } catch (verifyError) {
-        console.warn("Could not verify uploaded file URL:", verifyError);
-      }
-
-      // Upload successful
+      // Complete upload
       setUploadState({
         isUploading: false,
         progress: 100,
         error: null,
-        result: { 
-          path: data.path, 
-          url: urlData.publicUrl, 
-          success: true, 
-          error: null 
-        },
-        files: [],
-        previews: [],
-        isComplete: true,
-        success: true
+        isComplete: true
       });
       
-      // Auto-reset if configured
-      if (options?.autoResetOnCompletion || defaultOptions?.autoResetOnCompletion) {
-        const delay = options?.resetDelay || defaultOptions?.resetDelay || 3000;
-        setTimeout(() => {
-          resetUploadState();
-        }, delay);
+      // Auto-reset state after completion if enabled
+      if (finalOptions?.autoResetOnCompletion) {
+        const delay = finalOptions.resetDelay || 3000;
+        setTimeout(resetUploadState, delay);
       }
-
-      // Return the result with url and path
-      return {
-        success: true,
-        error: null,
-        url: urlData.publicUrl,
-        path: data.path
-      };
-    } catch (error: any) {
-      clearInterval(progressInterval);
-      console.error('Upload error:', error);
       
-      const errorMessage = error.message || 'An unknown error occurred';
+      return result;
+    } catch (error: any) {
+      console.error("Media upload error:", error);
       
       setUploadState({
         isUploading: false,
         progress: 0,
-        error: errorMessage,
-        result: null,
-        files: [],
-        previews: [],
-        isComplete: false,
-        success: false
+        error: error.message || "Upload failed",
+        isComplete: false
       });
       
       toast({
-        title: 'Upload Error',
-        description: errorMessage,
-        variant: 'destructive',
+        title: "Upload Failed",
+        description: error.message || "Failed to upload media",
+        variant: "destructive"
       });
       
-      return { success: false, error: errorMessage };
+      return { 
+        success: false, 
+        error: error.message || "Upload failed" 
+      };
     }
   }, [session, toast, validateFile, resetUploadState, defaultOptions]);
-
+  
   return {
-    uploadMedia,
     uploadState,
-    validateFile,
-    resetUploadState
+    uploadMedia,
+    resetUploadState,
+    validateFile
   };
 };

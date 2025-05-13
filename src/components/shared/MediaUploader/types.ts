@@ -1,31 +1,40 @@
 
+import { UploadOptions } from '@/utils/media/types';
+
+export type MediaTypes = 'image' | 'video' | 'both';
+
 export interface MediaUploaderProps {
-  /** Function called when upload completes with the public URL */
-  onComplete?: (url: string) => void;
-  /** Function called when an error occurs */
+  onComplete: (url: string) => void;
   onError?: (message: string) => void;
-  /** Context for the upload (determines bucket and path) */
-  context?: 'profile' | 'post' | 'story' | 'message' | 'shorts' | 'generic';
-  /** Maximum size in MB */
+  context?: string;
   maxSizeInMB?: number;
-  /** Types of media to accept */
-  mediaTypes?: 'image' | 'video' | 'both';
-  /** Button text */
+  mediaTypes?: MediaTypes;
   buttonText?: string;
-  /** Button variant */
-  buttonVariant?: 'default' | 'outline' | 'ghost' | 'link' | 'secondary' | 'destructive';
-  /** Additional classes */
+  buttonVariant?: string; 
   className?: string;
-  /** Show preview */
   showPreview?: boolean;
-  /** Auto upload after selection */
   autoUpload?: boolean;
-  /** Capture file without uploading */
   onFileCapture?: (file: File) => void;
 }
 
-export interface FileInfo {
-  name: string;
-  type: string;
-  size: number;
+export interface FileUploadButtonProps {
+  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  allowedTypes: string[];
+  buttonText: string;
+  buttonVariant?: string;
+  isUploading: boolean;
+}
+
+export interface MediaPreviewProps {
+  file: File | null;
+  previewUrl: string | null;
+  previewError: string | null;
+  previewLoading: boolean;
+  selectedFileInfo: {
+    name: string;
+    type: string;
+    size: number;
+  } | null;
+  onClear: () => void;
+  isUploading: boolean;
 }

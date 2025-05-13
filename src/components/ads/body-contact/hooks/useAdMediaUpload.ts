@@ -1,4 +1,5 @@
 
+import { useRef } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { validateVideoFormat, getVideoDuration } from "@/utils/videoProcessing";
@@ -12,8 +13,19 @@ interface MediaUploadResult {
 
 export const useAdMediaUpload = () => {
   const session = useSession();
+  // Critical: Use refs instead of state for file objects
+  const videoFileRef = useRef<File | null>(null);
+  const avatarFileRef = useRef<File | null>(null);
 
-  const uploadMedia = async (videoFile: File | null, avatarFile: File | null): Promise<MediaUploadResult> => {
+  const setVideoFile = (file: File | null) => {
+    videoFileRef.current = file;
+  };
+
+  const setAvatarFile = (file: File | null) => {
+    avatarFileRef.current = file;
+  };
+
+  const uploadMedia = async (): Promise<MediaUploadResult> => {
     if (!session?.user?.id) {
       return { videoUrl: null, avatarUrl: null, error: "No user session found" };
     }
@@ -23,7 +35,9 @@ export const useAdMediaUpload = () => {
 
     try {
       // Video Upload Process
-      if (videoFile) {
+      if (videoFileRef.current) {
+        const videoFile = videoFileRef.current;
+        
         // CRITICAL: Run comprehensive file diagnostic
         runFileDiagnostic(videoFile);
         
@@ -81,7 +95,7 @@ export const useAdMediaUpload = () => {
 
         console.log("Video upload successful:", videoData);
         
-        // Test the upload with getPublicUrl
+        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('dating-videos')
           .getPublicUrl(videoFileName);
@@ -99,7 +113,9 @@ export const useAdMediaUpload = () => {
       }
 
       // Avatar Upload Process
-      if (avatarFile) {
+      if (avatarFileRef.current) {
+        const avatarFile = avatarFileRef.current;
+        
         // CRITICAL: Run comprehensive file diagnostic
         runFileDiagnostic(avatarFile);
         
@@ -142,7 +158,7 @@ export const useAdMediaUpload = () => {
 
         console.log("Avatar upload successful:", avatarData);
         
-        // Test the upload with getPublicUrl
+        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
           .getPublicUrl(avatarFileName);
@@ -166,5 +182,9 @@ export const useAdMediaUpload = () => {
     }
   };
 
-  return { uploadMedia };
+  return { 
+    uploadMedia, 
+    setVideoFile, 
+    setAvatarFile 
+  };
 };

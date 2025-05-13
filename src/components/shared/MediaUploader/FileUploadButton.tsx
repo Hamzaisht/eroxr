@@ -1,41 +1,42 @@
 
-import React from 'react';
-import { Upload } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-interface FileUploadButtonProps {
-  buttonText: string;
-  buttonVariant: 'default' | 'outline' | 'ghost' | 'link' | 'secondary' | 'destructive';
-  isUploading: boolean;
-  mediaTypes: 'image' | 'video' | 'both';
-  maxSizeInMB: number;
-  onClick: () => void;
-}
+import { FileUploadButtonProps } from "./types";
 
 export const FileUploadButton: React.FC<FileUploadButtonProps> = ({
+  onFileSelect,
+  allowedTypes,
   buttonText,
-  buttonVariant,
-  isUploading,
-  mediaTypes,
-  maxSizeInMB,
-  onClick
+  buttonVariant = 'default',
+  isUploading
 }) => {
-  const mediaTypeLabel = mediaTypes === 'both' 
-    ? 'images and videos' 
-    : mediaTypes === 'image' ? 'images' : 'videos';
-    
   return (
-    <Button
-      variant={buttonVariant}
-      onClick={onClick}
-      disabled={isUploading}
-      className="w-full"
-    >
-      <Upload className="h-4 w-4 mr-2" />
-      {buttonText}
-      <span className="text-xs ml-2 opacity-70">
-        ({mediaTypeLabel}, max {maxSizeInMB}MB)
-      </span>
-    </Button>
+    <div>
+      <input
+        type="file"
+        id="media-upload-input"
+        className="hidden"
+        accept={allowedTypes.join(',')}
+        onChange={onFileSelect}
+        disabled={isUploading}
+      />
+      
+      <Button
+        type="button"
+        variant={buttonVariant as any}
+        className="w-full"
+        onClick={() => document.getElementById('media-upload-input')?.click()}
+        disabled={isUploading}
+      >
+        {isUploading ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Uploading...
+          </>
+        ) : (
+          buttonText
+        )}
+      </Button>
+    </div>
   );
 };

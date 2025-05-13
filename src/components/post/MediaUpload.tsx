@@ -1,10 +1,12 @@
-import { useState } from "react";
+
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ImagePlus, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { validateVideoFormat, getVideoDuration } from "@/utils/videoProcessing";
-import { supabase } from "@/integrations/supabase/client";
+import { runFileDiagnostic } from "@/utils/upload/fileUtils";
+import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface MediaUploadProps {
   onFileSelect: (files: FileList | null) => void;
@@ -13,7 +15,6 @@ interface MediaUploadProps {
 }
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB in bytes
-const MAX_VIDEO_DURATION = 300; // 5 minutes in seconds
 
 export const MediaUpload = ({
   onFileSelect,
@@ -22,7 +23,9 @@ export const MediaUpload = ({
 }: MediaUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const session = useSession();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -32,30 +35,7 @@ export const MediaUpload = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const validateFile = async (file: File) => {
-    // Check file size first
-    if (file.size > MAX_FILE_SIZE) {
-      throw new Error(`File size must be less than ${formatFileSize(MAX_FILE_SIZE)} (current size: ${formatFileSize(file.size)})`);
-    }
-
-    if (file.type.startsWith('video/')) {
-      const isValidVideo = await validateVideoFormat(file);
-      if (!isValidVideo) {
-        throw new Error("Invalid video format. Please upload MP4 or WebM files only.");
-      }
-
-      const duration = await getVideoDuration(file);
-      if (duration > MAX_VIDEO_DURATION) {
-        throw new Error(`Video must be shorter than ${MAX_VIDEO_DURATION / 60} minutes (current duration: ${Math.round(duration / 60)} minutes)`);
-      }
-    } else if (!file.type.startsWith('image/')) {
-      throw new Error("File must be an image (JPG, PNG, GIF) or video (MP4, WebM)");
-    }
-
-    return true;
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isPayingCustomer) {
       toast({
         title: "Premium Feature",
@@ -64,56 +44,85 @@ export const MediaUpload = ({
       });
       return;
     }
+    
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upload media",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const files = e.target.files;
     if (!files?.length) return;
 
-    setIsUploading(true);
-    setUploadProgress(0);
+    // CRITICAL: Use direct file reference
+    const fileArray = Array.from(files);
+    
+    // Perform file validation
+    for (const file of fileArray) {
+      runFileDiagnostic(file);
+      
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "File too large",
+          description: `Maximum file size is ${formatFileSize(MAX_FILE_SIZE)}`,
+          variant: "destructive",
+        });
+        e.target.value = '';
+        return;
+      }
+    }
 
     try {
-      // Validate each file before proceeding
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        try {
-          await validateFile(file);
-        } catch (error: any) {
-          toast({
-            title: `Invalid file: ${file.name}`,
-            description: error.message,
-            variant: "destructive",
-          });
-          e.target.value = '';
-          setIsUploading(false);
-          return;
-        }
+      setIsUploading(true);
+      setUploadProgress(10);
+      
+      // Create a data transfer object to build a new FileList
+      const dataTransfer = new DataTransfer();
+      
+      // Process each file and add to the DataTransfer
+      for (const file of fileArray) {
+        dataTransfer.items.add(file);
+        setUploadProgress(prev => prev + Math.round(70 / fileArray.length));
       }
-
-      // Test storage access
-      const { data: bucketExists, error: bucketError } = await supabase
-        .storage
-        .getBucket('posts');
-
-      if (bucketError) {
-        throw new Error("Unable to access storage. Please check your permissions.");
-      }
-
-      onFileSelect(files);
+      
+      // Pass the files to the parent component
+      onFileSelect(dataTransfer.files);
+      setUploadProgress(100);
+      
       toast({
         title: "Files selected",
-        description: `${files.length} file(s) ready for upload`,
+        description: `${fileArray.length} file(s) selected for upload`,
       });
     } catch (error: any) {
+      console.error("Error processing files:", error);
+      
       toast({
         title: "Error",
         description: error.message || "Failed to process files",
         variant: "destructive",
       });
+      
       onFileSelect(null);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
     }
+  };
+
+  const handleButtonClick = () => {
+    if (!isPayingCustomer) {
+      toast({
+        title: "Premium Feature",
+        description: "Only paying customers can upload media",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    fileInputRef.current?.click();
   };
 
   return (
@@ -130,11 +139,12 @@ export const MediaUpload = ({
       <div className="grid gap-4">
         <input
           type="file"
+          ref={fileInputRef}
           id="media-upload"
           multiple
           accept="image/*,video/*"
           className="hidden"
-          onChange={handleFileSelect}
+          onChange={handleFileChange}
           disabled={isUploading || !isPayingCustomer}
         />
 
@@ -142,13 +152,13 @@ export const MediaUpload = ({
           type="button"
           variant="outline"
           className="w-full h-24 relative"
-          onClick={() => document.getElementById('media-upload')?.click()}
+          onClick={handleButtonClick}
           disabled={isUploading || !isPayingCustomer}
         >
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="h-6 w-6 animate-spin" />
-              <span>Processing...</span>
+              <span>Processing... {uploadProgress}%</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">

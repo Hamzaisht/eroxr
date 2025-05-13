@@ -1,39 +1,70 @@
 
-import React from 'react';
-import { FileInfo } from './types';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Bug } from "lucide-react";
 
 interface DebugInfoProps {
-  selectedFileInfo: FileInfo | null;
-  previewUrl: string | null;
-  previewLoading: boolean;
-  previewError: string | null;
-  hasSelectedFile: boolean;
+  uploadState: {
+    isUploading: boolean;
+    progress: number;
+    error: string | null;
+    isComplete: boolean;
+  };
+  fileInfo: {
+    name?: string;
+    type?: string;
+    size?: number;
+  } | null;
 }
 
-// Only shows in development mode, helpful for debugging
 export const DebugInfo: React.FC<DebugInfoProps> = ({
-  selectedFileInfo,
-  previewUrl,
-  previewLoading,
-  previewError,
-  hasSelectedFile,
+  uploadState,
+  fileInfo
 }) => {
-  if (process.env.NODE_ENV !== 'development') return null;
+  const [showDebug, setShowDebug] = useState(false);
+  
+  if (!showDebug) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="text-xs text-muted-foreground"
+        onClick={() => setShowDebug(true)}
+      >
+        <Bug className="h-3 w-3 mr-1" />
+        Debug
+      </Button>
+    );
+  }
   
   return (
-    <div className="text-xs border border-dashed border-gray-300 p-2 mb-2 rounded bg-muted/20">
-      <div className="font-bold">Debug Info:</div>
-      <div>hasSelectedFile: {String(hasSelectedFile)}</div>
-      <div>previewLoading: {String(previewLoading)}</div>
-      <div>previewError: {previewError || 'none'}</div>
-      <div>previewUrl: {previewUrl ? 'exists' : 'none'}</div>
-      {selectedFileInfo && (
-        <div>
-          <div>File: {selectedFileInfo.name}</div>
-          <div>Type: {selectedFileInfo.type}</div>
-          <div>Size: {(selectedFileInfo.size / 1024 / 1024).toFixed(2)} MB</div>
-        </div>
-      )}
+    <div className="mt-4 p-2 border rounded text-xs font-mono bg-muted/20">
+      <div className="flex justify-between mb-2">
+        <span className="font-medium">Debug Info</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-xs h-5 px-1"
+          onClick={() => setShowDebug(false)}
+        >
+          Hide
+        </Button>
+      </div>
+      
+      <div className="space-y-1">
+        <p>Upload State: {uploadState.isUploading ? 'Uploading' : uploadState.isComplete ? 'Complete' : 'Idle'}</p>
+        <p>Progress: {uploadState.progress}%</p>
+        {uploadState.error && <p className="text-destructive">Error: {uploadState.error}</p>}
+        {fileInfo && (
+          <>
+            <p>File: {fileInfo.name}</p>
+            <p>Type: {fileInfo.type}</p>
+            <p>Size: {fileInfo.size} bytes</p>
+          </>
+        )}
+      </div>
     </div>
   );
 };

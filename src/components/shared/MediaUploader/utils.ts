@@ -1,25 +1,22 @@
 
+import { MediaTypes } from './types';
 import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '@/utils/upload/validators';
 
-/**
- * Get allowed file types based on mediaTypes option
- */
-export const getAllowedTypes = (mediaTypes: 'image' | 'video' | 'both'): string[] => {
-  if (mediaTypes === 'image') {
-    return SUPPORTED_IMAGE_TYPES;
+export const getAllowedTypes = (mediaTypes: MediaTypes): string[] => {
+  switch (mediaTypes) {
+    case 'image':
+      return SUPPORTED_IMAGE_TYPES;
+    case 'video':
+      return SUPPORTED_VIDEO_TYPES;
+    case 'both':
+    default:
+      return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
   }
-  if (mediaTypes === 'video') {
-    return SUPPORTED_VIDEO_TYPES;
-  }
-  return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
 };
 
-/**
- * Validate file before processing (quick check before passing to upload logic)
- */
 export const validateFile = (file: File): { valid: boolean; error?: string } => {
   if (!file) {
-    return { valid: false, error: 'No file provided' };
+    return { valid: false, error: 'No file selected' };
   }
   
   if (!(file instanceof File)) {
@@ -27,8 +24,18 @@ export const validateFile = (file: File): { valid: boolean; error?: string } => 
   }
   
   if (file.size === 0) {
-    return { valid: false, error: `File "${file.name}" is empty (0 bytes)` };
+    return { valid: false, error: 'File is empty' };
   }
   
   return { valid: true };
+};
+
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };

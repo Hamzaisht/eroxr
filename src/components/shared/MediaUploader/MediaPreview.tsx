@@ -1,19 +1,9 @@
 
-import React from 'react';
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { FileInfo } from './types';
-
-interface MediaPreviewProps {
-  file: File | null;
-  previewUrl: string | null;
-  previewError: string | null; 
-  previewLoading: boolean;
-  selectedFileInfo: FileInfo | null;
-  onClear: () => void;
-  isUploading: boolean;
-}
+import { formatFileSize } from "./utils";
+import { MediaPreviewProps } from "./types";
+import { isImageFile, isVideoFile } from "@/utils/upload/validators";
 
 export const MediaPreview: React.FC<MediaPreviewProps> = ({
   file,
@@ -26,18 +16,14 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
 }) => {
   if (!file || !selectedFileInfo) return null;
   
-  const isImage = selectedFileInfo.type.startsWith('image/');
-  const isVideo = selectedFileInfo.type.startsWith('video/');
-  
-  const sizeInMB = (selectedFileInfo.size / (1024 * 1024)).toFixed(2);
-  
   return (
-    <div className="relative border rounded-md p-2 bg-muted/20">
-      <div className="absolute top-2 right-2 z-10">
+    <div className="relative border rounded-md p-4">
+      <div className="absolute top-2 right-2">
         <Button
+          type="button"
           variant="destructive"
           size="icon"
-          className="h-6 w-6 rounded-full"
+          className="h-6 w-6"
           onClick={onClear}
           disabled={isUploading}
         >
@@ -45,36 +31,42 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
         </Button>
       </div>
       
-      <div className="flex flex-col space-y-2">
-        <div className="text-sm font-medium">{selectedFileInfo.name} ({sizeInMB} MB)</div>
-        
-        {/* Preview area */}
-        <div className="relative rounded-md overflow-hidden bg-black/10 flex items-center justify-center min-h-[200px]">
-          {previewLoading ? (
-            <div className="flex items-center justify-center h-full w-full min-h-[200px]">
-              <Loader2 className="h-8 w-8 animate-spin opacity-70" />
-            </div>
-          ) : previewError ? (
-            <div className="text-destructive text-sm p-2">
-              {previewError}
-            </div>
-          ) : isImage && previewUrl ? (
-            <img 
-              src={previewUrl} 
-              alt="Preview" 
-              className="max-w-full max-h-[300px] object-contain"
+      <div className="mt-2 space-y-4">
+        {previewLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : previewError ? (
+          <div className="p-2 bg-destructive/10 text-destructive rounded text-sm">
+            {previewError}
+          </div>
+        ) : previewUrl && isImageFile(file) ? (
+          <div className="flex justify-center">
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="max-h-40 rounded-md object-contain"
             />
-          ) : isVideo && previewUrl ? (
+          </div>
+        ) : previewUrl && isVideoFile(file) ? (
+          <div className="flex justify-center">
             <video
               src={previewUrl}
               controls
-              className="max-w-full max-h-[300px] object-contain"
+              className="max-h-40 rounded-md"
             />
-          ) : (
-            <div className="flex items-center justify-center h-full w-full min-h-[200px]">
-              <p className="text-sm opacity-70">No preview available</p>
-            </div>
-          )}
+          </div>
+        ) : (
+          <div className="p-4 bg-muted rounded-md flex items-center justify-center">
+            <span className="text-muted-foreground">No preview available</span>
+          </div>
+        )}
+        
+        <div className="text-sm">
+          <p className="font-medium truncate">{selectedFileInfo.name}</p>
+          <p className="text-muted-foreground">
+            {selectedFileInfo.type} • {formatFileSize(selectedFileInfo.size)}
+          </p>
         </div>
       </div>
     </div>
