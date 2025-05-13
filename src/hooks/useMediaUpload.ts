@@ -2,8 +2,9 @@
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
-import { uploadFileToStorage, createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { createUniqueFilePath } from '@/utils/media/mediaUtils';
 import { validateFileForUpload } from '@/utils/upload/validators';
+import { uploadFileToStorage } from '@/utils/upload/storageService';
 import { UploadOptions } from '@/utils/media/types';
 
 interface UploadState {

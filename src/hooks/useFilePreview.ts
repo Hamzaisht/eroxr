@@ -1,13 +1,39 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createFilePreview, revokeFilePreview } from '@/utils/upload/fileUtils';
 
 export const useFilePreview = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Clean up preview URL on unmount
+  const [fileType, setFileType] = useState<'image' | 'video' | 'other' | null>(null);
+
+  // Create a preview URL from a file
+  const createPreview = (file: File | null) => {
+    // Clean up any existing preview URL
+    if (previewUrl) {
+      revokeFilePreview(previewUrl);
+      setPreviewUrl(null);
+    }
+
+    if (!file) {
+      setFileType(null);
+      return;
+    }
+
+    // Determine file type
+    if (file.type.startsWith('image/')) {
+      setFileType('image');
+    } else if (file.type.startsWith('video/')) {
+      setFileType('video');
+    } else {
+      setFileType('other');
+    }
+
+    // Create a new preview URL
+    const newPreviewUrl = createFilePreview(file);
+    setPreviewUrl(newPreviewUrl);
+  };
+
+  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -15,46 +41,16 @@ export const useFilePreview = () => {
       }
     };
   }, [previewUrl]);
-  
-  // Create preview for a file
-  const createPreview = useCallback((file: File) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // Clean up previous preview if exists
-      if (previewUrl) {
-        revokeFilePreview(previewUrl);
-      }
-      
-      // Create new preview URL
-      const url = createFilePreview(file);
-      setPreviewUrl(url);
-      
-      return url;
-    } catch (error: any) {
-      console.error("Error creating file preview:", error);
-      setError(error.message || "Failed to create preview");
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [previewUrl]);
-  
-  // Clear preview
-  const clearPreview = useCallback(() => {
-    if (previewUrl) {
-      revokeFilePreview(previewUrl);
-    }
-    setPreviewUrl(null);
-    setError(null);
-  }, [previewUrl]);
-  
+
   return {
     previewUrl,
-    isLoading,
-    error,
+    fileType,
     createPreview,
-    clearPreview
+    revokePreview: () => {
+      if (previewUrl) {
+        revokeFilePreview(previewUrl);
+        setPreviewUrl(null);
+      }
+    }
   };
 };

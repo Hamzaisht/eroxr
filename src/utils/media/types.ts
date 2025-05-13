@@ -55,6 +55,7 @@ export interface MediaOptions {
   alt?: string;
   maxRetries?: number;
   showWatermark?: boolean;
+  ref?: React.Ref<HTMLVideoElement | HTMLImageElement>;
 }
 
 export type MediaTypes = 'image' | 'video' | 'audio' | 'document' | 'all';
@@ -95,6 +96,7 @@ export interface UploadOptions {
   onProgress?: (progress: number) => void;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
+  allowedTypes?: string[];
 }
 
 // Normalize a media source to ensure it has a valid URL property

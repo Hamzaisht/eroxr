@@ -1,126 +1,71 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { MediaType, MediaSource } from '@/utils/media/types';
-import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
+import { useCallback } from "react";
+import { MediaSource, MediaType } from "@/utils/media/types";
+import { extractMediaUrl } from "@/utils/media/mediaUtils";
 
-interface UseMediaServiceOptions {
-  maxRetries?: number;
-  onError?: () => void;
-  onLoad?: () => void;
-}
+// Helper function to determine if a URL is a video
+const isVideoUrl = (url: string): boolean => {
+  if (!url) return false;
+  const videoExtensions = ["mp4", "webm", "mov", "avi"];
+  const extension = url.split(".").pop()?.toLowerCase();
+  return videoExtensions.includes(extension || "");
+};
 
-/**
- * Hook to handle all media processing logic consistently across the app
- */
-export function useMediaService(
-  source: MediaSource | string | null, 
-  options: UseMediaServiceOptions = {}
-) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<MediaType>(MediaType.UNKNOWN);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  
-  console.log("useMediaService called with source:", source);
-  
-  // Extract and process URL from the source
-  useEffect(() => {
-    if (!source) {
-      console.error("useMediaService: No source provided");
-      setUrl(null);
-      setIsLoading(false);
-      setHasError(true);
-      setErrorMessage("No media source provided");
-      return;
+export const useMediaService = () => {
+  // Convert any media source to a standard format
+  const normalizeMediaSource = useCallback((source: any): MediaSource => {
+    if (!source) return {};
+
+    // If it's already a string, assume it's a direct URL
+    if (typeof source === "string") {
+      return {
+        url: source,
+        media_type: isVideoUrl(source) ? MediaType.VIDEO : MediaType.IMAGE,
+      };
     }
-    
-    setIsLoading(true);
-    setHasError(false);
-    setErrorMessage(null);
-    
-    try {
-      // Determine media type
-      const detectedType = determineMediaType(source);
-      setMediaType(detectedType);
-      console.log("useMediaService detected media type:", detectedType);
-      
-      // Extract the media URL
-      const sourceUrl = extractMediaUrl(source);
-      console.log("useMediaService extracted URL:", sourceUrl);
-      
-      if (!sourceUrl) {
-        console.error("useMediaService: Could not extract URL from source");
-        setIsLoading(false);
-        setHasError(true);
-        setErrorMessage("Could not extract media URL");
-        return;
+
+    // If it's a MediaSource-like object, normalize it
+    const mediaSource: MediaSource = { ...source };
+
+    // Ensure there's a single URL
+    if (!mediaSource.url) {
+      if (mediaSource.video_url) {
+        mediaSource.url = mediaSource.video_url;
+        mediaSource.media_type = MediaType.VIDEO;
+      } else if (mediaSource.media_url) {
+        mediaSource.url = mediaSource.media_url;
+        mediaSource.media_type = isVideoUrl(mediaSource.media_url)
+          ? MediaType.VIDEO
+          : MediaType.IMAGE;
       }
-      
-      // Get thumbnail URL if available
-      if (typeof source === 'object' && source !== null) {
-        const thumbUrl = source.thumbnail_url || source.video_thumbnail_url || source.poster;
-        if (thumbUrl) {
-          console.log("useMediaService found thumbnail URL:", thumbUrl);
-          setThumbnailUrl(thumbUrl);
-        }
-      }
-      
-      // Get playable URL
-      const playableUrl = getPlayableMediaUrl(sourceUrl);
-      console.log("useMediaService final playable URL:", playableUrl);
-      setUrl(playableUrl);
-    } catch (error) {
-      console.error("useMediaService error processing source:", error);
-      setHasError(true);
-      setErrorMessage(`Error processing media: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsLoading(false);
     }
-  }, [source, retryCount]);
-  
-  // Handle successful media load
-  const handleLoad = useCallback(() => {
-    console.log("useMediaService: Media loaded successfully:", url);
-    setHasError(false);
-    setErrorMessage(null);
-    if (options.onLoad) options.onLoad();
-  }, [url, options]);
-  
-  // Handle media error
-  const handleError = useCallback(() => {
-    console.error("useMediaService: Media load error:", url);
-    setHasError(true);
-    setErrorMessage(`Failed to load ${mediaType === MediaType.VIDEO ? 'video' : 'image'}`);
-    if (options.onError) options.onError();
-  }, [url, mediaType, options]);
-  
-  // Retry loading media
-  const retry = useCallback(() => {
-    if (retryCount >= (options.maxRetries || 2)) {
-      console.warn("useMediaService: Maximum retry count reached");
-      return;
-    }
-    
-    console.log(`useMediaService: Retrying (${retryCount + 1}/${options.maxRetries || 2})`);
-    setRetryCount(prev => prev + 1);
-    setIsLoading(true);
-    setHasError(false);
-    setErrorMessage(null);
-  }, [retryCount, options.maxRetries]);
-  
+
+    return mediaSource;
+  }, []);
+
+  // Get a public display URL for an internal media source
+  const getPublicMediaUrl = useCallback((source: MediaSource | string): string | null => {
+    const url = extractMediaUrl(source);
+    return url;
+  }, []);
+
+  // Get a usable poster image for video content
+  const getVideoPosterUrl = useCallback((source: MediaSource): string | null => {
+    if (!source) return null;
+
+    // If there's an explicit poster, use it
+    if (source.poster) return source.poster;
+
+    // If there's a thumbnail, use it
+    if (source.thumbnail_url) return source.thumbnail_url;
+
+    return null;
+  }, []);
+
   return {
-    url,
-    thumbnailUrl,
-    mediaType,
-    isLoading,
-    hasError,
-    errorMessage,
-    retry,
-    handleLoad,
-    handleError
+    normalizeMediaSource,
+    getPublicMediaUrl,
+    getVideoPosterUrl,
+    isVideoUrl,
   };
-}
+};

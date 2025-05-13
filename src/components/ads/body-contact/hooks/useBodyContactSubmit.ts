@@ -60,7 +60,7 @@ export const useBodyContactSubmit = ({
       }
 
       // 3. Upload media files (video and avatar)
-      const mediaResult = await uploadMedia(values.videoFile, values.avatarFile, session.user.id);
+      const mediaResult = await uploadMedia();
       if (mediaResult.error) {
         throw new Error(mediaResult.error);
       }
@@ -69,8 +69,7 @@ export const useBodyContactSubmit = ({
       const saveResult = await saveAd(
         values, 
         mediaResult.videoUrl, 
-        mediaResult.avatarUrl,
-        session.user.id
+        mediaResult.avatarUrl
       );
       
       if (!saveResult.success || !saveResult.data) {

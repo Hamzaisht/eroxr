@@ -2,7 +2,7 @@
 import { forwardRef, Ref, useMemo } from 'react';
 import { MediaRenderer } from '@/components/media/MediaRenderer';
 import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
-import { extractMediaUrl } from '@/utils/media/urlUtils';
+import { extractMediaUrl } from '@/utils/media/mediaUtils';
 import { normalizeMediaSource } from '@/utils/media/types';
 
 interface UniversalMediaProps extends MediaOptions {
@@ -51,7 +51,7 @@ export const UniversalMedia = forwardRef(({
       onError={onError}
       onEnded={onEnded}
       onTimeUpdate={onTimeUpdate}
-      ref={ref as any}
+      ref={ref}
       allowRetry={true}
       maxRetries={maxRetries}
     />

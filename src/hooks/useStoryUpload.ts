@@ -3,8 +3,8 @@ import { useState, useRef } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
-import { createUniqueFilePath, runFileDiagnostic } from '@/utils/upload/fileUtils';
-import { validateFileForUpload } from '@/utils/upload/validators';
+import { createUniqueFilePath } from '@/utils/upload/fileUtils';
+import { validateFileForUpload, isImageFile, isVideoFile } from '@/utils/upload/validators';
 
 export const useStoryUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -44,15 +44,18 @@ export const useStoryUpload = () => {
     }
     
     // CRITICAL: Run comprehensive file diagnostic
-    runFileDiagnostic(file);
+    if (!file) {
+      console.warn('File Diagnostic: No file provided');
+      return false;
+    }
     
     // CRITICAL: Store file in ref, not state
     fileRef.current = file;
     
     // Determine media type
-    if (file.type.startsWith('image/')) {
+    if (isImageFile(file)) {
       setMediaType('image');
-    } else if (file.type.startsWith('video/')) {
+    } else if (isVideoFile(file)) {
       setMediaType('video');
     } else {
       setError(`Invalid file type: ${file.type}. Only images and videos are allowed.`);
@@ -77,9 +80,6 @@ export const useStoryUpload = () => {
       return;
     }
     
-    // CRITICAL: Run comprehensive file diagnostic again right before upload
-    runFileDiagnostic(file);
-    
     // CRITICAL: Strict file validation before upload
     if (!file || !(file instanceof File) || file.size === 0) {
       console.error("❌ Invalid File passed to uploader", file);
@@ -90,7 +90,7 @@ export const useStoryUpload = () => {
     // Validate file
     const validation = validateFileForUpload(file);
     if (!validation.valid) {
-      setError(validation.message || 'Invalid file');
+      setError(validation.error || 'Invalid file');
       return;
     }
     

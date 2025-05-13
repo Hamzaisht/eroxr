@@ -1,42 +1,37 @@
 
+import { MediaSource } from './types';
+
 /**
- * Extract the media URL from a string or media object
+ * Extract the media URL from a MediaSource object or string
  */
-export function extractMediaUrl(source: any): string | null {
-  if (!source) return null;
-  
-  // Handle string source
+export function extractMediaUrl(source: MediaSource | string): string | null {
   if (typeof source === 'string') {
     return source;
   }
   
-  // Handle media object with various URL properties
-  return source.url || source.video_url || source.media_url || source.src || null;
+  // Try to get the URL from different possible properties
+  const url = source.url || source.video_url || source.media_url || source.src;
+  
+  return url || null;
 }
 
 /**
- * Get a playable media URL (handles CDN transformations, proxies, etc)
+ * Get a playable media URL by handling special cases
  */
 export function getPlayableMediaUrl(url: string): string {
-  if (!url) return '';
+  // Handle special URL types or transformations here
   
-  // Add CORS proxy for external URLs if needed
-  if (
-    url.startsWith('http') && 
-    !url.includes(window.location.hostname) &&
-    !url.includes('localhost') &&
-    !url.includes('storage.googleapis.com') &&
-    !url.includes('supabase')
-  ) {
-    // You can add CORS proxy logic here if needed
-    // For now we just return the URL as is
+  // Handle Supabase URLs
+  if (url.includes('storage.googleapis.com') && !url.includes('token=')) {
+    // This is a likely public Supabase URL, leave it as is
+    return url;
   }
   
   return url;
 }
 
 /**
- * Add a cache buster parameter to a URL
+ * Add a cache buster to a URL
  */
 export function addCacheBuster(url: string): string {
   if (!url) return url;
@@ -46,31 +41,34 @@ export function addCacheBuster(url: string): string {
 }
 
 /**
- * Check if URL points to an image
+ * Convert a relative URL to an absolute URL
  */
-export function isImageUrl(url: string): boolean {
-  if (!url) return false;
+export function toAbsoluteUrl(url: string): string {
+  if (!url) return url;
   
-  const extension = url.split('.').pop()?.toLowerCase();
-  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension || '');
+  // If already absolute, return as is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // Handle relative URLs
+  const baseUrl = window.location.origin;
+  
+  if (url.startsWith('/')) {
+    return `${baseUrl}${url}`;
+  }
+  
+  return `${baseUrl}/${url}`;
 }
 
 /**
- * Check if URL points to a video
+ * Check if URL exists and is accessible
  */
-export function isVideoUrl(url: string): boolean {
-  if (!url) return false;
-  
-  const extension = url.split('.').pop()?.toLowerCase();
-  return ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension || '');
-}
-
-/**
- * Check if URL points to an audio file
- */
-export function isAudioUrl(url: string): boolean {
-  if (!url) return false;
-  
-  const extension = url.split('.').pop()?.toLowerCase();
-  return ['mp3', 'wav', 'ogg'].includes(extension || '');
+export async function checkUrlExists(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
 }

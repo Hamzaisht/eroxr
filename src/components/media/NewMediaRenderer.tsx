@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  determineMediaType,
-  extractMediaUrl
+  determineMediaType
 } from '@/utils/media/mediaUtils';
+import { extractMediaUrl } from '@/utils/media/mediaUtils';
 import { MediaType } from '@/utils/media/types';
 import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
 import { AlertCircle, Loader2 } from 'lucide-react';

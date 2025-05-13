@@ -39,6 +39,12 @@ export function determineMediaType(source: string | MediaSource): MediaType {
   return MediaType.UNKNOWN;
 }
 
+// Export extractMediaUrl to resolve import errors
+export { extractMediaUrl } from './urlUtils';
+
+// Re-export the uploadFileToStorage function to maintain backward compatibility
+export { uploadFileToStorage } from '../upload/storageService';
+
 function _getMediaTypeFromUrl(url: string): MediaType {
   const extension = url.split('.').pop()?.toLowerCase();
   

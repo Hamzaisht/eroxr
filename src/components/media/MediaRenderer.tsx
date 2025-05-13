@@ -1,8 +1,8 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
 import { MediaDisplay } from './MediaDisplay';
-import { extractMediaUrl } from '@/utils/media/urlUtils';
+import { extractMediaUrl } from '@/utils/media/mediaUtils';
 import { normalizeMediaSource } from '@/utils/media/types';
 
 interface MediaRendererProps extends MediaOptions {
@@ -35,7 +35,7 @@ interface MediaRendererProps extends MediaOptions {
 /**
  * A smart media renderer that handles various media types
  */
-export function MediaRenderer({
+export const MediaRenderer = forwardRef(({
   src,
   type,
   className,
@@ -52,7 +52,7 @@ export function MediaRenderer({
   allowRetry = false,
   maxRetries = 2,
   showWatermark = false
-}: MediaRendererProps) {
+}: MediaRendererProps, ref: React.ForwardedRef<HTMLVideoElement | HTMLImageElement>) => {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<MediaType>(type || MediaType.UNKNOWN);
   const [isLoading, setIsLoading] = useState(true);
@@ -144,6 +144,9 @@ export function MediaRenderer({
       onError={handleError}
       onEnded={onEnded}
       onTimeUpdate={onTimeUpdate}
+      ref={ref}
     />
   );
-}
+});
+
+MediaRenderer.displayName = 'MediaRenderer';

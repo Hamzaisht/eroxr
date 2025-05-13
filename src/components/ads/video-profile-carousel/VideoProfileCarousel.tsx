@@ -1,96 +1,105 @@
 
-"use client"
-
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { DatingAd } from '../types/dating';
-import { CarouselContainer } from './CarouselContainer';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Create stub components for the missing imports
-const CarouselControls = ({ onNext, onPrev, currentIndex, total }: any) => (
-  <div className="flex justify-between w-full px-4">
-    <button onClick={onPrev}>Previous</button>
-    <div>
-      {currentIndex + 1} / {total}
-    </div>
-    <button onClick={onNext}>Next</button>
-  </div>
-);
-
-const CarouselEmpty = () => (
-  <div className="flex justify-center items-center h-[50vh]">
-    <p>No profiles available</p>
-  </div>
-);
-
-// Create a stub for useSettings
-const useSettings = () => ({
-  settings: {
-    enableVideoAutoplay: true
-  }
-});
+// Create these files as needed
+import { CarouselControls } from './CarouselControls';
+import { CarouselEmpty } from './CarouselEmpty';
 
 interface VideoProfileCarouselProps {
-  ads: DatingAd[];
-  autoPlay?: boolean;
-  className?: string;
+  ads?: any[];
+  title?: string;
+  emptyMessage?: string;
+  onViewMore?: () => void;
 }
 
-export const VideoProfileCarousel = ({ 
+export const VideoProfileCarousel = ({
   ads = [],
-  autoPlay = true,
-  className = ""
+  title = "Dating Videos",
+  emptyMessage = "No videos available",
+  onViewMore
 }: VideoProfileCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isActive, setIsActive] = useState(false);
-  const { settings } = useSettings();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleNext = () => {
-    if (ads.length === 0) return;
-    setCurrentIndex((prev) => (prev + 1) % ads.length);
-  };
-
-  const handlePrev = () => {
-    if (ads.length === 0) return;
-    setCurrentIndex((prev) => (prev === 0 ? ads.length - 1 : prev - 1));
-  };
-
+  // Reset index when ads change
   useEffect(() => {
-    // Reset to the first item when ads change
     setCurrentIndex(0);
   }, [ads]);
 
-  useEffect(() => {
-    // Set active state based on autoplay setting or prop
-    setIsActive(autoPlay && settings.enableVideoAutoplay);
-  }, [autoPlay, settings.enableVideoAutoplay]);
+  const handlePrevious = () => {
+    setCurrentIndex(prev => (prev > 0 ? prev - 1 : ads.length - 1));
+  };
 
-  // Return empty state if no ads
+  const handleNext = () => {
+    setCurrentIndex(prev => (prev < ads.length - 1 ? prev + 1 : 0));
+  };
+
   if (!ads || ads.length === 0) {
-    return <CarouselEmpty />;
+    return <CarouselEmpty message={emptyMessage} />;
   }
 
   return (
-    <motion.div 
-      className={`relative w-full overflow-hidden ${className}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      {/* Carousel Content */}
-      <CarouselContainer 
-        ads={ads} 
-        currentIndex={currentIndex} 
-        isActive={isActive}
-      />
-      
-      {/* Carousel Controls */}
-      <CarouselControls 
-        onNext={handleNext}
-        onPrev={handlePrev}
-        currentIndex={currentIndex}
-        total={ads.length}
-      />
-    </motion.div>
+    <Card className="relative overflow-hidden bg-gray-900 rounded-lg">
+      <div className="flex flex-col">
+        <div className="p-4 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          
+          {onViewMore && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onViewMore}
+              className="text-gray-300 hover:text-white"
+            >
+              View All
+            </Button>
+          )}
+        </div>
+        
+        <div className="relative h-[400px]">
+          {/* Main video display */}
+          <div className="relative w-full h-full">
+            {ads[currentIndex] && (
+              <video
+                src={ads[currentIndex].video_url || ads[currentIndex].media_url}
+                className="w-full h-full object-cover"
+                autoPlay
+                loop
+                muted
+                playsInline
+              />
+            )}
+            
+            {/* Overlay with profile info */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-gray-300 overflow-hidden">
+                  <img 
+                    src={ads[currentIndex]?.avatar_url || "/placeholder-avatar.png"} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-medium text-white">{ads[currentIndex]?.title || "Anonymous"}</h3>
+                  <p className="text-sm text-gray-300">{ads[currentIndex]?.location || "Unknown location"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Navigation controls */}
+          <CarouselControls 
+            onPrevious={handlePrevious} 
+            onNext={handleNext} 
+            totalItems={ads.length} 
+            currentIndex={currentIndex}
+          />
+        </div>
+      </div>
+    </Card>
   );
 };
