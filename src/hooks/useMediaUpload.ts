@@ -1,11 +1,10 @@
 
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { uploadFileToStorage, createUniqueFilePath } from '@/utils/media/mediaUtils';
+import { supabase } from "@/integrations/supabase/client";
+import { createUniqueFilePath, runFileDiagnostic } from '@/utils/upload/fileUtils';
 import { UploadOptions, UploadState, FileValidationResult } from '@/utils/media/types';
 import { useToast } from './use-toast';
-import { getSupabaseUrl } from '@/utils/media/supabaseUrlUtils';
-import { supabase } from '@/integrations/supabase/client';
 
 // Helper constants for file validation
 const MAX_FILE_SIZE_DEFAULT = 50; // MB
@@ -93,17 +92,6 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       return { valid: false, error };
     }
 
-    // Additional validation to ensure file has content
-    if (!file.type) {
-      const error = 'File has no content type';
-      return { valid: false, error };
-    }
-
-    if (!file.name) {
-      const error = 'File has no name';
-      return { valid: false, error };
-    }
-
     // Try creating a preview URL as an additional validation
     try {
       const previewUrl = URL.createObjectURL(file);
@@ -162,16 +150,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
       return { success: false, error: errorMessage };
     }
 
-    // Log file details right before validation
-    console.log("FILE DEBUG >>>", {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      isBlob: file instanceof Blob,
-      isFile: file instanceof File,
-      lastModified: file.lastModified,
-      preview: URL.createObjectURL(file)
-    });
+    // CRITICAL: Run comprehensive file diagnostic
+    runFileDiagnostic(file);
 
     const validation = validateFile(file, options);
     if (!validation.valid) {
@@ -215,17 +195,23 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
 
     try {
       const contentCategory = options?.contentCategory || 'media';
-      const bucket = contentCategory === 'shorts' ? 'shorts' : 'media';
+      
+      // Determine which bucket to use based on content category
+      let bucket = 'media'; // default
+      
+      if (contentCategory === 'profile') bucket = 'avatars';
+      else if (contentCategory === 'post') bucket = 'media';
+      else if (contentCategory === 'story') bucket = 'stories';
+      else if (contentCategory === 'message') bucket = 'messages';
+      else if (contentCategory === 'shorts') bucket = 'shorts';
       
       // Create path for upload
       const path = createUniqueFilePath(session.user.id, file);
       
-      console.log("Uploading file:", {
+      console.log(`Uploading to bucket "${bucket}" at path "${path}":`, {
         name: file.name,
         type: file.type,
-        size: file.size,
-        bucket: bucket,
-        path: path
+        size: file.size
       });
       
       // CRITICAL: Direct Supabase upload with explicit content type
@@ -281,19 +267,12 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         return { success: false, error: errorMsg };
       }
       
-      // Test the upload with getPublicUrl
+      // Get the public URL
       const { data: urlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(data.path);
       
-      console.log("Uploaded URL:", urlData.publicUrl);
-      
-      // Get URL using our utility
-      const { url: mediaUrl } = await getSupabaseUrl(bucket, data.path, { 
-        useSignedUrls: true // Change this to false for public buckets
-      });
-      
-      if (!mediaUrl) {
+      if (!urlData.publicUrl) {
         const errorMsg = "Failed to get media URL";
         console.error(errorMsg);
         
@@ -311,9 +290,11 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         return { success: false, error: errorMsg };
       }
 
+      console.log("Upload successful, URL:", urlData.publicUrl);
+      
       // Final verification - test if the uploaded file can be accessed
       try {
-        const response = await fetch(mediaUrl, { method: 'HEAD' });
+        const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
         if (!response.ok) {
           console.warn(`Upload verification check failed: ${response.status} ${response.statusText}`);
         } else {
@@ -328,7 +309,12 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         isUploading: false,
         progress: 100,
         error: null,
-        result: { path: data.path, url: mediaUrl, success: true, error: null },
+        result: { 
+          path: data.path, 
+          url: urlData.publicUrl, 
+          success: true, 
+          error: null 
+        },
         files: [],
         previews: [],
         isComplete: true,
@@ -343,12 +329,12 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         }, delay);
       }
 
-      // Return the result with url and path - fixing the type mismatch
+      // Return the result with url and path
       return {
         success: true,
         error: null,
-        url: mediaUrl || '',
-        path: data.path || ''
+        url: urlData.publicUrl,
+        path: data.path
       };
     } catch (error: any) {
       clearInterval(progressInterval);

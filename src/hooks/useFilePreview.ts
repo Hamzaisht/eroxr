@@ -1,110 +1,63 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { createFilePreview, revokeFilePreview } from '@/utils/upload/fileUtils';
+import { createFilePreview, revokeFilePreview, runFileDiagnostic } from '@/utils/upload/fileUtils';
 
-interface FilePreviewState {
-  previewUrl: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
+export const useFilePreview = () => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export const useFilePreview = (file?: File | null) => {
-  const [state, setState] = useState<FilePreviewState>({
-    previewUrl: null,
-    isLoading: false,
-    error: null
-  });
-  
+  // Clean up preview URL when component unmounts
   useEffect(() => {
-    if (!file) {
-      return;
-    }
-    
-    // Start loading
-    setState(prev => ({
-      ...prev,
-      isLoading: true,
-      error: null
-    }));
-    
-    try {
-      console.log(`Creating preview for file: ${file.name} (${file.type}, ${file.size} bytes)`);
-      
-      // Create a file preview
-      const previewUrl = createFilePreview(file);
-      console.log(`Preview URL created: ${previewUrl?.substring(0, 30)}...`);
-      
-      setState({
-        previewUrl,
-        isLoading: false,
-        error: null
-      });
-    } catch (error: any) {
-      console.error("Error creating preview:", error);
-      setState({
-        previewUrl: null,
-        isLoading: false,
-        error: error.message || "Could not create preview"
-      });
-    }
-    
-    // Cleanup the object URL when component unmounts or file changes
     return () => {
-      if (state.previewUrl) {
-        console.log(`Revoking preview URL: ${state.previewUrl.substring(0, 30)}...`);
-        revokeFilePreview(state.previewUrl);
+      if (previewUrl) {
+        revokeFilePreview(previewUrl);
       }
     };
-  }, [file]);
-  
-  // Method to manually clear preview
+  }, [previewUrl]);
+
   const clearPreview = useCallback(() => {
-    if (state.previewUrl) {
-      console.log(`Manually clearing preview: ${state.previewUrl.substring(0, 30)}...`);
-      revokeFilePreview(state.previewUrl);
+    if (previewUrl) {
+      revokeFilePreview(previewUrl);
     }
-    
-    setState({
-      previewUrl: null,
-      isLoading: false,
-      error: null
-    });
-  }, [state.previewUrl]);
-  
-  // Method to create preview for a specific file
-  const createPreview = useCallback((fileToPreview: File) => {
-    if (state.previewUrl) {
-      console.log(`Clearing old preview before creating new one`);
-      revokeFilePreview(state.previewUrl);
-    }
-    
+    setPreviewUrl(null);
+    setError(null);
+  }, [previewUrl]);
+
+  const createPreview = useCallback((file: File): boolean => {
+    clearPreview();
+    setIsLoading(true);
+    setError(null);
+
     try {
-      console.log(`Creating preview for file: ${fileToPreview.name}, type: ${fileToPreview.type}, size: ${fileToPreview.size}`);
-      const previewUrl = createFilePreview(fileToPreview);
-      console.log(`New preview URL created: ${previewUrl?.substring(0, 30)}...`);
+      // Verify file is valid
+      runFileDiagnostic(file);
       
-      setState({
-        previewUrl,
-        isLoading: false,
-        error: null
-      });
-      return previewUrl;
-    } catch (error: any) {
-      console.error("Error creating preview:", error);
-      setState({
-        previewUrl: null,
-        isLoading: false,
-        error: error.message || "Could not create preview"
-      });
-      return null;
+      if (!(file instanceof File) || file.size === 0) {
+        throw new Error('Invalid file or empty file');
+      }
+
+      const url = createFilePreview(file);
+      if (!url) {
+        throw new Error('Failed to create preview URL');
+      }
+
+      setPreviewUrl(url);
+      setIsLoading(false);
+      return true;
+    } catch (err: any) {
+      console.error('Error creating preview:', err);
+      setError(err.message || 'Failed to create preview');
+      setIsLoading(false);
+      return false;
     }
-  }, [state.previewUrl]);
-  
+  }, [clearPreview]);
+
   return {
-    ...state,
-    clearPreview,
-    createPreview
+    previewUrl,
+    isLoading,
+    error,
+    createPreview,
+    clearPreview
   };
 };
-
-export default useFilePreview;

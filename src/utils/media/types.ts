@@ -1,145 +1,53 @@
 
-/**
- * Represents various types of media sources that can be used across the app
- */
-export interface MediaSource {
-  url?: string;
-  media_url?: string;
-  video_url?: string;
-  media_urls?: string[];
-  video_urls?: string[];
-  creator_id?: string;
-  thumbnail_url?: string;
-  video_thumbnail_url?: string;
-  media_type?: MediaType;
-  src?: string;
-  poster?: string;
-}
-
-/**
- * Supported media types
- */
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
-  GIF = 'gif',
-  DOCUMENT = 'document',
   FILE = 'file',
   UNKNOWN = 'unknown'
 }
 
-/**
- * User availability status
- */
-export enum AvailabilityStatus {
-  ONLINE = 'online',
-  OFFLINE = 'offline',
-  AWAY = 'away',
-  BUSY = 'busy',
-  INVISIBLE = 'invisible'
+export interface MediaSource {
+  url?: string;
+  src?: string;
+  media_url?: string;
+  media_urls?: string[];
+  video_url?: string;
+  video_urls?: string[];
+  thumbnail_url?: string;
+  media_type?: MediaType | string;
+  creator_id?: string;
+  [key: string]: any;
 }
 
-/**
- * Options for media playback
- */
-export interface MediaOptions {
-  className?: string;
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  poster?: string;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: () => void;
-  onEnded?: () => void;
-  onTimeUpdate?: (currentTime: number) => void;
-}
-
-/**
- * Options for media upload
- */
 export interface UploadOptions {
+  contentCategory?: string;
   maxSizeInMB?: number;
   allowedTypes?: string[];
-  compress?: boolean;
-  compressOptions?: {
-    maxWidth?: number;
-    maxHeight?: number;
-    quality?: number;
-  };
-  contentCategory?: string;
   onProgress?: (progress: number) => void;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
 }
 
-/**
- * Result of a storage upload operation
- */
-export interface StorageUploadResult {
-  path: string;
-  url: string;
-  success: boolean;
-  error: string | null;
-}
-
-/**
- * Upload state tracking
- */
 export interface UploadState {
   isUploading: boolean;
   progress: number;
   error: string | null;
   result: StorageUploadResult | null;
   files: File[];
-  previews?: string[];
+  previews: string[];
   isComplete: boolean;
   success: boolean;
 }
 
-/**
- * File validation result
- */
 export interface FileValidationResult {
   valid: boolean;
-  message?: string;
   error?: string;
 }
 
-/**
- * Convert string to MediaType
- */
-export const stringToMediaType = (type?: string): MediaType => {
-  if (!type) return MediaType.UNKNOWN;
-  
-  switch (type.toLowerCase()) {
-    case 'image':
-    case 'jpg':
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-    case 'webp':
-      return MediaType.IMAGE;
-    case 'video':
-    case 'mp4':
-    case 'webm':
-    case 'mov':
-      return MediaType.VIDEO;
-    case 'audio':
-    case 'mp3':
-    case 'wav':
-    case 'ogg':
-      return MediaType.AUDIO;
-    case 'document':
-    case 'pdf':
-    case 'doc':
-    case 'docx':
-      return MediaType.DOCUMENT;
-    case 'file':
-      return MediaType.FILE;
-    default:
-      return MediaType.UNKNOWN;
-  }
-};
+export interface StorageUploadResult {
+  success: boolean;
+  path: string;
+  url: string;
+  error: string | null;
+}

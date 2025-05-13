@@ -1,133 +1,96 @@
 
 /**
- * Utility functions for handling media URLs
- */
-import { MediaSource } from './types';
-import { extractMediaUrl } from './mediaUtils';
-import { mediaOrchestrator } from './mediaOrchestrator';
-
-/**
- * Gets the file extension from a URL or path
- */
-export function getFileExtension(url: string): string | null {
-  if (!url) return null;
-  
-  try {
-    // Handle data URIs separately
-    if (url.startsWith('data:')) {
-      const match = url.match(/data:([a-z]+)\/([a-z0-9.+-]+);/i);
-      return match ? match[2].toLowerCase() : null;
-    }
-
-    // Extract filename from URL or path and handle query params
-    const urlWithoutParams = url.split('?')[0];
-    const filename = urlWithoutParams.split('/').pop() || '';
-    
-    // Extract extension
-    const parts = filename.split('.');
-    if (parts.length <= 1) return null;
-    
-    return parts.pop()?.toLowerCase() || null;
-  } catch (error) {
-    console.error("Error getting file extension:", error);
-    return null;
-  }
-}
-
-/**
- * Checks if a URL is an image URL based on extension
+ * Detect if a URL points to an image based on extension or query string
  */
 export function isImageUrl(url: string): boolean {
-  if (!url) return false;
-  
-  // Handle data URIs
-  if (url.startsWith('data:image/')) return true;
-  
-  const extension = getFileExtension(url);
-  if (!extension) return false;
-  
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'];
-  return imageExtensions.includes(extension);
+  return (
+    /\.(jpe?g|png|gif|webp|bmp|svg)($|\?)/.test(url.toLowerCase()) ||
+    url.includes('image/') || 
+    url.includes('content-type=image')
+  );
 }
 
 /**
- * Checks if a URL is a video URL based on extension
+ * Detect if a URL points to a video based on extension or query string
  */
 export function isVideoUrl(url: string): boolean {
-  if (!url) return false;
-  
-  // Handle data URIs
-  if (url.startsWith('data:video/')) return true;
-  
-  const extension = getFileExtension(url);
-  if (!extension) return false;
-  
-  const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'flv', 'mkv'];
-  return videoExtensions.includes(extension);
+  return (
+    /\.(mp4|webm|mov|ogv|m4v|mkv)($|\?)/.test(url.toLowerCase()) ||
+    url.includes('video/') ||
+    url.includes('content-type=video')
+  );
 }
 
 /**
- * Checks if a URL is an audio URL based on extension
+ * Detect if a URL points to an audio file based on extension or query string
  */
 export function isAudioUrl(url: string): boolean {
-  if (!url) return false;
-  
-  // Handle data URIs
-  if (url.startsWith('data:audio/')) return true;
-  
-  const extension = getFileExtension(url);
-  if (!extension) return false;
-  
-  const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'];
-  return audioExtensions.includes(extension);
+  return (
+    /\.(mp3|wav|ogg|m4a)($|\?)/.test(url.toLowerCase()) ||
+    url.includes('audio/') ||
+    url.includes('content-type=audio')
+  );
 }
 
 /**
- * Transforms URL for playback with stable cache-busting
- * Enhanced to use the global media orchestrator for stable references
+ * Extract the file extension from a URL or filename
  */
-export function getPlayableMediaUrl(urlOrSource: string | MediaSource | null | undefined): string | null {
-  // Use the orchestrator to get a stable URL
-  return mediaOrchestrator.getStableUrl(urlOrSource);
+export function getFileExtension(url: string): string | null {
+  const match = url.match(/\.([a-zA-Z0-9]+)($|\?)/);
+  return match ? match[1].toLowerCase() : null;
 }
 
 /**
- * Adds a cache busting parameter to a URL using a stable hash
- * @param url - The URL to add the cache buster to
- * @returns The URL with a cache buster parameter
+ * Extract the file name from a URL or path
  */
-export function addCacheBuster(url: string): string {
+export function getFileName(url: string): string {
+  const parts = url.split('/');
+  const lastPart = parts[parts.length - 1];
+  const queryIndex = lastPart.indexOf('?');
+  return queryIndex > -1 ? lastPart.substring(0, queryIndex) : lastPart;
+}
+
+/**
+ * Convert a string URL or path into a File object
+ * Useful for processing URLs received from external sources
+ */
+export async function urlToFile(url: string, filename?: string): Promise<File | null> {
   try {
-    // Generate a more stable cache buster that doesn't change on every reload
-    const hourTimestamp = Math.floor(Date.now() / 3600000); // Changes only once per hour
-    const contentHash = url
-      .split('')
-      .reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) & 0xFFFFFFFF, 0)
-      .toString(36);
-      
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}cb=${hourTimestamp}-${contentHash}`;
-  } catch (error) {
-    console.error("Error adding cache buster:", error);
-    return url;
-  }
-}
-
-/**
- * Creates a URL for a file object
- * @param file - The file to create a URL for
- * @returns A URL for the file
- */
-export function createObjectUrl(file: File | Blob): string {
-  return URL.createObjectURL(file);
-}
-
-/**
- * Revokes a URL created with URL.createObjectURL
- * @param url - The URL to revoke
- */
-export function revokeObjectUrl(url: string): void {
-  if (url && url.startsWith('blob:')) {
-    URL.revokeObjectURL(url);
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`Failed to fetch URL: ${url}, status: ${response.status}`);
+      return null;
+    }
+    
+    const blob = await response.blob();
+    if (blob.size === 0) {
+      console.error(`URL resulted in empty blob: ${url}`);
+      return null;
+    }
+    
+    // Use provided filename or extract from URL
+    const name = filename || getFileName(url) || 'file';
+    
+    // Ensure file has proper extension based on content type
+    let finalName = name;
+    const contentType = blob.type;
+    const fileExt = getFileExtension(name);
+    
+    if (contentType && !fileExt) {
+      // Add extension based on content type if missing
+      const ext = contentType.split('/')[1];
+      if (ext) {
+        finalName = `${name}.${ext}`;
+      }
+    }
+    
+    // Create new File object with proper name and type
+    return new File([blob], finalName, { 
+      type: contentType || 'application/octet-stream',
+      lastModified: Date.now()
+    });
+  } catch (err) {
+    console.error('Error converting URL to file:', err);
+    return null;
   }
 }

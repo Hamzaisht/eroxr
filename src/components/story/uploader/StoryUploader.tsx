@@ -1,15 +1,19 @@
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Camera, Upload, X } from "lucide-react";
 import { useStoryUpload } from './hooks/useStoryUpload';
 import { runFileDiagnostic } from '@/utils/upload/fileUtils';
+import { MediaUploader } from "@/components/shared/MediaUploader";
+import { useToast } from "@/hooks/use-toast";
 
 export const StoryUploader = () => {
+  const [showUploader, setShowUploader] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<File | null>(null); // CRITICAL: Use ref for file storage instead of state
+  const { toast } = useToast();
   
   const {
     isUploading,
@@ -54,88 +58,136 @@ export const StoryUploader = () => {
       await uploadFile(file);
     }
   };
+  
+  const handleStoryUploaded = (url: string) => {
+    toast({
+      title: "Story uploaded",
+      description: "Your story has been uploaded successfully",
+    });
+    setShowUploader(false);
+  };
+  
+  const handleUploadError = (message: string) => {
+    toast({
+      title: "Upload failed",
+      description: message,
+      variant: "destructive",
+    });
+  };
 
+  // If not using the shared component, render the original one
+  if (!showUploader) {
+    return (
+      <Card className="p-4 w-full max-w-sm mx-auto">
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg">Add to Story</h3>
+          
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*,video/*"
+            onChange={handleFileChange}
+            disabled={isUploading}
+          />
+          
+          {previewUrl ? (
+            <div className="relative">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute top-1 right-1 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full"
+                onClick={resetState}
+                disabled={isUploading}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              
+              {previewUrl.includes('video') ? (
+                <video 
+                  src={previewUrl} 
+                  className="w-full rounded-md aspect-[9/16] object-cover" 
+                  autoPlay 
+                  muted 
+                  loop 
+                />
+              ) : (
+                <img 
+                  src={previewUrl} 
+                  alt="Story preview" 
+                  className="w-full rounded-md aspect-[9/16] object-cover" 
+                />
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col gap-1"
+                onClick={() => setShowUploader(true)}
+                disabled={isUploading}
+              >
+                <Camera className="h-6 w-6" />
+                <span className="text-xs">Media</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col gap-1"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                <Upload className="h-6 w-6" />
+                <span className="text-xs">Upload</span>
+              </Button>
+            </div>
+          )}
+          
+          {isUploading && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span>Uploading...</span>
+                <span>{progress}%</span>
+              </div>
+              <Progress value={progress} />
+            </div>
+          )}
+          
+          {error && (
+            <div className="text-destructive text-sm bg-destructive/10 p-2 rounded">
+              {error}
+            </div>
+          )}
+        </div>
+      </Card>
+    );
+  }
+  
+  // If using the shared component, render MediaUploader
   return (
     <Card className="p-4 w-full max-w-sm mx-auto">
       <div className="space-y-4">
-        <h3 className="font-semibold text-lg">Add to Story</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-lg">Add to Story</h3>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowUploader(false)}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
         
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*,video/*"
-          onChange={handleFileChange}
-          disabled={isUploading}
+        <MediaUploader
+          context="story"
+          mediaTypes="both"
+          buttonText="Select Media for Story"
+          onComplete={handleStoryUploaded}
+          onError={handleUploadError}
+          maxSizeInMB={100}
+          autoUpload
         />
-        
-        {previewUrl ? (
-          <div className="relative">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute top-1 right-1 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full"
-              onClick={resetState}
-              disabled={isUploading}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            
-            {previewUrl.includes('video') ? (
-              <video 
-                src={previewUrl} 
-                className="w-full rounded-md aspect-[9/16] object-cover" 
-                autoPlay 
-                muted 
-                loop 
-              />
-            ) : (
-              <img 
-                src={previewUrl} 
-                alt="Story preview" 
-                className="w-full rounded-md aspect-[9/16] object-cover" 
-              />
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              className="h-20 flex flex-col gap-1"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-            >
-              <Camera className="h-6 w-6" />
-              <span className="text-xs">Media</span>
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="h-20 flex flex-col gap-1"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-            >
-              <Upload className="h-6 w-6" />
-              <span className="text-xs">Upload</span>
-            </Button>
-          </div>
-        )}
-        
-        {isUploading && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span>Uploading...</span>
-              <span>{progress}%</span>
-            </div>
-            <Progress value={progress} />
-          </div>
-        )}
-        
-        {error && (
-          <div className="text-destructive text-sm bg-destructive/10 p-2 rounded">
-            {error}
-          </div>
-        )}
       </div>
     </Card>
   );

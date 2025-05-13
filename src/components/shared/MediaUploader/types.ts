@@ -1,63 +1,31 @@
 
-import { UploadOptions } from '@/utils/media/types';
-
-/**
- * Props for the MediaUploader component
- */
 export interface MediaUploaderProps {
-  /**
-   * Function called when upload completes successfully
-   */
+  /** Function called when upload completes with the public URL */
   onComplete?: (url: string) => void;
-  
-  /**
-   * Function called when upload fails
-   */
-  onError?: (error: string) => void;
-  
-  /**
-   * Content type category ('story', 'post', etc)
-   */
-  context?: string;
-  
-  /**
-   * Maximum file size in MB
-   */
+  /** Function called when an error occurs */
+  onError?: (message: string) => void;
+  /** Context for the upload (determines bucket and path) */
+  context?: 'profile' | 'post' | 'story' | 'message' | 'shorts' | 'generic';
+  /** Maximum size in MB */
   maxSizeInMB?: number;
-  
-  /**
-   * Allow only specific media types
-   */
+  /** Types of media to accept */
   mediaTypes?: 'image' | 'video' | 'both';
-  
-  /**
-   * Custom button text
-   */
+  /** Button text */
   buttonText?: string;
-  
-  /**
-   * Button variant
-   */
-  buttonVariant?: 'default' | 'outline' | 'secondary' | 'ghost';
-  
-  /**
-   * Additional CSS class for the container
-   */
+  /** Button variant */
+  buttonVariant?: 'default' | 'outline' | 'ghost' | 'link' | 'secondary' | 'destructive';
+  /** Additional classes */
   className?: string;
-
-  /**
-   * Whether to show media preview
-   */
+  /** Show preview */
   showPreview?: boolean;
-
-  /**
-   * Whether to auto-upload on file selection
-   */
+  /** Auto upload after selection */
   autoUpload?: boolean;
-  
-  /**
-   * Function to capture the raw File object reference 
-   * before any processing or serialization
-   */
+  /** Capture file without uploading */
   onFileCapture?: (file: File) => void;
+}
+
+export interface FileInfo {
+  name: string;
+  type: string;
+  size: number;
 }
