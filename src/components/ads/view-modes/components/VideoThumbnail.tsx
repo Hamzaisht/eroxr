@@ -1,6 +1,6 @@
 
 import { VideoPlayer } from "@/components/video/VideoPlayer";
-import { extractMediaUrl, getPlayableMediaUrl } from "@/utils/media/urlUtils";
+import { getPlayableMediaUrl } from "@/utils/media/urlUtils";
 import { AlertCircle } from "lucide-react";
 
 interface VideoThumbnailProps {

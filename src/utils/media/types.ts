@@ -4,6 +4,7 @@ export enum MediaType {
   VIDEO = 'video',
   AUDIO = 'audio',
   DOCUMENT = 'document',
+  GIF = 'gif',
   UNKNOWN = 'unknown'
 }
 
@@ -16,13 +17,33 @@ export enum AvailabilityStatus {
 }
 
 export interface MediaSource {
-  id?: string;
   url: string;
-  type?: string;
-  media_type?: string;
   video_url?: string;
-  poster?: string;
+  media_url?: string;
   thumbnail_url?: string;
+  poster?: string;
+  media_type?: MediaType | string;
+  type?: string;
+  src?: string;
+  creator_id?: string;
+  video_urls?: string[];
+  media_urls?: string[];
+}
+
+export interface MediaOptions {
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  showWatermark?: boolean;
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: () => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (currentTime: number) => void;
 }
 
 export interface UploadOptions {

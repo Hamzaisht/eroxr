@@ -16,6 +16,7 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
   console.log("VideoControls props:", { videoUrl, avatarUrl, isActive });
 
   const mediaItem = {
+    url: videoUrl || avatarUrl || '',
     video_url: videoUrl,
     media_url: avatarUrl,
     media_type: MediaType.VIDEO

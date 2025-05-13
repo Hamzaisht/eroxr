@@ -33,7 +33,7 @@ export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: V
         >
           <UniversalMedia
             item={{
-              ...ad,
+              url: ad.video_url,
               video_url: ad.video_url,
               media_type: MediaType.VIDEO
             }}

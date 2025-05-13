@@ -63,6 +63,7 @@ export const MediaPreviewDialog = ({
   };
   
   const mediaItem = {
+    url: videoUrl || currentMedia,
     video_url: videoUrl || (session.type === "call" ? currentMedia : null),
     media_url: session.type !== "call" ? currentMedia : null,
     content_type: session.content_type,

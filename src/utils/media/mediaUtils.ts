@@ -1,6 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
+import { MediaType } from "./types";
+import { isImageUrl, isVideoUrl, isAudioUrl } from "./urlUtils";
 
 /**
  * Creates a unique file path for storage
@@ -66,6 +68,70 @@ export const uploadFileToStorage = async (
     };
   }
 };
+
+/**
+ * Determines the type of media from a source
+ * @param source - Media source object or URL string
+ * @returns MediaType enum value
+ */
+export function determineMediaType(source: any): MediaType {
+  if (!source) return MediaType.UNKNOWN;
+  
+  // If source has an explicit media_type, use it
+  if (typeof source === 'object' && source.media_type) {
+    return source.media_type as MediaType;
+  }
+  
+  // If source is a string URL
+  if (typeof source === 'string') {
+    if (isVideoUrl(source)) return MediaType.VIDEO;
+    if (isImageUrl(source)) return MediaType.IMAGE;
+    if (isAudioUrl(source)) return MediaType.AUDIO;
+    return MediaType.UNKNOWN;
+  }
+  
+  // For object sources, check properties
+  if (typeof source === 'object') {
+    const url = source.url || source.video_url || source.media_url || '';
+    
+    // Check for specific media properties
+    if (source.video_url || source.content_type === 'video') {
+      return MediaType.VIDEO;
+    }
+    
+    if (source.media_url || source.content_type === 'image') {
+      return MediaType.IMAGE;
+    }
+    
+    // Fallback to URL extension analysis
+    if (isVideoUrl(url)) return MediaType.VIDEO;
+    if (isImageUrl(url)) return MediaType.IMAGE;
+    if (isAudioUrl(url)) return MediaType.AUDIO;
+  }
+  
+  return MediaType.UNKNOWN;
+}
+
+/**
+ * Extract a media URL from a MediaSource object or string
+ */
+export function extractMediaUrl(source: any): string | null {
+  if (!source) return null;
+  
+  // If source is already a string, return it
+  if (typeof source === 'string') {
+    return source;
+  }
+  
+  // Try all possible URL fields in the MediaSource object
+  return source.url || 
+         source.video_url || 
+         source.media_url || 
+         source.src || 
+         (source.video_urls && source.video_urls.length > 0 ? source.video_urls[0] : null) ||
+         (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : null) ||
+         null;
+}
 
 /**
  * Optimizes an image for upload (reduces size)
