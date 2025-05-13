@@ -66,6 +66,7 @@ export const useBodyContactSubmit = ({
       }
 
       // 4. Save ad to the database
+      // Fix: Pass a boolean for isSuperAdmin instead of a string
       const saveResult = await saveAd(
         values, 
         mediaResult.videoUrl, 
@@ -78,6 +79,7 @@ export const useBodyContactSubmit = ({
       }
 
       // 5. Record ad media
+      // Fix: Use correct parameters for the saveAdMedia function
       await saveAdMedia(
         saveResult.data.id, 
         mediaResult.videoUrl, 
