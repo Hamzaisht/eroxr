@@ -23,6 +23,9 @@ export interface FileUploadButtonProps {
   buttonText: string;
   buttonVariant?: string;
   isUploading: boolean;
+  maxSizeInMB?: number;
+  mediaTypes?: MediaTypes;
+  onClick?: () => void;
 }
 
 export interface MediaPreviewProps {
@@ -37,4 +40,33 @@ export interface MediaPreviewProps {
   } | null;
   onClear: () => void;
   isUploading: boolean;
+}
+
+export interface DebugInfoProps {
+  uploadState: {
+    isUploading: boolean;
+    progress: number;
+    error: string | null;
+    isComplete: boolean;
+  };
+  fileInfo: {
+    name?: string;
+    type?: string;
+    size?: number;
+  } | null;
+  selectedFileInfo?: {
+    name: string;
+    type: string;
+    size: number;
+  } | null;
+  previewUrl?: string | null;
+  previewLoading?: boolean;
+  previewError?: string | null;
+  hasSelectedFile?: boolean;
+}
+
+export interface UploadProgressProps {
+  progress: number;
+  isUploading: boolean;
+  error?: string | null;
 }

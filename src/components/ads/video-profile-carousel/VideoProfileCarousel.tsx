@@ -1,193 +1,165 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { DatingAd } from '../types/dating';
 import { CarouselContainer } from './CarouselContainer';
-import { CarouselNavigation } from './CarouselNavigation';
-import { CarouselProgressIndicator } from './CarouselProgressIndicator';
-import { VideoControls } from '../video-profile-card/VideoControls';
-import { useMediaQuery } from '@/hooks/use-mobile';
-import { motion, AnimatePresence } from 'framer-motion';
-import { UniversalMedia } from '@/components/media/UniversalMedia';
-import { MediaType } from '@/utils/media/types';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { CarouselControls } from './CarouselControls';
+import { CarouselEmpty } from './CarouselEmpty';
+import { Button } from '@/components/ui/button';
+import { useInView } from 'framer-motion';
+import { useSettings } from '@/hooks/useSettings';
+import { cn } from '@/lib/utils';
 
 interface VideoProfileCarouselProps {
-  ads: DatingAd[];
+  limit?: number;
+  autoplay?: boolean;
+  showControls?: boolean;
+  className?: string;
+  userId?: string;
+  emptyMessage?: string;
+  onProfileClick?: (ad: DatingAd) => void;
 }
 
-export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
+export const VideoProfileCarousel = ({
+  limit = 10,
+  autoplay = true,
+  showControls = true,
+  className,
+  userId,
+  emptyMessage = "No dating profiles found",
+  onProfileClick
+}: VideoProfileCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isActive, setIsActive] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(true);
+  const isInView = useInView(containerRef, { once: false, amount: 0.3 });
+  const { isReducedMotion } = useSettings();
+  
+  // Determine if carousel should be active (in view and not paused)
+  const isActive = isInView && !isPaused && !isReducedMotion && autoplay;
 
-  // Handle keyboard navigation and controls
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        handlePrev();
-      } else if (e.key === 'ArrowRight') {
-        handleNext();
-      } else if (e.key === ' ' || e.key === 'Space') {
-        e.preventDefault();
-        togglePlay();
-      } else if (e.key === 'm') {
-        toggleMute();
-      } else if (e.key === 'f') {
-        toggleFullscreen();
-      } else if (e.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false);
+  // Fetch dating ads
+  const { data: ads = [], isLoading, error } = useQuery({
+    queryKey: ['datingAds', limit, userId],
+    queryFn: async () => {
+      let query = supabase
+        .from('dating_ads')
+        .select('*')
+        .eq('is_active', true)
+        .eq('moderation_status', 'approved')
+        .order('last_active', { ascending: false })
+        .limit(limit);
+        
+      if (userId) {
+        query = query.eq('user_id', userId);
       }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, ads.length, isPlaying, isFullscreen]);
-
-  // Auto-hide controls after inactivity
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      return data as DatingAd[];
+    },
+  });
+  
+  // Navigation control handlers
+  const handleNext = useCallback(() => {
+    setCurrentIndex(prevIndex => 
+      prevIndex === ads.length - 1 ? 0 : prevIndex + 1
+    );
+  }, [ads.length]);
+  
+  const handlePrevious = useCallback(() => {
+    setCurrentIndex(prevIndex => 
+      prevIndex === 0 ? ads.length - 1 : prevIndex - 1
+    );
+  }, [ads.length]);
+  
+  const handlePause = useCallback(() => {
+    setIsPaused(true);
+  }, []);
+  
+  const handlePlay = useCallback(() => {
+    setIsPaused(false);
+  }, []);
+  
+  // Auto advance carousel
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || ads.length <= 1) return;
     
-    const timer = setTimeout(() => {
-      setShowControls(false);
-    }, 3000);
+    const interval = setInterval(() => {
+      handleNext();
+    }, 8000); // Advance every 8 seconds
     
-    return () => clearTimeout(timer);
+    return () => clearInterval(interval);
+  }, [isActive, ads.length, handleNext]);
+  
+  // Set playing state based on view status
+  useEffect(() => {
+    setIsPlaying(isActive);
   }, [isActive]);
-
-  const handleNext = () => {
-    if (currentIndex < ads.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setIsPlaying(false);
+  
+  // Handle profile click
+  const handleProfileClick = (ad: DatingAd) => {
+    if (onProfileClick) {
+      onProfileClick(ad);
     }
-  };
-
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const handleGoToSlide = (index: number) => {
-    setCurrentIndex(index);
-    setIsPlaying(false);
-  };
-
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-    setShowControls(true);
-  };
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    setShowControls(true);
   };
   
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-    setShowControls(true);
-  };
-
-  // Show controls when mouse moves
-  const handleMouseMove = () => {
-    setIsActive(true);
-    setShowControls(true);
-  };
-
-  if (!ads || ads.length === 0) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="relative w-full h-[85vh] overflow-hidden rounded-2xl bg-gradient-to-br from-luxury-dark/80 to-luxury-darker/80 backdrop-blur-xl flex items-center justify-center">
-        <p className="text-luxury-neutral">No profiles available at this time</p>
+      <div className="w-full flex justify-center py-8">
+        <div className="animate-spin h-8 w-8 border-t-2 border-primary rounded-full"></div>
       </div>
     );
   }
+  
+  // Error state
+  if (error) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center py-8 space-y-4">
+        <p className="text-destructive">Failed to load dating profiles</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
+    );
+  }
+  
+  // Empty state
+  if (!ads || ads.length === 0) {
+    return <CarouselEmpty message={emptyMessage} />;
+  }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className={`relative w-full ${isFullscreen ? 'h-screen fixed inset-0 z-50' : 'h-[85vh]'} 
-        overflow-hidden rounded-2xl bg-gradient-to-br from-luxury-dark/80 to-luxury-darker/80 backdrop-blur-xl`}
+    <div 
+      ref={containerRef}
+      className={cn(
+        "relative w-full aspect-[9/16] max-w-4xl mx-auto overflow-hidden rounded-xl glass-card",
+        className
+      )}
     >
-      <div className="absolute inset-0 bg-neon-glow opacity-10"></div>
+      <CarouselContainer 
+        ads={ads}
+        currentIndex={currentIndex}
+        isActive={isActive}
+      />
       
-      <div 
-        ref={containerRef}
-        className="relative h-full flex items-center"
-        onMouseEnter={() => setIsActive(true)}
-        onMouseLeave={() => setIsActive(false)}
-        onMouseMove={handleMouseMove}
-      >
-        <CarouselContainer 
-          ads={ads} 
-          currentIndex={currentIndex} 
-          isActive={isActive} 
+      {showControls && (
+        <CarouselControls
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onPause={handlePause}
+          onPlay={handlePlay}
+          isPaused={isPaused}
+          currentIndex={currentIndex}
+          totalCount={ads.length}
+          onProfileClick={() => handleProfileClick(ads[currentIndex])}
         />
-
-        {showControls && (
-          <>
-            <CarouselNavigation 
-              onPrev={handlePrev} 
-              onNext={handleNext} 
-              hasPrev={currentIndex > 0} 
-              hasNext={currentIndex < ads.length - 1} 
-            />
-
-            <CarouselProgressIndicator 
-              totalSlides={ads.length} 
-              currentIndex={currentIndex} 
-              onSlideChange={handleGoToSlide} 
-            />
-            
-            {/* Fullscreen toggle button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={toggleFullscreen}
-              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-luxury-dark/50 backdrop-blur-md border border-luxury-primary/20 text-luxury-primary hover:text-white transition-colors"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="w-5 h-5" />
-              ) : (
-                <Maximize2 className="w-5 h-5" />
-              )}
-            </motion.button>
-          </>
-        )}
-
-        <div className="absolute inset-0 pointer-events-none z-10">
-          <div className="absolute bottom-4 left-4 z-20 pointer-events-auto">
-            <VideoControls 
-              isHovered={showControls}
-              isPlaying={isPlaying}
-              isMuted={isMuted}
-              togglePlay={togglePlay}
-              toggleMute={toggleMute}
-            />
-          </div>
-        </div>
-
-        {/* Video in background - hidden but handles actual playback */}
-        <div className="absolute inset-0 opacity-0 pointer-events-none">
-          {ads[currentIndex]?.video_url && (
-            <UniversalMedia
-              item={{
-                video_url: ads[currentIndex].video_url,
-                media_type: MediaType.VIDEO
-              }}
-              autoPlay={isPlaying}
-              muted={isMuted}
-              controls={false}
-              loop={true}
-            />
-          )}
-        </div>
-      </div>
-    </motion.div>
+      )}
+    </div>
   );
 };

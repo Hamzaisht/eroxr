@@ -17,7 +17,7 @@ export enum AvailabilityStatus {
 }
 
 export interface MediaSource {
-  url: string;
+  url?: string;
   video_url?: string;
   media_url?: string;
   thumbnail_url?: string;
@@ -39,11 +39,14 @@ export interface MediaOptions {
   poster?: string;
   showWatermark?: boolean;
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  alt?: string;
   onClick?: () => void;
   onLoad?: () => void;
   onError?: () => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number) => void;
+  maxRetries?: number;
+  allowRetry?: boolean;
 }
 
 export interface UploadOptions {
@@ -53,4 +56,21 @@ export interface UploadOptions {
   onProgress?: (progress: number) => void;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
+}
+
+export function stringToMediaType(type: string): MediaType {
+  switch (type?.toLowerCase()) {
+    case 'image':
+      return MediaType.IMAGE;
+    case 'video':
+      return MediaType.VIDEO;
+    case 'audio':
+      return MediaType.AUDIO;
+    case 'document':
+      return MediaType.DOCUMENT;
+    case 'gif':
+      return MediaType.GIF;
+    default:
+      return MediaType.UNKNOWN;
+  }
 }

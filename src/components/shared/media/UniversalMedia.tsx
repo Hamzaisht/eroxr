@@ -2,7 +2,8 @@
 import { forwardRef, Ref, useMemo } from 'react';
 import { MediaRenderer } from '@/components/media/MediaRenderer';
 import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
-import { mediaOrchestrator } from '@/utils/media/mediaOrchestrator';
+import { mediaOrchestrator } from '@/utils/media/mediaUtils';
+import { extractMediaUrl } from '@/utils/media/urlUtils';
 
 interface UniversalMediaProps extends MediaOptions {
   item: MediaSource | string;
@@ -22,49 +23,34 @@ export const UniversalMedia = forwardRef(({
   onLoad,
   onError,
   onEnded,
-  onTimeUpdate
+  onTimeUpdate,
+  objectFit = 'cover',
+  alt = "Media content",
+  maxRetries = 2
 }: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
   const mediaId = useMemo(() => mediaOrchestrator.createMediaId(item), [item]);
   
-  // Create a minimal stable reference for the media item to prevent re-renders
+  // Process the item to ensure it has a url property
   const mediaItem = useMemo(() => {
     // Skip processing if we got a string
     if (typeof item === 'string') {
+      return { url: item };
+    }
+    
+    // If item already has a url property, use it as is
+    if (item.url) {
       return item;
     }
     
-    // Determine media type
-    const mediaType = item.media_type || 
-                     (item.video_url ? MediaType.VIDEO : 
-                     item.media_url ? MediaType.IMAGE : MediaType.UNKNOWN);
+    // Extract the main URL from different possible properties
+    const mainUrl = extractMediaUrl(item);
     
-    // Create a stable minimal reference with only the essential properties
-    if (mediaType === MediaType.VIDEO) {
-      return {
-        video_url: item.video_url || (item.video_urls && item.video_urls[0]),
-        media_type: MediaType.VIDEO,
-        creator_id: item.creator_id,
-        thumbnail_url: item.thumbnail_url,
-        mediaId, // Include our stable ID
-        // Include all possible URL properties to ensure compatibility
-        url: item.url,
-        media_url: item.media_url,
-        src: item.src
-      };
-    } else {
-      return {
-        media_url: item.media_url || item.url || (item.media_urls && item.media_urls[0]),
-        media_type: mediaType,
-        creator_id: item.creator_id,
-        mediaId, // Include our stable ID
-        // Include video-related properties as fallbacks
-        video_url: item.video_url,
-        thumbnail_url: item.thumbnail_url,
-        url: item.url,
-        src: item.src
-      };
-    }
-  }, [item, mediaId]);
+    // Create a new media item with the url property
+    return {
+      ...item,
+      url: mainUrl
+    };
+  }, [item]);
 
   // Register with the orchestrator to preload
   useMemo(() => {
@@ -90,7 +76,7 @@ export const UniversalMedia = forwardRef(({
       onTimeUpdate={onTimeUpdate}
       ref={ref}
       allowRetry={true}
-      maxRetries={1} // Reduce retries to prevent too many loading attempts
+      maxRetries={maxRetries}
     />
   );
 });

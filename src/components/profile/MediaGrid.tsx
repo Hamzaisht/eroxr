@@ -1,7 +1,5 @@
-
 import React, { useState, useCallback } from 'react';
 import { MediaSource, MediaType } from '@/utils/media/types';
-import { stringToMediaType } from '@/utils/media/types';
 
 interface MediaGridProps {
   mediaItems: MediaSource[];
@@ -36,7 +34,7 @@ export const MediaGrid = ({
   }
 
   const getMediaUrl = (media: MediaSource): string => {
-    return media.media_url || media.video_url || media.url || media.thumbnail_url || '';
+    return media.url || media.media_url || media.video_url || media.thumbnail_url || '';
   };
   
   const getAspectRatioClass = (index: number, total: number) => {
@@ -61,12 +59,30 @@ export const MediaGrid = ({
   };
 
   const getMediaType = (media: MediaSource): MediaType => {
-    const url = getMediaUrl(media);
-    const mediaType = media.media_type;
-    
-    if (mediaType) {
-      return stringToMediaType(mediaType as string);
+    // Use media_type if available
+    if (media.media_type) {
+      if (typeof media.media_type === 'string') {
+        switch (media.media_type.toLowerCase()) {
+          case 'image':
+            return MediaType.IMAGE;
+          case 'video':
+            return MediaType.VIDEO;
+          case 'audio':
+            return MediaType.AUDIO;
+          case 'gif':
+            return MediaType.GIF;
+          case 'document':
+            return MediaType.DOCUMENT;
+          default:
+            return MediaType.UNKNOWN;
+        }
+      } else {
+        return media.media_type;
+      }
     }
+    
+    // Otherwise, infer from URL
+    const url = getMediaUrl(media);
     
     // Infer from URL
     if (url.match(/\.(mp4|webm|mov)$/i)) {
@@ -75,6 +91,13 @@ export const MediaGrid = ({
       return MediaType.IMAGE;
     } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
       return MediaType.AUDIO;
+    }
+    
+    // Infer from property presence
+    if (media.video_url) {
+      return MediaType.VIDEO;
+    } else if (media.media_url) {
+      return MediaType.IMAGE;
     }
     
     return MediaType.UNKNOWN;

@@ -1,221 +1,218 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useMediaUpload } from '@/hooks/useMediaUpload';
-import { useFilePreview } from '@/hooks/useFilePreview';
-import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '@/utils/upload/validators';
-import { runFileDiagnostic } from '@/utils/upload/fileUtils';
-import { MediaUploaderProps } from './types';
-import { getAllowedTypes, validateFile } from './utils';
-import { FileUploadButton } from './FileUploadButton';
-import { MediaPreview } from './MediaPreview';
-import { DebugInfo } from './DebugInfo';
-import { UploadProgress } from './UploadProgress';
-import { UploadOptions } from '@/utils/media/types';
 
-export const MediaUploader: React.FC<MediaUploaderProps> = ({
+import { useState, useEffect, useRef } from "react";
+import { FileUploadButton } from "./FileUploadButton";
+import { MediaPreview } from "./MediaPreview";
+import { UploadProgress } from "./UploadProgress";
+import { DebugInfo } from "./DebugInfo";
+import { getAllowedTypes, validateFile } from "./utils";
+import { toast } from "@/components/ui/use-toast";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { MediaTypes, MediaUploaderProps } from "./types";
+
+export const MediaUploader = ({
   onComplete,
   onError,
-  context = 'generic',
-  maxSizeInMB = 100,
-  mediaTypes = 'both',
-  buttonText = 'Upload Media',
-  buttonVariant = 'default',
-  className = '',
-  showPreview = true,
-  autoUpload = true,
+  context = "media",
+  maxSizeInMB = 50,
+  mediaTypes = "both",
+  buttonText = "Upload Media",
+  buttonVariant = "default",
+  className = "",
+  showPreview = false,
+  autoUpload = false,
   onFileCapture
-}) => {
-  // CRITICAL: Use useRef instead of useState for file storage to prevent data corruption
-  const fileRef = useRef<File | null>(null);
+}: MediaUploaderProps) => {
+  // File selection and preview state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewLoading, setPreviewLoading] = useState<boolean>(false);
+  const [selectedFileInfo, setSelectedFileInfo] = useState<{
+    name: string;
+    type: string;
+    size: number;
+  } | null>(null);
   
-  // Keep selectedFileInfo state only for triggering UI updates, not for storing the actual file
-  const [selectedFileInfo, setSelectedFileInfo] = useState<{name: string, type: string, size: number} | null>(null);
-  
-  const allowedTypes = getAllowedTypes(mediaTypes);
-  
-  const uploadOptions: UploadOptions = {
+  // Use our media upload hook
+  const {
+    uploadState,
+    uploadMedia,
+    resetUploadState,
+    validateFile: validateMediaFile
+  } = useMediaUpload({
     contentCategory: context,
-    maxSizeInMB,
-    allowedTypes,
-    autoResetOnCompletion: true,
-    resetDelay: 3000,
-    onProgress: (progress: number) => {}
-  };
+    maxSizeInMB
+  });
   
-  const { 
-    uploadMedia, 
-    uploadState: { isUploading, progress, error, isComplete },
-    validateFile: validateMediaFile 
-  } = useMediaUpload(uploadOptions);
+  // Clear preview when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
   
-  const { 
-    previewUrl, 
-    isLoading: previewLoading, 
-    error: filePreviewError,
-    clearPreview,
-    createPreview
-  } = useFilePreview();
-  
-  // Capture errors from preview for debugging
-  React.useEffect(() => {
-    if (filePreviewError) {
-      console.error("File preview error:", filePreviewError);
-      setPreviewError(filePreviewError);
-    } else {
-      setPreviewError(null);
-    }
-  }, [filePreviewError]);
-  
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // CRITICAL: Get file directly from input event
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Process file selection
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     
-    // CRITICAL: Run comprehensive file diagnostic
-    runFileDiagnostic(file);
+    const file = files[0];
     
-    // CRITICAL: Strict file validation
+    // Validate the file format and size
     const fileValidation = validateFile(file);
     if (!fileValidation.valid) {
-      if (onError) onError(fileValidation.error || "Invalid file");
+      setPreviewError(fileValidation.error || "Invalid file");
+      if (onError && fileValidation.error) {
+        onError(fileValidation.error);
+      }
       return;
     }
     
-    // Validate using the media upload hook
-    const validation = validateMediaFile(file);
-    if (!validation.valid) { 
-      console.error("File validation failed:", validation.error);
-      if (onError) onError(validation.error || "Invalid file");
-      return;
-    }
-    
-    // CRITICAL: Store file in useRef instead of useState to prevent data corruption
-    fileRef.current = file;
-    
-    // Store only metadata in state for UI updates
+    // Store file metadata
+    setSelectedFile(file);
     setSelectedFileInfo({
       name: file.name,
       type: file.type,
       size: file.size
     });
     
-    // Pass the raw File reference to parent if onFileCapture is provided
-    if (onFileCapture) {
-      onFileCapture(file);
-    }
+    // Generate preview for images and videos
+    setPreviewLoading(true);
+    setPreviewError(null);
+    setPreviewUrl(null);
     
-    console.log("Creating preview for file:", file.name);
-    createPreview(file);
-    
-    if (autoUpload) {
-      handleUpload(file);
+    try {
+      // Create object URL for preview
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+      
+      // If callback provided, pass the file
+      if (onFileCapture) {
+        onFileCapture(file);
+      }
+      
+      // Auto upload if enabled
+      if (autoUpload) {
+        handleUpload();
+      }
+    } catch (err: any) {
+      console.error("Preview generation error:", err);
+      setPreviewError("Failed to generate preview");
+      if (onError) {
+        onError("Failed to generate preview: " + err.message);
+      }
+    } finally {
+      setPreviewLoading(false);
     }
-  }, [validateMediaFile, onError, onFileCapture, createPreview, autoUpload]);
+  };
   
-  const handleUploadClick = useCallback(() => {
-    if (fileRef.current) {
-      handleUpload(fileRef.current);
+  // Clear selection
+  const handleClear = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
     }
-  }, []);
-  
-  const handleUpload = useCallback(async (file: File) => {
-    // CRITICAL: Run comprehensive file diagnostic again right before upload
-    runFileDiagnostic(file);
     
-    // CRITICAL: Strict file validation again right before upload
-    const fileValidation = validateFile(file);
-    if (!fileValidation.valid) {
-      if (onError) onError(fileValidation.error || "Invalid file");
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setPreviewError(null);
+    setSelectedFileInfo(null);
+    resetUploadState();
+  };
+  
+  // Upload the file to storage
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setPreviewError("No file selected");
       return;
     }
     
-    const result = await uploadMedia(file, uploadOptions);
-    
-    if (result.success && result.url) {
-      if (onComplete) onComplete(result.url);
-    } else {
-      if (onError) onError(result.error || "Upload failed");
+    try {
+      const result = await uploadMedia(selectedFile, {
+        contentCategory: context,
+        maxSizeInMB
+      });
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      
+      onComplete(result.url as string);
+      
+      toast({
+        title: "Upload successful",
+        description: "Your file has been uploaded."
+      });
+      
+      // Auto clear the selection after successful upload
+      if (autoUpload) {
+        handleClear();
+      }
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      if (onError) {
+        onError(error.message);
+      }
+      
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive"
+      });
     }
-  }, [uploadMedia, uploadOptions, onComplete, onError]);
+  };
   
-  const handleClear = useCallback(() => {
-    fileRef.current = null;
-    setSelectedFileInfo(null);
-    clearPreview();
-    setPreviewError(null);
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  }, [clearPreview]);
-  
-  // Helper function to determine if we have a selected file
-  const hasSelectedFile = fileRef.current !== null && selectedFileInfo !== null;
+  const allowedTypes = getAllowedTypes(mediaTypes);
   
   return (
-    <div className={`relative space-y-4 ${className}`}>
-      <input
-        ref={fileInputRef}
-        id="media-upload"
-        type="file"
-        className="hidden"
-        accept={allowedTypes.join(',')}
-        onChange={handleFileSelect}
-        disabled={isUploading}
+    <div className={className}>
+      {/* Debug info */}
+      <DebugInfo
+        uploadState={uploadState}
+        fileInfo={selectedFileInfo}
       />
       
-      {showPreview && hasSelectedFile && (
+      {/* Preview area */}
+      {showPreview && selectedFile && (
         <MediaPreview
-          file={fileRef.current}
+          file={selectedFile}
           previewUrl={previewUrl}
           previewError={previewError}
           previewLoading={previewLoading}
           selectedFileInfo={selectedFileInfo}
           onClear={handleClear}
-          isUploading={isUploading}
+          isUploading={uploadState.isUploading}
         />
       )}
       
-      <DebugInfo
-        selectedFileInfo={selectedFileInfo}
-        previewUrl={previewUrl}
-        previewLoading={previewLoading}
-        previewError={previewError}
-        hasSelectedFile={hasSelectedFile}
-      />
-      
-      {!hasSelectedFile ? (
+      {/* File selection button */}
+      {(!selectedFile || !showPreview) && (
         <FileUploadButton
+          onFileSelect={handleFileSelect}
+          allowedTypes={allowedTypes}
           buttonText={buttonText}
           buttonVariant={buttonVariant}
-          isUploading={isUploading}
-          mediaTypes={mediaTypes}
-          maxSizeInMB={maxSizeInMB}
-          onClick={() => fileInputRef.current?.click()}
+          isUploading={uploadState.isUploading}
         />
-      ) : !autoUpload && !isUploading ? (
-        <Button
-          variant="default"
-          onClick={handleUploadClick}
-          disabled={isUploading}
-          className="w-full"
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Upload {selectedFileInfo?.name}
-        </Button>
-      ) : null}
+      )}
       
+      {/* Upload progress */}
       <UploadProgress
-        isUploading={isUploading}
-        progress={progress}
-        error={error}
+        progress={uploadState.progress}
+        isUploading={uploadState.isUploading}
       />
+      
+      {/* Upload button for manual upload mode */}
+      {selectedFile && !autoUpload && !uploadState.isUploading && !uploadState.isComplete && (
+        <button
+          type="button"
+          className="mt-2 px-4 py-2 bg-primary text-white rounded w-full hover:bg-primary/90"
+          onClick={handleUpload}
+        >
+          Upload
+        </button>
+      )}
     </div>
   );
 };
-
-export * from './types';
-export default MediaUploader;

@@ -10,8 +10,6 @@ interface MediaRendererProps extends MediaOptions {
   src: MediaSource | string | null;
   type?: MediaType;
   fallbackSrc?: string | null;
-  maxRetries?: number;
-  allowRetry?: boolean;
 }
 
 export const MediaRenderer = forwardRef((
@@ -51,8 +49,11 @@ export const MediaRenderer = forwardRef((
     }
     
     try {
+      // If src has a url property directly, use it
+      const sourceWithUrl = typeof src === 'string' ? { url: src } : (src.url ? src : { ...src, url: extractMediaUrl(src) });
+      
       // Extract URL from source
-      const extractedUrl = extractMediaUrl(src);
+      const extractedUrl = sourceWithUrl.url;
       
       // If extraction fails, try fallback
       if (!extractedUrl && fallbackSrc) {
@@ -65,7 +66,7 @@ export const MediaRenderer = forwardRef((
         }
       } else if (extractedUrl) {
         setMediaUrl(getPlayableMediaUrl(extractedUrl));
-        setMediaType(type || determineMediaType(src));
+        setMediaType(type || determineMediaType(sourceWithUrl));
         setIsLoading(false);
         return;
       }
@@ -151,6 +152,7 @@ export const MediaRenderer = forwardRef((
       onError={handleError}
       onEnded={onEnded}
       onTimeUpdate={onTimeUpdate}
+      showWatermark={showWatermark}
     />
   );
 });
