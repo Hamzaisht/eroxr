@@ -94,3 +94,22 @@ export async function urlToFile(url: string, filename?: string): Promise<File | 
     return null;
   }
 }
+
+/**
+ * Gets a playable media URL, adding cache-busting or other parameters as needed
+ * 
+ * @param url The raw media URL
+ * @returns The processed URL ready for playback
+ */
+export function getPlayableMediaUrl(url: string | null): string {
+  if (!url) return '';
+  
+  // Add cache busting for development environment
+  if (process.env.NODE_ENV === 'development') {
+    const cacheBuster = `_cb=${Date.now()}`;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}${cacheBuster}`;
+  }
+  
+  return url;
+}

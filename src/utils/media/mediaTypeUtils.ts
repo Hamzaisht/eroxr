@@ -1,5 +1,5 @@
 
-import { MediaType, AvailabilityStatus } from "./types";
+import { MediaType, AvailabilityStatus, stringToMediaType } from "./types";
 
 /**
  * Get the MIME type for a file or URL
@@ -47,9 +47,9 @@ export const isVideoUrl = (url: string): boolean => {
 /**
  * Convert string to MediaType enum value
  */
-export { stringToMediaType } from './types';
+export { stringToMediaType };
 
 /**
  * Re-export AvailabilityStatus enum for consistency
  */
-export { AvailabilityStatus } from './types';
+export { AvailabilityStatus };

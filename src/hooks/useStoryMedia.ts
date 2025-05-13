@@ -7,7 +7,7 @@ import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
 
 interface UseStoryMediaOptions extends MediaOptions {
   onComplete?: () => void;
-  // No need to redefine onError as it's now compatible with the parent interface
+  // MediaOptions now includes onError, so it's compatible
 }
 
 export const useStoryMedia = (

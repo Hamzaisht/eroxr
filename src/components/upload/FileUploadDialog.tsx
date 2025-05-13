@@ -1,141 +1,143 @@
-
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { MediaUploader } from "@/components/shared/MediaUploader";
-import { MultiFileUploader } from "./MultiFileUploader";
-import { Upload, Image, FileVideo } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle, X } from "lucide-react";
 
-export interface FileUploadDialogProps {
+interface FileUploadDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onFileUploaded?: (url: string) => void;
-  onMultipleFilesUploaded?: (urls: string[]) => void;
-  contentCategory?: string;
-  title?: string;
-  allowMultiple?: boolean;
-  defaultTab?: 'single' | 'multiple';
-  maxFiles?: number;
+  setOpen: (open: boolean) => void;
+  setMediaUrl: (url: string) => void;
 }
 
-export const FileUploadDialog = ({
+export function FileUploadDialog({
   open,
-  onOpenChange,
-  onFileUploaded,
-  onMultipleFilesUploaded,
-  contentCategory = 'generic',
-  title = 'Upload Media',
-  allowMultiple = true,
-  defaultTab = 'single',
-  maxFiles = 10
-}: FileUploadDialogProps) => {
-  const [activeTab, setActiveTab] = useState<'single' | 'multiple'>(defaultTab);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  
-  // Reset state when dialog opens/closes
-  useEffect(() => {
-    if (open) {
-      setUploadSuccess(false);
-    }
-  }, [open]);
-  
-  // Handle single file upload completion
-  const handleSingleUploadComplete = (url: string) => {
-    setUploadSuccess(true);
-    if (onFileUploaded) {
-      onFileUploaded(url);
-    }
-    
-    // Close dialog after delay
-    setTimeout(() => {
-      onOpenChange(false);
-    }, 1500);
+  setOpen,
+  setMediaUrl,
+}: FileUploadDialogProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadType, setUploadType] = useState<string>("generic");
+  const [contentCategory, setContentCategory] = useState<string>("generic");
+  const { uploadMedia, uploadState, resetUploadState } = useMediaUpload();
+  const { toast } = useToast();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    setFile(selectedFile || null);
   };
-  
-  // Handle multiple files upload completion
-  const handleMultipleUploadsComplete = (urls: string[]) => {
-    if (urls.length > 0) {
-      setUploadSuccess(true);
-      if (onMultipleFilesUploaded) {
-        onMultipleFilesUploaded(urls);
-      }
-      
-      // Close dialog after delay
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 1500);
+
+  const handleUpload = async () => {
+    if (!file) {
+      toast({
+        title: "No file selected",
+        description: "Please select a file to upload.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Replace the type error parts with updated code using proper types
+    const contentType: "profile" | "post" | "story" | "message" | "shorts" | "generic" = 
+      (uploadType as "profile" | "post" | "story" | "message" | "shorts" | "generic") || "generic";
+
+    const uploadContentType: "profile" | "post" | "story" | "message" | "shorts" | "generic" = 
+      (contentCategory as "profile" | "post" | "story" | "message" | "shorts" | "generic") || "generic";
+
+    const result = await uploadMedia(file, {
+      contentCategory: uploadContentType,
+      maxSizeInMB: 100,
+      allowedTypes: [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "video/mp4",
+        "video/webm",
+        "video/quicktime",
+      ],
+    });
+
+    if (result.success && result.url) {
+      setMediaUrl(result.url);
+      toast({
+        title: "Upload successful",
+        description: "Your file has been successfully uploaded.",
+      });
+      setOpen(false);
+      resetUploadState();
+    } else {
+      toast({
+        title: "Upload failed",
+        description: result.error || "There was an error during upload.",
+        variant: "destructive",
+      });
     }
   };
-  
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            {title}
-          </DialogTitle>
+          <DialogTitle>Upload Media</DialogTitle>
+          <DialogDescription>
+            Upload your media to our secure servers.
+          </DialogDescription>
         </DialogHeader>
-        
-        {allowMultiple ? (
-          <Tabs 
-            defaultValue={activeTab} 
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as 'single' | 'multiple')}
-            className="w-full"
-          >
-            <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="single" className="flex items-center gap-1.5">
-                <Image className="h-4 w-4" />
-                <span>Single File</span>
-              </TabsTrigger>
-              <TabsTrigger value="multiple" className="flex items-center gap-1.5">
-                <FileVideo className="h-4 w-4" />
-                <span>Multiple Files</span>
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="single" className="mt-4">
-              <MediaUploader
-                context={contentCategory}
-                onComplete={handleSingleUploadComplete}
-                showPreview={true}
-                autoUpload={true}
-              />
-            </TabsContent>
-            
-            <TabsContent value="multiple" className="mt-4">
-              <MultiFileUploader 
-                contentCategory={contentCategory}
-                onUploadsComplete={handleMultipleUploadsComplete}
-                maxFiles={maxFiles}
-                autoUpload={true}
-              />
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <div className="mt-4">
-            <MediaUploader
-              context={contentCategory}
-              onComplete={handleSingleUploadComplete}
-              showPreview={true}
-              autoUpload={true}
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="picture" className="text-right">
+              Upload picture
+            </Label>
+            <Input
+              type="file"
+              id="picture"
+              onChange={handleFileChange}
+              disabled={uploadState.isUploading}
+              className="col-span-3"
             />
           </div>
-        )}
-        
-        <div className="flex justify-end">
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
-          </Button>
+          {uploadState.isUploading && (
+            <Progress value={uploadState.progress} className="w-full" />
+          )}
+          {uploadState.isComplete && uploadState.success && (
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <p className="text-sm text-green-500">Upload complete!</p>
+            </div>
+          )}
+          {uploadState.error && (
+            <div className="flex items-center space-x-2">
+              <X className="h-4 w-4 text-red-500" />
+              <p className="text-sm text-red-500">{uploadState.error}</p>
+            </div>
+          )}
         </div>
+        <Button type="submit" onClick={handleUpload} disabled={uploadState.isUploading}>
+          Upload Media
+        </Button>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default FileUploadDialog;
+}

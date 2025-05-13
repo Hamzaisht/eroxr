@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { UniversalMedia } from './UniversalMedia';
-import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
 
 interface MediaViewerProps {
   media: string | null;
