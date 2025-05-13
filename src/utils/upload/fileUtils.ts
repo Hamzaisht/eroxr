@@ -1,63 +1,78 @@
 
 /**
- * Comprehensive file diagnostics utility
+ * Log file information for debugging purposes
  */
-export const runFileDiagnostic = (file: File | null): void => {
+export function logFileDebugInfo(file: File): void {
+  console.group('File Debug Info');
+  console.log('Name:', file.name);
+  console.log('Type:', file.type);
+  console.log('Size:', formatFileSize(file.size));
+  console.log('Last Modified:', new Date(file.lastModified).toLocaleString());
+  console.groupEnd();
+}
+
+/**
+ * Run a diagnostic check on a file to catch common issues
+ */
+export function runFileDiagnostic(file: File | null): void {
   if (!file) {
-    console.error("❌ File is null or undefined");
+    console.warn('File Diagnostic: No file provided');
     return;
   }
   
-  if (!(file instanceof File)) {
-    console.error("❌ Object is not a File instance:", file);
-    return;
+  console.group('File Diagnostic');
+  console.log('Name:', file.name);
+  console.log('Type:', file.type);
+  console.log('Size:', formatFileSize(file.size));
+  
+  // Check if file size is reasonable
+  if (file.size > 100 * 1024 * 1024) {
+    console.warn('File is very large (>100MB). This may cause upload issues.');
   }
   
-  console.log("📋 File diagnostic:", {
-    name: file.name,
-    size: file.size,
-    type: file.type,
-    lastModified: new Date(file.lastModified).toISOString(),
-    isFile: file instanceof File,
-    constructor: file.constructor.name,
-  });
-  
+  // Check for empty files
   if (file.size === 0) {
-    console.error("⚠️ Warning: File has zero bytes");
+    console.error('File is empty (0 bytes)');
   }
-};
+  
+  // Check for common file types
+  if (!file.type) {
+    console.warn('File has no MIME type specified');
+  }
+  
+  console.groupEnd();
+}
 
 /**
- * Creates a temporary file preview URL
+ * Format file size in a human-readable format
  */
-export const createFilePreview = (file: File): string => {
-  return URL.createObjectURL(file);
-};
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 /**
- * Revokes a file preview URL to free up memory
+ * Generate a unique path for a file
  */
-export const revokeFilePreview = (url: string): void => {
-  URL.revokeObjectURL(url);
-};
-
-/**
- * Creates a unique path for storage
- */
-export const createUniqueFilePath = (userId: string, file: File): string => {
+export function createUniqueFilePath(userId: string, fileName: string, prefix = ''): string {
   const timestamp = new Date().getTime();
-  const fileExtension = file.name.split('.').pop() || '';
-  return `${userId}/${timestamp}-${Math.random().toString(36).substring(2, 10)}.${fileExtension}`;
-};
+  const extension = fileName.split('.').pop() || '';
+  const safeName = fileName
+    .split('.')[0]
+    .replace(/[^a-z0-9]/gi, '_')
+    .toLowerCase();
+  
+  return `${prefix ? prefix + '/' : ''}${userId}/${timestamp}_${safeName}.${extension}`;
+}
 
 /**
- * Log detailed file information for debugging
+ * Generate a unique ID for a file
  */
-export const logFileDebugInfo = (file: File): void => {
-  console.log("[FILE DEBUG]", {
-    filename: file.name,
-    size: `${(file.size / 1024).toFixed(2)} KB`,
-    type: file.type,
-    lastModified: new Date(file.lastModified).toLocaleString()
-  });
-};
+export function generateFileId(): string {
+  return `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}

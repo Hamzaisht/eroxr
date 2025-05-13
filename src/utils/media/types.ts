@@ -7,7 +7,15 @@ export enum MediaType {
   AUDIO = 'audio',
   GIF = 'gif',
   DOCUMENT = 'document',
-  FILE = 'file' // Add FILE type
+  FILE = 'file' 
+}
+
+export enum AvailabilityStatus {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  AWAY = 'away',
+  BUSY = 'busy',
+  INVISIBLE = 'invisible'
 }
 
 export interface MediaSource {
@@ -45,3 +53,58 @@ export interface MediaOptions {
 }
 
 export type MediaTypes = 'image' | 'video' | 'audio' | 'document' | 'all';
+
+// Helper function to convert string to MediaType
+export function stringToMediaType(str: string): MediaType {
+  switch (str.toLowerCase()) {
+    case 'image':
+      return MediaType.IMAGE;
+    case 'video':
+      return MediaType.VIDEO;
+    case 'audio':
+      return MediaType.AUDIO;
+    case 'gif':
+      return MediaType.GIF;
+    case 'document':
+      return MediaType.DOCUMENT;
+    case 'file':
+      return MediaType.FILE;
+    default:
+      return MediaType.UNKNOWN;
+  }
+}
+
+// Upload related types
+export interface UploadOptions {
+  bucket?: string;
+  path?: string;
+  contentType?: string;
+  cacheControl?: string;
+  upsert?: boolean;
+  generateThumbnail?: boolean;
+  addWatermark?: boolean;
+  isPublic?: boolean;
+  metadata?: Record<string, any>;
+}
+
+// Normalize a media source to ensure it has a valid URL property
+export function normalizeMediaSource(source: string | MediaSource): MediaSource {
+  if (typeof source === 'string') {
+    return { url: source };
+  }
+  
+  const normalizedSource: MediaSource = { ...source };
+  
+  // Ensure the url property is set
+  if (!normalizedSource.url) {
+    if (normalizedSource.video_url) {
+      normalizedSource.url = normalizedSource.video_url;
+    } else if (normalizedSource.media_url) {
+      normalizedSource.url = normalizedSource.media_url;
+    } else if (normalizedSource.src) {
+      normalizedSource.url = normalizedSource.src;
+    }
+  }
+  
+  return normalizedSource;
+}
