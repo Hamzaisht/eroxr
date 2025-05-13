@@ -30,8 +30,13 @@ export const useContextualMediaUpload = (contextId: string, contextType: string 
         ]
       });
       
-      if (!result.success || !result.url) {
+      if (!result.success) {
         throw new Error(result.error || 'Upload failed');
+      }
+      
+      // Handle the possibility that url might be undefined
+      if (!result.url) {
+        throw new Error('Upload succeeded but no URL returned');
       }
       
       return result.url;

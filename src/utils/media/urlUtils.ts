@@ -120,3 +120,11 @@ export function getPlayableMediaUrl(url: string | null): string | null {
   
   return url;
 }
+
+/**
+ * Adds a cache-busting parameter to a URL
+ */
+export function addCacheBuster(url: string): string {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${Date.now()}`;
+}

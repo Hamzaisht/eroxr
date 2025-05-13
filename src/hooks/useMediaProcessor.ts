@@ -2,10 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { 
-  determineMediaType, 
-  extractMediaUrl 
+  determineMediaType
 } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+import { getPlayableMediaUrl, extractMediaUrl } from '@/utils/media/urlUtils';
 
 interface UseMediaProcessorOptions {
   autoLoad?: boolean;

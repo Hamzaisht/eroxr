@@ -1,6 +1,6 @@
 
 import { MediaType, MediaSource } from './types';
-import { isImageUrl, isVideoUrl, isAudioUrl } from './urlUtils';
+import { isImageUrl, isVideoUrl, isAudioUrl, extractMediaUrl } from './urlUtils';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -23,127 +23,60 @@ export function determineMediaType(media: string | MediaSource): MediaType {
           return MediaType.DOCUMENT;
         case 'gif':
           return MediaType.GIF;
-        default:
-          break;
+        case 'file':
+          return MediaType.FILE;
       }
-    } else {
-      return media.media_type;
     }
+    return media.media_type;
   }
-
-  // Handle string URLs
-  let url: string | null = null;
   
-  if (typeof media === 'string') {
-    url = media;
-  } else {
-    // Check for video_url first since that's a stronger signal
-    if (media.video_url) {
-      return MediaType.VIDEO;
-    }
-    
-    // Then try any available URL
-    url = media.url || media.media_url || media.src || null;
-  }
-
-  if (!url) {
-    return MediaType.UNKNOWN;
-  }
-
-  // Determine type by file extension
-  if (isVideoUrl(url)) {
-    return MediaType.VIDEO;
-  } else if (isImageUrl(url)) {
-    if (url.toLowerCase().endsWith('.gif')) {
-      return MediaType.GIF;
-    }
-    return MediaType.IMAGE;
-  } else if (isAudioUrl(url)) {
-    return MediaType.AUDIO;
-  }
-
+  // Extract URL to check
+  const url = typeof media === 'string' ? media : extractMediaUrl(media);
+  if (!url) return MediaType.UNKNOWN;
+  
+  // Check URL patterns
+  if (isImageUrl(url)) return MediaType.IMAGE;
+  if (isVideoUrl(url)) return MediaType.VIDEO;
+  if (isAudioUrl(url)) return MediaType.AUDIO;
+  
   // Default to unknown
   return MediaType.UNKNOWN;
 }
 
 /**
- * Creates a unique file path for media uploads
- * @param userId User ID for folder organization
- * @param file The file being uploaded
- * @returns A unique path string
+ * Helper function to standardize media objects for our components
  */
-export function createUniqueFilePath(userId: string, file: File): string {
-  const timestamp = new Date().getTime();
-  const uuid = uuidv4().substring(0, 8);
-  const fileExtension = file.name.split('.').pop() || '';
+export function normalizeMediaSource(source: string | MediaSource): MediaSource {
+  // If source is a string, assume it's a URL and create a MediaSource object
+  if (typeof source === 'string') {
+    return { url: source };
+  }
   
-  return `${userId}/${timestamp}-${uuid}.${fileExtension}`;
+  // For MediaSource objects, ensure they have the 'url' property
+  const normalized: MediaSource = { ...source };
+  
+  // If url is not set, try to extract it from other fields
+  if (!normalized.url) {
+    normalized.url = extractMediaUrl(source);
+  }
+  
+  // If media_type is not set, try to determine it
+  if (!normalized.media_type) {
+    normalized.media_type = determineMediaType(source);
+  }
+  
+  return normalized;
 }
 
 /**
- * Upload a file to Supabase storage
- * @param bucket Bucket name
- * @param path File path in storage
- * @param file File to upload
- * @returns Upload result with URL or error
+ * Media processing orchestrator - coordinates all media-related operations
  */
-export async function uploadFileToStorage(
-  bucket: string,
-  path: string,
-  file: File
-): Promise<{ success: boolean; url?: string; error?: string }> {
-  try {
-    // Import here to avoid circular dependencies
-    const { supabase } = await import('@/integrations/supabase/client');
-    
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: true
-      });
-      
-    if (error) {
-      throw error;
-    }
-    
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(data.path);
-      
-    return {
-      success: true,
-      url: urlData.publicUrl
-    };
-  } catch (error: any) {
-    console.error('Storage upload error:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to upload file'
-    };
-  }
-}
-
 export const mediaOrchestrator = {
-  mediaRequests: new Map<string, any>(),
-  
-  createMediaId(media: MediaSource | string): string {
-    if (typeof media === 'string') {
-      return media;
-    }
-    
-    const url = media.url || media.video_url || media.media_url || '';
-    return url || uuidv4();
-  },
-  
-  registerMediaRequest(media: MediaSource | string): void {
-    const id = this.createMediaId(media);
-    if (!this.mediaRequests.has(id)) {
-      this.mediaRequests.set(id, {
-        media,
-        timestamp: Date.now()
-      });
-    }
+  process: (source: string | MediaSource) => {
+    const normalized = normalizeMediaSource(source);
+    return normalized;
   }
 };
+
+// Re-export functions from urlUtils to avoid duplicate imports
+export { extractMediaUrl } from './urlUtils';

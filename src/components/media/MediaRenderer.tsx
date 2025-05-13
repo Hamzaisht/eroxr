@@ -1,144 +1,130 @@
 
-import { forwardRef, useState, useEffect, useCallback, Ref } from 'react';
+import { useState, useEffect } from 'react';
 import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
-import { extractMediaUrl, getPlayableMediaUrl } from '@/utils/media/urlUtils';
-import { determineMediaType } from '@/utils/media/mediaUtils';
 import { MediaDisplay } from './MediaDisplay';
-import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { extractMediaUrl } from '@/utils/media/urlUtils';
+import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 
 interface MediaRendererProps extends MediaOptions {
-  src: MediaSource | string | null;
+  /**
+   * The media source to render (string URL or MediaSource object)
+   */
+  src: string | MediaSource;
+  
+  /**
+   * Media type override (optional)
+   */
   type?: MediaType;
-  fallbackSrc?: string | null;
+  
+  /**
+   * Allow retry on error
+   */
+  allowRetry?: boolean;
+  
+  /**
+   * Maximum number of retries
+   */
+  maxRetries?: number;
 }
 
-export const MediaRenderer = forwardRef((
-  {
-    src,
-    type,
-    fallbackSrc,
-    className = '',
-    autoPlay = false,
-    controls = true,
-    muted = true,
-    loop = false,
-    poster,
-    maxRetries = 2,
-    allowRetry = true,
-    showWatermark = false,
-    onClick,
-    onLoad,
-    onError,
-    onEnded,
-    onTimeUpdate
-  }: MediaRendererProps,
-  ref: Ref<HTMLVideoElement | HTMLImageElement>
-) => {
+/**
+ * A smart media renderer that handles various media types
+ */
+export function MediaRenderer({
+  src,
+  type,
+  className,
+  autoPlay = false,
+  controls = true,
+  muted = true,
+  loop = false,
+  poster,
+  onClick,
+  onError,
+  onLoad,
+  onEnded,
+  onTimeUpdate,
+  allowRetry = false,
+  maxRetries = 2
+}: MediaRendererProps) {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<MediaType>(type || MediaType.UNKNOWN);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   
-  // Process the media source to extract URL and determine media type
+  // Process the media source to normalize it
   useEffect(() => {
-    if (!src) {
-      setIsLoading(false);
-      setHasError(true);
-      return;
-    }
-    
     try {
-      // If src has a url property directly, use it
-      const sourceWithUrl = typeof src === 'string' ? { url: src } : (src.url ? src : { ...src, url: extractMediaUrl(src) });
+      // Normalize the media source
+      const normalized = normalizeMediaSource(src);
       
-      // Extract URL from source
-      const extractedUrl = sourceWithUrl.url;
-      
-      // If extraction fails, try fallback
-      if (!extractedUrl && fallbackSrc) {
-        const fallbackUrl = typeof fallbackSrc === 'string' ? fallbackSrc : extractMediaUrl(fallbackSrc);
-        if (fallbackUrl) {
-          setMediaUrl(getPlayableMediaUrl(fallbackUrl));
-          setMediaType(type || determineMediaType(fallbackSrc));
-          setIsLoading(false);
-          return;
-        }
-      } else if (extractedUrl) {
-        setMediaUrl(getPlayableMediaUrl(extractedUrl));
-        setMediaType(type || determineMediaType(sourceWithUrl));
-        setIsLoading(false);
-        return;
+      // Extract the URL
+      const url = extractMediaUrl(normalized);
+      if (!url) {
+        throw new Error("Could not extract media URL");
       }
       
-      // If we got here, no valid URL was found
+      setMediaUrl(url);
+      
+      // Set media type from prop or from normalized source
+      setMediaType(type || normalized.media_type || MediaType.UNKNOWN);
+      
       setIsLoading(false);
-      setHasError(true);
-    } catch (err) {
-      console.error('Error processing media source:', err);
+      setError(null);
+    } catch (err: any) {
+      console.error("Error processing media source:", err);
+      setError(err.message || "Failed to process media");
       setIsLoading(false);
-      setHasError(true);
     }
-  }, [src, fallbackSrc, type, retryCount]);
+  }, [src, type]);
   
-  // Handle successful media loading
-  const handleLoad = useCallback(() => {
-    setHasError(false);
-    if (onLoad) onLoad();
-  }, [onLoad]);
-  
-  // Handle media loading error
-  const handleError = useCallback(() => {
-    console.error('Media error:', mediaUrl);
-    
-    // If we have retries left and retry is allowed, try again
-    if (retryCount < maxRetries && allowRetry) {
-      // Add cache busting
-      setRetryCount(prevCount => prevCount + 1);
+  const handleError = () => {
+    if (allowRetry && retryCount < maxRetries) {
+      // Retry loading with a slight delay
+      setRetryCount(count => count + 1);
+      setTimeout(() => {
+        // Force remount by temporarily clearing the URL
+        setMediaUrl(null);
+        setTimeout(() => {
+          const normalized = normalizeMediaSource(src);
+          const url = extractMediaUrl(normalized);
+          if (url) setMediaUrl(url);
+        }, 50);
+      }, 1000);
+      
+      console.log(`Media load retry ${retryCount + 1}/${maxRetries}`);
     } else {
-      setHasError(true);
+      setError("Failed to load media");
       if (onError) onError();
     }
-  }, [mediaUrl, retryCount, maxRetries, allowRetry, onError]);
+  };
   
-  // Handle manual retry
-  const handleRetry = useCallback(() => {
-    setRetryCount(0);
-    setHasError(false);
-    setIsLoading(true);
-  }, []);
+  const handleLoad = () => {
+    setError(null);
+    if (onLoad) onLoad();
+  };
   
-  // Show loading state
+  // Show loading or error state
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center bg-black/10 ${className}`}>
-        <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
+      <div className={`flex items-center justify-center bg-black/20 ${className}`}>
+        <div className="animate-pulse">Loading...</div>
       </div>
     );
   }
   
-  // Show error state with retry option
-  if (hasError || !mediaUrl) {
+  if (error || !mediaUrl) {
     return (
-      <div className={`flex flex-col items-center justify-center bg-black/10 ${className}`}>
-        <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
-        <p className="text-sm text-gray-400 mb-3">Failed to load media</p>
-        {allowRetry && (
-          <button
-            onClick={handleRetry}
-            className="flex items-center text-xs gap-1 px-2 py-1 bg-primary/20 hover:bg-primary/30 rounded text-primary"
-          >
-            <RefreshCw className="w-3 h-3" /> Try Again
-          </button>
-        )}
+      <div className={`flex items-center justify-center bg-black/20 ${className}`}>
+        <div className="text-red-500">{error || "Media unavailable"}</div>
       </div>
     );
   }
   
-  // Render the actual media
+  // Render the appropriate media component
   return (
     <MediaDisplay
-      ref={ref}
       mediaUrl={mediaUrl}
       mediaType={mediaType}
       className={className}
@@ -152,9 +138,6 @@ export const MediaRenderer = forwardRef((
       onError={handleError}
       onEnded={onEnded}
       onTimeUpdate={onTimeUpdate}
-      showWatermark={showWatermark}
     />
   );
-});
-
-MediaRenderer.displayName = 'MediaRenderer';
+}

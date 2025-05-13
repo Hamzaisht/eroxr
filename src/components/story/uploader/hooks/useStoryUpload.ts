@@ -8,7 +8,7 @@ import { createFilePreview, revokeFilePreview, runFileDiagnostic } from '@/utils
 
 export const useStoryUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Add missing state variable
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -22,14 +22,14 @@ export const useStoryUpload = () => {
       revokeFilePreview(previewUrl);
     }
     setIsUploading(false);
-    setIsSubmitting(false); // Reset the submitting state too
+    setIsSubmitting(false);
     setProgress(0);
     setError(null);
     setPreviewUrl(null);
   }, [previewUrl]);
 
   // Validate file before upload
-  const validateFile = useCallback((file: File): { valid: boolean; message?: string } => {
+  const validateFile = useCallback((file: File): { valid: boolean; error?: string } => {
     // CRITICAL: Run comprehensive file diagnostic
     runFileDiagnostic(file);
     
@@ -38,7 +38,7 @@ export const useStoryUpload = () => {
       console.error("❌ Invalid File passed to uploader", file);
       return { 
         valid: false, 
-        message: "Only raw File instances with data can be uploaded"
+        error: "Only raw File instances with data can be uploaded"
       };
     }
     
@@ -52,7 +52,7 @@ export const useStoryUpload = () => {
     if (!isImageFile(file) && !isVideoFile(file)) {
       return { 
         valid: false, 
-        message: 'Only image and video files are allowed for stories' 
+        error: 'Only image and video files are allowed for stories' 
       };
     }
     
@@ -61,7 +61,7 @@ export const useStoryUpload = () => {
     if (file.size > maxSize) {
       return { 
         valid: false, 
-        message: `File is too large. Maximum size is 100MB` 
+        error: `File is too large. Maximum size is 100MB` 
       };
     }
     
@@ -80,10 +80,10 @@ export const useStoryUpload = () => {
       // Validate file
       const validationResult = validateFile(file);
       if (!validationResult.valid) {
-        setError(validationResult.message || 'Invalid file');
+        setError(validationResult.error || 'Invalid file');
         toast({
           title: 'Invalid file',
-          description: validationResult.message || 'The selected file cannot be used for stories',
+          description: validationResult.error || 'The selected file cannot be used for stories',
           variant: 'destructive',
         });
         return false;
@@ -132,17 +132,17 @@ export const useStoryUpload = () => {
     // Final validation before upload
     const validation = validateFileForUpload(file);
     if (!validation.valid) {
-      setError(validation.message || 'Invalid file');
+      setError(validation.error || 'Invalid file');
       toast({
         title: 'Invalid file',
-        description: validation.message || 'The selected file is not valid',
+        description: validation.error || 'The selected file is not valid',
         variant: 'destructive',
       });
-      return { success: false, error: validation.message };
+      return { success: false, error: validation.error };
     }
 
     setIsUploading(true);
-    setIsSubmitting(true); // Set submitting state to true at the beginning
+    setIsSubmitting(true);
     setProgress(0);
     setError(null);
 

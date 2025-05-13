@@ -69,8 +69,7 @@ export const useBodyContactSubmit = ({
       const saveResult = await saveAd(
         values, 
         mediaResult.videoUrl, 
-        mediaResult.avatarUrl, 
-        isSuperAdmin
+        mediaResult.avatarUrl 
       );
       
       if (!saveResult.success || !saveResult.data) {

@@ -12,6 +12,11 @@ interface MediaDisplayProps extends MediaOptions {
    * The type of media being displayed
    */
   mediaType: MediaType;
+
+  /**
+   * Optional alt text for accessibility (for images)
+   */
+  alt?: string;
 }
 
 /**
@@ -27,6 +32,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
     muted = true,
     loop = false,
     poster,
+    alt = '',
     onClick,
     onLoad,
     onError,
@@ -81,7 +87,7 @@ export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, Medi
           onClick={onClick}
           onLoad={onLoad}
           onError={handleError}
-          alt=""
+          alt={alt}
         />
       );
     }

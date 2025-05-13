@@ -40,3 +40,24 @@ export const createFilePreview = (file: File): string => {
 export const revokeFilePreview = (url: string): void => {
   URL.revokeObjectURL(url);
 };
+
+/**
+ * Creates a unique path for storage
+ */
+export const createUniqueFilePath = (userId: string, file: File): string => {
+  const timestamp = new Date().getTime();
+  const fileExtension = file.name.split('.').pop() || '';
+  return `${userId}/${timestamp}-${Math.random().toString(36).substring(2, 10)}.${fileExtension}`;
+};
+
+/**
+ * Log detailed file information for debugging
+ */
+export const logFileDebugInfo = (file: File): void => {
+  console.log("[FILE DEBUG]", {
+    filename: file.name,
+    size: `${(file.size / 1024).toFixed(2)} KB`,
+    type: file.type,
+    lastModified: new Date(file.lastModified).toLocaleString()
+  });
+};

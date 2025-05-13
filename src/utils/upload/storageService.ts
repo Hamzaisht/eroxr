@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { validateFileForUpload } from "./validators";
-import { runFileDiagnostic, logFileDebugInfo } from "./fileUtils";
+import { runFileDiagnostic } from "./fileUtils";
 
 /**
  * Result of a storage upload operation
@@ -38,12 +39,17 @@ export async function uploadFileToStorage(
     if (!validation.valid) {
       return {
         success: false,
-        error: validation.message || 'Invalid file'
+        error: validation.error || 'Invalid file'
       };
     }
     
     // Log file debug info
-    logFileDebugInfo(file);
+    console.log("[FILE DEBUG]", {
+      filename: file.name,
+      size: `${(file.size / 1024).toFixed(2)} KB`,
+      type: file.type,
+      lastModified: new Date(file.lastModified).toLocaleString()
+    });
     
     // Upload to Supabase storage with proper content type
     const { data, error } = await supabase.storage

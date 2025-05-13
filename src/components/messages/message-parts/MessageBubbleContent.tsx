@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -97,7 +96,7 @@ export const MessageBubbleContent = ({
       ? MediaType.VIDEO 
       : mediaUrl.match(/\.(mp3|m4a|wav|ogg|webm)$/i)
         ? MediaType.AUDIO
-        : MediaType.FILE;
+        : MediaType.DOCUMENT; // Change FILE to DOCUMENT;
       
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
