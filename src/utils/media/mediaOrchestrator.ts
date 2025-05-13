@@ -1,4 +1,3 @@
-
 import { MediaType, MediaSource } from './types';
 import { determineMediaType, extractMediaUrl } from './mediaUtils';
 import { getFileExtension } from './mediaUrlUtils';
@@ -81,7 +80,8 @@ class MediaOrchestrator {
                       (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : '');
     
     const creatorId = source.creator_id || '';
-    const mediaType = source.media_type || determineMediaType(source);
+    const mediaType: MediaType = source.media_type as MediaType || 
+                              (source.video_url ? MediaType.VIDEO : MediaType.IMAGE);
     
     // Create a composite key
     const compositeKey = `${primaryUrl}|${creatorId}|${mediaType}`;
@@ -157,7 +157,8 @@ class MediaOrchestrator {
     
     const mediaId = this.createMediaId(source);
     const url = this.getStableUrl(source);
-    const type = typeof source === 'object' ? (source.media_type || determineMediaType(source)) : determineMediaType(source);
+    const type: MediaType = source.media_type as MediaType || 
+                          (source.video_url ? MediaType.VIDEO : MediaType.IMAGE);
     
     // Check if request already exists
     if (this.requestMap.has(mediaId)) {

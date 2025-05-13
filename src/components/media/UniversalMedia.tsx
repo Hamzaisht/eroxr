@@ -48,11 +48,14 @@ export const UniversalMedia = memo(forwardRef(({
     
     // If item is a string, assume it's a direct URL
     if (typeof item === 'string') {
+      const isVideoUrl = item.match(/\.(mp4|webm|mov|ogv)($|\?)/i);
+      const mediaType: MediaType = isVideoUrl ? MediaType.VIDEO : MediaType.IMAGE;
+      
       return {
         url: item,
         media_url: item,
         video_url: item,
-        media_type: item.match(/\.(mp4|webm|mov|ogv)($|\?)/i) ? MediaType.VIDEO : MediaType.IMAGE
+        media_type: mediaType
       };
     }
     
@@ -125,7 +128,7 @@ export const UniversalMedia = memo(forwardRef(({
     <MediaRenderer
       ref={ref}
       src={mediaSource}
-      type={mediaSource.media_type}
+      type={mediaSource.media_type as MediaType}
       className={className}
       autoPlay={autoPlay}
       controls={controls}

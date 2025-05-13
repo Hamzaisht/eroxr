@@ -12,7 +12,8 @@ export enum AvailabilityStatus {
   ONLINE = 'online',
   AWAY = 'away',
   BUSY = 'busy',
-  OFFLINE = 'offline'
+  OFFLINE = 'offline',
+  INVISIBLE = 'invisible'
 }
 
 export interface MediaSource {

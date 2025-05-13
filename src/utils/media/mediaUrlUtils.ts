@@ -1,114 +1,123 @@
 
-/**
- * Detect if a URL points to an image based on extension or query string
- */
-export function isImageUrl(url: string): boolean {
-  return (
-    /\.(jpe?g|png|gif|webp|bmp|svg)($|\?)/.test(url.toLowerCase()) ||
-    url.includes('image/') || 
-    url.includes('content-type=image')
-  );
-}
+import { MediaSource } from './types';
 
 /**
- * Detect if a URL points to a video based on extension or query string
+ * Extracts a file extension from a URL
+ * @param url - URL to extract extension from
+ * @returns The file extension or an empty string
  */
-export function isVideoUrl(url: string): boolean {
-  return (
-    /\.(mp4|webm|mov|ogv|m4v|mkv)($|\?)/.test(url.toLowerCase()) ||
-    url.includes('video/') ||
-    url.includes('content-type=video')
-  );
-}
-
-/**
- * Detect if a URL points to an audio file based on extension or query string
- */
-export function isAudioUrl(url: string): boolean {
-  return (
-    /\.(mp3|wav|ogg|m4a)($|\?)/.test(url.toLowerCase()) ||
-    url.includes('audio/') ||
-    url.includes('content-type=audio')
-  );
-}
-
-/**
- * Extract the file extension from a URL or filename
- */
-export function getFileExtension(url: string): string | null {
-  const match = url.match(/\.([a-zA-Z0-9]+)($|\?)/);
-  return match ? match[1].toLowerCase() : null;
-}
-
-/**
- * Extract the file name from a URL or path
- */
-export function getFileName(url: string): string {
-  const parts = url.split('/');
-  const lastPart = parts[parts.length - 1];
-  const queryIndex = lastPart.indexOf('?');
-  return queryIndex > -1 ? lastPart.substring(0, queryIndex) : lastPart;
-}
-
-/**
- * Convert a string URL or path into a File object
- * Useful for processing URLs received from external sources
- */
-export async function urlToFile(url: string, filename?: string): Promise<File | null> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Failed to fetch URL: ${url}, status: ${response.status}`);
-      return null;
-    }
-    
-    const blob = await response.blob();
-    if (blob.size === 0) {
-      console.error(`URL resulted in empty blob: ${url}`);
-      return null;
-    }
-    
-    // Use provided filename or extract from URL
-    const name = filename || getFileName(url) || 'file';
-    
-    // Ensure file has proper extension based on content type
-    let finalName = name;
-    const contentType = blob.type;
-    const fileExt = getFileExtension(name);
-    
-    if (contentType && !fileExt) {
-      // Add extension based on content type if missing
-      const ext = contentType.split('/')[1];
-      if (ext) {
-        finalName = `${name}.${ext}`;
-      }
-    }
-    
-    // Create new File object with proper name and type
-    return new File([blob], finalName, { 
-      type: contentType || 'application/octet-stream',
-      lastModified: Date.now()
-    });
-  } catch (err) {
-    console.error('Error converting URL to file:', err);
-    return null;
-  }
-}
-
-/**
- * Gets a playable media URL, adding cache-busting or other parameters as needed
- * 
- * @param url The raw media URL
- * @returns The processed URL ready for playback
- */
-export function getPlayableMediaUrl(url: string | null): string {
+export function getFileExtension(url: string): string {
   if (!url) return '';
   
-  // Add cache busting for development environment
-  if (process.env.NODE_ENV === 'development') {
-    const cacheBuster = `_cb=${Date.now()}`;
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}${cacheBuster}`;
+  // Extract the filename from the URL
+  const filename = url.split('/').pop() || '';
+  
+  // If there's a query string, remove it
+  const filenameWithoutQuery = filename.split('?')[0];
+  
+  // Extract extension
+  const parts = filenameWithoutQuery.split('.');
+  if (parts.length > 1) {
+    return parts.pop() || '';
+  }
+  
+  return '';
+}
+
+/**
+ * Checks if a URL points to an image
+ * @param url - URL to check
+ * @returns True if URL points to an image, false otherwise
+ */
+export function isImageUrl(url: string): boolean {
+  if (!url) return false;
+  
+  const extension = getFileExtension(url).toLowerCase();
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+  
+  return imageExtensions.includes(extension);
+}
+
+/**
+ * Checks if a URL points to a video
+ * @param url - URL to check
+ * @returns True if URL points to a video, false otherwise
+ */
+export function isVideoUrl(url: string): boolean {
+  if (!url) return false;
+  
+  const extension = getFileExtension(url).toLowerCase();
+  const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'flv', 'm4v', 'mkv'];
+  
+  return videoExtensions.includes(extension);
+}
+
+/**
+ * Checks if a URL points to an audio file
+ * @param url - URL to check
+ * @returns True if URL points to an audio file, false otherwise
+ */
+export function isAudioUrl(url: string): boolean {
+  if (!url) return false;
+  
+  const extension = getFileExtension(url).toLowerCase();
+  const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'];
+  
+  return audioExtensions.includes(extension);
+}
+
+/**
+ * Extract a media URL from a MediaSource object or string
+ * @param source - MediaSource object or URL string
+ * @returns Extracted URL or null if no URL found
+ */
+export function extractMediaUrl(source: MediaSource | string | null | undefined): string | null {
+  if (!source) return null;
+  
+  // If source is already a string, return it
+  if (typeof source === 'string') {
+    return source;
+  }
+  
+  // Try all possible URL fields in the MediaSource object
+  return source.video_url || 
+         source.media_url || 
+         source.url || 
+         source.src || 
+         (source.video_urls && source.video_urls.length > 0 ? source.video_urls[0] : null) ||
+         (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : null) ||
+         null;
+}
+
+/**
+ * Process a media URL to ensure it's playable
+ * @param url - Raw media URL
+ * @returns Processed URL for playback
+ */
+export function getPlayableMediaUrl(url: string): string {
+  if (!url) return '';
+  
+  // Handle special cases for different hosting providers
+  
+  // Supabase storage URLs
+  if (url.includes('storage.googleapis.com') || url.includes('supabase.co/storage/v1/object/public')) {
+    // Ensure proper caching parameters
+    return url.includes('?') ? `${url}&t=${Date.now()}` : `${url}?t=${Date.now()}`;
+  }
+  
+  // Custom CDN URLs
+  if (url.includes('cdn.eroxr.se')) {
+    return url.includes('?') ? url : `${url}?quality=high`;
+  }
+  
+  // URLs with special encoding
+  if (url.includes('%')) {
+    try {
+      return decodeURIComponent(url);
+    } catch (e) {
+      console.warn('Failed to decode URL:', url);
+      return url;
+    }
   }
   
   return url;
