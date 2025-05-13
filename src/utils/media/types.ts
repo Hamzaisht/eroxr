@@ -32,6 +32,7 @@ export interface MediaSource {
   thumbnail_url?: string;
   creator_id?: string;
   content_type?: string;
+  poster?: string;
   
   // Arrays for multiple URLs
   video_urls?: string[];
@@ -50,6 +51,10 @@ export interface MediaOptions {
   onError?: () => void;
   onEnded?: () => void;
   onTimeUpdate?: (time: number) => void;
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  alt?: string;
+  maxRetries?: number;
+  showWatermark?: boolean;
 }
 
 export type MediaTypes = 'image' | 'video' | 'audio' | 'document' | 'all';
@@ -85,6 +90,11 @@ export interface UploadOptions {
   addWatermark?: boolean;
   isPublic?: boolean;
   metadata?: Record<string, any>;
+  contentCategory?: string;
+  maxSizeInMB?: number;
+  onProgress?: (progress: number) => void;
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
 }
 
 // Normalize a media source to ensure it has a valid URL property

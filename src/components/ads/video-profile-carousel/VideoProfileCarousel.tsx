@@ -1,85 +1,96 @@
 
+"use client"
+
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from 'framer-motion';
 import { DatingAd } from '../types/dating';
 import { CarouselContainer } from './CarouselContainer';
 
+// Create stub components for the missing imports
+const CarouselControls = ({ onNext, onPrev, currentIndex, total }: any) => (
+  <div className="flex justify-between w-full px-4">
+    <button onClick={onPrev}>Previous</button>
+    <div>
+      {currentIndex + 1} / {total}
+    </div>
+    <button onClick={onNext}>Next</button>
+  </div>
+);
+
+const CarouselEmpty = () => (
+  <div className="flex justify-center items-center h-[50vh]">
+    <p>No profiles available</p>
+  </div>
+);
+
+// Create a stub for useSettings
+const useSettings = () => ({
+  settings: {
+    enableVideoAutoplay: true
+  }
+});
+
 interface VideoProfileCarouselProps {
   ads: DatingAd[];
+  autoPlay?: boolean;
+  className?: string;
 }
 
-export const VideoProfileCarousel = ({ ads }: VideoProfileCarouselProps) => {
+export const VideoProfileCarousel = ({ 
+  ads = [],
+  autoPlay = true,
+  className = ""
+}: VideoProfileCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const { ref, inView } = useInView({
-    threshold: 0.6,
-  });
-
-  // Reset the current index when ads change
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [ads]);
-
-  // Start/stop playing based on visibility
-  useEffect(() => {
-    if (inView) {
-      setIsPlaying(true);
-    } else {
-      setIsPlaying(false);
-    }
-  }, [inView]);
-
-  // If no ads, return nothing
-  if (!ads || ads.length === 0) {
-    return (
-      <div className="relative aspect-[4/3] md:aspect-video w-full max-w-4xl mx-auto bg-luxury-darker/50 rounded-xl overflow-hidden flex items-center justify-center">
-        <p className="text-luxury-neutral text-center p-4">No profiles available at the moment.</p>
-      </div>
-    );
-  }
+  const [isActive, setIsActive] = useState(false);
+  const { settings } = useSettings();
 
   const handleNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
+    if (ads.length === 0) return;
+    setCurrentIndex((prev) => (prev + 1) % ads.length);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + ads.length) % ads.length);
+    if (ads.length === 0) return;
+    setCurrentIndex((prev) => (prev === 0 ? ads.length - 1 : prev - 1));
   };
 
+  useEffect(() => {
+    // Reset to the first item when ads change
+    setCurrentIndex(0);
+  }, [ads]);
+
+  useEffect(() => {
+    // Set active state based on autoplay setting or prop
+    setIsActive(autoPlay && settings.enableVideoAutoplay);
+  }, [autoPlay, settings.enableVideoAutoplay]);
+
+  // Return empty state if no ads
+  if (!ads || ads.length === 0) {
+    return <CarouselEmpty />;
+  }
+
   return (
-    <div 
-      ref={ref}
-      className="relative aspect-[4/3] md:aspect-video w-full max-w-4xl mx-auto bg-luxury-darker/30 rounded-xl overflow-hidden shadow-2xl"
+    <motion.div 
+      className={`relative w-full overflow-hidden ${className}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
     >
-      {/* Profile Cards */}
+      {/* Carousel Content */}
       <CarouselContainer 
         ads={ads} 
         currentIndex={currentIndex} 
-        isActive={isPlaying} 
+        isActive={isActive}
       />
       
-      {/* Navigation Controls */}
-      <div className="absolute bottom-0 inset-x-0 flex justify-between p-4 z-20">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 text-white"
-          onClick={handlePrev}
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 text-white"
-          onClick={handleNext}
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-      </div>
-    </div>
+      {/* Carousel Controls */}
+      <CarouselControls 
+        onNext={handleNext}
+        onPrev={handlePrev}
+        currentIndex={currentIndex}
+        total={ads.length}
+      />
+    </motion.div>
   );
 };

@@ -59,15 +59,31 @@ export function formatFileSize(bytes: number): string {
 /**
  * Generate a unique path for a file
  */
-export function createUniqueFilePath(userId: string, fileName: string, prefix = ''): string {
+export function createUniqueFilePath(userId: string, file: File, prefix = ''): string {
   const timestamp = new Date().getTime();
-  const extension = fileName.split('.').pop() || '';
-  const safeName = fileName
+  const extension = file.name.split('.').pop() || '';
+  const safeName = file.name
     .split('.')[0]
     .replace(/[^a-z0-9]/gi, '_')
     .toLowerCase();
   
   return `${prefix ? prefix + '/' : ''}${userId}/${timestamp}_${safeName}.${extension}`;
+}
+
+/**
+ * Create a preview for a file
+ */
+export function createFilePreview(file: File): string {
+  return URL.createObjectURL(file);
+}
+
+/**
+ * Revoke a file preview URL
+ */
+export function revokeFilePreview(url: string): void {
+  if (url && url.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
+  }
 }
 
 /**

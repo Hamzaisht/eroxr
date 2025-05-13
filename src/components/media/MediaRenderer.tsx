@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
 import { MediaDisplay } from './MediaDisplay';
 import { extractMediaUrl } from '@/utils/media/urlUtils';
-import { normalizeMediaSource } from '@/utils/media/mediaUtils';
+import { normalizeMediaSource } from '@/utils/media/types';
 
 interface MediaRendererProps extends MediaOptions {
   /**
@@ -25,6 +25,11 @@ interface MediaRendererProps extends MediaOptions {
    * Maximum number of retries
    */
   maxRetries?: number;
+  
+  /**
+   * Show watermark on media (default: false)
+   */
+  showWatermark?: boolean;
 }
 
 /**
@@ -45,7 +50,8 @@ export function MediaRenderer({
   onEnded,
   onTimeUpdate,
   allowRetry = false,
-  maxRetries = 2
+  maxRetries = 2,
+  showWatermark = false
 }: MediaRendererProps) {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<MediaType>(type || MediaType.UNKNOWN);

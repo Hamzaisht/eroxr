@@ -1,147 +1,152 @@
 
-import React, { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Loader2, Upload, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { MediaUploader } from '@/components/shared/MediaUploader';
-import { VideoPreview } from '../VideoPreview';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ImagePlus, VideoIcon, X, Loader2 } from "lucide-react";
+import { useStoryUpload } from "./hooks/useStoryUpload";
 
-interface StoryUploaderProps {
-  onUploadComplete?: (url: string) => void;
-  onCancel?: () => void;
-  className?: string;
-}
-
-export const StoryUploader = ({ 
-  onUploadComplete, 
-  onCancel,
-  className 
-}: StoryUploaderProps) => {
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const { toast } = useToast();
+export function StoryUploader() {
+  const { 
+    isUploading, 
+    progress, 
+    error, 
+    previewUrl, 
+    handleFileSelect, 
+    uploadFile, 
+    resetState 
+  } = useStoryUpload();
   
-  // File input reference to trigger file selection
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Handle file selection
-  const handleFileSelect = (file: File) => {
-    setIsUploading(true);
+  // File input change handler
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     
-    // Create Object URL for preview
-    const objectUrl = URL.createObjectURL(file);
-    setVideoUrl(objectUrl);
-    
-    // Simulate upload progress (this would be replaced with actual upload logic)
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setUploadProgress(progress);
-      
-      if (progress >= 100) {
-        clearInterval(interval);
-        setIsUploading(false);
-        
-        // In a real implementation, this would be the URL returned from the server
-        if (onUploadComplete) {
-          onUploadComplete(objectUrl);
-        }
-        
-        toast({
-          title: "Upload successful",
-          description: "Your story has been uploaded.",
-        });
-      }
-    }, 300);
-  };
-  
-  const handleError = (error: string) => {
-    toast({
-      title: "Upload failed",
-      description: error,
-      variant: "destructive",
-    });
-  };
-  
-  const handleCancel = () => {
-    setVideoUrl(null);
-    if (onCancel) {
-      onCancel();
+    const isValid = await handleFileSelect(file);
+    if (isValid) {
+      setSelectedFile(file);
     }
   };
 
+  // Clear the selected file
+  const handleClear = () => {
+    setSelectedFile(null);
+    resetState();
+  };
+
+  // Upload the file
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    await uploadFile(selectedFile);
+    setSelectedFile(null);
+  };
+
   return (
-    <Card className={className}>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <div className="text-center">
-            <h3 className="text-xl font-semibold mb-1">Upload Story</h3>
-            <p className="text-sm text-muted-foreground">
-              Upload a video for your story (up to 60 seconds)
-            </p>
-          </div>
-          
-          {videoUrl ? (
-            <div className="relative aspect-[9/16] rounded-lg overflow-hidden">
-              <VideoPreview videoUrl={videoUrl} className="w-full h-full" />
-              
-              {isUploading && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                  <p className="text-sm font-medium">{uploadProgress}%</p>
-                </div>
-              )}
-              
-              <Button
-                size="icon"
-                variant="destructive"
-                className="absolute top-2 right-2 h-8 w-8"
-                onClick={handleCancel}
-                disabled={isUploading}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+    <Card className="relative p-4 max-w-md mx-auto">
+      <div className="text-center mb-4">
+        <h3 className="text-lg font-medium">Create a Story</h3>
+        <p className="text-sm text-muted-foreground">
+          Share a photo or video that will last for 24 hours
+        </p>
+      </div>
+
+      {previewUrl ? (
+        <div className="relative aspect-[9/16] bg-black rounded-md overflow-hidden mb-4">
+          {selectedFile?.type.startsWith('image/') ? (
+            <img 
+              src={previewUrl} 
+              alt="Story preview" 
+              className="w-full h-full object-contain"
+            />
           ) : (
-            <MediaUploader
-              onComplete={url => setVideoUrl(url)}
-              onError={handleError}
-              mediaTypes="video"
-              maxSizeInMB={50}
-              context="stories"
-              buttonText="Upload Video"
-              showPreview={true}
-              autoUpload={true}
+            <video 
+              src={previewUrl} 
+              className="w-full h-full object-contain" 
+              controls
+              autoPlay
+              muted
+              loop
             />
           )}
-        </div>
-      </CardContent>
-      
-      <CardFooter className="flex justify-end gap-2 border-t p-4">
-        <Button 
-          variant="outline" 
-          onClick={handleCancel}
-          disabled={isUploading}
-        >
-          Cancel
-        </Button>
-        
-        <Button
-          disabled={!videoUrl || isUploading}
-          onClick={() => onUploadComplete && videoUrl && onUploadComplete(videoUrl)}
-        >
-          {isUploading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-              Processing...
-            </>
-          ) : (
-            'Add to Story'
+          
+          {!isUploading && (
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 h-8 w-8"
+              onClick={handleClear}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           )}
+        </div>
+      ) : (
+        <div className="flex gap-4 justify-center mb-4">
+          <label className="cursor-pointer">
+            <div className="flex flex-col items-center">
+              <div className="p-4 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+                <ImagePlus className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-sm mt-2">Photo</span>
+            </div>
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </label>
+          
+          <label className="cursor-pointer">
+            <div className="flex flex-col items-center">
+              <div className="p-4 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+                <VideoIcon className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-sm mt-2">Video</span>
+            </div>
+            <input 
+              type="file" 
+              accept="video/*" 
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </label>
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 p-2 bg-destructive/10 text-destructive text-sm rounded">
+          {error}
+        </div>
+      )}
+
+      {isUploading && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm font-medium">Uploading...</span>
+            <span className="text-sm text-muted-foreground ml-auto">
+              {progress}%
+            </span>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all" 
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {previewUrl && !isUploading && (
+        <Button 
+          className="w-full" 
+          onClick={handleUpload}
+        >
+          Share to Story
         </Button>
-      </CardFooter>
+      )}
     </Card>
   );
-};
+}

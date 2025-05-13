@@ -45,22 +45,22 @@ export const useBodyContactSubmit = ({
       // 1. Validate form values
       const validation = validateAdSubmission(values);
       if (!validation.isValid) {
-        throw new Error(validation.error);
+        throw new Error(validation.error || "Invalid form data");
       }
 
       // 2. Check user permissions (premium, verification)
-      const permissionCheck = await checkPermissions();
+      const permissionCheck = await checkPermissions(session.user.id);
       if (!permissionCheck.isAllowed) {
         toast({
           title: "Access restricted",
-          description: permissionCheck.error,
+          description: permissionCheck.error || "Permission denied",
           variant: "destructive",
         });
         return;
       }
 
       // 3. Upload media files (video and avatar)
-      const mediaResult = await uploadMedia(values.videoFile, values.avatarFile);
+      const mediaResult = await uploadMedia(values.videoFile, values.avatarFile, session.user.id);
       if (mediaResult.error) {
         throw new Error(mediaResult.error);
       }
@@ -69,7 +69,8 @@ export const useBodyContactSubmit = ({
       const saveResult = await saveAd(
         values, 
         mediaResult.videoUrl, 
-        mediaResult.avatarUrl 
+        mediaResult.avatarUrl,
+        session.user.id
       );
       
       if (!saveResult.success || !saveResult.data) {

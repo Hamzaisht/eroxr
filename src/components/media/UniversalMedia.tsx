@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
 import { MediaRenderer } from './MediaRenderer';
-import { normalizeMediaSource } from '@/utils/media/mediaUtils';
+import { normalizeMediaSource } from '@/utils/media/types';
 
 interface UniversalMediaProps extends MediaOptions {
   /**
@@ -24,6 +24,11 @@ interface UniversalMediaProps extends MediaOptions {
    * Maximum number of retries on error
    */
   maxRetries?: number;
+  
+  /**
+   * Object fit style for the media
+   */
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
 }
 
 export const UniversalMedia = ({ 
@@ -32,6 +37,7 @@ export const UniversalMedia = ({
   showWatermark = false,
   alt = '',
   maxRetries = 1,
+  objectFit = 'cover',
   ...props 
 }: UniversalMediaProps) => {
   // Determine media type from item if possible
@@ -55,6 +61,7 @@ export const UniversalMedia = ({
       type={mediaType}
       className={className}
       maxRetries={maxRetries}
+      showWatermark={showWatermark}
       {...props}
     />
   );

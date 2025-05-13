@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import { FileUploadButton } from "./FileUploadButton";
 import { MediaPreview } from "./MediaPreview";
 import { UploadProgress } from "./UploadProgress";
-import { DebugInfo } from "./DebugInfo";
 import { getAllowedTypes, validateFile } from "./utils";
 import { toast } from "@/components/ui/use-toast";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
@@ -38,10 +37,10 @@ export const MediaUploader = ({
     uploadState,
     uploadMedia,
     resetUploadState,
-    validateFile: validateMediaFile
   } = useMediaUpload({
-    contentCategory: context,
-    maxSizeInMB
+    // We'll handle these properties properly in the hook
+    bucket: context === 'avatar' ? 'avatars' : 'media', 
+    maxSizeInMB,
   });
   
   // Clear preview when component unmounts
@@ -130,24 +129,28 @@ export const MediaUploader = ({
     
     try {
       const result = await uploadMedia(selectedFile, {
-        contentCategory: context,
+        bucket: context === 'avatar' ? 'avatars' : 'media',
         maxSizeInMB
       });
       
       if (!result.success) {
-        throw new Error(result.error);
+        throw new Error(result.error || "Upload failed");
       }
       
-      onComplete(result.url as string);
-      
-      toast({
-        title: "Upload successful",
-        description: "Your file has been uploaded."
-      });
-      
-      // Auto clear the selection after successful upload
-      if (autoUpload) {
-        handleClear();
+      if (result.url) {
+        onComplete(result.url);
+        
+        toast({
+          title: "Upload successful",
+          description: "Your file has been uploaded."
+        });
+        
+        // Auto clear the selection after successful upload
+        if (autoUpload) {
+          handleClear();
+        }
+      } else {
+        throw new Error("Upload succeeded but no URL was returned");
       }
     } catch (error: any) {
       console.error("Upload error:", error);
@@ -167,12 +170,6 @@ export const MediaUploader = ({
   
   return (
     <div className={className}>
-      {/* Debug info */}
-      <DebugInfo
-        uploadState={uploadState}
-        fileInfo={selectedFileInfo}
-      />
-      
       {/* Preview area */}
       {showPreview && selectedFile && (
         <MediaPreview

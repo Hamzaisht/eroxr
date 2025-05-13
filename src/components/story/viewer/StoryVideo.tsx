@@ -19,6 +19,7 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
     const [loadError, setLoadError] = useState(false);
     
     const mediaItem = {
+      url: videoUrl,
       video_url: videoUrl,
       creator_id: creatorId,
       media_type: MediaType.VIDEO
@@ -70,7 +71,6 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
         )}
         
         <UniversalMedia
-          ref={ref}
           item={mediaItem}
           className="w-full h-full object-contain"
           autoPlay={!isPaused && !isLoading && !loadError}
@@ -79,15 +79,9 @@ export const StoryVideo = forwardRef<HTMLVideoElement, StoryVideoProps>(
           onLoad={handleLoad}
           onEnded={onEnded}
         />
-        
-        {!isLoading && !loadError && (
-          <div className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
-            <VolumeX className="h-5 w-5 text-white" />
-          </div>
-        )}
       </div>
     );
   }
 );
 
-StoryVideo.displayName = "StoryVideo";
+StoryVideo.displayName = 'StoryVideo';

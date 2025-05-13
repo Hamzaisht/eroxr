@@ -6,7 +6,7 @@ import { useInView } from "react-intersection-observer";
 import { MediaRenderer } from "@/components/media/MediaRenderer";
 import { MediaType, MediaSource } from "@/utils/media/types";
 import { extractMediaUrl } from '@/utils/media/urlUtils';
-import { normalizeMediaSource } from '@/utils/media/mediaUtils';
+import { normalizeMediaSource } from '@/utils/media/types';
 
 interface ErosVideoPlayerProps {
   videoUrl: string;
