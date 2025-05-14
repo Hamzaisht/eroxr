@@ -66,12 +66,12 @@ export const useBodyContactSubmit = ({
       }
 
       // 4. Save ad to the database
-      // Ensure we're passing a boolean value for isSuperAdmin, not a string
+      // Explicitly ensure isSuperAdmin is a boolean value
       const saveResult = await saveAd(
         values, 
         mediaResult.videoUrl, 
         mediaResult.avatarUrl,
-        isSuperAdmin // Now properly passing the boolean
+        Boolean(isSuperAdmin) // Explicitly convert to boolean to ensure type safety
       );
       
       if (!saveResult.success || !saveResult.data) {
