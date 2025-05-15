@@ -1,6 +1,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { getFileExtension } from '../upload/validators';
+import { MediaSource, MediaType } from './types';
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Create a unique file path for uploading
@@ -56,6 +58,47 @@ export function extractMediaUrl(media: any): string {
 }
 
 /**
+ * Determines the type of media based on the source or URL
+ * @param source Media source or URL
+ * @returns Media type
+ */
+export function determineMediaType(source: MediaSource | string): MediaType {
+  // If the source already has a media_type, use that
+  if (typeof source !== 'string' && source.media_type) {
+    return source.media_type;
+  }
+  
+  // Extract URL for analysis
+  const url = extractMediaUrl(source);
+  if (!url) return MediaType.UNKNOWN;
+  
+  // Check extensions
+  const extension = url.split('.').pop()?.toLowerCase();
+  
+  // Image types
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension || '')) {
+    return MediaType.IMAGE;
+  }
+  
+  // Video types
+  if (['mp4', 'webm', 'mov', 'avi', 'mkv', 'wmv'].includes(extension || '')) {
+    return MediaType.VIDEO;
+  }
+  
+  // Audio types
+  if (['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension || '')) {
+    return MediaType.AUDIO;
+  }
+  
+  // Check if the source object has video_url
+  if (typeof source !== 'string' && source.video_url) {
+    return MediaType.VIDEO;
+  }
+  
+  return MediaType.UNKNOWN;
+}
+
+/**
  * Get appropriate MIME type for an extension
  * @param extension File extension
  * @returns MIME type
@@ -81,4 +124,82 @@ export function getMimeTypeFromExtension(extension: string): string {
   if (ext === 'ogg') return 'audio/ogg';
   
   return 'application/octet-stream';
+}
+
+/**
+ * Uploads a file to Supabase storage with proper validation
+ */
+export async function uploadFileToStorage(
+  bucket: string,
+  path: string,
+  file: File
+): Promise<{ success: boolean, url?: string, path?: string, error?: string }> {
+  try {
+    // Validate file before upload
+    if (!file || !(file instanceof File) || file.size === 0) {
+      console.error("❌ Invalid File passed to uploader", file);
+      return {
+        success: false,
+        error: "Only raw File instances with data can be uploaded"
+      };
+    }
+    
+    // Log file debug info
+    console.log("[FILE DEBUG]", {
+      filename: file.name,
+      size: `${(file.size / 1024).toFixed(2)} KB`,
+      type: file.type,
+      lastModified: new Date(file.lastModified).toLocaleString()
+    });
+    
+    // Upload to Supabase storage with proper content type
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        contentType: file.type, // CRITICAL: Set correct content type
+        upsert: true           // Allow overwrites
+      });
+    
+    if (error) {
+      console.error("Storage upload error:", error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+    
+    if (!data || !data.path) {
+      return {
+        success: false,
+        error: 'Upload successful but no path returned'
+      };
+    }
+    
+    // Get public URL for verification
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+    
+    // Verify URL is accessible
+    try {
+      const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
+      if (!response.ok) {
+        console.warn(`Upload verification failed: ${response.status} ${response.statusText}`);
+      }
+    } catch (verifyError) {
+      console.warn("Could not verify uploaded file URL:", verifyError);
+    }
+    
+    return {
+      success: true,
+      path: data.path,
+      url: urlData.publicUrl
+    };
+  } catch (error: any) {
+    console.error("Storage upload error:", error);
+    return {
+      success: false,
+      error: error.message || String(error)
+    };
+  }
 }

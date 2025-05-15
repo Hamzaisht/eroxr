@@ -1,55 +1,50 @@
 
 /**
- * Infer content type from file extension
- */
-export function inferContentTypeFromExtension(filename: string): string {
-  const extension = filename.split('.').pop()?.toLowerCase() || '';
-  
-  // Common image types
-  if (['jpg', 'jpeg'].includes(extension)) return 'image/jpeg';
-  if (extension === 'png') return 'image/png';
-  if (extension === 'gif') return 'image/gif';
-  if (extension === 'webp') return 'image/webp';
-  if (extension === 'svg') return 'image/svg+xml';
-  if (extension === 'bmp') return 'image/bmp';
-  
-  // Common video types
-  if (extension === 'mp4') return 'video/mp4';
-  if (extension === 'webm') return 'video/webm';
-  if (extension === 'mov') return 'video/quicktime';
-  if (extension === 'avi') return 'video/x-msvideo';
-  if (extension === 'mkv') return 'video/x-matroska';
-  
-  // Common audio types
-  if (extension === 'mp3') return 'audio/mpeg';
-  if (extension === 'wav') return 'audio/wav';
-  if (extension === 'ogg') return 'audio/ogg';
-  if (extension === 'aac') return 'audio/aac';
-  if (extension === 'm4a') return 'audio/mp4';
-  
-  // Default
-  return 'application/octet-stream';
-}
-
-/**
  * Format file size to human-readable string
  */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-  
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+export function formatFileSize(sizeInBytes: number): string {
+  if (sizeInBytes < 1024) {
+    return `${sizeInBytes} B`;
+  } else if (sizeInBytes < 1024 * 1024) {
+    return `${(sizeInBytes / 1024).toFixed(2)} KB`;
+  } else if (sizeInBytes < 1024 * 1024 * 1024) {
+    return `${(sizeInBytes / 1024 / 1024).toFixed(2)} MB`;
+  } else {
+    return `${(sizeInBytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+  }
 }
 
 /**
  * Format duration in seconds to MM:SS format
  */
-export function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
+export function formatDuration(durationInSeconds: number): string {
+  const minutes = Math.floor(durationInSeconds / 60);
+  const seconds = Math.floor(durationInSeconds % 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Infer content type from file extension
+ */
+export function inferContentTypeFromExtension(extension: string): string {
+  const ext = extension.toLowerCase();
   
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  // Image types
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'gif') return 'image/gif';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'svg') return 'image/svg+xml';
+  
+  // Video types
+  if (ext === 'mp4') return 'video/mp4';
+  if (ext === 'webm') return 'video/webm';
+  if (ext === 'mov') return 'video/quicktime';
+  
+  // Audio types
+  if (ext === 'mp3') return 'audio/mpeg';
+  if (ext === 'wav') return 'audio/wav';
+  if (ext === 'ogg') return 'audio/ogg';
+  
+  return 'application/octet-stream';
 }

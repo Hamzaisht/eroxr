@@ -1,54 +1,43 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
-interface SupabaseUrlOptions {
-  useSignedUrls?: boolean;
-  download?: boolean;
-  transform?: {
-    width?: number;
-    height?: number;
-    quality?: number;
-    format?: 'webp' | 'png' | 'jpg' | 'jpeg' | 'origin';
-  };
+/**
+ * Get the Supabase URL for a project
+ */
+export function getSupabaseUrl(): string {
+  // Extract from the current client
+  const url = supabase.supabaseUrl;
+  return url;
 }
 
 /**
- * Get a URL for a file in Supabase storage
- * This function can return either a public or signed URL based on options
+ * Get a public URL for a file in a bucket
  */
-export const getSupabaseUrl = async (
-  bucket: string, 
-  path: string, 
-  options: SupabaseUrlOptions = {}
-): Promise<{ url: string; error?: string }> => {
-  if (!path) {
-    return { url: '', error: 'No path provided' };
+export function getPublicStorageUrl(bucket: string, path: string): string {
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+/**
+ * Get a signed URL for a file in a bucket (for private files)
+ */
+export async function getSignedUrl(bucket: string, path: string, expiresIn = 60): Promise<string | null> {
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
+  
+  if (error) {
+    console.error('Error creating signed URL:', error);
+    return null;
   }
   
-  try {
-    if (options.useSignedUrls) {
-      // Get signed URL (for private buckets)
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(path, 3600);
-      
-      if (error) {
-        console.error('Error getting signed URL:', error);
-        return { url: '', error: error.message };
-      }
-      
-      return { url: data?.signedUrl || '' };
-    } else {
-      // Get public URL
-      const { data } = supabase.storage.from(bucket).getPublicUrl(path, {
-        download: options.download,
-        transform: options.transform
-      });
-      
-      return { url: data?.publicUrl || '' };
-    }
-  } catch (error: any) {
-    console.error('Error getting URL:', error);
-    return { url: '', error: error.message };
-  }
-};
+  return data.signedUrl;
+}
+
+/**
+ * Transform a path into a full Supabase storage URL
+ */
+export function getFullStorageUrl(bucket: string, path: string): string {
+  if (!path) return '';
+  
+  const baseUrl = getSupabaseUrl();
+  return `${baseUrl}/storage/v1/object/public/${bucket}/${path}`;
+}

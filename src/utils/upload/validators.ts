@@ -1,118 +1,123 @@
 
-/**
- * Supported file types for uploads
- */
-export const SUPPORTED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/bmp',
-  'image/svg+xml'
-];
-
-export const SUPPORTED_VIDEO_TYPES = [
-  'video/mp4',
-  'video/webm',
-  'video/quicktime',
-  'video/x-msvideo',
-  'video/x-matroska'
-];
-
-export const SUPPORTED_AUDIO_TYPES = [
-  'audio/mpeg',
-  'audio/mp3',
-  'audio/wav',
-  'audio/ogg',
-  'audio/aac',
-  'audio/mp4'
-];
+interface ValidationResult {
+  valid: boolean;
+  error?: string;
+}
 
 /**
- * Validate file type
+ * Get file extension from File object
  */
-export const isValidFileType = (file: File, allowedTypes: string[]): boolean => {
-  return allowedTypes.includes(file.type);
-};
+export function getFileExtension(file: File): string {
+  if (!file || !file.name) return '';
+  const parts = file.name.split('.');
+  return parts.length > 1 ? parts.pop()!.toLowerCase() : '';
+}
 
 /**
- * Validate file size (in MB)
+ * Check if file is an image
  */
-export const isValidFileSize = (file: File, maxSizeInMB: number): boolean => {
-  return file.size <= maxSizeInMB * 1024 * 1024;
-};
-
-/**
- * Get file extension from file or filename
- */
-export const getFileExtension = (fileOrName: File | string): string => {
-  const name = typeof fileOrName === 'string' ? fileOrName : fileOrName.name;
-  return name.split('.').pop()?.toLowerCase() || '';
-};
-
-/**
- * Generate a safe filename (alphanumeric with hyphens, underscores)
- */
-export const sanitizeFileName = (fileName: string): string => {
-  const extension = getFileExtension(fileName);
-  const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
-  const sanitized = baseName
-    .replace(/[^a-z0-9-_]/gi, '-')
-    .replace(/-+/g, '-');
-  
-  return `${sanitized}.${extension}`;
-};
-
-/**
- * Generate a unique filename with timestamp
- */
-export const generateUniqueFileName = (file: File): string => {
-  const extension = getFileExtension(file);
-  const timestamp = new Date().getTime();
-  const random = Math.floor(Math.random() * 1000);
-  return `${timestamp}-${random}.${extension}`;
-};
-
-/**
- * Check if a file is an image
- */
-export const isImageFile = (file: File): boolean => {
+export function isImageFile(file: File): boolean {
+  if (!file || !file.type) return false;
   return file.type.startsWith('image/');
-};
+}
 
 /**
- * Check if a file is a video
+ * Check if file is a video
  */
-export const isVideoFile = (file: File): boolean => {
+export function isVideoFile(file: File): boolean {
+  if (!file || !file.type) return false;
   return file.type.startsWith('video/');
-};
+}
 
 /**
- * Check if a file is an audio file
+ * Check if file is an audio file
  */
-export const isAudioFile = (file: File): boolean => {
+export function isAudioFile(file: File): boolean {
+  if (!file || !file.type) return false;
   return file.type.startsWith('audio/');
-};
+}
 
 /**
  * Validate a file for upload
  */
-export const validateFileForUpload = (file: File, maxSizeInMB = 100): { valid: boolean; error?: string } => {
+export function validateFileForUpload(file: File, maxSizeMB = 100): ValidationResult {
+  // Check if file is valid
   if (!file) {
-    return { valid: false, error: 'No file selected' };
+    return { valid: false, error: 'No file provided' };
+  }
+
+  // Check file size
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  if (file.size > maxSizeBytes) {
+    return { 
+      valid: false, 
+      error: `File size exceeds maximum allowed size (${maxSizeMB}MB)` 
+    };
+  }
+
+  // Check if file type is allowed
+  const allowedTypes = [
+    // Images
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    // Videos
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+    // Audio
+    'audio/mpeg',
+    'audio/wav',
+    'audio/ogg',
+    // Documents
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    return {
+      valid: false,
+      error: `File type "${file.type}" is not allowed`
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Run diagnostic checks on a file and log results
+ */
+export function runFileDiagnostic(file: File | null): void {
+  if (!file) {
+    console.error("❌ File diagnostic: Null file object");
+    return;
   }
   
   if (!(file instanceof File)) {
-    return { valid: false, error: 'Invalid file object' };
+    console.error("❌ File diagnostic: Object is not a File instance", typeof file);
+    return;
   }
+  
+  console.log("📝 File diagnostic:", {
+    name: file.name,
+    size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+    type: file.type || "No type",
+    lastModified: new Date(file.lastModified).toLocaleString()
+  });
   
   if (file.size === 0) {
-    return { valid: false, error: 'File is empty' };
+    console.error("⚠️ File diagnostic: Zero-byte file detected");
   }
   
-  if (file.size > maxSizeInMB * 1024 * 1024) {
-    return { valid: false, error: `File size exceeds ${maxSizeInMB}MB limit` };
+  if (isImageFile(file)) {
+    console.log("🖼️ File diagnostic: Image file detected");
+  } else if (isVideoFile(file)) {
+    console.log("🎬 File diagnostic: Video file detected");
+  } else if (isAudioFile(file)) {
+    console.log("🔊 File diagnostic: Audio file detected");
+  } else {
+    console.log("📄 File diagnostic: Other file type detected");
   }
-  
-  return { valid: true };
-};
+}
