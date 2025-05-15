@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { createUniqueFilePath, runFileDiagnostic } from "@/utils/upload/fileUtils";
-import { getFileExtension } from "@/utils/upload/validators";
+import { validateFileForUpload } from "@/utils/upload/validators";
 import { getSupabaseUrl } from "@/utils/media/supabaseUrlUtils";
 
 /**
@@ -60,16 +61,17 @@ export const addCacheBuster = (url: string): string => {
 };
 
 /**
+ * Extract file extension from filename
+ */
+export const extractFileExtension = (filename: string): string => {
+  return filename.split('.').pop()?.toLowerCase() || '';
+};
+
+/**
  * Infer content type from file extension
  */
 export const inferContentTypeFromExtension = (filename: string): string => {
-  return getMimeTypeFromExtension(getFileExtension(filename));
-};
-
-// Fix the line that causes the type error
-export const getFileExtension = (file: File | { name: string }): string => {
-  const filename = typeof file === 'string' ? file : file.name;
-  return filename.split('.').pop()?.toLowerCase() || '';
+  return getMimeTypeFromExtension(extractFileExtension(filename));
 };
 
 /**

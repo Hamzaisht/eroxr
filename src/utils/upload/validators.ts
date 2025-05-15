@@ -56,7 +56,8 @@ export const isVideoFile = (file: File): boolean => {
 };
 
 // Get file extension
-export const getFileExtension = (filename: string): string => {
+export const getFileExtension = (file: File | string): string => {
+  const filename = typeof file === 'string' ? file : file.name;
   return filename.split('.').pop()?.toLowerCase() || '';
 };
 
