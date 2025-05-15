@@ -3,6 +3,9 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { AvailabilityStatus } from "@/utils/media/types";
 
+// Re-export the AvailabilityStatus enum so it can be imported from this file
+export { AvailabilityStatus };
+
 export interface AvailabilityIndicatorProps {
   status?: AvailabilityStatus;
   size?: number;
