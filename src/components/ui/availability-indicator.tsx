@@ -1,63 +1,48 @@
 
+import React from "react";
 import { cn } from "@/lib/utils";
 import { AvailabilityStatus } from "@/utils/media/types";
 
-// Re-export the enum so it can be imported from this component
-export { AvailabilityStatus };
-
-export interface AvailabilityIndicatorProps {
-  status: AvailabilityStatus | string;
-  className?: string;
+interface AvailabilityIndicatorProps {
+  status: AvailabilityStatus;
   size?: number;
-  onClick?: (e: React.MouseEvent) => void;
+  className?: string;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
-export function AvailabilityIndicator({ 
-  status, 
+export const AvailabilityIndicator = ({
+  status,
+  size = 10,
   className,
-  size,
-  onClick
-}: AvailabilityIndicatorProps) {
-  // Convert string to the correct enum value if needed
-  let normalizedStatus: AvailabilityStatus;
-  
-  if (typeof status === 'string') {
-    switch (status.toLowerCase()) {
-      case 'online':
-        normalizedStatus = AvailabilityStatus.ONLINE;
-        break;
-      case 'away':
-        normalizedStatus = AvailabilityStatus.AWAY;
-        break;
-      case 'busy':
-        normalizedStatus = AvailabilityStatus.BUSY;
-        break;
-      case 'invisible':
-        normalizedStatus = AvailabilityStatus.INVISIBLE;
-        break;
+  onClick,
+}: AvailabilityIndicatorProps) => {
+  const getStatusColor = () => {
+    switch (status) {
+      case AvailabilityStatus.ONLINE:
+        return "bg-green-500";
+      case AvailabilityStatus.AWAY:
+        return "bg-yellow-500";
+      case AvailabilityStatus.BUSY:
+        return "bg-red-500";
+      case AvailabilityStatus.INVISIBLE:
+        return "bg-gray-500";
       default:
-        normalizedStatus = AvailabilityStatus.OFFLINE;
+        return "bg-gray-500";
     }
-  } else {
-    normalizedStatus = status;
-  }
-  
+  };
+
   return (
-    <div 
+    <div
       className={cn(
-        "rounded-full",
-        normalizedStatus === AvailabilityStatus.ONLINE && "bg-green-500",
-        normalizedStatus === AvailabilityStatus.OFFLINE && "bg-gray-400",
-        normalizedStatus === AvailabilityStatus.AWAY && "bg-yellow-500",
-        normalizedStatus === AvailabilityStatus.BUSY && "bg-red-500",
-        normalizedStatus === AvailabilityStatus.INVISIBLE && "bg-gray-400 opacity-50",
+        "rounded-full border-2 border-background",
+        getStatusColor(),
         className
       )}
-      style={{
-        width: size ? `${size}px` : '12px',
-        height: size ? `${size}px` : '12px',
-      }}
+      style={{ width: size, height: size }}
       onClick={onClick}
     />
   );
-}
+};
+
+// Export AvailabilityStatus from the types file
+export { AvailabilityStatus } from "@/utils/media/types";

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -8,11 +9,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowRightOnRectangle,
+  ArrowRightFromLine,
   Settings,
   User,
   Activity,
@@ -36,7 +37,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
-import { toDbValue } from "@/utils/supabase/helpers";
+import { toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
+import { Button } from "@/components/ui/button";
 
 interface UserMenuItemProps {
   label: string;
@@ -56,7 +58,7 @@ const UserMenuItem: React.FC<UserMenuItemProps> = ({ label, icon: Icon, onClick 
 export function UserMenu() {
   const [open, setOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<AvailabilityStatus>(AvailabilityStatus.OFFLINE);
-  const router = useRouter();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const session = useSession();
   const supabaseClient = useSupabaseClient();
@@ -83,9 +85,12 @@ export function UserMenu() {
     enabled: !!session?.user?.id,
   });
 
+  // Safely access profile data
+  const safeProfile = safeDataAccess(profile, null);
+
   const signOut = async () => {
     await supabaseClient.auth.signOut();
-    router.push("/login");
+    navigate("/login");
     toast({
       description: "You have been signed out.",
     });
@@ -101,7 +106,7 @@ export function UserMenu() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ status: newStatus })  // Pass the status as a simple string
+        .update({ status: newStatus })
         .eq('id', toDbValue(session.user.id));
         
       if (error) {
@@ -120,23 +125,23 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={profile?.avatar_url || ""} alt={profile?.username || "User"} />
-            <AvatarFallback>{profile?.username?.slice(0, 2) || "Guest"}</AvatarFallback>
+            <AvatarImage src={safeProfile?.avatar_url || ""} alt={safeProfile?.username || "User"} />
+            <AvatarFallback>{safeProfile?.username?.slice(0, 2) || "Guest"}</AvatarFallback>
           </Avatar>
           <span className="sr-only">Open user menu</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end">
         <div className="grid gap-2 px-4 py-2">
-          <p className="text-sm font-medium leading-none">{profile?.username || "Guest"}</p>
+          <p className="text-sm font-medium leading-none">{safeProfile?.username || "Guest"}</p>
           <p className="text-muted-foreground text-xs">
-            {profile?.email || "No email available"}
+            {safeProfile?.email || "No email available"}
           </p>
         </div>
         <DropdownMenuSeparator />
-        <UserMenuItem label="Profile" icon={User} onClick={() => router.push('/profile')} />
+        <UserMenuItem label="Profile" icon={User} onClick={() => navigate('/profile')} />
         <UserMenuItem label="Activity" icon={Activity} />
-        <UserMenuItem label="Settings" icon={Settings} onClick={() => router.push('/settings')} />
+        <UserMenuItem label="Settings" icon={Settings} onClick={() => navigate('/settings')} />
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <AlertDialog>
@@ -188,7 +193,7 @@ export function UserMenu() {
         </DropdownMenuItem>
         <UserMenuItem label="Help" icon={HelpCircle} />
         <DropdownMenuSeparator />
-        <UserMenuItem label="Sign Out" icon={ArrowRightOnRectangle} onClick={signOut} />
+        <UserMenuItem label="Sign Out" icon={ArrowRightFromLine} onClick={signOut} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

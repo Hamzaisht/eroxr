@@ -7,20 +7,7 @@ import { CreatorCard } from "./CreatorCard";
 import { Skeleton } from "./ui/skeleton";
 import { Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Creator } from "@/integrations/supabase/types/profile";
 import { toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
-
-interface CreatorWithStats extends Creator {
-  subscriber_count: number;
-}
-
-interface SubscriptionData {
-  creator: {
-    id: string;
-    username: string | null;
-    avatar_url: string | null;
-  };
-}
 
 export const SubscribedCreators = () => {
   const session = useSession();

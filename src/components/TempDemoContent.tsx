@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { toDbValue, extractCreator } from "@/utils/supabase/helpers";
+import { toDbValue, extractCreator, safeDataAccess } from "@/utils/supabase/helpers";
 
 export const TempDemoContent = () => {
   const [showMore, setShowMore] = useState(false);
@@ -57,6 +58,10 @@ export const TempDemoContent = () => {
     },
   });
 
+  // Safely access the data
+  const safePosts = safeDataAccess(posts, []);
+  const safeStories = safeDataAccess(stories, []);
+
   return (
     <div className="space-y-8 p-4">
       <div>
@@ -65,11 +70,11 @@ export const TempDemoContent = () => {
           <p>Loading...</p>
         ) : error ? (
           <p>Error loading content: {(error as Error).message}</p>
-        ) : posts && posts.length > 0 ? (
+        ) : safePosts && safePosts.length > 0 ? (
           <div className="space-y-4">
-            {posts.map((post) => {
+            {safePosts.map((post) => {
               const postData = post && typeof post === 'object' ? post : null;
-              const creatorData = postData && postData.creator && Array.isArray(postData.creator) && postData.creator.length > 0 ? postData.creator[0] : null;
+              const creatorData = postData?.creator && Array.isArray(postData.creator) && postData.creator.length > 0 ? postData.creator[0] : null;
               
               return postData ? (
                 <Card key={postData.id} className="overflow-hidden">
@@ -111,11 +116,11 @@ export const TempDemoContent = () => {
 
       <div>
         <h2 className="text-xl font-bold mb-4">Sample Stories</h2>
-        {stories && stories.length > 0 ? (
+        {safeStories && safeStories.length > 0 ? (
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {stories.map((story) => {
+            {safeStories.map((story) => {
               const storyData = story && typeof story === 'object' ? story : null;
-              const creatorData = storyData && storyData.creator && Array.isArray(storyData.creator) && storyData.creator.length > 0 ? storyData.creator[0] : null;
+              const creatorData = storyData?.creator && Array.isArray(storyData.creator) && storyData.creator.length > 0 ? storyData.creator[0] : null;
               
               return storyData ? (
                 <div

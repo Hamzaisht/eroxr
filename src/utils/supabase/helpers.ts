@@ -22,7 +22,8 @@ export const extractProfile = (profile: any) => {
     banner_url: profile.banner_url,
     bio: profile.bio,
     status: profile.status,
-    is_paying_customer: profile.is_paying_customer
+    is_paying_customer: profile.is_paying_customer,
+    email: profile.email
   };
 };
 

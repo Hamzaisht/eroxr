@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -9,21 +10,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { User, Settings, CreditCard, ArrowRightFromLine, Loader2, CircleUserRound } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { asUUID, convertToStatus, extractProfile, toDbValue } from "@/utils/supabase/helpers";
 import { AvailabilityStatus } from "@/utils/media/types";
-import { StatusIndicator } from "@/components/StatusIndicator";
+import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<AvailabilityStatus>(AvailabilityStatus.OFFLINE);
-  const router = useRouter();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const session = useSession();
   const supabaseClient = useSupabaseClient();
@@ -64,7 +66,7 @@ export function UserMenu() {
     setIsSigningOut(true);
     try {
       await supabaseClient.auth.signOut();
-      router.push("/login");
+      navigate("/login");
     } catch (error: any) {
       toast({
         title: "Error signing out",
@@ -105,7 +107,7 @@ export function UserMenu() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ status: newStatus })  // Pass the status as a simple string
+        .update({ status: newStatus })
         .eq('id', toDbValue(session.user.id));
         
       if (error) {
@@ -127,21 +129,21 @@ export function UserMenu() {
             <AvatarImage src={safeProfile?.avatar_url || ""} alt={safeProfile?.username || "User"} />
             <AvatarFallback>{safeProfile?.username?.slice(0, 2).toUpperCase() || "US"}</AvatarFallback>
           </Avatar>
-          <StatusIndicator status={currentStatus} className="absolute bottom-0 right-0" />
+          <AvailabilityIndicator status={currentStatus} className="absolute bottom-0 right-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push(`/profile/${session?.user?.id}`)}>
+        <DropdownMenuItem onClick={() => navigate(`/profile/${session?.user?.id}`)}>
           <CircleUserRound className="mr-2 h-4 w-4" />
           <span>Profile</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/settings")}>
+        <DropdownMenuItem onClick={() => navigate("/settings")}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/subscription")}>
+        <DropdownMenuItem onClick={() => navigate("/subscription")}>
           <CreditCard className="mr-2 h-4 w-4" />
           <span>Subscription</span>
         </DropdownMenuItem>

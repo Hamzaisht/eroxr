@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query"; // Updated import
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoThumbnail } from "./VideoThumbnail";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -12,7 +12,6 @@ import { Heart, MessageCircle, Star, Flag } from "lucide-react";
 import { toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
 
 export const PromotedAds = () => {
-  const [adItems, setAdItems] = useState([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const navigate = useNavigate();
   const session = useSession();
@@ -32,8 +31,8 @@ export const PromotedAds = () => {
           `)
           .eq("is_active", toDbValue(true))
           .eq("country", toDbValue(country))
-          .eq("moderation_status", "approved")
-          .eq("user_type", "premium")
+          .eq("moderation_status", toDbValue("approved"))
+          .eq("user_type", toDbValue("premium"))
           .limit(5);
 
         if (error) throw error;

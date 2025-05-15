@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -8,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { asUUID, convertToStatus } from "@/utils/supabase/helpers";
+import { asUUID, convertToStatus, safeDataAccess } from "@/utils/supabase/helpers";
 
 interface UserProfileSectionProps {
   isExpanded: boolean;
@@ -44,6 +45,13 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
     enabled: !!session?.user?.id,
   });
 
+  // Get safe profile data
+  const safeProfile = safeDataAccess(profile, null);
+  // Extract status safely with a fallback
+  const currentStatus = safeProfile?.status ? 
+    convertToStatus(safeProfile.status) : 
+    AvailabilityStatus.OFFLINE;
+
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -68,11 +76,6 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
   };
 
   if (!session) return null;
-  
-  // Extract status safely with a fallback
-  const currentStatus = profile?.status ? 
-    convertToStatus(profile.status) : 
-    AvailabilityStatus.OFFLINE;
 
   return (
     <div className="mt-auto px-4 space-y-4">
@@ -85,11 +88,11 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
         >
           <Avatar className="w-12 h-12 ring-2 ring-luxury-primary/20 transition-all duration-200 hover:ring-luxury-primary/40">
             <AvatarImage 
-              src={profile?.avatar_url} 
-              alt={profile?.username || "User"} 
+              src={safeProfile?.avatar_url} 
+              alt={safeProfile?.username || "User"} 
             />
             <AvatarFallback className="bg-luxury-darker text-luxury-primary">
-              {profile?.username?.[0]?.toUpperCase() || "?"}
+              {safeProfile?.username?.[0]?.toUpperCase() || "?"}
             </AvatarFallback>
           </Avatar>
         </motion.div>
@@ -101,7 +104,7 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
               animate={{ opacity: 1 }}
               className="text-sm font-medium text-white/80 truncate"
             >
-              {profile?.username || "Guest"}
+              {safeProfile?.username || "Guest"}
             </motion.p>
             <div className="flex items-center gap-2">
               <AvailabilityIndicator 

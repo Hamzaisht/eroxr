@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { asUUID, toDbValue } from "@/utils/supabase/helpers";
+import { asUUID, toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
 
 interface CreatorCardProps {
   id: string;
@@ -54,46 +55,61 @@ export const CreatorCard = ({
   
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const session = useSession();
 
   // Check if user is already following this creator
-  const checkFollowStatus = async () => {
-    if (!session?.user?.id) return;
-    
-    try {
-      const { data } = await supabase
-        .from("followers")
-        .select()
-        .eq("follower_id", toDbValue(session.user.id))
-        .eq("following_id", toDbValue(displayId))
-        .maybeSingle();
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      if (!session?.user?.id) {
+        setIsChecking(false);
+        return;
+      }
       
-      setIsFollowing(!!data);
-    } catch (error) {
-      console.error("Error checking follow status:", error);
-    }
-  };
-  
-  // Check if user is subscribed to this creator
-  const checkSubscriptionStatus = async () => {
-    if (!session?.user?.id) return;
+      try {
+        const { data } = await supabase
+          .from("followers")
+          .select()
+          .eq("follower_id", toDbValue(session.user.id))
+          .eq("following_id", toDbValue(displayId))
+          .maybeSingle();
+        
+        setIsFollowing(!!data);
+      } catch (error) {
+        console.error("Error checking follow status:", error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
     
-    try {
-      const { data } = await supabase
-        .from("creator_subscriptions")
-        .select()
-        .eq("user_id", toDbValue(session.user.id))
-        .eq("creator_id", toDbValue(displayId))
-        .maybeSingle();
+    // Check if user is subscribed to this creator
+    const checkSubscriptionStatus = async () => {
+      if (!session?.user?.id) return;
       
-      setIsSubscribed(!!data);
-    } catch (error) {
-      console.error("Error checking subscription status:", error);
+      try {
+        const { data } = await supabase
+          .from("creator_subscriptions")
+          .select()
+          .eq("user_id", toDbValue(session.user.id))
+          .eq("creator_id", toDbValue(displayId))
+          .maybeSingle();
+        
+        setIsSubscribed(!!data);
+      } catch (error) {
+        console.error("Error checking subscription status:", error);
+      }
+    };
+
+    if (session?.user?.id && displayId) {
+      checkFollowStatus();
+      checkSubscriptionStatus();
+    } else {
+      setIsChecking(false);
     }
-  };
+  }, [session?.user?.id, displayId]);
 
   const handleFollowClick = async () => {
     if (!session) {
@@ -216,10 +232,10 @@ export const CreatorCard = ({
           size="sm" 
           className="flex-1"
           onClick={handleFollowClick}
-          disabled={isLoading}
+          disabled={isLoading || isChecking}
         >
           <Heart className={`h-4 w-4 mr-1 ${isFollowing ? 'fill-red-500 text-red-500' : ''}`} />
-          {isFollowing ? 'Following' : 'Follow'}
+          {isChecking ? 'Loading...' : isFollowing ? 'Following' : 'Follow'}
         </Button>
         
         <Button 

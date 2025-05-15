@@ -10,6 +10,7 @@ interface VideoThumbnailProps {
   controls?: boolean;
   showPlayButton?: boolean;
   posterUrl?: string;
+  className?: string;
   onPlay?: () => void;
   onPause?: () => void;
 }
@@ -22,6 +23,7 @@ export const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   controls = false,
   showPlayButton = true,
   posterUrl,
+  className = "",
   onPlay,
   onPause,
 }) => {
@@ -65,7 +67,7 @@ export const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   
   return (
     <div 
-      className="relative w-full h-full overflow-hidden"
+      className={`relative overflow-hidden ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

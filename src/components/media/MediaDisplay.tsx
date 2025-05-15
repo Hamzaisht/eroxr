@@ -1,5 +1,5 @@
 
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import { MediaType } from '@/utils/media/types';
 
 interface MediaDisplayProps {
@@ -12,86 +12,97 @@ interface MediaDisplayProps {
   loop?: boolean;
   poster?: string;
   onClick?: () => void;
-  onError?: () => void;
   onLoad?: () => void;
+  onError?: () => void;
   onEnded?: () => void;
-  onTimeUpdate?: (time: number) => void;
+  onTimeUpdate?: () => void;
 }
 
 export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, MediaDisplayProps>(({
   mediaUrl,
   mediaType,
-  className = '',
+  className,
   autoPlay = false,
   controls = true,
   muted = true,
   loop = false,
   poster,
   onClick,
-  onError,
   onLoad,
+  onError,
   onEnded,
   onTimeUpdate
 }, ref) => {
-  if (mediaType === MediaType.VIDEO) {
-    return (
-      <video
-        src={mediaUrl}
-        className={className}
-        autoPlay={autoPlay}
-        controls={controls}
-        muted={muted}
-        loop={loop}
-        poster={poster}
-        onClick={onClick}
-        onError={onError}
-        onLoadedData={onLoad}
-        onEnded={onEnded}
-        onTimeUpdate={e => {
-          if (onTimeUpdate) {
-            onTimeUpdate((e.target as HTMLVideoElement).currentTime);
-          }
-        }}
-        playsInline
-        ref={ref as React.Ref<HTMLVideoElement>}
-      />
-    );
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  const handleLoad = () => {
+    setIsLoaded(true);
+    if (onLoad) onLoad();
+  };
+  
+  // Render content based on media type
+  switch (mediaType) {
+    case MediaType.VIDEO:
+      return (
+        <video
+          ref={ref as React.RefObject<HTMLVideoElement>}
+          src={mediaUrl}
+          className={className}
+          autoPlay={autoPlay}
+          controls={controls}
+          muted={muted}
+          loop={loop}
+          poster={poster}
+          onClick={onClick}
+          onLoadedData={handleLoad}
+          onError={onError}
+          onEnded={onEnded}
+          onTimeUpdate={onTimeUpdate}
+          playsInline
+        />
+      );
+    
+    case MediaType.IMAGE:
+      return (
+        <img
+          ref={ref as React.RefObject<HTMLImageElement>}
+          src={mediaUrl}
+          className={className}
+          onClick={onClick}
+          onLoad={handleLoad}
+          onError={onError}
+        />
+      );
+      
+    case MediaType.AUDIO:
+      return (
+        <audio
+          src={mediaUrl}
+          className={className}
+          autoPlay={autoPlay}
+          controls={controls}
+          muted={muted}
+          loop={loop}
+          onClick={onClick}
+          onLoadedData={handleLoad}
+          onError={onError}
+          onEnded={onEnded}
+        />
+      );
+    
+    default:
+      // For unknown types, try to render as image first
+      return (
+        <img
+          ref={ref as React.RefObject<HTMLImageElement>}
+          src={mediaUrl}
+          className={className}
+          onClick={onClick}
+          onLoad={handleLoad}
+          onError={onError}
+        />
+      );
   }
-
-  if (mediaType === MediaType.AUDIO) {
-    return (
-      <audio
-        src={mediaUrl}
-        className={className}
-        autoPlay={autoPlay}
-        controls={controls}
-        muted={muted}
-        loop={loop}
-        onError={onError}
-        onLoadedData={onLoad}
-        onEnded={onEnded}
-        onTimeUpdate={e => {
-          if (onTimeUpdate) {
-            onTimeUpdate((e.target as HTMLAudioElement).currentTime);
-          }
-        }}
-        ref={ref as React.Ref<HTMLAudioElement>}
-      />
-    );
-  }
-
-  // Default to image for anything else
-  return (
-    <img
-      src={mediaUrl}
-      className={className}
-      onClick={onClick}
-      onError={onError}
-      onLoad={onLoad}
-      alt="Media content"
-      ref={ref as React.Ref<HTMLImageElement>}
-    />
-  );
 });
 
 MediaDisplay.displayName = 'MediaDisplay';

@@ -1,90 +1,139 @@
 
-import { useState, useEffect, createContext, useContext } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect, createContext, useContext } from 'react';
+import { useSession } from '@supabase/auth-helpers-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { safeDataAccess } from '@/utils/supabase/helpers';
 
-// Create a context for ghost mode
 interface GhostModeContextType {
   isGhostMode: boolean;
   toggleGhostMode: () => Promise<void>;
   isLoading: boolean;
 }
 
-const GhostModeContext = createContext<GhostModeContextType | null>(null);
+const GhostModeContext = createContext<GhostModeContextType>({
+  isGhostMode: false,
+  toggleGhostMode: async () => {},
+  isLoading: false,
+});
 
 export const GhostModeProvider = ({ children }: { children: React.ReactNode }) => {
   const [isGhostMode, setIsGhostMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const session = useSession();
-  const { toast } = useToast();
 
-  // Fetch initial ghost mode status
+  // Check if the user is an admin
+  const { data: userRole } = useQuery({
+    queryKey: ['user-role', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user role:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+  
+  // Make sure user role is safe to access
+  const safeUserRole = safeDataAccess(userRole, { role: 'user' });
+  const isAdmin = safeUserRole?.role === 'admin' || safeUserRole?.role === 'superadmin';
+
+  // Check if ghost mode is active
+  const { data: adminSession, refetch } = useQuery({
+    queryKey: ['admin-session', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id || !isAdmin) return null;
+      
+      const { data, error } = await supabase
+        .from('admin_sessions')
+        .select('ghost_mode')
+        .eq('admin_id', session.user.id)
+        .is('ghost_mode', true)
+        .single();
+        
+      if (error && error.code !== 'PGRST116') { // No rows returned error code
+        console.error('Error fetching ghost mode status:', error);
+      }
+      
+      return data;
+    },
+    enabled: !!session?.user?.id && isAdmin,
+  });
+  
   useEffect(() => {
-    if (session?.user?.id) {
-      const fetchGhostModeStatus = async () => {
-        try {
-          const { data, error } = await supabase
-            .from("admin_settings")
-            .select("ghost_mode_active")
-            .eq("user_id", session.user.id)
-            .single();
-
-          if (error) {
-            console.error("Error fetching ghost mode status:", error);
-            setIsGhostMode(false);
-          } else {
-            setIsGhostMode(data?.ghost_mode_active || false);
-          }
-        } catch (err) {
-          console.error("Failed to fetch ghost mode status:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchGhostModeStatus();
+    if (adminSession?.ghost_mode) {
+      setIsGhostMode(true);
+    } else {
+      setIsGhostMode(false);
     }
-  }, [session?.user?.id]);
+  }, [adminSession]);
 
-  // Toggle ghost mode function
   const toggleGhostMode = async () => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || !isAdmin) return;
     
     setIsLoading(true);
+    
     try {
-      const newStatus = !isGhostMode;
-      
-      const { error } = await supabase
-        .from("admin_settings")
-        .upsert({
-          user_id: session.user.id,
-          ghost_mode_active: newStatus
-        });
-
-      if (error) {
-        console.error("Error toggling ghost mode:", error);
-        toast({
-          title: "Error",
-          description: "Could not toggle ghost mode",
-          variant: "destructive"
-        });
+      if (isGhostMode) {
+        // Disable ghost mode
+        const { error } = await supabase
+          .from('admin_sessions')
+          .update({ ghost_mode: false })
+          .eq('admin_id', session.user.id);
+          
+        if (error) throw error;
       } else {
-        setIsGhostMode(newStatus);
-        toast({
-          title: newStatus ? "Ghost Mode Activated" : "Ghost Mode Deactivated",
-          description: newStatus 
-            ? "You are now browsing in ghost mode. Your actions will not be visible to regular users." 
-            : "You are now browsing in normal mode."
-        });
+        // Enable ghost mode
+        // First check if an admin session exists
+        const { data: existingSession, error: checkError } = await supabase
+          .from('admin_sessions')
+          .select('id')
+          .eq('admin_id', session.user.id)
+          .single();
+          
+        if (checkError && checkError.code !== 'PGRST116') throw checkError; 
+        
+        if (existingSession) {
+          // Update existing session
+          const { error } = await supabase
+            .from('admin_sessions')
+            .update({ ghost_mode: true })
+            .eq('admin_id', session.user.id);
+            
+          if (error) throw error;
+        } else {
+          // Create new session
+          const { error } = await supabase
+            .from('admin_sessions')
+            .insert({
+              admin_id: session.user.id,
+              ghost_mode: true,
+              activated_at: new Date().toISOString(),
+            });
+            
+          if (error) throw error;
+        }
       }
-    } catch (err) {
-      console.error("Failed to toggle ghost mode:", err);
+      
+      // Refetch to update state
+      await refetch();
+    } catch (error) {
+      console.error('Error toggling ghost mode:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <GhostModeContext.Provider value={{ isGhostMode, toggleGhostMode, isLoading }}>
       {children}
@@ -92,17 +141,4 @@ export const GhostModeProvider = ({ children }: { children: React.ReactNode }) =
   );
 };
 
-// Hook for using ghost mode
-export const useGhostMode = () => {
-  const context = useContext(GhostModeContext);
-  
-  if (!context) {
-    return {
-      isGhostMode: false,
-      toggleGhostMode: async () => {},
-      isLoading: false
-    };
-  }
-  
-  return context;
-};
+export const useGhostMode = () => useContext(GhostModeContext);

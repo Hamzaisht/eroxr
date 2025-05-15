@@ -7,15 +7,16 @@ interface VideoThumbnailProps {
   videoUrl?: string;
   isHovered: boolean;
   isMobile: boolean;
+  className?: string;
 }
 
-export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnailProps) => {
+export const VideoThumbnail = ({ videoUrl, isHovered, isMobile, className = "" }: VideoThumbnailProps) => {
   // Process the URL
   const processedUrl = videoUrl ? getPlayableMediaUrl(videoUrl) : null;
   
   if (!processedUrl) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-luxury-darker">
+      <div className={`w-full h-full flex items-center justify-center bg-luxury-darker ${className}`}>
         <p className="text-luxury-neutral">No video</p>
       </div>
     );
@@ -25,7 +26,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
     return (
       <VideoPlayer 
         url={processedUrl}
-        className="w-full h-full"
+        className={`w-full h-full ${className}`}
         autoPlay={isHovered}
         playOnHover={false}
         onError={() => console.error("Video thumbnail error:", videoUrl)}
@@ -36,7 +37,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
   return (
     <>
       {!isHovered && (
-        <div className="absolute inset-0 z-10 bg-black">
+        <div className={`absolute inset-0 z-10 bg-black ${className}`}>
           <img
             src={processedUrl}
             alt="Video thumbnail"
@@ -51,7 +52,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
       
       <VideoPlayer 
         url={processedUrl} 
-        className="w-full h-full"
+        className={`w-full h-full ${className}`}
         playOnHover={true}
         autoPlay={isHovered}
         onError={() => console.error("Video thumbnail error:", videoUrl)}
