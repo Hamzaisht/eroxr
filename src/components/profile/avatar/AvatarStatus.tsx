@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvailabilityStatus } from "@/utils/media/types";
+import { toDbValue } from "@/utils/supabase/helpers";
 
 interface AvatarStatusProps {
   profileId: string;
@@ -34,11 +35,11 @@ export const AvatarStatus = ({
       
       await channel.subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          await channel.track({
+          await channel.track(toDbValue({
             user_id: profileId,
             status: newStatus,
             timestamp: new Date().toISOString()
-          });
+          }));
           
           onStatusChange?.(newStatus);
           

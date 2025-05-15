@@ -8,47 +8,40 @@ import { UserPlus, Video } from "lucide-react";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { asUUID, extractProfile } from "@/utils/supabase/helpers";
+import { useQuery } from "react-query";
+import { toDbValue } from "@/utils/supabase/helpers";
 
 export const PromotedAds = () => {
   const [ads, setAds] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchPromotedAds = async () => {
+  const { data: promotedAds, isLoading: isLoadingPromotedAds } = useQuery({
+    queryKey: ["promoted-ads"],
+    queryFn: async () => {
       try {
-        // Using string equality directly to handle TypeScript issues
-        const { data, error } = await supabase
+        const { data: ads, error } = await supabase
           .from("dating_ads")
-          .select(`
-            id,
-            title,
-            description,
-            tags,
-            avatar_url,
-            video_url,
-            user_id,
-            created_at,
-            view_count,
-            message_count
-          `)
-          // We'll use .eq instead of filter objects to avoid type issues
-          .eq("is_active", true)
-          .eq("country", "sweden")
+          .select("*")
+          .eq("is_active", toDbValue(true))
+          .in("country", toDbValue(['denmark', 'finland', 'iceland', 'norway', 'sweden']))
           .order("created_at", { ascending: false })
-          .limit(6);
+          .limit(5);
 
         if (error) throw error;
-        setAds(data || []);
-      } catch (error: any) {
+        return ads || [];
+      } catch (error) {
         console.error("Error fetching promoted ads:", error);
-      } finally {
-        setIsLoading(false);
+        return [];
       }
-    };
+    },
+  });
 
-    fetchPromotedAds();
-  }, []);
+  useEffect(() => {
+    if (!isLoadingPromotedAds) {
+      setAds(promotedAds || []);
+    }
+  }, [isLoadingPromotedAds, promotedAds]);
 
   const handleAdClick = (adId: string) => {
     // Here you'd implement logic to track ad clicks
@@ -65,7 +58,7 @@ export const PromotedAds = () => {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingPromotedAds) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-pulse">
         {[...Array(6)].map((_, i) => (
@@ -90,9 +83,12 @@ export const PromotedAds = () => {
           onClick={() => handleAdClick(ad.id)}
         >
           <div className="relative aspect-video">
+            {/* Use VideoThumbnail with className prop */}
             <VideoThumbnail 
               videoUrl={ad.video_url} 
-              className="w-full h-full object-cover"
+              isHovered={hoveredAdId === ad.id}
+              isMobile={false}
+              className="object-cover" 
             />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
             <div className="absolute bottom-3 left-3 flex items-center gap-2">

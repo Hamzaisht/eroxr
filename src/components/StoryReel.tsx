@@ -1,167 +1,48 @@
-import { useRef, useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { motion } from "framer-motion";
-import { Story } from "@/integrations/supabase/types/story";
+// Import required components and utilities
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { StoryUploader } from "./story/uploader";
-import { StoryItem } from "./story/StoryItem";
-import { StoryViewer } from "./story/StoryViewer";
-import { StoryNavigation } from "./story/StoryNavigation";
-import { useToast } from "@/hooks/use-toast";
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { useStories } from "./story/hooks/useStories";
-import { StoryLoadingState } from "./story/components/StoryLoadingState";
-import { StoryErrorState } from "./story/components/StoryErrorState";
-import { StoryReelHeader } from "./story/components/StoryReelHeader";
-import { getPlayableMediaUrl } from "@/utils/media/mediaUrlUtils";
-
-interface GroupedStories {
-  [creatorId: string]: Story[];
-}
+import { StoryCard } from "./StoryCard";
+import { toDbValue } from "@/utils/supabase/helpers";
 
 export const StoryReel = () => {
-  const [selectedStoryIndex, setSelectedStoryIndex] = useState<number | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const session = useSession();
-  const { toast } = useToast();
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const { 
-    stories, 
-    isLoading, 
-    error, 
-    refreshStories 
-  } = useStories();
+  const [isLoadingStories, setIsLoadingStories] = useState(true);
 
-  const handleDeleteStory = async (storyId: string) => {
-    try {
-      const { error } = await supabase
-        .from('stories')
-        .delete()
-        .eq('id', storyId);
+  const { data: stories, isLoading } = useQuery({
+    queryKey: ["stories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stories")
+        .select(`
+          id,
+          creator_id,
+          media_url,
+          video_url,
+          created_at,
+          profiles:creator_id(username, avatar_url)
+        `)
+        .eq("is_active", toDbValue(true))
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-
-      // Refresh stories
-      refreshStories();
-      
-      toast({
-        title: "Story deleted",
-        description: "Your story has been removed successfully",
-      });
-    } catch (err) {
-      console.error('Error deleting story:', err);
-      toast({
-        title: "Error",
-        description: "Failed to delete story",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleCloseViewer = () => {
-    setSelectedStoryIndex(null);
-  };
-
-  const groupStoriesByCreator = (stories: Story[]): Record<string, Story[]> => {
-    return stories.reduce((acc: Record<string, Story[]>, story) => {
-      if (!acc[story.creator_id]) {
-        acc[story.creator_id] = [];
-      }
-      acc[story.creator_id].push(story);
-      return acc;
-    }, {});
-  };
-
-  const groupedStories = groupStoriesByCreator(stories);
-  const hasStories = Object.keys(groupedStories).length > 0;
-
-  if (isLoading) return <StoryLoadingState />;
-  if (error) return <StoryErrorState error={error} />;
+      return data || [];
+    },
+  });
 
   return (
-    <div className="w-full mx-auto px-0 sm:px-2 md:px-4 py-3">
-      <div className="relative bg-gradient-to-r from-luxury-dark/60 via-luxury-darker/40 to-luxury-dark/60 backdrop-blur-xl rounded-xl p-4 shadow-xl">
-        <StoryReelHeader />
-        
-        <div className="relative">
-          <div
-            ref={containerRef}
-            className="flex gap-3 overflow-x-auto scrollbar-hide relative py-2 px-2"
-          >
-            {/* Story uploader */}
-            {session && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-                className="shrink-0"
-              >
-                <StoryUploader />
-              </motion.div>
-            )}
-            
-            {/* Story items */}
-            {Object.entries(groupedStories).map(([creatorId, creatorStories], index) => (
-              <motion.div 
-                key={creatorId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="relative shrink-0"
-              >
-                <StoryItem
-                  story={creatorStories[0]}
-                  isStacked={creatorStories.length > 1}
-                  stackCount={creatorStories.length - 1}
-                  onDelete={
-                    session?.user?.id === creatorId 
-                      ? () => handleDeleteStory(creatorStories[0].id)
-                      : undefined
-                  }
-                  onClick={() => {
-                    const index = stories.findIndex(s => s.id === creatorStories[0].id);
-                    setSelectedStoryIndex(index);
-                  }}
-                />
-              </motion.div>
-            ))}
-
-            {/* Empty state */}
-            {!hasStories && !isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center w-full py-4"
-              >
-                <span className="text-luxury-neutral/60 text-sm">
-                  No stories yet
-                </span>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Navigation buttons */}
-          {stories.length > (isMobile ? 3 : 5) && (
-            <StoryNavigation 
-              onScroll={(direction) => {
-                if (containerRef.current) {
-                  const scrollAmount = direction === "left" ? -200 : 200;
-                  containerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-                }
-              }} 
-            />
-          )}
-        </div>
-      </div>
-      
-      {/* Story viewer modal */}
-      {selectedStoryIndex !== null && (
-        <StoryViewer
-          stories={stories}
-          initialStoryIndex={selectedStoryIndex}
-          onClose={handleCloseViewer}
+    <div className="relative z-10 flex items-center justify-start w-full gap-4 px-4 py-6 overflow-x-auto">
+      {stories?.map((story) => (
+        <StoryCard
+          key={story.id}
+          storyId={story.id}
+          creatorId={story.creator_id}
+          mediaUrl={story.media_url}
+          videoUrl={story.video_url}
+          username={story.profiles?.username}
+          avatarUrl={story.profiles?.avatar_url}
+          createdAt={story.created_at}
         />
-      )}
+      ))}
     </div>
   );
 };

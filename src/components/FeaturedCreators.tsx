@@ -1,53 +1,81 @@
-
-import { CreatorCard } from "./CreatorCard";
-
-const FEATURED_CREATORS = [
-  {
-    id: "d290f1ee-6c54-4b01-90e6-d701748f0851",
-    username: "Sophie Dreams",
-    avatarUrl: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-    banner: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81",
-    bio: "Lifestyle and wellness content creator sharing daily inspiration.",
-    followerCount: 1234,
-  },
-  {
-    id: "d290f1ee-6c54-4b01-90e6-d701748f0852",
-    username: "Alex Arts",
-    avatarUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
-    banner: "https://images.unsplash.com/photo-1518005020951-eccb494ad742",
-    bio: "Digital artist creating unique and mesmerizing artwork.",
-    followerCount: 2345,
-  },
-  {
-    id: "d290f1ee-6c54-4b01-90e6-d701748f0853",
-    username: "Luna Star",
-    avatarUrl: "https://images.unsplash.com/photo-1496307653780-42ee777d4833",
-    banner: "https://images.unsplash.com/photo-1504893524553-b855bce32c67",
-    bio: "Fashion and beauty tips for the modern woman.",
-    followerCount: 3456,
-  },
-];
+// Import components and utilities
+import { useEffect, useState } from "react";
+import { CreatorCard } from "@/components/CreatorCard";
 
 export const FeaturedCreators = () => {
+  const [creators, setCreators] = useState([
+    {
+      key: "1",
+      name: "Alice Wonderland",
+      image: "https://i.pravatar.cc/150?img=1",
+      banner: "https://source.unsplash.com/800x200/?nature",
+      description: "Exploring the depths of creativity and sharing my journey with you.",
+      subscribers: 2345,
+      creatorId: "uniqueId1",
+    },
+    {
+      key: "2",
+      name: "Bob The Builder",
+      image: "https://i.pravatar.cc/150?img=2",
+      banner: "https://source.unsplash.com/800x200/?city",
+      description: "Building dreams one block at a time. Join me in constructing a better world.",
+      subscribers: 1876,
+      creatorId: "uniqueId2",
+    },
+    {
+      key: "3",
+      name: "Charlie Chaplin",
+      image: "https://i.pravatar.cc/150?img=3",
+      banner: "https://source.unsplash.com/800x200/?abstract",
+      description: "Bringing laughter and joy through timeless stories and silent expressions.",
+      subscribers: 3012,
+      creatorId: "uniqueId3",
+    },
+  ]);
+
+  useEffect(() => {
+    // Simulate fetching featured creators from an API
+    // In a real application, you would replace this with an actual API call
+    setTimeout(() => {
+      setCreators([
+        {
+          key: "4",
+          name: "Diana Prince",
+          image: "https://i.pravatar.cc/150?img=4",
+          banner: "https://source.unsplash.com/800x200/?fantasy",
+          description: "Empowering women and fighting for justice in a world of chaos.",
+          subscribers: 4123,
+          creatorId: "uniqueId4",
+        },
+        {
+          key: "5",
+          name: "Ethan Hunt",
+          image: "https://i.pravatar.cc/150?img=5",
+          banner: "https://source.unsplash.com/800x200/?adventure",
+          description: "On a mission to save the world, one impossible task at a time.",
+          subscribers: 2879,
+          creatorId: "uniqueId5",
+        },
+      ]);
+    }, 1500);
+  }, []);
+
+  // Update the CreatorCard usage for compatibility
   return (
-    <section className="relative overflow-hidden py-24">
-      <div className="absolute inset-0 bg-gradient-to-b from-soft-purple/50 to-soft-pink/30" />
-      <div className="container relative z-10">
-        <div className="animate-fade-in space-y-6 text-center">
-          <h2 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
-            Featured Creators
-          </h2>
-          <p className="mx-auto max-w-2xl text-lg text-foreground/70">
-            Discover and support amazing creators who inspire and entertain
-          </p>
-        </div>
-        <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {FEATURED_CREATORS.map((creator) => (
-            <CreatorCard key={creator.id} {...creator} />
-          ))}
-        </div>
-      </div>
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
-    </section>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {creators.map((creator) => (
+        <CreatorCard
+          key={creator.creatorId}
+          id={creator.creatorId}
+          username={creator.name}
+          avatarUrl={creator.image}
+          banner={creator.banner}
+          bio={creator.description}
+          followerCount={creator.subscribers}
+          isVerified={true}
+          isPremium={Math.random() > 0.5}
+        />
+      ))}
+    </div>
   );
 };

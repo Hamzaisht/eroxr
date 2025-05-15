@@ -6,9 +6,10 @@ interface VideoThumbnailProps {
   videoUrl?: string;
   isHovered: boolean;
   isMobile: boolean;
+  className?: string; // Added className prop
 }
 
-export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnailProps) => {
+export const VideoThumbnail = ({ videoUrl, isHovered, isMobile, className }: VideoThumbnailProps) => {
   // Since we have a TODO to track playback state in the future, we'll keep the state
   // but properly implement it with our current VideoPlayer component capabilities
   const [isPlaying, setIsPlaying] = useState(false);
@@ -19,7 +20,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
   
   if (!processedUrl) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-luxury-darker">
+      <div className={`w-full h-full flex items-center justify-center bg-luxury-darker ${className || ''}`}>
         <p className="text-luxury-neutral">No video</p>
       </div>
     );
@@ -44,7 +45,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
     return (
       <VideoPlayer 
         url={processedUrl}
-        className="w-full h-full"
+        className={`w-full h-full ${className || ''}`}
         autoPlay={isHovered}
         playOnHover={false}
         onError={handleError}
@@ -60,7 +61,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
           <img
             src={processedUrl}
             alt="Video thumbnail"
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${className || ''}`}
             onError={(e) => {
               console.error("Thumbnail load error:", videoUrl);
               (e.target as HTMLImageElement).style.display = 'none';
@@ -71,7 +72,7 @@ export const VideoThumbnail = ({ videoUrl, isHovered, isMobile }: VideoThumbnail
       
       <VideoPlayer 
         url={processedUrl} 
-        className="w-full h-full"
+        className={`w-full h-full ${className || ''}`}
         playOnHover={true}
         autoPlay={isHovered}
         onError={handleError}

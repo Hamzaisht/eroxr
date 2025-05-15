@@ -24,61 +24,55 @@ export const SubscribedCreators = () => {
   const session = useSession();
   const { toast } = useToast();
 
-  const { data: creators, isLoading, error } = useQuery({
+  const { data: subscriptions, isLoading } = useQuery({
     queryKey: ["subscribed-creators", session?.user?.id],
     queryFn: async () => {
-      if (!session?.user) return [];
-      
+      if (!session?.user?.id) return [];
+
       try {
-        const { data: subscriptions, error: subsError } = await supabase
+        const { data, error } = await supabase
           .from("creator_subscriptions")
-          .select(`
-            creator:creator_id (
-              id,
-              username,
-              avatar_url
-            )
-          `)
-          .eq("user_id", session.user.id);
+          .select()
+          .eq("user_id", toDbValue(session.user.id))
+          .limit(5);
 
-        if (subsError) {
-          toast({
-            title: "Error",
-            description: "Failed to fetch subscriptions",
-            variant: "destructive",
-          });
-          throw subsError;
-        }
-
-        const typedSubscriptions = subscriptions as unknown as SubscriptionData[];
-
-        // Get subscriber count for each creator
-        const creatorsWithCounts = await Promise.all(
-          (typedSubscriptions || []).map(async (sub) => {
-            const { count } = await supabase
-              .from("creator_subscriptions")
-              .select("*", { count: "exact", head: true })
-              .eq("creator_id", sub.creator.id);
-
-            return {
-              ...sub.creator,
-              subscriber_count: count || 0,
-            } as CreatorWithStats;
-          })
-        );
-
-        return creatorsWithCounts;
+        if (error) throw error;
+        return data || [];
       } catch (error) {
-        console.error('Error in mutual followers query:', error);
-        toast({
-          title: "Error loading mutual followers",
-          description: "Please try again later",
-          variant: "destructive",
-        });
+        console.error("Error fetching subscriptions:", error);
         return [];
       }
     },
     enabled: !!session?.user?.id,
+  });
+
+  const { data: creators, isLoading: isLoadingCreators } = useQuery({
+    queryKey: ["subscribed-creators-details", subscriptions],
+    queryFn: async () => {
+      if (!subscriptions?.length) return [];
+
+      try {
+        const creatorIds = subscriptions.map((sub) => sub.creator_id);
+        const { data, error } = await supabase
+          .from("profiles")
+          .select(`
+            id,
+            username,
+            avatar_url,
+            bio,
+            banner_url,
+            followers!followers(count)
+          `)
+          .in("id", toDbValue(creatorIds));
+
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching creator details:", error);
+        return [];
+      }
+    },
+    enabled: !!subscriptions?.length,
   });
 
   if (error) {
@@ -124,12 +118,14 @@ export const SubscribedCreators = () => {
       {creators?.map((creator) => (
         <CreatorCard
           key={creator.id}
-          name={creator.username || "Anonymous Creator"}
-          image={creator.avatar_url || "https://via.placeholder.com/400"}
-          banner="https://images.unsplash.com/photo-1605810230434-7631ac76ec81"
-          description="Content creator on our platform"
-          subscribers={creator.subscriber_count}
-          creatorId={creator.id}
+          id={creator.id}
+          username={creator.username}
+          avatarUrl={creator.avatar_url}
+          banner={creator.banner_url}
+          bio={creator.bio}
+          followerCount={creator.followers?.length || 0}
+          isVerified={true}
+          isPremium={true}
         />
       ))}
     </div>

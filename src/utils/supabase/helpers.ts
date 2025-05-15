@@ -1,5 +1,6 @@
 
 import { v4 as uuidv4 } from "uuid";
+import { AvailabilityStatus } from "@/utils/media/types";
 
 // Safely cast a string to UUID - for Supabase queries
 export const asUUID = (id: string) => {
@@ -42,9 +43,47 @@ export const safeDataAccess = <T,>(data: T | null | undefined, defaultValue: T):
 };
 
 // Convert string to status
-export const convertToStatus = (status: string | null | undefined): { status: string } => {
-  if (!status) return { status: 'offline' };
+export const convertToStatus = (status: string | null | undefined): AvailabilityStatus => {
+  if (!status) return AvailabilityStatus.OFFLINE;
   
-  const validStatuses = ['online', 'away', 'busy', 'offline'];
-  return { status: validStatuses.includes(status) ? status : 'offline' };
+  switch(status.toLowerCase()) {
+    case 'online':
+      return AvailabilityStatus.ONLINE;
+    case 'away':
+      return AvailabilityStatus.AWAY;
+    case 'busy':
+      return AvailabilityStatus.BUSY;
+    case 'offline':
+    default:
+      return AvailabilityStatus.OFFLINE;
+  }
+};
+
+// Safe database value converter
+export const toDbValue = (value: any): any => {
+  return value as any;
+};
+
+// Extract creator data safely
+export const extractCreator = (data: any) => {
+  if (!data) return null;
+  
+  // Handle error cases
+  if (data.error || data.code) return null;
+  
+  // If the data is in a nested structure (common with joins)
+  if (data.creator) {
+    return {
+      id: data.creator.id || '',
+      username: data.creator.username || '',
+      avatar_url: data.creator.avatar_url || null,
+    };
+  }
+  
+  // Direct data format
+  return {
+    id: data.id || '',
+    username: data.username || '',
+    avatar_url: data.avatar_url || null,
+  };
 };

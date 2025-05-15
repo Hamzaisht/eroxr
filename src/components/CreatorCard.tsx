@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,7 +8,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { asUUID } from "@/utils/supabase/helpers";
+import { asUUID, toDbValue } from "@/utils/supabase/helpers";
 
 interface CreatorCardProps {
   id: string;
@@ -120,16 +119,16 @@ export const CreatorCard = ({
           description: `You are no longer following ${displayUsername}`,
         });
       } else {
-        // Follow
-        // Creating an object with the correct column names
+        // Follow - using the more generic approach that works with Supabase's types
         const followData = {
-          follower_id: asUUID(session.user.id), 
-          following_id: asUUID(displayId),
+          follower_id: session.user.id, 
+          following_id: displayId,
         };
         
+        // Use toDbValue to handle the TypeScript casting
         const { error } = await supabase
           .from("followers")
-          .insert(followData);
+          .insert(toDbValue(followData));
         
         if (error) throw error;
         

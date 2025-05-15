@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { AvailabilityStatus } from "@/utils/media/types";
-import { asUUID, convertToStatus, extractProfile } from "@/utils/supabase/helpers";
+import { asUUID, convertToStatus, extractProfile, toDbValue } from "@/utils/supabase/helpers";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -91,9 +90,10 @@ export const UserMenu = () => {
     try {
       const statusValue = safeStatus.toString().toLowerCase();
       
+      // Use toDbValue to handle type casting
       const { error } = await supabase
         .from('profiles')
-        .update({ status: statusValue })
+        .update(toDbValue({ status: statusValue }))
         .eq('id', asUUID(session?.user?.id));
 
       if (error) throw error;
@@ -175,7 +175,9 @@ export const UserMenu = () => {
                 status={currentStatus} 
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleStatusChange(currentStatus === AvailabilityStatus.ONLINE ? AvailabilityStatus.OFFLINE : AvailabilityStatus.ONLINE);
+                  handleStatusChange(currentStatus === AvailabilityStatus.ONLINE ? 
+                    AvailabilityStatus.OFFLINE : 
+                    AvailabilityStatus.ONLINE);
                 }}
               />
             </div>
