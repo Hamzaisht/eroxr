@@ -1,8 +1,9 @@
 
+// Status enumeration for availability indicators
 export enum AvailabilityStatus {
-  ONLINE = 'online',
-  OFFLINE = 'offline',
-  AWAY = 'away',
-  BUSY = 'busy',
-  INVISIBLE = 'invisible'
+  ONLINE = "Online",
+  AWAY = "Away",
+  BUSY = "Busy",
+  INVISIBLE = "Invisible",
+  OFFLINE = "Offline"
 }

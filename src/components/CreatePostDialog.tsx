@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { asUUID, extractProfile, toDbValue } from "@/utils/supabase/helpers";
+import { applyEqualsFilter, getSafeProfile } from "@/utils/supabase/helpers";
 
 interface CreatePostDialogProps {
   isOpen: boolean;
@@ -35,10 +35,11 @@ export const CreatePostDialog = ({ isOpen, onClose, onSubmit }: CreatePostDialog
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
+      const query = supabase
         .from('profiles')
-        .select('is_paying_customer')
-        .eq('id', toDbValue(session.user.id))
+        .select('is_paying_customer');
+        
+      const { data, error } = await applyEqualsFilter(query, "id", session.user.id)
         .single();
         
       if (error) {
@@ -51,8 +52,8 @@ export const CreatePostDialog = ({ isOpen, onClose, onSubmit }: CreatePostDialog
     enabled: !!session?.user?.id
   });
   
-  // Extract profile safely
-  const safeProfile = extractProfile(profile);
+  // Extract profile safely with better error handling
+  const safeProfile = getSafeProfile(profile);
   const isPayingCustomer = safeProfile?.is_paying_customer || false;
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

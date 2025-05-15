@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -37,7 +36,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
-import { toDbValue, safeDataAccess, asProfileUpdate } from "@/utils/supabase/helpers";
+import { applyEqualsFilter, asProfileUpdate, getSafeProfile } from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
 
 interface UserMenuItemProps {
@@ -69,10 +68,11 @@ export function UserMenu() {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
+      const query = supabase
         .from('profiles')
-        .select('*')
-        .eq('id', toDbValue(session.user.id))
+        .select('*');
+        
+      const { data, error } = await applyEqualsFilter(query, "id", session.user.id)
         .single();
         
       if (error) {
@@ -86,7 +86,7 @@ export function UserMenu() {
   });
 
   // Safely access profile data
-  const safeProfile = safeDataAccess(profile, null);
+  const safeProfile = getSafeProfile(profile);
 
   const signOut = async () => {
     await supabaseClient.auth.signOut();
@@ -104,12 +104,15 @@ export function UserMenu() {
     if (!session?.user?.id) return;
     
     try {
-      const { error } = await supabase
+      const update = asProfileUpdate({ 
+        status: newStatus.toString().toLowerCase() 
+      });
+      
+      const query = supabase
         .from('profiles')
-        .update(asProfileUpdate({ 
-          status: newStatus.toString().toLowerCase() 
-        }))
-        .eq('id', toDbValue(session.user.id));
+        .update(update);
+        
+      const { error } = await applyEqualsFilter(query, "id", session.user.id);
         
       if (error) {
         console.error('Error updating status:', error);

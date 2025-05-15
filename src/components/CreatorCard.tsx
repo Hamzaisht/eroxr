@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,7 +8,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { asUUID, toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
+import { applyEqualsFilter, createFollowerData, createSubscriptionData, safeDataAccess } from "@/utils/supabase/helpers";
 
 interface CreatorCardProps {
   id: string;
@@ -70,11 +69,13 @@ export const CreatorCard = ({
       }
       
       try {
-        const { data } = await supabase
+        const query = supabase
           .from("followers")
-          .select()
-          .eq("follower_id", toDbValue(session.user.id))
-          .eq("following_id", toDbValue(displayId))
+          .select();
+          
+        // Apply filters using helper function
+        const filteredQuery = applyEqualsFilter(query, "follower_id", session.user.id);
+        const { data } = await applyEqualsFilter(filteredQuery, "following_id", displayId)
           .maybeSingle();
         
         setIsFollowing(!!data);
@@ -90,11 +91,13 @@ export const CreatorCard = ({
       if (!session?.user?.id) return;
       
       try {
-        const { data } = await supabase
+        const query = supabase
           .from("creator_subscriptions")
-          .select()
-          .eq("user_id", toDbValue(session.user.id))
-          .eq("creator_id", toDbValue(displayId))
+          .select();
+          
+        // Apply filters using helper function
+        const filteredQuery = applyEqualsFilter(query, "user_id", session.user.id);
+        const { data } = await applyEqualsFilter(filteredQuery, "creator_id", displayId)
           .maybeSingle();
         
         setIsSubscribed(!!data);
@@ -121,12 +124,13 @@ export const CreatorCard = ({
     
     try {
       if (isFollowing) {
-        // Unfollow
-        const { error } = await supabase
+        // Unfollow - using the more generic approach with helper functions
+        const query = supabase
           .from("followers")
-          .delete()
-          .eq("follower_id", toDbValue(session.user.id))
-          .eq("following_id", toDbValue(displayId));
+          .delete();
+          
+        const filteredQuery = applyEqualsFilter(query, "follower_id", session.user.id);
+        const { error } = await applyEqualsFilter(filteredQuery, "following_id", displayId);
         
         if (error) throw error;
         
@@ -135,16 +139,12 @@ export const CreatorCard = ({
           description: `You are no longer following ${displayUsername}`,
         });
       } else {
-        // Follow - using the more generic approach that works with Supabase's types
-        const followData = {
-          follower_id: session.user.id, 
-          following_id: displayId,
-        };
+        // Follow - using typed data helper
+        const followData = createFollowerData(session.user.id, displayId);
         
-        // Use toDbValue to handle the TypeScript casting
         const { error } = await supabase
           .from("followers")
-          .insert(toDbValue(followData));
+          .insert(followData);
         
         if (error) throw error;
         
@@ -242,7 +242,7 @@ export const CreatorCard = ({
           variant="outline" 
           size="sm" 
           className="flex-1"
-          onClick={handleSubscribeClick}
+          onClick={() => navigate(`/subscribe/${id}`)}
           disabled={isLoading || isSubscribed}
         >
           {isSubscribed ? (
@@ -262,7 +262,7 @@ export const CreatorCard = ({
           variant="ghost" 
           size="sm" 
           className="flex-none"
-          onClick={handleViewProfile}
+          onClick={() => navigate(`/profile/${id}`)}
         >
           <MessageCircle className="h-4 w-4" />
         </Button>

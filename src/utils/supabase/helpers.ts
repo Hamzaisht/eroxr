@@ -1,11 +1,18 @@
 
 import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
+import { PostgrestFilterBuilder } from "@supabase/supabase-js";
+
+// Type for profile updates
+type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+type FollowersInsert = Database['public']['Tables']['followers']['Insert'];
+type SubscriptionsInsert = Database['public']['Tables']['creator_subscriptions']['Insert'];
 
 /**
  * Safely converts a UUID string to the format expected by Supabase
+ * This is a type assertion helper for column equality filters
  */
-export function toDbValue(value: string): string {
+export function toDbValue<T>(value: T): T {
   return value;
 }
 
@@ -52,10 +59,41 @@ export function convertToStatus(status?: string | null): AvailabilityStatus {
 }
 
 /**
- * Type assertion helper for Supabase updates
+ * Type assertion helper for Supabase profile updates
  */
-export function asProfileUpdate(data: any): Database['public']['Tables']['profiles']['Update'] {
-  return data as Database['public']['Tables']['profiles']['Update'];
+export function asProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
+  return data as ProfileUpdate;
+}
+
+/**
+ * Helper to apply .eq() filter with proper typing
+ */
+export function applyEqualsFilter<T>(
+  query: PostgrestFilterBuilder<T>,
+  column: string,
+  value: unknown
+): PostgrestFilterBuilder<T> {
+  return query.eq(column as any, value);
+}
+
+/**
+ * Helper to construct typed insert data for followers
+ */
+export function createFollowerData(followerId: string, followingId: string): FollowersInsert {
+  return {
+    follower_id: followerId,
+    following_id: followingId
+  } as FollowersInsert;
+}
+
+/**
+ * Helper to construct typed insert data for subscriptions
+ */
+export function createSubscriptionData(userId: string, creatorId: string): SubscriptionsInsert {
+  return {
+    user_id: userId,
+    creator_id: creatorId
+  } as SubscriptionsInsert;
 }
 
 /**
@@ -85,4 +123,21 @@ export function isErrorObject(obj: any): boolean {
 export function safeCast<T>(data: any): T[] {
   if (!data || isErrorObject(data)) return [];
   return data as T[];
+}
+
+/**
+ * Safe profile access for UI
+ */
+export function getSafeProfile(profile: any) {
+  if (!profile || isErrorObject(profile)) {
+    return {
+      username: "User",
+      avatar_url: null,
+      is_paying_customer: false,
+      id_verification_status: "pending",
+      status: "offline"
+    };
+  }
+  
+  return profile;
 }

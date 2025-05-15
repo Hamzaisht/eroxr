@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { asUUID, convertToStatus, safeDataAccess } from "@/utils/supabase/helpers";
+import { applyEqualsFilter, convertToStatus, getSafeProfile } from "@/utils/supabase/helpers";
 
 interface UserProfileSectionProps {
   isExpanded: boolean;
@@ -26,10 +26,11 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
       if (!session?.user?.id) return null;
       
       try {
-        const { data, error } = await supabase
+        const query = supabase
           .from("profiles")
-          .select("*")
-          .eq("id", asUUID(session.user.id))
+          .select("*");
+          
+        const { data, error } = await applyEqualsFilter(query, "id", session.user.id)
           .single();
 
         if (error) {
@@ -45,8 +46,9 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
     enabled: !!session?.user?.id,
   });
 
-  // Get safe profile data
-  const safeProfile = safeDataAccess(profile, null);
+  // Get safe profile data with better error handling
+  const safeProfile = getSafeProfile(profile);
+  
   // Extract status safely with a fallback
   const currentStatus = safeProfile?.status ? 
     convertToStatus(safeProfile.status) : 

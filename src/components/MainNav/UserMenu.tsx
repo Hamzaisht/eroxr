@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Settings, CreditCard, ArrowRightFromLine, Loader2, CircleUserRound } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { asProfileUpdate, asUUID, convertToStatus, extractProfile, toDbValue } from "@/utils/supabase/helpers";
+import { applyEqualsFilter, asProfileUpdate, convertToStatus, getSafeProfile } from "@/utils/supabase/helpers";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
@@ -36,10 +36,11 @@ export function UserMenu() {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
+      const query = supabase
         .from('profiles')
-        .select('*')
-        .eq('id', toDbValue(session.user.id))
+        .select('*');
+        
+      const { data, error } = await applyEqualsFilter(query, "id", session.user.id)
         .single();
         
       if (error) {
@@ -52,8 +53,8 @@ export function UserMenu() {
     enabled: !!session?.user?.id,
   });
 
-  // Extract profile data safely
-  const safeProfile = extractProfile(profile);
+  // Extract profile data safely with better error handling
+  const safeProfile = getSafeProfile(profile);
 
   // Initialize status from profile data
   useState(() => {
@@ -105,12 +106,15 @@ export function UserMenu() {
     if (!session?.user?.id) return;
     
     try {
-      const { error } = await supabase
+      const update = asProfileUpdate({ 
+        status: newStatus.toString().toLowerCase() 
+      });
+      
+      const query = supabase
         .from('profiles')
-        .update(asProfileUpdate({ 
-          status: newStatus.toString().toLowerCase() 
-        }))
-        .eq('id', toDbValue(session.user.id));
+        .update(update);
+        
+      const { error } = await applyEqualsFilter(query, "id", session.user.id);
         
       if (error) {
         console.error('Error updating status:', error);
@@ -131,7 +135,7 @@ export function UserMenu() {
             <AvatarImage src={safeProfile?.avatar_url || ""} alt={safeProfile?.username || "User"} />
             <AvatarFallback>{safeProfile?.username?.slice(0, 2).toUpperCase() || "US"}</AvatarFallback>
           </Avatar>
-          <AvailabilityIndicator status={currentStatus} className="absolute bottom-0 right-0" />
+          <AvailabilityIndicator status={currentStatus} className="absolute bottom-0 right-0" onClick={(e) => e.stopPropagation()} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end">
