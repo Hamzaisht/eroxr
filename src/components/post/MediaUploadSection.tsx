@@ -1,10 +1,10 @@
-
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { createUniqueFilePath } from "@/utils/upload/fileUtils";
+import { uploadFileToStorage } from "@/utils/upload/storageService";
 
 interface MediaUploadSectionProps {
   onMediaSelect: (urls: string[]) => void;

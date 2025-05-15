@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { createUniqueFilePath, uploadFileToStorage } from '@/utils/media/mediaUtils';
+import { createUniqueFilePath } from '@/utils/upload/fileUtils';
+import { uploadFileToStorage } from '@/utils/upload/storageService';
 
 interface MediaUploadState {
   isUploading: boolean;

@@ -4,7 +4,8 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { createUniqueFilePath } from "@/utils/upload/fileUtils";
+import { uploadFileToStorage } from "@/utils/upload/storageService";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 export const usePostSubmission = (onSuccess: () => void) => {

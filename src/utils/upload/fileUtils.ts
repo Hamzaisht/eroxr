@@ -1,79 +1,61 @@
 
-import { v4 as uuidv4 } from 'uuid';
+/**
+ * File Utility Functions for Upload Operations
+ */
 
 /**
- * Creates a unique file path for storage
- * @param userId User ID prefix
- * @param file File to create path for
+ * Creates a unique file path for upload
  */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  // Extract extension
-  const extension = file.name.split('.').pop()?.toLowerCase() || '';
-  
-  // Create safe name from original filename
-  const safeFilename = sanitizeFilename(file.name.replace(/\.[^/.]+$/, ''));
-  
-  // Create unique path with timestamp and UUID
+export function createUniqueFilePath(userId: string, file: File): string {
   const timestamp = Date.now();
-  const uniqueId = uuidv4().substring(0, 8);
+  const randomString = Math.random().toString(36).substring(2, 8);
+  const fileExtension = file.name.split('.').pop() || '';
   
-  return `${userId}/${timestamp}_${uniqueId}_${safeFilename}.${extension}`;
-};
+  return `${userId}/${timestamp}-${randomString}.${fileExtension}`;
+}
 
 /**
- * Sanitizes a filename for safe storage
- * @param filename Original filename
- * @returns Sanitized filename
+ * Generates a human-readable file size string
  */
-export const sanitizeFilename = (filename: string): string => {
-  return filename
-    .replace(/[^a-z0-9-_]/gi, '_') // Replace non-alphanumeric with underscore
-    .replace(/_{2,}/g, '_')        // Replace multiple underscores with single
-    .replace(/^_+|_+$/g, '')       // Remove leading/trailing underscores
-    .toLowerCase()
-    .substring(0, 50);             // Limit length
-};
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 /**
- * Creates a file preview URL for local display
- * @param file File to preview
+ * Creates a file preview URL
  */
-export const createFilePreview = (file: File): string => {
-  try {
-    return URL.createObjectURL(file);
-  } catch (err) {
-    console.error('Error creating file preview:', err);
-    return '';
-  }
-};
+export function createFilePreview(file: File): string {
+  return URL.createObjectURL(file);
+}
 
 /**
  * Revokes a file preview URL to free memory
- * @param url Preview URL to revoke
  */
-export const revokeFilePreview = (url: string): void => {
-  if (url && url.startsWith('blob:')) {
-    try {
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Error revoking file preview:', err);
-    }
-  }
-};
+export function revokeFilePreview(url: string): void {
+  URL.revokeObjectURL(url);
+}
 
 /**
- * Runs comprehensive diagnostics on a file
+ * Run a comprehensive diagnostic on a file object
+ * This helps identify issues with file objects that may cause upload failures
  */
-export const runFileDiagnostic = (file: any): void => {
-  console.log("FILE DIAGNOSTIC:", {
-    value: file,
-    type: typeof file,
+export function runFileDiagnostic(file: File): void {
+  if (!file) {
+    console.warn('FILE DIAGNOSTIC: File is null or undefined');
+    return;
+  }
+  
+  console.log('FILE DIAGNOSTIC:', {
     isFile: file instanceof File,
-    constructor: file && file.constructor ? file.constructor.name : 'N/A',
-    properties: file ? Object.keys(file) : [],
-    fileType: file && file.type ? file.type : 'N/A',
-    fileSize: file && file.size ? `${(file.size / 1024).toFixed(2)} KB` : 'N/A',
-    fileName: file && file.name ? file.name : 'N/A',
-    lastModified: file && file.lastModified ? new Date(file.lastModified).toLocaleString() : 'N/A',
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    lastModified: new Date(file.lastModified).toISOString()
   });
-};
+}

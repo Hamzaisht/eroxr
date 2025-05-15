@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { ImagePlus, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
-import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { createUniqueFilePath } from "@/utils/upload/fileUtils";
+import { uploadFileToStorage } from "@/utils/upload/storageService";
 import { useSession } from "@supabase/auth-helpers-react";
 
 interface MediaUploadProps {

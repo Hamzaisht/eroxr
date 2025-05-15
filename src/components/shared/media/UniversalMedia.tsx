@@ -1,9 +1,8 @@
-
 import { forwardRef, Ref, useMemo } from 'react';
 import { MediaRenderer } from '@/components/media/MediaRenderer';
 import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
 import { extractMediaUrl } from '@/utils/media/mediaUtils';
-import { normalizeMediaSource } from '@/utils/media/types';
+import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 
 interface UniversalMediaProps extends MediaOptions {
   item: MediaSource | string;

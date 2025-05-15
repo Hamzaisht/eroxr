@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { useOptimisticMessaging, createOptimisticMessage } from "@/utils/messaging/optimisticUpdates";
 import { v4 as uuidv4 } from "uuid";
-import { createUniqueFilePath, uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { createUniqueFilePath } from '@/utils/upload/fileUtils';
+import { uploadFileToStorage } from '@/utils/upload/storageService';
 
 interface ChatActionsProps {
   recipientId: string;

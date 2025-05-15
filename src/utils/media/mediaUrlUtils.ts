@@ -1,70 +1,42 @@
 
-import { MediaSource } from './types';
-import { extractMediaUrl } from './mediaUtils';
+/**
+ * Utilities for transforming and processing media URLs
+ */
 
 /**
- * Get a playable media URL from a source URL
- * This handles various transformations needed for different media sources
+ * Gets a URL that can be played in the browser
+ * This function handles various URL formats and ensures they're playable
  */
 export function getPlayableMediaUrl(url: string): string {
   if (!url) return '';
   
-  // Handle special cases for various media hosting services
-  
-  // YouTube
-  if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
-    const videoId = url.includes('youtu.be/') 
-      ? url.split('youtu.be/')[1].split('?')[0]
-      : url.includes('v=') 
-        ? url.split('v=')[1].split('&')[0]
-        : '';
-    
-    if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0`;
-    }
+  // Check if URL needs processing
+  if (url.includes('supabase.co') || url.includes('supabase.in')) {
+    // Add cache buster if needed for Supabase URLs
+    const hasParams = url.includes('?');
+    return `${url}${hasParams ? '&' : '?'}t=${Date.now()}`;
   }
   
-  // Vimeo
-  if (url.includes('vimeo.com/')) {
-    const videoId = url.split('vimeo.com/')[1].split('?')[0];
-    if (videoId) {
-      return `https://player.vimeo.com/video/${videoId}?autoplay=1`;
-    }
-  }
-  
-  // For standard URLs, just return the URL as is
   return url;
 }
 
 /**
- * Process a MediaSource to get a playable URL
+ * Add cache buster to URL to prevent caching issues
  */
-export function getPlayableMediaUrlFromSource(source: string | MediaSource): string {
-  const url = extractMediaUrl(source);
+export function addCacheBuster(url: string): string {
   if (!url) return '';
   
-  return getPlayableMediaUrl(url);
+  const hasParams = url.includes('?');
+  return `${url}${hasParams ? '&' : '?'}t=${Date.now()}`;
 }
 
 /**
- * Get a thumbnail URL for a video
+ * Process URL for thumbnail display
  */
-export function getVideoThumbnailUrl(videoUrl: string): string | null {
-  if (!videoUrl) return null;
+export function getThumbnailUrl(url: string): string {
+  if (!url) return '';
   
-  // YouTube thumbnail
-  if (videoUrl.includes('youtube.com/watch') || videoUrl.includes('youtu.be/')) {
-    const videoId = videoUrl.includes('youtu.be/') 
-      ? videoUrl.split('youtu.be/')[1].split('?')[0]
-      : videoUrl.includes('v=') 
-        ? videoUrl.split('v=')[1].split('&')[0]
-        : '';
-    
-    if (videoId) {
-      return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-    }
-  }
-  
-  // For other videos, we don't have a reliable way to get thumbnails
-  return null;
+  // Add thumbnail processing logic here if needed
+  return url;
 }
+

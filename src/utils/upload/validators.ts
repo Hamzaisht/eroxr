@@ -1,85 +1,66 @@
 
-// Supported file types
-export const SUPPORTED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp'
-];
-
-export const SUPPORTED_VIDEO_TYPES = [
-  'video/mp4',
-  'video/webm',
-  'video/quicktime'
-];
-
 /**
- * Validates a file for upload
- * @param file The file to validate
- * @param maxSizeInMB Maximum file size in MB
- * @returns Result of validation
+ * Validator functions for file uploads
  */
-export const validateFileForUpload = (
-  file: File,
-  maxSizeInMB = 100
-): { valid: boolean; error?: string } => {
-  // Check if file is valid
-  if (!file || !(file instanceof File)) {
-    return { valid: false, error: "Invalid file object" };
-  }
 
-  // Check file size
-  const maxSizeBytes = maxSizeInMB * 1024 * 1024;
-  if (file.size > maxSizeBytes) {
-    return {
-      valid: false,
-      error: `File is too large. Maximum size is ${maxSizeInMB}MB`
-    };
-  }
+import { MediaType } from '../media/types';
 
-  // Check if file is empty
-  if (file.size === 0) {
-    return { valid: false, error: "File is empty" };
+// Validate file for upload
+export const validateFileForUpload = (file: File, maxSizeInMB = 100): { valid: boolean, error?: string } => {
+  // Check if file exists
+  if (!file) {
+    return { valid: false, error: 'No file provided' };
   }
-
+  
+  // Check if it's a valid File object
+  if (!(file instanceof File)) {
+    return { valid: false, error: 'Invalid file object' };
+  }
+  
+  // Check size
+  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+  if (file.size > maxSizeInBytes) {
+    return { valid: false, error: `File size exceeds the maximum allowed size (${maxSizeInMB}MB)` };
+  }
+  
+  // Check if it's an allowed file type (can be expanded)
+  if (!isImageFile(file) && !isVideoFile(file)) {
+    return { valid: false, error: `Unsupported file type: ${file.type}` };
+  }
+  
   return { valid: true };
 };
 
-/**
- * Check if a file is an image
- */
+// Check if file is an image
 export const isImageFile = (file: File): boolean => {
   return file.type.startsWith('image/');
 };
 
-/**
- * Check if a file is a video
- */
+// Check if file is a video
 export const isVideoFile = (file: File): boolean => {
   return file.type.startsWith('video/');
 };
 
-/**
- * Get file extension from File object
- */
-export const getFileExtension = (file: File): string => {
-  return file.name.split('.').pop()?.toLowerCase() || '';
+// Get file extension
+export const getFileExtension = (filename: string): string => {
+  return filename.split('.').pop()?.toLowerCase() || '';
 };
 
 /**
- * Runs a diagnostic on a file to debug upload issues
- * @param file The file to diagnose
+ * Run a comprehensive diagnostic on a file object
+ * This helps identify issues with file objects that may cause upload failures
  */
-export const runFileDiagnostic = (file: any): void => {
-  console.log("FILE DIAGNOSTIC:", {
-    value: file,
-    type: typeof file,
+export const runFileDiagnostic = (file: File): void => {
+  if (!file) {
+    console.warn('FILE DIAGNOSTIC: File is null or undefined');
+    return;
+  }
+  
+  console.log('FILE DIAGNOSTIC:', {
     isFile: file instanceof File,
-    constructor: file && file.constructor ? file.constructor.name : 'N/A',
-    properties: file ? Object.keys(file) : [],
-    fileType: file && file.type ? file.type : 'N/A',
-    fileSize: file && file.size ? `${(file.size / 1024).toFixed(2)} KB` : 'N/A',
-    fileName: file && file.name ? file.name : 'N/A',
-    lastModified: file && file.lastModified ? new Date(file.lastModified).toLocaleString() : 'N/A',
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    lastModified: new Date(file.lastModified).toISOString()
   });
 };

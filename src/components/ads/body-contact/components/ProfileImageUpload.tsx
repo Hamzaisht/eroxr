@@ -5,7 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadFileToStorage } from "@/utils/media/mediaUtils";
+import { uploadFileToStorage } from "@/utils/upload/storageService";
 import { runFileDiagnostic } from "@/utils/upload/fileUtils";
 
 interface ProfileImageUploadProps {
