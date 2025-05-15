@@ -1,87 +1,112 @@
 
-/**
- * Validate if a file is suitable for upload
- */
-export function validateFileForUpload(file: File, maxSizeInMB: number = 100): {
-  valid: boolean;
-  error?: string;
-} {
-  // Check if file actually exists and is a File object
-  if (!file || !(file instanceof File)) {
-    return {
-      valid: false,
-      error: "No file selected or invalid file object"
-    };
-  }
+// Define supported file types
+export const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+export const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+export const SUPPORTED_AUDIO_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'];
+export const SUPPORTED_DOCUMENT_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
-  // Check file size
-  const maxSizeBytes = maxSizeInMB * 1024 * 1024;
-  if (file.size > maxSizeBytes) {
-    return {
-      valid: false,
-      error: `File is too large. Maximum size is ${maxSizeInMB}MB`
-    };
-  }
-
-  // Check if file is empty
-  if (file.size === 0) {
-    return {
-      valid: false,
-      error: "File is empty"
-    };
-  }
-
-  return { valid: true };
-}
+// Maximum allowed file sizes in bytes
+export const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
+export const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100MB
+export const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024; // 50MB
 
 /**
  * Check if a file is an image
  */
 export function isImageFile(file: File): boolean {
-  return file.type.startsWith('image/');
+  return SUPPORTED_IMAGE_TYPES.includes(file.type);
 }
 
 /**
  * Check if a file is a video
  */
 export function isVideoFile(file: File): boolean {
-  return file.type.startsWith('video/');
+  return SUPPORTED_VIDEO_TYPES.includes(file.type);
 }
 
 /**
  * Check if a file is an audio file
  */
 export function isAudioFile(file: File): boolean {
-  return file.type.startsWith('audio/');
+  return SUPPORTED_AUDIO_TYPES.includes(file.type);
 }
 
 /**
- * Run diagnostics on a file before upload
+ * Check if a file is a document
  */
-export function runFileDiagnostic(file: File): void {
+export function isDocumentFile(file: File): boolean {
+  return SUPPORTED_DOCUMENT_TYPES.includes(file.type);
+}
+
+/**
+ * Validate file for upload
+ */
+export function validateFileForUpload(file: File): { valid: boolean; error?: string } {
+  // Check if file exists
   if (!file) {
-    console.error("NULL file passed to diagnostic");
-    return;
+    return { valid: false, error: 'No file selected' };
   }
   
-  console.log("[FILE DIAGNOSTIC]", {
-    name: file.name,
-    type: file.type,
-    size: `${(file.size / 1024).toFixed(2)} KB`,
-    lastModified: new Date(file.lastModified).toLocaleString(),
-    isFile: file instanceof File,
-    hasSize: file.size > 0
-  });
+  // Check if file has content
+  if (file.size === 0) {
+    return { valid: false, error: 'File is empty' };
+  }
+  
+  // Check if file is too large
+  let maxSize = MAX_IMAGE_SIZE;
+  
+  if (isImageFile(file)) {
+    maxSize = MAX_IMAGE_SIZE;
+  } else if (isVideoFile(file)) {
+    maxSize = MAX_VIDEO_SIZE;
+  } else if (isAudioFile(file)) {
+    maxSize = MAX_AUDIO_SIZE;
+  } else if (isDocumentFile(file)) {
+    maxSize = MAX_DOCUMENT_SIZE;
+  } else {
+    return { valid: false, error: 'Unsupported file type' };
+  }
+  
+  if (file.size > maxSize) {
+    return { 
+      valid: false, 
+      error: `File too large. Maximum size is ${Math.round(maxSize / (1024 * 1024))}MB` 
+    };
+  }
+  
+  return { valid: true };
 }
 
 /**
- * Get file extension from a filename or url
+ * Get file extension from a File object
  */
 export function getFileExtension(file: File | string): string {
   if (typeof file === 'string') {
-    const parts = file.split('.');
-    return parts.length > 1 ? parts.pop()?.toLowerCase() || '' : '';
+    return file.split('.').pop()?.toLowerCase() || '';
   }
-  
   return file.name.split('.').pop()?.toLowerCase() || '';
+}
+
+/**
+ * Run comprehensive file diagnostics
+ */
+export function runFileDiagnostic(file: File): void {
+  try {
+    console.log('[FILE DIAGNOSTIC]', {
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      lastModified: new Date(file.lastModified).toISOString(),
+      isFile: file instanceof File,
+      hasProperties: {
+        name: !!file.name,
+        type: !!file.type,
+        size: typeof file.size === 'number',
+        lastModified: typeof file.lastModified === 'number',
+      },
+    });
+  } catch (error) {
+    console.error('[FILE DIAGNOSTIC ERROR]', error);
+  }
 }

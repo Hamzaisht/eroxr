@@ -16,6 +16,7 @@ export function extractMediaUrl(media: any): string {
   return media.url || 
          media.video_url || 
          media.media_url || 
+         media.image_url ||
          media.thumbnail_url || 
          '';
 }
@@ -197,23 +198,17 @@ export function normalizeMediaSource(source: string | any): MediaSource {
   }
   
   // Create a copy to avoid mutating the original
-  const mediaSource: MediaSource = { 
-    url: '',
-    media_type: source.media_type || MediaType.UNKNOWN
-  };
+  const mediaSource: MediaSource = { ...source };
   
   // Set the url property based on available properties
-  mediaSource.url = source.url || source.video_url || source.media_url || source.thumbnail_url || '';
-  
-  // If no media_type is specified, try to determine it
-  if (!mediaSource.media_type || mediaSource.media_type === MediaType.UNKNOWN) {
-    mediaSource.media_type = determineMediaType(mediaSource.url);
+  if (!mediaSource.url) {
+    mediaSource.url = mediaSource.video_url || mediaSource.media_url || mediaSource.thumbnail_url || '';
   }
   
-  // Copy other useful properties
-  if (source.poster) mediaSource.poster = source.poster;
-  if (source.thumbnail_url) mediaSource.thumbnail_url = source.thumbnail_url;
-  if (source.creator_id) mediaSource.creator_id = source.creator_id;
+  // If no media_type is specified, try to determine it
+  if (!mediaSource.media_type) {
+    mediaSource.media_type = determineMediaType(mediaSource.url || '');
+  }
   
   return mediaSource;
 }

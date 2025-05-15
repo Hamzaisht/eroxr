@@ -33,9 +33,9 @@ export interface MediaOptions {
   onTimeUpdate?: (time?: number) => void;
 }
 
-// Media source interface - enforcing url field
+// Media source interface - making it more flexible to handle existing code
 export interface MediaSource {
-  url: string;
+  url?: string;
   media_type?: MediaType;
   content_type?: string;
   creator_id?: string;

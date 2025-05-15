@@ -1,3 +1,4 @@
+
 import { MediaSource } from './types';
 
 /**
@@ -17,6 +18,7 @@ export function extractMediaUrl(source: MediaSource | string | null | undefined)
   return source.url || 
          source.video_url || 
          source.media_url || 
+         source.image_url ||
          (source.video_urls && source.video_urls.length > 0 ? source.video_urls[0] : null) ||
          (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : null) ||
          null;
