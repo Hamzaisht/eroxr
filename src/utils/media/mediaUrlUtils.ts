@@ -1,81 +1,34 @@
 
+import { MediaType } from './types';
+
 /**
- * Gets a playable URL for media content, handling CDN transformations if needed
- * @param url Original media URL
- * @returns A URL that can be used for playback
+ * Get a playable URL for media sources
+ * This function handles cases where URLs might need modification
+ * to work correctly across different browsers and devices
  */
-export const getPlayableMediaUrl = (url: string | undefined | null): string | null => {
+export const getPlayableMediaUrl = (url: string | null): string | null => {
   if (!url) return null;
   
-  // Handle relative URLs
-  if (url.startsWith('/')) {
-    return url;
-  }
-  
-  // Return the URL as-is for now
-  // In a real implementation, this could apply CDN transformations or other processing
+  // Handle special cases like direct auth links, storage URLs etc.
+  // For now, just return the URL as is
   return url;
 };
 
 /**
- * Gets a thumbnail URL for video content
- * @param videoUrl The video URL
- * @returns A URL for the video thumbnail
+ * Get an appropriate thumbnail URL based on media type
  */
-export const getVideoThumbnailUrl = (videoUrl: string | undefined | null): string | null => {
-  if (!videoUrl) return null;
+export const getThumbnailUrl = (source: { 
+  url?: string; 
+  thumbnail_url?: string; 
+  media_type?: MediaType;
+}): string | null => {
+  // Return thumbnail URL if available
+  if (source.thumbnail_url) return source.thumbnail_url;
   
-  // For now, just return the video URL
-  // In a real implementation, this could generate or fetch a thumbnail
-  return videoUrl;
-};
-
-/**
- * Creates an optimized URL for responsive images
- * @param imageUrl Original image URL
- * @param width Desired width
- * @param height Desired height
- * @returns Optimized image URL
- */
-export const getResponsiveImageUrl = (
-  imageUrl: string | undefined | null,
-  width?: number,
-  height?: number
-): string | null => {
-  if (!imageUrl) return null;
-  
-  // Basic implementation - would be replaced with actual CDN parameters
-  // in a production environment
-  return imageUrl;
-};
-
-/**
- * Determine if a URL is an external URL (not from our domain)
- */
-export const isExternalUrl = (url: string | undefined | null): boolean => {
-  if (!url) return false;
-  if (url.startsWith('/')) return false;
-  
-  try {
-    const currentDomain = window.location.hostname;
-    const urlObj = new URL(url);
-    return urlObj.hostname !== currentDomain;
-  } catch (e) {
-    // If URL parsing fails, assume it's not external
-    return false;
+  // For now just return the main URL for images
+  if (source.media_type === MediaType.IMAGE && source.url) {
+    return source.url;
   }
-};
-
-/**
- * Create a URL for an avatar with the given size
- */
-export const getAvatarUrl = (
-  url: string | undefined | null, 
-  size: number = 64
-): string | null => {
-  if (!url) return null;
   
-  // Basic implementation - would be replaced with actual CDN parameters
-  // in a production environment
-  return url;
+  return null;
 };
