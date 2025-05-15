@@ -9,7 +9,8 @@ import { UserProfileSection } from "./nav/UserProfileSection";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
 import { useGhostMode } from "@/hooks/useGhostMode";
 

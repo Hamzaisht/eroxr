@@ -1,6 +1,11 @@
 
-// Export from the fully implemented hook
-export { useGhostMode } from './useGhostMode.tsx';
+import { useContext } from 'react';
+import { GhostModeContext } from '@/context/ghost/GhostModeContext';
 
-// Also export any other related hooks
-export { useGhostModeToggle } from './useGhostMode.tsx';
+export const useGhostMode = () => {
+  const context = useContext(GhostModeContext);
+  if (context === undefined) {
+    throw new Error("useGhostMode must be used within a GhostModeProvider");
+  }
+  return context;
+};

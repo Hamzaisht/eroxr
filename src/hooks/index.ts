@@ -3,3 +3,5 @@
 export * from './useRealtimeUpdates';
 export * from './use-mobile';
 export * from './use-toast';
+export * from './useMediaQuery';
+
