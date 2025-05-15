@@ -1,205 +1,235 @@
 
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { CreatorActions } from "./creator/CreatorActions";
-import { CreatorStats } from "./creator/CreatorStats";
-import { CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Heart, MessageCircle, User } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AvailabilityIndicator } from "./ui/availability-indicator";
-import { AvailabilityStatus } from "@/utils/media/types";
-import { useToast } from "./ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { asUUID } from "@/utils/supabase/helpers";
 
 interface CreatorCardProps {
-  name: string;
-  image: string;
-  banner: string;
-  description: string;
-  subscribers: number;
-  creatorId: string;
+  id: string;
+  username: string;
+  avatarUrl?: string;
+  banner?: string;
+  bio?: string;
+  isVerified?: boolean;
+  isPremium?: boolean;
+  followerCount?: number;
+  postCount?: number;
 }
 
-interface PresenceState {
-  presence_ref: string;
-  status?: AvailabilityStatus;
-}
-
-export const CreatorCard = ({ 
-  name, 
-  image, 
+export const CreatorCard = ({
+  id,
+  username,
+  avatarUrl,
   banner,
-  description, 
-  subscribers: initialSubscribers,
-  creatorId 
+  bio,
+  isVerified = false,
+  isPremium = false,
+  followerCount = 0,
+  postCount = 0,
 }: CreatorCardProps) => {
-  const [subscribers, setSubscribers] = useState(initialSubscribers);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [availability, setAvailability] = useState<AvailabilityStatus>(AvailabilityStatus.OFFLINE);
-  const session = useSession();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const session = useSession();
 
-  useEffect(() => {
-    const checkFollowingStatus = async () => {
-      if (!session?.user?.id) return;
+  // Check if user is already following this creator
+  const checkFollowStatus = async () => {
+    if (!session?.user?.id) return;
+    
+    try {
+      const { data } = await supabase
+        .from("followers")
+        .select()
+        .eq("follower_id", asUUID(session.user.id))
+        .eq("following_id", asUUID(id))
+        .maybeSingle();
       
-      try {
-        const { data: followData } = await supabase
-          .from('followers')
-          .select('*')
-          .eq('follower_id', asUUID(session.user.id))
-          .eq('following_id', asUUID(creatorId))
-          .single();
-
-        setIsFollowing(!!followData);
-      } catch (error) {
-        console.error('Error checking follow status:', error);
-      }
-    };
-
-    const checkSubscriptionStatus = async () => {
-      if (!session?.user?.id) return;
+      setIsFollowing(!!data);
+    } catch (error) {
+      console.error("Error checking follow status:", error);
+    }
+  };
+  
+  // Check if user is subscribed to this creator
+  const checkSubscriptionStatus = async () => {
+    if (!session?.user?.id) return;
+    
+    try {
+      const { data } = await supabase
+        .from("creator_subscriptions")
+        .select()
+        .eq("user_id", asUUID(session.user.id))
+        .eq("creator_id", asUUID(id))
+        .maybeSingle();
       
-      try {
-        const { data: subscriptionData } = await supabase
-          .from('creator_subscriptions')
-          .select('*')
-          .eq('user_id', asUUID(session.user.id))
-          .eq('creator_id', asUUID(creatorId))
-          .single();
+      setIsSubscribed(!!data);
+    } catch (error) {
+      console.error("Error checking subscription status:", error);
+    }
+  };
 
-        setIsSubscribed(!!subscriptionData);
-      } catch (error) {
-        console.error('Error checking subscription status:', error);
-      }
-    };
-
-    // Subscribe to presence changes
-    const channel = supabase.channel('online-users')
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const userState = state[creatorId] as PresenceState[];
+  const handleFollowClick = async () => {
+    if (!session) {
+      navigate("/login");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      if (isFollowing) {
+        // Unfollow
+        const { error } = await supabase
+          .from("followers")
+          .delete()
+          .eq("follower_id", asUUID(session.user.id))
+          .eq("following_id", asUUID(id));
         
-        if (userState && userState.length > 0) {
-          const status = userState[0]?.status || AvailabilityStatus.OFFLINE;
-          setAvailability(status);
-        } else {
-          setAvailability(AvailabilityStatus.OFFLINE);
-        }
-      })
-      .subscribe();
+        if (error) throw error;
+        
+        toast({
+          title: "Unfollowed",
+          description: `You are no longer following ${username}`,
+        });
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from("followers")
+          .insert({
+            follower_id: asUUID(session.user.id),
+            following_id: asUUID(id),
+          });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Following",
+          description: `You are now following ${username}`,
+        });
+      }
+      
+      setIsFollowing(!isFollowing);
+    } catch (error: any) {
+      console.error("Error toggling follow status:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update follow status",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    checkFollowingStatus();
-    checkSubscriptionStatus();
+  const handleSubscribeClick = () => {
+    if (!session) {
+      navigate("/login");
+      return;
+    }
 
-    // Subscribe to realtime changes for follows and subscriptions
-    const followsChannel = supabase
-      .channel('follows-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'followers',
-          filter: `follower_id=eq.${session?.user?.id} AND following_id=eq.${creatorId}`
-        },
-        (payload) => {
-          if (payload.eventType === 'DELETE') {
-            setIsFollowing(false);
-          } else if (payload.eventType === 'INSERT') {
-            setIsFollowing(true);
-          }
-        }
-      )
-      .subscribe();
+    // Navigate to subscription page
+    navigate(`/subscribe/${id}`);
+  };
 
-    const subscriptionsChannel = supabase
-      .channel('subscriptions-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'creator_subscriptions',
-          filter: `user_id=eq.${session?.user?.id} AND creator_id=eq.${creatorId}`
-        },
-        (payload) => {
-          if (payload.eventType === 'DELETE') {
-            setIsSubscribed(false);
-            setSubscribers(prev => prev - 1);
-          } else if (payload.eventType === 'INSERT') {
-            setIsSubscribed(true);
-            setSubscribers(prev => prev + 1);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(followsChannel);
-      supabase.removeChannel(subscriptionsChannel);
-    };
-  }, [session?.user?.id, creatorId, toast]);
-
-  const handleSubscriberChange = (change: number) => {
-    setSubscribers(prev => prev + change);
+  const handleViewProfile = () => {
+    navigate(`/profile/${id}`);
   };
 
   return (
-    <Link to={`/profile/${creatorId}`}>
-      <Card className="group relative overflow-hidden border-none bg-white/80 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl">
-        <div className="absolute right-4 top-4 z-10">
-          <CreatorActions
-            creatorId={creatorId}
-            name={name}
-            subscribers={subscribers}
-            onSubscriberChange={handleSubscriberChange}
-            isFollowing={isFollowing}
-            isSubscribed={isSubscribed}
-          />
+    <Card className="w-full max-w-sm bg-card/50 backdrop-blur border-primary/20 overflow-hidden transition-all hover:shadow-md hover:border-primary/40">
+      <div 
+        className="h-24 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" 
+        style={banner ? { backgroundImage: `url(${banner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+      />
+      
+      <CardContent className="-mt-8 space-y-4">
+        <div className="flex justify-between">
+          <Avatar className="h-16 w-16 border-4 border-background">
+            <AvatarImage src={avatarUrl} alt={username} />
+            <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          
+          <div className="space-x-1 mt-8">
+            {isVerified && (
+              <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/30">
+                Verified
+              </Badge>
+            )}
+            {isPremium && (
+              <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                Premium
+              </Badge>
+            )}
+          </div>
         </div>
         
-        <div className="relative">
-          <div className="h-32 w-full overflow-hidden">
-            <img
-              src={banner}
-              alt={`${name}'s banner`}
-              className="h-full w-full object-cover"
-            />
+        <div>
+          <h3 className="text-lg font-medium">{username}</h3>
+          {bio && <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{bio}</p>}
+        </div>
+        
+        <div className="flex gap-4 text-sm">
+          <div>
+            <span className="font-medium">{followerCount}</span>
+            <span className="text-muted-foreground ml-1">followers</span>
           </div>
-          <div className="absolute -bottom-10 left-4">
-            <div className="relative h-20 w-20">
-              <div className="h-full w-full overflow-hidden rounded-full border-4 border-white">
-                <img
-                  src={image}
-                  alt={name}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-1 -right-1 ring-2 ring-white rounded-full">
-                <AvailabilityIndicator status={availability} size={12} />
-              </div>
-            </div>
+          <div>
+            <span className="font-medium">{postCount}</span>
+            <span className="text-muted-foreground ml-1">posts</span>
           </div>
         </div>
-        <div className="space-y-4 p-6 pt-12">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h3 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-semibold text-transparent">
-                {name}
-              </h3>
-              {isFollowing && (
-                <CheckCircle className="h-5 w-5 text-primary" />
-              )}
-            </div>
-          </div>
-          <p className="text-sm text-foreground/70">{description}</p>
-          <CreatorStats subscribers={subscribers} />
-        </div>
-      </Card>
-    </Link>
+      </CardContent>
+      
+      <CardFooter className="pt-0 pb-4 gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex-1"
+          onClick={handleFollowClick}
+          disabled={isLoading}
+        >
+          <Heart className={`h-4 w-4 mr-1 ${isFollowing ? 'fill-red-500 text-red-500' : ''}`} />
+          {isFollowing ? 'Following' : 'Follow'}
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex-1"
+          onClick={handleSubscribeClick}
+          disabled={isLoading || isSubscribed}
+        >
+          {isSubscribed ? (
+            <>
+              <User className="h-4 w-4 mr-1" />
+              Subscribed
+            </>
+          ) : (
+            <>
+              <User className="h-4 w-4 mr-1" />
+              Subscribe
+            </>
+          )}
+        </Button>
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="flex-none"
+          onClick={handleViewProfile}
+        >
+          <MessageCircle className="h-4 w-4" />
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };

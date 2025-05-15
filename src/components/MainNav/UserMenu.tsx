@@ -137,19 +137,20 @@ export const UserMenu = () => {
     );
   }
 
-  // Get safe status from profile with fallback to offline
-  const currentStatus = profile?.status ? 
-    convertToStatus(profile.status) : 
+  // Get safe profile values with fallbacks
+  const safeProfile = extractProfile(profile);
+  const currentStatus = safeProfile?.status ? 
+    convertToStatus(safeProfile.status) : 
     AvailabilityStatus.OFFLINE;
 
   return (
     <div className="flex items-center gap-4">
       <div className="flex flex-col items-end">
         <span className="text-sm font-medium">
-          @{profile?.username || session.user.email?.split('@')[0] || 'Guest'}
+          @{safeProfile?.username || session.user.email?.split('@')[0] || 'Guest'}
         </span>
         <Badge variant="outline" className="text-xs">
-          {profile?.is_paying_customer ? 'Premium' : 'Free'}
+          {safeProfile?.is_paying_customer ? 'Premium' : 'Free'}
         </Badge>
       </div>
       
@@ -162,8 +163,8 @@ export const UserMenu = () => {
           >
             <Avatar className="h-10 w-10 cursor-pointer">
               <AvatarImage 
-                src={profile?.avatar_url} 
-                alt={profile?.username || 'User avatar'} 
+                src={safeProfile?.avatar_url} 
+                alt={safeProfile?.username || 'User avatar'} 
               />
               <AvatarFallback>
                 {session.user.email?.charAt(0).toUpperCase()}

@@ -1,79 +1,56 @@
 
-import { PostgrestError } from '@supabase/supabase-js';
-import { Database } from '@/integrations/supabase/types/database.types';
-import { AvailabilityStatus } from '@/utils/media/types';
+import { AvailabilityStatus } from "@/utils/media/types";
 
 /**
- * Type guard to check if the response has data
+ * Converts a string to a valid UUID for use in Supabase queries
+ * This solves TypeScript errors that expect UUIDs when strings are provided
  */
-export function isDataResponse<T>(
-  response: { data: T; error: null } | { data: null; error: PostgrestError }
-): response is { data: T; error: null } {
-  return response.error === null && response.data !== null;
-}
+export const asUUID = (id: string | undefined): string => {
+  if (!id) return '';
+  return id as unknown as string;
+};
 
 /**
- * Helper function to safely access nested properties on potentially null objects
+ * Safely extracts a profile from a Supabase query result
+ * This handles error cases and ensures type safety
  */
-export function safelyAccessProperty<T, K extends keyof T>(obj: T | null | undefined, property: K): T[K] | undefined {
-  if (obj && property in obj) {
-    return obj[property];
-  }
-  return undefined;
-}
+export const extractProfile = <T>(data: T | { message: string; code: string }): T | null => {
+  if (!data) return null;
+  if ('message' in data && 'code' in data) return null;
+  return data;
+};
 
 /**
- * Type-safe conversion for status strings to our AvailabilityStatus enum
+ * Safely accesses a property from data that might be an error object
+ * @param data The data object from a Supabase query
+ * @param key The property key to access
+ * @param defaultValue A fallback value if the property doesn't exist
  */
-export function convertToStatus(status: string | null | undefined): 'online' | 'offline' | 'away' | 'busy' {
-  if (!status) return 'offline';
-  
-  // Ensure status is one of the allowed values
-  if (['online', 'offline', 'away', 'busy'].includes(status)) {
-    return status as 'online' | 'offline' | 'away' | 'busy';
-  }
-  
-  return 'offline';
-}
-
-/**
- * Type-safe way to cast string IDs for Supabase equality operations
- * This function casts a string to the UUID type expected by Supabase
- */
-export function asUUID(id: string | undefined) {
-  if (!id) return undefined;
-  return id as unknown as Database['public']['Tables']['profiles']['Row']['id'];
-}
-
-/**
- * Safe data access helper for Supabase query results
- * Handles error responses gracefully and provides default values
- */
-export function safeDataAccess<T, K extends keyof T>(
-  queryResult: { data: T | null; error: PostgrestError | null },
-  property: K,
+export const safeDataAccess = <T, K extends keyof T>(
+  data: T | { message: string; code: string } | null | undefined,
+  key: K,
   defaultValue: T[K]
-): T[K] {
-  if (queryResult.error || !queryResult.data) {
-    return defaultValue;
-  }
-  return queryResult.data[property] ?? defaultValue;
-}
+): T[K] => {
+  if (!data) return defaultValue;
+  if ('message' in data && 'code' in data) return defaultValue;
+  return (data as T)[key] !== undefined ? (data as T)[key] : defaultValue;
+};
 
 /**
- * Helper to check if a Supabase query result has an error
+ * Converts a string status to the corresponding AvailabilityStatus enum value
  */
-export function hasQueryError(result: { error: PostgrestError | null }): boolean {
-  return result.error !== null;
-}
-
-/**
- * Helper to safely extract a profile from a query result
- */
-export function extractProfile<T>(result: { data: T | null; error: PostgrestError | null }): T | null {
-  if (result.error || !result.data) {
-    console.error("Error fetching profile:", result.error);
-    return null;
+export const convertToStatus = (status: string | null | undefined): AvailabilityStatus => {
+  if (!status) return AvailabilityStatus.OFFLINE;
+  
+  switch (status.toLowerCase()) {
+    case 'online':
+      return AvailabilityStatus.ONLINE;
+    case 'away':
+      return AvailabilityStatus.AWAY;
+    case 'busy':
+      return AvailabilityStatus.BUSY;
+    case 'offline':
+    default:
+      return AvailabilityStatus.OFFLINE;
   }
-  return result.data;
-}
+};

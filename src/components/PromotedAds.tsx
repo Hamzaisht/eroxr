@@ -1,119 +1,124 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSession } from '@supabase/auth-helpers-react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from './ui/button';
-import { AdCard } from './ads/AdCard';
-import { Skeleton } from './ui/skeleton';
-import { DatingAd } from './ads/types/dating';
-import { asUUID } from '@/utils/supabase/helpers';
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { VideoThumbnail } from "./VideoThumbnail";
+import { UserPlus, Video } from "lucide-react";
+import { Button } from "./ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { asUUID, extractProfile } from "@/utils/supabase/helpers";
 
 export const PromotedAds = () => {
-  const [ads, setAds] = useState<DatingAd[]>([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const session = useSession();
+  const [ads, setAds] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchPromotedAds = async () => {
       try {
-        setLoading(true);
-        
-        const queryBuilder = supabase
-          .from('dating_ads')
+        const { data, error } = await supabase
+          .from("dating_ads")
           .select(`
             id,
             title,
             description,
-            city,
-            age_range,
-            video_url,
-            avatar_url,
             tags,
-            is_active,
-            relationship_status,
-            body_type,
-            looking_for,
-            country,
-            created_at,
+            avatar_url,
+            video_url,
             user_id,
-            user:user_id (
-              id,
-              username,
-              avatar_url
-            )
+            created_at,
+            view_count,
+            message_count
           `)
-          .eq('is_active', true)
-          .eq('country', 'sweden')
+          .eq("is_active", true)
+          .eq("country", "sweden")
+          .order("created_at", { ascending: false })
           .limit(6);
-          
-        // If user is logged in, filter out their own ads
-        if (session?.user?.id) {
-          queryBuilder.neq('user_id', asUUID(session.user.id));
-        }
-        
-        const { data, error } = await queryBuilder.order('created_at', { ascending: false });
 
-        if (error) {
-          console.error("Error fetching promoted ads:", error);
-          return;
-        }
-
-        if (data) {
-          const formattedAds = data.map(ad => ({
-            ...ad,
-            age_range: {
-              lower: ad.age_range ? parseInt(ad.age_range.replace(/[\[\]]/g, '').split(',')[0]) : 18,
-              upper: ad.age_range ? parseInt(ad.age_range.replace(/[\[\]]/g, '').split(',')[1]) : 99
-            },
-            location: ad.city,
-          })) as DatingAd[];
-
-          setAds(formattedAds);
-        }
-      } catch (error) {
-        console.error("Error in promoted ads fetch:", error);
+        if (error) throw error;
+        setAds(data || []);
+      } catch (error: any) {
+        console.error("Error fetching promoted ads:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchPromotedAds();
-  }, [session?.user?.id]);
+  }, []);
 
-  if (loading) {
+  const handleAdClick = (adId: string) => {
+    // Here you'd implement logic to track ad clicks
+    console.log(`Ad clicked: ${adId}`);
+    // Redirect to the ad's detail page
+  };
+
+  const handleConnect = (adId: string, title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    toast({
+      title: "Connection request sent",
+      description: `You've reached out to ${title}`,
+    });
+  };
+
+  if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(3)].map((_, i) => (
-          <Skeleton key={i} className="h-64" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-pulse">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i} className="h-64 bg-gray-800/50">
+            <div className="h-full" />
+          </Card>
         ))}
       </div>
     );
   }
 
   if (ads.length === 0) {
-    return null;
+    return <div className="text-center py-8 text-muted-foreground">No promoted ads found</div>;
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Promoted Profiles</h2>
-        <Button 
-          variant="link" 
-          onClick={() => navigate('/dating')}
-          className="text-sm"
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {ads.map((ad) => (
+        <Card 
+          key={ad.id}
+          className="overflow-hidden cursor-pointer transition-all hover:border-luxury-primary/50 hover:shadow-md"
+          onClick={() => handleAdClick(ad.id)}
         >
-          View all
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {ads.map(ad => (
-          <AdCard key={ad.id} ad={ad} />
-        ))}
-      </div>
+          <div className="relative aspect-video">
+            <VideoThumbnail 
+              videoUrl={ad.video_url} 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
+            <div className="absolute bottom-3 left-3 flex items-center gap-2">
+              <Avatar className="h-8 w-8 border-2 border-white">
+                <AvatarImage src={ad.avatar_url} />
+                <AvatarFallback>{ad.title.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <h4 className="text-white font-medium text-sm">{ad.title}</h4>
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className="text-[10px] bg-black/50 text-white border-none px-1.5 h-4">
+                    <Video className="w-3 h-3 mr-1" /> {ad.view_count || 0}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="absolute bottom-3 right-3 flex items-center gap-1"
+              onClick={(e) => handleConnect(ad.id, ad.title, e)}
+            >
+              <UserPlus className="h-3 w-3" />
+              <span className="text-xs">Connect</span>
+            </Button>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 };

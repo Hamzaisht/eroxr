@@ -1,159 +1,282 @@
 
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useDropzone } from "react-dropzone";
+import { Badge } from "@/components/ui/badge";
+import { X, Image, Video, FileVideo } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AnimatePresence } from "framer-motion";
-import { PostDialogHeader } from "./post/PostDialogHeader";
-import { PostContentInput } from "./post/PostContentInput";
-import { PostSettings } from "./post/PostSettings";
-import { ContentPreview } from "./post/ContentPreview";
-import { MediaUpload } from "./post/MediaUpload";
-import { PostSubmitButtons } from "./post/PostSubmitButtons";
-import { SuccessOverlay } from "./post/SuccessOverlay";
-import { usePostSubmission } from "./post/usePostSubmission";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { asUUID, extractProfile } from "@/utils/supabase/helpers";
 
 interface CreatePostDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedFiles: FileList | null;
-  onFileSelect: (files: FileList | null) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (content: string, files: FileList | null, tags?: string[]) => Promise<void>;
 }
 
-export const CreatePostDialog = ({ 
-  open, 
-  onOpenChange,
-  selectedFiles,
-  onFileSelect
-}: CreatePostDialogProps) => {
+export const CreatePostDialog = ({ isOpen, onClose, onSubmit }: CreatePostDialogProps) => {
   const [content, setContent] = useState("");
-  const [isPayingCustomer, setIsPayingCustomer] = useState<boolean | null>(null);
   const [tags, setTags] = useState<string[]>([]);
-  const [visibility, setVisibility] = useState<"public" | "subscribers_only">("public");
-  const [isPPV, setIsPPV] = useState(false);
-  const [ppvAmount, setPpvAmount] = useState<number | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const session = useSession();
+  const [currentTag, setCurrentTag] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [activeTab, setActiveTab] = useState("post");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-  const { handleSubmit, isLoading } = usePostSubmission(() => {
-    setShowSuccess(true);
-    toast({
-      title: "Post Created! 🎉",
-      description: "Your content is now live and visible to your audience",
-      duration: 3000,
-    });
-    
-    setTimeout(() => {
-      setContent("");
-      onFileSelect(null);
-      setTags([]);
-      setVisibility("public");
-      setIsPPV(false);
-      setPpvAmount(null);
-      setShowSuccess(false);
-      onOpenChange(false);
-    }, 1500);
-  });
-
-  const checkPayingCustomerStatus = async () => {
-    if (!session?.user?.id) return;
-    
-    try {
+  const session = useSession();
+  
+  const { data: profile } = useQuery({
+    queryKey: ['profile', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('is_paying_customer')
         .eq('id', asUUID(session.user.id))
         .single();
-      
+        
       if (error) {
-        console.error("Error fetching profile:", error);
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!session?.user?.id
+  });
+  
+  // Extract profile safely
+  const safeProfile = extractProfile(profile);
+  const isPayingCustomer = safeProfile?.is_paying_customer || false;
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      'image/*': [],
+      'video/*': []
+    },
+    onDrop: (acceptedFiles) => {
+      // Check file restrictions
+      if (!isPayingCustomer && acceptedFiles.length > 0) {
+        toast({
+          title: "Premium Feature",
+          description: "Only premium users can upload media. Upgrade your account to unlock this feature.",
+          variant: "destructive"
+        });
         return;
       }
       
-      setIsPayingCustomer(data?.is_paying_customer || false);
+      setSelectedFiles(prev => [...prev, ...acceptedFiles]);
+    },
+    maxFiles: 5
+  });
+
+  const handleSubmit = async () => {
+    try {
+      if (!content.trim() && selectedFiles.length === 0) {
+        toast({
+          title: "Empty Post",
+          description: "Please add content to your post.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setIsSubmitting(true);
+      
+      // Convert selectedFiles to FileList for the parent component
+      const dataTransfer = new DataTransfer();
+      selectedFiles.forEach(file => {
+        dataTransfer.items.add(file);
+      });
+      
+      const fileList = selectedFiles.length > 0 ? dataTransfer.files : null;
+      
+      await onSubmit(content, fileList, tags.length > 0 ? tags : undefined);
+      
+      // Reset form after successful submission
+      setContent("");
+      setTags([]);
+      setCurrentTag("");
+      setSelectedFiles([]);
+      setActiveTab("post");
+      onClose();
     } catch (error) {
-      console.error("Error in profile fetch:", error);
+      console.error("Error creating post:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create post. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    if (open) {
-      checkPayingCustomerStatus();
+  const handleAddTag = () => {
+    if (currentTag.trim() && !tags.includes(currentTag.trim())) {
+      setTags(prev => [...prev, currentTag.trim()]);
+      setCurrentTag("");
     }
-  }, [open, session?.user?.id]);
+  };
 
-  if (!session) {
-    return null;
-  }
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(prev => prev.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
+  const handleRemoveFile = (indexToRemove: number) => {
+    setSelectedFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="fixed left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] w-[95%] sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 rounded-lg shadow-xl">
-        <AnimatePresence>
-          {showSuccess && <SuccessOverlay show={showSuccess} />}
-        </AnimatePresence>
-
-        <PostDialogHeader />
-
-        <div className="space-y-6 p-6">
-          <PostContentInput
-            content={content}
-            setContent={setContent}
-            tags={tags}
-            setTags={setTags}
-          />
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[600px]">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full mb-4">
+            <TabsTrigger value="post" className="flex-1">Create Post</TabsTrigger>
+            <TabsTrigger value="media" className="flex-1">
+              Add Media {selectedFiles.length > 0 && `(${selectedFiles.length})`}
+            </TabsTrigger>
+          </TabsList>
           
-          <PostSettings
-            isPayingCustomer={isPayingCustomer}
-            visibility={visibility}
-            setVisibility={setVisibility}
-            isPPV={isPPV}
-            setIsPPV={setIsPPV}
-            ppvAmount={ppvAmount}
-            setPpvAmount={setPpvAmount}
-          />
-
-          <ContentPreview content={content} />
+          <TabsContent value="post" className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="content">What's on your mind?</Label>
+              <Textarea
+                id="content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={6}
+                placeholder="Share your thoughts..."
+                className="resize-none"
+                disabled={isSubmitting}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="tags">Tags (optional)</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  id="tags"
+                  type="text"
+                  value={currentTag}
+                  onChange={(e) => setCurrentTag(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Add tags..."
+                  className="flex-1 bg-background px-3 py-2 border border-input rounded-md"
+                  disabled={isSubmitting}
+                />
+                <Button 
+                  type="button" 
+                  onClick={handleAddTag}
+                  disabled={!currentTag.trim() || isSubmitting}
+                >
+                  Add
+                </Button>
+              </div>
+              
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {tags.map((tag, i) => (
+                    <Badge key={i} variant="secondary" className="flex items-center gap-1">
+                      {tag}
+                      <X 
+                        className="h-3 w-3 cursor-pointer" 
+                        onClick={() => handleRemoveTag(tag)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
           
-          <MediaUpload
-            selectedFiles={selectedFiles}
-            onFileSelect={onFileSelect}
-            isPayingCustomer={isPayingCustomer}
-          />
-          
-          <PostSubmitButtons
-            isLoading={isLoading}
-            onCancel={() => {
-              setContent("");
-              onFileSelect(null);
-              setTags([]);
-              setVisibility("public");
-              setIsPPV(false);
-              setPpvAmount(null);
-              onOpenChange(false);
-            }}
-            onSubmit={() => {
-              if (!content.trim() && !selectedFiles?.length) {
-                toast({
-                  title: "Content required",
-                  description: "Please add some text or media to your post",
-                  variant: "destructive",
-                });
-                return;
-              }
-              handleSubmit(
-                content, 
-                selectedFiles, 
-                isPayingCustomer, 
-                tags, 
-                visibility,
-                isPPV ? ppvAmount : null
-              );
-            }}
-          />
+          <TabsContent value="media" className="space-y-4">
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-lg p-6 text-center ${
+                isDragActive ? "border-primary bg-primary/10" : "border-muted-foreground/20"
+              }`}
+            >
+              <input {...getInputProps()} ref={fileInputRef} />
+              
+              <div className="flex flex-col items-center justify-center space-y-2">
+                <div className="flex gap-3">
+                  <Image className="h-8 w-8 text-muted-foreground" />
+                  <FileVideo className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    Drag & drop files here, or click to select files
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isPayingCustomer ? 
+                      "Upload up to 5 images or videos" : 
+                      "Only premium users can upload media"}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2">
+                <Label>Selected Files ({selectedFiles.length})</Label>
+                <div className="space-y-2">
+                  {selectedFiles.map((file, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center justify-between bg-background p-2 rounded-md"
+                    >
+                      <div className="flex items-center gap-2">
+                        {file.type.includes('image') ? (
+                          <Image className="h-4 w-4" />
+                        ) : (
+                          <Video className="h-4 w-4" />
+                        )}
+                        <span className="text-sm truncate max-w-[300px]">{file.name}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleRemoveFile(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+        
+        <div className="flex justify-end gap-3 pt-4">
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting || (!content.trim() && selectedFiles.length === 0)}
+          >
+            {isSubmitting ? "Posting..." : "Post"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
