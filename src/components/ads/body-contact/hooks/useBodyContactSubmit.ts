@@ -38,6 +38,7 @@ export const useBodyContactSubmit = ({
 
     // Add debug logging to inspect the form values
     console.log("Form values submitted:", values);
+    console.log("isSuperAdmin value:", isSuperAdmin, "type:", typeof isSuperAdmin);
     
     setIsLoading(true);
 
@@ -66,12 +67,14 @@ export const useBodyContactSubmit = ({
       }
 
       // 4. Save ad to the database
-      // Explicitly ensure isSuperAdmin is a boolean value
+      // Make sure isSuperAdmin is always a boolean
+      const superAdminFlag = isSuperAdmin === true;
+      
       const saveResult = await saveAd(
         values, 
         mediaResult.videoUrl, 
         mediaResult.avatarUrl,
-        Boolean(isSuperAdmin) // Explicitly convert to boolean to ensure type safety
+        superAdminFlag
       );
       
       if (!saveResult.success || !saveResult.data) {
