@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useSession } from "@supabase/auth-helpers-react";
 import { LoadingScreen } from './LoadingScreen';
@@ -10,29 +10,31 @@ export const AuthLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const redirectAttempted = useRef(false);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  console.log("AuthLayout - session:", session ? "exists" : "null"); // Debug logging
+  console.info("AuthLayout - session:", session ? "exists" : "null");
 
   useEffect(() => {
     // Only redirect if we have a session AND we're on auth pages (login or register)
     const authPages = ['/login', '/register'];
     
-    if (session && authPages.includes(location.pathname) && !redirectAttempted.current) {
+    if (session && authPages.includes(location.pathname) && !redirectAttempted) {
       // Set flag to prevent multiple redirects
-      redirectAttempted.current = true;
+      setRedirectAttempted(true);
       setIsRedirecting(true);
       
       // Check if there's a redirect path from previous navigation
       const returnPath = location.state?.from || '/home';
-      console.log(`User is authenticated, redirecting to: ${returnPath}`);
+      console.info(`User is authenticated, redirecting to: ${returnPath}`);
       
-      // Use setTimeout to break potential infinite loops
-      setTimeout(() => {
-        navigate(returnPath, { replace: true });
-      }, 100);
+      navigate(returnPath, { replace: true });
     }
-  }, [session, navigate, location.pathname, location.state]);
+
+    if (!session && !authPages.includes(location.pathname)) {
+      console.info("No session in AuthLayout, redirecting to login");
+      navigate('/login', { state: { from: location.pathname }, replace: true });
+    }
+  }, [session, navigate, location.pathname, location.state, redirectAttempted]);
 
   // Show loading while session is being determined
   if (session === undefined) {

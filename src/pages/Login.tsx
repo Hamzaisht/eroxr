@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { AuthForm } from "@/components/auth/AuthForm";
@@ -12,28 +12,25 @@ const Login = () => {
   const session = useSession();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectAttempted = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
 
   // Add debug logging
   useEffect(() => {
-    console.log("Login page rendered with session:", session ? "exists" : "null");
+    console.info("Login page rendered with session:", session ? "exists" : "null");
     
     // If we have a session and haven't attempted to redirect yet
-    if (session && !redirectAttempted.current) {
-      redirectAttempted.current = true;
+    if (session && !redirectAttempted) {
+      setRedirectAttempted(true);
       setIsLoading(true);
       
       // Get the redirect path from location state or default to home
       const from = location.state?.from || "/home";
-      console.log("User is logged in, redirecting to:", from);
+      console.info("User is logged in, redirecting to:", from);
       
-      // Use setTimeout to break potential infinite loops
-      setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 100);
+      navigate(from, { replace: true });
     }
-  }, [session, navigate, location]);
+  }, [session, navigate, location, redirectAttempted]);
 
   // Show loading while session is being determined
   if (session === undefined || isLoading) {
