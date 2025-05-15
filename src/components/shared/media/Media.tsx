@@ -1,14 +1,25 @@
 
 import { useState, useEffect, forwardRef } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
+import { MediaType, MediaSource } from '@/utils/media/types';
 import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
 import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
 
 type MediaProps = {
   source: MediaSource | string;
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
   showWatermark?: boolean;
-} & MediaOptions;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: () => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (time: number) => void;
+}
 
 export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>(
   (
@@ -54,8 +65,10 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
         const playableUrl = getPlayableMediaUrl(extractedUrl);
         setUrl(playableUrl);
 
-        // Determine media type
-        setMediaType(determineMediaType(source));
+        // Determine media type - using the extracted URL string for type detection
+        const typeString = determineMediaType(extractedUrl);
+        // Set the media type
+        setMediaType(typeString);
       } catch (err) {
         console.error('Error processing media:', err);
         setError('Failed to process media');
@@ -120,7 +133,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     }
 
     // For image content
-    if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
+    if (mediaType === MediaType.IMAGE) {
       return (
         <div className="relative w-full h-full">
           <img

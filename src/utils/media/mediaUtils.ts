@@ -1,6 +1,6 @@
 
 import { v4 as uuidv4 } from 'uuid';
-import { MediaType } from './types';
+import { MediaType, MediaSource } from './types';
 
 /**
  * Determine media type from file or URL
@@ -129,4 +129,40 @@ export const extractMediaUrl = (mediaSource: any): string => {
     mediaSource.src ||
     ''
   );
+};
+
+/**
+ * Normalize media source to ensure it has consistent properties
+ * This function ensures older code and newer code can work together
+ */
+export const normalizeMediaSource = (source: string | any): MediaSource => {
+  // If source is a string, treat it as a URL
+  if (typeof source === 'string') {
+    return { 
+      url: source,
+      media_type: MediaType.UNKNOWN
+    };
+  }
+  
+  // If it's null or undefined, return an empty object
+  if (!source) {
+    return { url: '', media_type: MediaType.UNKNOWN };
+  }
+  
+  // Create a copy to avoid mutating the original
+  const mediaSource: MediaSource = { ...source };
+  
+  // Set the url property based on available properties
+  if (!mediaSource.url) {
+    mediaSource.url = mediaSource.video_url || mediaSource.media_url || 
+                      mediaSource.image_url || mediaSource.thumbnail_url || 
+                      mediaSource.src || '';
+  }
+  
+  // Also set src property for backwards compatibility
+  if (!mediaSource.src) {
+    mediaSource.src = mediaSource.url;
+  }
+  
+  return mediaSource;
 };

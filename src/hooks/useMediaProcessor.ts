@@ -2,9 +2,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MediaType, MediaSource } from '@/utils/media/types';
 import { 
-  determineMediaType
+  determineMediaType, 
+  extractMediaUrl
 } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl, extractMediaUrl } from '@/utils/media/urlUtils';
+import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
 
 interface UseMediaProcessorOptions {
   autoLoad?: boolean;
@@ -45,7 +46,8 @@ export function useMediaProcessor(source: MediaSource | string | null, options: 
       setMediaUrl(playableUrl);
       
       // Determine media type
-      const type = determineMediaType(source);
+      // Use the string URL for media type detection
+      const type = determineMediaType(extractedUrl);
       setMediaType(type as MediaType);
     } catch (err: any) {
       console.error('Error processing media:', err);

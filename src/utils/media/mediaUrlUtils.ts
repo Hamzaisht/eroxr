@@ -108,3 +108,49 @@ export const getUrlWithFallbacks = (source: MediaSource | string | null | undefi
          (source.media_urls?.length ? source.media_urls[0] : '') || 
          '';
 };
+
+/**
+ * Gets a playable media URL, with cache busting if needed
+ */
+export const getPlayableMediaUrl = (url: string | string[] | undefined | null): string => {
+  if (!url) return '';
+  
+  if (Array.isArray(url)) {
+    return url.length > 0 ? processMediaUrl(url[0]) : '';
+  }
+  
+  return processMediaUrl(url);
+};
+
+/**
+ * Process media URL to make it playable
+ */
+function processMediaUrl(url: string): string {
+  if (!url) return '';
+  
+  // Handle URL without protocol
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+  
+  // Add protocol if missing
+  if (!url.startsWith('http') && !url.startsWith('blob:') && !url.startsWith('data:')) {
+    return `https://${url}`;
+  }
+  
+  // Add cache buster to help with media loading issues
+  return addCacheBuster(url);
+}
+
+/**
+ * Adds cache busting parameters to a URL
+ */
+export const addCacheBuster = (url: string): string => {
+  if (!url) return url;
+  
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 9);
+  return url.includes('?') 
+    ? `${url}&t=${timestamp}&r=${random}` 
+    : `${url}?t=${timestamp}&r=${random}`;
+};
