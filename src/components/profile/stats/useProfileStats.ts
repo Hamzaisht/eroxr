@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { ProfileStats as ProfileStatsType } from "./types";
+import { asUUID } from "@/utils/supabase/helpers";
 
 export const useProfileStats = (profileId: string) => {
   const [showTipDialog, setShowTipDialog] = useState(false);
@@ -25,19 +26,19 @@ export const useProfileStats = (profileId: string) => {
           supabase
             .from("followers")
             .select("*", { count: 'exact', head: true })
-            .eq("following_id", profileId),
+            .eq("following_id", asUUID(profileId)),
           supabase
             .from("post_likes")
             .select("posts!inner(*)", { count: 'exact', head: true })
-            .eq("posts.creator_id", profileId),
+            .eq("posts.creator_id", asUUID(profileId)),
           supabase
             .from("posts")
             .select("id, is_ppv")
-            .eq("creator_id", profileId),
+            .eq("creator_id", asUUID(profileId)),
           supabase
             .from("creator_subscriptions")
             .select("*", { count: 'exact', head: true })
-            .eq("creator_id", profileId)
+            .eq("creator_id", asUUID(profileId))
         ]);
 
         if (followerError) throw followerError;

@@ -2,6 +2,7 @@
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdFormValues } from "../types";
+import { asUUID } from "@/utils/supabase/helpers";
 
 interface AdData {
   id: string;
@@ -33,7 +34,7 @@ export const useAdDatabaseOperations = () => {
       
       // Create the ad data object
       const adData = {
-        user_id: session.user.id,
+        user_id: asUUID(session.user.id),
         title: values.title,
         description: values.description,
         relationship_status: values.relationshipStatus,
@@ -86,7 +87,7 @@ export const useAdDatabaseOperations = () => {
     
     if (videoUrl || avatarUrl) {
       const mediaData = {
-        user_id: session.user.id,
+        user_id: asUUID(session.user.id),
         ad_id: adId,
         video_url: videoUrl,
         avatar_url: avatarUrl,
@@ -116,7 +117,7 @@ export const useAdDatabaseOperations = () => {
     const { error: profileError } = await supabase
       .from("profiles")
       .update({ avatar_url: avatarUrl })
-      .eq("id", session.user.id);
+      .eq("id", asUUID(session.user.id));
 
     if (profileError) {
       console.error("Avatar profile update error:", profileError);

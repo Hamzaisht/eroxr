@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { asUUID } from "@/utils/supabase/helpers";
 
 interface ProfileContainerProps {
   id?: string;
@@ -25,14 +26,19 @@ export const ProfileContainer = ({ id, isEditing, setIsEditing }: ProfileContain
     queryFn: async () => {
       if (!id) return null;
       
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", asUUID(id))
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error("Profile fetch error:", error);
+        throw error;
+      }
     },
     enabled: !!id,
     retry: 2,

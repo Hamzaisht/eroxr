@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { AvailabilityStatus } from "@/utils/media/types";
+import { asUUID, convertToStatus } from "@/utils/supabase/helpers";
 
 export const UserMenu = () => {
   const navigate = useNavigate();
@@ -27,16 +28,23 @@ export const UserMenu = () => {
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-      if (error) {
-        console.error("Profile fetch error:", error);
-        throw error;
+      
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", asUUID(session.user.id))
+          .single();
+
+        if (error) {
+          console.error("Profile fetch error:", error);
+          throw error;
+        }
+        return data;
+      } catch (error) {
+        console.error("Profile fetch exception:", error);
+        return null;
       }
-      return data;
     },
     enabled: !!session?.user?.id,
   });
@@ -81,10 +89,12 @@ export const UserMenu = () => {
       newStatus === AvailabilityStatus.INVISIBLE ? AvailabilityStatus.OFFLINE : newStatus;
     
     try {
+      const statusValue = safeStatus.toString().toLowerCase();
+      
       const { error } = await supabase
         .from('profiles')
-        .update({ status: safeStatus })
-        .eq('id', session?.user?.id);
+        .update({ status: statusValue })
+        .eq('id', asUUID(session?.user?.id || ''));
 
       if (error) throw error;
 
@@ -128,7 +138,9 @@ export const UserMenu = () => {
   }
 
   // Get safe status from profile with fallback to offline
-  const currentStatus = (profile?.status as AvailabilityStatus) || AvailabilityStatus.OFFLINE;
+  const currentStatus = profile?.status ? 
+    convertToStatus(profile.status) : 
+    AvailabilityStatus.OFFLINE;
 
   return (
     <div className="flex items-center gap-4">

@@ -1,4 +1,3 @@
-
 // Media types enum
 export enum MediaType {
   IMAGE = 'image',
@@ -12,9 +11,9 @@ export enum MediaType {
 // User availability status
 export enum AvailabilityStatus {
   ONLINE = 'online',
+  OFFLINE = 'offline',
   AWAY = 'away',
   BUSY = 'busy',
-  OFFLINE = 'offline',
   INVISIBLE = 'invisible'
 }
 

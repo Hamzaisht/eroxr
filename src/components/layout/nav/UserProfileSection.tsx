@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { asUUID, convertToStatus } from "@/utils/supabase/helpers";
 
 interface UserProfileSectionProps {
   isExpanded: boolean;
@@ -24,17 +25,22 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", asUUID(session.user.id))
+          .single();
 
-      if (error) {
+        if (error) {
+          console.error("Profile fetch error:", error);
+          throw error;
+        }
+        return data;
+      } catch (error) {
         console.error("Profile fetch error:", error);
-        throw error;
+        return null;
       }
-      return data;
     },
     enabled: !!session?.user?.id,
   });
@@ -57,12 +63,17 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
       toast({
         variant: "destructive",
         title: "Error signing out",
-        description: error.message || "Please try again",
+        description: error.message || "Please try again later",
       });
     }
   };
 
   if (!session) return null;
+  
+  // Extract status safely with a fallback
+  const currentStatus = profile?.status ? 
+    convertToStatus(profile.status) : 
+    AvailabilityStatus.OFFLINE;
 
   return (
     <div className="mt-auto px-4 space-y-4">
@@ -95,11 +106,11 @@ export const UserProfileSection = ({ isExpanded }: UserProfileSectionProps) => {
             </motion.p>
             <div className="flex items-center gap-2">
               <AvailabilityIndicator 
-                status={(profile?.status as AvailabilityStatus) || "offline"}
+                status={currentStatus}
                 size={8}
               />
               <span className="text-xs text-white/60">
-                {profile?.status || "offline"}
+                {currentStatus}
               </span>
             </div>
           </div>

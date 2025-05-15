@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -12,6 +13,7 @@ import { MediaUpload } from "./post/MediaUpload";
 import { PostSubmitButtons } from "./post/PostSubmitButtons";
 import { SuccessOverlay } from "./post/SuccessOverlay";
 import { usePostSubmission } from "./post/usePostSubmission";
+import { asUUID } from "@/utils/supabase/helpers";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -59,14 +61,21 @@ export const CreatePostDialog = ({
   const checkPayingCustomerStatus = async () => {
     if (!session?.user?.id) return;
     
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_paying_customer')
-      .eq('id', session.user.id)
-      .single();
-    
-    if (!error && data) {
-      setIsPayingCustomer(data.is_paying_customer);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_paying_customer')
+        .eq('id', asUUID(session.user.id))
+        .single();
+      
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+      
+      setIsPayingCustomer(data?.is_paying_customer || false);
+    } catch (error) {
+      console.error("Error in profile fetch:", error);
     }
   };
 

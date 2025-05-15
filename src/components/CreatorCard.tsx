@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AvailabilityIndicator } from "./ui/availability-indicator";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { useToast } from "./ui/use-toast";
+import { asUUID } from "@/utils/supabase/helpers";
 
 interface CreatorCardProps {
   name: string;
@@ -44,27 +45,35 @@ export const CreatorCard = ({
     const checkFollowingStatus = async () => {
       if (!session?.user?.id) return;
       
-      const { data: followData } = await supabase
-        .from('followers')
-        .select('*')
-        .eq('follower_id', session.user.id)
-        .eq('following_id', creatorId)
-        .single();
+      try {
+        const { data: followData } = await supabase
+          .from('followers')
+          .select('*')
+          .eq('follower_id', asUUID(session.user.id))
+          .eq('following_id', asUUID(creatorId))
+          .single();
 
-      setIsFollowing(!!followData);
+        setIsFollowing(!!followData);
+      } catch (error) {
+        console.error('Error checking follow status:', error);
+      }
     };
 
     const checkSubscriptionStatus = async () => {
       if (!session?.user?.id) return;
       
-      const { data: subscriptionData } = await supabase
-        .from('creator_subscriptions')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .eq('creator_id', creatorId)
-        .single();
+      try {
+        const { data: subscriptionData } = await supabase
+          .from('creator_subscriptions')
+          .select('*')
+          .eq('user_id', asUUID(session.user.id))
+          .eq('creator_id', asUUID(creatorId))
+          .single();
 
-      setIsSubscribed(!!subscriptionData);
+        setIsSubscribed(!!subscriptionData);
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+      }
     };
 
     // Subscribe to presence changes
