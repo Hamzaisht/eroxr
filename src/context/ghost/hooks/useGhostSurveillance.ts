@@ -2,171 +2,177 @@
 import { useState, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useGhostMode } from '@/hooks/useGhostMode';
+import { useToast } from '@/hooks/use-toast';
 import { toDbValue } from '@/utils/supabase/helpers';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-export interface SurveillanceTarget {
+interface SurveillanceSession {
   id: string;
   user_id: string;
-  username?: string;
-  avatar_url?: string;
-  surveillance_reason: string;
-  start_time: string;
-  end_time?: string;
-  is_active: boolean;
+  session_type: string;
+  started_at: string;
+  status: string;
+  data: any;
 }
 
-export const useGhostSurveillance = () => {
-  const [activeSurveillance, setActiveSurveillance] = useState<SurveillanceTarget[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+export function useGhostSurveillance() {
+  const [isActive, setIsActive] = useState(false);
+  const [sessions, setSessions] = useState<SurveillanceSession[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [activeSession, setActiveSession] = useState<SurveillanceSession | null>(null);
   const session = useSession();
-  const { isGhostMode } = useGhostMode();
+  const { toast } = useToast();
+  const isMobile = useIsMobile();
 
-  // Fetch active surveillance targets
-  const fetchActiveSurveillance = async () => {
-    if (!session?.user?.id || !isGhostMode) return;
-    
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase
-        .from('surveillance_targets')
-        .select(`
-          *,
-          profiles:user_id(username, avatar_url)
-        `)
-        .eq('is_active', toDbValue(true))
-        .order('start_time', { ascending: false });
-        
-      if (error) throw error;
-      
-      // Format the data to include profile info
-      const formattedData = data.map(target => ({
-        ...target,
-        username: target.profiles?.username,
-        avatar_url: target.profiles?.avatar_url
-      }));
-      
-      setActiveSurveillance(formattedData);
-    } catch (error) {
-      console.error('Error fetching surveillance targets:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Start surveillance on a user
-  const startSurveillance = async (userId: string, reason: string) => {
-    if (!session?.user?.id || !isGhostMode) return;
-    
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase
-        .from('surveillance_targets')
-        .insert({
-          user_id: userId,
-          admin_id: session.user.id,
-          surveillance_reason: reason,
-          start_time: new Date().toISOString(),
-          is_active: true
-        })
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      // Fetch user profile for display
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('username, avatar_url')
-        .eq('id', toDbValue(userId))
-        .single();
-        
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-      }
-      
-      // Add the new surveillance target to the state
-      setActiveSurveillance(prev => [{
-        ...data,
-        username: profileData?.username,
-        avatar_url: profileData?.avatar_url
-      }, ...prev]);
-      
-      return data.id;
-    } catch (error) {
-      console.error('Error starting surveillance:', error);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // End surveillance
-  const endSurveillance = async (surveillanceId: string) => {
+  const checkSurveillanceStatus = async () => {
     if (!session?.user?.id) return;
     
-    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('admin_sessions')
+        .select('ghost_mode')
+        .eq('admin_id', toDbValue(session.user.id))
+        .single();
+      
+      if (error) {
+        // If no record found, surveillance is not active
+        setIsActive(false);
+        return;
+      }
+      
+      setIsActive(!!data?.ghost_mode);
+    } catch (error) {
+      console.error('Error checking surveillance status:', error);
+      setIsActive(false);
+    }
+  };
+
+  const toggleSurveillance = async () => {
+    if (!session?.user?.id) return;
+    
+    setLoading(true);
     
     try {
-      const { error } = await supabase
-        .from('surveillance_targets')
-        .update({
-          is_active: false,
-          end_time: new Date().toISOString()
-        })
-        .eq('id', toDbValue(surveillanceId));
+      // Check if admin session exists
+      const { data: existingSession, error: checkError } = await supabase
+        .from('admin_sessions')
+        .select('*')
+        .eq('admin_id', toDbValue(session.user.id))
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        // Real error, not just "no rows found"
+        throw checkError;
+      }
+      
+      if (existingSession) {
+        // Update existing session
+        const { error: updateError } = await supabase
+          .from('admin_sessions')
+          .update({
+            ghost_mode: !isActive,
+            last_active_at: new Date().toISOString(),
+          })
+          .eq('admin_id', toDbValue(session.user.id));
+          
+        if (updateError) throw updateError;
+      } else {
+        // Create new session
+        const { error: insertError } = await supabase
+          .from('admin_sessions')
+          .insert({
+            admin_id: session.user.id,
+            ghost_mode: true,
+            activated_at: new Date().toISOString(),
+          });
+          
+        if (insertError) throw insertError;
+      }
+      
+      setIsActive(!isActive);
+      
+      toast({
+        title: !isActive ? 'Ghost Mode Activated' : 'Ghost Mode Deactivated',
+        description: !isActive ? 'You are now invisible to users' : 'Users can now see your activity',
+      });
+    } catch (error) {
+      console.error('Error toggling surveillance mode:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to toggle ghost mode',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get available surveillance sessions
+  const fetchSessions = async () => {
+    if (!session?.user?.id || !isActive) return;
+    
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('surveillance_sessions')
+        .select('*')
+        .eq('status', toDbValue('active'))
+        .order('started_at', { ascending: false });
         
       if (error) throw error;
       
-      // Remove the target from active surveillance
-      setActiveSurveillance(prev => 
-        prev.filter(target => target.id !== surveillanceId)
-      );
-      
-      return true;
+      setSessions(data as SurveillanceSession[]);
     } catch (error) {
-      console.error('Error ending surveillance:', error);
-      return false;
+      console.error('Error fetching surveillance sessions:', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  // Load initial data
-  useEffect(() => {
-    if (isGhostMode) {
-      fetchActiveSurveillance();
-    }
-  }, [isGhostMode, session?.user?.id]);
-
-  // Subscribe to surveillance updates
-  useEffect(() => {
-    if (!isGhostMode || !session?.user?.id) return;
-    
-    const channel = supabase
-      .channel('ghost-surveillance')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'surveillance_targets'
-      }, () => {
-        // Refetch on any changes
-        fetchActiveSurveillance();
-      })
-      .subscribe();
+  // Join a surveillance session
+  const joinSession = (sessionId: string) => {
+    const selectedSession = sessions.find(s => s.id === sessionId);
+    if (selectedSession) {
+      setActiveSession(selectedSession);
       
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isGhostMode, session?.user?.id]);
+      // Mobile warning
+      if (isMobile) {
+        toast({
+          title: 'Mobile Warning',
+          description: 'Surveillance mode is optimized for desktop. Some features may be limited on mobile.',
+        });
+      }
+    }
+  };
+
+  // Leave the current surveillance session
+  const leaveSession = () => {
+    setActiveSession(null);
+  };
+
+  // Initialize
+  useEffect(() => {
+    if (session?.user?.id) {
+      checkSurveillanceStatus();
+    }
+  }, [session?.user?.id]);
+
+  // Fetch sessions when ghost mode is activated
+  useEffect(() => {
+    if (isActive) {
+      fetchSessions();
+    }
+  }, [isActive]);
 
   return {
-    activeSurveillance,
-    isLoading,
-    startSurveillance,
-    endSurveillance,
-    refresh: fetchActiveSurveillance
+    isActive,
+    loading,
+    toggleSurveillance,
+    sessions,
+    activeSession,
+    joinSession,
+    leaveSession,
+    refreshSessions: fetchSessions,
   };
-};
+}

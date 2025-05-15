@@ -1,42 +1,34 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState<boolean>(() => {
-    // Initialize with current match state if in browser
-    if (typeof window !== 'undefined') {
-      return window.matchMedia(query).matches;
-    }
-    // Default to false for SSR
-    return false;
-  });
+/**
+ * Hook to detect if the current device is a mobile device
+ * @param breakpoint Breakpoint width to consider mobile (default: 768px)
+ * @returns Boolean indicating if the device is mobile
+ */
+export function useIsMobile(breakpoint: number = 768) {
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const mediaQuery = window.matchMedia(query);
-      
-      // Set initial value
-      setMatches(mediaQuery.matches);
+    // Check if window exists (browser environment)
+    if (typeof window === 'undefined') return;
 
-      // Define the handler
-      const handler = (event: MediaQueryListEvent) => {
-        setMatches(event.matches);
-      };
+    // Initial check
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < breakpoint);
+    };
 
-      // Add event listener
-      mediaQuery.addEventListener('change', handler);
-      
-      // Clean up
-      return () => {
-        mediaQuery.removeEventListener('change', handler);
-      };
-    }
-  }, [query]);
+    // Run on mount
+    checkIsMobile();
 
-  return matches;
-}
+    // Add event listener for resize
+    window.addEventListener('resize', checkIsMobile);
 
-// Add the useIsMobile hook that uses the useMediaQuery hook
-export function useIsMobile(): boolean {
-  return useMediaQuery('(max-width: 768px)');
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', checkIsMobile);
+    };
+  }, [breakpoint]);
+
+  return isMobile;
 }

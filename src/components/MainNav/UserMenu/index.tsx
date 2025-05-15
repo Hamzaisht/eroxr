@@ -106,7 +106,9 @@ export function UserMenu() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus.toString().toLowerCase() 
+        })
         .eq('id', toDbValue(session.user.id));
         
       if (error) {

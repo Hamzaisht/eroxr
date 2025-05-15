@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,8 @@ interface AdminLog {
   target_id: string;
   details: any;
   created_at: string;
-  admin_name?: string; // Adding optional field for displaying admin name
+  admin_name?: string; 
+  profiles?: { username?: string } | null;
 }
 
 export const AdminLogsTable = () => {
@@ -28,17 +28,20 @@ export const AdminLogsTable = () => {
     try {
       const { data, error } = await supabase
         .from('admin_logs')
-        .select('*, profiles(username)')
+        .select('*, profiles:admin_id(username)')
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (error) throw error;
 
       // Transform data to include admin_name from profiles
-      const formattedLogs = data.map(log => ({
-        ...log,
-        admin_name: log.profiles?.username || 'Unknown Admin'
-      }));
+      const formattedLogs = data.map(log => {
+        const adminLog: AdminLog = {
+          ...log,
+          admin_name: log.profiles?.username || 'Unknown Admin'
+        };
+        return adminLog;
+      });
 
       setLogs(formattedLogs);
     } catch (error: any) {

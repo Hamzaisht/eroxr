@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { toDbValue } from "@/utils/supabase/helpers";
 import { 
   Users, 
   MessageSquare, 

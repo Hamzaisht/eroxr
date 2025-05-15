@@ -1,8 +1,8 @@
-
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { toDbValue } from "@/utils/supabase/helpers"; 
 import { 
   Users, 
   MessageSquare, 
@@ -36,11 +36,11 @@ export function GodmodeDashboardHome() {
         { count: activeStreams },
         { data: alerts },
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', false),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', true),
-        supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('id_verifications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('live_streams').select('*', { count: 'exact', head: true }).eq('status', 'live'),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', toDbValue(false)),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', toDbValue(true)),
+        supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', toDbValue('pending')),
+        supabase.from('id_verifications').select('*', { count: 'exact', head: true }).eq('status', toDbValue('pending')),
+        supabase.from('live_streams').select('*', { count: 'exact', head: true }).eq('status', toDbValue('live')),
         supabase.from('admin_audit_logs').select('*').order('created_at', { ascending: false }).limit(5),
       ]);
 

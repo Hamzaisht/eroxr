@@ -1,17 +1,6 @@
 
 /**
- * Enumeration of different media types for the application
- */
-export enum MediaType {
-  IMAGE = "image",
-  VIDEO = "video", 
-  AUDIO = "audio",
-  GIF = "gif",
-  UNKNOWN = "unknown"
-}
-
-/**
- * Enumeration of different availability statuses for users
+ * User availability status
  */
 export enum AvailabilityStatus {
   ONLINE = "online",
@@ -22,90 +11,31 @@ export enum AvailabilityStatus {
 }
 
 /**
- * Interface for media items
+ * Media type enum for different content types
  */
-export interface MediaItem {
-  url: string;
-  type: 'image' | 'video';
-  caption?: string;
-  thumbnailUrl?: string;
+export enum MediaType {
+  IMAGE = "image",
+  VIDEO = "video",
+  AUDIO = "audio",
+  DOCUMENT = "document",
+  OTHER = "other"
 }
 
 /**
- * Interface for media source
+ * Content visibility options
  */
-export interface MediaSource {
-  url?: string;
-  media_url?: string;
-  video_url?: string;
-  thumbnail?: string;
-  poster?: string;
-  media_type?: MediaType;
-  content_type?: string;
-  creator_id?: string;
-}
+export type ContentVisibility = 'public' | 'private' | 'subscribers_only' | 'followers_only';
 
 /**
- * Interface for media render options
+ * Content classification interface
  */
-export interface MediaOptions {
-  quality?: number;
-  autoPlay?: boolean;
-  controls?: boolean;
-  loop?: boolean;
-  muted?: boolean;
-  onError?: () => void;
-}
-
-/**
- * Interface for media renderer props
- */
-export interface MediaRendererProps {
-  src: MediaSource | string;
-  type?: MediaType;
-  className?: string;
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  poster?: string;
-  onClick?: () => void;
-  onError?: () => void;
-  onLoad?: () => void;
-  onEnded?: () => void;
-  onTimeUpdate?: (time?: number) => void;
-  allowRetry?: boolean;
-  maxRetries?: number;
-  showWatermark?: boolean;
-  alt?: string;
-}
-
-/**
- * Interface for universal media props
- */
-export interface UniversalMediaProps {
-  item: MediaSource | string;
-  className?: string;
-  autoPlay?: boolean;
-  controls?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  poster?: string;
-  showWatermark?: boolean;
-  onClick?: () => void;
-  onLoad?: () => void;
-  onError?: () => void;
-  onEnded?: () => void;
-  onTimeUpdate?: (time?: number) => void;
-  alt?: string;
-  maxRetries?: number;
-}
-
-/**
- * Interface for upload progress
- */
-export interface UploadProgress {
-  percentage: number;
-  status: 'idle' | 'uploading' | 'success' | 'error';
-  error?: string;
+export interface ContentClassification {
+  id: string;
+  content_type: string;
+  classification: string;
+  visibility: string;
+  created_at: string;
+  age_restriction: boolean;
+  requires_warning: boolean;
+  warning_text?: string;
 }

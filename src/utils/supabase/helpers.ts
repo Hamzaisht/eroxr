@@ -61,8 +61,8 @@ export const convertToStatus = (status: string): AvailabilityStatus => {
  * Convert data to database-compatible format
  * This helps with type casting for Supabase operations
  */
-export const toDbValue = (value: any) => {
-  return value as any;
+export const toDbValue = <T,>(value: T): any => {
+  return value;
 };
 
 /**

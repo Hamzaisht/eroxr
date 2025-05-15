@@ -3,3 +3,4 @@
 export * from './media';
 export * from './upload';
 export * from './supabase/helpers';
+export * from './stringUtils';

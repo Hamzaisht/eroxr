@@ -1,80 +1,52 @@
 
-import { useState, useEffect } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@supabase/auth-helpers-react';
+import { useToast } from '@/hooks/use-toast';
 import { toDbValue } from '@/utils/supabase/helpers';
 
-export interface GhostAlert {
+interface GhostAlert {
   id: string;
-  type: string;
-  message: string;
-  target_id: string;
+  alert_type: string;
+  content: string;
   created_at: string;
-  is_read: boolean;
-  severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
-export const useGhostAlerts = () => {
+export function useGhostAlerts() {
   const [alerts, setAlerts] = useState<GhostAlert[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
   const session = useSession();
+  const { toast } = useToast();
 
-  // Fetch alerts
-  const { data, refetch } = useQuery({
-    queryKey: ['ghost-alerts', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return [];
-      
+  const fetchAlerts = async () => {
+    if (!session?.user?.id) return;
+    
+    setLoading(true);
+    
+    try {
       const { data, error } = await supabase
         .from('admin_alerts')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .eq('admin_id', toDbValue(session.user.id))
+        .eq('is_read', toDbValue(false))
+        .order('created_at', { ascending: false });
         
-      if (error) {
-        console.error('Error fetching alerts:', error);
-        return [];
-      }
+      if (error) throw error;
       
-      return data || [];
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  useEffect(() => {
-    if (data) {
       setAlerts(data as GhostAlert[]);
-      const unread = data.filter(alert => !alert.is_read).length;
-      setUnreadCount(unread);
+    } catch (error: any) {
+      console.error('Error fetching ghost mode alerts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch alerts',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
-  }, [data]);
-
-  // Subscribe to new alerts
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    
-    const channel = supabase
-      .channel('ghost-alerts')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'admin_alerts',
-      }, payload => {
-        const newAlert = payload.new as GhostAlert;
-        setAlerts(prev => [newAlert, ...prev]);
-        setUnreadCount(prev => prev + 1);
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session?.user?.id]);
+  };
 
   const markAsRead = async (alertId: string) => {
-    if (!session?.user?.id) return;
-    
     try {
       const { error } = await supabase
         .from('admin_alerts')
@@ -83,50 +55,48 @@ export const useGhostAlerts = () => {
         
       if (error) throw error;
       
-      // Update local state
-      setAlerts(prev => 
-        prev.map(alert => 
-          alert.id === alertId ? { ...alert, is_read: true } : alert
-        )
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
+      setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+    } catch (error: any) {
       console.error('Error marking alert as read:', error);
     }
   };
 
-  const markAllAsRead = async () => {
-    if (!session?.user?.id || alerts.length === 0) return;
-    
-    try {
-      const unreadAlertIds = alerts
-        .filter(alert => !alert.is_read)
-        .map(alert => alert.id);
-        
-      if (unreadAlertIds.length === 0) return;
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchAlerts();
       
-      const { error } = await supabase
-        .from('admin_alerts')
-        .update({ is_read: true })
-        .in('id', unreadAlertIds);
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('alerts-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'admin_alerts',
+            filter: `admin_id=eq.${session.user.id}`,
+          },
+          (payload) => {
+            setAlerts((prev) => [payload.new as GhostAlert, ...prev]);
+            
+            toast({
+              title: 'New Alert',
+              description: (payload.new as GhostAlert).content,
+            });
+          }
+        )
+        .subscribe();
         
-      if (error) throw error;
-      
-      // Update local state
-      setAlerts(prev => 
-        prev.map(alert => ({ ...alert, is_read: true }))
-      );
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Error marking all alerts as read:', error);
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-  };
+  }, [session?.user?.id]);
 
   return {
     alerts,
-    unreadCount,
+    loading,
     markAsRead,
-    markAllAsRead,
-    refetch,
+    refreshAlerts: fetchAlerts,
   };
-};
+}
