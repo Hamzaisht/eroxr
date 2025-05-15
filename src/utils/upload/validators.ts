@@ -72,3 +72,47 @@ export const generateUniqueFileName = (file: File): string => {
   const random = Math.floor(Math.random() * 1000);
   return `${timestamp}-${random}.${extension}`;
 };
+
+/**
+ * Check if a file is an image
+ */
+export const isImageFile = (file: File): boolean => {
+  return file.type.startsWith('image/');
+};
+
+/**
+ * Check if a file is a video
+ */
+export const isVideoFile = (file: File): boolean => {
+  return file.type.startsWith('video/');
+};
+
+/**
+ * Check if a file is an audio file
+ */
+export const isAudioFile = (file: File): boolean => {
+  return file.type.startsWith('audio/');
+};
+
+/**
+ * Validate a file for upload
+ */
+export const validateFileForUpload = (file: File, maxSizeInMB = 100): { valid: boolean; error?: string } => {
+  if (!file) {
+    return { valid: false, error: 'No file selected' };
+  }
+  
+  if (!(file instanceof File)) {
+    return { valid: false, error: 'Invalid file object' };
+  }
+  
+  if (file.size === 0) {
+    return { valid: false, error: 'File is empty' };
+  }
+  
+  if (file.size > maxSizeInMB * 1024 * 1024) {
+    return { valid: false, error: `File size exceeds ${maxSizeInMB}MB limit` };
+  }
+  
+  return { valid: true };
+};

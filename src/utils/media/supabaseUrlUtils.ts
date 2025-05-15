@@ -1,107 +1,54 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Get the public URL for a file in Supabase storage
- */
-export const getPublicUrl = (bucket: string, path: string): string => {
-  if (!path) return '';
-  
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  return data?.publicUrl || '';
-};
+interface SupabaseUrlOptions {
+  useSignedUrls?: boolean;
+  download?: boolean;
+  transform?: {
+    width?: number;
+    height?: number;
+    quality?: number;
+    format?: 'webp' | 'png' | 'jpg' | 'jpeg' | 'origin';
+  };
+}
 
 /**
- * Get a signed URL for a file in Supabase storage (useful for private buckets)
+ * Get a URL for a file in Supabase storage
+ * This function can return either a public or signed URL based on options
  */
-export const getSignedUrl = async (bucket: string, path: string, expiresIn: number = 3600): Promise<string> => {
-  if (!path) return '';
-  
-  try {
-    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
-    
-    if (error) {
-      console.error('Error getting signed URL:', error);
-      return '';
-    }
-    
-    return data?.signedUrl || '';
-  } catch (error) {
-    console.error('Error getting signed URL:', error);
-    return '';
+export const getSupabaseUrl = async (
+  bucket: string, 
+  path: string, 
+  options: SupabaseUrlOptions = {}
+): Promise<{ url: string; error?: string }> => {
+  if (!path) {
+    return { url: '', error: 'No path provided' };
   }
-};
-
-/**
- * Get the download URL for a file in Supabase storage
- */
-export const getDownloadUrl = (bucket: string, path: string): string => {
-  if (!path) return '';
-  
-  return supabase.storage.from(bucket).getPublicUrl(path, {
-    download: true,
-  }).data.publicUrl;
-};
-
-/**
- * Get transformed image URL (for resizing, format conversion, etc.)
- */
-export const getTransformedUrl = (bucket: string, path: string, options: {
-  width?: number;
-  height?: number;
-  quality?: number;
-  format?: 'origin';
-} = {}): string => {
-  if (!path) return '';
-  
-  return supabase.storage.from(bucket).getPublicUrl(path, {
-    transform: options
-  }).data.publicUrl;
-};
-
-/**
- * Check if a file exists in Supabase storage
- */
-export const checkFileExists = async (bucket: string, path: string): Promise<boolean> => {
-  if (!path) return false;
   
   try {
-    // List files with exact path as prefix to check if file exists
-    const { data, error } = await supabase.storage.from(bucket).list(path.split('/').slice(0, -1).join('/'), {
-      limit: 1,
-      offset: 0,
-      search: path.split('/').pop(),
-    });
-    
-    if (error) {
-      console.error('Error checking if file exists:', error);
-      return false;
+    if (options.useSignedUrls) {
+      // Get signed URL (for private buckets)
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(path, 3600);
+      
+      if (error) {
+        console.error('Error getting signed URL:', error);
+        return { url: '', error: error.message };
+      }
+      
+      return { url: data?.signedUrl || '' };
+    } else {
+      // Get public URL
+      const { data } = supabase.storage.from(bucket).getPublicUrl(path, {
+        download: options.download,
+        transform: options.transform
+      });
+      
+      return { url: data?.publicUrl || '' };
     }
-    
-    return (data?.length || 0) > 0;
-  } catch (error) {
-    console.error('Error checking if file exists:', error);
-    return false;
-  }
-};
-
-/**
- * Delete a file from Supabase storage
- */
-export const deleteFile = async (bucket: string, path: string): Promise<boolean> => {
-  if (!path) return false;
-  
-  try {
-    const { error } = await supabase.storage.from(bucket).remove([path]);
-    
-    if (error) {
-      console.error('Error deleting file:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error deleting file:', error);
-    return false;
+  } catch (error: any) {
+    console.error('Error getting URL:', error);
+    return { url: '', error: error.message };
   }
 };

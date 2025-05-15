@@ -8,34 +8,23 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Upload, Image as ImageIcon } from 'lucide-react';
 import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '@/utils/upload/validators';
 import { useToast } from '@/hooks/use-toast';
-import { UploadOptions } from '@/utils/media/types';
-
-interface MediaUploaderProps {
-  onUploadComplete: (urls: string[]) => void;
-  onUploadError?: (error: string) => void;
-  bucketName: string;
-  folderPath?: string;
-  maxFiles?: number;
-  maxSizeInMB?: number;
-  acceptedFileTypes?: 'images' | 'videos' | 'all';
-  className?: string;
-  buttonText?: string;
-  showPreview?: boolean;
-  options?: Omit<UploadOptions, 'bucket'>;
-}
+import { MediaUploaderProps } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 export const MediaUploader: React.FC<MediaUploaderProps> = ({
-  onUploadComplete,
-  onUploadError,
+  onComplete,
+  onError,
+  context = 'media',
   bucketName,
   folderPath = '',
   maxFiles = 5,
   maxSizeInMB = 50,
-  acceptedFileTypes = 'all',
+  mediaTypes = 'both',
   className = '',
   buttonText = 'Upload Media',
   showPreview = true,
-  options = {}
+  autoUpload = false,
+  onFileCapture
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -44,14 +33,37 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Determine accepted MIME types based on acceptedFileTypes
+  // Map context to bucket name if not explicitly provided
+  const getBucketName = () => {
+    if (bucketName) return bucketName;
+    
+    // Map generic categories to actual bucket names
+    switch (context) {
+      case 'avatar':
+      case 'profile':
+        return 'avatars';
+      case 'post':
+        return 'posts';
+      case 'story':
+        return 'stories';
+      case 'dating':
+      case 'video-ad':
+        return 'dating-videos';
+      case 'chat':
+        return 'messages';
+      default:
+        return 'media';
+    }
+  };
+
+  // Determine accepted MIME types based on mediaTypes
   const getAcceptedTypes = () => {
-    switch (acceptedFileTypes) {
-      case 'images':
+    switch (mediaTypes) {
+      case 'image':
         return SUPPORTED_IMAGE_TYPES;
-      case 'videos':
+      case 'video':
         return SUPPORTED_VIDEO_TYPES;
-      case 'all':
+      case 'both':
       default:
         return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
     }
@@ -91,7 +103,18 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     setFiles(acceptedFiles);
     setPreviews(newPreviews);
     setError(null);
-  }, [maxFiles, maxSizeInMB, acceptedTypes]);
+    
+    // Notify parent about file selection if callback provided
+    if (onFileCapture && acceptedFiles.length > 0) {
+      onFileCapture(acceptedFiles[0]);
+    }
+    
+    // Auto upload if enabled
+    if (autoUpload && acceptedFiles.length > 0) {
+      // Use setTimeout to allow state to update first
+      setTimeout(() => handleUpload(acceptedFiles), 100);
+    }
+  }, [maxFiles, maxSizeInMB, acceptedTypes, onFileCapture, autoUpload]);
 
   // Dropzone configuration
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -105,8 +128,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   });
 
   // Handle upload
-  const handleUpload = async () => {
-    if (files.length === 0) {
+  const handleUpload = async (filesToUpload = files) => {
+    if (filesToUpload.length === 0) {
       setError('Please select files to upload.');
       return;
     }
@@ -118,9 +141,11 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     try {
       const uploadedUrls: string[] = [];
       let totalProgress = 0;
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      
+      const targetBucket = getBucketName();
+      
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
         
         // Log file details for debugging
         console.log("🧬 FILE DEBUG", {
@@ -129,17 +154,20 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           type: file.type,
         });
 
-        // Generate path for storage
+        // Generate unique path for storage
+        const uniqueId = uuidv4();
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         const path = folderPath 
-          ? `${folderPath}/${Date.now()}_${file.name}` 
-          : `${Date.now()}_${file.name}`;
+          ? `${folderPath}/${Date.now()}_${uniqueId}_${safeName}` 
+          : `${Date.now()}_${uniqueId}_${safeName}`;
 
         // Upload file
         const { data, error } = await supabase.storage
-          .from(bucketName)
+          .from(targetBucket)
           .upload(path, file, { 
             upsert: true,
-            ...options
+            contentType: file.type,
+            cacheControl: '3600'
           });
 
         if (error) {
@@ -148,7 +176,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
         // Get public URL
         const { data: urlData } = supabase.storage
-          .from(bucketName)
+          .from(targetBucket)
           .getPublicUrl(data.path);
 
         if (urlData?.publicUrl) {
@@ -156,7 +184,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         }
 
         // Update progress
-        totalProgress = ((i + 1) / files.length) * 100;
+        totalProgress = ((i + 1) / filesToUpload.length) * 100;
         setProgress(totalProgress);
       }
 
@@ -167,6 +195,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       setFiles([]);
       setPreviews([]);
       setProgress(0);
+      setIsUploading(false);
 
       // Notify completion
       toast({
@@ -174,13 +203,19 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         description: `Successfully uploaded ${uploadedUrls.length} files.`,
       });
       
-      onUploadComplete(uploadedUrls);
+      // Call onComplete with the first URL if there's at least one
+      if (uploadedUrls.length > 0) {
+        onComplete(uploadedUrls[0]);
+      } else if (uploadedUrls.length > 1) {
+        // This would be for multi-file uploads in the future
+        // onCompleteMultiple?.(uploadedUrls);
+      }
     } catch (error: any) {
       console.error('Upload error:', error);
       setError(error.message || 'An error occurred during upload.');
       
-      if (onUploadError) {
-        onUploadError(error.message || 'Upload failed');
+      if (onError) {
+        onError(error.message || 'Upload failed');
       }
       
       toast({
@@ -188,7 +223,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         title: "Upload failed",
         description: error.message || 'An error occurred during upload.',
       });
-    } finally {
+      
       setIsUploading(false);
     }
   };
@@ -285,7 +320,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       <div className="flex justify-end">
         <Button
           type="button"
-          onClick={handleUpload}
+          onClick={() => handleUpload()}
           disabled={isUploading || files.length === 0}
           className="flex items-center gap-2"
         >

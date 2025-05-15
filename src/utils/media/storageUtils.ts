@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { getSupabaseUrl } from "./supabaseUrlUtils";
+import { getSupabaseUrl } from "@/utils/media/supabaseUrlUtils";
 
 /**
  * Gets the public URL for a file in Supabase Storage

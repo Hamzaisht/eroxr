@@ -30,7 +30,7 @@ export const FileUploadDialog = ({
   onSuccess
 }: FileUploadDialogProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileCategory, setFileCategory] = useState("media");
+  const [contentCategory, setContentCategory] = useState("media");
   const [maxFileSizeMB, setMaxFileSizeMB] = useState(100);
   const [acceptedFileTypes, setAcceptedFileTypes] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -59,7 +59,7 @@ export const FileUploadDialog = ({
 
     try {
       const uploadOptions: UploadOptions = {
-        bucket: fileCategory,
+        contentCategory: contentCategory,
         maxSizeInMB: maxFileSizeMB
       };
 
@@ -138,9 +138,9 @@ export const FileUploadDialog = ({
             <Input
               type="text"
               id="category"
-              defaultValue={fileCategory}
+              defaultValue={contentCategory}
               className="col-span-3"
-              onChange={(e) => setFileCategory(e.target.value)}
+              onChange={(e) => setContentCategory(e.target.value)}
             />
           </div>
 

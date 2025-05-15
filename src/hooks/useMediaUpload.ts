@@ -103,32 +103,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
         });
       }, 200);
       
-      // Create bucket path based on content category
-      let bucketName = finalOptions?.contentCategory || 'media';
-      
       // Map generic categories to actual bucket names
-      switch (bucketName) {
-        case 'avatar':
-        case 'profile':
-          bucketName = 'avatars';
-          break;
-        case 'post':
-          bucketName = 'posts';
-          break;
-        case 'story':
-          bucketName = 'stories';
-          break;
-        case 'dating':
-        case 'video-ad':
-          bucketName = 'dating-videos';
-          break;
-        case 'chat':
-          bucketName = 'messages';
-          break;
-        default:
-          // Use the provided name or default to 'media'
-          break;
-      }
+      let bucketName = finalOptions?.contentCategory || 'media';
       
       // Generate unique file path
       const filePath = createUniqueFilePath(session.user.id, file);

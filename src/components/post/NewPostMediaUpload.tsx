@@ -54,7 +54,7 @@ export const NewPostMediaUpload: React.FC<NewPostMediaUploadProps> = ({
       {showUploader ? (
         <div className="border rounded-md p-4">
           <MediaUploader 
-            context="post"
+            bucketName="posts"
             onComplete={handleMediaComplete}
           />
           <Button

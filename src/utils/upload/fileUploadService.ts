@@ -1,8 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { createUniqueFilePath, runFileDiagnostic } from "@/utils/upload/fileUtils";
-import { inferContentTypeFromExtension } from "@/utils/media/formatUtils";
-import { addCacheBuster } from "@/utils/media/urlUtils";
+import { getFileExtension } from "@/utils/upload/validators";
 import { getSupabaseUrl } from "@/utils/media/supabaseUrlUtils";
 
 interface FileUploadOptions {
@@ -17,6 +16,41 @@ interface FileUploadResult {
   path?: string;
   error?: string;
 }
+
+/**
+ * Add cache buster to URL
+ */
+export const addCacheBuster = (url: string): string => {
+  if (!url) return '';
+  
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_cb=${Date.now()}`;
+};
+
+/**
+ * Infer content type from file extension
+ */
+export const inferContentTypeFromExtension = (filename: string): string => {
+  const extension = getFileExtension(filename);
+  
+  // Common image types
+  if (['jpg', 'jpeg'].includes(extension)) return 'image/jpeg';
+  if (extension === 'png') return 'image/png';
+  if (extension === 'gif') return 'image/gif';
+  if (extension === 'webp') return 'image/webp';
+  
+  // Common video types
+  if (extension === 'mp4') return 'video/mp4';
+  if (extension === 'webm') return 'video/webm';
+  if (extension === 'mov') return 'video/quicktime';
+  
+  // Common audio types
+  if (extension === 'mp3') return 'audio/mpeg';
+  if (extension === 'wav') return 'audio/wav';
+  
+  // Default
+  return 'application/octet-stream';
+};
 
 /**
  * Upload a file to Supabase storage
@@ -158,7 +192,7 @@ export const createLocalPreview = (file: File): string => {
  * @param url URL to revoke
  */
 export const revokeLocalPreview = (url: string): void => {
-  if (url.startsWith('blob:')) {
+  if (url && url.startsWith('blob:')) {
     URL.revokeObjectURL(url);
   }
 };

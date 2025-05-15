@@ -115,7 +115,7 @@ export const NewStoryUploader: React.FC = () => {
         </div>
       ) : (
         <MediaUploader
-          context="story"
+          bucketName="stories"
           onComplete={handleMediaComplete}
           buttonText="Upload Story Media"
           onFileCapture={handleFileCapture} // Prop to capture file reference

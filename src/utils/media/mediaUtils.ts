@@ -1,84 +1,84 @@
 
-import { MediaSource, MediaType } from './types';
-import { extractMediaUrl } from './urlUtils';
+import { v4 as uuidv4 } from 'uuid';
+import { getFileExtension } from '../upload/validators';
 
 /**
- * Create a unique file path for a media file
+ * Create a unique file path for uploading
+ * @param userId User ID for organization
+ * @param file File being uploaded
+ * @returns A unique path string for storage
  */
-export function createUniqueFilePath(userId: string, file: File, prefix = ''): string {
-  const timestamp = new Date().getTime();
-  const extension = file.name.split('.').pop() || '';
-  const safeName = file.name
-    .split('.')[0]
-    .replace(/[^a-z0-9]/gi, '_')
-    .toLowerCase();
+export function createUniqueFilePath(userId: string, file: File): string {
+  // Get clean filename and extension
+  const extension = getFileExtension(file);
+  const baseFilename = file.name.replace(/\.[^/.]+$/, "");
+  const sanitizedName = sanitizeFilename(baseFilename);
   
-  return `${prefix ? prefix + '/' : ''}${userId}/${timestamp}_${safeName}.${extension}`;
+  // Generate a timestamp with random string to ensure uniqueness
+  const timestamp = Date.now();
+  const uniqueId = uuidv4().substring(0, 8);
+  
+  return `${userId}/${timestamp}_${uniqueId}_${sanitizedName}.${extension}`;
 }
 
 /**
- * Determine the media type based on URL or MIME type
+ * Sanitize a filename for storage
+ * @param filename Original filename
+ * @returns Safe filename
  */
-export function determineMediaType(source: string | MediaSource): MediaType {
-  // Handle string sources
-  if (typeof source === 'string') {
-    return _getMediaTypeFromUrl(source);
-  }
-  
-  // If media_type is already specified, use it
-  if (source.media_type) {
-    return source.media_type;
-  }
-  
-  // Check for video_url or media_url
-  const url = extractMediaUrl(source);
-  if (url) {
-    return _getMediaTypeFromUrl(url);
-  }
-  
-  return MediaType.UNKNOWN;
+export function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[^a-z0-9-_]/gi, '_') // Replace non-alphanumeric with underscore
+    .replace(/_{2,}/g, '_')        // Replace multiple underscores with single
+    .replace(/^_+|_+$/g, '')       // Remove leading/trailing underscores
+    .toLowerCase()
+    .substring(0, 50);             // Limit length
 }
-
-// Export extractMediaUrl to resolve import errors
-export { extractMediaUrl } from './urlUtils';
-
-// Re-export the uploadFileToStorage function to maintain backward compatibility
-export { uploadFileToStorage } from '../upload/storageService';
-
-function _getMediaTypeFromUrl(url: string): MediaType {
-  const extension = url.split('.').pop()?.toLowerCase();
-  
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension || '')) {
-    return MediaType.IMAGE;
-  }
-  
-  if (['mp4', 'webm', 'mov', 'avi'].includes(extension || '')) {
-    return MediaType.VIDEO;
-  }
-  
-  if (['mp3', 'wav', 'ogg'].includes(extension || '')) {
-    return MediaType.AUDIO;
-  }
-  
-  return MediaType.UNKNOWN;
-}
-
-// A simplified media orchestrator for caching and reusability
-export const mediaOrchestrator = {
-  process: (source: string | MediaSource): MediaSource => {
-    return typeof source === 'string' ? { url: source } : source;
-  },
-  createMediaId: (source: string | MediaSource): string => {
-    const url = typeof source === 'string' ? source : extractMediaUrl(source);
-    return `media_${url?.split('/').pop() || ''}`;
-  },
-  registerMediaRequest: (source: MediaSource): void => {
-    // Just a stub for now
-    console.log("Media registered:", extractMediaUrl(source));
-  }
-};
 
 /**
- * Normalize a media source to ensure it has a valid URL property
+ * Extract the content URL from a media object
+ * @param media The media object or URL string
+ * @returns The extracted URL
  */
-export { normalizeMediaSource } from './types';
+export function extractMediaUrl(media: any): string {
+  if (!media) return '';
+  
+  // If it's a string, assume it's already a URL
+  if (typeof media === 'string') return media;
+  
+  // Check all possible URL properties
+  return media.url || 
+         media.media_url || 
+         media.video_url || 
+         media.image_url || 
+         media.thumbnail_url || 
+         '';
+}
+
+/**
+ * Get appropriate MIME type for an extension
+ * @param extension File extension
+ * @returns MIME type
+ */
+export function getMimeTypeFromExtension(extension: string): string {
+  const ext = extension.toLowerCase();
+  
+  // Image types
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'gif') return 'image/gif';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'svg') return 'image/svg+xml';
+  
+  // Video types
+  if (ext === 'mp4') return 'video/mp4';
+  if (ext === 'webm') return 'video/webm';
+  if (ext === 'mov') return 'video/quicktime';
+  
+  // Audio types
+  if (ext === 'mp3') return 'audio/mpeg';
+  if (ext === 'wav') return 'audio/wav';
+  if (ext === 'ogg') return 'audio/ogg';
+  
+  return 'application/octet-stream';
+}

@@ -15,6 +15,8 @@ export interface MediaUploaderProps {
   showPreview?: boolean;
   autoUpload?: boolean;
   onFileCapture?: (file: File) => void;
+  bucketName?: string;
+  folderPath?: string;
 }
 
 export interface FileUploadButtonProps {

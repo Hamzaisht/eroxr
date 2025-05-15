@@ -18,7 +18,7 @@ export const useContextualMediaUpload = (contextId: string, contextType: string 
       const contentCategory = contextType === 'post' ? 'posts' : 'messages';
       
       const result = await uploadMedia(file, {
-        bucket: contentCategory,
+        contentCategory: contentCategory,
         maxSizeInMB: 100
       });
       
