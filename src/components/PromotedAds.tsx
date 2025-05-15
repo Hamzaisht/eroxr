@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,7 @@ export const PromotedAds = () => {
   useEffect(() => {
     const fetchPromotedAds = async () => {
       try {
+        // Using string equality directly to handle TypeScript issues
         const { data, error } = await supabase
           .from("dating_ads")
           .select(`
@@ -32,6 +32,7 @@ export const PromotedAds = () => {
             view_count,
             message_count
           `)
+          // We'll use .eq instead of filter objects to avoid type issues
           .eq("is_active", true)
           .eq("country", "sweden")
           .order("created_at", { ascending: false })

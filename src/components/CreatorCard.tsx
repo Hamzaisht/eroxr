@@ -21,6 +21,12 @@ interface CreatorCardProps {
   isPremium?: boolean;
   followerCount?: number;
   postCount?: number;
+  // For backward compatibility with FeaturedCreators
+  name?: string;
+  image?: string;
+  creatorId?: string;
+  description?: string;
+  subscribers?: number;
 }
 
 export const CreatorCard = ({
@@ -33,7 +39,20 @@ export const CreatorCard = ({
   isPremium = false,
   followerCount = 0,
   postCount = 0,
+  // Map legacy props to new props
+  name,
+  image,
+  creatorId,
+  description,
+  subscribers,
 }: CreatorCardProps) => {
+  // Use new props or fall back to legacy props
+  const displayId = id || creatorId || "";
+  const displayUsername = username || name || "";
+  const displayAvatar = avatarUrl || image;
+  const displayBio = bio || description;
+  const displayFollowerCount = followerCount || subscribers || 0;
+  
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -50,7 +69,7 @@ export const CreatorCard = ({
         .from("followers")
         .select()
         .eq("follower_id", asUUID(session.user.id))
-        .eq("following_id", asUUID(id))
+        .eq("following_id", asUUID(displayId))
         .maybeSingle();
       
       setIsFollowing(!!data);
@@ -68,7 +87,7 @@ export const CreatorCard = ({
         .from("creator_subscriptions")
         .select()
         .eq("user_id", asUUID(session.user.id))
-        .eq("creator_id", asUUID(id))
+        .eq("creator_id", asUUID(displayId))
         .maybeSingle();
       
       setIsSubscribed(!!data);
@@ -92,28 +111,31 @@ export const CreatorCard = ({
           .from("followers")
           .delete()
           .eq("follower_id", asUUID(session.user.id))
-          .eq("following_id", asUUID(id));
+          .eq("following_id", asUUID(displayId));
         
         if (error) throw error;
         
         toast({
           title: "Unfollowed",
-          description: `You are no longer following ${username}`,
+          description: `You are no longer following ${displayUsername}`,
         });
       } else {
         // Follow
+        // Creating an object with the correct column names
+        const followData = {
+          follower_id: asUUID(session.user.id), 
+          following_id: asUUID(displayId),
+        };
+        
         const { error } = await supabase
           .from("followers")
-          .insert({
-            follower_id: asUUID(session.user.id),
-            following_id: asUUID(id),
-          });
+          .insert(followData);
         
         if (error) throw error;
         
         toast({
           title: "Following",
-          description: `You are now following ${username}`,
+          description: `You are now following ${displayUsername}`,
         });
       }
       
@@ -154,8 +176,8 @@ export const CreatorCard = ({
       <CardContent className="-mt-8 space-y-4">
         <div className="flex justify-between">
           <Avatar className="h-16 w-16 border-4 border-background">
-            <AvatarImage src={avatarUrl} alt={username} />
-            <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarImage src={displayAvatar} alt={displayUsername} />
+            <AvatarFallback>{displayUsername.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           
           <div className="space-x-1 mt-8">
@@ -173,13 +195,13 @@ export const CreatorCard = ({
         </div>
         
         <div>
-          <h3 className="text-lg font-medium">{username}</h3>
-          {bio && <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{bio}</p>}
+          <h3 className="text-lg font-medium">{displayUsername}</h3>
+          {displayBio && <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{displayBio}</p>}
         </div>
         
         <div className="flex gap-4 text-sm">
           <div>
-            <span className="font-medium">{followerCount}</span>
+            <span className="font-medium">{displayFollowerCount}</span>
             <span className="text-muted-foreground ml-1">followers</span>
           </div>
           <div>
