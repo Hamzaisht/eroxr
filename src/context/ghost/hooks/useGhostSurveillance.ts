@@ -1,76 +1,74 @@
 
-import { useState, useCallback } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveSession } from "@/types/surveillance";
+import { useSession } from "@supabase/auth-helpers-react";
 
-export const useGhostSurveillance = (isGhostMode: boolean, isSuperAdmin: boolean) => {
-  const [activeSurveillance, setActiveSurveillance] = useState<{
-    isWatching: boolean;
-    session: LiveSession | null;
-    startTime: string | null;
-  }>({ 
-    isWatching: false,
-    session: null,
-    startTime: null
-  });
-  
+export const useGhostSurveillance = () => {
+  const [surveillanceData, setSurveillanceData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const session = useSession();
 
-  const startSurveillance = useCallback(async (sessionToWatch: LiveSession) => {
-    if (!isGhostMode || !isSuperAdmin || !session?.user?.id) return false;
+  const startSurveillance = async (userId: string) => {
+    if (!session?.user?.id) return;
+    setIsLoading(true);
     
     try {
-      // Open a new window for surveillance
-      const surveillanceWindow = window.open(
-        `/admin/platform/surveillance/session?type=${sessionToWatch.type}&id=${sessionToWatch.id}`,
-        '_blank',
-        'noopener,noreferrer,width=800,height=600'
-      );
-      
-      if (!surveillanceWindow) {
-        console.error("Failed to open surveillance window");
-        return false;
+      // Record a new surveillance session
+      const { error } = await supabase
+        .from("ghost_surveillance_sessions")
+        .insert({
+          admin_id: session.user.id,
+          target_user_id: userId,
+          status: "active"
+        });
+
+      if (error) {
+        console.error("Error starting surveillance:", error);
+      } else {
+        // Fetch initial data
+        const { data: userData, error: fetchError } = await supabase
+          .from("surveillance_data")
+          .select("*")
+          .eq("user_id", userId)
+          .order("timestamp", { ascending: false })
+          .limit(20);
+
+        if (fetchError) {
+          console.error("Error fetching surveillance data:", fetchError);
+        } else {
+          setSurveillanceData(userData || []);
+        }
       }
-      
-      // Add logs for debugging the surveillance session
-      console.log(`Starting surveillance on ${sessionToWatch.type} by ${sessionToWatch.username || 'unknown user'} - ${sessionToWatch.title || 'No title'}`);
-
-      setActiveSurveillance({
-        session: sessionToWatch,
-        isWatching: true,
-        startTime: new Date().toISOString()
-      });
-      
-      return true;
-    } catch (error) {
-      console.error("Error starting surveillance:", error);
-      return false;
+    } catch (err) {
+      console.error("Failed in surveillance operation:", err);
+    } finally {
+      setIsLoading(false);
     }
-  }, [isGhostMode, isSuperAdmin, session?.user?.id]);
+  };
 
-  const stopSurveillance = useCallback(async () => {
-    if (!isGhostMode || !isSuperAdmin) return false;
-
+  const stopSurveillance = async (sessionId: string) => {
+    if (!session?.user?.id) return;
+    
     try {
-      // Close the surveillance window if it exists
-      const windows = window.open('', '_blank');
-      if (windows) {
-        windows.close();
+      const { error } = await supabase
+        .from("ghost_surveillance_sessions")
+        .update({ status: "ended", end_time: new Date() })
+        .eq("id", sessionId);
+
+      if (error) {
+        console.error("Error stopping surveillance:", error);
+      } else {
+        setSurveillanceData([]);
       }
-
-      setActiveSurveillance({ 
-        isWatching: false,
-        session: null,
-        startTime: null
-      });
-      
-      return true;
-    } catch (error) {
-      console.error("Error stopping surveillance:", error);
-      return false;
+    } catch (err) {
+      console.error("Failed to stop surveillance:", err);
     }
-  }, [isGhostMode, isSuperAdmin]);
+  };
 
-  return { activeSurveillance, startSurveillance, stopSurveillance };
+  return {
+    surveillanceData,
+    isLoading,
+    startSurveillance,
+    stopSurveillance
+  };
 };
