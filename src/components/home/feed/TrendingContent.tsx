@@ -1,7 +1,7 @@
 
 import { Post } from "@/components/feed/Post";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { motion, AnimatePresence } from "framer-motion";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

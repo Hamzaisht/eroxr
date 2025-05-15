@@ -2,7 +2,7 @@
 import { Volume2, VolumeX, Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { usePreventFormSubmission } from "@/hooks/use-prevent-form-submission";
 
 interface VideoControlsProps {

@@ -32,3 +32,6 @@ export function useIsMobile(breakpoint: number = 768) {
 
   return isMobile;
 }
+
+// Re-export useMediaQuery for backward compatibility
+export { useMediaQuery } from './useMediaQuery';

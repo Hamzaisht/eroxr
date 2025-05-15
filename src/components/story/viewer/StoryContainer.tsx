@@ -7,7 +7,7 @@ import { StoryProgress } from "./StoryProgress";
 import { StoryHeader } from "./StoryHeader";
 import { StoryActions } from "./StoryActions";
 import { ViewersSheet } from "./ViewersSheet";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 interface StoryContainerProps {
   stories: Story[];

@@ -1,6 +1,6 @@
 
 import { ChevronUp, ChevronDown } from "lucide-react";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 interface ShortNavigationButtonsProps {
   currentVideoIndex: number;
