@@ -1,6 +1,10 @@
 
-// Export all validator functions
-export * from './validators';
+// Export only validator functions that aren't duplicated
+export {
+  validateFileForUpload,
+  isImageFile,
+  isVideoFile
+} from './validators';
 
 // Export file utilities
 export * from './fileUtils';

@@ -18,6 +18,7 @@ export function extractMediaUrl(media: any): string {
          media.media_url || 
          media.image_url ||
          media.thumbnail_url || 
+         media.src ||
          '';
 }
 
@@ -74,6 +75,50 @@ export function createUniqueFilePath(userId: string, file: File): string {
   const uniqueId = uuidv4().substring(0, 8);
   
   return `${userId}/${timestamp}_${uniqueId}_${sanitizedName}.${extension}`;
+}
+
+/**
+ * Get MIME type from file extension
+ */
+export function getMimeTypeFromExtension(extension: string): string {
+  const mimeTypes: Record<string, string> = {
+    // Images
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    'bmp': 'image/bmp',
+    
+    // Videos
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska',
+    'wmv': 'video/x-ms-wmv',
+    
+    // Audio
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    'aac': 'audio/aac',
+    'm4a': 'audio/mp4',
+    
+    // Documents
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls': 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'ppt': 'application/vnd.ms-powerpoint',
+    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'txt': 'text/plain',
+  };
+  
+  const ext = extension.toLowerCase().replace('.', '');
+  return mimeTypes[ext] || 'application/octet-stream';
 }
 
 /**
@@ -180,35 +225,5 @@ export async function uploadFileToStorage(
   }
 }
 
-/**
- * Utility to normalize any media source to a standard MediaSource object with url property
- */
-export function normalizeMediaSource(source: string | any): MediaSource {
-  // If source is a string, treat it as a URL
-  if (typeof source === 'string') {
-    return { 
-      url: source,
-      media_type: determineMediaType(source)
-    };
-  }
-  
-  // If it's null or undefined, return an empty object with empty url
-  if (!source) {
-    return { url: '', media_type: MediaType.UNKNOWN };
-  }
-  
-  // Create a copy to avoid mutating the original
-  const mediaSource: MediaSource = { ...source };
-  
-  // Set the url property based on available properties
-  if (!mediaSource.url) {
-    mediaSource.url = mediaSource.video_url || mediaSource.media_url || mediaSource.thumbnail_url || '';
-  }
-  
-  // If no media_type is specified, try to determine it
-  if (!mediaSource.media_type) {
-    mediaSource.media_type = determineMediaType(mediaSource.url || '');
-  }
-  
-  return mediaSource;
-}
+// Export the normalizeMediaSource function for components that import it from mediaUtils
+export { normalizeMediaSource } from './types';

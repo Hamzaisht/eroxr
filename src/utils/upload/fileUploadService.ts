@@ -1,9 +1,40 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { createUniqueFilePath, runFileDiagnostic } from "@/utils/upload/fileUtils";
 import { getFileExtension } from "@/utils/upload/validators";
 import { getSupabaseUrl } from "@/utils/media/supabaseUrlUtils";
-import { getMimeTypeFromExtension } from "@/utils/media/mediaUtils";
+
+/**
+ * Get MIME type from file extension
+ */
+function getMimeTypeFromExtension(extension: string): string {
+  const mimeTypes: Record<string, string> = {
+    // Images
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    'bmp': 'image/bmp',
+    
+    // Videos
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska',
+    'wmv': 'video/x-ms-wmv',
+    
+    // Documents
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'txt': 'text/plain',
+  };
+  
+  const ext = extension.toLowerCase().replace('.', '');
+  return mimeTypes[ext] || 'application/octet-stream';
+}
 
 interface FileUploadOptions {
   contentType?: string;

@@ -2,67 +2,78 @@
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Creates a unique file path for uploading
- * @param userId User ID
- * @param file File being uploaded
- * @returns Unique file path
+ * Creates a unique file path for storage
+ * @param userId User ID prefix
+ * @param file File to create path for
  */
-export function createUniqueFilePath(userId: string, file: File): string {
-  const extension = getFileExtension(file);
+export const createUniqueFilePath = (userId: string, file: File): string => {
+  // Extract extension
+  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+  
+  // Create safe name from original filename
+  const safeFilename = sanitizeFilename(file.name.replace(/\.[^/.]+$/, ''));
+  
+  // Create unique path with timestamp and UUID
   const timestamp = Date.now();
   const uniqueId = uuidv4().substring(0, 8);
   
-  return `${userId}/${timestamp}_${uniqueId}.${extension}`;
-}
+  return `${userId}/${timestamp}_${uniqueId}_${safeFilename}.${extension}`;
+};
 
 /**
- * Gets file extension from a File object
- * @param file File object
- * @returns File extension
+ * Sanitizes a filename for safe storage
+ * @param filename Original filename
+ * @returns Sanitized filename
  */
-export function getFileExtension(file: File): string {
-  const parts = file.name.split('.');
-  return parts.length > 1 ? parts.pop()?.toLowerCase() || '' : '';
-}
+export const sanitizeFilename = (filename: string): string => {
+  return filename
+    .replace(/[^a-z0-9-_]/gi, '_') // Replace non-alphanumeric with underscore
+    .replace(/_{2,}/g, '_')        // Replace multiple underscores with single
+    .replace(/^_+|_+$/g, '')       // Remove leading/trailing underscores
+    .toLowerCase()
+    .substring(0, 50);             // Limit length
+};
 
 /**
- * Creates a preview URL for a file
- * @param file File to create preview for
- * @returns Object URL for the file
+ * Creates a file preview URL for local display
+ * @param file File to preview
  */
-export function createFilePreview(file: File): string {
-  return URL.createObjectURL(file);
-}
+export const createFilePreview = (file: File): string => {
+  try {
+    return URL.createObjectURL(file);
+  } catch (err) {
+    console.error('Error creating file preview:', err);
+    return '';
+  }
+};
 
 /**
- * Revokes a file preview URL
- * @param url URL to revoke
+ * Revokes a file preview URL to free memory
+ * @param url Preview URL to revoke
  */
-export function revokeFilePreview(url: string): void {
+export const revokeFilePreview = (url: string): void => {
   if (url && url.startsWith('blob:')) {
-    URL.revokeObjectURL(url);
+    try {
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error revoking file preview:', err);
+    }
   }
-}
+};
 
 /**
- * Runs diagnostic checks on a file and logs results
- * @param file File to check
+ * Runs comprehensive diagnostics on a file
  */
-export function runFileDiagnostic(file: File | null): void {
-  if (!file) {
-    console.error("File diagnostic: Null file object");
-    return;
-  }
-  
-  if (!(file instanceof File)) {
-    console.error("File diagnostic: Object is not a File instance", typeof file);
-    return;
-  }
-  
-  console.log("File diagnostic:", {
-    name: file.name,
-    size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-    type: file.type || "No type",
-    lastModified: new Date(file.lastModified).toLocaleString()
+export const runFileDiagnostic = (file: any): void => {
+  console.log("FILE DIAGNOSTIC:", {
+    value: file,
+    type: typeof file,
+    isFile: file instanceof File,
+    constructor: file && file.constructor ? file.constructor.name : 'N/A',
+    properties: file ? Object.keys(file) : [],
+    fileType: file && file.type ? file.type : 'N/A',
+    fileSize: file && file.size ? `${(file.size / 1024).toFixed(2)} KB` : 'N/A',
+    fileName: file && file.name ? file.name : 'N/A',
+    lastModified: file && file.lastModified ? new Date(file.lastModified).toLocaleString() : 'N/A',
   });
-}
+};

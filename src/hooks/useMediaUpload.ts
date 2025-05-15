@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
@@ -36,8 +35,8 @@ export const useMediaUpload = (defaultOptions?: UploadOptions) => {
   }, []);
   
   // Validate file before upload
-  const validateFile = useCallback((file: File, options?: UploadOptions) => {
-    const maxSizeInMB = options?.maxSizeInMB || defaultOptions?.maxSizeInMB || 100;
+  const validateFile = useCallback((file: File) => {
+    const maxSizeInMB = defaultOptions?.maxSizeInMB || 100;
     return validateFileForUpload(file, maxSizeInMB);
   }, [defaultOptions?.maxSizeInMB]);
   

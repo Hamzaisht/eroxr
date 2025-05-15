@@ -1,38 +1,58 @@
 
-export interface FileUploadButtonProps {
-  onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  allowedTypes: string[];
-  buttonText: string;
-  buttonVariant?: string;
-  isUploading: boolean;
+import { ReactNode } from 'react';
+
+export enum MediaTypes {
+  IMAGE = 'image',
+  VIDEO = 'video',
+  AUDIO = 'audio',
+  ALL = 'all'
 }
 
-export interface MediaPreviewProps {
-  file: File | null;
-  previewUrl: string | null;
-  previewError: string | null;
-  previewLoading: boolean;
-  selectedFileInfo: { name: string; type: string; size: number } | null;
-  onClear: () => void;
-  isUploading: boolean;
+export interface MediaFile {
+  file: File;
+  preview: string;
+  id: string;
 }
-
-export type MediaTypes = 'image' | 'video' | 'both';
 
 export interface MediaUploaderProps {
-  onComplete?: (url: string) => void;
-  onError?: (error: string) => void;
+  onFilesSelected?: (files: File[]) => void;
+  onUploadComplete?: (urls: string[]) => void;
   maxSizeInMB?: number;
-  allowedTypes?: string[];
-  bucketName?: string;
-  contentCategory?: string;
-  buttonText?: string;
-  onFileCapture?: (file: File) => void;
-  context?: string;
   maxFiles?: number;
+  bucket?: string;
   folderPath?: string;
-  mediaTypes?: MediaTypes;
+  mediaTypes?: MediaTypes[];
   className?: string;
+  children?: ReactNode;
   showPreview?: boolean;
   autoUpload?: boolean;
 }
+
+export interface FileUploadButtonProps {
+  onFilesSelected: (files: File[]) => void;
+  disabled?: boolean;
+  maxFiles?: number;
+  mediaTypes?: MediaTypes[];
+  children?: ReactNode;
+  className?: string;
+}
+
+export interface MediaPreviewProps {
+  files: MediaFile[];
+  onRemove: (id: string) => void;
+  className?: string;
+}
+
+// Constants for file validation
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp'
+];
+
+export const SUPPORTED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/quicktime'
+];

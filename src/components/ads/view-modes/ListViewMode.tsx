@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Eye, MapPin, Calendar, User, Clock } from "lucide-react";
@@ -105,12 +104,12 @@ export const ListViewMode = ({ ads, isLoading = false, onMediaClick, userProfile
 
   const handleMediaClick = (media: string | MediaSource) => {
     const url = typeof media === 'string' ? media : (
-      media.media_url || 
-      (Array.isArray(media.media_url) && media.media_url[0]) ||
-      media.video_url || 
-      (Array.isArray(media.video_url) && media.video_url[0]) || 
       media.url || 
-      media.src
+      media.media_url || 
+      (Array.isArray(media.media_urls) && media.media_urls[0]) ||
+      media.video_url || 
+      (Array.isArray(media.video_urls) && media.video_urls[0]) || 
+      ''
     );
     if (url && onMediaClick) onMediaClick(handleMediaUrl(url));
   };

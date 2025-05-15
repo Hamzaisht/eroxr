@@ -1,105 +1,113 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { validateFileForUpload } from "./validators";
-import { getFileExtension } from "@/utils/media/mediaUtils";
-import { v4 as uuidv4 } from 'uuid';
+import { createUniqueFilePath } from "./fileUtils";
 
 /**
- * Create a unique file path for upload
+ * Uploads a file to Supabase storage
  */
-function createUniqueFilePath(userId: string, file: File): string {
-  const extension = getFileExtension(file);
-  const timestamp = Date.now();
-  const uniqueId = uuidv4().substring(0, 8);
-  
-  return `${userId}/${timestamp}-${uniqueId}.${extension}`;
-}
-
-/**
- * Upload a file to Supabase storage
- */
-export async function uploadFileToStorage(
+export const uploadFileToStorage = async (
   bucket: string,
-  path: string | null,
+  path: string,
   file: File
-): Promise<{ success: boolean; url?: string; path?: string; error?: string }> {
+): Promise<{ success: boolean; url?: string; error?: string }> => {
   try {
-    // Validate the file
-    const validation = validateFileForUpload(file);
-    if (!validation.valid) {
+    // Validate file
+    if (!file || !(file instanceof File) || file.size === 0) {
       return {
         success: false,
-        error: validation.error
+        error: "Invalid file object"
       };
     }
-
-    // If no path provided, create one
-    const filePath = path || createUniqueFilePath('uploads', file);
-
+    
     // Upload to Supabase
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(filePath, file, {
+      .upload(path, file, {
         contentType: file.type,
         upsert: true
       });
-
+      
     if (error) {
+      console.error("Storage upload error:", error);
       return {
         success: false,
         error: error.message
       };
     }
-
-    if (!data) {
-      return {
-        success: false,
-        error: 'Upload failed with no data returned'
-      };
-    }
-
-    // Get the public URL
+    
+    // Get public URL
     const { data: urlData } = supabase.storage
       .from(bucket)
-      .getPublicUrl(data.path);
-
+      .getPublicUrl(data!.path);
+      
     return {
       success: true,
-      path: data.path,
       url: urlData.publicUrl
     };
   } catch (error: any) {
+    console.error("Storage upload error:", error);
     return {
       success: false,
-      error: error.message || 'An unknown error occurred'
+      error: error.message || "Unknown error during upload"
     };
   }
-}
+};
 
 /**
- * Delete a file from Supabase storage
+ * Deletes a file from Supabase storage
  */
-export async function deleteFileFromStorage(
+export const deleteFileFromStorage = async (
   bucket: string,
   path: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { error } = await supabase.storage.from(bucket).remove([path]);
-
+    const { error } = await supabase.storage
+      .from(bucket)
+      .remove([path]);
+      
     if (error) {
       return {
         success: false,
         error: error.message
       };
     }
-
+    
+    return { success: true };
+  } catch (error: any) {
     return {
-      success: true
+      success: false,
+      error: error.message || "Unknown error during deletion"
+    };
+  }
+};
+
+/**
+ * Lists files in a Supabase storage bucket folder
+ */
+export const listFiles = async (
+  bucket: string,
+  folder: string
+): Promise<{ success: boolean; files?: any[]; error?: string }> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list(folder);
+      
+    if (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+    
+    return {
+      success: true,
+      files: data
     };
   } catch (error: any) {
     return {
       success: false,
-      error: error.message || 'An unknown error occurred'
+      error: error.message || "Unknown error listing files"
     };
   }
-}
+};
