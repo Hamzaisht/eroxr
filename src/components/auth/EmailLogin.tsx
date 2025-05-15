@@ -66,8 +66,6 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      
-      // Navigation is now handled by the Login page component itself
     } catch (error: any) {
       console.error("Login error:", error);
       

@@ -14,18 +14,15 @@ export const AuthLayout = () => {
 
   useEffect(() => {
     // Only redirect if we have a session AND we're on auth pages (login or register)
-    // But not if we're on the demo page
     const authPages = ['/login', '/register'];
     
-    if (session && 
-       authPages.includes(location.pathname) && 
-       location.pathname !== '/demo') {
+    if (session && authPages.includes(location.pathname)) {
       // Check if there's a redirect path from previous navigation
       const returnPath = location.state?.from || '/home';
       console.log(`User is authenticated, redirecting to: ${returnPath}`);
       navigate(returnPath, { replace: true });
     }
-  }, [session, navigate, location]);
+  }, [session, navigate, location.pathname]);
 
   // Show loading while session is being determined
   if (session === undefined) {
