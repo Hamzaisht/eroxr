@@ -1,134 +1,71 @@
 
-import { useState } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CreatorCard } from "./CreatorCard";
-import { Skeleton } from "./ui/skeleton";
-import { Users } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
+import { CreatorCard } from "@/components/CreatorCard";
+import { useSession } from "@supabase/auth-helpers-react";
+import { asUUID } from "@/utils/supabase/helpers";
 
 export const SubscribedCreators = () => {
   const session = useSession();
-  const { toast } = useToast();
-  const [error, setError] = useState<string | null>(null);
-
+  const userId = session?.user?.id;
+  
   const { data: subscriptions, isLoading } = useQuery({
-    queryKey: ["subscribed-creators", session?.user?.id],
+    queryKey: ["subscriptions", userId],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
-
-      try {
-        const { data, error } = await supabase
-          .from("creator_subscriptions")
-          .select()
-          .eq("user_id", toDbValue(session.user.id))
-          .limit(5);
-
-        if (error) throw error;
-        return data || [];
-      } catch (error) {
-        console.error("Error fetching subscriptions:", error);
-        return [];
-      }
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  // Safely access the subscriptions data
-  const safeSubscriptions = safeDataAccess(subscriptions, []);
-
-  const { data: creators, isLoading: isLoadingCreators } = useQuery({
-    queryKey: ["subscribed-creators-details", safeSubscriptions],
-    queryFn: async () => {
-      if (!safeSubscriptions.length) return [];
-
-      try {
-        // Extract creator IDs safely
-        const creatorIds = safeSubscriptions.map((sub: any) => sub.creator_id).filter(Boolean);
-        
-        if (creatorIds.length === 0) return [];
-        
-        const { data, error } = await supabase
-          .from("profiles")
-          .select(`
+      if (!userId) return [];
+      
+      const { data, error } = await supabase
+        .from("creator_subscriptions")
+        .select(`
+          *,
+          creator:creator_id(
             id,
             username,
             avatar_url,
             bio,
-            banner_url,
-            followers!followers(count)
-          `)
-          .in("id", toDbValue(creatorIds));
-
-        if (error) throw error;
-        return data || [];
-      } catch (error) {
-        console.error("Error fetching creator details:", error);
-        setError("Failed to load creator details");
+            banner_url
+          )
+        `)
+        .eq("user_id", asUUID(userId!))
+        .order("created_at", { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching subscriptions:", error);
         return [];
       }
+      
+      return data || [];
     },
-    enabled: safeSubscriptions.length > 0,
+    enabled: !!userId,
   });
-
-  // Safely access the creators data
-  const safeCreators = safeDataAccess(creators, []);
-
-  if (error) {
+  
+  if (isLoading) {
+    return <div>Loading subscriptions...</div>;
+  }
+  
+  if (!subscriptions || subscriptions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <h3 className="text-2xl font-semibold text-red-500 mb-2">
-          Error Loading Subscriptions
-        </h3>
-        <p className="text-luxury-neutral/70 max-w-md">
-          There was an error loading your subscriptions. Please try again later.
+      <div className="text-center p-8">
+        <h3 className="text-xl font-semibold">No Subscriptions Yet</h3>
+        <p className="text-muted-foreground mt-2">
+          Subscribe to creators to see their content here
         </p>
       </div>
     );
   }
-
-  if (isLoading) {
-    return (
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-[400px] w-full" />
+  
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-4">Your Subscriptions</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {subscriptions.map((subscription) => (
+          <CreatorCard
+            key={subscription.id}
+            creator={subscription.creator}
+          />
         ))}
       </div>
-    );
-  }
-
-  if (!safeCreators.length) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Users className="h-16 w-16 text-luxury-primary mb-4" />
-        <h3 className="text-2xl font-semibold text-luxury-primary mb-2">
-          No Subscriptions Yet
-        </h3>
-        <p className="text-luxury-neutral/70 max-w-md">
-          You haven't subscribed to any creators yet. Explore our featured creators
-          to find content you'll love!
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {safeCreators?.map((creator: any) => (
-        <CreatorCard
-          key={creator.id}
-          id={creator.id}
-          username={creator.username}
-          avatarUrl={creator.avatar_url}
-          banner={creator.banner_url}
-          bio={creator.bio}
-          followerCount={creator.followers?.length || 0}
-          isVerified={true}
-          isPremium={true}
-        />
-      ))}
     </div>
   );
 };

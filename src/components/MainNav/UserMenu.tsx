@@ -15,7 +15,14 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Settings, CreditCard, ArrowRightFromLine, Loader2, CircleUserRound } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { applyEqualsFilter, asProfileUpdate, convertToStatus, getSafeProfile } from "@/utils/supabase/helpers";
+import { 
+  applyEqualsFilter, 
+  asProfileUpdate, 
+  convertToStatus, 
+  getSafeProfile, 
+  getStatusForProfile, 
+  prepareProfileStatusUpdate 
+} from "@/utils/supabase/helpers";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
@@ -106,9 +113,8 @@ export function UserMenu() {
     if (!session?.user?.id) return;
     
     try {
-      const update = asProfileUpdate({ 
-        status: newStatus.toString().toLowerCase() 
-      });
+      // Use the helper function to get the correct profile update format
+      const update = prepareProfileStatusUpdate(newStatus);
       
       const query = supabase
         .from('profiles')

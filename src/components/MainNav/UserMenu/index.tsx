@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -36,7 +37,11 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
-import { applyEqualsFilter, asProfileUpdate, getSafeProfile } from "@/utils/supabase/helpers";
+import { 
+  applyEqualsFilter, 
+  getSafeProfile, 
+  prepareProfileStatusUpdate 
+} from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
 
 interface UserMenuItemProps {
@@ -104,9 +109,7 @@ export function UserMenu() {
     if (!session?.user?.id) return;
     
     try {
-      const update = asProfileUpdate({ 
-        status: newStatus.toString().toLowerCase() 
-      });
+      const update = prepareProfileStatusUpdate(newStatus);
       
       const query = supabase
         .from('profiles')

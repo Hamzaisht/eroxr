@@ -39,6 +39,14 @@ export function extractProfile<T>(profile: T | null | undefined): T | null {
 }
 
 /**
+ * Extract a creator object safely
+ */
+export function extractCreator<T>(creator: T | null | undefined): T | null {
+  if (!creator) return null;
+  return creator;
+}
+
+/**
  * Converts status string to AvailabilityStatus enum
  */
 export function convertToStatus(status?: string | null): AvailabilityStatus {
@@ -141,3 +149,24 @@ export function getSafeProfile(profile: any) {
   
   return profile;
 }
+
+/**
+ * Get enum-compatible status value for profiles
+ */
+export function getStatusForProfile(status: AvailabilityStatus): 'online' | 'offline' | 'away' | 'busy' {
+  // Convert enum value to lowercase and handle the 'invisible' case
+  const statusString = status.toString().toLowerCase();
+  if (statusString === 'invisible') return 'offline';
+  
+  return statusString as 'online' | 'offline' | 'away' | 'busy';
+}
+
+/**
+ * Safe function to update profile status
+ */
+export function prepareProfileStatusUpdate(status: AvailabilityStatus): Partial<ProfileUpdate> {
+  return {
+    status: getStatusForProfile(status)
+  };
+}
+
