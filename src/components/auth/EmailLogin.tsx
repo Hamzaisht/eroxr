@@ -1,17 +1,16 @@
+
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { SocialLoginSection } from "./sections/SocialLoginSection";
 import { DividerWithText } from "./sections/DividerWithText";
 import { LoginForm } from "./sections/LoginForm";
-import { AuthError, AuthApiError, Provider } from "@supabase/supabase-js";
+import { AuthApiError, Provider } from "@supabase/supabase-js";
 
 export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   // Add debug logging
   useEffect(() => {
@@ -68,8 +67,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         description: "You have successfully signed in.",
       });
       
-      // The navigation will now be handled by the AuthLayout component
-      // We don't need to navigate here to avoid duplication
+      // Navigation is now handled by the Login page component itself
     } catch (error: any) {
       console.error("Login error:", error);
       
@@ -104,7 +102,7 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
       
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to authenticate with social provider",
         variant: "destructive",
       });
     } finally {

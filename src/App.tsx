@@ -5,7 +5,6 @@ import { Toaster } from "./components/ui/toaster";
 import { LoadingScreen } from "./components/layout/LoadingScreen";
 import { MainLayout } from "./components/layout/MainLayout";
 import { ScrollToTop } from "./components/ScrollToTop";
-import { AuthLayout } from "./components/layout/AuthLayout";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -29,12 +28,10 @@ function App() {
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
           {/* Public routes */}
-          <Route element={<AuthLayout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/demo" element={<Demo />} />
-          </Route>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/demo" element={<Demo />} />
 
           {/* Protected routes wrapped in MainLayout */}
           <Route element={<MainLayout />}>
