@@ -13,7 +13,7 @@ import { MediaUpload } from "./post/MediaUpload";
 import { PostSubmitButtons } from "./post/PostSubmitButtons";
 import { SuccessOverlay } from "./post/SuccessOverlay";
 import { usePostSubmission } from "./post/usePostSubmission";
-import { asUUID } from "@/utils/supabase/helpers";
+import { asUUID, extractProfile } from "@/utils/supabase/helpers";
 
 interface CreatePostDialogProps {
   open: boolean;

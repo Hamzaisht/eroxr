@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
@@ -161,6 +160,7 @@ export const CreatorCard = ({
             isSubscribed={isSubscribed}
           />
         </div>
+        
         <div className="relative">
           <div className="h-32 w-full overflow-hidden">
             <img
