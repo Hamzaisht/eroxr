@@ -1,6 +1,4 @@
 
-// Re-export all utilities
-export * from './media';
-export * from './upload';
+// Export all utilities
 export * from './supabase/helpers';
 export * from './stringUtils';

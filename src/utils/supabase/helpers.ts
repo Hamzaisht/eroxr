@@ -1,49 +1,43 @@
 
+import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
 
 /**
- * Converts a UUID string to PostgreSQL UUID type
+ * Safely converts a UUID string to the format expected by Supabase
  */
-export const asUUID = (id: string) => {
-  if (!id) return id;
-  return id as unknown as `${string}-${string}-${string}-${string}-${string}`;
-};
+export function toDbValue(value: string): string {
+  return value;
+}
 
 /**
- * Extract profile data safely with type guards
+ * Safely converts a UUID string to the format expected by Supabase
  */
-export const extractProfile = (profile: any) => {
+export function asUUID(value: string): string {
+  return value;
+}
+
+/**
+ * Safely access data with fallback
+ */
+export function safeDataAccess<T, F>(data: T | null | undefined, fallback: F): T | F {
+  return data !== null && data !== undefined ? data : fallback;
+}
+
+/**
+ * Extract a profile object safely
+ */
+export function extractProfile<T>(profile: T | null | undefined): T | null {
   if (!profile) return null;
-  
-  return {
-    id: profile.id,
-    username: profile.username,
-    avatar_url: profile.avatar_url,
-    banner_url: profile.banner_url,
-    bio: profile.bio,
-    status: profile.status,
-    is_paying_customer: profile.is_paying_customer,
-    email: profile.email
-  };
-};
+  return profile;
+}
 
 /**
- * Safely access data from query results
+ * Converts status string to AvailabilityStatus enum
  */
-export const safeDataAccess = <T,>(data: any, defaultValue: T): T => {
-  if (!data) return defaultValue;
+export function convertToStatus(status?: string | null): AvailabilityStatus {
+  if (!status) return AvailabilityStatus.OFFLINE;
   
-  // Handle potential error responses from Supabase
-  if ('error' in data) return defaultValue;
-  
-  return data as T;
-};
-
-/**
- * Convert status string to AvailabilityStatus enum
- */
-export const convertToStatus = (status: string): AvailabilityStatus => {
-  switch (status?.toLowerCase()) {
+  switch (status.toLowerCase()) {
     case 'online':
       return AvailabilityStatus.ONLINE;
     case 'away':
@@ -55,27 +49,40 @@ export const convertToStatus = (status: string): AvailabilityStatus => {
     default:
       return AvailabilityStatus.OFFLINE;
   }
-};
+}
 
 /**
- * Convert data to database-compatible format
- * This helps with type casting for Supabase operations
+ * Type assertion helper for Supabase updates
  */
-export const toDbValue = <T,>(value: T): any => {
-  return value;
-};
+export function asProfileUpdate(data: any): Database['public']['Tables']['profiles']['Update'] {
+  return data as Database['public']['Tables']['profiles']['Update'];
+}
 
 /**
- * Extract creator data safely with type guards
+ * Type assertion helper for database tables
  */
-export const extractCreator = (creator: any) => {
-  if (!creator) return null;
-  
-  return {
-    id: creator.id,
-    username: creator.username,
-    avatar_url: creator.avatar_url,
-    banner_url: creator.banner_url,
-    bio: creator.bio
-  };
-};
+export function asDbUpdate<T = any>(data: any): T {
+  return data as T;
+}
+
+/**
+ * Replace all instances of a string with another string
+ */
+export function replaceAllString(str: string, find: string, replace: string): string {
+  return str.split(find).join(replace);
+}
+
+/**
+ * Check if object is of error type
+ */
+export function isErrorObject(obj: any): boolean {
+  return obj && typeof obj === 'object' && 'error' in obj;
+}
+
+/**
+ * Safe cast for database query results
+ */
+export function safeCast<T>(data: any): T[] {
+  if (!data || isErrorObject(data)) return [];
+  return data as T[];
+}

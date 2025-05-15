@@ -1,50 +1,34 @@
 
 /**
- * Replace all occurrences of a string
- * @param str Source string
- * @param find String to find
- * @param replace String to replace with
- * @returns New string with all occurrences replaced
+ * Replace all instances of a string with another string
  */
-export const replaceAllString = (str: string, find: string, replace: string): string => {
+export function replaceAllString(str: string, find: string, replace: string): string {
   return str.split(find).join(replace);
-};
+}
 
 /**
- * Truncate text to a specific length
- * @param text Text to truncate
- * @param maxLength Maximum length
- * @returns Truncated string with ellipsis
+ * Format a timestamp to a readable date
  */
-export const truncateText = (text: string, maxLength: number): string => {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
-};
+export function formatTimestamp(timestamp: string | Date): string {
+  const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+  return date.toLocaleString();
+}
 
 /**
- * Convert string to title case
- * @param str String to convert
- * @returns Title cased string
+ * Truncate a string if it exceeds a certain length
  */
-export const toTitleCase = (str: string): string => {
+export function truncateString(str: string, maxLength = 100): string {
+  if (str.length <= maxLength) return str;
+  return `${str.slice(0, maxLength)}...`;
+}
+
+/**
+ * Convert camelCase or snake_case to Title Case
+ */
+export function toTitleCase(str: string): string {
   return str
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-/**
- * Create a slug from a string
- * @param text Text to convert to slug
- * @returns URL-friendly slug
- */
-export const createSlug = (text: string): string => {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-};
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/_/g, ' ')
+    .replace(/^\w/, c => c.toUpperCase())
+    .trim();
+}

@@ -37,7 +37,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
-import { toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
+import { toDbValue, safeDataAccess, asProfileUpdate } from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
 
 interface UserMenuItemProps {
@@ -106,9 +106,9 @@ export function UserMenu() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ 
+        .update(asProfileUpdate({ 
           status: newStatus.toString().toLowerCase() 
-        })
+        }))
         .eq('id', toDbValue(session.user.id));
         
       if (error) {

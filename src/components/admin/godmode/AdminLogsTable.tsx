@@ -36,9 +36,12 @@ export const AdminLogsTable = () => {
 
       // Transform data to include admin_name from profiles
       const formattedLogs = data.map(log => {
+        // Safely handle potential undefined values
+        const adminName = log.profiles && 'username' in log.profiles ? log.profiles.username : 'Unknown Admin';
+        
         const adminLog: AdminLog = {
           ...log,
-          admin_name: log.profiles?.username || 'Unknown Admin'
+          admin_name: adminName || 'Unknown Admin'
         };
         return adminLog;
       });

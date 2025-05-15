@@ -11,6 +11,13 @@ interface UserAvatarProps {
 }
 
 export const UserAvatar = ({ avatarUrl, email, status = AvailabilityStatus.OFFLINE, onStatusChange }: UserAvatarProps) => {
+  const handleStatusClick = (e: React.MouseEvent) => {
+    if (onStatusChange) {
+      e.stopPropagation();
+      onStatusChange(status === AvailabilityStatus.ONLINE ? AvailabilityStatus.OFFLINE : AvailabilityStatus.ONLINE);
+    }
+  };
+
   return (
     <Button 
       variant="ghost" 
@@ -29,11 +36,9 @@ export const UserAvatar = ({ avatarUrl, email, status = AvailabilityStatus.OFFLI
       {onStatusChange && (
         <div className="absolute -bottom-1 -right-1">
           <AvailabilityIndicator 
-            status={status} 
-            onClick={(e) => {
-              e.stopPropagation();
-              onStatusChange(status === AvailabilityStatus.ONLINE ? AvailabilityStatus.OFFLINE : AvailabilityStatus.ONLINE);
-            }}
+            status={status}
+            className="cursor-pointer"
+            onClick={handleStatusClick}
           />
         </div>
       )}
