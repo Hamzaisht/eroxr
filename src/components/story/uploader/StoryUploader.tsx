@@ -1,152 +1,236 @@
 
-import { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ImagePlus, VideoIcon, X, Loader2 } from "lucide-react";
-import { useStoryUpload } from "./hooks/useStoryUpload";
+import { useSession } from "@supabase/auth-helpers-react";
+import { useShortPostSubmit } from "@/components/home/hooks/short-post";
+import { Progress } from "@/components/ui/progress";
+import { Camera, Video, X, Upload, CheckCircle } from "lucide-react";
+import { useDropzone } from "react-dropzone";
 
-export function StoryUploader() {
-  const { 
-    isUploading, 
-    progress, 
-    error, 
-    previewUrl, 
-    handleFileSelect, 
-    uploadFile, 
-    resetState 
-  } = useStoryUpload();
+interface StoryUploaderProps {
+  onComplete?: () => void;
+  className?: string;
+}
+
+export const StoryUploader: React.FC<StoryUploaderProps> = ({
+  onComplete,
+  className = "",
+}) => {
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [caption, setCaption] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { toast } = useToast();
+  const session = useSession();
+  const videoRef = useRef<HTMLVideoElement>(null);
   
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const {
+    submitShortPost,
+    isUploading,
+    uploadProgress,
+    isSubmitting,
+    error,
+    resetUploadState,
+  } = useShortPostSubmit();
 
-  // File input change handler
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
     
-    const isValid = await handleFileSelect(file);
-    if (isValid) {
-      setSelectedFile(file);
+    const file = acceptedFiles[0];
+    
+    // Check if file is a video
+    if (!file.type.startsWith('video/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a video file",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check file size (limit to 100MB)
+    if (file.size > 100 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Video size should be less than 100MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Create object URL for preview
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setVideoFile(file);
+    
+  }, [toast]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'video/*': []
+    },
+    maxFiles: 1,
+    multiple: false,
+  });
+
+  const handleSubmit = async () => {
+    if (!videoFile) {
+      toast({
+        title: "No video selected",
+        description: "Please select a video to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const result = await submitShortPost(
+        videoFile,
+        caption,
+        'public',
+        []
+      );
+      
+      if (result.success) {
+        toast({
+          title: "Story uploaded",
+          description: "Your story has been posted successfully",
+        });
+        
+        // Reset state
+        setVideoFile(null);
+        setPreviewUrl(null);
+        setCaption("");
+        
+        // Call completion callback
+        onComplete?.();
+      }
+    } catch (err) {
+      console.error("Error uploading story:", err);
     }
   };
 
-  // Clear the selected file
-  const handleClear = () => {
-    setSelectedFile(null);
-    resetState();
+  const handleRemoveVideo = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setVideoFile(null);
+    setPreviewUrl(null);
+    resetUploadState();
   };
 
-  // Upload the file
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-    await uploadFile(selectedFile);
-    setSelectedFile(null);
-  };
+  if (!session) {
+    return (
+      <div className="text-center p-4">
+        <p className="mb-2">Sign in to upload stories</p>
+        <Button variant="outline">Sign In</Button>
+      </div>
+    );
+  }
 
   return (
-    <Card className="relative p-4 max-w-md mx-auto">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-medium">Create a Story</h3>
-        <p className="text-sm text-muted-foreground">
-          Share a photo or video that will last for 24 hours
-        </p>
-      </div>
-
-      {previewUrl ? (
-        <div className="relative aspect-[9/16] bg-black rounded-md overflow-hidden mb-4">
-          {selectedFile?.type.startsWith('image/') ? (
-            <img 
-              src={previewUrl} 
-              alt="Story preview" 
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <video 
-              src={previewUrl} 
-              className="w-full h-full object-contain" 
-              controls
-              autoPlay
-              muted
-              loop
-            />
-          )}
-          
-          {!isUploading && (
-            <Button
-              variant="destructive"
-              size="icon"
-              className="absolute top-2 right-2 h-8 w-8"
-              onClick={handleClear}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+    <div className={`space-y-4 ${className}`}>
+      {!videoFile ? (
+        <div
+          {...getRootProps()}
+          className={`border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors ${
+            isDragActive
+              ? "border-primary/60 bg-primary/10"
+              : "border-muted-foreground/20 hover:border-primary/40 hover:bg-muted/50"
+          }`}
+        >
+          <input {...getInputProps()} />
+          <div className="flex flex-col items-center justify-center text-center space-y-2">
+            <div className="flex flex-row gap-2">
+              <Video className="h-8 w-8 text-muted-foreground" />
+              <Camera className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">
+                Drag & drop video here, or click to select
+              </p>
+              <p className="text-xs text-muted-foreground">
+                MP4, MOV or WebM format, max 100MB
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="flex gap-4 justify-center mb-4">
-          <label className="cursor-pointer">
-            <div className="flex flex-col items-center">
-              <div className="p-4 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
-                <ImagePlus className="h-6 w-6 text-primary" />
-              </div>
-              <span className="text-sm mt-2">Photo</span>
+        <div className="relative rounded-lg overflow-hidden bg-black aspect-[9/16] max-h-[50vh]">
+          <video
+            ref={videoRef}
+            src={previewUrl || undefined}
+            className="w-full h-full object-contain"
+            controls
+            muted
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
+            onClick={handleRemoveVideo}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {videoFile && (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label
+              htmlFor="caption"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Caption (optional)
+            </label>
+            <textarea
+              id="caption"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              className="flex h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Add a caption to your story"
+              maxLength={150}
+            />
+            <div className="text-xs text-muted-foreground text-right">
+              {caption.length}/150
             </div>
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </label>
-          
-          <label className="cursor-pointer">
-            <div className="flex flex-col items-center">
-              <div className="p-4 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
-                <VideoIcon className="h-6 w-6 text-primary" />
+          </div>
+
+          {isUploading && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span>Uploading...</span>
+                <span>{uploadProgress}%</span>
               </div>
-              <span className="text-sm mt-2">Video</span>
+              <Progress value={uploadProgress} className="h-2" />
             </div>
-            <input 
-              type="file" 
-              accept="video/*" 
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </label>
+          )}
+
+          <Button
+            className="w-full"
+            onClick={handleSubmit}
+            disabled={isSubmitting || isUploading}
+          >
+            {isSubmitting || isUploading ? (
+              <>
+                <Upload className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Post Story
+              </>
+            )}
+          </Button>
+
+          {error && (
+            <p className="text-destructive text-sm">{error}</p>
+          )}
         </div>
       )}
-
-      {error && (
-        <div className="mb-4 p-2 bg-destructive/10 text-destructive text-sm rounded">
-          {error}
-        </div>
-      )}
-
-      {isUploading && (
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm font-medium">Uploading...</span>
-            <span className="text-sm text-muted-foreground ml-auto">
-              {progress}%
-            </span>
-          </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-primary transition-all" 
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {previewUrl && !isUploading && (
-        <Button 
-          className="w-full" 
-          onClick={handleUpload}
-        >
-          Share to Story
-        </Button>
-      )}
-    </Card>
+    </div>
   );
-}
+};

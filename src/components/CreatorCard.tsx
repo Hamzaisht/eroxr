@@ -67,8 +67,8 @@ export const CreatorCard = ({
       const { data } = await supabase
         .from("followers")
         .select()
-        .eq("follower_id", asUUID(session.user.id))
-        .eq("following_id", asUUID(displayId))
+        .eq("follower_id", toDbValue(session.user.id))
+        .eq("following_id", toDbValue(displayId))
         .maybeSingle();
       
       setIsFollowing(!!data);
@@ -85,8 +85,8 @@ export const CreatorCard = ({
       const { data } = await supabase
         .from("creator_subscriptions")
         .select()
-        .eq("user_id", asUUID(session.user.id))
-        .eq("creator_id", asUUID(displayId))
+        .eq("user_id", toDbValue(session.user.id))
+        .eq("creator_id", toDbValue(displayId))
         .maybeSingle();
       
       setIsSubscribed(!!data);
@@ -109,8 +109,8 @@ export const CreatorCard = ({
         const { error } = await supabase
           .from("followers")
           .delete()
-          .eq("follower_id", asUUID(session.user.id))
-          .eq("following_id", asUUID(displayId));
+          .eq("follower_id", toDbValue(session.user.id))
+          .eq("following_id", toDbValue(displayId));
         
         if (error) throw error;
         

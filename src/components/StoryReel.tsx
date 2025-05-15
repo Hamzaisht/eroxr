@@ -1,9 +1,10 @@
+
 // Import required components and utilities
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { StoryCard } from "./StoryCard";
-import { toDbValue } from "@/utils/supabase/helpers";
+import { StoryCard } from "./story/StoryCard";
+import { toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
 
 export const StoryReel = () => {
   const [isLoadingStories, setIsLoadingStories] = useState(true);
@@ -29,9 +30,12 @@ export const StoryReel = () => {
     },
   });
 
+  // Ensure stories is a safe array to map over
+  const safeStories = safeDataAccess(stories, []);
+
   return (
     <div className="relative z-10 flex items-center justify-start w-full gap-4 px-4 py-6 overflow-x-auto">
-      {stories?.map((story) => (
+      {safeStories.map((story) => (
         <StoryCard
           key={story.id}
           storyId={story.id}

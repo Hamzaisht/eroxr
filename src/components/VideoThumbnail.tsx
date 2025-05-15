@@ -1,83 +1,108 @@
-import { useState } from "react";
-import { VideoPlayer } from "@/components/video/VideoPlayer";
-import { getPlayableMediaUrl, extractMediaUrl } from "@/utils/media/urlUtils";
+
+import { useState } from 'react';
+import { Play, Volume2, VolumeX } from 'lucide-react';
 
 interface VideoThumbnailProps {
-  videoUrl?: string;
-  isHovered: boolean;
-  isMobile: boolean;
-  className?: string; // Added className prop
+  videoUrl: string;
+  autoplay?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  controls?: boolean;
+  showPlayButton?: boolean;
+  posterUrl?: string;
+  onPlay?: () => void;
+  onPause?: () => void;
 }
 
-export const VideoThumbnail = ({ videoUrl, isHovered, isMobile, className }: VideoThumbnailProps) => {
-  // Since we have a TODO to track playback state in the future, we'll keep the state
-  // but properly implement it with our current VideoPlayer component capabilities
-  const [isPlaying, setIsPlaying] = useState(false);
+export const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
+  videoUrl,
+  autoplay = false,
+  muted = true,
+  loop = true, 
+  controls = false,
+  showPlayButton = true,
+  posterUrl,
+  onPlay,
+  onPause,
+}) => {
+  const [isPlaying, setIsPlaying] = useState(autoplay);
+  const [isMuted, setIsMuted] = useState(muted);
+  const [isHovered, setIsHovered] = useState(false);
   
-  // Process and validate video URL
-  const url = videoUrl ? extractMediaUrl({ url: videoUrl }) : null;
-  const processedUrl = url ? getPlayableMediaUrl(url) : null;
-  
-  if (!processedUrl) {
-    return (
-      <div className={`w-full h-full flex items-center justify-center bg-luxury-darker ${className || ''}`}>
-        <p className="text-luxury-neutral">No video</p>
-      </div>
-    );
-  }
-
-  const handleError = () => {
-    console.error("Video thumbnail error:", videoUrl);
-  };
-
-  // The VideoPlayer component accepts an onLoadedData callback
-  const handleLoadedData = () => {
-    // We can log that the video is ready to play
-    console.log("Video loaded, ready to play");
+  const handlePlayPause = () => {
+    const video = document.getElementById(`video-${videoUrl}`) as HTMLVideoElement;
     
-    // If video is autoplaying (when hovered), update our playing state
-    if (isHovered) {
-      setIsPlaying(true);
+    if (video) {
+      if (isPlaying) {
+        video.pause();
+        setIsPlaying(false);
+        onPause?.();
+      } else {
+        video.play()
+          .then(() => {
+            setIsPlaying(true);
+            onPlay?.();
+          })
+          .catch(err => {
+            console.error('Error playing video:', err);
+            // Handle autoplay restrictions gracefully
+            setIsPlaying(false);
+          });
+      }
     }
   };
-
-  if (isMobile) {
-    return (
-      <VideoPlayer 
-        url={processedUrl}
-        className={`w-full h-full ${className || ''}`}
-        autoPlay={isHovered}
-        playOnHover={false}
-        onError={handleError}
-        onLoadedData={handleLoadedData}
-      />
-    );
-  }
-
+  
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const video = document.getElementById(`video-${videoUrl}`) as HTMLVideoElement;
+    
+    if (video) {
+      video.muted = !video.muted;
+      setIsMuted(video.muted);
+    }
+  };
+  
   return (
-    <>
-      {!isHovered && (
-        <div className="absolute inset-0 z-10 bg-black">
-          <img
-            src={processedUrl}
-            alt="Video thumbnail"
-            className={`w-full h-full object-cover ${className || ''}`}
-            onError={(e) => {
-              console.error("Thumbnail load error:", videoUrl);
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
+    <div 
+      className="relative w-full h-full overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <video
+        id={`video-${videoUrl}`}
+        src={videoUrl}
+        poster={posterUrl}
+        autoPlay={autoplay}
+        muted={isMuted}
+        loop={loop}
+        playsInline
+        controls={controls}
+        className="w-full h-full object-cover"
+      />
+      
+      {showPlayButton && !isPlaying && (
+        <div 
+          className={`absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer ${isHovered ? 'opacity-100' : 'opacity-0'} transition-opacity`}
+          onClick={handlePlayPause}
+        >
+          <Play className="w-12 h-12 text-white" />
         </div>
       )}
       
-      <VideoPlayer 
-        url={processedUrl} 
-        className={`w-full h-full ${className || ''}`}
-        playOnHover={true}
-        autoPlay={isHovered}
-        onError={handleError}
-        onLoadedData={handleLoadedData}
-      />
-    </>
+      {isHovered && (
+        <div className="absolute bottom-2 right-2">
+          <button 
+            onClick={toggleMute} 
+            className="p-1.5 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+          >
+            {isMuted ? 
+              <VolumeX className="w-4 h-4" /> : 
+              <Volume2 className="w-4 h-4" />
+            }
+          </button>
+        </div>
+      )}
+    </div>
   );
 };

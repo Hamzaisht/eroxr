@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
@@ -5,8 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "./CreatorCard";
 import { Skeleton } from "./ui/skeleton";
 import { Users } from "lucide-react";
-import { useToast } from "./ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Creator } from "@/integrations/supabase/types/profile";
+import { toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
 
 interface CreatorWithStats extends Creator {
   subscriber_count: number;
@@ -23,6 +25,7 @@ interface SubscriptionData {
 export const SubscribedCreators = () => {
   const session = useSession();
   const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   const { data: subscriptions, isLoading } = useQuery({
     queryKey: ["subscribed-creators", session?.user?.id],
@@ -46,13 +49,20 @@ export const SubscribedCreators = () => {
     enabled: !!session?.user?.id,
   });
 
+  // Safely access the subscriptions data
+  const safeSubscriptions = safeDataAccess(subscriptions, []);
+
   const { data: creators, isLoading: isLoadingCreators } = useQuery({
-    queryKey: ["subscribed-creators-details", subscriptions],
+    queryKey: ["subscribed-creators-details", safeSubscriptions],
     queryFn: async () => {
-      if (!subscriptions?.length) return [];
+      if (!safeSubscriptions.length) return [];
 
       try {
-        const creatorIds = subscriptions.map((sub) => sub.creator_id);
+        // Extract creator IDs safely
+        const creatorIds = safeSubscriptions.map((sub: any) => sub.creator_id).filter(Boolean);
+        
+        if (creatorIds.length === 0) return [];
+        
         const { data, error } = await supabase
           .from("profiles")
           .select(`
@@ -69,11 +79,15 @@ export const SubscribedCreators = () => {
         return data || [];
       } catch (error) {
         console.error("Error fetching creator details:", error);
+        setError("Failed to load creator details");
         return [];
       }
     },
-    enabled: !!subscriptions?.length,
+    enabled: safeSubscriptions.length > 0,
   });
+
+  // Safely access the creators data
+  const safeCreators = safeDataAccess(creators, []);
 
   if (error) {
     return (
@@ -98,7 +112,7 @@ export const SubscribedCreators = () => {
     );
   }
 
-  if (!creators?.length) {
+  if (!safeCreators.length) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Users className="h-16 w-16 text-luxury-primary mb-4" />
@@ -115,7 +129,7 @@ export const SubscribedCreators = () => {
 
   return (
     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {creators?.map((creator) => (
+      {safeCreators?.map((creator: any) => (
         <CreatorCard
           key={creator.id}
           id={creator.id}

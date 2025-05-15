@@ -1,48 +1,30 @@
 
-// Define all media-related types
-
-// Availability status for users
+/**
+ * Enumeration of different availability statuses for users
+ */
 export enum AvailabilityStatus {
-  ONLINE = 'online',
-  OFFLINE = 'offline',
-  AWAY = 'away',
-  BUSY = 'busy',
-  INVISIBLE = 'invisible'
+  ONLINE = "online",
+  AWAY = "away",
+  BUSY = "busy",
+  OFFLINE = "offline",
+  INVISIBLE = "invisible"
 }
 
-// Media types
-export enum MediaType {
-  IMAGE = 'image',
-  VIDEO = 'video',
-  AUDIO = 'audio',
-  DOCUMENT = 'document',
-  OTHER = 'other'
+/**
+ * Interface for media items
+ */
+export interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+  caption?: string;
+  thumbnailUrl?: string;
 }
 
-// File upload state
-export enum UploadState {
-  IDLE = 'idle',
-  UPLOADING = 'uploading',
-  SUCCESS = 'success',
-  ERROR = 'error'
-}
-
-// Media permissions
-export enum MediaPermission {
-  PUBLIC = 'public',
-  PRIVATE = 'private',
-  SUBSCRIBERS = 'subscribers',
-  PAID = 'paid'
-}
-
-// Media filtering options
-export type MediaFilterOptions = {
-  types?: MediaType[];
-  permissions?: MediaPermission[];
-  dateRange?: {
-    start: Date;
-    end: Date;
-  };
-  tags?: string[];
-  searchQuery?: string;
+/**
+ * Interface for upload progress
+ */
+export interface UploadProgress {
+  percentage: number;
+  status: 'idle' | 'uploading' | 'success' | 'error';
+  error?: string;
 }

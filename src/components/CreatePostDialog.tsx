@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { asUUID, extractProfile } from "@/utils/supabase/helpers";
+import { asUUID, extractProfile, toDbValue } from "@/utils/supabase/helpers";
 
 interface CreatePostDialogProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ export const CreatePostDialog = ({ isOpen, onClose, onSubmit }: CreatePostDialog
       const { data, error } = await supabase
         .from('profiles')
         .select('is_paying_customer')
-        .eq('id', asUUID(session.user.id))
+        .eq('id', toDbValue(session.user.id))
         .single();
         
       if (error) {

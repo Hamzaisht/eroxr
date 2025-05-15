@@ -1,9 +1,4 @@
-
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { useSession } from "@supabase/auth-helpers-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,197 +7,150 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { User, Settings, CreditCard, ArrowRightFromLine, Loader2, CircleUserRound } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
-import { AvailabilityStatus } from "@/utils/media/types";
+import { supabase } from "@/integrations/supabase/client";
 import { asUUID, convertToStatus, extractProfile, toDbValue } from "@/utils/supabase/helpers";
+import { AvailabilityStatus } from "@/utils/media/types";
+import { StatusIndicator } from "@/components/StatusIndicator";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-export const UserMenu = () => {
-  const navigate = useNavigate();
-  const session = useSession();
+export function UserMenu() {
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<AvailabilityStatus>(AvailabilityStatus.OFFLINE);
+  const router = useRouter();
   const { toast } = useToast();
+  const session = useSession();
+  const supabaseClient = useSupabaseClient();
 
-  const { data: profile } = useQuery({
-    queryKey: ["profile", session?.user?.id],
+  // Fetch user profile data
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['user-profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", asUUID(session.user.id))
-          .single();
-
-        if (error) {
-          console.error("Profile fetch error:", error);
-          throw error;
-        }
-        return data;
-      } catch (error) {
-        console.error("Profile fetch exception:", error);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', toDbValue(session.user.id))
+        .single();
+        
+      if (error) {
+        console.error('Error fetching profile:', error);
         return null;
       }
+      
+      return data;
     },
     enabled: !!session?.user?.id,
   });
 
-  const handleLogin = () => navigate("/login");
-  const handleSignUp = () => {
-    navigate("/login");
-    toast({
-      title: "Join our community!",
-      description: "Create your account to get started.",
-    });
-  };
+  // Extract profile data safely
+  const safeProfile = extractProfile(profile);
 
-  const handleLogout = async () => {
+  // Initialize status from profile data
+  useState(() => {
+    if (safeProfile?.status) {
+      setCurrentStatus(convertToStatus(safeProfile.status));
+    }
+  }, [safeProfile?.status]);
+
+  const signOut = async () => {
+    setIsSigningOut(true);
     try {
-      console.log("Attempting to sign out...");
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Logout error:", error);
-        throw error;
-      }
-      console.log("Sign out successful");
-      navigate("/login");
-      toast({
-        title: "Signed out successfully",
-        description: "Come back soon!",
-      });
+      await supabaseClient.auth.signOut();
+      router.push("/login");
     } catch (error: any) {
-      console.error("Error during logout:", error);
       toast({
-        variant: "destructive",
         title: "Error signing out",
-        description: error.message || "Please try again later",
+        description: error.message,
+        variant: "destructive",
       });
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
-  // Convert AvailabilityStatus to the subset used by the component
-  const handleStatusChange = async (newStatus: AvailabilityStatus) => {
-    // Make sure we only use statuses compatible with the profile table
-    const safeStatus: AvailabilityStatus = 
-      newStatus === AvailabilityStatus.INVISIBLE ? AvailabilityStatus.OFFLINE : newStatus;
+  const statusOptions = [
+    { value: AvailabilityStatus.ONLINE, label: "Online" },
+    { value: AvailabilityStatus.AWAY, label: "Away" },
+    { value: AvailabilityStatus.BUSY, label: "Busy" },
+    { value: AvailabilityStatus.INVISIBLE, label: "Invisible" },
+    { value: AvailabilityStatus.OFFLINE, label: "Offline" },
+  ];
+
+  const getStatusColor = (status: AvailabilityStatus) => {
+    switch (status) {
+      case AvailabilityStatus.ONLINE:
+        return "text-green-500";
+      case AvailabilityStatus.AWAY:
+        return "text-yellow-500";
+      case AvailabilityStatus.BUSY:
+        return "text-red-500";
+      case AvailabilityStatus.INVISIBLE:
+        return "text-gray-500";
+      default:
+        return "text-gray-500";
+    }
+  };
+
+  const updateUserStatus = async (newStatus: AvailabilityStatus) => {
+    if (!session?.user?.id) return;
     
     try {
-      const statusValue = safeStatus.toString().toLowerCase();
-      
-      // Use toDbValue to handle type casting
       const { error } = await supabase
         .from('profiles')
-        .update(toDbValue({ status: statusValue }))
-        .eq('id', asUUID(session?.user?.id));
-
-      if (error) throw error;
-
-      toast({
-        title: "Status updated",
-        description: `You are now ${safeStatus}`,
-      });
+        .update({ status: newStatus })  // Pass the status as a simple string
+        .eq('id', toDbValue(session.user.id));
+        
+      if (error) {
+        console.error('Error updating status:', error);
+        return;
+      }
+      
+      setCurrentStatus(newStatus);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error updating status",
-        description: "Please try again later",
-      });
+      console.error('Failed to update status:', error);
     }
   };
-
-  const navigateToProfile = () => {
-    if (session?.user?.id) {
-      navigate(`/profile/${session.user.id}`);
-    }
-  };
-
-  if (!session) {
-    return (
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          onClick={handleLogin}
-          className="hover:bg-white/5"
-        >
-          Log in
-        </Button>
-        <Button 
-          onClick={handleSignUp}
-          className="bg-white/10 hover:bg-white/20"
-        >
-          Sign up
-        </Button>
-      </div>
-    );
-  }
-
-  // Get safe profile values with fallbacks
-  const safeProfile = extractProfile(profile);
-  const currentStatus = safeProfile?.status ? 
-    convertToStatus(safeProfile.status) : 
-    AvailabilityStatus.OFFLINE;
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex flex-col items-end">
-        <span className="text-sm font-medium">
-          @{safeProfile?.username || session.user.email?.split('@')[0] || 'Guest'}
-        </span>
-        <Badge variant="outline" className="text-xs">
-          {safeProfile?.is_paying_customer ? 'Premium' : 'Free'}
-        </Badge>
-      </div>
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className="relative h-10 w-10 rounded-full p-0"
-            onClick={navigateToProfile}
-          >
-            <Avatar className="h-10 w-10 cursor-pointer">
-              <AvatarImage 
-                src={safeProfile?.avatar_url} 
-                alt={safeProfile?.username || 'User avatar'} 
-              />
-              <AvatarFallback>
-                {session.user.email?.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute -bottom-1 -right-1">
-              <AvailabilityIndicator 
-                status={currentStatus} 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleStatusChange(currentStatus === AvailabilityStatus.ONLINE ? 
-                    AvailabilityStatus.OFFLINE : 
-                    AvailabilityStatus.ONLINE);
-                }}
-              />
-            </div>
-          </Button>
-        </DropdownMenuTrigger>
-        
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate(`/profile/${session.user.id}`)}>
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/settings")}>
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/dating")}>
-            Dating Ads
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="text-red-500">
-            Log out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={safeProfile?.avatar_url || ""} alt={safeProfile?.username || "User"} />
+            <AvatarFallback>{safeProfile?.username?.slice(0, 2).toUpperCase() || "US"}</AvatarFallback>
+          </Avatar>
+          <StatusIndicator status={currentStatus} className="absolute bottom-0 right-0" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-80" align="end">
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => router.push(`/profile/${session?.user?.id}`)}>
+          <CircleUserRound className="mr-2 h-4 w-4" />
+          <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/settings")}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Settings</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/subscription")}>
+          <CreditCard className="mr-2 h-4 w-4" />
+          <span>Subscription</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={signOut} disabled={isSigningOut}>
+          <ArrowRightFromLine className="mr-2 h-4 w-4" />
+          <span>{isSigningOut ? "Signing Out..." : "Sign out"}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
-};
+}
