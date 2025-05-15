@@ -1,146 +1,117 @@
 
-import { v4 as uuidv4 } from 'uuid';
 import { MediaType, MediaSource } from './types';
 
 /**
- * Determine media type from file or URL
+ * Extracts media URL from a MediaSource object or string
  */
-export const determineMediaType = (fileOrUrl: File | string): MediaType => {
-  if (typeof fileOrUrl === 'string') {
-    // URL-based detection
-    const url = fileOrUrl.toLowerCase();
-    if (url.match(/\.(jpeg|jpg|png|gif|webp|bmp|svg)($|\?)/)) {
-      return MediaType.IMAGE;
-    } else if (url.match(/\.(mp4|webm|mov|avi|wmv|flv|mkv)($|\?)/)) {
-      return MediaType.VIDEO;
-    } else if (url.match(/\.(mp3|wav|ogg|flac|aac)($|\?)/)) {
-      return MediaType.AUDIO;
-    } else {
-      return MediaType.UNKNOWN;
-    }
-  } else {
-    // File-based detection
-    const mimeType = fileOrUrl.type;
-    if (mimeType.startsWith('image/')) {
-      return MediaType.IMAGE;
-    } else if (mimeType.startsWith('video/')) {
-      return MediaType.VIDEO;
-    } else if (mimeType.startsWith('audio/')) {
-      return MediaType.AUDIO;
-    } else {
-      return MediaType.UNKNOWN;
-    }
-  }
-};
+export function extractMediaUrl(source: string | MediaSource | null): string | null {
+  if (!source) return null;
+  
+  // If source is a string, return it directly
+  if (typeof source === 'string') return source;
+  
+  // Extract from MediaSource object, checking various properties
+  return source.url || 
+         source.video_url || 
+         source.media_url || 
+         source.image_url || 
+         source.thumbnail_url || 
+         source.src || 
+         null;
+}
 
 /**
- * Create a unique file path for storage
+ * Determine the media type from a URL or source object
  */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  // Extract extension
-  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+export function determineMediaType(source: string | MediaSource): MediaType {
+  const url = typeof source === 'string' ? source : extractMediaUrl(source);
   
-  // Create safe name from original filename
-  const safeFilename = sanitizeFilename(file.name.replace(/\.[^/.]+$/, ''));
+  if (!url) return MediaType.UNKNOWN;
   
-  // Create unique path with timestamp and UUID
+  // Check for specific media type property in MediaSource
+  if (typeof source !== 'string' && source.media_type) {
+    return source.media_type;
+  }
+  
+  // Simple URL-based detection
+  const lowerUrl = url.toLowerCase();
+  
+  if (lowerUrl.match(/\.(jpeg|jpg|png|gif|webp|avif|svg)$/i) || 
+      lowerUrl.includes('/images/') ||
+      lowerUrl.includes('/img/')) {
+    return MediaType.IMAGE;
+  }
+  
+  if (lowerUrl.match(/\.(mp4|mov|webm|avi|wmv|flv|mkv)$/i) || 
+      lowerUrl.includes('/videos/') ||
+      lowerUrl.includes('/video/')) {
+    return MediaType.VIDEO;
+  }
+  
+  if (lowerUrl.match(/\.(mp3|wav|ogg|aac|flac)$/i) || 
+      lowerUrl.includes('/audio/')) {
+    return MediaType.AUDIO;
+  }
+  
+  return MediaType.UNKNOWN;
+}
+
+/**
+ * Creates a unique file path for upload
+ */
+export function createUniqueFilePath(userId: string, file: File): string {
   const timestamp = Date.now();
-  const uniqueId = uuidv4().substring(0, 8);
+  const randomString = Math.random().toString(36).substring(2, 8);
+  const fileExtension = file.name.split('.').pop() || '';
   
-  return `${userId}/${timestamp}_${uniqueId}_${safeFilename}.${extension}`;
-};
+  return `${userId}/${timestamp}-${randomString}.${fileExtension}`;
+}
 
 /**
- * Get mime type from file extension
+ * Get MIME type from file extension
  */
-export const getMimeTypeFromExtension = (extension: string): string => {
-  const ext = extension.toLowerCase().replace('.', '');
-  
-  // Common image formats
-  if (['jpg', 'jpeg'].includes(ext)) return 'image/jpeg';
-  if (ext === 'png') return 'image/png';
-  if (ext === 'gif') return 'image/gif';
-  if (ext === 'webp') return 'image/webp';
-  if (ext === 'svg') return 'image/svg+xml';
-  
-  // Common video formats
-  if (ext === 'mp4') return 'video/mp4';
-  if (ext === 'webm') return 'video/webm';
-  if (ext === 'mov') return 'video/quicktime';
-  
-  // Common audio formats
-  if (ext === 'mp3') return 'audio/mpeg';
-  if (ext === 'wav') return 'audio/wav';
-  if (ext === 'ogg') return 'audio/ogg';
-  
-  // Default
-  return 'application/octet-stream';
-};
-
-/**
- * Sanitize a filename for safe storage
- */
-export const sanitizeFilename = (filename: string): string => {
-  return filename
-    .replace(/[^a-z0-9-_]/gi, '_') // Replace non-alphanumeric with underscore
-    .replace(/_{2,}/g, '_')        // Replace multiple underscores with single
-    .replace(/^_+|_+$/g, '')       // Remove leading/trailing underscores
-    .toLowerCase()
-    .substring(0, 50);             // Limit length
-};
-
-/**
- * Upload a file to storage
- */
-export const uploadFileToStorage = async (
-  bucket: string, 
-  path: string, 
-  file: File
-): Promise<{ success: boolean; url?: string; error?: string }> => {
-  // In this stub implementation, we simulate a successful upload
-  // This should be replaced with actual storage implementation
-  console.log(`Simulating upload to ${bucket}/${path}`);
-  
-  // Return a mock success response
-  return {
-    success: true,
-    url: `https://example.com/storage/${bucket}/${path}`
+export function getMimeTypeFromExtension(extension: string): string {
+  const mimeTypes: Record<string, string> = {
+    // Images
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    
+    // Videos
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    
+    // Audio
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    
+    // Documents
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls': 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   };
-};
+  
+  const ext = extension.toLowerCase().replace('.', '');
+  return mimeTypes[ext] || 'application/octet-stream';
+}
 
 /**
- * Extract media URL from a media source object
- */
-export const extractMediaUrl = (mediaSource: any): string => {
-  if (typeof mediaSource === 'string') {
-    return mediaSource;
-  }
-
-  if (!mediaSource) {
-    return '';
-  }
-
-  return (
-    mediaSource.url ||
-    mediaSource.video_url ||
-    mediaSource.media_url ||
-    mediaSource.image_url ||
-    mediaSource.thumbnail_url ||
-    mediaSource.src ||
-    ''
-  );
-};
-
-/**
- * Normalize media source to ensure it has consistent properties
- * This function ensures older code and newer code can work together
+ * Normalize any media source to a standard MediaSource object
  */
 export const normalizeMediaSource = (source: string | any): MediaSource => {
   // If source is a string, treat it as a URL
   if (typeof source === 'string') {
     return { 
       url: source,
-      media_type: MediaType.UNKNOWN
+      media_type: determineMediaType(source)
     };
   }
   
@@ -154,14 +125,17 @@ export const normalizeMediaSource = (source: string | any): MediaSource => {
   
   // Set the url property based on available properties
   if (!mediaSource.url) {
-    mediaSource.url = mediaSource.video_url || mediaSource.media_url || 
-                      mediaSource.image_url || mediaSource.thumbnail_url || 
-                      mediaSource.src || '';
+    mediaSource.url = mediaSource.video_url || mediaSource.media_url || mediaSource.image_url || mediaSource.thumbnail_url || mediaSource.src || '';
   }
   
   // Also set src property for backwards compatibility
   if (!mediaSource.src) {
     mediaSource.src = mediaSource.url;
+  }
+  
+  // Set media_type if not already set
+  if (!mediaSource.media_type) {
+    mediaSource.media_type = determineMediaType(mediaSource.url || '');
   }
   
   return mediaSource;

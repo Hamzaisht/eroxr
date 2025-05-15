@@ -101,33 +101,4 @@ export interface UniversalMediaProps {
   maxRetries?: number;
 }
 
-// Export the normalizeMediaSource utility function
-export const normalizeMediaSource = (source: string | any): MediaSource => {
-  // If source is a string, treat it as a URL
-  if (typeof source === 'string') {
-    return { 
-      url: source,
-      media_type: MediaType.UNKNOWN
-    };
-  }
-  
-  // If it's null or undefined, return an empty object
-  if (!source) {
-    return { url: '', media_type: MediaType.UNKNOWN };
-  }
-  
-  // Create a copy to avoid mutating the original
-  const mediaSource: MediaSource = { ...source };
-  
-  // Set the url property based on available properties
-  if (!mediaSource.url) {
-    mediaSource.url = mediaSource.video_url || mediaSource.media_url || mediaSource.image_url || mediaSource.thumbnail_url || mediaSource.src || '';
-  }
-  
-  // Also set src property for backwards compatibility
-  if (!mediaSource.src) {
-    mediaSource.src = mediaSource.url;
-  }
-  
-  return mediaSource;
-};
+// Remove the implementation of normalizeMediaSource from here to avoid conflict
