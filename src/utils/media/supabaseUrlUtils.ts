@@ -1,120 +1,107 @@
 
-import { supabase } from "@/integrations/supabase/client";
-
-interface UrlOptions {
-  useSignedUrls?: boolean;
-  download?: boolean;
-  transform?: {
-    width?: number;
-    height?: number;
-    quality?: number;
-    format?: 'webp' | 'jpg' | 'png';
-  };
-}
-
-interface SupabaseUrlResult {
-  url: string | null;
-  error?: string;
-}
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Get a URL for a file in Supabase storage
- * This handles both public and signed URLs
+ * Get the public URL for a file in Supabase storage
  */
-export async function getSupabaseUrl(
-  bucket: string,
-  filePath: string,
-  options: UrlOptions = {}
-): Promise<SupabaseUrlResult> {
+export const getPublicUrl = (bucket: string, path: string): string => {
+  if (!path) return '';
+  
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data?.publicUrl || '';
+};
+
+/**
+ * Get a signed URL for a file in Supabase storage (useful for private buckets)
+ */
+export const getSignedUrl = async (bucket: string, path: string, expiresIn: number = 3600): Promise<string> => {
+  if (!path) return '';
+  
   try {
-    if (!bucket || !filePath) {
-      return { 
-        url: null, 
-        error: 'Missing bucket or file path' 
-      };
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
+    
+    if (error) {
+      console.error('Error getting signed URL:', error);
+      return '';
     }
     
-    // Default to public URLs
-    const { useSignedUrls = false } = options;
-    
-    if (!useSignedUrls) {
-      // Get public URL (works for public buckets)
-      const { data } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath, {
-          download: options.download,
-          transform: options.transform
-        });
-        
-      if (!data.publicUrl) {
-        console.warn(`Failed to get public URL for ${bucket}/${filePath}`);
-        return { 
-          url: null, 
-          error: 'Could not get public URL' 
-        };
-      }
-      
-      return { url: data.publicUrl };
-    } else {
-      // Get signed URL (works for private buckets or when authentication is needed)
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
-      
-      if (error || !data?.signedUrl) {
-        console.error(`Failed to get signed URL for ${bucket}/${filePath}:`, error);
-        
-        // Fallback to public URL if signed URL fails
-        const { data: publicData } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(filePath);
-          
-        if (publicData.publicUrl) {
-          console.log(`Falling back to public URL for ${bucket}/${filePath}`);
-          return { url: publicData.publicUrl };
-        }
-        
-        return { 
-          url: null, 
-          error: error?.message || 'Could not create signed URL' 
-        };
-      }
-      
-      return { url: data.signedUrl };
-    }
-  } catch (err: any) {
-    console.error(`Error getting Supabase URL for ${bucket}/${filePath}:`, err);
-    return {
-      url: null,
-      error: err.message || 'Unknown error getting URL'
-    };
+    return data?.signedUrl || '';
+  } catch (error) {
+    console.error('Error getting signed URL:', error);
+    return '';
   }
-}
+};
+
+/**
+ * Get the download URL for a file in Supabase storage
+ */
+export const getDownloadUrl = (bucket: string, path: string): string => {
+  if (!path) return '';
+  
+  return supabase.storage.from(bucket).getPublicUrl(path, {
+    download: true,
+  }).data.publicUrl;
+};
+
+/**
+ * Get transformed image URL (for resizing, format conversion, etc.)
+ */
+export const getTransformedUrl = (bucket: string, path: string, options: {
+  width?: number;
+  height?: number;
+  quality?: number;
+  format?: 'origin';
+} = {}): string => {
+  if (!path) return '';
+  
+  return supabase.storage.from(bucket).getPublicUrl(path, {
+    transform: options
+  }).data.publicUrl;
+};
 
 /**
  * Check if a file exists in Supabase storage
  */
-export async function checkFileExists(
-  bucket: string,
-  filePath: string
-): Promise<boolean> {
+export const checkFileExists = async (bucket: string, path: string): Promise<boolean> => {
+  if (!path) return false;
+  
   try {
-    // List files with exact match of path
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .list(filePath.split('/').slice(0, -1).join('/'), {
-        limit: 1,
-        offset: 0,
-        sortBy: { column: 'name', order: 'asc' }
-      });
+    // List files with exact path as prefix to check if file exists
+    const { data, error } = await supabase.storage.from(bucket).list(path.split('/').slice(0, -1).join('/'), {
+      limit: 1,
+      offset: 0,
+      search: path.split('/').pop(),
+    });
     
-    if (error || !data) {
+    if (error) {
+      console.error('Error checking if file exists:', error);
       return false;
     }
     
-    const fileName = filePath.split('/').pop();
-    return data.some(file => file.name === fileName);
-  } catch {
+    return (data?.length || 0) > 0;
+  } catch (error) {
+    console.error('Error checking if file exists:', error);
     return false;
   }
-}
+};
+
+/**
+ * Delete a file from Supabase storage
+ */
+export const deleteFile = async (bucket: string, path: string): Promise<boolean> => {
+  if (!path) return false;
+  
+  try {
+    const { error } = await supabase.storage.from(bucket).remove([path]);
+    
+    if (error) {
+      console.error('Error deleting file:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    return false;
+  }
+};

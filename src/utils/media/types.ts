@@ -7,7 +7,19 @@ export enum MediaType {
   VIDEO = 'video',
   AUDIO = 'audio',
   DOCUMENT = 'document',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
+  GIF = 'gif'
+}
+
+/**
+ * Enum for user availability status
+ */
+export enum AvailabilityStatus {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  AWAY = 'away',
+  BUSY = 'busy',
+  INVISIBLE = 'invisible'
 }
 
 /**
@@ -56,6 +68,26 @@ export interface UploadOptions {
 }
 
 /**
+ * Helper function to convert string to MediaType
+ */
+export function stringToMediaType(type: string): MediaType {
+  switch (type.toLowerCase()) {
+    case 'image':
+      return MediaType.IMAGE;
+    case 'video':
+      return MediaType.VIDEO;
+    case 'audio':
+      return MediaType.AUDIO;
+    case 'document':
+      return MediaType.DOCUMENT;
+    case 'gif':
+      return MediaType.GIF;
+    default:
+      return MediaType.UNKNOWN;
+  }
+}
+
+/**
  * Helper function to normalize any media source into a standard MediaSource object
  */
 export function normalizeMediaSource(source: any): MediaSource {
@@ -69,7 +101,7 @@ export function normalizeMediaSource(source: any): MediaSource {
     
     if (extension) {
       if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(extension)) {
-        mediaType = MediaType.IMAGE;
+        mediaType = extension === 'gif' ? MediaType.GIF : MediaType.IMAGE;
       } else if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension)) {
         mediaType = MediaType.VIDEO;
       } else if (['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension)) {
@@ -96,10 +128,14 @@ export function normalizeMediaSource(source: any): MediaSource {
       // Infer type from extension if not provided
       if (!mediaSource.media_type) {
         const ext = mediaSource.media_url.split('.').pop()?.toLowerCase();
-        if (ext && ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)) {
-          mediaSource.media_type = MediaType.VIDEO;
-        } else {
-          mediaSource.media_type = MediaType.IMAGE;
+        if (ext) {
+          if (ext === 'gif') {
+            mediaSource.media_type = MediaType.GIF;
+          } else if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)) {
+            mediaSource.media_type = MediaType.VIDEO;
+          } else {
+            mediaSource.media_type = MediaType.IMAGE;
+          }
         }
       }
     }

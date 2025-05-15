@@ -1,102 +1,95 @@
 
 /**
- * Infer content type from file extension
- * @param filename Filename with extension
- * @returns Inferred content type or fallback
+ * Format file size to human-readable string
  */
-export function inferContentTypeFromExtension(filename: string): string {
-  if (!filename) return 'application/octet-stream';
-  
-  const extension = filename.split('.').pop()?.toLowerCase();
-  
-  if (!extension) return 'application/octet-stream';
-  
-  const mimeTypes: Record<string, string> = {
-    // Images
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png',
-    'gif': 'image/gif',
-    'webp': 'image/webp',
-    'bmp': 'image/bmp',
-    'svg': 'image/svg+xml',
-    
-    // Videos
-    'mp4': 'video/mp4',
-    'webm': 'video/webm',
-    'ogg': 'video/ogg',
-    'mov': 'video/quicktime',
-    'mkv': 'video/x-matroska',
-    'avi': 'video/x-msvideo',
-    
-    // Audio
-    'mp3': 'audio/mpeg',
-    'wav': 'audio/wav',
-    'ogg': 'audio/ogg',
-    'aac': 'audio/aac',
-    
-    // Documents
-    'pdf': 'application/pdf',
-    'doc': 'application/msword',
-    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'txt': 'text/plain'
-  };
-  
-  return mimeTypes[extension] || 'application/octet-stream';
-}
-
-/**
- * Format file size to human readable format
- * @param bytes File size in bytes
- * @returns Human readable file size
- */
-export function formatFileSize(bytes: number): string {
+export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   
-  const units = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
   
-  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${units[i]}`;
-}
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 /**
- * Format a media duration in seconds to readable time format
- * @param seconds Duration in seconds
- * @returns Formatted time string (MM:SS or HH:MM:SS)
+ * Format duration in seconds to MM:SS
  */
-export function formatDuration(seconds: number): string {
-  if (isNaN(seconds) || seconds < 0) {
-    return '00:00';
-  }
+export const formatDuration = (seconds: number): string => {
+  if (isNaN(seconds) || seconds < 0) return '00:00';
   
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
   
-  if (hours > 0) {
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-  
-  return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
 
 /**
- * Creates a media monitoring report to track issues
+ * Format date to relative time (e.g. "2 days ago")
  */
-export function reportMediaError(
-  url: string,
-  errorType: 'load_failure' | 'playback_error' | 'processing_error',
-  retryCount: number,
-  mediaType: string,
-  componentName: string
-): void {
-  console.error(`Media Error Report: ${componentName} - ${errorType}`, {
-    url,
-    errorType,
-    retryCount,
-    mediaType,
-    component: componentName,
-    timestamp: new Date().toISOString(),
-    userAgent: navigator.userAgent
-  });
-}
+export const formatRelativeTime = (date: string | Date): string => {
+  const now = new Date();
+  const pastDate = new Date(date);
+  const diffMs = now.getTime() - pastDate.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffSecs < 60) {
+    return 'just now';
+  } else if (diffMins < 60) {
+    return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+  } else if (diffDays < 7) {
+    return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+  } else {
+    // Format as MM/DD/YYYY
+    return pastDate.toLocaleDateString();
+  }
+};
+
+/**
+ * Format options for video display
+ */
+export const videoDisplayOptions = {
+  playerOptions: {
+    controls: true,
+    autoplay: false,
+    muted: false,
+    loop: false,
+    preload: 'auto',
+    fluid: true,
+  },
+  transformOptions: {
+    quality: 80,
+    format: 'mp4'
+  }
+};
+
+/**
+ * Image transform options
+ */
+export const imageTransformOptions = {
+  quality: 80,
+  format: 'webp',
+  resize: {
+    width: 1200,
+    height: 800,
+    fit: 'inside'
+  }
+};
+
+/**
+ * Thumbnail transform options
+ */
+export const thumbnailTransformOptions = {
+  quality: 70,
+  format: 'webp',
+  resize: {
+    width: 300,
+    height: 300,
+    fit: 'cover'
+  }
+};

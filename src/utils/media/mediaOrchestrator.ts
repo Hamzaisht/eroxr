@@ -1,181 +1,242 @@
 
-import { MediaSource, MediaType } from "./types";
-import { getPlayableMediaUrl, extractMediaUrl } from "./urlUtils";
-import { determineMediaType } from "./mediaUtils";
+import { MediaType } from './types';
+import { extractMediaUrl } from './urlUtils';
 
 /**
- * MediaOrchestrator is responsible for managing and optimizing media loading
- * across the application to prevent performance issues when many media elements
- * are displayed simultaneously.
+ * Media orchestrator configuration
  */
-class MediaOrchestrator {
-  private mediaRegistry: Map<string, MediaSource | string>;
-  private preloadQueue: string[];
-  private isProcessingQueue: boolean;
-  private maxConcurrentLoads: number;
-  private activeLoads: number;
+interface MediaOrchestratorConfig {
+  defaultPlayerOptions?: Record<string, any>;
+  defaultImageOptions?: Record<string, any>;
+  enableCaching?: boolean;
+  enableLazyLoading?: boolean;
+  enableAnalytics?: boolean;
+}
 
-  constructor() {
-    this.mediaRegistry = new Map();
-    this.preloadQueue = [];
-    this.isProcessingQueue = false;
-    this.maxConcurrentLoads = 3; // Maximum concurrent media loads
-    this.activeLoads = 0;
+/**
+ * Media item to be orchestrated
+ */
+interface MediaItem {
+  id: string;
+  url: string;
+  type: MediaType;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Media cache entry
+ */
+interface MediaCacheEntry {
+  item: MediaItem;
+  loaded: boolean;
+  error: boolean;
+  timestamp: number;
+}
+
+/**
+ * Media orchestrator class for managing media across the application
+ */
+export class MediaOrchestrator {
+  private config: MediaOrchestratorConfig;
+  private mediaCache: Map<string, MediaCacheEntry>;
+  private mediaTypes: Map<string, MediaType>;
+
+  constructor(config: MediaOrchestratorConfig = {}) {
+    this.config = {
+      enableCaching: true,
+      enableLazyLoading: true,
+      enableAnalytics: false,
+      ...config
+    };
+    
+    this.mediaCache = new Map();
+    this.mediaTypes = new Map();
+    
+    this.initializeMediaTypes();
   }
 
   /**
-   * Create a unique ID for a media source
+   * Initialize media type mappings
    */
-  createMediaId(source: MediaSource | string): string {
-    if (!source) return '';
+  private initializeMediaTypes(): void {
+    // Image extensions
+    ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp'].forEach(ext => {
+      this.mediaTypes.set(ext, MediaType.IMAGE);
+    });
     
-    let url = '';
-    let type = '';
+    // Video extensions
+    ['mp4', 'webm', 'mov', 'avi', 'mkv'].forEach(ext => {
+      this.mediaTypes.set(ext, MediaType.VIDEO);
+    });
     
-    if (typeof source === 'string') {
-      url = source;
-      type = determineMediaType(source).toString();
-    } else {
-      url = extractMediaUrl(source) || '';
-      type = source.media_type?.toString() || determineMediaType(source).toString();
-    }
+    // Audio extensions
+    ['mp3', 'wav', 'ogg', 'aac', 'm4a'].forEach(ext => {
+      this.mediaTypes.set(ext, MediaType.AUDIO);
+    });
     
-    // Create a simple hash of the URL
-    let hash = 0;
-    for (let i = 0; i < url.length; i++) {
-      hash = ((hash << 5) - hash) + url.charCodeAt(i);
-      hash |= 0; // Convert to 32bit integer
-    }
-    
-    return `${type}-${Math.abs(hash)}`.substring(0, 20);
+    // Document extensions
+    ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].forEach(ext => {
+      this.mediaTypes.set(ext, MediaType.DOCUMENT);
+    });
   }
 
   /**
-   * Register a media item for potential preloading
+   * Register a media item
    */
-  registerMediaRequest(source: MediaSource | string): void {
-    if (!source) return;
-    
-    const mediaId = this.createMediaId(source);
-    
-    // If already registered, don't duplicate
-    if (this.mediaRegistry.has(mediaId)) return;
-    
-    // Add to registry
-    this.mediaRegistry.set(mediaId, source);
-    
-    // Add to preload queue, prioritizing videos
-    let priority = 1;
-    
-    if (typeof source !== 'string' && source.media_type === MediaType.VIDEO) {
-      priority = 0;
-    } else if (typeof source !== 'string' && source.video_url) {
-      priority = 0;
+  registerMedia(item: MediaItem): void {
+    if (this.config.enableCaching) {
+      this.mediaCache.set(item.id, {
+        item,
+        loaded: false,
+        error: false,
+        timestamp: Date.now()
+      });
     }
     
-    // Insert into queue based on priority
-    if (priority === 0) {
-      this.preloadQueue.unshift(mediaId);
-    } else {
-      this.preloadQueue.push(mediaId);
-    }
-    
-    // Start processing if not already doing so
-    if (!this.isProcessingQueue) {
-      this.processPreloadQueue();
-    }
-  }
-
-  /**
-   * Process the preload queue, loading media items in sequence
-   */
-  private async processPreloadQueue(): Promise<void> {
-    if (this.preloadQueue.length === 0) {
-      this.isProcessingQueue = false;
-      return;
-    }
-
-    this.isProcessingQueue = true;
-
-    // Process as many items as allowed by maxConcurrentLoads
-    while (this.preloadQueue.length > 0 && this.activeLoads < this.maxConcurrentLoads) {
-      const mediaId = this.preloadQueue.shift();
-      if (!mediaId) continue;
-
-      this.activeLoads++;
-      this.preloadMedia(mediaId)
-        .finally(() => {
-          this.activeLoads--;
-          if (this.preloadQueue.length > 0) {
-            this.processPreloadQueue();
-          } else {
-            this.isProcessingQueue = false;
-          }
-        });
+    if (this.config.enableAnalytics) {
+      this.trackMediaRegistration(item);
     }
   }
 
   /**
-   * Preload a specific media item
+   * Preload a media item
    */
-  private async preloadMedia(mediaId: string): Promise<void> {
-    const source = this.mediaRegistry.get(mediaId);
-    if (!source) return;
-
+  async preloadMedia(id: string): Promise<boolean> {
+    const entry = this.mediaCache.get(id);
+    
+    if (!entry) return false;
+    
     try {
-      const url = typeof source === 'string' ? source : extractMediaUrl(source);
-      if (!url) return;
-
-      const playableUrl = getPlayableMediaUrl(url);
-      if (!playableUrl) return;
-
-      const mediaType = typeof source === 'string' 
-        ? determineMediaType(source) 
-        : (source.media_type as MediaType || determineMediaType(source));
-
-      // Create appropriate element based on media type
-      if (mediaType === MediaType.VIDEO) {
-        const video = document.createElement('video');
-        video.preload = 'metadata'; // Just load metadata, not the whole video
-        video.src = playableUrl;
-        video.muted = true;
-        video.playsInline = true;
-        
-        // Wait for metadata to load, then stop loading
-        await new Promise<void>((resolve) => {
-          video.onloadedmetadata = () => {
-            video.onloadedmetadata = null;
-            video.src = '';
-            resolve();
-          };
-          video.onerror = () => {
-            console.error('Error preloading video:', playableUrl);
-            resolve();
-          };
-          
-          // Safety timeout
-          setTimeout(resolve, 5000);
-        });
-      } else if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
-        // Preload image
-        const img = new Image();
-        await new Promise<void>((resolve) => {
-          img.onload = () => resolve();
-          img.onerror = () => {
-            console.error('Error preloading image:', playableUrl);
-            resolve();
-          };
-          img.src = playableUrl;
-          
-          // Safety timeout
-          setTimeout(resolve, 5000);
-        });
+      if (entry.item.type === MediaType.IMAGE) {
+        await this.preloadImage(entry.item.url);
+      } else if (entry.item.type === MediaType.VIDEO) {
+        await this.preloadVideo(entry.item.url);
       }
+      
+      this.mediaCache.set(id, {
+        ...entry,
+        loaded: true,
+        error: false,
+        timestamp: Date.now()
+      });
+      
+      return true;
     } catch (error) {
-      console.error('Error during media preload:', error);
+      this.mediaCache.set(id, {
+        ...entry,
+        loaded: false,
+        error: true,
+        timestamp: Date.now()
+      });
+      
+      console.error(`Failed to preload media ${id}:`, error);
+      return false;
     }
+  }
+
+  /**
+   * Preload an image
+   */
+  private preloadImage(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+      
+      img.src = url;
+    });
+  }
+
+  /**
+   * Preload a video
+   */
+  private preloadVideo(url: string): Promise<HTMLVideoElement> {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      
+      video.onloadeddata = () => resolve(video);
+      video.onerror = () => reject(new Error(`Failed to load video: ${url}`));
+      
+      video.preload = 'auto';
+      video.src = url;
+      video.load();
+    });
+  }
+
+  /**
+   * Get media type from URL
+   */
+  getMediaTypeFromUrl(url: string): MediaType {
+    // Extract extension
+    const extension = url.split('.').pop()?.toLowerCase();
+    
+    if (!extension) return MediaType.UNKNOWN;
+    
+    // Check if GIF
+    if (extension === 'gif') return MediaType.GIF;
+    
+    // Return mapped type or unknown
+    return this.mediaTypes.get(extension) || MediaType.UNKNOWN;
+  }
+
+  /**
+   * Track media registration (for analytics)
+   */
+  private trackMediaRegistration(item: MediaItem): void {
+    // Implement analytics tracking here
+    console.log('Media registered:', item);
+  }
+
+  /**
+   * Clear the media cache
+   */
+  clearCache(): void {
+    this.mediaCache.clear();
+  }
+
+  /**
+   * Remove expired items from cache
+   */
+  cleanupCache(maxAge: number = 30 * 60 * 1000): void {
+    const now = Date.now();
+    
+    this.mediaCache.forEach((entry, id) => {
+      if (now - entry.timestamp > maxAge) {
+        this.mediaCache.delete(id);
+      }
+    });
+  }
+
+  /**
+   * Get a media item by ID
+   */
+  getMediaById(id: string): MediaItem | null {
+    const entry = this.mediaCache.get(id);
+    return entry ? entry.item : null;
+  }
+
+  /**
+   * Process a media source to normalize it
+   */
+  processMediaSource(source: any): MediaItem | null {
+    if (!source) return null;
+    
+    const url = extractMediaUrl(source);
+    
+    if (!url) return null;
+    
+    const id = source.id || `media-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const type = source.media_type || this.getMediaTypeFromUrl(url);
+    
+    return {
+      id,
+      url,
+      type,
+      metadata: source
+    };
   }
 }
 
-// Export a singleton instance for app-wide use
+// Create and export a singleton instance
 export const mediaOrchestrator = new MediaOrchestrator();

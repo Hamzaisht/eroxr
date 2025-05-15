@@ -1,5 +1,5 @@
 
-import { MediaType, AvailabilityStatus, stringToMediaType } from "./types";
+import { MediaType, AvailabilityStatus } from "./types";
 
 /**
  * Get the MIME type for a file or URL
@@ -45,9 +45,32 @@ export const isVideoUrl = (url: string): boolean => {
 };
 
 /**
+ * Check if URL points to an audio file
+ */
+export const isAudioUrl = (url: string): boolean => {
+  const mimeType = getMimeType(url);
+  return mimeType.startsWith('audio/');
+};
+
+/**
  * Convert string to MediaType enum value
  */
-export { stringToMediaType };
+export const stringToMediaType = (type: string): MediaType => {
+  switch (type.toLowerCase()) {
+    case 'image':
+      return MediaType.IMAGE;
+    case 'video':
+      return MediaType.VIDEO;
+    case 'audio':
+      return MediaType.AUDIO;
+    case 'document':
+      return MediaType.DOCUMENT;
+    case 'gif':
+      return MediaType.GIF;
+    default:
+      return MediaType.UNKNOWN;
+  }
+};
 
 /**
  * Re-export AvailabilityStatus enum for consistency

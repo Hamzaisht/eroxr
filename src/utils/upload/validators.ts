@@ -1,126 +1,74 @@
 
 /**
- * Validate a file for upload
- * @param file The file to validate
- * @param maxSizeInMB Maximum allowed file size in MB
- * @returns Validation result with valid flag and optional error message
+ * Supported file types for uploads
  */
-export function validateFileForUpload(file: File, maxSizeInMB: number = 100): {
-  valid: boolean;
-  error?: string;
-} {
-  // Verify file isn't null
-  if (!file) {
-    return {
-      valid: false,
-      error: 'No file provided'
-    };
-  }
-  
-  // Verify it's actually a File object
-  if (!(file instanceof File)) {
-    return {
-      valid: false,
-      error: 'Invalid file object'
-    };
-  }
-  
-  // Verify file isn't empty
-  if (file.size <= 0) {
-    return {
-      valid: false,
-      error: 'File is empty'
-    };
-  }
-  
-  // Check file size
-  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-  if (file.size > maxSizeInBytes) {
-    return {
-      valid: false,
-      error: `File is too large. Maximum size is ${maxSizeInMB}MB`
-    };
-  }
-  
-  // Check for supported file types
-  if (!isSupportedFileType(file)) {
-    return {
-      valid: false,
-      error: 'Unsupported file type'
-    };
-  }
-  
-  return { valid: true };
-}
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+  'image/svg+xml'
+];
+
+export const SUPPORTED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/x-matroska'
+];
+
+export const SUPPORTED_AUDIO_TYPES = [
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/ogg',
+  'audio/aac',
+  'audio/mp4'
+];
 
 /**
- * Check if file is a supported type
- * @param file File to check
- * @returns Whether the file type is supported
+ * Validate file type
  */
-export function isSupportedFileType(file: File): boolean {
-  // Check if it's an image
-  if (isImageFile(file)) {
-    return true;
-  }
-  
-  // Check if it's a video
-  if (isVideoFile(file)) {
-    return true;
-  }
-  
-  // Check if it's an audio file
-  if (isAudioFile(file)) {
-    return true;
-  }
-  
-  // Check if it's a document
-  if (isDocumentFile(file)) {
-    return true;
-  }
-  
-  return false;
-}
+export const isValidFileType = (file: File, allowedTypes: string[]): boolean => {
+  return allowedTypes.includes(file.type);
+};
 
 /**
- * Check if file is an image
- * @param file File to check
- * @returns Whether the file is an image
+ * Validate file size (in MB)
  */
-export function isImageFile(file: File): boolean {
-  return file.type.startsWith('image/');
-}
+export const isValidFileSize = (file: File, maxSizeInMB: number): boolean => {
+  return file.size <= maxSizeInMB * 1024 * 1024;
+};
 
 /**
- * Check if file is a video
- * @param file File to check
- * @returns Whether the file is a video
+ * Get file extension from file or filename
  */
-export function isVideoFile(file: File): boolean {
-  return file.type.startsWith('video/');
-}
+export const getFileExtension = (fileOrName: File | string): string => {
+  const name = typeof fileOrName === 'string' ? fileOrName : fileOrName.name;
+  return name.split('.').pop()?.toLowerCase() || '';
+};
 
 /**
- * Check if file is an audio file
- * @param file File to check
- * @returns Whether the file is an audio file
+ * Generate a safe filename (alphanumeric with hyphens, underscores)
  */
-export function isAudioFile(file: File): boolean {
-  return file.type.startsWith('audio/');
-}
-
-/**
- * Check if file is a document
- * @param file File to check
- * @returns Whether the file is a document
- */
-export function isDocumentFile(file: File): boolean {
-  const documentTypes = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'text/plain'
-  ];
+export const sanitizeFileName = (fileName: string): string => {
+  const extension = getFileExtension(fileName);
+  const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+  const sanitized = baseName
+    .replace(/[^a-z0-9-_]/gi, '-')
+    .replace(/-+/g, '-');
   
-  return documentTypes.includes(file.type);
-}
+  return `${sanitized}.${extension}`;
+};
+
+/**
+ * Generate a unique filename with timestamp
+ */
+export const generateUniqueFileName = (file: File): string => {
+  const extension = getFileExtension(file);
+  const timestamp = new Date().getTime();
+  const random = Math.floor(Math.random() * 1000);
+  return `${timestamp}-${random}.${extension}`;
+};
