@@ -2,6 +2,9 @@
 import { cn } from "@/lib/utils";
 import { AvailabilityStatus } from "@/utils/media/types";
 
+// Re-export the enum so it can be imported from this component
+export { AvailabilityStatus };
+
 export interface AvailabilityIndicatorProps {
   status: AvailabilityStatus | string;
   className?: string;

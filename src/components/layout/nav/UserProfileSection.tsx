@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { useSession } from "@supabase/auth-helpers-react";

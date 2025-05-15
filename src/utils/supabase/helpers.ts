@@ -1,89 +1,80 @@
 
-import { v4 as uuidv4 } from "uuid";
 import { AvailabilityStatus } from "@/utils/media/types";
 
-// Safely cast a string to UUID - for Supabase queries
+/**
+ * Converts a UUID string to PostgreSQL UUID type
+ */
 export const asUUID = (id: string) => {
-  try {
-    // Validate if it's a valid UUID
-    if (typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-      return id as unknown as any; // Cast to any to satisfy Supabase's UUID type requirement
-    }
-    console.warn('Invalid UUID format:', id);
-    return id as unknown as any; // Still cast to satisfy types, but logged warning
-  } catch (error) {
-    console.error('Error processing UUID:', error);
-    return id as unknown as any; // Fallback
-  }
+  if (!id) return id;
+  return id as unknown as `${string}-${string}-${string}-${string}-${string}`;
 };
 
-// Extract profile data safely
-export const extractProfile = (data: any) => {
-  if (!data) return { is_paying_customer: false };
+/**
+ * Extract profile data safely with type guards
+ */
+export const extractProfile = (profile: any) => {
+  if (!profile) return null;
   
-  // Handle error cases
-  if (data.error || data.code) return { is_paying_customer: false };
-  
-  // Safe extraction with defaults
   return {
-    id: data.id || '',
-    username: data.username || '',
-    avatar_url: data.avatar_url || null,
-    status: data.status || 'offline',
-    is_paying_customer: !!data.is_paying_customer,
-    bio: data.bio || '',
-    location: data.location || '',
-    website: data.website || '',
+    id: profile.id,
+    username: profile.username,
+    avatar_url: profile.avatar_url,
+    banner_url: profile.banner_url,
+    bio: profile.bio,
+    status: profile.status,
+    is_paying_customer: profile.is_paying_customer
   };
 };
 
-// Safe data access
-export const safeDataAccess = <T,>(data: T | null | undefined, defaultValue: T): T => {
-  return data !== null && data !== undefined ? data : defaultValue;
+/**
+ * Safely access data from query results
+ */
+export const safeDataAccess = <T,>(data: any, defaultValue: T): T => {
+  if (!data) return defaultValue;
+  
+  // Handle potential error responses from Supabase
+  if ('error' in data) return defaultValue;
+  
+  return data as T;
 };
 
-// Convert string to status
-export const convertToStatus = (status: string | null | undefined): AvailabilityStatus => {
-  if (!status) return AvailabilityStatus.OFFLINE;
-  
-  switch(status.toLowerCase()) {
+/**
+ * Convert status string to AvailabilityStatus enum
+ */
+export const convertToStatus = (status: string): AvailabilityStatus => {
+  switch (status?.toLowerCase()) {
     case 'online':
       return AvailabilityStatus.ONLINE;
     case 'away':
       return AvailabilityStatus.AWAY;
     case 'busy':
       return AvailabilityStatus.BUSY;
-    case 'offline':
+    case 'invisible':
+      return AvailabilityStatus.INVISIBLE;
     default:
       return AvailabilityStatus.OFFLINE;
   }
 };
 
-// Safe database value converter
-export const toDbValue = (value: any): any => {
+/**
+ * Convert data to database-compatible format
+ * This helps with type casting for Supabase operations
+ */
+export const toDbValue = (value: any) => {
   return value as any;
 };
 
-// Extract creator data safely
-export const extractCreator = (data: any) => {
-  if (!data) return null;
+/**
+ * Extract creator data safely with type guards
+ */
+export const extractCreator = (creator: any) => {
+  if (!creator) return null;
   
-  // Handle error cases
-  if (data.error || data.code) return null;
-  
-  // If the data is in a nested structure (common with joins)
-  if (data.creator) {
-    return {
-      id: data.creator.id || '',
-      username: data.creator.username || '',
-      avatar_url: data.creator.avatar_url || null,
-    };
-  }
-  
-  // Direct data format
   return {
-    id: data.id || '',
-    username: data.username || '',
-    avatar_url: data.avatar_url || null,
+    id: creator.id,
+    username: creator.username,
+    avatar_url: creator.avatar_url,
+    banner_url: creator.banner_url,
+    bio: creator.bio
   };
 };
