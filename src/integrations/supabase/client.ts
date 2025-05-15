@@ -9,20 +9,13 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const supabaseOptions = {
   auth: {
     // Use localStorage for storing session data
-    storage: localStorage,
-    // Always persist session between page refreshes
     persistSession: true,
     // Automatically refresh JWT tokens when they're about to expire
     autoRefreshToken: true,
     // Detect auth parameters in URL (e.g., after social logins)
-    detectSessionInUrl: true
-  },
-  // Set default headers
-  global: {
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Client-Info': 'supabase-js/2.0.0'
-    }
+    detectSessionInUrl: true,
+    // Prevent multiple concurrent auth requests
+    flowType: 'implicit'
   }
 };
 
@@ -33,6 +26,13 @@ supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session ? 'User authenticated' : 'No session');
 });
 
-// Log the current domain for debugging
-const currentDomain = window.location.origin;
-console.log('Current domain:', currentDomain);
+// Export a function to get session synchronously from localStorage
+export const getLocalSession = () => {
+  try {
+    const sessionStr = localStorage.getItem('supabase.auth.token');
+    return sessionStr ? JSON.parse(sessionStr) : null;
+  } catch (error) {
+    console.error('Error retrieving local session:', error);
+    return null;
+  }
+};

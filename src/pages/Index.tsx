@@ -3,11 +3,14 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { Navigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import Landing from "@/pages/Landing";
+import { useEffect } from "react";
 
 const Index = () => {
   const session = useSession();
   
-  console.log("Index page - session:", session ? "exists" : "undefined/null");
+  useEffect(() => {
+    console.log("Index page - session:", session ? "exists" : "undefined/null");
+  }, [session]);
 
   // Show loading while session is being determined
   if (session === undefined) {
