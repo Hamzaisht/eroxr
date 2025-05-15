@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -68,7 +67,9 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      navigate("/home");
+      
+      // The navigation will now be handled by the AuthLayout component
+      // We don't need to navigate here to avoid duplication
     } catch (error: any) {
       console.error("Login error:", error);
       

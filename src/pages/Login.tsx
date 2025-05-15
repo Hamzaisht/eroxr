@@ -20,6 +20,7 @@ const Login = () => {
       // Get the redirect path from location state or default to home
       const from = location.state?.from || "/home";
       console.log("User is logged in, redirecting to:", from);
+      // Use replace to avoid browser history stack issues
       navigate(from, { replace: true });
     }
   }, [session, navigate, location]);
@@ -29,6 +30,7 @@ const Login = () => {
     return <LoadingScreen />;
   }
 
+  // Only render the login form if there's no session
   return (
     <AuthLayout>
       <AnimatePresence>
@@ -37,7 +39,7 @@ const Login = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
+          className="w-full max-w-md mx-auto"
         >
           <motion.div
             initial={{ opacity: 0 }}
