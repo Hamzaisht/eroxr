@@ -1,42 +1,81 @@
 
 /**
- * Utilities for transforming and processing media URLs
+ * Gets a playable URL for media content, handling CDN transformations if needed
+ * @param url Original media URL
+ * @returns A URL that can be used for playback
  */
-
-/**
- * Gets a URL that can be played in the browser
- * This function handles various URL formats and ensures they're playable
- */
-export function getPlayableMediaUrl(url: string): string {
-  if (!url) return '';
+export const getPlayableMediaUrl = (url: string | undefined | null): string | null => {
+  if (!url) return null;
   
-  // Check if URL needs processing
-  if (url.includes('supabase.co') || url.includes('supabase.in')) {
-    // Add cache buster if needed for Supabase URLs
-    const hasParams = url.includes('?');
-    return `${url}${hasParams ? '&' : '?'}t=${Date.now()}`;
+  // Handle relative URLs
+  if (url.startsWith('/')) {
+    return url;
   }
   
+  // Return the URL as-is for now
+  // In a real implementation, this could apply CDN transformations or other processing
   return url;
-}
+};
 
 /**
- * Add cache buster to URL to prevent caching issues
+ * Gets a thumbnail URL for video content
+ * @param videoUrl The video URL
+ * @returns A URL for the video thumbnail
  */
-export function addCacheBuster(url: string): string {
-  if (!url) return '';
+export const getVideoThumbnailUrl = (videoUrl: string | undefined | null): string | null => {
+  if (!videoUrl) return null;
   
-  const hasParams = url.includes('?');
-  return `${url}${hasParams ? '&' : '?'}t=${Date.now()}`;
-}
+  // For now, just return the video URL
+  // In a real implementation, this could generate or fetch a thumbnail
+  return videoUrl;
+};
 
 /**
- * Process URL for thumbnail display
+ * Creates an optimized URL for responsive images
+ * @param imageUrl Original image URL
+ * @param width Desired width
+ * @param height Desired height
+ * @returns Optimized image URL
  */
-export function getThumbnailUrl(url: string): string {
-  if (!url) return '';
+export const getResponsiveImageUrl = (
+  imageUrl: string | undefined | null,
+  width?: number,
+  height?: number
+): string | null => {
+  if (!imageUrl) return null;
   
-  // Add thumbnail processing logic here if needed
-  return url;
-}
+  // Basic implementation - would be replaced with actual CDN parameters
+  // in a production environment
+  return imageUrl;
+};
 
+/**
+ * Determine if a URL is an external URL (not from our domain)
+ */
+export const isExternalUrl = (url: string | undefined | null): boolean => {
+  if (!url) return false;
+  if (url.startsWith('/')) return false;
+  
+  try {
+    const currentDomain = window.location.hostname;
+    const urlObj = new URL(url);
+    return urlObj.hostname !== currentDomain;
+  } catch (e) {
+    // If URL parsing fails, assume it's not external
+    return false;
+  }
+};
+
+/**
+ * Create a URL for an avatar with the given size
+ */
+export const getAvatarUrl = (
+  url: string | undefined | null, 
+  size: number = 64
+): string | null => {
+  if (!url) return null;
+  
+  // Basic implementation - would be replaced with actual CDN parameters
+  // in a production environment
+  return url;
+};

@@ -99,3 +99,48 @@ export const extractMediaUrl = (source: MediaSource): string | null => {
   // Return null if no URL can be found
   return null;
 };
+
+/**
+ * Determine the media type from a media source object or URL
+ */
+export function determineMediaType(source: MediaSource | string): MediaType {
+  // Handle string URLs directly
+  if (typeof source === 'string') {
+    return detectMediaType(source);
+  }
+  
+  // If media_type is already defined, use it
+  if (source.media_type) {
+    return source.media_type;
+  }
+  
+  // Check for content_type hints
+  if (source.content_type) {
+    const contentType = source.content_type.toLowerCase();
+    if (contentType === 'image' || contentType.includes('image')) {
+      return MediaType.IMAGE;
+    }
+    if (contentType === 'video' || contentType.includes('video')) {
+      return MediaType.VIDEO;
+    }
+    if (contentType === 'audio' || contentType.includes('audio')) {
+      return MediaType.AUDIO;
+    }
+  }
+  
+  // Check which URL property exists and use that for detection
+  if (source.video_url) {
+    return MediaType.VIDEO;
+  }
+  
+  if (source.media_url) {
+    return detectMediaType(source.media_url);
+  }
+  
+  if (source.url) {
+    return detectMediaType(source.url);
+  }
+  
+  // Default to unknown if we can't determine
+  return MediaType.UNKNOWN;
+}

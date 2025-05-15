@@ -2,12 +2,16 @@
  * Converts a media URL to a playable URL
  * This may include adding query parameters or modifying the URL for different services
  */
-export const getPlayableMediaUrl = (url: string): string => {
-  if (!url) return "";
+export const getPlayableMediaUrl = (url: string | undefined | null): string => {
+  if (!url) return '';
   
-  // Handle special URL conversions here if needed
-  // For example, converting a YouTube share URL to an embed URL
+  // Handle relative URLs
+  if (url.startsWith('/')) {
+    return url;
+  }
   
+  // Return the URL as-is for now
+  // In a real implementation, this could apply CDN transformations or other processing
   return url;
 };
 
@@ -102,4 +106,28 @@ export const getThumbnailFromVideoUrl = (videoUrl: string): string | null => {
   // For most direct video URLs, no thumbnail is available 
   // without server-side processing
   return null;
+};
+
+/**
+ * Safely process URLs to ensure they're valid for use in img or video tags
+ * @param url The URL to process
+ * @returns A sanitized URL
+ */
+export const sanitizeMediaUrl = (url: string | undefined | null): string => {
+  if (!url) return '';
+  
+  try {
+    // Try to create a URL object to validate the URL
+    new URL(url);
+    return url;
+  } catch (e) {
+    // If it's not a valid URL but starts with a slash, it's likely a valid relative URL
+    if (url.startsWith('/')) {
+      return url;
+    }
+    
+    // Otherwise, log the issue and return an empty string
+    console.warn('Invalid URL:', url);
+    return '';
+  }
 };

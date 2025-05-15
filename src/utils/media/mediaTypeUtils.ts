@@ -1,8 +1,8 @@
 
-import { MediaType } from './types';
+import { MediaType, AvailabilityStatus } from './types';
 
 /**
- * Re-export MediaType enum
+ * Re-export MediaType and AvailabilityStatus enum
  */
 export { MediaType, AvailabilityStatus } from './types';
 

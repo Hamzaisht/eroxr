@@ -3,6 +3,8 @@
 export * from './types';
 export * from './mediaUtils';
 export * from './mediaUrlUtils';
+export * from './mediaTypeUtils';
 
-// Explicitly re-export normalizeMediaSource from mediaUtils to resolve ambiguity
-export { normalizeMediaSource } from './mediaUtils';
+// Explicitly re-export these items to resolve ambiguity and ensure they're available
+export { MediaType, AvailabilityStatus } from './types';
+export { normalizeMediaSource, detectMediaType, extractMediaUrl } from './mediaUtils';
