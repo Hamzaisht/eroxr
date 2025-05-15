@@ -17,19 +17,30 @@ export interface MediaFile {
 export interface MediaUploaderProps {
   onFilesSelected?: (files: File[]) => void;
   onUploadComplete?: (urls: string[]) => void;
+  onComplete?: (url: string) => void;
+  onError?: (error: string) => void;
   maxSizeInMB?: number;
   maxFiles?: number;
   bucket?: string;
+  bucketName?: string;
   folderPath?: string;
-  mediaTypes?: MediaTypes[];
+  mediaTypes?: MediaTypes[] | string;
   className?: string;
   children?: ReactNode;
   showPreview?: boolean;
   autoUpload?: boolean;
+  context?: string;
+  buttonText?: string;
+  onFileCapture?: (file: File) => void;
 }
 
 export interface FileUploadButtonProps {
   onFilesSelected: (files: File[]) => void;
+  onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  allowedTypes: string[];
+  buttonText: string;
+  buttonVariant?: string;
+  isUploading?: boolean;
   disabled?: boolean;
   maxFiles?: number;
   mediaTypes?: MediaTypes[];
@@ -38,8 +49,15 @@ export interface FileUploadButtonProps {
 }
 
 export interface MediaPreviewProps {
-  files: MediaFile[];
-  onRemove: (id: string) => void;
+  files?: MediaFile[];
+  file?: File;
+  previewUrl?: string;
+  previewError?: string;
+  previewLoading?: boolean;
+  selectedFileInfo?: File;
+  onRemove?: (id: string) => void;
+  onClear?: () => void;
+  isUploading?: boolean;
   className?: string;
 }
 

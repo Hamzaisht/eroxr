@@ -2,13 +2,25 @@
 import { MediaTypes } from './types';
 import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '@/utils/upload/validators';
 
-export const getAllowedTypes = (mediaTypes: MediaTypes): string[] => {
+export const getAllowedTypes = (mediaTypes: MediaTypes | string): string[] => {
+  if (typeof mediaTypes === 'string') {
+    switch (mediaTypes) {
+      case 'image':
+        return SUPPORTED_IMAGE_TYPES;
+      case 'video':
+        return SUPPORTED_VIDEO_TYPES;
+      case 'both':
+      default:
+        return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
+    }
+  }
+  
   switch (mediaTypes) {
-    case 'image':
+    case MediaTypes.IMAGE:
       return SUPPORTED_IMAGE_TYPES;
-    case 'video':
+    case MediaTypes.VIDEO:
       return SUPPORTED_VIDEO_TYPES;
-    case 'both':
+    case MediaTypes.ALL:
     default:
       return [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
   }

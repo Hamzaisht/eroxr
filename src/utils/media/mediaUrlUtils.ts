@@ -2,98 +2,109 @@
 import { MediaSource } from './types';
 
 /**
- * Extract a media URL from a MediaSource object or string
- * @param source - MediaSource object or URL string
- * @returns Extracted URL or null if no URL found
+ * Gets a clean URL from a media source
  */
-export function extractMediaUrl(source: MediaSource | string | null | undefined): string | null {
-  if (!source) return null;
+export const getMediaUrl = (source: string | MediaSource | undefined | null): string => {
+  if (!source) return '';
   
-  // If source is already a string, return it
   if (typeof source === 'string') {
-    return source;
+    return cleanUrl(source);
   }
   
-  // Try all possible URL fields in the MediaSource object
-  return source.url || 
-         source.video_url || 
-         source.media_url || 
-         source.image_url ||
-         (source.video_urls && source.video_urls.length > 0 ? source.video_urls[0] : null) ||
-         (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : null) ||
-         null;
-}
+  // Check for different URL properties in order of preference
+  const url = 
+    source.url || 
+    source.video_url || 
+    source.media_url || 
+    source.image_url || 
+    source.thumbnail_url ||
+    source.src ||
+    '';
+    
+  return cleanUrl(url);
+};
 
 /**
- * Add cache buster to URL to prevent caching issues
+ * Gets a thumbnail URL from a media source
  */
-export function addCacheBuster(url: string): string {
-  if (!url) return '';
+export const getThumbnailUrl = (source: string | MediaSource | undefined | null): string => {
+  if (!source) return '';
   
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}_cb=${Date.now()}`;
-}
-
-/**
- * Get a playable media URL with cache busting
- */
-export function getPlayableMediaUrl(url: string): string {
-  if (!url) return '';
-  return addCacheBuster(url);
-}
-
-/**
- * Convert a relative URL to an absolute URL if needed
- */
-export function ensureAbsoluteUrl(url: string): string {
-  if (!url) return '';
-  
-  // If URL is already absolute, return it
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
+  if (typeof source === 'string') {
+    return cleanUrl(source);
   }
   
-  // If it's a data URL, return it
+  // Check for thumbnail properties in order of preference
+  const url = 
+    source.thumbnail_url || 
+    source.image_url || 
+    source.media_url || 
+    source.url ||
+    source.src ||
+    '';
+    
+  return cleanUrl(url);
+};
+
+/**
+ * Clean and validate a URL string
+ */
+export const cleanUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // Handle data URLs as is
   if (url.startsWith('data:')) {
     return url;
   }
   
-  // If it's a blob URL, return it
-  if (url.startsWith('blob:')) {
+  // Handle relative URLs
+  if (url.startsWith('/')) {
     return url;
   }
   
-  // Otherwise, assume it's relative to the base URL
-  const baseUrl = window.location.origin;
-  return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
-}
+  // Add https if protocol is missing
+  if (!/^https?:\/\//i.test(url)) {
+    return `https://${url}`;
+  }
+  
+  return url;
+};
 
 /**
- * Check if a URL is for an image
+ * Check if the URL is for media content
  */
-export function isImageUrl(url: string): boolean {
+export const isMediaUrl = (url: string): boolean => {
   if (!url) return false;
   
-  const extension = url.split('.').pop()?.toLowerCase() || '';
-  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
-}
+  // Check if it's a data URL for media
+  if (url.startsWith('data:image/') || 
+      url.startsWith('data:video/') || 
+      url.startsWith('data:audio/')) {
+    return true;
+  }
+  
+  // Check for common media file extensions
+  const mediaExtensions = /\.(jpg|jpeg|png|gif|webp|svg|mp4|webm|mov|mp3|wav|ogg)($|\?)/i;
+  return mediaExtensions.test(url);
+};
 
 /**
- * Check if a URL is for a video
+ * Get URL from a media source with fallbacks
  */
-export function isVideoUrl(url: string): boolean {
-  if (!url) return false;
+export const getUrlWithFallbacks = (source: MediaSource | string | null | undefined): string => {
+  if (!source) return '';
   
-  const extension = url.split('.').pop()?.toLowerCase() || '';
-  return ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(extension);
-}
-
-/**
- * Check if a URL is for an audio file
- */
-export function isAudioUrl(url: string): boolean {
-  if (!url) return false;
+  // For string sources, just return directly
+  if (typeof source === 'string') return source;
   
-  const extension = url.split('.').pop()?.toLowerCase() || '';
-  return ['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension);
-}
+  // For object sources, try various properties
+  return source.url || 
+         source.video_url || 
+         source.media_url || 
+         source.image_url || 
+         source.thumbnail_url || 
+         source.src ||
+         (source.video_urls?.length ? source.video_urls[0] : '') || 
+         (source.media_urls?.length ? source.media_urls[0] : '') || 
+         '';
+};

@@ -2,7 +2,7 @@
 // Export types
 export * from './types';
 
-// Export utilities - use explicit re-exports to avoid ambiguity
+// Export utilities - use explicit named imports and exports to avoid ambiguity
 export { 
   determineMediaType,
   createUniqueFilePath,

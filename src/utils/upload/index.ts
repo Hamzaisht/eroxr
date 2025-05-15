@@ -1,9 +1,11 @@
 
-// Export only validator functions that aren't duplicated
+// Export validator functions with explicit named exports to avoid ambiguity
 export {
   validateFileForUpload,
   isImageFile,
-  isVideoFile
+  isVideoFile,
+  getFileExtension,
+  runFileDiagnostic
 } from './validators';
 
 // Export file utilities
