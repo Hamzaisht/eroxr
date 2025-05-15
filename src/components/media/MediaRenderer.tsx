@@ -2,7 +2,7 @@
 import { useState, useEffect, forwardRef } from 'react';
 import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
 import { MediaDisplay } from './MediaDisplay';
-import { extractMediaUrl } from '@/utils/media/mediaUtils';
+import { extractMediaUrl } from '@/utils/media/urlUtils';
 import { normalizeMediaSource } from '@/utils/media/types';
 
 interface MediaRendererProps extends MediaOptions {

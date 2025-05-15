@@ -12,93 +12,86 @@ interface MediaDisplayProps {
   loop?: boolean;
   poster?: string;
   onClick?: () => void;
-  onLoad?: () => void;
   onError?: () => void;
+  onLoad?: () => void;
   onEnded?: () => void;
   onTimeUpdate?: (time: number) => void;
 }
 
-export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, MediaDisplayProps>(
-  ({
-    mediaUrl,
-    mediaType,
-    className = '',
-    autoPlay = false,
-    controls = true,
-    muted = true,
-    loop = false,
-    poster,
-    onClick,
-    onLoad,
-    onError,
-    onEnded,
-    onTimeUpdate
-  }, ref) => {
-    // Custom handler for video time updates
-    const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-      if (onTimeUpdate) {
-        onTimeUpdate(e.currentTarget.currentTime);
-      }
-    };
-
-    switch (mediaType) {
-      case MediaType.VIDEO:
-        return (
-          <video
-            ref={ref as React.RefObject<HTMLVideoElement>}
-            src={mediaUrl}
-            className={className}
-            poster={poster}
-            autoPlay={autoPlay}
-            controls={controls}
-            muted={muted}
-            loop={loop}
-            onClick={onClick}
-            onLoadedData={onLoad}
-            onError={onError}
-            onEnded={onEnded}
-            onTimeUpdate={handleTimeUpdate}
-            playsInline
-          />
-        );
-
-      case MediaType.IMAGE:
-      case MediaType.GIF:
-        return (
-          <img
-            ref={ref as React.RefObject<HTMLImageElement>}
-            src={mediaUrl}
-            className={className}
-            onClick={onClick}
-            onLoad={onLoad}
-            onError={onError}
-            alt="Media content"
-          />
-        );
-
-      case MediaType.AUDIO:
-        return (
-          <audio
-            src={mediaUrl}
-            className={className}
-            controls={controls}
-            autoPlay={autoPlay}
-            muted={muted}
-            loop={loop}
-            onLoadedData={onLoad}
-            onError={onError}
-            onEnded={onEnded}
-          />
-        );
-
-      default:
-        return (
-          <div className={`flex items-center justify-center bg-gray-100 ${className}`}>
-            <p>Unsupported media type</p>
-          </div>
-        );
-    }
+export const MediaDisplay = forwardRef<HTMLVideoElement | HTMLImageElement, MediaDisplayProps>(({
+  mediaUrl,
+  mediaType,
+  className = '',
+  autoPlay = false,
+  controls = true,
+  muted = true,
+  loop = false,
+  poster,
+  onClick,
+  onError,
+  onLoad,
+  onEnded,
+  onTimeUpdate
+}, ref) => {
+  if (mediaType === MediaType.VIDEO) {
+    return (
+      <video
+        src={mediaUrl}
+        className={className}
+        autoPlay={autoPlay}
+        controls={controls}
+        muted={muted}
+        loop={loop}
+        poster={poster}
+        onClick={onClick}
+        onError={onError}
+        onLoadedData={onLoad}
+        onEnded={onEnded}
+        onTimeUpdate={e => {
+          if (onTimeUpdate) {
+            onTimeUpdate((e.target as HTMLVideoElement).currentTime);
+          }
+        }}
+        playsInline
+        ref={ref as React.Ref<HTMLVideoElement>}
+      />
+    );
   }
-);
+
+  if (mediaType === MediaType.AUDIO) {
+    return (
+      <audio
+        src={mediaUrl}
+        className={className}
+        autoPlay={autoPlay}
+        controls={controls}
+        muted={muted}
+        loop={loop}
+        onError={onError}
+        onLoadedData={onLoad}
+        onEnded={onEnded}
+        onTimeUpdate={e => {
+          if (onTimeUpdate) {
+            onTimeUpdate((e.target as HTMLAudioElement).currentTime);
+          }
+        }}
+        ref={ref as React.Ref<HTMLAudioElement>}
+      />
+    );
+  }
+
+  // Default to image for anything else
+  return (
+    <img
+      src={mediaUrl}
+      className={className}
+      onClick={onClick}
+      onError={onError}
+      onLoad={onLoad}
+      alt="Media content"
+      ref={ref as React.Ref<HTMLImageElement>}
+    />
+  );
+});
 
 MediaDisplay.displayName = 'MediaDisplay';

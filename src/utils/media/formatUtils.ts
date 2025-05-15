@@ -1,80 +1,102 @@
 
-import { formatDistanceToNow, format } from 'date-fns';
+/**
+ * Infer content type from file extension
+ * @param filename Filename with extension
+ * @returns Inferred content type or fallback
+ */
+export function inferContentTypeFromExtension(filename: string): string {
+  if (!filename) return 'application/octet-stream';
+  
+  const extension = filename.split('.').pop()?.toLowerCase();
+  
+  if (!extension) return 'application/octet-stream';
+  
+  const mimeTypes: Record<string, string> = {
+    // Images
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'bmp': 'image/bmp',
+    'svg': 'image/svg+xml',
+    
+    // Videos
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'ogg': 'video/ogg',
+    'mov': 'video/quicktime',
+    'mkv': 'video/x-matroska',
+    'avi': 'video/x-msvideo',
+    
+    // Audio
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    'aac': 'audio/aac',
+    
+    // Documents
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'txt': 'text/plain'
+  };
+  
+  return mimeTypes[extension] || 'application/octet-stream';
+}
 
-// Format a date string to a relative time (e.g., "2 hours ago")
-export const formatRelativeTime = (dateString: string): string => {
-  try {
-    const date = new Date(dateString);
-    return formatDistanceToNow(date, { addSuffix: true });
-  } catch (error) {
-    console.error('Error formatting relative time:', error);
-    return 'Invalid date';
-  }
-};
-
-// Format a date string to a specific format
-export const formatDateTime = (dateString: string, formatString: string = 'PPpp'): string => {
-  try {
-    const date = new Date(dateString);
-    return format(date, formatString);
-  } catch (error) {
-    console.error('Error formatting date time:', error);
-    return 'Invalid date';
-  }
-};
-
-// Format file size to human readable format
-export const formatFileSize = (bytes: number): string => {
+/**
+ * Format file size to human readable format
+ * @param bytes File size in bytes
+ * @returns Human readable file size
+ */
+export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 Bytes';
   
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const units = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
   
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
+  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${units[i]}`;
+}
 
-// Format duration in seconds to MM:SS format
-export const formatDuration = (seconds: number): string => {
-  if (!seconds || isNaN(seconds)) return '00:00';
-  
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  
-  const formattedMinutes = minutes.toString().padStart(2, '0');
-  const formattedSeconds = remainingSeconds.toString().padStart(2, '0');
-  
-  return `${formattedMinutes}:${formattedSeconds}`;
-};
-
-// Infer content type from file extension
-export const inferContentTypeFromExtension = (filename: string): string => {
-  const extension = filename.split('.').pop()?.toLowerCase() || '';
-  
-  switch (extension) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'gif':
-      return 'image/gif';
-    case 'webp':
-      return 'image/webp';
-    case 'mp4':
-      return 'video/mp4';
-    case 'webm':
-      return 'video/webm';
-    case 'mov':
-      return 'video/quicktime';
-    case 'mp3':
-      return 'audio/mpeg';
-    case 'wav':
-      return 'audio/wav';
-    case 'ogg':
-      return 'audio/ogg';
-    default:
-      return 'application/octet-stream';
+/**
+ * Format a media duration in seconds to readable time format
+ * @param seconds Duration in seconds
+ * @returns Formatted time string (MM:SS or HH:MM:SS)
+ */
+export function formatDuration(seconds: number): string {
+  if (isNaN(seconds) || seconds < 0) {
+    return '00:00';
   }
-};
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  
+  return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
 
+/**
+ * Creates a media monitoring report to track issues
+ */
+export function reportMediaError(
+  url: string,
+  errorType: 'load_failure' | 'playback_error' | 'processing_error',
+  retryCount: number,
+  mediaType: string,
+  componentName: string
+): void {
+  console.error(`Media Error Report: ${componentName} - ${errorType}`, {
+    url,
+    errorType,
+    retryCount,
+    mediaType,
+    component: componentName,
+    timestamp: new Date().toISOString(),
+    userAgent: navigator.userAgent
+  });
+}

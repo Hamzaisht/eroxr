@@ -46,12 +46,13 @@ export const uploadFile = async (
   }
   
   // CRITICAL: File validation check
-  console.log("FILE DEBUG:", {
+  console.log("🧬 FILE DEBUG:", {
     file,
-    isFile: file instanceof File,
-    type: file?.type,
-    size: file?.size,
-    name: file?.name
+    name: file.name,
+    size: `${(file.size / 1024).toFixed(2)} KB`,
+    type: file.type,
+    lastModified: new Date(file.lastModified).toLocaleString(),
+    url: URL.createObjectURL(file)
   });
   
   try {
@@ -61,7 +62,7 @@ export const uploadFile = async (
     // CRITICAL: Explicitly use the file's type
     const contentType = file.type;
     
-    console.log(`Uploading ${file.name} (${contentType}) to ${bucket}/${filePath}`);
+    console.log(`📤 Uploading ${file.name} (${contentType}) to ${bucket}/${filePath}`);
     
     // CRITICAL: Upload to Supabase with explicit content type and upsert: true
     const { data, error } = await supabase.storage
@@ -73,7 +74,7 @@ export const uploadFile = async (
       });
       
     if (error) {
-      console.error("Storage upload error:", error);
+      console.error("❌ Storage upload error:", error);
       return { 
         success: false, 
         error: error.message || "Upload failed"
@@ -87,7 +88,7 @@ export const uploadFile = async (
       };
     }
     
-    console.log("Upload successful, path:", data.path);
+    console.log("✅ Upload successful, path:", data.path);
     
     // Test upload with getPublicUrl
     const { data: urlData } = supabase.storage
@@ -103,11 +104,11 @@ export const uploadFile = async (
     
     // Get the URL using our utility function
     const { url: mediaUrl, error: urlError } = await getSupabaseUrl(bucket, data.path, {
-      useSignedUrls: true // Change this to false for public buckets
+      useSignedUrls: false // Use public URLs for most content
     });
     
     if (urlError) {
-      console.warn("Warning getting URL:", urlError);
+      console.warn("⚠️ Warning getting URL:", urlError);
     }
     
     if (!mediaUrl) {
@@ -117,15 +118,18 @@ export const uploadFile = async (
       };
     }
     
-    console.log("Upload successful, URL:", mediaUrl);
+    // Add cache buster to URL
+    const finalUrl = addCacheBuster(mediaUrl);
+    
+    console.log("📤 Upload successful, URL:", finalUrl);
     
     return {
       success: true,
-      url: mediaUrl,
+      url: finalUrl,
       path: data.path
     };
   } catch (error: any) {
-    console.error("File upload error:", error);
+    console.error("❌ File upload error:", error);
     return {
       success: false,
       error: error.message || "An unknown error occurred"

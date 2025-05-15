@@ -4,27 +4,35 @@ import { MediaSource } from './types';
 /**
  * Extract the media URL from a MediaSource object or string
  */
-export function extractMediaUrl(source: MediaSource | string): string | null {
+export function extractMediaUrl(source: MediaSource | string | null | undefined): string | null {
+  if (!source) return null;
+  
+  // If source is already a string, return it
   if (typeof source === 'string') {
     return source;
   }
   
-  // Try to get the URL from different possible properties
-  const url = source.url || source.video_url || source.media_url || source.src;
-  
-  return url || null;
+  // Try all possible URL fields in the MediaSource object
+  return source.url || 
+         source.video_url || 
+         source.media_url || 
+         (source.video_urls && source.video_urls.length > 0 ? source.video_urls[0] : null) ||
+         (source.media_urls && source.media_urls.length > 0 ? source.media_urls[0] : null) ||
+         null;
 }
 
 /**
  * Get a playable media URL by handling special cases
  */
-export function getPlayableMediaUrl(url: string): string {
+export function getPlayableMediaUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  
   // Handle special URL types or transformations here
   
   // Handle Supabase URLs
-  if (url.includes('storage.googleapis.com') && !url.includes('token=')) {
-    // This is a likely public Supabase URL, leave it as is
-    return url;
+  if (url.includes('storage.googleapis.com') || url.includes('supabase.co/storage/v1/object/public')) {
+    // Ensure proper caching parameters
+    return url.includes('?') ? `${url}&t=${Date.now()}` : `${url}?t=${Date.now()}`;
   }
   
   return url;
@@ -75,8 +83,6 @@ export async function checkUrlExists(url: string): Promise<boolean> {
 
 /**
  * Checks if a URL points to an image
- * @param url - URL to check
- * @returns True if URL points to an image, false otherwise
  */
 export function isImageUrl(url: string): boolean {
   if (!url) return false;
@@ -89,8 +95,6 @@ export function isImageUrl(url: string): boolean {
 
 /**
  * Checks if a URL points to a video
- * @param url - URL to check
- * @returns True if URL points to a video, false otherwise
  */
 export function isVideoUrl(url: string): boolean {
   if (!url) return false;
@@ -102,23 +106,7 @@ export function isVideoUrl(url: string): boolean {
 }
 
 /**
- * Checks if a URL points to an audio file
- * @param url - URL to check
- * @returns True if URL points to an audio file, false otherwise
- */
-export function isAudioUrl(url: string): boolean {
-  if (!url) return false;
-  
-  const extension = getFileExtension(url).toLowerCase();
-  const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'];
-  
-  return audioExtensions.includes(extension);
-}
-
-/**
  * Extracts a file extension from a URL
- * @param url - URL to extract extension from
- * @returns The file extension or an empty string
  */
 export function getFileExtension(url: string): string {
   if (!url) return '';

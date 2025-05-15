@@ -1,44 +1,35 @@
 
-// Types for media handling
+/**
+ * Enum for media types
+ */
 export enum MediaType {
-  UNKNOWN = 'unknown',
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
-  GIF = 'gif',
   DOCUMENT = 'document',
-  FILE = 'file' 
+  UNKNOWN = 'unknown'
 }
 
-export enum AvailabilityStatus {
-  ONLINE = 'online',
-  OFFLINE = 'offline',
-  AWAY = 'away',
-  BUSY = 'busy',
-  INVISIBLE = 'invisible'
-}
-
+/**
+ * Interface for media source object
+ */
 export interface MediaSource {
-  // Required field to store the URL
   url?: string;
-  
-  // Legacy fields for backward compatibility
   video_url?: string;
   media_url?: string;
   src?: string;
-  
-  // Additional metadata fields
   media_type?: MediaType;
-  thumbnail_url?: string;
-  creator_id?: string;
-  content_type?: string;
-  poster?: string;
-  
-  // Arrays for multiple URLs
   video_urls?: string[];
   media_urls?: string[];
+  thumbnail_url?: string;
+  poster?: string;
+  creator_id?: string;
+  id?: string;
 }
 
+/**
+ * Interface for media options used in various media components
+ */
 export interface MediaOptions {
   className?: string;
   autoPlay?: boolean;
@@ -47,76 +38,72 @@ export interface MediaOptions {
   loop?: boolean;
   poster?: string;
   onClick?: () => void;
-  onLoad?: () => void;
   onError?: () => void;
+  onLoad?: () => void;
   onEnded?: () => void;
   onTimeUpdate?: (time: number) => void;
-  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
-  alt?: string;
-  maxRetries?: number;
-  showWatermark?: boolean;
-  ref?: React.Ref<HTMLVideoElement | HTMLImageElement>;
 }
 
-export type MediaTypes = 'image' | 'video' | 'audio' | 'document' | 'all';
-
-// Helper function to convert string to MediaType
-export function stringToMediaType(str: string): MediaType {
-  switch (str.toLowerCase()) {
-    case 'image':
-      return MediaType.IMAGE;
-    case 'video':
-      return MediaType.VIDEO;
-    case 'audio':
-      return MediaType.AUDIO;
-    case 'gif':
-      return MediaType.GIF;
-    case 'document':
-      return MediaType.DOCUMENT;
-    case 'file':
-      return MediaType.FILE;
-    default:
-      return MediaType.UNKNOWN;
-  }
-}
-
-// Upload related types
+/**
+ * Interface for upload options
+ */
 export interface UploadOptions {
-  bucket?: string;
-  path?: string;
-  contentType?: string;
-  cacheControl?: string;
-  upsert?: boolean;
-  generateThumbnail?: boolean;
-  addWatermark?: boolean;
-  isPublic?: boolean;
-  metadata?: Record<string, any>;
-  contentCategory?: string;
   maxSizeInMB?: number;
+  contentCategory?: string;
   onProgress?: (progress: number) => void;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
-  allowedTypes?: string[];
 }
 
-// Normalize a media source to ensure it has a valid URL property
-export function normalizeMediaSource(source: string | MediaSource): MediaSource {
-  if (typeof source === 'string') {
-    return { url: source };
+/**
+ * Helper function to normalize any media source into a standard MediaSource object
+ */
+export function normalizeMediaSource(source: any): MediaSource {
+  if (!source) return {};
+
+  // If it's already a string, assume it's a direct URL
+  if (typeof source === "string") {
+    // Try to infer media type from extension
+    let mediaType = MediaType.UNKNOWN;
+    const extension = source.split('.').pop()?.toLowerCase();
+    
+    if (extension) {
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(extension)) {
+        mediaType = MediaType.IMAGE;
+      } else if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension)) {
+        mediaType = MediaType.VIDEO;
+      } else if (['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension)) {
+        mediaType = MediaType.AUDIO;
+      }
+    }
+    
+    return {
+      url: source,
+      media_type: mediaType
+    };
   }
+
+  // If it's a MediaSource-like object, normalize it
+  const mediaSource: MediaSource = { ...source };
   
-  const normalizedSource: MediaSource = { ...source };
-  
-  // Ensure the url property is set
-  if (!normalizedSource.url) {
-    if (normalizedSource.video_url) {
-      normalizedSource.url = normalizedSource.video_url;
-    } else if (normalizedSource.media_url) {
-      normalizedSource.url = normalizedSource.media_url;
-    } else if (normalizedSource.src) {
-      normalizedSource.url = normalizedSource.src;
+  // Ensure there's a url property (required by MediaRenderer)
+  if (!mediaSource.url) {
+    if (mediaSource.video_url) {
+      mediaSource.url = mediaSource.video_url;
+      mediaSource.media_type = MediaType.VIDEO;
+    } else if (mediaSource.media_url) {
+      mediaSource.url = mediaSource.media_url;
+      // Infer type from extension if not provided
+      if (!mediaSource.media_type) {
+        const ext = mediaSource.media_url.split('.').pop()?.toLowerCase();
+        if (ext && ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)) {
+          mediaSource.media_type = MediaType.VIDEO;
+        } else {
+          mediaSource.media_type = MediaType.IMAGE;
+        }
+      }
     }
   }
-  
-  return normalizedSource;
+
+  return mediaSource;
 }

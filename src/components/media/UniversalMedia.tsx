@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
 import { MediaRenderer } from './MediaRenderer';
 import { normalizeMediaSource } from '@/utils/media/types';
+import { extractMediaUrl } from '@/utils/media/urlUtils';
 
 interface UniversalMediaProps extends MediaOptions {
   /**
@@ -40,7 +41,7 @@ export const UniversalMedia = ({
   objectFit = 'cover',
   ...props 
 }: UniversalMediaProps) => {
-  // Determine media type from item if possible
+  // Detect media type
   const [mediaType, setMediaType] = useState<MediaType | undefined>(
     typeof item !== 'string' ? item.media_type : undefined
   );
@@ -52,12 +53,25 @@ export const UniversalMedia = ({
     }
   }, [item]);
   
-  // Normalize the media source
-  const normalizedSource = normalizeMediaSource(item);
-
+  // Validate and debug incoming media item
+  useEffect(() => {
+    if (!item) {
+      console.warn("UniversalMedia: No media item provided");
+      return;
+    }
+    
+    // Debug media item structure
+    if (typeof item !== 'string') {
+      const url = extractMediaUrl(item);
+      if (!url) {
+        console.warn("UniversalMedia: Could not extract URL from media item", item);
+      }
+    }
+  }, [item]);
+  
   return (
     <MediaRenderer
-      src={normalizedSource}
+      src={item}
       type={mediaType}
       className={className}
       maxRetries={maxRetries}
