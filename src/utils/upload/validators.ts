@@ -5,6 +5,20 @@
 
 import { MediaType } from '../media/types';
 
+// Supported media types constants
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp'
+];
+
+export const SUPPORTED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/quicktime'
+];
+
 // Validate file for upload
 export const validateFileForUpload = (file: File, maxSizeInMB = 100): { valid: boolean, error?: string } => {
   // Check if file exists

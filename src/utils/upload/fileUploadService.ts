@@ -63,7 +63,13 @@ export const addCacheBuster = (url: string): string => {
  * Infer content type from file extension
  */
 export const inferContentTypeFromExtension = (filename: string): string => {
-  return getMimeTypeFromExtension(getFileExtension({ name: filename } as File));
+  return getMimeTypeFromExtension(getFileExtension(filename));
+};
+
+// Fix the line that causes the type error
+export const getFileExtension = (file: File | { name: string }): string => {
+  const filename = typeof file === 'string' ? file : file.name;
+  return filename.split('.').pop()?.toLowerCase() || '';
 };
 
 /**

@@ -5,7 +5,9 @@ export {
   isImageFile,
   isVideoFile,
   getFileExtension,
-  runFileDiagnostic
+  runFileDiagnostic,
+  SUPPORTED_IMAGE_TYPES,
+  SUPPORTED_VIDEO_TYPES
 } from './validators';
 
 // Export file utilities
