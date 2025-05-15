@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useSession } from "@supabase/auth-helpers-react";
 import { LoadingScreen } from './LoadingScreen';
@@ -9,6 +9,7 @@ export const AuthLayout = () => {
   const session = useSession();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   console.log("AuthLayout - session:", session ? "exists" : "null"); // Debug logging
 
@@ -16,13 +17,16 @@ export const AuthLayout = () => {
     // Only redirect if we have a session AND we're on auth pages (login or register)
     const authPages = ['/login', '/register'];
     
-    if (session && authPages.includes(location.pathname)) {
+    if (session && authPages.includes(location.pathname) && !isRedirecting) {
+      // Set flag to prevent multiple redirects
+      setIsRedirecting(true);
+      
       // Check if there's a redirect path from previous navigation
       const returnPath = location.state?.from || '/home';
       console.log(`User is authenticated, redirecting to: ${returnPath}`);
       navigate(returnPath, { replace: true });
     }
-  }, [session, navigate, location.pathname]);
+  }, [session, navigate, location.pathname, location.state, isRedirecting]);
 
   // Show loading while session is being determined
   if (session === undefined) {

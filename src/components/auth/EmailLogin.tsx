@@ -66,6 +66,8 @@ export const EmailLogin = ({ onToggleMode }: { onToggleMode: () => void }) => {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
+      
+      // No need to manually navigate - AuthLayout will handle redirection
     } catch (error: any) {
       console.error("Login error:", error);
       

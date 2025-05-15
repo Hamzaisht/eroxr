@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { AuthForm } from "@/components/auth/AuthForm";
@@ -12,18 +12,23 @@ const Login = () => {
   const session = useSession();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Add debug logging
   useEffect(() => {
     console.log("Login page rendered with session:", session ? "exists" : "null");
     
     if (session) {
-      // Get the redirect path from location state or default to home
-      const from = location.state?.from || "/home";
-      console.log("User is logged in, redirecting to:", from);
-      navigate(from, { replace: true });
+      // Prevent multiple redirects
+      if (!isRedirecting) {
+        setIsRedirecting(true);
+        // Get the redirect path from location state or default to home
+        const from = location.state?.from || "/home";
+        console.log("User is logged in, redirecting to:", from);
+        navigate(from, { replace: true });
+      }
     }
-  }, [session, navigate, location]);
+  }, [session, navigate, location, isRedirecting]);
 
   // Show loading while session is being determined
   if (session === undefined) {
@@ -31,6 +36,10 @@ const Login = () => {
   }
 
   // Only render the login form if there's no session
+  if (session) {
+    return <LoadingScreen />;
+  }
+
   return (
     <div className="min-h-screen w-full bg-luxury-dark flex items-center justify-center overflow-auto">
       {/* Background Video */}
