@@ -2,7 +2,7 @@
 import { ReactNode, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 interface MainContentProps {
   children: ReactNode;

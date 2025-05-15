@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { FeedContainer } from "./feed/components/FeedContainer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +13,7 @@ export const MainFeed = ({
   onFileSelect,
   onOpenGoLive,
 }: MainFeedProps) => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
   const { toast } = useToast();
   const [hasSeenTip, setHasSeenTip] = useState(() => 
     localStorage.getItem("hasSeenEngagementTip")

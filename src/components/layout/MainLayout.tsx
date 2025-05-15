@@ -5,14 +5,14 @@ import { BackgroundEffects } from "./BackgroundEffects";
 import { InteractiveNav } from "./InteractiveNav";
 import { MainContent } from "./components/MainContent";
 import { FloatingActionMenu } from "./FloatingActionMenu";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { LoadingScreen } from "./LoadingScreen";
 
 export const MainLayout = () => {
   const session = useSession();
   const location = useLocation();
   const isErosRoute = location.pathname.includes('/shorts');
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
   
   console.log("MainLayout - session:", session ? "exists" : "null"); // Debug logging
   
