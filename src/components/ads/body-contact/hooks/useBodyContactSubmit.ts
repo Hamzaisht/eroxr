@@ -50,7 +50,7 @@ export const useBodyContactSubmit = ({
       }
 
       // 2. Check user permissions (premium, verification)
-      const permissionCheck = await checkPermissions(session.user.id);
+      const permissionCheck = await checkPermissions(session.user.id, isSuperAdmin === true);
       if (!permissionCheck.isAllowed) {
         toast({
           title: "Access restricted",

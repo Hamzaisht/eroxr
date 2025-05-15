@@ -10,13 +10,13 @@ interface PermissionCheckResult {
 export const useAdPermissionCheck = () => {
   const session = useSession();
 
-  const checkPermissions = async (isSuperAdmin: boolean): Promise<PermissionCheckResult> => {
-    if (!session?.user?.id) {
+  const checkPermissions = async (userId: string, isSuperAdmin?: boolean): Promise<PermissionCheckResult> => {
+    if (!userId) {
       return { isAllowed: false, error: "You need to be logged in to create a body contact ad" };
     }
 
     // Skip checks for super admin
-    if (isSuperAdmin) {
+    if (isSuperAdmin === true) {
       console.log("Super admin detected - bypassing verification and premium checks");
       return { isAllowed: true };
     }
@@ -25,7 +25,7 @@ export const useAdPermissionCheck = () => {
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("is_paying_customer, id_verification_status")
-        .eq("id", session.user.id)
+        .eq("id", userId)
         .single();
 
       if (profileError) {
