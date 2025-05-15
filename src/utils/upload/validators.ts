@@ -1,4 +1,36 @@
 
+// Supported file types
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml'
+];
+
+export const SUPPORTED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/x-matroska'
+];
+
+export const SUPPORTED_AUDIO_TYPES = [
+  'audio/mpeg',
+  'audio/wav',
+  'audio/ogg',
+  'audio/aac',
+  'audio/mp4'
+];
+
+export const SUPPORTED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain'
+];
+
 interface ValidationResult {
   valid: boolean;
   error?: string;
@@ -18,7 +50,7 @@ export function getFileExtension(file: File): string {
  */
 export function isImageFile(file: File): boolean {
   if (!file || !file.type) return false;
-  return file.type.startsWith('image/');
+  return SUPPORTED_IMAGE_TYPES.includes(file.type);
 }
 
 /**
@@ -26,7 +58,7 @@ export function isImageFile(file: File): boolean {
  */
 export function isVideoFile(file: File): boolean {
   if (!file || !file.type) return false;
-  return file.type.startsWith('video/');
+  return SUPPORTED_VIDEO_TYPES.includes(file.type);
 }
 
 /**
@@ -34,7 +66,7 @@ export function isVideoFile(file: File): boolean {
  */
 export function isAudioFile(file: File): boolean {
   if (!file || !file.type) return false;
-  return file.type.startsWith('audio/');
+  return SUPPORTED_AUDIO_TYPES.includes(file.type);
 }
 
 /**
@@ -57,23 +89,10 @@ export function validateFileForUpload(file: File, maxSizeMB = 100): ValidationRe
 
   // Check if file type is allowed
   const allowedTypes = [
-    // Images
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    // Videos
-    'video/mp4',
-    'video/webm',
-    'video/quicktime',
-    // Audio
-    'audio/mpeg',
-    'audio/wav',
-    'audio/ogg',
-    // Documents
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ...SUPPORTED_IMAGE_TYPES,
+    ...SUPPORTED_VIDEO_TYPES,
+    ...SUPPORTED_AUDIO_TYPES,
+    ...SUPPORTED_DOCUMENT_TYPES
   ];
 
   if (!allowedTypes.includes(file.type)) {

@@ -1,114 +1,105 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { validateFileForUpload } from "./validators";
-import { runFileDiagnostic } from "./fileUtils";
+import { getFileExtension } from "@/utils/media/mediaUtils";
+import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Result of a storage upload operation
+ * Create a unique file path for upload
  */
-export interface UploadResult {
-  success: boolean;
-  path?: string;
-  url?: string;
-  error?: string;
+function createUniqueFilePath(userId: string, file: File): string {
+  const extension = getFileExtension(file);
+  const timestamp = Date.now();
+  const uniqueId = uuidv4().substring(0, 8);
+  
+  return `${userId}/${timestamp}-${uniqueId}.${extension}`;
 }
 
 /**
- * Uploads a file to Supabase storage with proper validation
+ * Upload a file to Supabase storage
  */
 export async function uploadFileToStorage(
   bucket: string,
-  path: string,
+  path: string | null,
   file: File
-): Promise<UploadResult> {
+): Promise<{ success: boolean; url?: string; path?: string; error?: string }> {
   try {
-    // CRITICAL: Run comprehensive file diagnostic
-    runFileDiagnostic(file);
-    
-    // CRITICAL: Strict file validation before upload
-    if (!file || !(file instanceof File) || file.size === 0) {
-      console.error("❌ Invalid File passed to uploader", file);
-      return {
-        success: false,
-        error: "Only raw File instances with data can be uploaded"
-      };
-    }
-    
-    // Validate file before upload
+    // Validate the file
     const validation = validateFileForUpload(file);
     if (!validation.valid) {
       return {
         success: false,
-        error: validation.error || 'Invalid file'
+        error: validation.error
       };
     }
-    
-    // Log file debug info
-    console.log("[FILE DEBUG]", {
-      filename: file.name,
-      size: `${(file.size / 1024).toFixed(2)} KB`,
-      type: file.type,
-      lastModified: new Date(file.lastModified).toLocaleString()
-    });
-    
-    // Upload to Supabase storage with proper content type
+
+    // If no path provided, create one
+    const filePath = path || createUniqueFilePath('uploads', file);
+
+    // Upload to Supabase
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(path, file, {
-        contentType: file.type, // CRITICAL: Set correct content type
-        upsert: true,           // Allow overwrites
-        cacheControl: '3600'    // Cache control header
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: true
       });
-    
+
     if (error) {
-      console.error("Storage upload error:", error);
       return {
         success: false,
         error: error.message
       };
     }
-    
-    if (!data || !data.path) {
+
+    if (!data) {
       return {
         success: false,
-        error: 'Upload successful but no path returned'
+        error: 'Upload failed with no data returned'
       };
     }
-    
-    // Get public URL for verification
+
+    // Get the public URL
     const { data: urlData } = supabase.storage
       .from(bucket)
       .getPublicUrl(data.path);
-    
-    // CRITICAL: Verify and log the result
-    if (urlData?.publicUrl) {
-      console.log("✅ Supabase URL:", urlData.publicUrl);
-    } else {
-      console.error("❌ Supabase URL missing");
-    }
-    
-    // Verify URL is accessible
-    try {
-      const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
-      if (!response.ok) {
-        console.warn(`Upload verification failed: ${response.status} ${response.statusText}`);
-      } else {
-        console.log("Upload verification successful");
-      }
-    } catch (verifyError) {
-      console.warn("Could not verify uploaded file URL:", verifyError);
-    }
-    
+
     return {
       success: true,
       path: data.path,
       url: urlData.publicUrl
     };
   } catch (error: any) {
-    console.error("Storage upload error:", error);
     return {
       success: false,
-      error: error.message || String(error)
+      error: error.message || 'An unknown error occurred'
+    };
+  }
+}
+
+/**
+ * Delete a file from Supabase storage
+ */
+export async function deleteFileFromStorage(
+  bucket: string,
+  path: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.storage.from(bucket).remove([path]);
+
+    if (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+
+    return {
+      success: true
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message || 'An unknown error occurred'
     };
   }
 }

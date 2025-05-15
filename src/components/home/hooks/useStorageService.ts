@@ -11,16 +11,16 @@ export const useStorageService = () => {
   const getFullPublicUrl = async (bucket: string, path: string): Promise<string> => {
     if (!path) return '';
     
-    // Use our new utility function for getting URLs
-    const { url, error } = await getSupabaseUrl(bucket, path, {
+    // Use our utility function for getting URLs
+    const result = await getSupabaseUrl(bucket, path, {
       useSignedUrls: true // Change this to false for public buckets
     });
     
-    if (error) {
-      console.error("Error getting URL:", error);
+    if (result.error) {
+      console.error("Error getting URL:", result.error);
     }
     
-    return url || '';
+    return result.url || '';
   };
 
   /**
@@ -96,15 +96,15 @@ export const useStorageService = () => {
       
       console.log("Upload successful, path:", uploadData.path);
       
-      // Use our new utility to get the URL (supports both signed and public URLs)
-      const { url: mediaUrl } = await getSupabaseUrl(bucketName, uploadData.path, {
+      // Use our utility to get the URL (supports both signed and public URLs)
+      const urlResult = await getSupabaseUrl(bucketName, uploadData.path, {
         useSignedUrls: true // Change to false for public buckets
       });
         
-      console.log("Media URL:", mediaUrl);
+      console.log("Media URL:", urlResult.url);
       
       // Use our utility to add cache busting as needed
-      const processedUrl = mediaUrl ? getPlayableMediaUrl(mediaUrl) : '';
+      const processedUrl = urlResult.url ? getPlayableMediaUrl(urlResult.url) : '';
       
       return { 
         success: true, 

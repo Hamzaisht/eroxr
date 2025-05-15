@@ -1,11 +1,11 @@
 
 import { useState, useEffect, forwardRef } from 'react';
-import { MediaType, MediaSource, MediaOptions } from '@/utils/media/types';
+import { MediaType, MediaSource } from '@/utils/media/types';
 import { MediaDisplay } from './MediaDisplay';
 import { extractMediaUrl } from '@/utils/media/urlUtils';
 import { normalizeMediaSource } from '@/utils/media/types';
 
-interface MediaRendererProps extends MediaOptions {
+interface MediaRendererProps {
   /**
    * The media source to render (string URL or MediaSource object)
    */
@@ -30,6 +30,61 @@ interface MediaRendererProps extends MediaOptions {
    * Show watermark on media (default: false)
    */
   showWatermark?: boolean;
+  
+  /**
+   * CSS class for styling
+   */
+  className?: string;
+  
+  /**
+   * Auto-play media (for video/audio)
+   */
+  autoPlay?: boolean;
+  
+  /**
+   * Show media controls (for video/audio)
+   */
+  controls?: boolean;
+  
+  /**
+   * Mute media (for video/audio)
+   */
+  muted?: boolean;
+  
+  /**
+   * Loop media (for video/audio)
+   */
+  loop?: boolean;
+  
+  /**
+   * Poster image URL (for video)
+   */
+  poster?: string;
+  
+  /**
+   * Click handler
+   */
+  onClick?: () => void;
+  
+  /**
+   * Error handler
+   */
+  onError?: () => void;
+  
+  /**
+   * Load complete handler
+   */
+  onLoad?: () => void;
+  
+  /**
+   * Media ended handler
+   */
+  onEnded?: () => void;
+  
+  /**
+   * Time update handler
+   */
+  onTimeUpdate?: (time?: number) => void;
 }
 
 /**

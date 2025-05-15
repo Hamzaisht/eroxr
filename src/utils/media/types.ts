@@ -1,9 +1,11 @@
+
 // Media types enum
 export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
   GIF = 'gif',
+  DOCUMENT = 'document',
   UNKNOWN = 'unknown'
 }
 
@@ -31,13 +33,9 @@ export interface MediaOptions {
   onTimeUpdate?: (time?: number) => void;
 }
 
-// Media source interface
+// Media source interface - enforcing url field
 export interface MediaSource {
-  url?: string;
-  media_url?: string;
-  video_url?: string;
-  image_url?: string;
-  thumbnail_url?: string;
+  url: string;
   media_type?: MediaType;
   content_type?: string;
   creator_id?: string;
@@ -45,7 +43,10 @@ export interface MediaSource {
   width?: number;
   height?: number;
   poster?: string;
-  src?: string;
+  media_url?: string;
+  video_url?: string;
+  image_url?: string;
+  thumbnail_url?: string;
   video_urls?: string[];
   media_urls?: string[];
 }
@@ -58,7 +59,8 @@ export interface UploadOptions {
   onProgress?: (progress: number) => void;
   autoResetOnCompletion?: boolean;
   resetDelay?: number;
-  bucketName?: string; // Add bucketName to support existing code
+  bucketName?: string;
+  maxFiles?: number;
 }
 
 /**
@@ -72,12 +74,14 @@ export function normalizeMediaSource(source: string | MediaSource): MediaSource 
   
   // Otherwise, ensure it has a url property
   const mediaSource: MediaSource = { ...source };
+  
+  // Make sure it has a URL property
   if (!mediaSource.url) {
     mediaSource.url = mediaSource.media_url || 
-                      mediaSource.video_url || 
-                      mediaSource.image_url || 
-                      mediaSource.thumbnail_url || 
-                      '';
+                     mediaSource.video_url || 
+                     mediaSource.image_url || 
+                     mediaSource.thumbnail_url || 
+                     '';
   }
   
   return mediaSource;

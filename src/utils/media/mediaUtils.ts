@@ -1,14 +1,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
-import { getFileExtension } from '../upload/validators';
 import { MediaSource, MediaType } from './types';
+import { extractMediaUrl } from './urlUtils';
 import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Create a unique file path for uploading
- * @param userId User ID for organization
- * @param file File being uploaded
- * @returns A unique path string for storage
  */
 export function createUniqueFilePath(userId: string, file: File): string {
   // Get clean filename and extension
@@ -25,8 +22,6 @@ export function createUniqueFilePath(userId: string, file: File): string {
 
 /**
  * Sanitize a filename for storage
- * @param filename Original filename
- * @returns Safe filename
  */
 export function sanitizeFilename(filename: string): string {
   return filename
@@ -38,29 +33,21 @@ export function sanitizeFilename(filename: string): string {
 }
 
 /**
- * Extract the content URL from a media object
- * @param media The media object or URL string
- * @returns The extracted URL
+ * Get file extension from File object
  */
-export function extractMediaUrl(media: any): string {
-  if (!media) return '';
+export function getFileExtension(file: File | string): string {
+  if (typeof file === 'string') {
+    // Extract extension from string URL or filename
+    const parts = file.split('.');
+    return parts.length > 1 ? parts.pop()?.toLowerCase() || '' : '';
+  }
   
-  // If it's a string, assume it's already a URL
-  if (typeof media === 'string') return media;
-  
-  // Check all possible URL properties
-  return media.url || 
-         media.media_url || 
-         media.video_url || 
-         media.image_url || 
-         media.thumbnail_url || 
-         '';
+  // Extract from File object
+  return file.name.split('.').pop()?.toLowerCase() || '';
 }
 
 /**
  * Determines the type of media based on the source or URL
- * @param source Media source or URL
- * @returns Media type
  */
 export function determineMediaType(source: MediaSource | string): MediaType {
   // If the source already has a media_type, use that
@@ -90,6 +77,11 @@ export function determineMediaType(source: MediaSource | string): MediaType {
     return MediaType.AUDIO;
   }
   
+  // Document types
+  if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(extension || '')) {
+    return MediaType.DOCUMENT;
+  }
+  
   // Check if the source object has video_url
   if (typeof source !== 'string' && source.video_url) {
     return MediaType.VIDEO;
@@ -100,8 +92,6 @@ export function determineMediaType(source: MediaSource | string): MediaType {
 
 /**
  * Get appropriate MIME type for an extension
- * @param extension File extension
- * @returns MIME type
  */
 export function getMimeTypeFromExtension(extension: string): string {
   const ext = extension.toLowerCase();
@@ -156,7 +146,7 @@ export async function uploadFileToStorage(
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
-        contentType: file.type, // CRITICAL: Set correct content type
+        contentType: file.type, // Set correct content type
         upsert: true           // Allow overwrites
       });
     

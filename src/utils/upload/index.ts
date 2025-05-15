@@ -1,7 +1,6 @@
 
+// Re-export all utility functions for uploads
 export * from './validators';
 export * from './fileUtils';
 export * from './storageService';
-
-// Re-export specific functions to resolve conflicts
-export { uploadFileToStorage } from './storageService';
+export * from './fileUploadService';

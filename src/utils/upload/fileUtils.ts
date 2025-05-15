@@ -1,96 +1,68 @@
 
+import { v4 as uuidv4 } from 'uuid';
+
 /**
- * Create a unique file path for uploading
- * @param userId User ID for organization
+ * Creates a unique file path for uploading
+ * @param userId User ID
  * @param file File being uploaded
- * @returns A unique path string for storage
+ * @returns Unique file path
  */
 export function createUniqueFilePath(userId: string, file: File): string {
-  // Get clean filename
-  const filename = cleanFileName(file.name);
-  
-  // Generate a timestamp with random string to ensure uniqueness
+  const extension = getFileExtension(file);
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
+  const uniqueId = uuidv4().substring(0, 8);
   
-  return `${userId}/${timestamp}_${random}_${filename}`;
+  return `${userId}/${timestamp}_${uniqueId}.${extension}`;
 }
 
 /**
- * Clean a filename for storage (remove special characters)
- * @param filename Original filename
- * @returns Cleaned filename
+ * Gets file extension from a File object
+ * @param file File object
+ * @returns File extension
  */
-export function cleanFileName(filename: string): string {
-  // Replace spaces with underscores
-  let cleanName = filename.replace(/\s+/g, '_');
-  
-  // Remove any characters that might cause issues in URLs
-  cleanName = cleanName.replace(/[^\w.-]/g, '');
-  
-  return cleanName;
+export function getFileExtension(file: File): string {
+  const parts = file.name.split('.');
+  return parts.length > 1 ? parts.pop()?.toLowerCase() || '' : '';
 }
 
 /**
- * Run a comprehensive diagnostic on a file before upload
- * @param file File to diagnose
- */
-export function runFileDiagnostic(file: File): void {
-  if (!file) {
-    console.warn('File Diagnostic: No file provided');
-    return;
-  }
-  
-  try {
-    const diagnostics = {
-      name: file.name,
-      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      type: file.type || 'unknown',
-      lastModified: new Date(file.lastModified).toLocaleString(),
-      isFile: file instanceof File,
-      hasData: file.size > 0,
-      extension: file.name.split('.').pop()?.toLowerCase() || 'unknown'
-    };
-    
-    console.log('📋 File Diagnostic:', diagnostics);
-    
-    // Warn about potential issues
-    if (!file.type) {
-      console.warn('⚠️ File has no MIME type');
-    }
-    
-    if (file.size === 0) {
-      console.warn('⚠️ File has zero bytes');
-    }
-    
-    if (file.size > 100 * 1024 * 1024) {
-      console.warn('⚠️ File exceeds 100MB and may fail to upload');
-    }
-  } catch (error) {
-    console.error('Error in file diagnostic:', error);
-  }
-}
-
-/**
- * Create a preview URL from a File object
+ * Creates a preview URL for a file
  * @param file File to create preview for
- * @returns URL for preview
+ * @returns Object URL for the file
  */
 export function createFilePreview(file: File): string {
-  try {
-    return URL.createObjectURL(file);
-  } catch (error) {
-    console.error('Error creating file preview:', error);
-    return '';
-  }
+  return URL.createObjectURL(file);
 }
 
 /**
- * Revoke a previously created file preview
+ * Revokes a file preview URL
  * @param url URL to revoke
  */
 export function revokeFilePreview(url: string): void {
   if (url && url.startsWith('blob:')) {
     URL.revokeObjectURL(url);
   }
+}
+
+/**
+ * Runs diagnostic checks on a file and logs results
+ * @param file File to check
+ */
+export function runFileDiagnostic(file: File | null): void {
+  if (!file) {
+    console.error("File diagnostic: Null file object");
+    return;
+  }
+  
+  if (!(file instanceof File)) {
+    console.error("File diagnostic: Object is not a File instance", typeof file);
+    return;
+  }
+  
+  console.log("File diagnostic:", {
+    name: file.name,
+    size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+    type: file.type || "No type",
+    lastModified: new Date(file.lastModified).toLocaleString()
+  });
 }

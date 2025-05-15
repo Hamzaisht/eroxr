@@ -1,82 +1,108 @@
 
-import { useState, useEffect } from 'react';
-import { MediaSource, MediaType, MediaOptions } from '@/utils/media/types';
+import { forwardRef, Ref, useMemo } from 'react';
 import { MediaRenderer } from './MediaRenderer';
-import { normalizeMediaSource } from '@/utils/media/types';
+import { MediaType, MediaSource } from '@/utils/media/types';
 import { extractMediaUrl } from '@/utils/media/urlUtils';
+import { normalizeMediaSource } from '@/utils/media/types';
+import { determineMediaType } from '@/utils/media/mediaUtils';
 
-interface UniversalMediaProps extends MediaOptions {
-  /**
-   * The media item to display
-   */
-  item: string | MediaSource;
+interface UniversalMediaProps {
+  /** The media item to display */
+  item: MediaSource | string;
   
-  /**
-   * Show watermark on media (default: false)
-   */
+  /** CSS class for styling */
+  className?: string;
+  
+  /** Auto-play media (for video/audio) */
+  autoPlay?: boolean;
+  
+  /** Show media controls (for video/audio) */
+  controls?: boolean;
+  
+  /** Mute media (for video/audio) */
+  muted?: boolean;
+  
+  /** Loop media (for video/audio) */
+  loop?: boolean;
+  
+  /** Poster image URL (for video) */
+  poster?: string;
+  
+  /** Show watermark on media */
   showWatermark?: boolean;
   
-  /**
-   * Alt text for image (for accessibility)
-   */
+  /** Click handler */
+  onClick?: () => void;
+  
+  /** Error handler */
+  onError?: () => void;
+  
+  /** Load complete handler */
+  onLoad?: () => void;
+  
+  /** Media ended handler */
+  onEnded?: () => void;
+  
+  /** Time update handler */
+  onTimeUpdate?: (time?: number) => void;
+  
+  /** Alt text for image (for accessibility) */
   alt?: string;
 
-  /**
-   * Maximum number of retries on error
-   */
+  /** Maximum number of retries on error */
   maxRetries?: number;
-  
-  /**
-   * Object fit style for the media
-   */
-  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
 }
 
-export const UniversalMedia = ({ 
-  item, 
-  className, 
+export const UniversalMedia = forwardRef(({
+  item,
+  className = "",
+  autoPlay = false,
+  controls = true,
+  muted = true,
+  loop = false,
+  poster,
   showWatermark = false,
-  alt = '',
-  maxRetries = 1,
-  objectFit = 'cover',
-  ...props 
-}: UniversalMediaProps) => {
-  // Detect media type
-  const [mediaType, setMediaType] = useState<MediaType | undefined>(
-    typeof item !== 'string' ? item.media_type : undefined
-  );
-  
-  useEffect(() => {
-    // Update media type when item changes
-    if (typeof item !== 'string' && item.media_type) {
-      setMediaType(item.media_type);
-    }
-  }, [item]);
-  
-  // Validate and debug incoming media item
-  useEffect(() => {
-    if (!item) {
-      console.warn("UniversalMedia: No media item provided");
-      return;
+  onClick,
+  onLoad,
+  onError,
+  onEnded,
+  onTimeUpdate,
+  alt = "Media content",
+  maxRetries = 2
+}: UniversalMediaProps, ref: Ref<HTMLVideoElement | HTMLImageElement>) => {
+  // Process the item to ensure it has a url property
+  const mediaItem = useMemo(() => {
+    const normalized = normalizeMediaSource(item);
+    
+    // If no media_type is specified, try to determine it
+    if (!normalized.media_type) {
+      normalized.media_type = determineMediaType(normalized);
     }
     
-    // Debug media item structure
-    if (typeof item !== 'string') {
-      const url = extractMediaUrl(item);
-      if (!url) {
-        console.warn("UniversalMedia: Could not extract URL from media item", item);
-      }
-    }
+    return normalized;
   }, [item]);
-  
+
   return (
     <MediaRenderer
-      src={item}
-      type={mediaType}
+      src={mediaItem}
+      type={mediaItem.media_type}
       className={className}
-      maxRetries={maxRetries}
+      autoPlay={autoPlay}
+      controls={controls}
+      muted={muted}
+      loop={loop}
+      poster={poster || mediaItem.poster}
       showWatermark={showWatermark}
-      {...props}
+      onClick={onClick}
+      onLoad={onLoad}
+      onError={onError}
+      onEnded={onEnded}
+      onTimeUpdate={onTimeUpdate}
+      allowRetry={true}
+      maxRetries={maxRetries}
+      ref={ref}
     />
   );
-};
+});
+
+UniversalMedia.displayName = 'UniversalMedia';

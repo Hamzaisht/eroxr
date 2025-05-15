@@ -1,5 +1,6 @@
 
-// Re-export all media utilities for easier imports
+// Re-export all utility functions for media handling
 export * from './types';
-export * from './urlUtils';
 export * from './mediaUtils';
+export * from './urlUtils';
+export * from './supabaseUrlUtils';

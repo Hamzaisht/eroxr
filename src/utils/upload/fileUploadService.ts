@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createUniqueFilePath, runFileDiagnostic } from "@/utils/upload/fileUtils";
 import { getFileExtension } from "@/utils/upload/validators";
 import { getSupabaseUrl } from "@/utils/media/supabaseUrlUtils";
+import { getMimeTypeFromExtension } from "@/utils/media/mediaUtils";
 
 interface FileUploadOptions {
   contentType?: string;
@@ -31,25 +32,7 @@ export const addCacheBuster = (url: string): string => {
  * Infer content type from file extension
  */
 export const inferContentTypeFromExtension = (filename: string): string => {
-  const extension = getFileExtension(filename);
-  
-  // Common image types
-  if (['jpg', 'jpeg'].includes(extension)) return 'image/jpeg';
-  if (extension === 'png') return 'image/png';
-  if (extension === 'gif') return 'image/gif';
-  if (extension === 'webp') return 'image/webp';
-  
-  // Common video types
-  if (extension === 'mp4') return 'video/mp4';
-  if (extension === 'webm') return 'video/webm';
-  if (extension === 'mov') return 'video/quicktime';
-  
-  // Common audio types
-  if (extension === 'mp3') return 'audio/mpeg';
-  if (extension === 'wav') return 'audio/wav';
-  
-  // Default
-  return 'application/octet-stream';
+  return getMimeTypeFromExtension(getFileExtension({ name: filename } as File));
 };
 
 /**
@@ -85,8 +68,7 @@ export const uploadFile = async (
     name: file.name,
     size: `${(file.size / 1024).toFixed(2)} KB`,
     type: file.type,
-    lastModified: new Date(file.lastModified).toLocaleString(),
-    url: URL.createObjectURL(file)
+    lastModified: new Date(file.lastModified).toLocaleString()
   });
   
   try {
@@ -137,15 +119,15 @@ export const uploadFile = async (
     }
     
     // Get the URL using our utility function
-    const { url: mediaUrl, error: urlError } = await getSupabaseUrl(bucket, data.path, {
+    const urlResult = await getSupabaseUrl(bucket, data.path, {
       useSignedUrls: false // Use public URLs for most content
     });
     
-    if (urlError) {
-      console.warn("⚠️ Warning getting URL:", urlError);
+    if (urlResult.error) {
+      console.warn("⚠️ Warning getting URL:", urlResult.error);
     }
     
-    if (!mediaUrl) {
+    if (!urlResult.url) {
       return {
         success: false,
         error: "Failed to get media URL"
@@ -153,7 +135,7 @@ export const uploadFile = async (
     }
     
     // Add cache buster to URL
-    const finalUrl = addCacheBuster(mediaUrl);
+    const finalUrl = addCacheBuster(urlResult.url);
     
     console.log("📤 Upload successful, URL:", finalUrl);
     
