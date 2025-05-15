@@ -63,26 +63,39 @@ export interface UploadOptions {
   maxFiles?: number;
 }
 
-/**
- * Normalize media source to ensure it has consistent properties
- */
-export function normalizeMediaSource(source: string | MediaSource): MediaSource {
-  // If source is a string, treat it as a URL
-  if (typeof source === 'string') {
-    return { url: source };
-  }
-  
-  // Otherwise, ensure it has a url property
-  const mediaSource: MediaSource = { ...source };
-  
-  // Make sure it has a URL property
-  if (!mediaSource.url) {
-    mediaSource.url = mediaSource.media_url || 
-                     mediaSource.video_url || 
-                     mediaSource.image_url || 
-                     mediaSource.thumbnail_url || 
-                     '';
-  }
-  
-  return mediaSource;
+export interface MediaRendererProps {
+  src: string | MediaSource;
+  type?: MediaType;
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  onClick?: () => void;
+  onError?: () => void;
+  onLoad?: () => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (time?: number) => void;
+  allowRetry?: boolean;
+  maxRetries?: number;
+  showWatermark?: boolean;
+}
+
+export interface UniversalMediaProps {
+  item: string | MediaSource;
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  showWatermark?: boolean;
+  onClick?: () => void;
+  onError?: () => void;
+  onLoad?: () => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (time?: number) => void;
+  alt?: string;
+  maxRetries?: number;
 }

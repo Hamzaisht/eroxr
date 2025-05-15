@@ -1,8 +1,63 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { MediaSource, MediaType } from './types';
-import { extractMediaUrl } from './urlUtils';
 import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * Extract media URL from different types of media objects
+ */
+export function extractMediaUrl(media: any): string {
+  if (!media) return '';
+  
+  // If it's already a string, assume it's a URL
+  if (typeof media === 'string') return media;
+  
+  // Check for different URL properties
+  return media.url || 
+         media.video_url || 
+         media.media_url || 
+         media.thumbnail_url || 
+         '';
+}
+
+/**
+ * Determines the type of media based on the source or URL
+ */
+export function determineMediaType(source: MediaSource | string): MediaType {
+  // If the source already has a media_type, use that
+  if (typeof source !== 'string' && source.media_type) {
+    return source.media_type;
+  }
+  
+  // Extract URL for analysis
+  const url = extractMediaUrl(source);
+  if (!url) return MediaType.UNKNOWN;
+  
+  // Check extensions
+  const extension = url.split('.').pop()?.toLowerCase();
+  
+  // Image types
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension || '')) {
+    return MediaType.IMAGE;
+  }
+  
+  // Video types
+  if (['mp4', 'webm', 'mov', 'avi', 'mkv', 'wmv'].includes(extension || '')) {
+    return MediaType.VIDEO;
+  }
+  
+  // Audio types
+  if (['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension || '')) {
+    return MediaType.AUDIO;
+  }
+  
+  // Check if the source object has video_url
+  if (typeof source !== 'string' && source.video_url) {
+    return MediaType.VIDEO;
+  }
+  
+  return MediaType.UNKNOWN;
+}
 
 /**
  * Create a unique file path for uploading
@@ -44,76 +99,6 @@ export function getFileExtension(file: File | string): string {
   
   // Extract from File object
   return file.name.split('.').pop()?.toLowerCase() || '';
-}
-
-/**
- * Determines the type of media based on the source or URL
- */
-export function determineMediaType(source: MediaSource | string): MediaType {
-  // If the source already has a media_type, use that
-  if (typeof source !== 'string' && source.media_type) {
-    return source.media_type;
-  }
-  
-  // Extract URL for analysis
-  const url = extractMediaUrl(source);
-  if (!url) return MediaType.UNKNOWN;
-  
-  // Check extensions
-  const extension = url.split('.').pop()?.toLowerCase();
-  
-  // Image types
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension || '')) {
-    return MediaType.IMAGE;
-  }
-  
-  // Video types
-  if (['mp4', 'webm', 'mov', 'avi', 'mkv', 'wmv'].includes(extension || '')) {
-    return MediaType.VIDEO;
-  }
-  
-  // Audio types
-  if (['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(extension || '')) {
-    return MediaType.AUDIO;
-  }
-  
-  // Document types
-  if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(extension || '')) {
-    return MediaType.DOCUMENT;
-  }
-  
-  // Check if the source object has video_url
-  if (typeof source !== 'string' && source.video_url) {
-    return MediaType.VIDEO;
-  }
-  
-  return MediaType.UNKNOWN;
-}
-
-/**
- * Get appropriate MIME type for an extension
- */
-export function getMimeTypeFromExtension(extension: string): string {
-  const ext = extension.toLowerCase();
-  
-  // Image types
-  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
-  if (ext === 'png') return 'image/png';
-  if (ext === 'gif') return 'image/gif';
-  if (ext === 'webp') return 'image/webp';
-  if (ext === 'svg') return 'image/svg+xml';
-  
-  // Video types
-  if (ext === 'mp4') return 'video/mp4';
-  if (ext === 'webm') return 'video/webm';
-  if (ext === 'mov') return 'video/quicktime';
-  
-  // Audio types
-  if (ext === 'mp3') return 'audio/mpeg';
-  if (ext === 'wav') return 'audio/wav';
-  if (ext === 'ogg') return 'audio/ogg';
-  
-  return 'application/octet-stream';
 }
 
 /**
@@ -192,4 +177,43 @@ export async function uploadFileToStorage(
       error: error.message || String(error)
     };
   }
+}
+
+/**
+ * Utility to normalize any media source to a standard MediaSource object with url property
+ */
+export function normalizeMediaSource(source: string | any): MediaSource {
+  // If source is a string, treat it as a URL
+  if (typeof source === 'string') {
+    return { 
+      url: source,
+      media_type: determineMediaType(source)
+    };
+  }
+  
+  // If it's null or undefined, return an empty object with empty url
+  if (!source) {
+    return { url: '', media_type: MediaType.UNKNOWN };
+  }
+  
+  // Create a copy to avoid mutating the original
+  const mediaSource: MediaSource = { 
+    url: '',
+    media_type: source.media_type || MediaType.UNKNOWN
+  };
+  
+  // Set the url property based on available properties
+  mediaSource.url = source.url || source.video_url || source.media_url || source.thumbnail_url || '';
+  
+  // If no media_type is specified, try to determine it
+  if (!mediaSource.media_type || mediaSource.media_type === MediaType.UNKNOWN) {
+    mediaSource.media_type = determineMediaType(mediaSource.url);
+  }
+  
+  // Copy other useful properties
+  if (source.poster) mediaSource.poster = source.poster;
+  if (source.thumbnail_url) mediaSource.thumbnail_url = source.thumbnail_url;
+  if (source.creator_id) mediaSource.creator_id = source.creator_id;
+  
+  return mediaSource;
 }

@@ -1,91 +1,9 @@
 
 import { useState, useEffect, forwardRef } from 'react';
-import { MediaType, MediaSource } from '@/utils/media/types';
+import { MediaType, MediaSource, MediaRendererProps } from '@/utils/media/types';
 import { MediaDisplay } from './MediaDisplay';
-import { extractMediaUrl } from '@/utils/media/urlUtils';
-import { normalizeMediaSource } from '@/utils/media/types';
-
-interface MediaRendererProps {
-  /**
-   * The media source to render (string URL or MediaSource object)
-   */
-  src: string | MediaSource;
-  
-  /**
-   * Media type override (optional)
-   */
-  type?: MediaType;
-  
-  /**
-   * Allow retry on error
-   */
-  allowRetry?: boolean;
-  
-  /**
-   * Maximum number of retries
-   */
-  maxRetries?: number;
-  
-  /**
-   * Show watermark on media (default: false)
-   */
-  showWatermark?: boolean;
-  
-  /**
-   * CSS class for styling
-   */
-  className?: string;
-  
-  /**
-   * Auto-play media (for video/audio)
-   */
-  autoPlay?: boolean;
-  
-  /**
-   * Show media controls (for video/audio)
-   */
-  controls?: boolean;
-  
-  /**
-   * Mute media (for video/audio)
-   */
-  muted?: boolean;
-  
-  /**
-   * Loop media (for video/audio)
-   */
-  loop?: boolean;
-  
-  /**
-   * Poster image URL (for video)
-   */
-  poster?: string;
-  
-  /**
-   * Click handler
-   */
-  onClick?: () => void;
-  
-  /**
-   * Error handler
-   */
-  onError?: () => void;
-  
-  /**
-   * Load complete handler
-   */
-  onLoad?: () => void;
-  
-  /**
-   * Media ended handler
-   */
-  onEnded?: () => void;
-  
-  /**
-   * Time update handler
-   */
-  onTimeUpdate?: (time?: number) => void;
-}
+import { extractMediaUrl } from '@/utils/media/mediaUtils';
+import { normalizeMediaSource } from '@/utils/media/mediaUtils';
 
 /**
  * A smart media renderer that handles various media types
