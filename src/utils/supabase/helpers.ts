@@ -9,7 +9,7 @@ type FollowersInsert = Database['public']['Tables']['followers']['Insert'];
 type SubscriptionsInsert = Database['public']['Tables']['creator_subscriptions']['Insert'];
 
 /**
- * Safely converts a UUID string to the format expected by Supabase
+ * Safely converts a value to the format expected by Supabase
  * This is a type assertion helper for column equality filters
  */
 export function toDbValue<T>(value: T): T {
@@ -39,11 +39,11 @@ export function extractProfile<T>(profile: T | null | undefined): T | null {
 }
 
 /**
- * Extract a creator object safely
+ * Safe cast for database query results
  */
-export function extractCreator<T>(creator: T | null | undefined): T | null {
-  if (!creator) return null;
-  return creator;
+export function safeCast<T>(data: any): T[] {
+  if (!data || isErrorObject(data)) return [];
+  return data as T[];
 }
 
 /**
@@ -76,12 +76,12 @@ export function asProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
 /**
  * Helper to apply .eq() filter with proper typing
  */
-export function applyEqualsFilter<T>(
+export function applyEqualsFilter<T = any>(
   query: PostgrestFilterBuilder<T>,
   column: string,
-  value: unknown
+  value: any
 ): PostgrestFilterBuilder<T> {
-  return query.eq(column as any, value);
+  return query.eq(column, toDbValue(value));
 }
 
 /**
@@ -126,14 +126,6 @@ export function isErrorObject(obj: any): boolean {
 }
 
 /**
- * Safe cast for database query results
- */
-export function safeCast<T>(data: any): T[] {
-  if (!data || isErrorObject(data)) return [];
-  return data as T[];
-}
-
-/**
  * Safe profile access for UI
  */
 export function getSafeProfile(profile: any) {
@@ -168,4 +160,50 @@ export function prepareProfileStatusUpdate(status: AvailabilityStatus): Partial<
   return {
     status: getStatusForProfile(status)
   };
+}
+
+/**
+ * Helper for casting database column values
+ * For use with eq, in, etc. methods on supabase queries
+ */
+export function asColumnValue<T>(value: T): T {
+  return value;
+}
+
+/**
+ * Strongly-typed helper function for updating profiles
+ */
+export function prepareProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
+  return data as ProfileUpdate;
+}
+
+/**
+ * Helper function for safely accessing nested properties
+ */
+export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
+  return obj ? obj[key] : undefined;
+}
+
+/**
+ * Helper function for safely creating VideoCard props
+ */
+export function createVideoCardProps(video: any) {
+  return {
+    id: safeGet(video, 'id') || '',
+    title: safeGet(video, 'title') || '',
+    thumbnailUrl: safeGet(video, 'thumbnail_url') || '',
+    duration: safeGet(video, 'duration') || 0,
+    views: safeGet(video, 'view_count') || 0,
+    createdAt: safeGet(video, 'created_at') || '',
+    creatorId: safeGet(video, 'creator_id') || '',
+    creatorName: safeGet(safeGet(video, 'profiles'), 'username') || 'Unknown',
+    creatorAvatar: safeGet(safeGet(video, 'profiles'), 'avatar_url') || '',
+  };
+}
+
+/**
+ * Type-safe helper for database enum values
+ */
+export function asEnumValue<T extends string>(value: T): T {
+  return value;
 }

@@ -1,172 +1,33 @@
 
-import { MediaSource, MediaType } from "./types";
-
-export const normalizeMediaSource = (source: MediaSource | string): MediaSource => {
-  if (typeof source === 'string') {
-    // If source is a string (URL), convert it to a MediaSource object
-    return {
-      url: source,
-      media_type: detectMediaType(source),
-    };
-  }
-  
-  // If source is already a MediaSource object but missing media_type
-  if (!source.media_type) {
-    return {
-      ...source,
-      media_type: detectMediaType(source.url),
-    };
-  }
-  
-  return source;
-};
-
-export const detectMediaType = (url: string): MediaType => {
-  if (!url) return MediaType.UNKNOWN;
-  
-  const lowerUrl = url.toLowerCase();
-  
-  // Check for common image extensions
-  if (
-    lowerUrl.endsWith('.jpg') || 
-    lowerUrl.endsWith('.jpeg') || 
-    lowerUrl.endsWith('.png') || 
-    lowerUrl.endsWith('.gif') || 
-    lowerUrl.endsWith('.webp') || 
-    lowerUrl.endsWith('.svg')
-  ) {
-    return MediaType.IMAGE;
-  }
-  
-  // Check for common video extensions
-  if (
-    lowerUrl.endsWith('.mp4') || 
-    lowerUrl.endsWith('.webm') || 
-    lowerUrl.endsWith('.ogg') || 
-    lowerUrl.endsWith('.mov') || 
-    lowerUrl.endsWith('.avi') || 
-    lowerUrl.endsWith('.mkv')
-  ) {
-    return MediaType.VIDEO;
-  }
-  
-  // Check for common audio extensions
-  if (
-    lowerUrl.endsWith('.mp3') || 
-    lowerUrl.endsWith('.wav') || 
-    lowerUrl.endsWith('.ogg') || 
-    lowerUrl.endsWith('.aac')
-  ) {
-    return MediaType.AUDIO;
-  }
-  
-  // Check if URL contains hints about its type
-  if (lowerUrl.includes('image')) {
-    return MediaType.IMAGE;
-  }
-  
-  if (lowerUrl.includes('video')) {
-    return MediaType.VIDEO;
-  }
-  
-  if (lowerUrl.includes('audio')) {
-    return MediaType.AUDIO;
-  }
-  
-  // Default to unknown if we can't determine the type
-  return MediaType.UNKNOWN;
-};
-
-export const extractMediaUrl = (source: MediaSource): string | null => {
-  if (!source) return null;
-  
-  // Directly return the URL if it exists
-  if (source.url) return source.url;
-  
-  // Try to find a URL from other possible properties
-  if ('media_url' in source && typeof source.media_url === 'string') {
-    return source.media_url;
-  }
-  
-  if ('video_url' in source && typeof source.video_url === 'string') {
-    return source.video_url;
-  }
-  
-  if ('thumbnail' in source && typeof source.thumbnail === 'string') {
-    return source.thumbnail;
-  }
-  
-  // Return null if no URL can be found
-  return null;
-};
-
 /**
- * Determine the media type from a media source object or URL
+ * Create a unique file path for uploading
+ * @param userId User ID
+ * @param file File object
  */
-export function determineMediaType(source: MediaSource | string): MediaType {
-  // Handle string URLs directly
-  if (typeof source === 'string') {
-    return detectMediaType(source);
-  }
-  
-  // If media_type is already defined, use it
-  if (source.media_type) {
-    return source.media_type;
-  }
-  
-  // Check for content_type hints
-  if (source.content_type) {
-    const contentType = source.content_type.toLowerCase();
-    if (contentType === 'image' || contentType.includes('image')) {
-      return MediaType.IMAGE;
-    }
-    if (contentType === 'video' || contentType.includes('video')) {
-      return MediaType.VIDEO;
-    }
-    if (contentType === 'audio' || contentType.includes('audio')) {
-      return MediaType.AUDIO;
-    }
-  }
-  
-  // Check which URL property exists and use that for detection
-  if (source.video_url) {
-    return MediaType.VIDEO;
-  }
-  
-  if (source.media_url) {
-    return detectMediaType(source.media_url);
-  }
-  
-  if (source.url) {
-    return detectMediaType(source.url);
-  }
-  
-  // Default to unknown if we can't determine
-  return MediaType.UNKNOWN;
+export function createUniqueFilePath(userId: string, file: File): string {
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 8);
+  const extension = file.name.split('.').pop();
+  return `${userId}/${timestamp}-${randomString}.${extension}`;
 }
 
 /**
- * Creates a unique file path for storage
- * @param userId User's ID
- * @param file The file being uploaded
- * @returns A unique storage path
+ * Format file size to human-readable format
+ * @param bytes Size in bytes
  */
-export const createUniqueFilePath = (userId: string, file: File): string => {
-  // Generate a unique timestamp-based ID
-  const timestamp = Date.now();
-  const randomChars = Math.random().toString(36).substring(2, 8);
-  const uniqueId = `${timestamp}-${randomChars}`;
-  
-  // Get file extension
-  const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
-  
-  // Determine folder based on content type
-  let folder = 'files';
-  if (file.type.startsWith('image/')) folder = 'images';
-  else if (file.type.startsWith('video/')) folder = 'videos';
-  else if (file.type.startsWith('audio/')) folder = 'audio';
-  
-  // Create a clean structure: folder/userId/uniqueId.extension
-  return `${folder}/${userId}/${uniqueId}.${fileExtension}`;
-};
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' bytes';
+  else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+  else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB';
+  else return (bytes / 1073741824).toFixed(2) + ' GB';
+}
 
+/**
+ * Convert seconds to time format (mm:ss)
+ * @param seconds Duration in seconds
+ */
+export function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}

@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { VideoProfileCard } from '@/components/ads/video-profile-card';
 import { supabase } from '@/integrations/supabase/client';
-import { asUUID, safeCast, toDbValue } from '@/utils/supabase/helpers';
+import { asColumnValue, safeCast } from '@/utils/supabase/helpers';
 
 interface ProfileData {
   username?: string;
@@ -24,6 +24,21 @@ interface AdData {
   view_count?: number;
 }
 
+interface VideoAdProps {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  avatarUrl: string;
+  videoUrl: string;
+  username: string;
+  isVerified: boolean;
+  isPremium: boolean;
+  location: string;
+  age: number;
+  views: number;
+}
+
 export const PromotedAds = () => {
   const { data: ads, isLoading } = useQuery({
     queryKey: ['promoted-ads'],
@@ -39,10 +54,10 @@ export const PromotedAds = () => {
             id_verification_status
           )
         `)
-        .eq('is_active', toDbValue(true))
-        .eq('country', toDbValue('denmark'))
-        .eq('moderation_status', toDbValue('approved'))
-        .eq('user_type', toDbValue('premium'))
+        .eq('is_active', asColumnValue(true))
+        .eq('country', asColumnValue('denmark'))
+        .eq('moderation_status', asColumnValue('approved'))
+        .eq('user_type', asColumnValue('premium'))
         .order('created_at', { ascending: false })
         .limit(3);
 
@@ -71,7 +86,7 @@ export const PromotedAds = () => {
               title: ad.title,
               description: ad.description || '',
               tags: ad.tags || [],
-              avatar: ad.avatar_url || (ad.profiles?.avatar_url || ''),
+              avatarUrl: ad.avatar_url || (ad.profiles?.avatar_url || ''),
               videoUrl: ad.video_url || '',
               username: ad.profiles?.username || 'Anonymous',
               isVerified: ad.profiles?.id_verification_status === 'verified',

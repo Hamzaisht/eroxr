@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
-import { asUUID, safeCast, toDbValue } from "@/utils/supabase/helpers";
+import { asColumnValue, safeCast } from "@/utils/supabase/helpers";
 
 interface Creator {
   id: string;
@@ -12,6 +12,14 @@ interface Creator {
   avatar_url?: string | null;
   bio?: string | null;
   banner_url?: string | null;
+}
+
+interface CreatorCardProps {
+  creatorId: string;
+  username?: string;
+  avatarUrl?: string;
+  bio?: string;
+  bannerUrl?: string;
 }
 
 interface Subscription {
@@ -43,7 +51,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq("user_id", toDbValue(userId!))
+        .eq("user_id", asColumnValue(userId))
         .order("created_at", { ascending: false });
         
       if (error) {
@@ -75,12 +83,21 @@ export const SubscribedCreators = () => {
     <div>
       <h2 className="text-2xl font-bold mb-4">Your Subscriptions</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {subscriptions.map((subscription) => (
-          <CreatorCard
-            key={subscription.id}
-            creator={subscription.creator}
-          />
-        ))}
+        {subscriptions.map((subscription) => {
+          const creator = subscription.creator;
+          if (!creator) return null;
+          
+          return (
+            <CreatorCard
+              key={subscription.id}
+              creatorId={creator.id}
+              username={creator.username || undefined}
+              avatarUrl={creator.avatar_url || undefined}
+              bio={creator.bio || undefined}
+              bannerUrl={creator.banner_url || undefined}
+            />
+          );
+        })}
       </div>
     </div>
   );

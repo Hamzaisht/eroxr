@@ -51,6 +51,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { asColumnValue } from "@/utils/supabase/helpers";
+import { updateRecord, updateRecords } from "@/utils/supabase/recordUpdaters";
 
 interface Report {
   id: string;
@@ -114,12 +116,8 @@ export const ErosMode = () => {
 
   const handleBulkAction = useMutation({
     mutationFn: async ({ items, action }: { items: string[]; action: string }) => {
-      const { error } = await supabase
-        .from('reports')
-        .update({ status: action })
-        .in('id', items);
-
-      if (error) throw error;
+      const result = await updateRecords('reports', items, { status: action });
+      if (result.error) throw result.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
@@ -201,15 +199,11 @@ export const ErosMode = () => {
 
   const handleReport = useMutation({
     mutationFn: async ({ reportId, action }: { reportId: string; action: string }) => {
-      const { error } = await supabase
-        .from('reports')
-        .update({ 
-          status: action === 'dismiss' ? 'dismissed' : 'resolved',
-          action_taken: action
-        })
-        .eq('id', reportId);
-
-      if (error) throw error;
+      const result = await updateRecord('reports', reportId, {
+        status: action === 'dismiss' ? 'dismissed' : 'resolved',
+        action_taken: action
+      });
+      if (result.error) throw result.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
@@ -222,15 +216,11 @@ export const ErosMode = () => {
 
   const handleDMCA = useMutation({
     mutationFn: async ({ requestId, action }: { requestId: string; action: 'approve' | 'reject' }) => {
-      const { error } = await supabase
-        .from('dmca_requests')
-        .update({ 
-          status: action === 'approve' ? 'approved' : 'rejected',
-          takedown_date: action === 'approve' ? new Date().toISOString() : null
-        })
-        .eq('id', requestId);
-
-      if (error) throw error;
+      const result = await updateRecord('dmca_requests', requestId, {
+        status: action === 'approve' ? 'approved' : 'rejected',
+        takedown_date: action === 'approve' ? new Date().toISOString() : null
+      });
+      if (result.error) throw result.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-dmca'] });
@@ -249,12 +239,8 @@ export const ErosMode = () => {
       classificationId: string; 
       visibility: string 
     }) => {
-      const { error } = await supabase
-        .from('content_classifications')
-        .update({ visibility })
-        .eq('id', classificationId);
-
-      if (error) throw error;
+      const result = await updateRecord('content_classifications', classificationId, { visibility });
+      if (result.error) throw result.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-classifications'] });

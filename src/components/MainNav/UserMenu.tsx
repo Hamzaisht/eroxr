@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -21,7 +20,8 @@ import {
   convertToStatus, 
   getSafeProfile, 
   getStatusForProfile, 
-  prepareProfileStatusUpdate 
+  prepareProfileStatusUpdate,
+  prepareProfileUpdate 
 } from "@/utils/supabase/helpers";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
@@ -114,11 +114,13 @@ export function UserMenu() {
     
     try {
       // Use the helper function to get the correct profile update format
-      const update = prepareProfileStatusUpdate(newStatus);
+      const update = prepareProfileUpdate({
+        status: getStatusForProfile(newStatus)
+      });
       
       const query = supabase
         .from('profiles')
-        .update(asProfileUpdate(update));
+        .update(update);
         
       const { error } = await applyEqualsFilter(query, "id", session.user.id);
         

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
@@ -6,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { toDbValue } from "@/utils/supabase/helpers";
+import { asColumnValue } from "@/utils/supabase/helpers";
 import { 
   Users, 
   MessageSquare, 
@@ -65,17 +64,17 @@ export const Dashboard = () => {
         { count: activeStreams },
         { data: onlineUsers },
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', toDbValue(false)),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', toDbValue(true)),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', asColumnValue(false)),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_suspended', asColumnValue(true)),
         supabase.from('posts').select('*', { count: 'exact', head: true }),
         supabase.from('direct_messages').select('*', { count: 'exact', head: true }),
-        supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', toDbValue('pending')),
+        supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', asColumnValue('pending')),
         supabase.from('security_violations').select('*', { count: 'exact', head: true }),
         supabase.from('posts').select('*', { count: 'exact', head: true }).not('media_url', 'eq', '{}'),
         supabase.from('posts').select('*', { count: 'exact', head: true }).not('video_urls', 'eq', '{}'),
-        supabase.from('id_verifications').select('*', { count: 'exact', head: true }).eq('status', toDbValue('pending')),
-        supabase.from('live_streams').select('*', { count: 'exact', head: true }).eq('status', toDbValue('live')),
-        supabase.from('profiles').select('id').eq('status', toDbValue('online')),
+        supabase.from('id_verifications').select('*', { count: 'exact', head: true }).eq('status', asColumnValue('pending')),
+        supabase.from('live_streams').select('*', { count: 'exact', head: true }).eq('status', asColumnValue('live')),
+        supabase.from('profiles').select('id').eq('status', asColumnValue('online')),
       ]);
 
       return {
