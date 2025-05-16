@@ -118,7 +118,7 @@ export function UserMenu() {
       
       const query = supabase
         .from('profiles')
-        .update(update);
+        .update(asProfileUpdate(update));
         
       const { error } = await applyEqualsFilter(query, "id", session.user.id);
         

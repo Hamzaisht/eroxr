@@ -39,6 +39,7 @@ import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   applyEqualsFilter, 
+  asProfileUpdate,
   getSafeProfile, 
   prepareProfileStatusUpdate 
 } from "@/utils/supabase/helpers";
@@ -113,7 +114,7 @@ export function UserMenu() {
       
       const query = supabase
         .from('profiles')
-        .update(update);
+        .update(asProfileUpdate(update));
         
       const { error } = await applyEqualsFilter(query, "id", session.user.id);
         

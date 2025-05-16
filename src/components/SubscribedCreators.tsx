@@ -4,7 +4,23 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
-import { asUUID } from "@/utils/supabase/helpers";
+import { asUUID, safeCast, toDbValue } from "@/utils/supabase/helpers";
+
+interface Creator {
+  id: string;
+  username?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
+  banner_url?: string | null;
+}
+
+interface Subscription {
+  id: string;
+  creator_id: string;
+  user_id: string;
+  created_at: string;
+  creator?: Creator;
+}
 
 export const SubscribedCreators = () => {
   const session = useSession();
@@ -27,7 +43,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq("user_id", asUUID(userId!))
+        .eq("user_id", toDbValue(userId!))
         .order("created_at", { ascending: false });
         
       if (error) {
@@ -35,7 +51,7 @@ export const SubscribedCreators = () => {
         return [];
       }
       
-      return data || [];
+      return safeCast<Subscription>(data);
     },
     enabled: !!userId,
   });

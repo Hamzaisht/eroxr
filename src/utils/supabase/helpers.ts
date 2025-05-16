@@ -169,4 +169,3 @@ export function prepareProfileStatusUpdate(status: AvailabilityStatus): Partial<
     status: getStatusForProfile(status)
   };
 }
-

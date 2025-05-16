@@ -3,7 +3,19 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StoryCard } from "./story/StoryCard";
-import { toDbValue, safeDataAccess } from "@/utils/supabase/helpers";
+import { safeCast, safeDataAccess, toDbValue } from "@/utils/supabase/helpers";
+
+interface StoryData {
+  id: string;
+  creator_id: string;
+  media_url?: string | null;
+  video_url?: string | null;
+  created_at: string;
+  profiles?: {
+    username?: string | null;
+    avatar_url?: string | null;
+  };
+}
 
 export const StoryReel = () => {
   const [isLoadingStories, setIsLoadingStories] = useState(true);
@@ -21,11 +33,11 @@ export const StoryReel = () => {
           created_at,
           profiles:creator_id(username, avatar_url)
         `)
-        .eq("is_active", true)
+        .eq("is_active", toDbValue(true))
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return safeCast<StoryData>(data);
     },
   });
 
@@ -39,10 +51,10 @@ export const StoryReel = () => {
           key={story.id}
           storyId={story.id}
           creatorId={story.creator_id}
-          mediaUrl={story.media_url}
-          videoUrl={story.video_url}
-          username={story.profiles?.username}
-          avatarUrl={story.profiles?.avatar_url}
+          mediaUrl={story.media_url || undefined}
+          videoUrl={story.video_url || undefined}
+          username={story.profiles?.username || undefined}
+          avatarUrl={story.profiles?.avatar_url || undefined}
           createdAt={story.created_at}
         />
       ))}
