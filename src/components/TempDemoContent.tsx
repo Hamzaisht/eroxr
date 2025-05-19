@@ -7,7 +7,8 @@ import { Button } from './ui/button';
 import { 
   getSafeProfile,
   asUserSubscriptionStatus,
-  safeDataAccess
+  safeDataAccess,
+  asColumnValue
 } from '@/utils/supabase/helpers';
 import { Database } from "@/integrations/supabase/types/database.types";
 
@@ -43,7 +44,7 @@ export const TempDemoContent = () => {
             *,
             user_subscriptions:user_subscriptions(*)
           `)
-          .eq("id" as keyof Database["public"]["Tables"]["profiles"]["Row"], session.user.id)
+          .eq("id", asColumnValue(session.user.id))
           .single();
           
         if (error) {
@@ -51,7 +52,7 @@ export const TempDemoContent = () => {
           return null;
         }
         
-        return data as ProfileWithSubscriptions;
+        return data as unknown as ProfileWithSubscriptions;
       } catch (err) {
         console.error("Failed to fetch profile data:", err);
         return null;
@@ -76,8 +77,8 @@ export const TempDemoContent = () => {
       const { data: subscriptionData } = await supabase
         .from('user_subscriptions')
         .select('*')
-        .eq("user_id" as keyof Database["public"]["Tables"]["user_subscriptions"]["Row"], session.user.id)
-        .eq("status" as keyof Database["public"]["Tables"]["user_subscriptions"]["Row"], "active")
+        .eq("user_id", asColumnValue(session.user.id))
+        .eq("status", asColumnValue("active"))
         .single();
       
       if (!subscriptionData) {
@@ -89,7 +90,7 @@ export const TempDemoContent = () => {
       const { error } = await supabase
         .from('user_subscriptions')
         .update({ status: "inactive" } as Database["public"]["Tables"]["user_subscriptions"]["Update"])
-        .eq("id" as keyof Database["public"]["Tables"]["user_subscriptions"]["Row"], subscriptionData.id);
+        .eq("id", asColumnValue(subscriptionData.id));
         
       if (error) {
         console.error("Failed to update subscription:", error);

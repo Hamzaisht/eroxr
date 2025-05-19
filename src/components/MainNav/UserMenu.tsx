@@ -18,7 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   convertToStatus,
   getSafeProfile, 
-  prepareProfileStatusUpdate 
+  prepareProfileStatusUpdate,
+  asColumnValue
 } from "@/utils/supabase/helpers";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
@@ -44,7 +45,7 @@ export function UserMenu() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq("id" as keyof Database["public"]["Tables"]["profiles"]["Row"], session.user.id)
+        .eq("id", asColumnValue(session.user.id))
         .single();
         
       if (error) {
@@ -116,7 +117,7 @@ export function UserMenu() {
       const { error } = await supabase
         .from('profiles')
         .update(statusUpdate as Database["public"]["Tables"]["profiles"]["Update"])
-        .eq("id" as keyof Database["public"]["Tables"]["profiles"]["Row"], session.user.id);
+        .eq("id", asColumnValue(session.user.id));
         
       if (error) {
         console.error('Error updating status:', error);
