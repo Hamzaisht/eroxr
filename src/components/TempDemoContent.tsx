@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { extractProfile as extractCreator } from "@/utils/supabase/helpers";
+import { extractCreator } from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,13 +23,15 @@ export const TempDemoContent: React.FC<DemoProps> = ({
   const [activeTab, setActiveTab] = useState("feed");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch creators
   const { data: creators } = useQuery({
     queryKey: ["featured-creators"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("role", "creator")
+        // Changed to avoid string literal in role column
+        .eq("is_paying_customer", true)
         .limit(5);
 
       if (error) throw error;
@@ -36,14 +39,15 @@ export const TempDemoContent: React.FC<DemoProps> = ({
     },
   });
 
-  const { data: posts } = useQuery({
+  // Fetch posts with safer handling
+  const { data: postsData } = useQuery({
     queryKey: ["recent-posts"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("posts")
         .select(
           `*, 
-          creator:creator_id(username, avatar_url, id_verification_status)`
+          profiles:creator_id(username, avatar_url, id_verification_status)`
         )
         .order("created_at", { ascending: false })
         .limit(3);
@@ -52,6 +56,9 @@ export const TempDemoContent: React.FC<DemoProps> = ({
       return data || [];
     },
   });
+
+  // Safely handle posts data
+  const posts = Array.isArray(postsData) ? postsData : [];
 
   useEffect(() => {
     // Simulate loading state
@@ -105,11 +112,12 @@ export const TempDemoContent: React.FC<DemoProps> = ({
           <>
             {activeTab === "feed" && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {posts?.map((post) => {
-                  const creator = extractCreator(post.creator);
+                {posts.map((post) => {
+                  // Use a safe way to access profiles property
+                  const postProfiles = post?.profiles;
                   return (
-                    <Card key={post.id} className="overflow-hidden">
-                      {post.media_url && post.media_url[0] && (
+                    <Card key={post?.id} className="overflow-hidden">
+                      {post?.media_url && post.media_url[0] && (
                         <div className="aspect-video bg-muted">
                           <img
                             src={post.media_url[0]}
@@ -121,24 +129,24 @@ export const TempDemoContent: React.FC<DemoProps> = ({
                       <CardHeader className="flex flex-row items-center gap-3">
                         <Avatar>
                           <AvatarImage
-                            src={creator?.avatar_url || ""}
-                            alt={creator?.username || "User"}
+                            src={postProfiles?.avatar_url || ""}
+                            alt={postProfiles?.username || "User"}
                           />
                           <AvatarFallback>
-                            {creator?.username?.[0]?.toUpperCase() || "U"}
+                            {(postProfiles?.username || "U")[0]?.toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <h3 className="font-semibold">
-                            {creator?.username || "Anonymous"}
+                            {postProfiles?.username || "Anonymous"}
                           </h3>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(post.created_at).toLocaleDateString()}
+                            {post?.created_at ? new Date(post.created_at).toLocaleDateString() : "Unknown date"}
                           </p>
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <p className="line-clamp-3">{post.content}</p>
+                        <p className="line-clamp-3">{post?.content || ""}</p>
                       </CardContent>
                       <CardFooter className="flex justify-between">
                         <div className="flex gap-3">
@@ -159,14 +167,14 @@ export const TempDemoContent: React.FC<DemoProps> = ({
               </div>
             )}
 
-            {activeTab === "explore" && (
+            {activeTab === "explore" && creators && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {creators?.map((creator) => (
-                  <Card key={creator.id} className="overflow-hidden">
+                {creators.map((creator) => (
+                  <Card key={creator?.id} className="overflow-hidden">
                     <div
                       className="h-24 bg-cover bg-center"
                       style={{
-                        backgroundImage: creator.banner_url
+                        backgroundImage: creator?.banner_url
                           ? `url(${creator.banner_url})`
                           : "linear-gradient(to right, #4a5568, #2d3748)",
                       }}
@@ -175,31 +183,31 @@ export const TempDemoContent: React.FC<DemoProps> = ({
                       <div className="absolute -top-12 left-4 border-4 border-background rounded-full">
                         <Avatar className="h-20 w-20">
                           <AvatarImage
-                            src={creator.avatar_url || ""}
-                            alt={creator.username || "Creator"}
+                            src={creator?.avatar_url || ""}
+                            alt={creator?.username || "Creator"}
                           />
                           <AvatarFallback>
-                            {creator.username?.[0]?.toUpperCase() || "C"}
+                            {(creator?.username || "C")[0]?.toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                       </div>
                       <div className="pt-10">
                         <div className="flex items-center gap-2">
                           <h3 className="text-lg font-bold">
-                            {creator.username || "Anonymous Creator"}
+                            {creator?.username || "Anonymous Creator"}
                           </h3>
-                          {creator.id_verification_status === "verified" && (
+                          {creator?.id_verification_status === "verified" && (
                             <Check className="h-4 w-4 text-blue-500" />
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-2">
-                          {creator.bio || "No bio available"}
+                          {creator?.bio || "No bio available"}
                         </p>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-1">
-                        {creator.interests?.slice(0, 3).map((interest, i) => (
+                        {creator?.interests?.slice(0, 3).map((interest, i) => (
                           <Badge key={i} variant="secondary">
                             {interest}
                           </Badge>

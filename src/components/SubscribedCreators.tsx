@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
-import { asStringValue, safeCast } from "@/utils/supabase/helpers";
+import { safeCast } from "@/utils/supabase/helpers";
 
 interface Creator {
   id: string;
@@ -43,7 +43,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq("user_id", asStringValue(userId))
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
         
       if (error) {

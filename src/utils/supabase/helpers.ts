@@ -156,7 +156,7 @@ export function getStatusForProfile(status: AvailabilityStatus): 'online' | 'off
 /**
  * Safe function to update profile status
  */
-export function prepareProfileStatusUpdate(status: AvailabilityStatus): Partial<ProfileUpdate> {
+export function prepareProfileStatusUpdate(status: AvailabilityStatus): ProfileUpdate {
   return {
     status: getStatusForProfile(status)
   };
@@ -167,6 +167,22 @@ export function prepareProfileStatusUpdate(status: AvailabilityStatus): Partial<
  * For use with eq, in, etc. methods on supabase queries
  */
 export function asColumnValue<T>(value: T): T {
+  return value;
+}
+
+/**
+ * Helper for casting boolean values for database queries
+ * For use with eq, in, etc. methods on supabase queries
+ */
+export function asBooleanValue(value: boolean): boolean {
+  return value;
+}
+
+/**
+ * Helper for casting string values for database queries
+ * For use with eq, in, etc. methods on supabase queries
+ */
+export function asStringValue(value: string): string {
   return value;
 }
 
@@ -224,18 +240,3 @@ export function extractCreator(data: any) {
   if (!data) return null;
   return data.profiles || data.creator || null;
 }
-
-/**
- * Safe boolean value for database comparisons
- */
-export function asBooleanValue(value: boolean): boolean {
-  return value;
-}
-
-/**
- * Safe string value for database comparisons
- */
-export function asStringValue(value: string): string {
-  return value;
-}
-

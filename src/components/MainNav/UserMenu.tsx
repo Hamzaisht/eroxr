@@ -21,8 +21,7 @@ import {
   convertToStatus, 
   getSafeProfile, 
   getStatusForProfile, 
-  prepareProfileStatusUpdate, 
-  prepareProfileUpdate 
+  prepareProfileStatusUpdate
 } from "@/utils/supabase/helpers";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
