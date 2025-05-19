@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +92,8 @@ export const TempDemoContent: React.FC<DemoProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState("feed");
   const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Fetch creators
   const { data: creators } = useQuery({
@@ -129,6 +130,60 @@ export const TempDemoContent: React.FC<DemoProps> = ({
 
   // Safely handle posts data
   const posts = safeDataAccess(postsData, []);
+
+  // Fetch user profile
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq("id", userId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  // Fetch user subscription status
+  const { data: subscriptionStatus, isLoading: isLoadingSubscription } = useQuery({
+    queryKey: ['user-subscription', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      try {
+        const { data: subscription, error } = await supabase
+          .from('user_subscriptions')
+          .select('status')
+          .eq("user_id", userId)
+          .eq("status", "active")
+          .single();
+          
+        if (error && error.code !== 'PGRST116') { // No rows returned is ok
+          console.error('Error checking subscription:', error);
+        }
+        
+        return subscription || null;
+      } catch (error) {
+        console.error('Failed to check subscription status:', error);
+        return null;
+      }
+    },
+    enabled: !!userId,
+  });
+
+  const isSubscriber = subscriptionStatus !== null;
+
+  // Safely access the profile properties
+  const safeProfile = profile ? profile : { is_paying_customer: false };
 
   useEffect(() => {
     // Simulate loading state
@@ -349,4 +404,44 @@ export const TempDemoContent: React.FC<DemoProps> = ({
       </div>
     </div>
   );
+};
+
+// Upgrade function
+const handleUpgrade = async () => {
+  if (!userId) {
+    toast({
+      title: "Authentication required",
+      description: "Please log in to upgrade your account",
+      variant: "destructive"
+    });
+    return;
+  }
+
+  try {
+    setIsUpdating(true);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_paying_customer: true })
+      .eq("id", userId);
+
+    if (error) throw error;
+    
+    toast({
+      title: "Success!",
+      description: "Your account has been upgraded to premium",
+    });
+    
+    queryClient.invalidateQueries(['user-profile']);
+    
+  } catch (error) {
+    console.error('Error upgrading account:', error);
+    toast({
+      title: "Upgrade failed",
+      description: "Could not upgrade your account. Please try again.",
+      variant: "destructive"
+    });
+  } finally {
+    setIsUpdating(false);
+  }
 };

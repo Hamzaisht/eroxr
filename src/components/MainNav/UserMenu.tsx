@@ -16,19 +16,15 @@ import { User, Settings, CreditCard, ArrowRightFromLine, Loader2, CircleUserRoun
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  applyEqualsFilter,
-  asColumnName,
-  asUUID,
-  convertToStatus, 
+  AvailabilityStatus,
+  convertToStatus,
   getSafeProfile,
-  prepareProfileStatusUpdate 
+  prepareProfileStatusUpdate
 } from "@/utils/supabase/helpers";
-import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Database } from "@/integrations/supabase/types/database.types";
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -44,11 +40,10 @@ export function UserMenu() {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const query = supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*');
-        
-      const { data, error } = await applyEqualsFilter(query, "id", asUUID(session.user.id))
+        .select('*')
+        .eq("id", session.user.id)
         .single();
         
       if (error) {
@@ -120,7 +115,7 @@ export function UserMenu() {
       const { error } = await supabase
         .from('profiles')
         .update(statusUpdate)
-        .eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("id"), asUUID(session.user.id));
+        .eq("id", session.user.id);
         
       if (error) {
         console.error('Error updating status:', error);

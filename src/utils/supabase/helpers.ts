@@ -1,113 +1,118 @@
-
 import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { PostgrestFilterBuilder } from "@supabase/supabase-js";
 
-// Type for profile updates
-type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
-type FollowersInsert = Database['public']['Tables']['followers']['Insert'];
-type SubscriptionsInsert = Database['public']['Tables']['creator_subscriptions']['Insert'];
+// Types for database tables
+export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 
-// Strongly typed column types for specific tables
-type ProfileStatus = Database['public']['Tables']['profiles']['Row']['status'];
-type DatingAdCountry = Database['public']['Tables']['dating_ads']['Row']['country'];
-type DatingAdUserType = Database['public']['Tables']['dating_ads']['Row']['user_type'];
-type StoryIsActive = Database['public']['Tables']['stories']['Row']['is_active'];
-type ProfileIsSuspended = Database['public']['Tables']['profiles']['Row']['is_suspended'];
-type ProfileIsPayingCustomer = Database['public']['Tables']['profiles']['Row']['is_paying_customer'];
-type ReportStatus = Database['public']['Tables']['reports']['Row']['status'];
-type IdVerificationStatus = Database['public']['Tables']['id_verifications']['Row']['status'];
-type LiveStreamStatus = Database['public']['Tables']['live_streams']['Row']['status'];
-type UserID = Database['public']['Tables']['profiles']['Row']['id'];
-type UserSubscriptionStatus = Database['public']['Tables']['user_subscriptions']['Row']['status'];
+export type StoryRow = Database["public"]["Tables"]["stories"]["Row"];
+export type StoryUpdate = Database["public"]["Tables"]["stories"]["Update"];
 
-/**
- * Generic type-safe helper for database column values
- * Use for .eq(), .in(), etc. operations with proper type assertion
- */
-export function asDatabaseColumnValue<T>(value: T): T {
-  return value as T;
-}
+export type DatingAdRow = Database["public"]["Tables"]["dating_ads"]["Row"];
+export type DatingAdUpdate = Database["public"]["Tables"]["dating_ads"]["Update"];
+
+export type SubscriptionRow = Database["public"]["Tables"]["creator_subscriptions"]["Row"];
+export type SubscriptionInsert = Database["public"]["Tables"]["creator_subscriptions"]["Insert"];
+
+export type FollowersInsert = Database["public"]["Tables"]["followers"]["Insert"];
+
+// Strongly typed column references
+export type ProfileColumns = keyof ProfileRow;
+export type StoryColumns = keyof StoryRow;
+export type DatingAdColumns = keyof DatingAdRow;
+export type SubscriptionColumns = keyof SubscriptionRow;
 
 /**
- * Helper that casts a column name to the correct keyof type for Supabase filters
+ * Type-safe helper for column names
  */
 export function asColumnName<T extends Record<string, any>>(columnName: keyof T): keyof T {
   return columnName;
 }
 
 /**
- * Safely converts a UUID string for use in database queries
+ * Type-safe UUID conversion
  */
-export function asUUID(value: string): UserID {
-  return value as unknown as UserID;
+export function asUUID(value: string): string {
+  return value;
 }
 
 /**
- * Helper for casting boolean values for database queries
+ * Type-safe boolean value for database queries
  */
-export function asBooleanValue<T extends boolean>(value: T): T {
-  return value as unknown as T;
+export function asBooleanValue(value: boolean): boolean {
+  return value;
 }
 
 /**
- * Helper for casting string values for database queries
+ * Type-safe string value for database queries
  */
-export function asStringValue<T extends string>(value: T): T {
-  return value as unknown as T;
+export function asStringValue(value: string): string {
+  return value;
 }
 
 /**
- * Helper for dating_ads country enum value
+ * Type-safe helper for dating_ads country enum
  */
-export function asDatingAdCountry(value: string): DatingAdCountry {
-  return value as unknown as DatingAdCountry;
+export function asDatingAdCountry(value: string): string {
+  return value;
 }
 
 /**
- * Helper for dating_ads user_type enum value
+ * Type-safe helper for dating_ads user_type enum
  */
-export function asDatingAdUserType(value: string): DatingAdUserType {
-  return value as unknown as DatingAdUserType;
+export function asDatingAdUserType(value: string): string {
+  return value;
 }
 
 /**
- * Helper for profiles status value
+ * Type-safe helper for profiles status
  */
-export function asProfileStatus(value: string): ProfileStatus {
-  return value as unknown as ProfileStatus;
+export function asProfileStatus(value: string): ProfileRow["status"] {
+  return value as ProfileRow["status"];
 }
 
 /**
- * Helper for user subscription status
+ * Type-safe helper for story is_active field
  */
-export function asUserSubscriptionStatus(value: string): UserSubscriptionStatus {
-  return value as unknown as UserSubscriptionStatus;
+export function asStoryIsActive(value: boolean): boolean {
+  return value;
 }
 
-// Specialized helpers for specific table columns
-export function asReportStatus(value: string): ReportStatus {
-  return value as unknown as ReportStatus;
+/**
+ * Type-safe helper for profiles is_suspended field
+ */
+export function asProfileIsSuspended(value: boolean): boolean {
+  return value;
 }
 
-export function asIdVerificationStatus(value: string): IdVerificationStatus {
-  return value as unknown as IdVerificationStatus; 
+/**
+ * Type-safe helper for reports status field
+ */
+export function asReportStatus(value: string): string {
+  return value;
 }
 
-export function asLiveStreamStatus(value: string): LiveStreamStatus {
-  return value as unknown as LiveStreamStatus;
+/**
+ * Type-safe helper for id_verifications status field
+ */
+export function asIdVerificationStatus(value: string): string {
+  return value;
 }
 
-export function asProfileIsSuspended(value: boolean): ProfileIsSuspended {
-  return value as unknown as ProfileIsSuspended;
+/**
+ * Type-safe helper for live_streams status field
+ */
+export function asLiveStreamStatus(value: string): string {
+  return value;
 }
 
-export function asProfileIsPayingCustomer(value: boolean): ProfileIsPayingCustomer {
-  return value as unknown as ProfileIsPayingCustomer;
-}
-
-export function asStoryIsActive(value: boolean): StoryIsActive {
-  return value as unknown as StoryIsActive;
+/**
+ * Type-safe helper for profiles is_paying_customer field
+ */
+export function asProfileIsPayingCustomer(value: boolean): boolean {
+  return value;
 }
 
 /**
@@ -126,7 +131,7 @@ export function safeCast<T>(data: any): T[] {
 }
 
 /**
- * Converts status string to AvailabilityStatus enum
+ * Convert status string to AvailabilityStatus enum
  */
 export function convertToStatus(status?: string | null): AvailabilityStatus {
   if (!status) return AvailabilityStatus.OFFLINE;
@@ -143,24 +148,6 @@ export function convertToStatus(status?: string | null): AvailabilityStatus {
     default:
       return AvailabilityStatus.OFFLINE;
   }
-}
-
-/**
- * Type assertion helper for Supabase profile updates
- */
-export function asProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
-  return data as ProfileUpdate;
-}
-
-/**
- * Helper to apply .eq() filter with proper typing
- */
-export function applyEqualsFilter<T = any>(
-  query: PostgrestFilterBuilder<T>,
-  column: string,
-  value: any
-): PostgrestFilterBuilder<T> {
-  return query.eq(column, value);
 }
 
 /**
@@ -190,12 +177,12 @@ export function getSafeProfile(profile: any) {
 /**
  * Get enum-compatible status value for profiles
  */
-export function getStatusForProfile(status: AvailabilityStatus): ProfileStatus {
+export function getStatusForProfile(status: AvailabilityStatus): ProfileRow["status"] {
   // Convert enum value to lowercase and handle the 'invisible' case
   const statusString = status.toString().toLowerCase();
-  if (statusString === 'invisible') return 'offline' as ProfileStatus;
+  if (statusString === 'invisible') return 'offline';
   
-  return statusString as ProfileStatus;
+  return statusString as ProfileRow["status"];
 }
 
 /**
@@ -203,9 +190,9 @@ export function getStatusForProfile(status: AvailabilityStatus): ProfileStatus {
  */
 export function prepareProfileStatusUpdate(status: AvailabilityStatus): ProfileUpdate {
   const profileStatus = getStatusForProfile(status);
-  return asProfileUpdate({
+  return {
     status: profileStatus
-  });
+  };
 }
 
 // Helper functions for safely extracting creator information
@@ -219,6 +206,17 @@ export function extractCreator(data: any) {
  */
 export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
   return obj ? obj[key] : undefined;
+}
+
+/**
+ * Type-safe function for applying filters with proper typing
+ */
+export function applyEqualsFilter<T extends Record<string, any>>(
+  query: PostgrestFilterBuilder<T>,
+  column: keyof T,
+  value: any
+): PostgrestFilterBuilder<T> {
+  return query.eq(column, value);
 }
 
 /**
@@ -241,11 +239,11 @@ export function createFollowerData(followerId: string, followingId: string): Fol
 /**
  * Helper to construct typed insert data for subscriptions
  */
-export function createSubscriptionData(userId: string, creatorId: string): SubscriptionsInsert {
+export function createSubscriptionData(userId: string, creatorId: string): SubscriptionInsert {
   return {
     user_id: userId,
     creator_id: creatorId
-  } as SubscriptionsInsert;
+  } as SubscriptionInsert;
 }
 
 /**
@@ -267,7 +265,9 @@ export function asColumnValue<T>(value: T): T {
  * Strongly-typed helper function for updating profiles
  */
 export function prepareProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
-  return asProfileUpdate(data);
+  return {
+    ...data,
+  } as ProfileUpdate;
 }
 
 /**

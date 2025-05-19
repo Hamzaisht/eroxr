@@ -38,9 +38,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  applyEqualsFilter, 
-  asColumnName,
-  asUUID,
   getSafeProfile,
   prepareProfileStatusUpdate,
 } from "@/utils/supabase/helpers";
@@ -76,11 +73,10 @@ export function UserMenu() {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const query = supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*');
-        
-      const { data, error } = await applyEqualsFilter(query, "id", asUUID(session.user.id))
+        .select('*')
+        .eq("id", session.user.id)
         .single();
         
       if (error) {
@@ -117,7 +113,7 @@ export function UserMenu() {
       const { error } = await supabase
         .from('profiles')
         .update(statusUpdate)
-        .eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("id"), asUUID(session.user.id));
+        .eq("id", session.user.id);
         
       if (error) {
         console.error('Error updating status:', error);
