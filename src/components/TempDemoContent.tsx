@@ -3,9 +3,10 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
+  asColumnName,
   asProfileIsPayingCustomer,
+  asUUID,
   asUserSubscriptionStatus,
-  extractCreator, 
   safeCast, 
   safeDataAccess, 
   safeGet 
@@ -15,6 +16,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Check, MapPin, Eye, Heart, MessageCircle, Share2 } from "lucide-react";
+import { Database } from "@/integrations/supabase/types/database.types";
 
 interface DemoProps {
   title: string;
@@ -49,7 +51,7 @@ export const fetchProfileData = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", userId)
+      .eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("id"), asUUID(userId))
       .single();
 
     if (error) {
@@ -60,8 +62,8 @@ export const fetchProfileData = async (userId: string) => {
     const { data: subscriptionData } = await supabase
       .from("user_subscriptions")
       .select("*")
-      .eq("user_id", userId)
-      .eq("status", asUserSubscriptionStatus('active'))
+      .eq(asColumnName<Database["public"]["Tables"]["user_subscriptions"]["Row"]>("user_id"), asUUID(userId))
+      .eq(asColumnName<Database["public"]["Tables"]["user_subscriptions"]["Row"]>("status"), asUserSubscriptionStatus('active'))
       .limit(1);
 
     // Make sure we have valid data before proceeding
@@ -71,7 +73,7 @@ export const fetchProfileData = async (userId: string) => {
 
     // Use proper type assertion for boolean values
     const isPremium = subscriptionData && subscriptionData.length > 0;
-    const isPaying = data.is_paying_customer ? asProfileIsPayingCustomer(true) : asProfileIsPayingCustomer(false);
+    const isPaying = data.is_paying_customer || false;
 
     return {
       ...data,
@@ -99,7 +101,7 @@ export const TempDemoContent: React.FC<DemoProps> = ({
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("is_paying_customer", asProfileIsPayingCustomer(true))
+        .eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("is_paying_customer"), asProfileIsPayingCustomer(true))
         .limit(5);
 
       if (error) throw error;

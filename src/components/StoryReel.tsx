@@ -3,19 +3,15 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StoryCard } from "./story/StoryCard";
-import { asStoryIsActive, safeCast, safeDataAccess } from "@/utils/supabase/helpers";
+import { asColumnName, asStoryIsActive, safeCast, safeDataAccess } from "@/utils/supabase/helpers";
+import { Database } from "@/integrations/supabase/types/database.types";
 
-interface StoryData {
-  id: string;
-  creator_id: string;
-  media_url?: string | null;
-  video_url?: string | null;
-  created_at: string;
+type StoryData = Database["public"]["Tables"]["stories"]["Row"] & {
   profiles?: {
     username?: string | null;
     avatar_url?: string | null;
-  };
-}
+  } | null;
+};
 
 export const StoryReel = () => {
   const [isLoadingStories, setIsLoadingStories] = useState(true);
@@ -33,7 +29,7 @@ export const StoryReel = () => {
           created_at,
           profiles:creator_id(username, avatar_url)
         `)
-        .eq("is_active", asStoryIsActive(true))
+        .eq(asColumnName<Database["public"]["Tables"]["stories"]["Row"]>("is_active"), asStoryIsActive(true))
         .order("created_at", { ascending: false });
 
       if (error) throw error;

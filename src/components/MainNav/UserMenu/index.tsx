@@ -39,11 +39,13 @@ import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   applyEqualsFilter, 
+  asColumnName,
   asUUID,
   getSafeProfile,
   prepareProfileStatusUpdate,
 } from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
+import { Database } from "@/integrations/supabase/types/database.types";
 
 interface UserMenuItemProps {
   label: string;
@@ -115,7 +117,7 @@ export function UserMenu() {
       const { error } = await supabase
         .from('profiles')
         .update(statusUpdate)
-        .eq("id", asUUID(session.user.id));
+        .eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("id"), asUUID(session.user.id));
         
       if (error) {
         console.error('Error updating status:', error);

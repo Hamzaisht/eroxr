@@ -4,12 +4,14 @@ import { VideoProfileCard } from '@/components/ads/video-profile-card';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   asBooleanValue, 
+  asColumnName,
   asDatingAdCountry, 
   asDatingAdUserType, 
   asStringValue, 
   safeCast,
   safeDataAccess 
 } from '@/utils/supabase/helpers';
+import { Database } from "@/integrations/supabase/types/database.types";
 
 interface ProfileData {
   username?: string;
@@ -61,10 +63,10 @@ export const PromotedAds = () => {
             id_verification_status
           )
         `)
-        .eq('is_active', asBooleanValue(true))
-        .eq('country', asDatingAdCountry('denmark'))
-        .eq('moderation_status', asStringValue('approved'))
-        .eq('user_type', asDatingAdUserType('premium'))
+        .eq(asColumnName<Database["public"]["Tables"]["dating_ads"]["Row"]>("is_active"), asBooleanValue(true))
+        .eq(asColumnName<Database["public"]["Tables"]["dating_ads"]["Row"]>("country"), asDatingAdCountry('denmark'))
+        .eq(asColumnName<Database["public"]["Tables"]["dating_ads"]["Row"]>("moderation_status"), asStringValue('approved'))
+        .eq(asColumnName<Database["public"]["Tables"]["dating_ads"]["Row"]>("user_type"), asDatingAdUserType('premium'))
         .order('created_at', { ascending: false })
         .limit(3);
 

@@ -30,6 +30,13 @@ export function asDatabaseColumnValue<T>(value: T): T {
 }
 
 /**
+ * Helper that casts a column name to the correct keyof type for Supabase filters
+ */
+export function asColumnName<T extends Record<string, any>>(columnName: keyof T): keyof T {
+  return columnName;
+}
+
+/**
  * Safely converts a UUID string for use in database queries
  */
 export function asUUID(value: string): UserID {

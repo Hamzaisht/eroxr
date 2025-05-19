@@ -1,59 +1,36 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { formatDistanceToNow, format } from "date-fns";
+
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from '@/integrations/supabase/client';
 import { 
-  Shield, 
+  asReportStatus, 
+  asColumnName
+} from '@/utils/supabase/helpers';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
   AlertTriangle, 
   Ban, 
   CheckCircle, 
-  Download, 
-  Search, 
-  Filter,
-  Eye,
-  Calendar,
-  ChevronUp,
-  ChevronDown,
-  FileJson,
-  FileSpreadsheet
-} from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
-import { useSession } from "@supabase/auth-helpers-react";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { asColumnValue, asStringValue } from "@/utils/supabase/helpers";
-import { updateRecord, updateRecords } from "@/utils/supabase/recordUpdaters";
+  Clock, 
+  Flag, 
+  MessageSquare, 
+  ShieldAlert, 
+  Trash2, 
+  User, 
+  X 
+} from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useSession } from '@supabase/auth-helpers-react';
+import { useToast } from '@/hooks/use-toast';
+import { Database } from '@/integrations/supabase/types/database.types';
 
+// Define TypeScript interfaces for our data
 interface Report {
   id: string;
   content_type: string;
@@ -63,195 +40,24 @@ interface Report {
   is_emergency: boolean;
   reporter_id: string;
   reported_id: string;
-  reporter: Profile;
-  reported: Profile;
+  reporter?: {
+    username: string;
+  };
+  reported?: {
+    username: string;
+  };
 }
 
-interface DMCARequest {
-  id: string;
-  content_type: string;
-  status: string;
-  created_at: string;
-  reporter_id: string;
-  reporter: Profile;
-}
-
-interface ContentClassification {
-  id: string;
-  content_type: string;
-  classification: string;
-  visibility: string;
-  created_at: string;
-}
-
-interface Profile {
-  id: string;
-  username: string;
-}
-
-export const ErosMode = () => {
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
-  const [sortConfig, setSortConfig] = useState<{ field: string; direction: 'asc' | 'desc' }>({ field: 'created_at', direction: 'desc' });
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+export const ErosMode: React.FC = () => {
+  const [selectedTab, setSelectedTab] = useState('reports');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const session = useSession();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const isGodMode = session?.user?.email?.toLowerCase() === 'hamzaishtiaq242@gmail.com';
-  
-  if (!isGodMode) {
-    console.log("Access denied to God Mode. Current user email:", session?.user?.email);
-    toast({
-      title: "Access Denied",
-      description: "You don't have permission to access this area.",
-      variant: "destructive",
-    });
-    navigate('/');
-    return null;
-  }
-
-  const handleBulkAction = useMutation({
-    mutationFn: async ({ items, action }: { items: string[]; action: string }) => {
-      const result = await updateRecords('reports', items, { status: action });
-      if (result.error) throw result.error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
-      toast({
-        title: "Bulk Action Completed",
-        description: "Selected items have been updated.",
-      });
-      setSelectedItems([]);
-    },
-  });
-
-  const handleExport = (data: any[], type: string, format: 'csv' | 'json' | 'xlsx') => {
-    let content: string;
-    let mimeType: string;
-    let fileExtension: string;
-
-    switch (format) {
-      case 'json':
-        content = JSON.stringify(data, null, 2);
-        mimeType = 'application/json';
-        fileExtension = 'json';
-        break;
-      case 'xlsx':
-        content = data.map(item => Object.values(item).join(',')).join('\n');
-        mimeType = 'text/csv';
-        fileExtension = 'csv';
-        break;
-      default:
-        content = data.map(item => Object.values(item).join(',')).join('\n');
-        mimeType = 'text/csv';
-        fileExtension = 'csv';
-    }
-
-    const blob = new Blob([content], { type: mimeType });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', `${type}_export_${Date.now()}.${fileExtension}`);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-
-  const handleSort = (field: string) => {
-    setSortConfig({
-      field,
-      direction: sortConfig.field === field && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-    });
-  };
-
-  const filterAndSortData = (data: any[]) => {
-    return data
-      ?.filter(item => {
-        const matchesSearch = 
-          item.content_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (item.reason?.toLowerCase().includes(searchTerm.toLowerCase()));
-        
-        const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-        
-        const matchesDateRange = 
-          !dateRange.from || !dateRange.to || 
-          (new Date(item.created_at) >= dateRange.from && 
-           new Date(item.created_at) <= dateRange.to);
-        
-        return matchesSearch && matchesStatus && matchesDateRange;
-      })
-      .sort((a, b) => {
-        const aValue = a[sortConfig.field];
-        const bValue = b[sortConfig.field];
-        const modifier = sortConfig.direction === 'asc' ? 1 : -1;
-        
-        if (typeof aValue === 'string') {
-          return aValue.localeCompare(bValue) * modifier;
-        }
-        return ((aValue < bValue ? -1 : 1) * modifier);
-      });
-  };
-
-  const handleReport = useMutation({
-    mutationFn: async ({ reportId, action }: { reportId: string; action: string }) => {
-      const result = await updateRecord('reports', reportId, {
-        status: action === 'dismiss' ? 'dismissed' : 'resolved',
-        action_taken: action
-      });
-      if (result.error) throw result.error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
-      toast({
-        title: "Report Updated",
-        description: "The report has been successfully handled.",
-      });
-    },
-  });
-
-  const handleDMCA = useMutation({
-    mutationFn: async ({ requestId, action }: { requestId: string; action: 'approve' | 'reject' }) => {
-      const result = await updateRecord('dmca_requests', requestId, {
-        status: action === 'approve' ? 'approved' : 'rejected',
-        takedown_date: action === 'approve' ? new Date().toISOString() : null
-      });
-      if (result.error) throw result.error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-dmca'] });
-      toast({
-        title: "DMCA Request Updated",
-        description: "The DMCA request has been processed.",
-      });
-    },
-  });
-
-  const handleClassification = useMutation({
-    mutationFn: async ({ 
-      classificationId, 
-      visibility 
-    }: { 
-      classificationId: string; 
-      visibility: string 
-    }) => {
-      const result = await updateRecord('content_classifications', classificationId, { visibility });
-      if (result.error) throw result.error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-classifications'] });
-      toast({
-        title: "Classification Updated",
-        description: "The content classification has been updated.",
-      });
-    },
-  });
-
-  const { data: reports } = useQuery({
+  // Fetch reports data
+  const { data: reportsData, isLoading: isLoadingReports } = useQuery({
     queryKey: ['admin-reports'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -265,556 +71,310 @@ export const ErosMode = () => {
           is_emergency,
           reporter_id,
           reported_id,
-          reporter:profiles!reporter_id (username),
-          reported:profiles!reported_id (username)
-        `)
-        .order('is_emergency', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      return data as Report[];
-    }
-  });
-
-  const { data: dmcaRequests } = useQuery({
-    queryKey: ['admin-dmca'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('dmca_requests')
-        .select(`
-          id,
-          content_type,
-          status,
-          created_at,
-          reporter_id,
-          reporter:profiles!reporter_id (username)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      return data as DMCARequest[];
-    }
-  });
-
-  const { data: classificationsData } = useQuery({
-    queryKey: ['admin-classifications'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('content_classifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  // Safe casting for the classifications data
-  const classifications: ContentClassification[] = classificationsData as unknown as ContentClassification[];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-500/10 text-yellow-500';
-      case 'reviewing':
-        return 'bg-blue-500/10 text-blue-500';
-      case 'resolved':
-        return 'bg-green-500/10 text-green-500';
-      case 'dismissed':
-        return 'bg-gray-500/10 text-gray-500';
-      default:
-        return 'bg-gray-500/10 text-gray-500';
-    }
-  };
-
-  export const fetchReportSummary = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("reports")
-        .select(`
-          id,
-          content_type,
-          reason,
-          status,
-          created_at,
-          is_emergency,
-          reporter_id,
-          reported_id,
           reporter:reporter_id(username),
           reported:reported_id(username)
         `)
-        .order("created_at", { ascending: false })
-        .limit(5);
-
+        .order('created_at', { ascending: false });
+        
       if (error) {
+        console.error('Error fetching reports:', error);
         throw error;
       }
-
-      // Use as unknown as Report[] to fix the type conversion issue
+      
+      // Safely cast the data to our Report type
       return (data || []) as unknown as Report[];
-    } catch (error) {
-      console.error("Error fetching report summary:", error);
-      return [];
+    }
+  });
+
+  // Handle resolving reports
+  const handleResolveReport = async (reportId: string, action: 'approve' | 'reject' | 'delete') => {
+    if (!session?.user?.id) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to perform this action',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      const status = action === 'approve' ? 'resolved' : 'rejected';
+      
+      const { error } = await supabase
+        .from('reports')
+        .update({ 
+          status: asReportStatus(status),
+          resolved_by: session.user.id,
+        })
+        .eq(asColumnName<Database["public"]["Tables"]["reports"]["Row"]>("id"), reportId);
+        
+      if (error) throw error;
+      
+      // Log admin action
+      await supabase
+        .from('admin_logs')
+        .insert({
+          admin_id: session.user.id,
+          action: `report_${action}`,
+          action_type: 'moderation',
+          target_id: reportId,
+          target_type: 'report',
+          details: { action }
+        });
+        
+      toast({
+        title: 'Report updated',
+        description: `The report has been ${status}`,
+      });
+      
+      // Invalidate reports query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
+      
+    } catch (error: any) {
+      console.error('Error resolving report:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update report status',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  // Filter reports based on search and status
+  const filteredReports = reportsData?.filter(report => {
+    // Apply status filter
+    if (filterStatus !== 'all' && report.status !== filterStatus) {
+      return false;
+    }
+    
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        report.content_type?.toLowerCase().includes(searchLower) ||
+        report.reason?.toLowerCase().includes(searchLower) ||
+        report.reporter?.username?.toLowerCase().includes(searchLower) ||
+        report.reported?.username?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return true;
+  }) || [];
+  
+  // Helper function to get badge color based on report status
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-600 text-white';
+      case 'resolved': return 'bg-green-600 text-white';
+      case 'rejected': return 'bg-gray-600 text-white';
+      default: return 'bg-gray-600 text-white';
+    }
+  };
+
+  // Helper function to get icon based on content type
+  const getContentTypeIcon = (type: string) => {
+    switch (type) {
+      case 'user': return <User className="h-4 w-4" />;
+      case 'post': return <MessageSquare className="h-4 w-4" />;
+      case 'message': return <MessageSquare className="h-4 w-4" />;
+      case 'profile': return <User className="h-4 w-4" />;
+      default: return <Flag className="h-4 w-4" />;
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-luxury-neutral">Eros Mode Control Panel</h1>
-        <Badge variant="destructive" className="px-2 py-1">GOD MODE</Badge>
-      </div>
-
-      <div className="flex flex-wrap gap-4 mb-4">
-        <div className="relative max-w-xs">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
-          <Input
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+    <div className="container mx-auto p-6 space-y-6">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center">
+            <ShieldAlert className="mr-2 h-6 w-6 text-red-500" />
+            EROS Mode
+          </h1>
+          <p className="text-muted-foreground">Advanced content moderation and administrative tools</p>
         </div>
-        
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-            <SelectItem value="dismissed">Dismissed</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <DateRangePicker
-          from={dateRange.from}
-          to={dateRange.to}
-          onSelect={(range) => setDateRange(range)}
-        />
-      </div>
-
-      <Tabs defaultValue="reports" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="reports">
-            Active Reports ({reports?.length || 0})
+      </header>
+      
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
+        <TabsList className="grid grid-cols-3">
+          <TabsTrigger value="reports" className="relative">
+            Reports
+            {reportsData?.filter(r => r.status === 'pending').length ? (
+              <Badge variant="destructive" className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                {reportsData?.filter(r => r.status === 'pending').length}
+              </Badge>
+            ) : null}
           </TabsTrigger>
-          <TabsTrigger value="dmca">
-            DMCA Requests ({dmcaRequests?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="classifications">
-            Content Classifications
-          </TabsTrigger>
+          <TabsTrigger value="content">Content Review</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="reports" className="mt-4">
-          <Card className="p-4">
-            <div className="flex justify-between mb-4">
-              <div className="flex gap-2">
-                {selectedItems.length > 0 && (
-                  <>
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleBulkAction.mutate({
-                        items: selectedItems,
-                        action: 'resolved'
-                      })}
-                    >
-                      Resolve Selected ({selectedItems.length})
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleBulkAction.mutate({
-                        items: selectedItems,
-                        action: 'dismissed'
-                      })}
-                    >
-                      Dismiss Selected ({selectedItems.length})
-                    </Button>
-                  </>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleExport(reports || [], 'reports', 'json')}
-                >
-                  <FileJson className="w-4 h-4 mr-2" />
-                  Export JSON
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleExport(reports || [], 'reports', 'xlsx')}
-                >
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  Export Excel
-                </Button>
-              </div>
+        
+        <TabsContent value="reports" className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              placeholder="Search reports..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="sm:max-w-sm"
+            />
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="sm:w-[180px]">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {isLoadingReports ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
             </div>
-
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">
-                      <Checkbox
-                        checked={selectedItems.length === reports?.length}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedItems(reports?.map(r => r.id) || []);
-                          } else {
-                            setSelectedItems([]);
-                          }
-                        }}
-                      />
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer"
-                      onClick={() => handleSort('status')}
-                    >
-                      Status {sortConfig.field === 'status' && (
-                        sortConfig.direction === 'asc' ? <ChevronUp className="inline w-4 h-4" /> : <ChevronDown className="inline w-4 h-4" />
-                      )}
-                    </TableHead>
-                    <TableHead>Reporter</TableHead>
-                    <TableHead>Reported</TableHead>
-                    <TableHead 
-                      className="cursor-pointer"
-                      onClick={() => handleSort('content_type')}
-                    >
-                      Type {sortConfig.field === 'content_type' && (
-                        sortConfig.direction === 'asc' ? <ChevronUp className="inline w-4 h-4" /> : <ChevronDown className="inline w-4 h-4" />
-                      )}
-                    </TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead 
-                      className="cursor-pointer"
-                      onClick={() => handleSort('created_at')}
-                    >
-                      Time {sortConfig.field === 'created_at' && (
-                        sortConfig.direction === 'asc' ? <ChevronUp className="inline w-4 h-4" /> : <ChevronDown className="inline w-4 h-4" />
-                      )}
-                    </TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filterAndSortData(reports)?.map((report) => (
-                    <TableRow key={report.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedItems.includes(report.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedItems([...selectedItems, report.id]);
-                            } else {
-                              setSelectedItems(selectedItems.filter(id => id !== report.id));
-                            }
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(report.status)}>
-                          {report.status.toUpperCase()}
+          ) : filteredReports.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="pt-6 text-center">
+                <p className="text-muted-foreground">No reports match your criteria</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {filteredReports.map((report) => (
+                <Card key={report.id} className={report.is_emergency ? 'border-red-500' : ''}>
+                  <CardHeader className="p-4 pb-2 flex flex-row justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        {getContentTypeIcon(report.content_type)}
+                        {report.content_type}
+                      </Badge>
+                      <Badge className={getStatusColor(report.status)}>
+                        {report.status}
+                      </Badge>
+                      {report.is_emergency && (
+                        <Badge variant="destructive" className="flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Emergency
                         </Badge>
-                        {report.is_emergency && (
-                          <Badge variant="destructive" className="ml-2">
-                            URGENT
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>{report.reporter?.username}</TableCell>
-                      <TableCell>{report.reported?.username}</TableCell>
-                      <TableCell>{report.content_type}</TableCell>
-                      <TableCell>{report.reason}</TableCell>
-                      <TableCell>
-                        {formatDistanceToNow(new Date(report.created_at), { addSuffix: true })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="outline">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-3xl">
-                              <DialogHeader>
-                                <DialogTitle>Detailed Report View</DialogTitle>
-                              </DialogHeader>
-                              <div className="grid gap-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <h3 className="font-medium">Reporter Details</h3>
-                                    <p>Username: {report.reporter?.username}</p>
-                                    <p>Report Time: {new Date(report.created_at).toLocaleString()}</p>
-                                  </div>
-                                  <div>
-                                    <h3 className="font-medium">Reported Content</h3>
-                                    <p>Type: {report.content_type}</p>
-                                    <p>Status: {report.status}</p>
-                                  </div>
-                                </div>
-                                <div>
-                                  <h3 className="font-medium">Reason</h3>
-                                  <p>{report.reason}</p>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="outline">
-                                <Shield className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Review Report</DialogTitle>
-                                <DialogDescription>
-                                  Are you sure you want to review this report?
-                                </DialogDescription>
-                              </DialogHeader>
-                              <DialogFooter>
-                                <Button 
-                                  onClick={() => handleReport.mutate({ 
-                                    reportId: report.id, 
-                                    action: 'review'
-                                  })}
-                                >
-                                  Confirm Review
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="outline">
-                                <Ban className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Ban User</DialogTitle>
-                                <DialogDescription>
-                                  Are you sure you want to ban this user?
-                                </DialogDescription>
-                              </DialogHeader>
-                              <DialogFooter>
-                                <Button 
-                                  variant="destructive"
-                                  onClick={() => handleReport.mutate({ 
-                                    reportId: report.id, 
-                                    action: 'ban'
-                                  })}
-                                >
-                                  Confirm Ban
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="outline">
-                                <CheckCircle className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Dismiss Report</DialogTitle>
-                                <DialogDescription>
-                                  Are you sure you want to dismiss this report?
-                                </DialogDescription>
-                              </DialogHeader>
-                              <DialogFooter>
-                                <Button 
-                                  onClick={() => handleReport.mutate({ 
-                                    reportId: report.id, 
-                                    action: 'dismiss'
-                                  })}
-                                >
-                                  Confirm Dismiss
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(report.created_at).toLocaleString()}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0 space-y-3">
+                    <div>
+                      <h3 className="font-medium">Reason:</h3>
+                      <p>{report.reason}</p>
+                    </div>
+                    
+                    <div className="flex items-center gap-8">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Reported by:</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback>{report.reporter?.username?.[0] || '?'}</AvatarFallback>
+                          </Avatar>
+                          <span>{report.reporter?.username || 'Unknown'}</span>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="dmca" className="mt-4">
-          <Card className="p-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reporter</TableHead>
-                  <TableHead>Content Type</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dmcaRequests?.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>
-                      <Badge className={getStatusColor(request.status)}>
-                        {request.status.toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{request.reporter?.username}</TableCell>
-                    <TableCell>{request.content_type}</TableCell>
-                    <TableCell>
-                      {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              <AlertTriangle className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Reject DMCA Request</DialogTitle>
-                              <DialogDescription>
-                                Are you sure you want to reject this DMCA request?
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <Button 
-                                variant="destructive"
-                                onClick={() => handleDMCA.mutate({ 
-                                  requestId: request.id, 
-                                  action: 'reject'
-                                })}
-                              >
-                                Confirm Reject
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Approve DMCA Request</DialogTitle>
-                              <DialogDescription>
-                                Are you sure you want to approve this DMCA takedown request?
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <Button 
-                                onClick={() => handleDMCA.mutate({ 
-                                  requestId: request.id, 
-                                  action: 'approve'
-                                })}
-                              >
-                                Confirm Approval
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      
+                      <div>
+                        <p className="text-xs text-muted-foreground">Reported user:</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback>{report.reported?.username?.[0] || '?'}</AvatarFallback>
+                          </Avatar>
+                          <span>{report.reported?.username || 'Unknown'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {report.status === 'pending' && (
+                      <div className="flex items-center gap-2 pt-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => handleResolveReport(report.id, 'approve')}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Resolve
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Mark as resolved and take action</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleResolveReport(report.id, 'reject')}
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Dismiss
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Dismiss this report</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleResolveReport(report.id, 'delete')}
+                              >
+                                <Ban className="h-4 w-4 mr-1" />
+                                Ban User
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Ban the reported user</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="content">
+          <Card>
+            <CardHeader>
+              <h3 className="text-lg font-medium">Content Review</h3>
+            </CardHeader>
+            <CardContent>
+              <p>Content moderation tools will appear here.</p>
+            </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="classifications" className="mt-4">
-          <Card className="p-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Content Type</TableHead>
-                  <TableHead>Classification</TableHead>
-                  <TableHead>Visibility</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {classifications?.map((classification) => (
-                  <TableRow key={classification.id}>
-                    <TableCell>{classification.content_type}</TableCell>
-                    <TableCell>
-                      <Badge>
-                        {classification.classification.toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{classification.visibility}</TableCell>
-                    <TableCell>
-                      {formatDistanceToNow(new Date(classification.created_at), { addSuffix: true })}
-                    </TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline">
-                            Edit
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Update Content Visibility</DialogTitle>
-                            <DialogDescription>
-                              Choose the new visibility setting for this content.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4">
-                            <Button 
-                              onClick={() => handleClassification.mutate({
-                                classificationId: classification.id,
-                                visibility: 'public'
-                              })}
-                            >
-                              Make Public
-                            </Button>
-                            <Button 
-                              onClick={() => handleClassification.mutate({
-                                classificationId: classification.id,
-                                visibility: 'private'
-                              })}
-                            >
-                              Make Private
-                            </Button>
-                            <Button 
-                              onClick={() => handleClassification.mutate({
-                                classificationId: classification.id,
-                                visibility: 'subscribers_only'
-                              })}
-                            >
-                              Subscribers Only
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        
+        <TabsContent value="users">
+          <Card>
+            <CardHeader>
+              <h3 className="text-lg font-medium">User Management</h3>
+            </CardHeader>
+            <CardContent>
+              <p>User management tools will appear here.</p>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>

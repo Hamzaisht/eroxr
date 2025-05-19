@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
-import { asUUID, safeCast } from "@/utils/supabase/helpers";
+import { asColumnName, asUUID, safeCast } from "@/utils/supabase/helpers";
+import { Database } from "@/integrations/supabase/types/database.types";
 
 interface Creator {
   id: string;
@@ -42,7 +43,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq("user_id", asUUID(userId))
+        .eq(asColumnName<Database["public"]["Tables"]["creator_subscriptions"]["Row"]>("user_id"), asUUID(userId))
         .order("created_at", { ascending: false });
         
       if (error) {
