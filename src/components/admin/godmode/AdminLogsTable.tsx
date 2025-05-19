@@ -1,9 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { replaceAllString } from "@/utils/stringUtils";
-import { safePropertyAccess } from '@/utils/supabase/type-guards';
+import { 
+  safePropertyAccess, 
+  safeDatabaseQuery
+} from '@/utils/supabase/type-guards';
 
 interface AdminLog {
   id: string;
@@ -35,24 +39,22 @@ export const AdminLogsTable = () => {
 
       if (error) throw error;
 
-      // Transform data to include admin_name from profiles
-      const formattedLogs = data.map(log => {
+      // Safely transform data 
+      const formattedLogs = (data || []).map(log => {
         // Safely handle potential undefined values
-        const profile = safePropertyAccess(log, 'profiles');
-        const adminName = profile && typeof profile === 'object' && 'username' in profile 
-          ? profile.username 
-          : 'Unknown Admin';
+        const adminName = log?.profiles?.username || 'Unknown Admin';
         
+        // Create a safe record with required properties
         const adminLog: AdminLog = {
-          id: log.id,
-          admin_id: log.admin_id,
-          action: log.action,
-          action_type: log.action_type,
-          target_type: log.target_type,
-          target_id: log.target_id,
-          details: log.details,
-          created_at: log.created_at,
-          admin_name: adminName || 'Unknown Admin'
+          id: log.id || '',
+          admin_id: log.admin_id || '',
+          action: log.action || '',
+          action_type: log.action_type || '',
+          target_type: log.target_type || '',
+          target_id: log.target_id || '',
+          details: log.details || {},
+          created_at: log.created_at || new Date().toISOString(),
+          admin_name: adminName
         };
         return adminLog;
       });

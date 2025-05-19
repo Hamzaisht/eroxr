@@ -8,10 +8,9 @@ import {
   asUserSubscriptionStatus,
   safeDataAccess
 } from '@/utils/supabase/helpers';
-import { Database } from "@/integrations/supabase/types/database.types";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { safeUserSubscriptionFilter, safeUserSubscriptionUpdate, safeProfileFilter } from '@/utils/supabase/type-guards';
+import { safeUserSubscriptionFilter, safeUserSubscriptionUpdate, safeProfileFilter, safeDatabaseQuery } from '@/utils/supabase/type-guards';
 
 interface ProfileWithSubscriptions {
   id: string;
@@ -95,7 +94,10 @@ export const TempDemoContent = () => {
         .eq(statusColumn, statusValue)
         .single();
       
-      if (!subscriptionData) {
+      // Use safeDatabaseQuery to ensure type safety
+      const safeSubscription = safeDatabaseQuery(subscriptionData);
+      
+      if (!safeSubscription) {
         console.error("No active subscription found");
         return;
       }
@@ -106,7 +108,7 @@ export const TempDemoContent = () => {
       const { error } = await supabase
         .from('user_subscriptions')
         .update(updates)
-        .eq("id", subscriptionData.id);
+        .eq("id", safeSubscription.id);
         
       if (error) {
         console.error("Failed to update subscription:", error);

@@ -20,14 +20,15 @@ import {
 } from "@/utils/supabase/helpers";
 import { 
   safeProfileUpdate, 
-  safeProfileFilter 
+  safeProfileFilter,
+  ProfileStatus,
+  toValidProfileStatus
 } from "@/utils/supabase/type-guards";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Database } from "@/integrations/supabase/types/database.types";
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -115,25 +116,25 @@ export function UserMenu() {
     
     try {
       // Convert the enum status to a valid database status value
-      let dbStatus: string;
+      let dbStatus: ProfileStatus = 'offline';
+      
       switch (newStatus) {
         case AvailabilityStatus.ONLINE:
-          dbStatus = "online";
+          dbStatus = 'online';
           break;
         case AvailabilityStatus.AWAY:
-          dbStatus = "away";
+          dbStatus = 'away';
           break;
         case AvailabilityStatus.BUSY:
-          dbStatus = "busy";
+          dbStatus = 'busy';
           break;
         case AvailabilityStatus.INVISIBLE:
         case AvailabilityStatus.OFFLINE:
-          dbStatus = "offline";
+          dbStatus = 'offline';
           break;
-        default:
-          dbStatus = "offline";
       }
       
+      // Use safe type helpers
       const updates = safeProfileUpdate({ status: dbStatus });
       const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
       

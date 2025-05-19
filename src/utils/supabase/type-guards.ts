@@ -122,7 +122,7 @@ export function isNullOrUndefined(value: any): value is null | undefined {
   return value === null || value === undefined;
 }
 
-// Helper for database value conversions (needed by GodmodeDashboardHome.tsx)
+// Helper for database value conversions
 export function toDbValue(value: any): any {
   return value;
 }
@@ -140,4 +140,34 @@ export function safePropertyAccess<T, K extends keyof T>(obj: T | null | undefin
 // Type-safe helper for creating update payloads
 export function createUpdatePayload<T>(data: T): T {
   return data;
+}
+
+// Type-safe error handling for Supabase queries
+export function isSafeData<T>(data: any): data is T {
+  return data && !('error' in data) && data !== null;
+}
+
+// Type-safe profile status conversion
+export type ProfileStatus = 'online' | 'offline' | 'away' | 'busy';
+
+// Convert string to valid profile status
+export function toValidProfileStatus(status: string): ProfileStatus {
+  if (status === 'online' || status === 'offline' || status === 'away' || status === 'busy') {
+    return status as ProfileStatus;
+  }
+  return 'offline'; // Default fallback
+}
+
+// Safe wrapper for database data
+export function safeDatabaseQuery<T>(data: any): T | null {
+  if (data && !('error' in data)) {
+    return data as T;
+  }
+  return null;
+}
+
+// Safe array access
+export function safeArrayAccess<T>(arr: T[] | null | undefined, index: number): T | undefined {
+  if (!arr || !Array.isArray(arr)) return undefined;
+  return arr[index];
 }

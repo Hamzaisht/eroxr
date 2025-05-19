@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,7 +65,13 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { safeReportUpdate, safeReportFilter, safeAdminLogInsert } from '@/utils/supabase/type-guards';
+import { 
+  safeReportUpdate, 
+  safeReportFilter, 
+  safeAdminLogInsert,
+  safeDatabaseQuery,
+  isSafeData
+} from '@/utils/supabase/type-guards';
 
 interface ReportItem {
   id: string;
@@ -74,11 +81,11 @@ interface ReportItem {
   content_type: string;
   is_emergency: boolean;
   status: string;
-  profiles: {
-    username: string;
-    avatar_url: string;
-    id: string;
-  };
+  profiles?: {
+    username?: string;
+    avatar_url?: string;
+    id?: string;
+  } | null;
 }
 
 export const ErosMode = () => {
@@ -108,7 +115,7 @@ export const ErosMode = () => {
           content_type,
           is_emergency,
           status,
-          profiles (
+          profiles:reporter_id(
             id,
             username,
             avatar_url
@@ -166,7 +173,9 @@ export const ErosMode = () => {
         status: 'resolved', 
         resolved_by: session.user.id 
       });
+      
       const [reportColumn, reportValue] = safeReportFilter('id', selectedReport.id);
+      
       const { error } = await supabase
         .from('reports')
         .update(updates)
@@ -183,7 +192,10 @@ export const ErosMode = () => {
         target_type: 'report',
         details: { action: actionType }
       });
-      const { error: logError } = await supabase.from('admin_logs').insert(logData);
+      
+      const { error: logError } = await supabase
+        .from('admin_logs')
+        .insert(logData);
 
       if (logError) throw logError;
 
@@ -256,6 +268,8 @@ export const ErosMode = () => {
     );
   }
 
+  const safeItems = data?.items || [];
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col lg:flex-row justify-between gap-4">
@@ -300,96 +314,106 @@ export const ErosMode = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.items.length === 0 ? (
+            {safeItems.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-32 text-center text-gray-400">
                   No reports found
                 </TableCell>
               </TableRow>
             ) : (
-              data?.items.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell className="max-w-[200px] truncate" title={report.reason}>
-                    {report.reason}
-                  </TableCell>
-                  <TableCell className="capitalize">{report.content_type}</TableCell>
-                  <TableCell>{getStatusBadge(report.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
-                        {report.profiles?.avatar_url ? (
-                          <img 
-                            src={report.profiles.avatar_url} 
-                            alt={report.profiles.username} 
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-xs text-gray-300">
-                            {report.profiles?.username?.charAt(0).toUpperCase()}
-                          </span>
-                        )}
+              safeItems.map((report) => {
+                // Use optional chaining and nullish coalescing for safe access
+                const profileUsername = report?.profiles?.username || 'Unknown User';
+                const profileAvatar = report?.profiles?.avatar_url;
+                const reportReason = report?.reason || 'No reason provided';
+                const contentType = report?.content_type || 'Unknown';
+                const status = report?.status || 'pending';
+                const createdAt = report?.created_at ? new Date(report.created_at) : new Date();
+                
+                return (
+                  <TableRow key={report.id}>
+                    <TableCell className="max-w-[200px] truncate" title={reportReason}>
+                      {reportReason}
+                    </TableCell>
+                    <TableCell className="capitalize">{contentType}</TableCell>
+                    <TableCell>{getStatusBadge(status)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                          {profileAvatar ? (
+                            <img 
+                              src={profileAvatar} 
+                              alt={profileUsername} 
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs text-gray-300">
+                              {profileUsername.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <span>{profileUsername}</span>
                       </div>
-                      <span>{report.profiles?.username}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatDistanceToNow(new Date(report.created_at), { addSuffix: true })}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-1">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="h-8 w-8 p-0 text-green-500"
-                              onClick={() => handleActionClick(report, "approve")}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Approve Report</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="h-8 w-8 p-0 text-red-500"
-                              onClick={() => handleActionClick(report, "reject")}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Reject Report</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="h-8 w-8 p-0 text-red-600"
-                              onClick={() => handleActionClick(report, "delete")}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Delete Content</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                    <TableCell>{formatDistanceToNow(createdAt, { addSuffix: true })}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-1">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="h-8 w-8 p-0 text-green-500"
+                                onClick={() => handleActionClick(report, "approve")}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Approve Report</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-500"
+                                onClick={() => handleActionClick(report, "reject")}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Reject Report</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-600"
+                                onClick={() => handleActionClick(report, "delete")}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Delete Content</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -397,7 +421,7 @@ export const ErosMode = () => {
 
       <div className="flex justify-between items-center">
         <div className="text-sm text-gray-400">
-          Showing {Math.min(itemsPerPage, data?.items.length || 0)} of {data?.totalCount} reports
+          Showing {Math.min(itemsPerPage, safeItems.length || 0)} of {data?.totalCount} reports
         </div>
         <div className="flex gap-2">
           <Button
@@ -410,7 +434,7 @@ export const ErosMode = () => {
           <Button
             variant="outline"
             onClick={() => setCurrentPage(p => p + 1)}
-            disabled={(data?.items.length || 0) < itemsPerPage}
+            disabled={(safeItems.length || 0) < itemsPerPage}
           >
             Next
           </Button>
@@ -446,7 +470,7 @@ export const ErosMode = () => {
                 <h4 className="text-sm font-medium">Report Information</h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <span className="text-gray-400">Reported By:</span>
-                  <span>{selectedReport.profiles?.username}</span>
+                  <span>{selectedReport.profiles?.username || 'Unknown'}</span>
                   <span className="text-gray-400">Content Type:</span>
                   <span>{selectedReport.content_type}</span>
                   <span className="text-gray-400">Reason:</span>
