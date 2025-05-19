@@ -31,6 +31,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -168,54 +169,52 @@ export function UserMenu() {
         <UserMenuItem label="Activity" icon={Activity} />
         <UserMenuItem label="Settings" icon={Settings} onClick={() => navigate('/settings')} />
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <AlertDialog>
-            <AlertDialog open={open} onOpenChange={setOpen}>
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Dot className="mr-2 h-4 w-4" />
-                  Set Status
-                </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Set Availability Status</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Choose the status you want to display to other users.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="grid gap-4">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroup defaultValue={currentStatus.toString()} className="flex flex-col space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="online" id="online" onClick={() => handleStatusChange(AvailabilityStatus.ONLINE)} />
-                        <Label htmlFor="online">Online</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="away" id="away" onClick={() => handleStatusChange(AvailabilityStatus.AWAY)} />
-                        <Label htmlFor="away">Away</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="busy" id="busy" onClick={() => handleStatusChange(AvailabilityStatus.BUSY)} />
-                        <Label htmlFor="busy">Busy</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="offline" id="offline" onClick={() => handleStatusChange(AvailabilityStatus.OFFLINE)} />
-                        <Label htmlFor="offline">Offline</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="invisible" id="invisible" onClick={() => handleStatusChange(AvailabilityStatus.INVISIBLE)} />
-                        <Label htmlFor="invisible">Invisible</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+              <div className="flex items-center w-full cursor-pointer">
+                <Dot className="mr-2 h-4 w-4" />
+                Set Status
+              </div>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Set Availability Status</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Choose the status you want to display to other users.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="grid gap-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroup defaultValue={currentStatus.toString()} className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="online" id="online" onClick={() => handleStatusChange(AvailabilityStatus.ONLINE)} />
+                      <Label htmlFor="online">Online</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="away" id="away" onClick={() => handleStatusChange(AvailabilityStatus.AWAY)} />
+                      <Label htmlFor="away">Away</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="busy" id="busy" onClick={() => handleStatusChange(AvailabilityStatus.BUSY)} />
+                      <Label htmlFor="busy">Busy</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="offline" id="offline" onClick={() => handleStatusChange(AvailabilityStatus.OFFLINE)} />
+                      <Label htmlFor="offline">Offline</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="invisible" id="invisible" onClick={() => handleStatusChange(AvailabilityStatus.INVISIBLE)} />
+                      <Label htmlFor="invisible">Invisible</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => setOpen(false)}>Save</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => setOpen(false)}>Save</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
           </AlertDialog>
         </DropdownMenuItem>
         <UserMenuItem label="Help" icon={HelpCircle} />

@@ -1,160 +1,104 @@
-
 import { useState, useEffect } from 'react';
-import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from './ui/button';
-import { 
-  getSafeProfile,
-  asUserSubscriptionStatus,
-  safeDataAccess
-} from '@/utils/supabase/helpers';
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { 
-  safeUserSubscriptionFilter, 
-  safeUserSubscriptionUpdate, 
-  safeProfileFilter, 
-  safeDatabaseQuery 
-} from '@/utils/supabase/type-guards';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "@/components/ui/command"
 
-interface ProfileWithSubscriptions {
-  id: string;
-  username?: string | null;
-  is_paying_customer?: boolean | null;
-  user_subscriptions?: {
-    id: string;
-    status: string;
-  }[];
-}
-
-export const TempDemoContent = () => {
+export function TempDemoContent() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const session = useSession();
-  const queryClient = useQueryClient();
-  const [loading, setLoading] = useState(false);
-  const [canChangeUsername, setCanChangeUsername] = useState(true);
-  const [lastUsernameChange, setLastUsernameChange] = useState<string | null>(null);
-  const [currentUsername, setCurrentUsername] = useState("");
 
-  // Fetch user profile with subscriptions
-  const { data: profileData } = useQuery({
-    queryKey: ['profile-with-subscriptions'],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
-      
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
-        
-        const { data, error } = await supabase
+        const { data: profiles, error } = await supabase
           .from('profiles')
-          .select(`
-            *,
-            user_subscriptions:user_subscriptions(*)
-          `)
-          .eq(idColumn, idValue)
-          .single();
-          
+          .select('*')
+          .limit(10);
+
         if (error) {
-          console.error("Error fetching profile:", error);
-          return null;
+          throw error;
         }
-        
-        return data as unknown as ProfileWithSubscriptions;
-      } catch (err) {
-        console.error("Failed to fetch profile data:", err);
-        return null;
-      }
-    },
-    enabled: !!session?.user?.id,
-  });
 
-  // Safely access profile data
-  const safeProfile = getSafeProfile(profileData);
-  
-  // Type-safe access to subscription data
-  const subscriptions = safeProfile && 'user_subscriptions' in safeProfile && Array.isArray(safeProfile.user_subscriptions) ? 
-    safeProfile.user_subscriptions as { id: string; status: string }[] : 
-    [];
+        setData(profiles || []);
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleUnsubscribe = async () => {
-    if (!session?.user?.id) return;
-    
-    setLoading(true);
-    try {
-      // First get the subscription ID
-      const [userIdColumn, userIdValue] = safeUserSubscriptionFilter("user_id", session.user.id);
-      const [statusColumn, statusValue] = safeUserSubscriptionFilter("status", "active");
-      
-      const { data: subscriptionData } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq(userIdColumn, userIdValue)
-        .eq(statusColumn, statusValue)
-        .single();
-      
-      // Use safeDatabaseQuery to ensure type safety
-      const safeSubscription = safeDatabaseQuery(subscriptionData);
-      
-      if (!safeSubscription) {
-        console.error("No active subscription found");
-        return;
-      }
-      
-      // Update status to inactive
-      const updates = safeUserSubscriptionUpdate({ status: "inactive" });
-      
-      const { error } = await supabase
-        .from('user_subscriptions')
-        .update(updates)
-        .eq("id", safeSubscription.id);
-        
-      if (error) {
-        console.error("Failed to update subscription:", error);
-      }
-    } catch (err) {
-      console.error("Failed to cancel subscription:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchData();
+  }, [toast]);
 
   return (
-    <div>
-      <h2>Temporary Demo Content</h2>
-      {session ? (
-        <>
-          <p>User ID: {session.user.id}</p>
-          <p>Email: {session.user.email}</p>
-          {safeProfile ? (
-            <>
-              <p>Username: {safeProfile.username}</p>
-              <p>Paying Customer: {safeProfile.is_paying_customer ? 'Yes' : 'No'}</p>
-              {subscriptions && subscriptions.length > 0 ? (
-                <>
-                  <h3>Subscriptions:</h3>
-                  <ul>
-                    {subscriptions.map((sub) => (
-                      <li key={sub.id}>
-                        Subscription ID: {sub.id}, Status: {asUserSubscriptionStatus(sub.status)}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button onClick={handleUnsubscribe} disabled={loading}>
-                    {loading ? 'Unsubscribing...' : 'Unsubscribe'}
-                  </Button>
-                </>
-              ) : (
-                <p>No subscriptions found.</p>
-              )}
-            </>
-          ) : (
-            <p>Loading profile...</p>
-          )}
-        </>
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-5">Temporary Demo Content</h1>
+
+      {loading ? (
+        <p>Loading...</p>
       ) : (
-        <p>Not logged in.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {data.map((item, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <CardTitle>{item.username || 'No Username'}</CardTitle>
+                <CardDescription>{item.email || 'No Email'}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>ID: {item && 'id' in item ? item.id : undefined}</p>
+                <p>Created At: {item.created_at || 'No Creation Date'}</p>
+              </CardContent>
+              <CardFooter>
+                <Button>View Details</Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );
-};
+}

@@ -21,6 +21,19 @@ export type ReportInsert = Tables['reports']['Insert'];
 export type AdminLogRow = Tables['admin_logs']['Row'];
 export type AdminLogInsert = Tables['admin_logs']['Insert'];
 
+// Additional table types needed by components
+export type DatingAdRow = Tables['dating_ads']['Row'];
+export type DatingAdUpdate = Tables['dating_ads']['Update'];
+
+export type StoryRow = Tables['stories']['Row'];
+export type StoryUpdate = Tables['stories']['Update'];
+
+export type LiveStreamRow = Tables['live_streams']['Row'];
+export type LiveStreamUpdate = Tables['live_streams']['Update'];
+
+export type IdVerificationRow = Tables['id_verifications']['Row'];
+export type IdVerificationUpdate = Tables['id_verifications']['Update'];
+
 // Profile status type definition
 export type ProfileStatus = 'online' | 'offline' | 'away' | 'busy';
 
@@ -41,6 +54,23 @@ export function safeAdminLogInsert(data: AdminLogInsert): AdminLogInsert {
   return data;
 }
 
+// Additional safe operation helpers
+export function safeDatingAdUpdate(data: DatingAdUpdate): DatingAdUpdate {
+  return data;
+}
+
+export function safeStoryUpdate(data: StoryUpdate): StoryUpdate {
+  return data;
+}
+
+export function safeLiveStreamUpdate(data: LiveStreamUpdate): LiveStreamUpdate {
+  return data;
+}
+
+export function safeIdVerificationUpdate(data: IdVerificationUpdate): IdVerificationUpdate {
+  return data;
+}
+
 // Type-safe filter helpers
 export function safeProfileFilter<K extends keyof ProfileRow>(column: K, value: ProfileRow[K]): [string, any] {
   return [column as string, value];
@@ -50,9 +80,32 @@ export function safeReportFilter<K extends keyof ReportRow>(column: K, value: Re
   return [column as string, value];
 }
 
+export function safeDatingAdFilter<K extends keyof DatingAdRow>(column: K, value: DatingAdRow[K]): [string, any] {
+  return [column as string, value];
+}
+
+export function safeStoryFilter<K extends keyof StoryRow>(column: K, value: StoryRow[K]): [string, any] {
+  return [column as string, value];
+}
+
+export function safeLiveStreamFilter<K extends keyof LiveStreamRow>(column: K, value: LiveStreamRow[K]): [string, any] {
+  return [column as string, value];
+}
+
+export function safeIdVerificationFilter<K extends keyof IdVerificationRow>(column: K, value: IdVerificationRow[K]): [string, any] {
+  return [column as string, value];
+}
+
 export function safeUserSubscriptionFilter<K extends keyof Tables['user_subscriptions']['Row']>(
   column: K, 
   value: Tables['user_subscriptions']['Row'][K]
+): [string, any] {
+  return [column as string, value];
+}
+
+export function safeCreatorSubscriptionFilter<K extends keyof Tables['creator_subscriptions']['Row']>(
+  column: K, 
+  value: Tables['creator_subscriptions']['Row'][K]
 ): [string, any] {
   return [column as string, value];
 }
@@ -93,6 +146,12 @@ export function safeDataAccess<T>(data: T | null | undefined): T | null {
   return data !== null && data !== undefined ? data : null;
 }
 
+// Helper to safely access properties from potentially unknown objects
+export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
+  if (!obj) return undefined;
+  return obj[key];
+}
+
 // Convert string to valid profile status with type safety
 export function toValidProfileStatus(status: string): ProfileStatus {
   const validStatuses: ProfileStatus[] = ['online', 'offline', 'away', 'busy'];
@@ -107,4 +166,9 @@ export function asUserSubscriptionStatus(val: string): "active" | "inactive" | "
   if (val === "active") return "active";
   if (val === "inactive") return "inactive";
   return "pending";
+}
+
+// Helper for safely checking if data is an array
+export function isArrayData<T>(data: unknown): data is T[] {
+  return Array.isArray(data);
 }

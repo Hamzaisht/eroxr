@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { exists } from "@/utils/supabase/type-guards";
+import { exists, safeGet } from "@/utils/supabase/type-guards";
 
 interface AdminLog {
   id: string;
@@ -46,23 +46,23 @@ export const AdminLogsTable = () => {
       if (error) throw error;
 
       // Safely transform data 
-      const formattedLogs = (data || []).map(log => {
+      const formattedLogs = Array.isArray(data) ? data.filter(exists).map(log => {
         // Create a safe record with required properties
         const adminLog: AdminLog = {
-          id: log.id || '',
-          admin_id: log.admin_id || '',
-          action: log.action || '',
-          action_type: log.action_type || '',
-          target_type: log.target_type || '',
-          target_id: log.target_id || '',
-          details: log.details || {},
-          created_at: log.created_at || new Date().toISOString(),
-          admin_name: exists(log.profiles) && typeof log.profiles === 'object' ? 
-            log.profiles.username || 'Unknown Admin' : 
+          id: safeGet(log, 'id') || '',
+          admin_id: safeGet(log, 'admin_id') || '',
+          action: safeGet(log, 'action') || '',
+          action_type: safeGet(log, 'action_type') || '',
+          target_type: safeGet(log, 'target_type') || '',
+          target_id: safeGet(log, 'target_id') || '',
+          details: safeGet(log, 'details') || {},
+          created_at: safeGet(log, 'created_at') || new Date().toISOString(),
+          admin_name: safeGet(log, 'profiles') && typeof log.profiles === 'object' ? 
+            safeGet(log.profiles, 'username') || 'Unknown Admin' : 
             'Unknown Admin'
         };
         return adminLog;
-      });
+      }) : [];
 
       setLogs(formattedLogs);
     } catch (error: any) {

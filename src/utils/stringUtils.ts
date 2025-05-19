@@ -27,8 +27,13 @@ export function capitalize(str: string): string {
  */
 export function formatDateString(dateStr: string): string {
   if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateStr;
+  }
 }
 
 /**
@@ -41,4 +46,59 @@ export function truncate(str: string, maxLength: number): string {
   if (!str) return '';
   if (str.length <= maxLength) return str;
   return str.substring(0, maxLength) + '...';
+}
+
+/**
+ * Safely parse a JSON string
+ * @param jsonString The JSON string to parse
+ * @param fallback The fallback value if parsing fails
+ * @returns The parsed object or the fallback value
+ */
+export function safeJsonParse<T>(jsonString: string, fallback: T): T {
+  try {
+    return JSON.parse(jsonString) as T;
+  } catch (error) {
+    console.error('Error parsing JSON:', error);
+    return fallback;
+  }
+}
+
+/**
+ * Check if a string is a valid URL
+ * @param str The string to check
+ * @returns Whether the string is a valid URL
+ */
+export function isValidUrl(str: string): boolean {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Convert a string to kebab-case
+ * @param str The string to convert
+ * @returns The kebab-case string
+ */
+export function toKebabCase(str: string): string {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/\s+/g, '-')
+    .toLowerCase();
+}
+
+/**
+ * Generate a random string of specified length
+ * @param length The length of the random string
+ * @returns The random string
+ */
+export function generateRandomString(length: number = 8): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }

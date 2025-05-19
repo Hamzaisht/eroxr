@@ -62,7 +62,8 @@ import {
   safeReportUpdate, 
   safeReportFilter, 
   safeAdminLogInsert,
-  exists
+  exists,
+  safeGet
 } from '@/utils/supabase/type-guards';
 
 interface ReportItem {
@@ -120,8 +121,8 @@ export const ErosMode = () => {
       }
 
       if (statusFilter !== "all") {
-        // Use safer approach without specific type casting
-        query = query.eq('status', statusFilter);
+        const [statusColumn, statusValue] = safeReportFilter('status', statusFilter);
+        query = query.eq(statusColumn, statusValue);
       }
 
       const { data: reports, error, count } = await query
@@ -132,14 +133,14 @@ export const ErosMode = () => {
       // Type-safely process each report
       const safeReports: ReportItem[] = Array.isArray(reports) ? 
         reports.filter(exists).map(report => ({
-          id: report.id,
-          created_at: report.created_at || "",
-          reason: report.reason || "",
-          content_id: report.content_id || "",
-          content_type: report.content_type || "",
-          is_emergency: !!report.is_emergency,
-          status: report.status || "",
-          profiles: report.profiles || null
+          id: safeGet(report, 'id') || '',
+          created_at: safeGet(report, 'created_at') || '',
+          reason: safeGet(report, 'reason') || '',
+          content_id: safeGet(report, 'content_id') || '',
+          content_type: safeGet(report, 'content_type') || '',
+          is_emergency: !!safeGet(report, 'is_emergency'),
+          status: safeGet(report, 'status') || '',
+          profiles: safeGet(report, 'profiles') || null
         })) : [];
 
       return {
@@ -227,7 +228,7 @@ export const ErosMode = () => {
   };
 
   const exportAsJson = () => {
-    if (!data) return;
+    if (!data?.items) return;
 
     const jsonString = JSON.stringify(data.items, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
