@@ -19,6 +19,7 @@ type ReportStatus = Database['public']['Tables']['reports']['Row']['status'];
 type IdVerificationStatus = Database['public']['Tables']['id_verifications']['Row']['status'];
 type LiveStreamStatus = Database['public']['Tables']['live_streams']['Row']['status'];
 type UserID = Database['public']['Tables']['profiles']['Row']['id'];
+type UserSubscriptionStatus = Database['public']['Tables']['user_subscriptions']['Row']['status'];
 
 /**
  * Generic type-safe helper for database column values
@@ -68,6 +69,13 @@ export function asDatingAdUserType(value: string): DatingAdUserType {
  */
 export function asProfileStatus(value: string): ProfileStatus {
   return value as unknown as ProfileStatus;
+}
+
+/**
+ * Helper for user subscription status
+ */
+export function asUserSubscriptionStatus(value: string): UserSubscriptionStatus {
+  return value as unknown as UserSubscriptionStatus;
 }
 
 // Specialized helpers for specific table columns

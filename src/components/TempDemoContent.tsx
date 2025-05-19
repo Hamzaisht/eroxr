@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   asProfileIsPayingCustomer,
+  asUserSubscriptionStatus,
   extractCreator, 
   safeCast, 
   safeDataAccess, 
@@ -42,7 +44,7 @@ interface Post {
   };
 }
 
-export const fetchProfileData = async (userId) => {
+export const fetchProfileData = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from("profiles")
@@ -59,8 +61,13 @@ export const fetchProfileData = async (userId) => {
       .from("user_subscriptions")
       .select("*")
       .eq("user_id", userId)
-      .eq("status", "active")
+      .eq("status", asUserSubscriptionStatus('active'))
       .limit(1);
+
+    // Make sure we have valid data before proceeding
+    if (!data) {
+      return null;
+    }
 
     // Use proper type assertion for boolean values
     const isPremium = subscriptionData && subscriptionData.length > 0;
