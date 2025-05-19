@@ -43,7 +43,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq("user_id", userId)
+        .eq("user_id" as keyof Database["public"]["Tables"]["creator_subscriptions"]["Row"], userId)
         .order("created_at", { ascending: false });
         
       if (error) {

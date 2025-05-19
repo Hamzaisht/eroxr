@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +31,7 @@ export const StoryReel = () => {
           created_at,
           profiles:creator_id(username, avatar_url)
         `)
-        .eq("is_active", true)
+        .eq("is_active" as keyof Database["public"]["Tables"]["stories"]["Row"], true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

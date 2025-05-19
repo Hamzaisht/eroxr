@@ -58,10 +58,10 @@ export const PromotedAds = () => {
             id_verification_status
           )
         `)
-        .eq("is_active", true)
-        .eq("country", "denmark")
-        .eq("moderation_status", "approved")
-        .eq("user_type", "premium")
+        .eq("is_active" as keyof Database["public"]["Tables"]["dating_ads"]["Row"], true)
+        .eq("country" as keyof Database["public"]["Tables"]["dating_ads"]["Row"], "denmark")
+        .eq("moderation_status" as keyof Database["public"]["Tables"]["dating_ads"]["Row"], "approved")
+        .eq("user_type" as keyof Database["public"]["Tables"]["dating_ads"]["Row"], "premium")
         .order('created_at', { ascending: false })
         .limit(3);
 
