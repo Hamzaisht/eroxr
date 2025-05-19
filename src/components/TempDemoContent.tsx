@@ -2,7 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { asBooleanValue, extractCreator, safeCast, safeDataAccess, safeGet } from "@/utils/supabase/helpers";
+import { 
+  asProfileIsPayingCustomer,
+  extractCreator, 
+  safeCast, 
+  safeDataAccess, 
+  safeGet 
+} from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -52,7 +58,7 @@ export const TempDemoContent: React.FC<DemoProps> = ({
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("is_paying_customer", asBooleanValue(true))
+        .eq("is_paying_customer", asProfileIsPayingCustomer(true))
         .limit(5);
 
       if (error) throw error;

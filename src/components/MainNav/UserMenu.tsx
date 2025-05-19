@@ -17,7 +17,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   applyEqualsFilter,
-  asStringValue,
   asUUID,
   convertToStatus, 
   getSafeProfile,
@@ -114,14 +113,13 @@ export function UserMenu() {
     if (!session?.user?.id) return;
     
     try {
-      // Use the helper function to get the correct profile update format
+      // Get the properly formatted status update
       const statusUpdate = prepareProfileStatusUpdate(newStatus);
       
-      const query = supabase
+      const { error } = await supabase
         .from('profiles')
-        .update(statusUpdate);
-        
-      const { error } = await applyEqualsFilter(query, "id", asUUID(session.user.id));
+        .update(statusUpdate)
+        .eq("id", asUUID(session.user.id));
         
       if (error) {
         console.error('Error updating status:', error);

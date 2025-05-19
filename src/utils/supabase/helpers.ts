@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { PostgrestFilterBuilder } from "@supabase/supabase-js";
@@ -7,10 +8,16 @@ type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 type FollowersInsert = Database['public']['Tables']['followers']['Insert'];
 type SubscriptionsInsert = Database['public']['Tables']['creator_subscriptions']['Insert'];
 
-// Database specific column types
-type ProfileStatus = 'online' | 'offline' | 'away' | 'busy' | null;
+// Strongly typed column types for specific tables
+type ProfileStatus = Database['public']['Tables']['profiles']['Row']['status'];
 type DatingAdCountry = Database['public']['Tables']['dating_ads']['Row']['country'];
 type DatingAdUserType = Database['public']['Tables']['dating_ads']['Row']['user_type'];
+type StoryIsActive = Database['public']['Tables']['stories']['Row']['is_active'];
+type ProfileIsSuspended = Database['public']['Tables']['profiles']['Row']['is_suspended'];
+type ProfileIsPayingCustomer = Database['public']['Tables']['profiles']['Row']['is_paying_customer'];
+type ReportStatus = Database['public']['Tables']['reports']['Row']['status'];
+type IdVerificationStatus = Database['public']['Tables']['id_verifications']['Row']['status'];
+type LiveStreamStatus = Database['public']['Tables']['live_streams']['Row']['status'];
 
 /**
  * Generic type-safe helper for database column values
@@ -60,6 +67,31 @@ export function asDatingAdUserType(value: string): DatingAdUserType {
  */
 export function asProfileStatus(value: string): ProfileStatus {
   return value as unknown as ProfileStatus;
+}
+
+// Specialized helpers for specific table columns
+export function asReportStatus(value: string): ReportStatus {
+  return value as unknown as ReportStatus;
+}
+
+export function asIdVerificationStatus(value: string): IdVerificationStatus {
+  return value as unknown as IdVerificationStatus; 
+}
+
+export function asLiveStreamStatus(value: string): LiveStreamStatus {
+  return value as unknown as LiveStreamStatus;
+}
+
+export function asProfileIsSuspended(value: boolean): ProfileIsSuspended {
+  return value as unknown as ProfileIsSuspended;
+}
+
+export function asProfileIsPayingCustomer(value: boolean): ProfileIsPayingCustomer {
+  return value as unknown as ProfileIsPayingCustomer;
+}
+
+export function asStoryIsActive(value: boolean): StoryIsActive {
+  return value as unknown as StoryIsActive;
 }
 
 /**
@@ -112,7 +144,7 @@ export function applyEqualsFilter<T = any>(
   column: string,
   value: any
 ): PostgrestFilterBuilder<T> {
-  return query.eq(column, asDatabaseColumnValue(value));
+  return query.eq(column, value);
 }
 
 /**
@@ -145,7 +177,7 @@ export function getSafeProfile(profile: any) {
 export function getStatusForProfile(status: AvailabilityStatus): ProfileStatus {
   // Convert enum value to lowercase and handle the 'invisible' case
   const statusString = status.toString().toLowerCase();
-  if (statusString === 'invisible') return 'offline';
+  if (statusString === 'invisible') return 'offline' as ProfileStatus;
   
   return statusString as ProfileStatus;
 }

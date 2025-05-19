@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StoryCard } from "./story/StoryCard";
-import { asBooleanValue, safeCast, safeDataAccess } from "@/utils/supabase/helpers";
+import { asStoryIsActive, safeCast, safeDataAccess } from "@/utils/supabase/helpers";
 
 interface StoryData {
   id: string;
@@ -33,7 +33,7 @@ export const StoryReel = () => {
           created_at,
           profiles:creator_id(username, avatar_url)
         `)
-        .eq("is_active", asBooleanValue(true))
+        .eq("is_active", asStoryIsActive(true))
         .order("created_at", { ascending: false });
 
       if (error) throw error;

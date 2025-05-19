@@ -2,7 +2,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { VideoProfileCard } from '@/components/ads/video-profile-card';
 import { supabase } from '@/integrations/supabase/client';
-import { asBooleanValue, asDatingAdCountry, asDatingAdUserType, asStringValue, safeCast } from '@/utils/supabase/helpers';
+import { 
+  asDatingAdCountry, 
+  asDatingAdUserType, 
+  asStringValue, 
+  safeCast,
+  asBooleanValue 
+} from '@/utils/supabase/helpers';
 
 interface ProfileData {
   username?: string;

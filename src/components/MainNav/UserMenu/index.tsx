@@ -112,11 +112,10 @@ export function UserMenu() {
     try {
       const statusUpdate = prepareProfileStatusUpdate(newStatus);
       
-      const query = supabase
+      const { error } = await supabase
         .from('profiles')
-        .update(statusUpdate);
-        
-      const { error } = await applyEqualsFilter(query, "id", asUUID(session.user.id));
+        .update(statusUpdate)
+        .eq("id", asUUID(session.user.id));
         
       if (error) {
         console.error('Error updating status:', error);
