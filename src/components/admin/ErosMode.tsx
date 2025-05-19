@@ -1,24 +1,17 @@
 
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { formatDistanceToNow } from 'date-fns';
 import { 
-  Ban, 
-  EyeOff, 
-  FileJson, 
-  FileCog, 
-  Search, 
-  Download, 
-  Filter,
-  RotateCcw,
-  AlertTriangle,
-  Trash2,
-  X,
   Check,
-  Info,
-  RefreshCw
+  X,
+  Search, 
+  FileJson,
+  RefreshCw,
+  AlertTriangle,
+  Trash2
 } from "lucide-react";
 import { 
   Table, 
@@ -69,8 +62,7 @@ import {
   safeReportUpdate, 
   safeReportFilter, 
   safeAdminLogInsert,
-  safeDatabaseQuery,
-  isSafeData
+  exists
 } from '@/utils/supabase/type-guards';
 
 interface ReportItem {
@@ -128,6 +120,7 @@ export const ErosMode = () => {
       }
 
       if (statusFilter !== "all") {
+        // Use safer approach without specific type casting
         query = query.eq('status', statusFilter);
       }
 
@@ -136,8 +129,21 @@ export const ErosMode = () => {
 
       if (error) throw error;
 
+      // Type-safely process each report
+      const safeReports: ReportItem[] = Array.isArray(reports) ? 
+        reports.filter(exists).map(report => ({
+          id: report.id,
+          created_at: report.created_at || "",
+          reason: report.reason || "",
+          content_id: report.content_id || "",
+          content_type: report.content_type || "",
+          is_emergency: !!report.is_emergency,
+          status: report.status || "",
+          profiles: report.profiles || null
+        })) : [];
+
       return {
-        items: reports || [],
+        items: safeReports,
         totalCount: count || 0,
       };
     },
@@ -195,7 +201,7 @@ export const ErosMode = () => {
       
       const { error: logError } = await supabase
         .from('admin_logs')
-        .insert(logData);
+        .insert([logData]);
 
       if (logError) throw logError;
 
@@ -268,7 +274,7 @@ export const ErosMode = () => {
     );
   }
 
-  const safeItems = data?.items || [];
+  const safeItems = (data?.items || []) as ReportItem[];
 
   return (
     <div className="space-y-4">
@@ -322,13 +328,13 @@ export const ErosMode = () => {
               </TableRow>
             ) : (
               safeItems.map((report) => {
-                // Use optional chaining and nullish coalescing for safe access
-                const profileUsername = report?.profiles?.username || 'Unknown User';
-                const profileAvatar = report?.profiles?.avatar_url;
-                const reportReason = report?.reason || 'No reason provided';
-                const contentType = report?.content_type || 'Unknown';
-                const status = report?.status || 'pending';
-                const createdAt = report?.created_at ? new Date(report.created_at) : new Date();
+                // Safe access with defaults
+                const profileUsername = report.profiles?.username || 'Unknown User';
+                const profileAvatar = report.profiles?.avatar_url;
+                const reportReason = report.reason || 'No reason provided';
+                const contentType = report.content_type || 'Unknown';
+                const status = report.status || 'pending';
+                const createdAt = report.created_at ? new Date(report.created_at) : new Date();
                 
                 return (
                   <TableRow key={report.id}>

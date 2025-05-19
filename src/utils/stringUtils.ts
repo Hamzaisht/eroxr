@@ -1,34 +1,44 @@
 
 /**
- * Replace all instances of a string with another string
+ * Replace all occurrences of a substring in a string
+ * @param str The string to modify
+ * @param find The substring to find
+ * @param replace The string to replace with
+ * @returns The modified string
  */
 export function replaceAllString(str: string, find: string, replace: string): string {
   return str.split(find).join(replace);
 }
 
 /**
- * Format a timestamp to a readable date
+ * Capitalize the first letter of a string
+ * @param str The string to capitalize
+ * @returns The capitalized string
  */
-export function formatTimestamp(timestamp: string | Date): string {
-  const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-  return date.toLocaleString();
+export function capitalize(str: string): string {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**
- * Truncate a string if it exceeds a certain length
+ * Format a date string to a readable format
+ * @param dateStr The date string to format
+ * @returns The formatted date string
  */
-export function truncateString(str: string, maxLength = 100): string {
+export function formatDateString(dateStr: string): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}
+
+/**
+ * Truncate a string to a maximum length
+ * @param str The string to truncate
+ * @param maxLength The maximum length
+ * @returns The truncated string
+ */
+export function truncate(str: string, maxLength: number): string {
+  if (!str) return '';
   if (str.length <= maxLength) return str;
-  return `${str.slice(0, maxLength)}...`;
-}
-
-/**
- * Convert camelCase or snake_case to Title Case
- */
-export function toTitleCase(str: string): string {
-  return str
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/_/g, ' ')
-    .replace(/^\w/, c => c.toUpperCase())
-    .trim();
+  return str.substring(0, maxLength) + '...';
 }

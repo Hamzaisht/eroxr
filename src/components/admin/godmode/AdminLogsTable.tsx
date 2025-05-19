@@ -3,11 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { replaceAllString } from "@/utils/stringUtils";
-import { 
-  safePropertyAccess, 
-  safeDatabaseQuery
-} from '@/utils/supabase/type-guards';
+import { exists } from "@/utils/supabase/type-guards";
 
 interface AdminLog {
   id: string;
@@ -18,7 +14,7 @@ interface AdminLog {
   target_id: string;
   details: any;
   created_at: string;
-  admin_name?: string; 
+  admin_name?: string;
   profiles?: { username?: string } | null;
 }
 
@@ -33,7 +29,17 @@ export const AdminLogsTable = () => {
     try {
       const { data, error } = await supabase
         .from('admin_logs')
-        .select('*, profiles:admin_id(username)')
+        .select(`
+          id,
+          admin_id,
+          action,
+          action_type,
+          target_id,
+          target_type,
+          details,
+          created_at,
+          profiles:admin_id(username)
+        `)
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -41,9 +47,6 @@ export const AdminLogsTable = () => {
 
       // Safely transform data 
       const formattedLogs = (data || []).map(log => {
-        // Safely handle potential undefined values
-        const adminName = log?.profiles?.username || 'Unknown Admin';
-        
         // Create a safe record with required properties
         const adminLog: AdminLog = {
           id: log.id || '',
@@ -54,7 +57,9 @@ export const AdminLogsTable = () => {
           target_id: log.target_id || '',
           details: log.details || {},
           created_at: log.created_at || new Date().toISOString(),
-          admin_name: adminName
+          admin_name: exists(log.profiles) && typeof log.profiles === 'object' ? 
+            log.profiles.username || 'Unknown Admin' : 
+            'Unknown Admin'
         };
         return adminLog;
       });
@@ -79,7 +84,7 @@ export const AdminLogsTable = () => {
 
   // Format action for display
   const formatAction = (action: string): string => {
-    return replaceAllString(action, "_", " ");
+    return action.replace(/_/g, " ");
   };
 
   return (

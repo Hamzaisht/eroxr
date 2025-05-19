@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { AdminLogsTable } from "./AdminLogsTable";
 import { supabase } from "@/integrations/supabase/client";
-import { toDbValue } from "@/utils/supabase/type-guards";
 
 export const GodmodeDashboardHome = () => {
   const [totalUsers, setTotalUsers] = useState<number>(0);
@@ -21,7 +20,7 @@ export const GodmodeDashboardHome = () => {
           .from('profiles')
           .select('*', { count: 'exact', head: true });
         
-        setTotalUsers(toDbValue(usersCount || 0));
+        setTotalUsers(usersCount || 0);
         
         // Fetch total creators (users with is_paying_customer=true)
         const { count: creatorsCount } = await supabase
@@ -29,21 +28,21 @@ export const GodmodeDashboardHome = () => {
           .select('*', { count: 'exact', head: true })
           .eq('is_paying_customer', true);
         
-        setTotalCreators(toDbValue(creatorsCount || 0));
+        setTotalCreators(creatorsCount || 0);
         
         // Fetch total posts
         const { count: postsCount } = await supabase
           .from('posts')
           .select('*', { count: 'exact', head: true });
         
-        setTotalPosts(toDbValue(postsCount || 0));
+        setTotalPosts(postsCount || 0);
         
         // Fetch total reports
         const { count: reportsCount } = await supabase
           .from('reports')
           .select('*', { count: 'exact', head: true });
         
-        setTotalReports(toDbValue(reportsCount || 0));
+        setTotalReports(reportsCount || 0);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
       } finally {

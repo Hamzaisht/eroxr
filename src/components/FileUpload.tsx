@@ -37,10 +37,9 @@ export function FileUpload({
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       // Create a fake change event
-      const fileList = e.dataTransfer.files;
       const event = {
         target: {
-          files: fileList
+          files: e.dataTransfer.files
         }
       } as React.ChangeEvent<HTMLInputElement>;
       

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +11,12 @@ import {
 } from '@/utils/supabase/helpers';
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { safeUserSubscriptionFilter, safeUserSubscriptionUpdate, safeProfileFilter, safeDatabaseQuery } from '@/utils/supabase/type-guards';
+import { 
+  safeUserSubscriptionFilter, 
+  safeUserSubscriptionUpdate, 
+  safeProfileFilter, 
+  safeDatabaseQuery 
+} from '@/utils/supabase/type-guards';
 
 interface ProfileWithSubscriptions {
   id: string;
@@ -30,14 +36,6 @@ export const TempDemoContent = () => {
   const [canChangeUsername, setCanChangeUsername] = useState(true);
   const [lastUsernameChange, setLastUsernameChange] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
-
-  // Adding this function to safely handle potential errors in data responses
-  const safeGetId = (data: any): string | null => {
-    if (!data) return null;
-    if ('error' in data) return null;
-    if ('id' in data) return data.id;
-    return null;
-  };
 
   // Fetch user profile with subscriptions
   const { data: profileData } = useQuery({
@@ -75,8 +73,9 @@ export const TempDemoContent = () => {
   const safeProfile = getSafeProfile(profileData);
   
   // Type-safe access to subscription data
-  const subscriptions = safeProfile && 'user_subscriptions' in safeProfile ? 
-    safeProfile.user_subscriptions as { id: string; status: string }[] : [];
+  const subscriptions = safeProfile && 'user_subscriptions' in safeProfile && Array.isArray(safeProfile.user_subscriptions) ? 
+    safeProfile.user_subscriptions as { id: string; status: string }[] : 
+    [];
 
   const handleUnsubscribe = async () => {
     if (!session?.user?.id) return;

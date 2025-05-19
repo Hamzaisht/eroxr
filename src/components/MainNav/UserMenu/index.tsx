@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -30,21 +31,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  getSafeProfile
-} from "@/utils/supabase/helpers";
-import { 
-  safeProfileUpdate,
-  safeProfileFilter 
-} from "@/utils/supabase/type-guards";
+import { getSafeProfile } from "@/utils/supabase/helpers";
+import { safeProfileUpdate, safeProfileFilter, ProfileStatus } from "@/utils/supabase/type-guards";
 import { Button } from "@/components/ui/button";
-import { Database } from "@/integrations/supabase/types/database.types";
 
 interface UserMenuItemProps {
   label: string;
@@ -113,7 +107,7 @@ export function UserMenu() {
     
     try {
       // Convert the enum status to a valid database status value
-      let dbStatus: string;
+      let dbStatus: ProfileStatus;
       switch (newStatus) {
         case AvailabilityStatus.ONLINE:
           dbStatus = "online";
@@ -176,50 +170,52 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <DropdownMenuItem>
-                <Dot className="mr-2 h-4 w-4" />
-                Set Status
-              </DropdownMenuItem>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Set Availability Status</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Choose the status you want to display to other users.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="grid gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroup defaultValue={currentStatus} className="flex flex-col space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="online" id="online" onClick={() => handleStatusChange(AvailabilityStatus.ONLINE)} />
-                      <Label htmlFor="online">Online</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="away" id="away" onClick={() => handleStatusChange(AvailabilityStatus.AWAY)} />
-                      <Label htmlFor="away">Away</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="busy" id="busy" onClick={() => handleStatusChange(AvailabilityStatus.BUSY)} />
-                      <Label htmlFor="busy">Busy</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="offline" id="offline" onClick={() => handleStatusChange(AvailabilityStatus.OFFLINE)} />
-                      <Label htmlFor="offline">Offline</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="invisible" id="invisible" onClick={() => handleStatusChange(AvailabilityStatus.INVISIBLE)} />
-                      <Label htmlFor="invisible">Invisible</Label>
-                    </div>
-                  </RadioGroup>
+            <AlertDialog open={open} onOpenChange={setOpen}>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Dot className="mr-2 h-4 w-4" />
+                  Set Status
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Set Availability Status</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Choose the status you want to display to other users.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="grid gap-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroup defaultValue={currentStatus.toString()} className="flex flex-col space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="online" id="online" onClick={() => handleStatusChange(AvailabilityStatus.ONLINE)} />
+                        <Label htmlFor="online">Online</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="away" id="away" onClick={() => handleStatusChange(AvailabilityStatus.AWAY)} />
+                        <Label htmlFor="away">Away</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="busy" id="busy" onClick={() => handleStatusChange(AvailabilityStatus.BUSY)} />
+                        <Label htmlFor="busy">Busy</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="offline" id="offline" onClick={() => handleStatusChange(AvailabilityStatus.OFFLINE)} />
+                        <Label htmlFor="offline">Offline</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="invisible" id="invisible" onClick={() => handleStatusChange(AvailabilityStatus.INVISIBLE)} />
+                        <Label htmlFor="invisible">Invisible</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                 </div>
-              </div>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction>Save</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => setOpen(false)}>Save</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </AlertDialog>
         </DropdownMenuItem>
         <UserMenuItem label="Help" icon={HelpCircle} />

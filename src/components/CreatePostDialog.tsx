@@ -8,24 +8,8 @@ import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@supabase/auth-helpers-react';
-import { safePostInsert } from '@/utils/supabase/type-guards';
-
-// Define FileUpload component
-const FileUpload = ({ onChange, accept }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, accept: string }) => {
-  return (
-    <input
-      type="file"
-      onChange={onChange}
-      accept={accept}
-      className="block w-full text-sm text-gray-500
-        file:mr-4 file:py-2 file:px-4
-        file:rounded-md file:border-0
-        file:text-sm file:font-semibold
-        file:bg-primary file:text-white
-        hover:file:bg-primary/90"
-    />
-  );
-};
+import { safePostInsert, PostInsert } from '@/utils/supabase/type-guards';
+import { FileUpload } from './FileUpload';
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -63,15 +47,17 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
     try {
       setIsSubmitting(true);
 
-      // Use the type-safe helper to create post data
-      const postData = safePostInsert({
+      const postData: PostInsert = {
         creator_id: session.user.id,
         content,
         media_url: mediaUrls.length > 0 ? mediaUrls : null,
         visibility: 'public',
-      });
+      };
 
-      const { data, error } = await supabase.from('posts').insert(postData).select();
+      const { data, error } = await supabase
+        .from('posts')
+        .insert(safePostInsert(postData))
+        .select();
 
       if (error) {
         throw error;

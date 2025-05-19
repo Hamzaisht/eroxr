@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -11,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { User, Settings, CreditCard, ArrowRightFromLine, Loader2, CircleUserRound } from "lucide-react";
+import { User, Settings, CreditCard, ArrowRightFromLine, CircleUserRound } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -26,8 +27,6 @@ import {
 } from "@/utils/supabase/type-guards";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
 export function UserMenu() {
@@ -85,29 +84,6 @@ export function UserMenu() {
       });
     } finally {
       setIsSigningOut(false);
-    }
-  };
-
-  const statusOptions = [
-    { value: AvailabilityStatus.ONLINE, label: "Online" },
-    { value: AvailabilityStatus.AWAY, label: "Away" },
-    { value: AvailabilityStatus.BUSY, label: "Busy" },
-    { value: AvailabilityStatus.INVISIBLE, label: "Invisible" },
-    { value: AvailabilityStatus.OFFLINE, label: "Offline" },
-  ];
-
-  const getStatusColor = (status: AvailabilityStatus) => {
-    switch (status) {
-      case AvailabilityStatus.ONLINE:
-        return "text-green-500";
-      case AvailabilityStatus.AWAY:
-        return "text-yellow-500";
-      case AvailabilityStatus.BUSY:
-        return "text-red-500";
-      case AvailabilityStatus.INVISIBLE:
-        return "text-gray-500";
-      default:
-        return "text-gray-500";
     }
   };
 
