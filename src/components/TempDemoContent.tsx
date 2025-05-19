@@ -7,10 +7,11 @@ import { Button } from './ui/button';
 import { 
   getSafeProfile,
   asUserSubscriptionStatus,
-  safeDataAccess,
-  asColumnValue
+  safeDataAccess
 } from '@/utils/supabase/helpers';
 import { Database } from "@/integrations/supabase/types/database.types";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProfileWithSubscriptions {
   id: string;
@@ -44,7 +45,7 @@ export const TempDemoContent = () => {
             *,
             user_subscriptions:user_subscriptions(*)
           `)
-          .eq("id", asColumnValue(session.user.id))
+          .eq("id", session.user.id)
           .single();
           
         if (error) {
@@ -77,8 +78,8 @@ export const TempDemoContent = () => {
       const { data: subscriptionData } = await supabase
         .from('user_subscriptions')
         .select('*')
-        .eq("user_id", asColumnValue(session.user.id))
-        .eq("status", asColumnValue("active"))
+        .eq("user_id", session.user.id)
+        .eq("status", "active")
         .single();
       
       if (!subscriptionData) {
@@ -90,7 +91,7 @@ export const TempDemoContent = () => {
       const { error } = await supabase
         .from('user_subscriptions')
         .update({ status: "inactive" })
-        .eq("id", asColumnValue(subscriptionData.id));
+        .eq("id", subscriptionData.id);
         
       if (error) {
         console.error("Failed to update subscription:", error);
@@ -141,7 +142,3 @@ export const TempDemoContent = () => {
     </div>
   );
 };
-
-// Add missing import for useToast and useQueryClient
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";

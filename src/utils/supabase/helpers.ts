@@ -1,7 +1,6 @@
 
 import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
-import { PostgrestFilterBuilder } from "@supabase/supabase-js";
 
 // Types for database tables
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
@@ -79,20 +78,6 @@ export function asBooleanValue(value: boolean): boolean {
  * Type-safe string value for database queries
  */
 export function asStringValue(value: string): string {
-  return value;
-}
-
-/**
- * Type-safe helper for dating_ads country enum
- */
-export function asDatingAdCountry(value: string): string {
-  return value;
-}
-
-/**
- * Type-safe helper for dating_ads user_type enum
- */
-export function asDatingAdUserType(value: string): string {
   return value;
 }
 
@@ -205,12 +190,6 @@ export function prepareProfileStatusUpdate(status: AvailabilityStatus): ProfileU
   };
 }
 
-// Helper functions for safely extracting creator information
-export function extractCreator(data: any) {
-  if (!data) return null;
-  return data.profiles || data.creator || null;
-}
-
 /**
  * Helper function for safely accessing nested properties
  */
@@ -219,115 +198,9 @@ export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K)
 }
 
 /**
- * Type-safe function for applying filters with proper typing
- */
-export function applyEqualsFilter<T extends Record<string, any>>(
-  query: PostgrestFilterBuilder<T>,
-  column: keyof T,
-  value: any
-): PostgrestFilterBuilder<T> {
-  return query.eq(column, value);
-}
-
-/**
- * Type assertion helper for database tables
- */
-export function asDbUpdate<T = any>(data: any): T {
-  return data as T;
-}
-
-/**
- * Helper to construct typed insert data for followers
- */
-export function createFollowerData(followerId: string, followingId: string): FollowersInsert {
-  return {
-    follower_id: followerId,
-    following_id: followingId
-  } as FollowersInsert;
-}
-
-/**
- * Helper to construct typed insert data for subscriptions
- */
-export function createSubscriptionData(userId: string, creatorId: string): SubscriptionInsert {
-  return {
-    user_id: userId,
-    creator_id: creatorId
-  } as SubscriptionInsert;
-}
-
-/**
- * Replace all instances of a string with another string
- */
-export function replaceAllString(str: string, find: string, replace: string): string {
-  return str.split(find).join(replace);
-}
-
-/**
  * Helper for casting database column values
- * For use with eq, in, etc. methods on supabase queries
+ * Ensures type safety when using column values in Supabase queries
  */
 export function asColumnValue<T>(value: T): T {
   return value;
-}
-
-/**
- * Strongly-typed helper function for updating profiles
- */
-export function prepareProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
-  return {
-    ...data,
-  } as ProfileUpdate;
-}
-
-/**
- * Helper function for safely creating VideoCard props
- */
-export function createVideoCardProps(video: any) {
-  return {
-    id: safeGet(video, 'id') || '',
-    title: safeGet(video, 'title') || '',
-    thumbnailUrl: safeGet(video, 'thumbnail_url') || '',
-    duration: safeGet(video, 'duration') || 0,
-    views: safeGet(video, 'view_count') || 0,
-    createdAt: safeGet(video, 'created_at') || '',
-    creatorId: safeGet(video, 'creator_id') || '',
-    creatorName: safeGet(safeGet(video, 'profiles'), 'username') || 'Unknown',
-    creatorAvatar: safeGet(safeGet(video, 'profiles'), 'avatar_url') || '',
-  };
-}
-
-/**
- * Type-safe helper for database enum values
- */
-export function asEnumValue<T extends string>(value: T): T {
-  return value;
-}
-
-/**
- * Helper for updating records in the database with correct typing
- * @param update Object containing fields to update
- * @returns Properly typed update object
- */
-export function updateRecord<T extends object>(table: string, id: string, update: T) {
-  return { id, ...update };
-}
-
-/**
- * Type-safe utility to validate an object before sending to Supabase
- * @param data The data to validate
- * @param schema The expected schema structure
- * @returns A validated object that matches the schema
- */
-export function validateDatabaseObject<T>(data: any, schema: T): T {
-  const result: any = {};
-  
-  // Only include keys that exist in the schema
-  for (const key in schema) {
-    if (key in data) {
-      result[key] = data[key];
-    }
-  }
-  
-  return result as T;
 }

@@ -39,8 +39,7 @@ import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   getSafeProfile,
-  prepareProfileStatusUpdate,
-  asColumnValue
+  prepareProfileStatusUpdate
 } from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
@@ -77,7 +76,7 @@ export function UserMenu() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq("id", asColumnValue(session.user.id))
+        .eq("id", session.user.id)
         .single();
         
       if (error) {
@@ -114,7 +113,7 @@ export function UserMenu() {
       const { error } = await supabase
         .from('profiles')
         .update(statusUpdate)
-        .eq("id", asColumnValue(session.user.id));
+        .eq("id", session.user.id);
         
       if (error) {
         console.error('Error updating status:', error);
