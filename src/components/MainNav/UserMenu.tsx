@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -16,11 +17,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   applyEqualsFilter, 
-  asProfileUpdate, 
+  asColumnValue, 
   convertToStatus, 
   getSafeProfile, 
   getStatusForProfile, 
-  prepareProfileStatusUpdate,
+  prepareProfileStatusUpdate, 
   prepareProfileUpdate 
 } from "@/utils/supabase/helpers";
 import { AvailabilityStatus } from "@/utils/media/types";

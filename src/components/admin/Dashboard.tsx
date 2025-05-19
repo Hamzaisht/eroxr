@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { asColumnValue } from "@/utils/supabase/helpers";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { asColumnValue } from "@/utils/supabase/helpers";
 import { 
   Users, 
   MessageSquare, 

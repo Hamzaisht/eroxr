@@ -207,3 +207,12 @@ export function createVideoCardProps(video: any) {
 export function asEnumValue<T extends string>(value: T): T {
   return value;
 }
+
+/**
+ * Helper for updating records in the database with correct typing
+ * @param update Object containing fields to update
+ * @returns Properly typed update object
+ */
+export function updateRecord<T extends object>(table: string, id: string, update: T) {
+  return { id, ...update };
+}

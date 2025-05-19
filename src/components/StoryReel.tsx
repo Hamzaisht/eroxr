@@ -33,7 +33,7 @@ export const StoryReel = () => {
           created_at,
           profiles:creator_id(username, avatar_url)
         `)
-        .eq("is_active", asColumnValue(true))
+        .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
