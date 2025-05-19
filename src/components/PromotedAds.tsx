@@ -4,7 +4,8 @@ import { VideoProfileCard } from '@/components/ads/video-profile-card';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   safeDataAccess,
-  safeCast
+  safeCast,
+  asColumnValue
 } from '@/utils/supabase/helpers';
 import { Database } from "@/integrations/supabase/types/database.types";
 
@@ -58,10 +59,10 @@ export const PromotedAds = () => {
             id_verification_status
           )
         `)
-        .eq("is_active" as keyof Database["public"]["Tables"]["dating_ads"]["Row"], true)
-        .eq("country" as keyof Database["public"]["Tables"]["dating_ads"]["Row"], "denmark")
-        .eq("moderation_status" as keyof Database["public"]["Tables"]["dating_ads"]["Row"], "approved")
-        .eq("user_type" as keyof Database["public"]["Tables"]["dating_ads"]["Row"], "premium")
+        .eq("is_active", asColumnValue(true))
+        .eq("country", asColumnValue("denmark"))
+        .eq("moderation_status", asColumnValue("approved"))
+        .eq("user_type", asColumnValue("premium"))
         .order('created_at', { ascending: false })
         .limit(3);
 

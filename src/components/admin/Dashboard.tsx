@@ -7,7 +7,8 @@ import {
   asLiveStreamStatus, 
   asProfileIsSuspended, 
   asProfileStatus, 
-  asReportStatus 
+  asReportStatus,
+  asColumnValue 
 } from "@/utils/supabase/helpers";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { Card } from "@/components/ui/card";
@@ -73,17 +74,17 @@ export const Dashboard = () => {
         { count: activeStreams },
         { data: onlineUsers },
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("is_suspended"), false),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("is_suspended"), true),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq("is_suspended", asColumnValue(false)),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq("is_suspended", asColumnValue(true)),
         supabase.from('posts').select('*', { count: 'exact', head: true }),
         supabase.from('direct_messages').select('*', { count: 'exact', head: true }),
-        supabase.from('reports').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["reports"]["Row"]>("status"), asReportStatus('pending')),
+        supabase.from('reports').select('*', { count: 'exact', head: true }).eq("status", asColumnValue("pending")),
         supabase.from('security_violations').select('*', { count: 'exact', head: true }),
         supabase.from('posts').select('*', { count: 'exact', head: true }).not('media_url', 'eq', '{}'),
         supabase.from('posts').select('*', { count: 'exact', head: true }).not('video_urls', 'eq', '{}'),
-        supabase.from('id_verifications').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["id_verifications"]["Row"]>("status"), asIdVerificationStatus('pending')),
-        supabase.from('live_streams').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["live_streams"]["Row"]>("status"), asLiveStreamStatus('live')),
-        supabase.from('profiles').select('id').eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("status"), asProfileStatus('online')),
+        supabase.from('id_verifications').select('*', { count: 'exact', head: true }).eq("status", asColumnValue("pending")),
+        supabase.from('live_streams').select('*', { count: 'exact', head: true }).eq("status", asColumnValue("live")),
+        supabase.from('profiles').select('id').eq("status", asColumnValue("online")),
       ]);
 
       return {

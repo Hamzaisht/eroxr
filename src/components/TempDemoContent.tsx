@@ -89,7 +89,7 @@ export const TempDemoContent = () => {
       // Update status to inactive
       const { error } = await supabase
         .from('user_subscriptions')
-        .update({ status: "inactive" } as Database["public"]["Tables"]["user_subscriptions"]["Update"])
+        .update({ status: "inactive" })
         .eq("id", asColumnValue(subscriptionData.id));
         
       if (error) {

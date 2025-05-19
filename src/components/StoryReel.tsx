@@ -6,7 +6,8 @@ import { StoryCard } from "./story/StoryCard";
 import { 
   safeCast, 
   safeDataAccess,
-  asStoryIsActive
+  asStoryIsActive,
+  asColumnValue
 } from "@/utils/supabase/helpers";
 import { Database } from "@/integrations/supabase/types/database.types";
 
@@ -33,7 +34,7 @@ export const StoryReel = () => {
           created_at,
           profiles:creator_id(username, avatar_url)
         `)
-        .eq("is_active", asStoryIsActive(true))
+        .eq("is_active", asColumnValue(true))
         .order("created_at", { ascending: false });
 
       if (error) throw error;
