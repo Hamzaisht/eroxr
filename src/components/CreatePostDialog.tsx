@@ -1,5 +1,4 @@
 
-// Import without the non-existent applyEqualsFilter
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@supabase/auth-helpers-react';
+import { safePostInsert } from '@/utils/supabase/type-guards';
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -47,12 +47,12 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
     try {
       setIsSubmitting(true);
 
-      const postData = {
+      const postData = safePostInsert({
         creator_id: session.user.id,
         content,
         media_url: mediaUrls.length > 0 ? mediaUrls : null,
         visibility: 'public',
-      };
+      });
 
       const { data, error } = await supabase.from('posts').insert(postData).select();
 

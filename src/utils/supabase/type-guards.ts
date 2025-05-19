@@ -11,19 +11,37 @@ export type ProfileInsert = Tables['profiles']['Insert'];
 
 export type StoryRow = Tables['stories']['Row'];
 export type StoryUpdate = Tables['stories']['Update'];
+export type StoryInsert = Tables['stories']['Insert'];
 
 export type DatingAdRow = Tables['dating_ads']['Row'];
 export type DatingAdUpdate = Tables['dating_ads']['Update'];
+export type DatingAdInsert = Tables['dating_ads']['Insert'];
 
 export type SubscriptionRow = Tables['creator_subscriptions']['Row'];
+export type SubscriptionInsert = Tables['creator_subscriptions']['Insert'];
+
 export type UserSubscriptionRow = Tables['user_subscriptions']['Row'];
 export type UserSubscriptionUpdate = Tables['user_subscriptions']['Update'];
+export type UserSubscriptionInsert = Tables['user_subscriptions']['Insert'];
+
+export type PostRow = Tables['posts']['Row'];
+export type PostUpdate = Tables['posts']['Update'];
+export type PostInsert = Tables['posts']['Insert'];
+
+export type ReportRow = Tables['reports']['Row'];
+export type LiveStreamRow = Tables['live_streams']['Row'];
+export type IdVerificationRow = Tables['id_verifications']['Row'];
 
 // Type-safe helpers for database operations
 export function safeProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
   return data as ProfileUpdate;
 }
 
+export function safePostInsert(data: Partial<PostInsert>): PostInsert {
+  return data as PostInsert;
+}
+
+// Type-safe filter helpers
 export function safeStoryFilter(column: keyof StoryRow, value: any): [string, any] {
   return [column as string, value];
 }
@@ -37,6 +55,22 @@ export function safeSubscriptionFilter(column: keyof SubscriptionRow, value: any
 }
 
 export function safeUserSubscriptionFilter(column: keyof UserSubscriptionRow, value: any): [string, any] {
+  return [column as string, value];
+}
+
+export function safeProfileFilter(column: keyof ProfileRow, value: any): [string, any] {
+  return [column as string, value];
+}
+
+export function safeReportFilter(column: keyof ReportRow, value: any): [string, any] {
+  return [column as string, value];
+}
+
+export function safeLiveStreamFilter(column: keyof LiveStreamRow, value: any): [string, any] {
+  return [column as string, value];
+}
+
+export function safeIdVerificationFilter(column: keyof IdVerificationRow, value: any): [string, any] {
   return [column as string, value];
 }
 

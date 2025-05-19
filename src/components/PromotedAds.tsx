@@ -49,9 +49,7 @@ export const PromotedAds = () => {
     queryKey: ['promoted-ads'],
     queryFn: async () => {
       // Get promoted ads for the current country (Denmark is default)
-      const [isActiveColumn, isActiveValue] = safeDatingAdFilter("is_active", true);
       const [countryColumn, countryValue] = safeDatingAdFilter("country", "denmark");
-      const [moderationColumn, moderationValue] = safeDatingAdFilter("moderation_status", "approved");
       const [userTypeColumn, userTypeValue] = safeDatingAdFilter("user_type", "premium");
       
       const { data: fetchedAds, error: fetchError } = await supabase
@@ -64,9 +62,7 @@ export const PromotedAds = () => {
             id_verification_status
           )
         `)
-        .eq(isActiveColumn, isActiveValue)
         .eq(countryColumn, countryValue)
-        .eq(moderationColumn, moderationValue)
         .eq(userTypeColumn, userTypeValue)
         .order('created_at', { ascending: false })
         .limit(3);

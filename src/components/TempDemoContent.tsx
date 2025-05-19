@@ -12,7 +12,7 @@ import {
 import { Database } from "@/integrations/supabase/types/database.types";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { safeUserSubscriptionFilter, safeUserSubscriptionUpdate } from '@/utils/supabase/type-guards';
+import { safeUserSubscriptionFilter, safeUserSubscriptionUpdate, safeProfileFilter } from '@/utils/supabase/type-guards';
 
 interface ProfileWithSubscriptions {
   id: string;
@@ -40,13 +40,15 @@ export const TempDemoContent = () => {
       if (!session?.user?.id) return null;
       
       try {
+        const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
+        
         const { data, error } = await supabase
           .from('profiles')
           .select(`
             *,
             user_subscriptions:user_subscriptions(*)
           `)
-          .eq("id", session.user.id)
+          .eq(idColumn, idValue)
           .single();
           
         if (error) {

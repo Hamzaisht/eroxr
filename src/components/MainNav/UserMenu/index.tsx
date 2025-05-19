@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -40,7 +39,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   getSafeProfile
 } from "@/utils/supabase/helpers";
-import { safeProfileUpdate } from "@/utils/supabase/type-guards";
+import { 
+  safeProfileUpdate,
+  safeProfileFilter 
+} from "@/utils/supabase/type-guards";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
 
@@ -73,10 +75,12 @@ export function UserMenu() {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
+      const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq("id", session.user.id)
+        .eq(idColumn, idValue)
         .single();
         
       if (error) {
@@ -129,11 +133,12 @@ export function UserMenu() {
       }
       
       const updates = safeProfileUpdate({ status: dbStatus });
+      const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
       
       const { error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq("id", session.user.id);
+        .eq(idColumn, idValue);
         
       if (error) {
         console.error('Error updating status:', error);
