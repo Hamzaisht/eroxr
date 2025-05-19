@@ -1,17 +1,19 @@
 
-// Update the CreatorCard component to fix the property names
 import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
-interface CreatorCardProps {
+export interface CreatorCardProps {
   creatorId: string;
   username?: string;
   avatarUrl?: string;
   bio?: string;
   bannerUrl?: string;
+  isVerified?: boolean;
+  isPremium?: boolean;
+  followerCount?: number;
 }
 
 export const CreatorCard: React.FC<CreatorCardProps> = ({
@@ -19,7 +21,10 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
   username,
   avatarUrl,
   bio,
-  bannerUrl
+  bannerUrl,
+  isVerified,
+  isPremium,
+  followerCount
 }) => {
   const navigate = useNavigate();
   
@@ -39,6 +44,25 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
         <div className="pt-10">
           <h3 className="text-lg font-bold">{username || "Anonymous Creator"}</h3>
           <p className="text-sm text-muted-foreground line-clamp-2">{bio || "No bio available"}</p>
+          {followerCount !== undefined && (
+            <p className="text-xs text-muted-foreground mt-1">{followerCount} followers</p>
+          )}
+          {isVerified && (
+            <span className="inline-flex items-center text-blue-500 text-xs mt-1">
+              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Verified
+            </span>
+          )}
+          {isPremium && (
+            <span className="inline-flex items-center text-luxury-primary text-xs mt-1 ml-2">
+              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h8V3a1 1 0 112 0v1h1a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 011-1zm11 14a1 1 0 01-1 1H5a1 1 0 01-1-1V7h12v9z" clipRule="evenodd" />
+              </svg>
+              Premium
+            </span>
+          )}
         </div>
       </CardHeader>
       <CardContent>

@@ -1,3 +1,4 @@
+
 // Import components and utilities
 import { useEffect, useState } from "react";
 import { CreatorCard } from "@/components/CreatorCard";
@@ -66,10 +67,10 @@ export const FeaturedCreators = () => {
       {creators.map((creator) => (
         <CreatorCard
           key={creator.creatorId}
-          id={creator.creatorId}
+          creatorId={creator.creatorId}
           username={creator.name}
           avatarUrl={creator.image}
-          banner={creator.banner}
+          bannerUrl={creator.banner}
           bio={creator.description}
           followerCount={creator.subscribers}
           isVerified={true}

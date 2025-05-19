@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { VideoProfileCard } from '@/components/ads/video-profile-card';
 import { supabase } from '@/integrations/supabase/client';
-import { safeCast } from '@/utils/supabase/helpers';
+import { asBooleanValue, asStringValue, safeCast } from '@/utils/supabase/helpers';
 
 interface ProfileData {
   username?: string;
@@ -44,7 +44,7 @@ export const PromotedAds = () => {
     queryKey: ['promoted-ads'],
     queryFn: async () => {
       // Get promoted ads for the current country (Denmark is default)
-      const { data, error } = await supabase
+      const { data: fetchedAds, error: fetchError } = await supabase
         .from('dating_ads')
         .select(`
           *,
@@ -54,19 +54,19 @@ export const PromotedAds = () => {
             id_verification_status
           )
         `)
-        .eq('is_active', true)
-        .eq('country', 'denmark')
-        .eq('moderation_status', 'approved')
-        .eq('user_type', 'premium')
+        .eq('is_active', asBooleanValue(true))
+        .eq('country', asStringValue('denmark'))
+        .eq('moderation_status', asStringValue('approved'))
+        .eq('user_type', asStringValue('premium'))
         .order('created_at', { ascending: false })
         .limit(3);
 
-      if (error) {
-        console.error('Error fetching promoted ads:', error);
+      if (fetchError) {
+        console.error('Error fetching promoted ads:', fetchError);
         return [];
       }
 
-      return safeCast<AdData>(data);
+      return safeCast<AdData>(fetchedAds);
     },
   });
 

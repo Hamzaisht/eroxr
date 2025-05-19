@@ -216,3 +216,26 @@ export function asEnumValue<T extends string>(value: T): T {
 export function updateRecord<T extends object>(table: string, id: string, update: T) {
   return { id, ...update };
 }
+
+/**
+ * Extract creator information safely from related data
+ */
+export function extractCreator(data: any) {
+  if (!data) return null;
+  return data.profiles || data.creator || null;
+}
+
+/**
+ * Safe boolean value for database comparisons
+ */
+export function asBooleanValue(value: boolean): boolean {
+  return value;
+}
+
+/**
+ * Safe string value for database comparisons
+ */
+export function asStringValue(value: string): string {
+  return value;
+}
+

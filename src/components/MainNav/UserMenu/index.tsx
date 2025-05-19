@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -39,8 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   applyEqualsFilter, 
   getSafeProfile,
-  prepareProfileUpdate,
-  getStatusForProfile
+  prepareProfileStatusUpdate,
 } from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
 
@@ -109,13 +109,11 @@ export function UserMenu() {
     if (!session?.user?.id) return;
     
     try {
-      const update = prepareProfileUpdate({
-        status: getStatusForProfile(newStatus)
-      });
+      const statusUpdate = prepareProfileStatusUpdate(newStatus);
       
       const query = supabase
         .from('profiles')
-        .update(update);
+        .update(statusUpdate);
         
       const { error } = await applyEqualsFilter(query, "id", session.user.id);
         
