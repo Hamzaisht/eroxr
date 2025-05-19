@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,9 +11,24 @@ import {
 } from '@/utils/supabase/helpers';
 import { Database } from "@/integrations/supabase/types/database.types";
 
+interface ProfileWithSubscriptions {
+  id: string;
+  username?: string | null;
+  is_paying_customer?: boolean | null;
+  user_subscriptions?: {
+    id: string;
+    status: string;
+  }[];
+}
+
 export const TempDemoContent = () => {
+  const { toast } = useToast();
   const session = useSession();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+  const [canChangeUsername, setCanChangeUsername] = useState(true);
+  const [lastUsernameChange, setLastUsernameChange] = useState<string | null>(null);
+  const [currentUsername, setCurrentUsername] = useState("");
 
   // Fetch user profile with subscriptions
   const { data: profileData } = useQuery({
@@ -35,7 +51,7 @@ export const TempDemoContent = () => {
           return null;
         }
         
-        return data;
+        return data as ProfileWithSubscriptions;
       } catch (err) {
         console.error("Failed to fetch profile data:", err);
         return null;
@@ -49,7 +65,7 @@ export const TempDemoContent = () => {
   
   // Type-safe access to subscription data
   const subscriptions = safeProfile && 'user_subscriptions' in safeProfile ? 
-    safeProfile.user_subscriptions : [];
+    safeProfile.user_subscriptions as { id: string; status: string }[] : [];
 
   const handleUnsubscribe = async () => {
     if (!session?.user?.id) return;
@@ -72,7 +88,7 @@ export const TempDemoContent = () => {
       // Update status to inactive
       const { error } = await supabase
         .from('user_subscriptions')
-        .update({ status: "inactive" })
+        .update({ status: "inactive" } as Database["public"]["Tables"]["user_subscriptions"]["Update"])
         .eq("id" as keyof Database["public"]["Tables"]["user_subscriptions"]["Row"], subscriptionData.id);
         
       if (error) {
@@ -100,7 +116,7 @@ export const TempDemoContent = () => {
                 <>
                   <h3>Subscriptions:</h3>
                   <ul>
-                    {subscriptions.map((sub: any) => (
+                    {subscriptions.map((sub) => (
                       <li key={sub.id}>
                         Subscription ID: {sub.id}, Status: {asUserSubscriptionStatus(sub.status)}
                       </li>
@@ -124,3 +140,7 @@ export const TempDemoContent = () => {
     </div>
   );
 };
+
+// Add missing import for useToast and useQueryClient
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";

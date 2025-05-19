@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { PostgrestFilterBuilder } from "@supabase/supabase-js";
@@ -310,4 +311,23 @@ export function asEnumValue<T extends string>(value: T): T {
  */
 export function updateRecord<T extends object>(table: string, id: string, update: T) {
   return { id, ...update };
+}
+
+/**
+ * Type-safe utility to validate an object before sending to Supabase
+ * @param data The data to validate
+ * @param schema The expected schema structure
+ * @returns A validated object that matches the schema
+ */
+export function validateDatabaseObject<T>(data: any, schema: T): T {
+  const result: any = {};
+  
+  // Only include keys that exist in the schema
+  for (const key in schema) {
+    if (key in data) {
+      result[key] = data[key];
+    }
+  }
+  
+  return result as T;
 }

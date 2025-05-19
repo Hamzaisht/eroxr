@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -72,8 +73,8 @@ export const Dashboard = () => {
         { count: activeStreams },
         { data: onlineUsers },
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("is_suspended"), asProfileIsSuspended(false)),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("is_suspended"), asProfileIsSuspended(true)),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("is_suspended"), false),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["profiles"]["Row"]>("is_suspended"), true),
         supabase.from('posts').select('*', { count: 'exact', head: true }),
         supabase.from('direct_messages').select('*', { count: 'exact', head: true }),
         supabase.from('reports').select('*', { count: 'exact', head: true }).eq(asColumnName<Database["public"]["Tables"]["reports"]["Row"]>("status"), asReportStatus('pending')),

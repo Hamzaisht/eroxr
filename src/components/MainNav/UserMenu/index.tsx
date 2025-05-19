@@ -38,7 +38,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  convertToStatus,
   getSafeProfile,
   prepareProfileStatusUpdate,
 } from "@/utils/supabase/helpers";
@@ -113,7 +112,7 @@ export function UserMenu() {
       
       const { error } = await supabase
         .from('profiles')
-        .update(statusUpdate)
+        .update(statusUpdate as Database["public"]["Tables"]["profiles"]["Update"])
         .eq("id" as keyof Database["public"]["Tables"]["profiles"]["Row"], session.user.id);
         
       if (error) {
