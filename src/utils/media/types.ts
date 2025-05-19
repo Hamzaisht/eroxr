@@ -1,30 +1,28 @@
 
 export enum AvailabilityStatus {
   ONLINE = "online",
-  OFFLINE = "offline",
   AWAY = "away",
   BUSY = "busy",
+  OFFLINE = "offline",
   INVISIBLE = "invisible"
-}
-
-export interface MediaType {
-  VIDEO: "video";
-  IMAGE: "image";
-  AUDIO: "audio";
-  PDF: "pdf";
-  UNKNOWN: "unknown";
 }
 
 export interface MediaSource {
   url: string;
-  media_type?: string;
-  thumbnail?: string;
+  type: MediaType;
   poster?: string;
-  content_type?: string;
-  duration?: number;
+  thumbnail?: string;
 }
 
-export interface UniversalMediaProps {
+export enum MediaType {
+  IMAGE = "image",
+  VIDEO = "video",
+  AUDIO = "audio",
+  DOCUMENT = "document",
+  UNKNOWN = "unknown"
+}
+
+export type UniversalMediaProps = {
   item: MediaSource | string;
   className?: string;
   autoPlay?: boolean;
@@ -37,7 +35,16 @@ export interface UniversalMediaProps {
   onLoad?: () => void;
   onError?: (error: any) => void;
   onEnded?: () => void;
-  onTimeUpdate?: (time: number) => void;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
   alt?: string;
   maxRetries?: number;
+};
+
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+  fileSize?: number;
+  fileType?: string;
+  metadata?: Record<string, any>;
 }

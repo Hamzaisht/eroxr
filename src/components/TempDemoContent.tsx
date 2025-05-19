@@ -12,6 +12,7 @@ import {
 import { Database } from "@/integrations/supabase/types/database.types";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { safeUserSubscriptionFilter, safeUserSubscriptionUpdate } from '@/utils/supabase/type-guards';
 
 interface ProfileWithSubscriptions {
   id: string;
@@ -75,11 +76,14 @@ export const TempDemoContent = () => {
     setLoading(true);
     try {
       // First get the subscription ID
+      const [userIdColumn, userIdValue] = safeUserSubscriptionFilter("user_id", session.user.id);
+      const [statusColumn, statusValue] = safeUserSubscriptionFilter("status", "active");
+      
       const { data: subscriptionData } = await supabase
         .from('user_subscriptions')
         .select('*')
-        .eq("user_id", session.user.id)
-        .eq("status", "active")
+        .eq(userIdColumn, userIdValue)
+        .eq(statusColumn, statusValue)
         .single();
       
       if (!subscriptionData) {
@@ -88,9 +92,11 @@ export const TempDemoContent = () => {
       }
       
       // Update status to inactive
+      const updates = safeUserSubscriptionUpdate({ status: "inactive" });
+      
       const { error } = await supabase
         .from('user_subscriptions')
-        .update({ status: "inactive" })
+        .update(updates)
         .eq("id", subscriptionData.id);
         
       if (error) {

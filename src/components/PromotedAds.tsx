@@ -7,6 +7,7 @@ import {
   safeCast
 } from '@/utils/supabase/helpers';
 import { Database } from "@/integrations/supabase/types/database.types";
+import { safeDatingAdFilter } from "@/utils/supabase/type-guards";
 
 interface ProfileData {
   username?: string;
@@ -48,6 +49,11 @@ export const PromotedAds = () => {
     queryKey: ['promoted-ads'],
     queryFn: async () => {
       // Get promoted ads for the current country (Denmark is default)
+      const [isActiveColumn, isActiveValue] = safeDatingAdFilter("is_active", true);
+      const [countryColumn, countryValue] = safeDatingAdFilter("country", "denmark");
+      const [moderationColumn, moderationValue] = safeDatingAdFilter("moderation_status", "approved");
+      const [userTypeColumn, userTypeValue] = safeDatingAdFilter("user_type", "premium");
+      
       const { data: fetchedAds, error: fetchError } = await supabase
         .from('dating_ads')
         .select(`
@@ -58,10 +64,10 @@ export const PromotedAds = () => {
             id_verification_status
           )
         `)
-        .eq("is_active", true)
-        .eq("country", "denmark")
-        .eq("moderation_status", "approved")
-        .eq("user_type", "premium")
+        .eq(isActiveColumn, isActiveValue)
+        .eq(countryColumn, countryValue)
+        .eq(moderationColumn, moderationValue)
+        .eq(userTypeColumn, userTypeValue)
         .order('created_at', { ascending: false })
         .limit(3);
 

@@ -38,9 +38,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  getSafeProfile,
-  prepareProfileStatusUpdate
+  getSafeProfile
 } from "@/utils/supabase/helpers";
+import { safeProfileUpdate } from "@/utils/supabase/type-guards";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
 
@@ -108,11 +108,31 @@ export function UserMenu() {
     if (!session?.user?.id) return;
     
     try {
-      const statusUpdate = prepareProfileStatusUpdate(newStatus);
+      // Convert the enum status to a valid database status value
+      let dbStatus: Database["public"]["Tables"]["profiles"]["Update"]["status"];
+      switch (newStatus) {
+        case AvailabilityStatus.ONLINE:
+          dbStatus = "online";
+          break;
+        case AvailabilityStatus.AWAY:
+          dbStatus = "away";
+          break;
+        case AvailabilityStatus.BUSY:
+          dbStatus = "busy";
+          break;
+        case AvailabilityStatus.INVISIBLE:
+        case AvailabilityStatus.OFFLINE:
+          dbStatus = "offline";
+          break;
+        default:
+          dbStatus = "offline";
+      }
+      
+      const updates = safeProfileUpdate({ status: dbStatus });
       
       const { error } = await supabase
         .from('profiles')
-        .update(statusUpdate)
+        .update(updates)
         .eq("id", session.user.id);
         
       if (error) {

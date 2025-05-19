@@ -17,9 +17,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   convertToStatus,
-  getSafeProfile, 
-  prepareProfileStatusUpdate
+  getSafeProfile
 } from "@/utils/supabase/helpers";
+import { safeProfileUpdate } from "@/utils/supabase/type-guards";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
@@ -110,12 +110,31 @@ export function UserMenu() {
     if (!session?.user?.id) return;
     
     try {
-      // Get the properly formatted status update
-      const statusUpdate = prepareProfileStatusUpdate(newStatus);
+      // Convert the enum status to a valid database status value
+      let dbStatus: Database["public"]["Tables"]["profiles"]["Update"]["status"];
+      switch (newStatus) {
+        case AvailabilityStatus.ONLINE:
+          dbStatus = "online";
+          break;
+        case AvailabilityStatus.AWAY:
+          dbStatus = "away";
+          break;
+        case AvailabilityStatus.BUSY:
+          dbStatus = "busy";
+          break;
+        case AvailabilityStatus.INVISIBLE:
+        case AvailabilityStatus.OFFLINE:
+          dbStatus = "offline";
+          break;
+        default:
+          dbStatus = "offline";
+      }
+      
+      const updates = safeProfileUpdate({ status: dbStatus });
       
       const { error } = await supabase
         .from('profiles')
-        .update(statusUpdate)
+        .update(updates)
         .eq("id", session.user.id);
         
       if (error) {

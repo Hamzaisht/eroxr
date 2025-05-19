@@ -8,6 +8,7 @@ import {
   safeDataAccess
 } from "@/utils/supabase/helpers";
 import { Database } from "@/integrations/supabase/types/database.types";
+import { safeStoryFilter } from "@/utils/supabase/type-guards";
 
 type StoryData = Database["public"]["Tables"]["stories"]["Row"] & {
   profiles?: {
@@ -22,6 +23,8 @@ export const StoryReel = () => {
   const { data: stories, isLoading } = useQuery({
     queryKey: ["stories"],
     queryFn: async () => {
+      const [isActiveColumn, isActiveValue] = safeStoryFilter("is_active", true);
+      
       const { data, error } = await supabase
         .from("stories")
         .select(`
@@ -32,7 +35,7 @@ export const StoryReel = () => {
           created_at,
           profiles:creator_id(username, avatar_url)
         `)
-        .eq("is_active", true)
+        .eq(isActiveColumn, isActiveValue)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

@@ -5,6 +5,7 @@ import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
 import { safeCast } from "@/utils/supabase/helpers";
 import { Database } from "@/integrations/supabase/types/database.types";
+import { safeSubscriptionFilter } from "@/utils/supabase/type-guards";
 
 interface Creator {
   id: string;
@@ -31,6 +32,8 @@ export const SubscribedCreators = () => {
     queryFn: async () => {
       if (!userId) return [];
       
+      const [userIdColumn, userIdValue] = safeSubscriptionFilter("user_id", userId);
+      
       const { data, error } = await supabase
         .from("creator_subscriptions")
         .select(`
@@ -43,7 +46,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq("user_id", userId)
+        .eq(userIdColumn, userIdValue)
         .order("created_at", { ascending: false });
         
       if (error) {
