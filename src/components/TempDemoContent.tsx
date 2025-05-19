@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { asBooleanValue, extractCreator, safeCast, safeDataAccess } from "@/utils/supabase/helpers";
+import { asBooleanValue, extractCreator, safeCast, safeDataAccess, safeGet } from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -134,12 +134,18 @@ export const TempDemoContent: React.FC<DemoProps> = ({
             {activeTab === "feed" && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {posts.map((post) => {
-                  // Safe access to post properties
-                  const id = post?.id;
-                  const mediaUrl = post?.media_url;
-                  const postProfiles = post?.profiles;
-
-                  if (!id) return null; // Skip invalid posts
+                  if (!post) return null;
+                  
+                  // Use safeGet for safer property access
+                  const id = safeGet(post, 'id');
+                  if (!id) return null;
+                  
+                  const mediaUrl = safeGet(post, 'media_url');
+                  const postProfiles = safeGet(post, 'profiles');
+                  const content = safeGet(post, 'content') || '';
+                  const createdAt = safeGet(post, 'created_at');
+                  const avatarUrl = safeGet(postProfiles, 'avatar_url') || '';
+                  const username = safeGet(postProfiles, 'username') || 'Anonymous';
 
                   return (
                     <Card key={id} className="overflow-hidden">
@@ -155,24 +161,24 @@ export const TempDemoContent: React.FC<DemoProps> = ({
                       <CardHeader className="flex flex-row items-center gap-3">
                         <Avatar>
                           <AvatarImage
-                            src={postProfiles?.avatar_url || ""}
-                            alt={postProfiles?.username || "User"}
+                            src={avatarUrl}
+                            alt={username}
                           />
                           <AvatarFallback>
-                            {(postProfiles?.username || "U")[0]?.toUpperCase()}
+                            {(username || "U")[0]?.toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <h3 className="font-semibold">
-                            {postProfiles?.username || "Anonymous"}
+                            {username}
                           </h3>
                           <p className="text-xs text-muted-foreground">
-                            {post?.created_at ? new Date(post.created_at).toLocaleDateString() : "Unknown date"}
+                            {createdAt ? new Date(createdAt).toLocaleDateString() : "Unknown date"}
                           </p>
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <p className="line-clamp-3">{post?.content || ""}</p>
+                        <p className="line-clamp-3">{content}</p>
                       </CardContent>
                       <CardFooter className="flex justify-between">
                         <div className="flex gap-3">
@@ -196,17 +202,20 @@ export const TempDemoContent: React.FC<DemoProps> = ({
             {activeTab === "explore" && creators && creators.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {creators.map((creator) => {
-                  if (!creator?.id) return null;
+                  if (!creator) return null;
                   
-                  const bannerUrl = creator?.banner_url;
-                  const username = creator?.username;
-                  const avatarUrl = creator?.avatar_url;
-                  const bio = creator?.bio;
-                  const interests = creator?.interests;
-                  const isVerified = creator?.id_verification_status === "verified";
+                  const id = safeGet(creator, 'id');
+                  if (!id) return null;
+                  
+                  const bannerUrl = safeGet(creator, 'banner_url');
+                  const username = safeGet(creator, 'username');
+                  const avatarUrl = safeGet(creator, 'avatar_url');
+                  const bio = safeGet(creator, 'bio');
+                  const interests = safeGet(creator, 'interests') || [];
+                  const isVerified = safeGet(creator, 'id_verification_status') === "verified";
                   
                   return (
-                    <Card key={creator.id} className="overflow-hidden">
+                    <Card key={id} className="overflow-hidden">
                       <div
                         className="h-24 bg-cover bg-center"
                         style={{

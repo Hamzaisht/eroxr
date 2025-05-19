@@ -16,11 +16,11 @@ import { User, Settings, CreditCard, ArrowRightFromLine, Loader2, CircleUserRoun
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  applyEqualsFilter, 
+  applyEqualsFilter,
   asStringValue,
   asUUID,
   convertToStatus, 
-  getSafeProfile, 
+  getSafeProfile,
   getStatusForProfile, 
   prepareProfileStatusUpdate
 } from "@/utils/supabase/helpers";

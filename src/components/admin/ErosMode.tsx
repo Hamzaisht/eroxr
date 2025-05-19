@@ -51,7 +51,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { asColumnValue } from "@/utils/supabase/helpers";
+import { asColumnValue, asStringValue } from "@/utils/supabase/helpers";
 import { updateRecord, updateRecords } from "@/utils/supabase/recordUpdaters";
 
 interface Report {
@@ -273,7 +273,7 @@ export const ErosMode = () => {
         .limit(50);
 
       if (error) throw error;
-      return data as unknown as Report[];
+      return data as Report[];
     }
   });
 
@@ -294,11 +294,11 @@ export const ErosMode = () => {
         .limit(50);
 
       if (error) throw error;
-      return data as unknown as DMCARequest[];
+      return data as DMCARequest[];
     }
   });
 
-  const { data: classifications } = useQuery({
+  const { data: classificationsData } = useQuery({
     queryKey: ['admin-classifications'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -308,9 +308,12 @@ export const ErosMode = () => {
         .limit(50);
 
       if (error) throw error;
-      return data as ContentClassification[];
+      return data;
     }
   });
+
+  // Safe casting for the classifications data
+  const classifications: ContentClassification[] = classificationsData as unknown as ContentClassification[];
 
   const getStatusColor = (status: string) => {
     switch (status) {

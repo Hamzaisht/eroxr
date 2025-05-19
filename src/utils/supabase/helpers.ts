@@ -1,4 +1,3 @@
-
 import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { PostgrestFilterBuilder } from "@supabase/supabase-js";
@@ -14,26 +13,53 @@ type DatingAdCountry = Database['public']['Tables']['dating_ads']['Row']['countr
 type DatingAdUserType = Database['public']['Tables']['dating_ads']['Row']['user_type'];
 
 /**
- * Safely converts a value to the format expected by Supabase
- * This is a type assertion helper for column equality filters
+ * Generic type-safe helper for database column values
+ * Use for .eq(), .in(), etc. operations with proper type assertion
  */
-export function toDbValue<T>(value: T): T {
-  return value;
+export function asDatabaseColumnValue<T>(value: T): T {
+  return value as T;
 }
 
 /**
- * Type-safe helper for database column values 
- * Use for .eq(), .in(), etc. operations
- */
-export function asDatabaseColumnValue<T, K>(value: K): K {
-  return value;
-}
-
-/**
- * Safely converts a UUID string to the format expected by Supabase
+ * Safely converts a UUID string for use in database queries
  */
 export function asUUID(value: string): string {
-  return value;
+  return value as unknown as string;
+}
+
+/**
+ * Helper for casting boolean values for database queries
+ */
+export function asBooleanValue(value: boolean): boolean {
+  return value as unknown as boolean;
+}
+
+/**
+ * Helper for casting string values for database queries
+ */
+export function asStringValue(value: string): string {
+  return value as unknown as string;
+}
+
+/**
+ * Helper for dating_ads country enum value
+ */
+export function asDatingAdCountry(value: string): DatingAdCountry {
+  return value as unknown as DatingAdCountry;
+}
+
+/**
+ * Helper for dating_ads user_type enum value
+ */
+export function asDatingAdUserType(value: string): DatingAdUserType {
+  return value as unknown as DatingAdUserType;
+}
+
+/**
+ * Helper for profiles status value
+ */
+export function asProfileStatus(value: string): ProfileStatus {
+  return value as unknown as ProfileStatus;
 }
 
 /**
@@ -41,14 +67,6 @@ export function asUUID(value: string): string {
  */
 export function safeDataAccess<T, F>(data: T | null | undefined, fallback: F): T | F {
   return data !== null && data !== undefined ? data : fallback;
-}
-
-/**
- * Extract a profile object safely
- */
-export function extractProfile<T>(profile: T | null | undefined): T | null {
-  if (!profile) return null;
-  return profile;
 }
 
 /**
@@ -98,40 +116,6 @@ export function applyEqualsFilter<T = any>(
 }
 
 /**
- * Helper to construct typed insert data for followers
- */
-export function createFollowerData(followerId: string, followingId: string): FollowersInsert {
-  return {
-    follower_id: followerId,
-    following_id: followingId
-  } as FollowersInsert;
-}
-
-/**
- * Helper to construct typed insert data for subscriptions
- */
-export function createSubscriptionData(userId: string, creatorId: string): SubscriptionsInsert {
-  return {
-    user_id: userId,
-    creator_id: creatorId
-  } as SubscriptionsInsert;
-}
-
-/**
- * Type assertion helper for database tables
- */
-export function asDbUpdate<T = any>(data: any): T {
-  return data as T;
-}
-
-/**
- * Replace all instances of a string with another string
- */
-export function replaceAllString(str: string, find: string, replace: string): string {
-  return str.split(find).join(replace);
-}
-
-/**
  * Check if object is of error type
  */
 export function isErrorObject(obj: any): boolean {
@@ -170,9 +154,57 @@ export function getStatusForProfile(status: AvailabilityStatus): ProfileStatus {
  * Safe function to update profile status
  */
 export function prepareProfileStatusUpdate(status: AvailabilityStatus): ProfileUpdate {
+  const profileStatus = getStatusForProfile(status);
   return asProfileUpdate({
-    status: getStatusForProfile(status)
+    status: profileStatus
   });
+}
+
+// Helper functions for safely extracting creator information
+export function extractCreator(data: any) {
+  if (!data) return null;
+  return data.profiles || data.creator || null;
+}
+
+/**
+ * Helper function for safely accessing nested properties
+ */
+export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
+  return obj ? obj[key] : undefined;
+}
+
+/**
+ * Type assertion helper for database tables
+ */
+export function asDbUpdate<T = any>(data: any): T {
+  return data as T;
+}
+
+/**
+ * Helper to construct typed insert data for followers
+ */
+export function createFollowerData(followerId: string, followingId: string): FollowersInsert {
+  return {
+    follower_id: followerId,
+    following_id: followingId
+  } as FollowersInsert;
+}
+
+/**
+ * Helper to construct typed insert data for subscriptions
+ */
+export function createSubscriptionData(userId: string, creatorId: string): SubscriptionsInsert {
+  return {
+    user_id: userId,
+    creator_id: creatorId
+  } as SubscriptionsInsert;
+}
+
+/**
+ * Replace all instances of a string with another string
+ */
+export function replaceAllString(str: string, find: string, replace: string): string {
+  return str.split(find).join(replace);
 }
 
 /**
@@ -184,47 +216,10 @@ export function asColumnValue<T>(value: T): T {
 }
 
 /**
- * Helper for casting boolean values for database queries
- * For use with eq, in, etc. methods on supabase queries
- */
-export function asBooleanValue(value: boolean): boolean {
-  return asDatabaseColumnValue<boolean, boolean>(value);
-}
-
-/**
- * Helper for casting string values for database queries
- * For use with eq, in, etc. methods on supabase queries
- */
-export function asStringValue(value: string): string {
-  return asDatabaseColumnValue<string, string>(value);
-}
-
-/**
- * Helper for dating_ads country enum value
- */
-export function asDatingAdCountry(value: string): DatingAdCountry {
-  return value as DatingAdCountry;
-}
-
-/**
- * Helper for dating_ads user_type enum value
- */
-export function asDatingAdUserType(value: string): DatingAdUserType {
-  return value as DatingAdUserType;
-}
-
-/**
  * Strongly-typed helper function for updating profiles
  */
 export function prepareProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
   return asProfileUpdate(data);
-}
-
-/**
- * Helper function for safely accessing nested properties
- */
-export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
-  return obj ? obj[key] : undefined;
 }
 
 /**
@@ -258,12 +253,4 @@ export function asEnumValue<T extends string>(value: T): T {
  */
 export function updateRecord<T extends object>(table: string, id: string, update: T) {
   return { id, ...update };
-}
-
-/**
- * Extract creator information safely from related data
- */
-export function extractCreator(data: any) {
-  if (!data) return null;
-  return data.profiles || data.creator || null;
 }
