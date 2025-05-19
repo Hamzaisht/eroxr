@@ -18,6 +18,7 @@ type ProfileIsPayingCustomer = Database['public']['Tables']['profiles']['Row']['
 type ReportStatus = Database['public']['Tables']['reports']['Row']['status'];
 type IdVerificationStatus = Database['public']['Tables']['id_verifications']['Row']['status'];
 type LiveStreamStatus = Database['public']['Tables']['live_streams']['Row']['status'];
+type UserID = Database['public']['Tables']['profiles']['Row']['id'];
 
 /**
  * Generic type-safe helper for database column values
@@ -30,22 +31,22 @@ export function asDatabaseColumnValue<T>(value: T): T {
 /**
  * Safely converts a UUID string for use in database queries
  */
-export function asUUID(value: string): string {
-  return value as unknown as string;
+export function asUUID(value: string): UserID {
+  return value as unknown as UserID;
 }
 
 /**
  * Helper for casting boolean values for database queries
  */
-export function asBooleanValue(value: boolean): boolean {
-  return value as unknown as boolean;
+export function asBooleanValue<T extends boolean>(value: T): T {
+  return value as unknown as T;
 }
 
 /**
  * Helper for casting string values for database queries
  */
-export function asStringValue(value: string): string {
-  return value as unknown as string;
+export function asStringValue<T extends string>(value: T): T {
+  return value as unknown as T;
 }
 
 /**

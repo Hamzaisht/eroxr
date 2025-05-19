@@ -330,6 +330,37 @@ export const ErosMode = () => {
     }
   };
 
+  export const fetchReportSummary = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("reports")
+        .select(`
+          id,
+          content_type,
+          reason,
+          status,
+          created_at,
+          is_emergency,
+          reporter_id,
+          reported_id,
+          reporter:reporter_id(username),
+          reported:reported_id(username)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (error) {
+        throw error;
+      }
+
+      // Use as unknown as Report[] to fix the type conversion issue
+      return (data || []) as unknown as Report[];
+    } catch (error) {
+      console.error("Error fetching report summary:", error);
+      return [];
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">

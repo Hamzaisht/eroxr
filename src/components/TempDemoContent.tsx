@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +41,41 @@ interface Post {
     id_verification_status?: string | null;
   };
 }
+
+export const fetchProfileData = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching profile:", error);
+      return null;
+    }
+
+    const { data: subscriptionData } = await supabase
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .limit(1);
+
+    // Use proper type assertion for boolean values
+    const isPremium = subscriptionData && subscriptionData.length > 0;
+    const isPaying = data.is_paying_customer ? asProfileIsPayingCustomer(true) : asProfileIsPayingCustomer(false);
+
+    return {
+      ...data,
+      is_premium: isPremium,
+      is_paying_customer: isPaying,
+    };
+  } catch (error) {
+    console.error("Error in fetchProfileData:", error);
+    return null;
+  }
+};
 
 export const TempDemoContent: React.FC<DemoProps> = ({
   title,
