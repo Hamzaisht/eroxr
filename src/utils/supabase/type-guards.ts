@@ -1,5 +1,6 @@
 
 import { Database } from "@/integrations/supabase/types/database.types";
+import { PostgrestFilterBuilder } from "@supabase/supabase-js";
 
 // Type definitions for database tables
 export type Tables = Database['public']['Tables'];
@@ -29,8 +30,13 @@ export type PostUpdate = Tables['posts']['Update'];
 export type PostInsert = Tables['posts']['Insert'];
 
 export type ReportRow = Tables['reports']['Row'];
+export type ReportUpdate = Tables['reports']['Update'];
+export type ReportInsert = Tables['reports']['Insert'];
+
 export type LiveStreamRow = Tables['live_streams']['Row'];
 export type IdVerificationRow = Tables['id_verifications']['Row'];
+export type AdminLogRow = Tables['admin_logs']['Row'];
+export type AdminLogInsert = Tables['admin_logs']['Insert'];
 
 // Type-safe helpers for database operations
 export function safeProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
@@ -39,6 +45,14 @@ export function safeProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
 
 export function safePostInsert(data: Partial<PostInsert>): PostInsert {
   return data as PostInsert;
+}
+
+export function safeReportUpdate(data: Partial<ReportUpdate>): ReportUpdate {
+  return data as ReportUpdate;
+}
+
+export function safeAdminLogInsert(data: Partial<AdminLogInsert>): AdminLogInsert {
+  return data as AdminLogInsert;
 }
 
 // Type-safe filter helpers
@@ -78,6 +92,15 @@ export function safeUserSubscriptionUpdate(data: Partial<UserSubscriptionUpdate>
   return data as UserSubscriptionUpdate;
 }
 
+// NEW FUNCTION: Apply a type-safe equals filter to a query builder
+export function applyEqualsFilter<T extends object>(
+  query: PostgrestFilterBuilder<any, any, any>,
+  column: keyof T,
+  value: any
+): PostgrestFilterBuilder<any, any, any> {
+  return query.eq(column as string, value);
+}
+
 // Helper for safely getting properties
 export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K, fallback: T[K]): T[K] {
   return obj && obj[key] !== undefined ? obj[key] : fallback;
@@ -92,4 +115,9 @@ export function safeNestedGet<T, K extends keyof T, S extends keyof NonNullable<
 ): NonNullable<T[K]>[S] {
   if (!obj || obj[key1] === undefined || obj[key1] === null) return fallback;
   return (obj[key1] as any)[key2] ?? fallback;
+}
+
+// Helper function to check if an object is null or undefined
+export function isNullOrUndefined(value: any): value is null | undefined {
+  return value === null || value === undefined;
 }

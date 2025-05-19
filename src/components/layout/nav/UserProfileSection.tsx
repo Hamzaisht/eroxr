@@ -9,7 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvailabilityIndicator, AvailabilityStatus } from "@/components/ui/availability-indicator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { applyEqualsFilter, convertToStatus, getSafeProfile } from "@/utils/supabase/helpers";
+import { 
+  safeProfileFilter, 
+  applyEqualsFilter
+} from "@/utils/supabase/type-guards";
+import { convertToStatus, getSafeProfile } from "@/utils/supabase/helpers";
 
 interface UserProfileSectionProps {
   isExpanded: boolean;
