@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { toDbValue } from "@/utils/supabase/helpers"; 
+import { toDbValue } from "@/utils/supabase/type-guards"; 
 import { 
   Users, 
   MessageSquare, 

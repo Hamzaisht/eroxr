@@ -1,383 +1,488 @@
-
-import React, { useState } from 'react';
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
+import { formatDistanceToNow } from 'date-fns';
 import { 
-  asReportStatus, 
-  asColumnName
-} from '@/utils/supabase/helpers';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  AlertTriangle, 
   Ban, 
-  CheckCircle, 
-  Clock, 
-  Flag, 
-  MessageSquare, 
-  ShieldAlert, 
-  Trash2, 
-  User, 
-  X 
-} from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useSession } from '@supabase/auth-helpers-react';
-import { useToast } from '@/hooks/use-toast';
-import { Database } from '@/integrations/supabase/types/database.types';
+  EyeOff, 
+  FileJson, 
+  FileCog, 
+  Search, 
+  Download, 
+  Filter,
+  RotateCcw,
+  AlertTriangle,
+  Trash2,
+  X,
+  Check,
+  Info,
+  RefreshCw
+} from "lucide-react";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { safeReportUpdate, safeReportFilter, safeAdminLogInsert } from '@/utils/supabase/type-guards';
 
-// Define TypeScript interfaces for our data
-interface Report {
+interface ReportItem {
   id: string;
-  content_type: string;
-  reason: string;
-  status: string;
   created_at: string;
+  reason: string;
+  content_id: string;
+  content_type: string;
   is_emergency: boolean;
-  reporter_id: string;
-  reported_id: string;
-  reporter?: {
+  status: string;
+  profiles: {
     username: string;
-  };
-  reported?: {
-    username: string;
+    avatar_url: string;
+    id: string;
   };
 }
 
-export const ErosMode: React.FC = () => {
-  const [selectedTab, setSelectedTab] = useState('reports');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+export const ErosMode = () => {
   const session = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [actionReason, setActionReason] = useState("");
+  const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
+  const [actionType, setActionType] = useState<"approve" | "reject" | "delete" | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
 
-  // Fetch reports data
-  const { data: reportsData, isLoading: isLoadingReports } = useQuery({
-    queryKey: ['admin-reports'],
+  const { data, isLoading, error, isError, refetch } = useQuery({
+    queryKey: ["reports", searchQuery, statusFilter, currentPage],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('reports')
         .select(`
           id,
-          content_type,
-          reason,
-          status,
           created_at,
+          reason,
+          content_id,
+          content_type,
           is_emergency,
-          reporter_id,
-          reported_id,
-          reporter:reporter_id(username),
-          reported:reported_id(username)
+          status,
+          profiles (
+            id,
+            username,
+            avatar_url
+          )
         `)
         .order('created_at', { ascending: false });
-        
-      if (error) {
-        console.error('Error fetching reports:', error);
-        throw error;
+
+      if (searchQuery) {
+        query = query.ilike('reason', `%${searchQuery}%`);
       }
-      
-      // Safely cast the data to our Report type
-      return (data || []) as unknown as Report[];
-    }
+
+      if (statusFilter !== "all") {
+        query = query.eq('status', statusFilter);
+      }
+
+      const { data: reports, error, count } = await query
+        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
+
+      if (error) throw error;
+
+      return {
+        items: reports || [],
+        totalCount: count || 0,
+      };
+    },
   });
 
-  // Handle resolving reports
-  const handleResolveReport = async (reportId: string, action: 'approve' | 'reject' | 'delete') => {
-    if (!session?.user?.id) {
-      toast({
-        title: 'Authentication required',
-        description: 'You must be logged in to perform this action',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
+  const handleActionClick = (report: ReportItem, action: "approve" | "reject" | "delete") => {
+    setSelectedReport(report);
+    setActionType(action);
+    setActionDialogOpen(true);
+  };
+
+  const confirmAction = () => {
+    setActionDialogOpen(false);
+    setConfirmDialogOpen(true);
+  };
+
+  const executeAction = async () => {
+    if (!session?.user?.id || !selectedReport || !actionType) return;
+
     try {
-      const status = action === 'approve' ? 'resolved' : 'rejected';
-      
+      if (actionType === "delete") {
+        // Delete the content
+        const { error: deleteError } = await supabase
+          .from(selectedReport.content_type)
+          .delete()
+          .eq('id', selectedReport.content_id);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // Update the report
+      const updates = safeReportUpdate({ 
+        status: 'resolved', 
+        resolved_by: session.user.id 
+      });
+      const [reportColumn, reportValue] = safeReportFilter('id', selectedReport.id);
       const { error } = await supabase
         .from('reports')
-        .update({ 
-          status: asReportStatus(status),
-          resolved_by: session.user.id,
-        })
-        .eq(asColumnName<Database["public"]["Tables"]["reports"]["Row"]>("id"), reportId);
-        
+        .update(updates)
+        .eq(reportColumn, reportValue);
+
       if (error) throw error;
-      
-      // Log admin action
-      await supabase
-        .from('admin_logs')
-        .insert({
-          admin_id: session.user.id,
-          action: `report_${action}`,
-          action_type: 'moderation',
-          target_id: reportId,
-          target_type: 'report',
-          details: { action }
-        });
-        
-      toast({
-        title: 'Report updated',
-        description: `The report has been ${status}`,
+
+      // Log the admin action
+      const logData = safeAdminLogInsert({
+        admin_id: session.user.id,
+        action: actionType,
+        action_type: actionType,
+        target_id: selectedReport.id,
+        target_type: 'report',
+        details: { action: actionType }
       });
-      
-      // Invalidate reports query to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
-      
-    } catch (error: any) {
-      console.error('Error resolving report:', error);
+      const { error: logError } = await supabase.from('admin_logs').insert(logData);
+
+      if (logError) throw logError;
+
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update report status',
-        variant: 'destructive',
+        title: "Action successful",
+        description: `Report ${actionType}ed successfully`,
       });
-    }
-  };
-  
-  // Filter reports based on search and status
-  const filteredReports = reportsData?.filter(report => {
-    // Apply status filter
-    if (filterStatus !== 'all' && report.status !== filterStatus) {
-      return false;
-    }
-    
-    // Apply search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        report.content_type?.toLowerCase().includes(searchLower) ||
-        report.reason?.toLowerCase().includes(searchLower) ||
-        report.reporter?.username?.toLowerCase().includes(searchLower) ||
-        report.reported?.username?.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    return true;
-  }) || [];
-  
-  // Helper function to get badge color based on report status
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-600 text-white';
-      case 'resolved': return 'bg-green-600 text-white';
-      case 'rejected': return 'bg-gray-600 text-white';
-      default: return 'bg-gray-600 text-white';
+
+      setActionDialogOpen(false);
+      setConfirmDialogOpen(false);
+      setSelectedReport(null);
+      setActionType(null);
+      setActionReason("");
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+    } catch (err: any) {
+      console.error("Action error:", err);
+      toast({
+        title: "Action failed",
+        description: err.message || "Failed to perform action",
+        variant: "destructive",
+      });
     }
   };
 
-  // Helper function to get icon based on content type
-  const getContentTypeIcon = (type: string) => {
-    switch (type) {
-      case 'user': return <User className="h-4 w-4" />;
-      case 'post': return <MessageSquare className="h-4 w-4" />;
-      case 'message': return <MessageSquare className="h-4 w-4" />;
-      case 'profile': return <User className="h-4 w-4" />;
-      default: return <Flag className="h-4 w-4" />;
+  const exportAsJson = () => {
+    if (!data) return;
+
+    const jsonString = JSON.stringify(data.items, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = 'reports.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'open':
+        return <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">Open</Badge>;
+      case 'resolved':
+        return <Badge className="bg-green-500/20 text-green-500 border-green-500/30">Resolved</Badge>;
+      case 'pending':
+        return <Badge className="bg-gray-500/20 text-gray-500 border-gray-500/30">Pending</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  if (isLoading) {
+    return <LoadingState message="Loading reports..." />;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh]">
+        <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+        <h3 className="text-xl font-semibold mb-2">Failed to load reports</h3>
+        <p className="text-gray-500 mb-4">
+          {error instanceof Error ? error.message : "An unknown error occurred"}
+        </p>
+        <Button onClick={() => refetch()} variant="outline">
+          <RefreshCw className="w-4 h-4 mr-2" /> Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center">
-            <ShieldAlert className="mr-2 h-6 w-6 text-red-500" />
-            EROS Mode
-          </h1>
-          <p className="text-muted-foreground">Advanced content moderation and administrative tools</p>
+    <div className="space-y-4">
+      <div className="flex flex-col lg:flex-row justify-between gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search by reason..."
+            className="pl-10 bg-gray-950"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-      </header>
-      
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-        <TabsList className="grid grid-cols-3">
-          <TabsTrigger value="reports" className="relative">
-            Reports
-            {reportsData?.filter(r => r.status === 'pending').length ? (
-              <Badge variant="destructive" className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                {reportsData?.filter(r => r.status === 'pending').length}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="content">Content Review</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="reports" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              placeholder="Search reports..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="sm:max-w-sm"
-            />
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="sm:w-[180px]">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex flex-wrap gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px] bg-gray-950">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="resolved">Resolved</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={exportAsJson} variant="outline" className="gap-2">
+            <FileJson className="h-4 w-4" />
+            JSON
+          </Button>
+        </div>
+      </div>
+
+      <div className="rounded-md border border-gray-800 overflow-hidden">
+        <Table>
+          <TableHeader className="bg-gray-950">
+            <TableRow>
+              <TableHead>Reason</TableHead>
+              <TableHead>Content Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Reporter</TableHead>
+              <TableHead>Time</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.items.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center text-gray-400">
+                  No reports found
+                </TableCell>
+              </TableRow>
+            ) : (
+              data?.items.map((report) => (
+                <TableRow key={report.id}>
+                  <TableCell className="max-w-[200px] truncate" title={report.reason}>
+                    {report.reason}
+                  </TableCell>
+                  <TableCell className="capitalize">{report.content_type}</TableCell>
+                  <TableCell>{getStatusBadge(report.status)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                        {report.profiles?.avatar_url ? (
+                          <img 
+                            src={report.profiles.avatar_url} 
+                            alt={report.profiles.username} 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-xs text-gray-300">
+                            {report.profiles?.username?.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <span>{report.profiles?.username}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{formatDistanceToNow(new Date(report.created_at), { addSuffix: true })}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-8 w-8 p-0 text-green-500"
+                              onClick={() => handleActionClick(report, "approve")}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Approve Report</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-500"
+                              onClick={() => handleActionClick(report, "reject")}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Reject Report</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600"
+                              onClick={() => handleActionClick(report, "delete")}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Delete Content</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-400">
+          Showing {Math.min(itemsPerPage, data?.items.length || 0)} of {data?.totalCount} reports
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={(data?.items.length || 0) < itemsPerPage}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+
+      <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === "approve" ? "Approve Report" : actionType === "reject" ? "Reject Report" : "Delete Content"}
+            </DialogTitle>
+            <DialogDescription>
+              {actionType === "approve"
+                ? "This will approve the report and take action on the content."
+                : actionType === "reject"
+                  ? "This will reject the report and no action will be taken."
+                  : "This will delete the content from the platform."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Reason for action</h4>
+              <Textarea
+                placeholder={`Explain why you're ${actionType === "approve" ? "approving" : actionType === "reject" ? "rejecting" : "deleting"} this report...`}
+                value={actionReason}
+                onChange={(e) => setActionReason(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+            {selectedReport && (
+              <div className="space-y-2 p-3 rounded-md bg-gray-950">
+                <h4 className="text-sm font-medium">Report Information</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-gray-400">Reported By:</span>
+                  <span>{selectedReport.profiles?.username}</span>
+                  <span className="text-gray-400">Content Type:</span>
+                  <span>{selectedReport.content_type}</span>
+                  <span className="text-gray-400">Reason:</span>
+                  <span>{selectedReport.reason}</span>
+                </div>
+              </div>
+            )}
           </div>
-          
-          {isLoadingReports ? (
-            <div className="flex justify-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
-            </div>
-          ) : filteredReports.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="pt-6 text-center">
-                <p className="text-muted-foreground">No reports match your criteria</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {filteredReports.map((report) => (
-                <Card key={report.id} className={report.is_emergency ? 'border-red-500' : ''}>
-                  <CardHeader className="p-4 pb-2 flex flex-row justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        {getContentTypeIcon(report.content_type)}
-                        {report.content_type}
-                      </Badge>
-                      <Badge className={getStatusColor(report.status)}>
-                        {report.status}
-                      </Badge>
-                      {report.is_emergency && (
-                        <Badge variant="destructive" className="flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          Emergency
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(report.created_at).toLocaleString()}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0 space-y-3">
-                    <div>
-                      <h3 className="font-medium">Reason:</h3>
-                      <p>{report.reason}</p>
-                    </div>
-                    
-                    <div className="flex items-center gap-8">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Reported by:</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback>{report.reporter?.username?.[0] || '?'}</AvatarFallback>
-                          </Avatar>
-                          <span>{report.reporter?.username || 'Unknown'}</span>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <p className="text-xs text-muted-foreground">Reported user:</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback>{report.reported?.username?.[0] || '?'}</AvatarFallback>
-                          </Avatar>
-                          <span>{report.reported?.username || 'Unknown'}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {report.status === 'pending' && (
-                      <div className="flex items-center gap-2 pt-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="default"
-                                className="bg-green-600 hover:bg-green-700"
-                                onClick={() => handleResolveReport(report.id, 'approve')}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Resolve
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Mark as resolved and take action</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleResolveReport(report.id, 'reject')}
-                              >
-                                <X className="h-4 w-4 mr-1" />
-                                Dismiss
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Dismiss this report</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleResolveReport(report.id, 'delete')}
-                              >
-                                <Ban className="h-4 w-4 mr-1" />
-                                Ban User
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Ban the reported user</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="content">
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-medium">Content Review</h3>
-            </CardHeader>
-            <CardContent>
-              <p>Content moderation tools will appear here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="users">
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-medium">User Management</h3>
-            </CardHeader>
-            <CardContent>
-              <p>User management tools will appear here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setActionDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmAction} disabled={!actionReason}>
+              Confirm {actionType}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Moderation Action</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {actionType} this report?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={executeAction}>
+              {actionType === "approve" ? <Check className="mr-2 h-4 w-4" /> : actionType === "reject" ? <X className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Confirm {actionType}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

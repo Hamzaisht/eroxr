@@ -113,7 +113,7 @@ export function UserMenu() {
     
     try {
       // Convert the enum status to a valid database status value
-      let dbStatus: Database["public"]["Tables"]["profiles"]["Update"]["status"];
+      let dbStatus: string;
       switch (newStatus) {
         case AvailabilityStatus.ONLINE:
           dbStatus = "online";

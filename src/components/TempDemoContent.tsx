@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from '@tanstack/react-query';
@@ -32,6 +31,14 @@ export const TempDemoContent = () => {
   const [canChangeUsername, setCanChangeUsername] = useState(true);
   const [lastUsernameChange, setLastUsernameChange] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
+
+  // Adding this function to safely handle potential errors in data responses
+  const safeGetId = (data: any): string | null => {
+    if (!data) return null;
+    if ('error' in data) return null;
+    if ('id' in data) return data.id;
+    return null;
+  };
 
   // Fetch user profile with subscriptions
   const { data: profileData } = useQuery({

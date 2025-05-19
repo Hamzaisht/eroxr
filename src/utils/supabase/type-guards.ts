@@ -56,35 +56,35 @@ export function safeAdminLogInsert(data: Partial<AdminLogInsert>): AdminLogInser
 }
 
 // Type-safe filter helpers
-export function safeStoryFilter(column: keyof StoryRow, value: any): [string, any] {
+export function safeStoryFilter<K extends keyof StoryRow>(column: K, value: StoryRow[K]): [string, any] {
   return [column as string, value];
 }
 
-export function safeDatingAdFilter(column: keyof DatingAdRow, value: any): [string, any] {
+export function safeDatingAdFilter<K extends keyof DatingAdRow>(column: K, value: DatingAdRow[K]): [string, any] {
   return [column as string, value];
 }
 
-export function safeSubscriptionFilter(column: keyof SubscriptionRow, value: any): [string, any] {
+export function safeSubscriptionFilter<K extends keyof SubscriptionRow>(column: K, value: SubscriptionRow[K]): [string, any] {
   return [column as string, value];
 }
 
-export function safeUserSubscriptionFilter(column: keyof UserSubscriptionRow, value: any): [string, any] {
+export function safeUserSubscriptionFilter<K extends keyof UserSubscriptionRow>(column: K, value: UserSubscriptionRow[K]): [string, any] {
   return [column as string, value];
 }
 
-export function safeProfileFilter(column: keyof ProfileRow, value: any): [string, any] {
+export function safeProfileFilter<K extends keyof ProfileRow>(column: K, value: ProfileRow[K]): [string, any] {
   return [column as string, value];
 }
 
-export function safeReportFilter(column: keyof ReportRow, value: any): [string, any] {
+export function safeReportFilter<K extends keyof ReportRow>(column: K, value: ReportRow[K]): [string, any] {
   return [column as string, value];
 }
 
-export function safeLiveStreamFilter(column: keyof LiveStreamRow, value: any): [string, any] {
+export function safeLiveStreamFilter<K extends keyof LiveStreamRow>(column: K, value: LiveStreamRow[K]): [string, any] {
   return [column as string, value];
 }
 
-export function safeIdVerificationFilter(column: keyof IdVerificationRow, value: any): [string, any] {
+export function safeIdVerificationFilter<K extends keyof IdVerificationRow>(column: K, value: IdVerificationRow[K]): [string, any] {
   return [column as string, value];
 }
 
@@ -92,7 +92,7 @@ export function safeUserSubscriptionUpdate(data: Partial<UserSubscriptionUpdate>
   return data as UserSubscriptionUpdate;
 }
 
-// NEW FUNCTION: Apply a type-safe equals filter to a query builder
+// Apply a type-safe equals filter to a query builder
 export function applyEqualsFilter<T extends object>(
   query: PostgrestFilterBuilder<any, any, any>,
   column: keyof T,
@@ -120,4 +120,24 @@ export function safeNestedGet<T, K extends keyof T, S extends keyof NonNullable<
 // Helper function to check if an object is null or undefined
 export function isNullOrUndefined(value: any): value is null | undefined {
   return value === null || value === undefined;
+}
+
+// Helper for database value conversions (needed by GodmodeDashboardHome.tsx)
+export function toDbValue(value: any): any {
+  return value;
+}
+
+// Safely handle possible errors in data responses
+export function safeDataAccess<T>(data: T | null | undefined): T | null {
+  return data !== null && data !== undefined ? data : null;
+}
+
+// Helper to safely access nested properties that may not exist
+export function safePropertyAccess<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
+  return obj ? obj[key] : undefined;
+}
+
+// Type-safe helper for creating update payloads
+export function createUpdatePayload<T>(data: T): T {
+  return data;
 }
