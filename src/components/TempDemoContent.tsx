@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { extractCreator } from "@/utils/supabase/helpers";
+import { asBooleanValue, extractCreator, safeCast, safeDataAccess } from "@/utils/supabase/helpers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +13,28 @@ interface DemoProps {
   title: string;
   description?: string;
   children?: React.ReactNode;
+}
+
+interface CreatorProfile {
+  id: string;
+  username?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
+  banner_url?: string | null;
+  interests?: string[] | null;
+  id_verification_status?: string | null;
+}
+
+interface Post {
+  id: string;
+  content: string;
+  media_url?: string[] | null;
+  created_at: string;
+  profiles?: {
+    username?: string | null;
+    avatar_url?: string | null;
+    id_verification_status?: string | null;
+  };
 }
 
 export const TempDemoContent: React.FC<DemoProps> = ({
@@ -30,12 +52,11 @@ export const TempDemoContent: React.FC<DemoProps> = ({
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        // Changed to avoid string literal in role column
-        .eq("is_paying_customer", true)
+        .eq("is_paying_customer", asBooleanValue(true))
         .limit(5);
 
       if (error) throw error;
-      return data || [];
+      return safeCast<CreatorProfile>(data);
     },
   });
 
@@ -53,12 +74,12 @@ export const TempDemoContent: React.FC<DemoProps> = ({
         .limit(3);
 
       if (error) throw error;
-      return data || [];
+      return safeCast<Post>(data);
     },
   });
 
   // Safely handle posts data
-  const posts = Array.isArray(postsData) ? postsData : [];
+  const posts = safeDataAccess(postsData, []);
 
   useEffect(() => {
     // Simulate loading state
@@ -113,14 +134,19 @@ export const TempDemoContent: React.FC<DemoProps> = ({
             {activeTab === "feed" && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {posts.map((post) => {
-                  // Use a safe way to access profiles property
+                  // Safe access to post properties
+                  const id = post?.id;
+                  const mediaUrl = post?.media_url;
                   const postProfiles = post?.profiles;
+
+                  if (!id) return null; // Skip invalid posts
+
                   return (
-                    <Card key={post?.id} className="overflow-hidden">
-                      {post?.media_url && post.media_url[0] && (
+                    <Card key={id} className="overflow-hidden">
+                      {mediaUrl && mediaUrl[0] && (
                         <div className="aspect-video bg-muted">
                           <img
-                            src={post.media_url[0]}
+                            src={mediaUrl[0]}
                             alt="Post media"
                             className="w-full h-full object-cover"
                           />
@@ -167,58 +193,69 @@ export const TempDemoContent: React.FC<DemoProps> = ({
               </div>
             )}
 
-            {activeTab === "explore" && creators && (
+            {activeTab === "explore" && creators && creators.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {creators.map((creator) => (
-                  <Card key={creator?.id} className="overflow-hidden">
-                    <div
-                      className="h-24 bg-cover bg-center"
-                      style={{
-                        backgroundImage: creator?.banner_url
-                          ? `url(${creator.banner_url})`
-                          : "linear-gradient(to right, #4a5568, #2d3748)",
-                      }}
-                    />
-                    <CardHeader className="pt-0 relative">
-                      <div className="absolute -top-12 left-4 border-4 border-background rounded-full">
-                        <Avatar className="h-20 w-20">
-                          <AvatarImage
-                            src={creator?.avatar_url || ""}
-                            alt={creator?.username || "Creator"}
-                          />
-                          <AvatarFallback>
-                            {(creator?.username || "C")[0]?.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                      <div className="pt-10">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-bold">
-                            {creator?.username || "Anonymous Creator"}
-                          </h3>
-                          {creator?.id_verification_status === "verified" && (
-                            <Check className="h-4 w-4 text-blue-500" />
-                          )}
+                {creators.map((creator) => {
+                  if (!creator?.id) return null;
+                  
+                  const bannerUrl = creator?.banner_url;
+                  const username = creator?.username;
+                  const avatarUrl = creator?.avatar_url;
+                  const bio = creator?.bio;
+                  const interests = creator?.interests;
+                  const isVerified = creator?.id_verification_status === "verified";
+                  
+                  return (
+                    <Card key={creator.id} className="overflow-hidden">
+                      <div
+                        className="h-24 bg-cover bg-center"
+                        style={{
+                          backgroundImage: bannerUrl
+                            ? `url(${bannerUrl})`
+                            : "linear-gradient(to right, #4a5568, #2d3748)",
+                        }}
+                      />
+                      <CardHeader className="pt-0 relative">
+                        <div className="absolute -top-12 left-4 border-4 border-background rounded-full">
+                          <Avatar className="h-20 w-20">
+                            <AvatarImage
+                              src={avatarUrl || ""}
+                              alt={username || "Creator"}
+                            />
+                            <AvatarFallback>
+                              {(username || "C")[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {creator?.bio || "No bio available"}
-                        </p>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-1">
-                        {creator?.interests?.slice(0, 3).map((interest, i) => (
-                          <Badge key={i} variant="secondary">
-                            {interest}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full">View Profile</Button>
-                    </CardFooter>
-                  </Card>
-                ))}
+                        <div className="pt-10">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold">
+                              {username || "Anonymous Creator"}
+                            </h3>
+                            {isVerified && (
+                              <Check className="h-4 w-4 text-blue-500" />
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {bio || "No bio available"}
+                          </p>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap gap-1">
+                          {interests?.slice(0, 3).map((interest, i) => (
+                            <Badge key={i} variant="secondary">
+                              {interest}
+                            </Badge>
+                          ))}
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button className="w-full">View Profile</Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
               </div>
             )}
 

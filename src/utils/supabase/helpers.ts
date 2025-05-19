@@ -8,11 +8,24 @@ type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 type FollowersInsert = Database['public']['Tables']['followers']['Insert'];
 type SubscriptionsInsert = Database['public']['Tables']['creator_subscriptions']['Insert'];
 
+// Database specific column types
+type ProfileStatus = 'online' | 'offline' | 'away' | 'busy' | null;
+type DatingAdCountry = Database['public']['Tables']['dating_ads']['Row']['country'];
+type DatingAdUserType = Database['public']['Tables']['dating_ads']['Row']['user_type'];
+
 /**
  * Safely converts a value to the format expected by Supabase
  * This is a type assertion helper for column equality filters
  */
 export function toDbValue<T>(value: T): T {
+  return value;
+}
+
+/**
+ * Type-safe helper for database column values 
+ * Use for .eq(), .in(), etc. operations
+ */
+export function asDatabaseColumnValue<T, K>(value: K): K {
   return value;
 }
 
@@ -81,7 +94,7 @@ export function applyEqualsFilter<T = any>(
   column: string,
   value: any
 ): PostgrestFilterBuilder<T> {
-  return query.eq(column, toDbValue(value));
+  return query.eq(column, asDatabaseColumnValue(value));
 }
 
 /**
@@ -145,21 +158,21 @@ export function getSafeProfile(profile: any) {
 /**
  * Get enum-compatible status value for profiles
  */
-export function getStatusForProfile(status: AvailabilityStatus): 'online' | 'offline' | 'away' | 'busy' {
+export function getStatusForProfile(status: AvailabilityStatus): ProfileStatus {
   // Convert enum value to lowercase and handle the 'invisible' case
   const statusString = status.toString().toLowerCase();
   if (statusString === 'invisible') return 'offline';
   
-  return statusString as 'online' | 'offline' | 'away' | 'busy';
+  return statusString as ProfileStatus;
 }
 
 /**
  * Safe function to update profile status
  */
 export function prepareProfileStatusUpdate(status: AvailabilityStatus): ProfileUpdate {
-  return {
+  return asProfileUpdate({
     status: getStatusForProfile(status)
-  };
+  });
 }
 
 /**
@@ -175,7 +188,7 @@ export function asColumnValue<T>(value: T): T {
  * For use with eq, in, etc. methods on supabase queries
  */
 export function asBooleanValue(value: boolean): boolean {
-  return value;
+  return asDatabaseColumnValue<boolean, boolean>(value);
 }
 
 /**
@@ -183,14 +196,28 @@ export function asBooleanValue(value: boolean): boolean {
  * For use with eq, in, etc. methods on supabase queries
  */
 export function asStringValue(value: string): string {
-  return value;
+  return asDatabaseColumnValue<string, string>(value);
+}
+
+/**
+ * Helper for dating_ads country enum value
+ */
+export function asDatingAdCountry(value: string): DatingAdCountry {
+  return value as DatingAdCountry;
+}
+
+/**
+ * Helper for dating_ads user_type enum value
+ */
+export function asDatingAdUserType(value: string): DatingAdUserType {
+  return value as DatingAdUserType;
 }
 
 /**
  * Strongly-typed helper function for updating profiles
  */
 export function prepareProfileUpdate(data: Partial<ProfileUpdate>): ProfileUpdate {
-  return data as ProfileUpdate;
+  return asProfileUpdate(data);
 }
 
 /**

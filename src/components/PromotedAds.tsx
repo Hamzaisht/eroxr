@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { VideoProfileCard } from '@/components/ads/video-profile-card';
 import { supabase } from '@/integrations/supabase/client';
-import { safeCast } from '@/utils/supabase/helpers';
+import { asBooleanValue, asDatingAdCountry, asDatingAdUserType, asStringValue, safeCast } from '@/utils/supabase/helpers';
 
 interface ProfileData {
   username?: string;
@@ -54,10 +54,10 @@ export const PromotedAds = () => {
             id_verification_status
           )
         `)
-        .eq('is_active', true)
-        .eq('country', 'denmark')
-        .eq('moderation_status', 'approved')
-        .eq('user_type', 'premium')
+        .eq('is_active', asBooleanValue(true))
+        .eq('country', asDatingAdCountry('denmark'))
+        .eq('moderation_status', asStringValue('approved'))
+        .eq('user_type', asDatingAdUserType('premium'))
         .order('created_at', { ascending: false })
         .limit(3);
 

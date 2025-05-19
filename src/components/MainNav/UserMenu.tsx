@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   applyEqualsFilter, 
   asStringValue,
+  asUUID,
   convertToStatus, 
   getSafeProfile, 
   getStatusForProfile, 
@@ -47,7 +48,7 @@ export function UserMenu() {
         .from('profiles')
         .select('*');
         
-      const { data, error } = await applyEqualsFilter(query, "id", session.user.id)
+      const { data, error } = await applyEqualsFilter(query, "id", asUUID(session.user.id))
         .single();
         
       if (error) {
@@ -120,7 +121,7 @@ export function UserMenu() {
         .from('profiles')
         .update(statusUpdate);
         
-      const { error } = await applyEqualsFilter(query, "id", session.user.id);
+      const { error } = await applyEqualsFilter(query, "id", asUUID(session.user.id));
         
       if (error) {
         console.error('Error updating status:', error);
