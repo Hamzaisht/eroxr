@@ -16,15 +16,15 @@ import { User, Settings, CreditCard, ArrowRightFromLine, Loader2, CircleUserRoun
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  AvailabilityStatus,
-  convertToStatus,
-  getSafeProfile,
+  getSafeProfile, 
   prepareProfileStatusUpdate
 } from "@/utils/supabase/helpers";
+import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Database } from "@/integrations/supabase/types/database.types";
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -62,7 +62,7 @@ export function UserMenu() {
   // Initialize status from profile data
   useState(() => {
     if (safeProfile?.status) {
-      setCurrentStatus(convertToStatus(safeProfile.status));
+      setCurrentStatus(safeProfile.status as unknown as AvailabilityStatus);
     }
   });
 

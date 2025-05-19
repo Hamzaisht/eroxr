@@ -4,8 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StoryCard } from "./story/StoryCard";
 import { 
-  StoryRow,
-  StoryColumns,
   safeCast, 
   safeDataAccess 
 } from "@/utils/supabase/helpers";
@@ -34,7 +32,7 @@ export const StoryReel = () => {
           created_at,
           profiles:creator_id(username, avatar_url)
         `)
-        .eq("is_active" as StoryColumns, true)
+        .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

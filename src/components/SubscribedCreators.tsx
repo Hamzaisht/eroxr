@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
-import { asUUID, safeCast } from "@/utils/supabase/helpers";
+import { safeCast } from "@/utils/supabase/helpers";
 import { Database } from "@/integrations/supabase/types/database.types";
 
 interface Creator {

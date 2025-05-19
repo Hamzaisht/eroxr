@@ -7,7 +7,6 @@ import {
   safeCast
 } from '@/utils/supabase/helpers';
 import { Database } from "@/integrations/supabase/types/database.types";
-import { DatingAdRow } from '@/utils/supabase/helpers';
 
 interface ProfileData {
   username?: string;

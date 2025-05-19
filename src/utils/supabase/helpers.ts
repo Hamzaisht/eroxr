@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { PostgrestFilterBuilder } from "@supabase/supabase-js";
@@ -128,26 +129,6 @@ export function safeDataAccess<T, F>(data: T | null | undefined, fallback: F): T
 export function safeCast<T>(data: any): T[] {
   if (!data || isErrorObject(data)) return [];
   return data as T[];
-}
-
-/**
- * Convert status string to AvailabilityStatus enum
- */
-export function convertToStatus(status?: string | null): AvailabilityStatus {
-  if (!status) return AvailabilityStatus.OFFLINE;
-  
-  switch (status.toLowerCase()) {
-    case 'online':
-      return AvailabilityStatus.ONLINE;
-    case 'away':
-      return AvailabilityStatus.AWAY;
-    case 'busy':
-      return AvailabilityStatus.BUSY;
-    case 'invisible':
-      return AvailabilityStatus.INVISIBLE;
-    default:
-      return AvailabilityStatus.OFFLINE;
-  }
 }
 
 /**
