@@ -1,10 +1,10 @@
 
 /**
- * Utility functions for working with age ranges in dating filters
+ * Extract values from age range union type
+ * @param ageRange Age range as object or tuple
+ * @returns Consistent object with lower and upper values
  */
-
-// Extract lower and upper values from age range regardless of its format
-export function getAgeRangeBounds(ageRange: { lower: number; upper: number } | [number, number] | undefined): { lower: number; upper: number } {
+export function getAgeRangeValues(ageRange?: { lower: number; upper: number } | [number, number]): { lower: number; upper: number } {
   if (!ageRange) {
     return { lower: 18, upper: 99 };
   }
@@ -14,16 +14,4 @@ export function getAgeRangeBounds(ageRange: { lower: number; upper: number } | [
   }
   
   return ageRange;
-}
-
-// Format the age range for display
-export function formatAgeRange(ageRange: { lower: number; upper: number } | [number, number] | undefined): string {
-  const { lower, upper } = getAgeRangeBounds(ageRange);
-  return `${lower}-${upper}`;
-}
-
-// Check if an age falls within a range
-export function isAgeInRange(age: number, ageRange: { lower: number; upper: number } | [number, number] | undefined): boolean {
-  const { lower, upper } = getAgeRangeBounds(ageRange);
-  return age >= lower && age <= upper;
 }

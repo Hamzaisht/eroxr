@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
@@ -8,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search as SearchIcon } from 'lucide-react';
 
-export default function Search() {
+export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
-  const [results, setResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const resultsPerPage = 12;
@@ -37,10 +36,10 @@ export default function Search() {
         .limit(resultsPerPage);
       
       if (error) throw error;
-      setResults(data || []);
+      setSearchResults(data || []);
     } catch (error) {
       console.error('Search error:', error);
-      setResults([]);
+      setSearchResults([]);
     } finally {
       setIsLoading(false);
     }
@@ -56,10 +55,10 @@ export default function Search() {
         .limit(resultsPerPage);
       
       if (error) throw error;
-      setResults(data || []);
+      setSearchResults(data || []);
     } catch (error) {
       console.error('Error loading popular creators:', error);
-      setResults([]);
+      setSearchResults([]);
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +74,7 @@ export default function Search() {
   };
 
   return (
-    <div className="container py-8">
+    <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-4">Search</h1>
       
       {/* Search Form */}
@@ -106,21 +105,20 @@ export default function Search() {
               <div key={i} className="bg-luxury-darker/50 h-48 rounded-lg animate-pulse"></div>
             ))}
           </div>
-        ) : results.length === 0 ? (
+        ) : searchResults.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-gray-500">No results found.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {results.map((creator) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {searchResults.map((creator) => (
               <CreatorCard
                 key={creator.id}
-                id={creator.id}
-                name={creator.username}
-                image={creator.avatar_url}
-                banner={creator.banner_url || ""}
-                description={creator.bio}
-                subscribers={creator.subscriber_count || 0}
+                username={creator.username}
+                avatarUrl={creator.avatar_url}
+                bannerUrl={creator.banner_url}
+                bio={creator.bio}
+                subscriberCount={creator.subscriber_count || 0}
                 creatorId={creator.id}
               />
             ))}
@@ -129,7 +127,7 @@ export default function Search() {
       </div>
       
       {/* Pagination */}
-      {results.length > 0 && (
+      {searchResults.length > 0 && (
         <div className="flex justify-center mt-8">
           <Button 
             variant="outline"

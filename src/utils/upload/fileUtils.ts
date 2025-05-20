@@ -16,6 +16,20 @@ export function revokeFilePreview(preview: string): void {
 }
 
 /**
+ * Generate a unique file path for storage
+ * @param userId User ID for path prefix
+ * @param file File to create path for
+ * @returns Unique file path with timestamp
+ */
+export function createUniqueFilePath(userId: string, file: File): string {
+  const timestamp = new Date().getTime();
+  const randomString = Math.random().toString(36).substring(2, 10);
+  const fileExtension = file.name.split('.').pop();
+  
+  return `${userId}/${timestamp}-${randomString}.${fileExtension}`;
+}
+
+/**
  * Runs diagnostic checks on a file to ensure it meets requirements
  */
 export function runFileDiagnostic(file: File, options?: { 

@@ -1,34 +1,27 @@
 
-import { motion } from 'framer-motion';
-import { Award, CheckCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { DatingAd } from '../types/dating';
+import { Shield, Award } from "lucide-react";
 
 interface ProfileBadgesProps {
-  ad: DatingAd;
+  isPremium: boolean;
+  isVerified: boolean;
 }
 
-export const ProfileBadges = ({ ad }: ProfileBadgesProps) => {
+export const ProfileBadges = ({ isPremium, isVerified }: ProfileBadgesProps) => {
   return (
-    <motion.div 
-      className="absolute top-3 right-3 z-30 flex flex-col gap-2"
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.2 }}
-    >
-      {(ad.isPremium || ad.is_premium) && (
-        <Badge className="bg-gradient-to-r from-purple-500 to-purple-700 text-white px-3 py-1 flex items-center gap-1 shadow-lg">
-          <Award className="w-3.5 h-3.5" />
-          <span>Premium</span>
-        </Badge>
+    <div className="absolute top-4 right-4 flex space-x-2">
+      {isVerified && (
+        <div className="bg-green-500/20 text-green-500 text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+          <Shield className="h-3 w-3" />
+          <span>Verified</span>
+        </div>
       )}
       
-      {(ad.isVerified || ad.is_verified) && (
-        <Badge className="bg-gradient-to-r from-green-500 to-green-700 text-white px-3 py-1 flex items-center gap-1 shadow-lg">
-          <CheckCircle className="w-3.5 h-3.5" />
-          <span>Verified</span>
-        </Badge>
+      {isPremium && (
+        <div className="bg-luxury-primary/20 text-luxury-primary text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+          <Award className="h-3 w-3" />
+          <span>Premium</span>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 };

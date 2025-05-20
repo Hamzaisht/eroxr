@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
@@ -70,7 +71,9 @@ export function useStoryUpload() {
         throw error;
       }
       
-      const videoUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.Key}`;
+      // Fixed: Use proper access to data object
+      const storageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/videos/`;
+      const videoUrl = `${storageUrl}${data.path}`;
       
       // Update user profile with video URL
       const { error: updateError } = await supabase

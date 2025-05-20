@@ -1,3 +1,4 @@
+
 // Updating the relevant parts only to fix type errors
 import { useState, useEffect, useMemo } from "react";
 import { DatingFiltersPanel } from "../components/dating/DatingFiltersPanel";
@@ -33,7 +34,7 @@ export interface DatingContentProps {
   datingAds: DatingAd[];
   isLoading: boolean;
   activeTab: string;
-  userProfile: DatingAd;
+  userProfile: DatingAd | null;
   handleAdCreationSuccess: () => void;
   handleTagClick: (tag: string) => void;
   handleTabChange: (tab: string) => void;
@@ -260,16 +261,16 @@ export default function DatingMainContent() {
         isFilterApplied={isFilterApplied}
         handleApplyFilters={handleApplyFilters}
         handleResetFilters={handleResetFilters}
-        selectedCity={selectedCity as string | undefined}
-        setSelectedCity={setSelectedCity as ((city: string) => void) | undefined}
+        selectedCity={selectedCity}
+        setSelectedCity={setSelectedCity}
       />
       
       {/* Content Section */}
       <DatingContent 
-        datingAds={filteredAds}
+        datingAds={filteredAds || []}
         isLoading={isLoading}
         activeTab={selectedTab}
-        userProfile={userProfile as any}
+        userProfile={userProfile}
         handleAdCreationSuccess={fetchDatingAds}
         handleTagClick={handleTagClick}
         handleTabChange={setSelectedTab}

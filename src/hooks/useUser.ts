@@ -1,20 +1,33 @@
 
-import { useState, useEffect } from "react";
-import { useSession } from '@supabase/auth-helpers-react';
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+
+interface User {
+  id: string;
+  username?: string;
+  email?: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+}
 
 export function useUser() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const session = useSession();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const supabase = useSupabaseClient();
   
   useEffect(() => {
-    if (!session?.user?.id) {
-      setLoading(false);
-      return;
-    }
-    
-    async function fetchUserProfile() {
+    const fetchUser = async () => {
+      if (!session?.user) {
+        setCurrentUser(null);
+        setIsLoading(false);
+        return;
+      }
+      
+      setIsLoading(true);
+      
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -23,19 +36,26 @@ export function useUser() {
           .single();
           
         if (error) {
-          console.error('Error fetching user profile:', error);
-        } else {
-          setUser(data);
+          throw error;
         }
-      } catch (error) {
-        console.error('Unexpected error fetching user profile:', error);
+        
+        setCurrentUser({
+          id: session.user.id,
+          username: data?.username,
+          email: session.user.email,
+          avatar_url: data?.avatar_url,
+          is_verified: data?.is_verified
+        });
+      } catch (err: any) {
+        console.error('Error fetching user:', err);
+        setError(err.message);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
-    }
+    };
     
-    fetchUserProfile();
-  }, [session]);
+    fetchUser();
+  }, [session, supabase]);
   
-  return { user, loading };
+  return { currentUser, isLoading, error };
 }

@@ -1,53 +1,37 @@
 
-import { Play } from "lucide-react";
-import { Message } from "./MessageBubbleContent";
+import { Camera, Timer } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SnapPreviewProps {
-  message: Message;
-  onSnapView?: () => Promise<void>;
+  message: any;
+  onClick?: () => void;
 }
 
-export const SnapPreview = ({ message, onSnapView }: SnapPreviewProps) => {
-  const isExpired = message.is_expired || (message.expires_at && new Date(message.expires_at) < new Date());
-  const isAlreadyViewed = !!message.viewed_at;
+export const SnapPreview = ({ message, onClick }: SnapPreviewProps) => {
+  const hasBeenViewed = !!message.viewed_at;
   
   return (
     <div 
-      className="cursor-pointer group"
-      onClick={!isExpired && !isAlreadyViewed ? onSnapView : undefined}
+      className={cn(
+        "mt-2 w-56 h-32 rounded-md flex items-center justify-center cursor-pointer bg-gray-900/50 backdrop-blur-sm relative overflow-hidden border border-gray-700/50",
+        hasBeenViewed ? "opacity-50" : "hover:bg-gray-900/70"
+      )}
+      onClick={onClick}
     >
-      <div className="bg-black relative w-48 h-32 rounded overflow-hidden">
-        {isExpired ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <p className="text-sm text-gray-400">Snap expired</p>
-          </div>
-        ) : isAlreadyViewed ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <p className="text-sm text-gray-400">Snap viewed</p>
-          </div>
-        ) : (
-          <>
-            {message.media_url && message.media_url.length > 0 ? (
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70 flex items-center justify-center">
-                <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm group-hover:bg-white/30 transition-all">
-                  <Play className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-black">
-                <p className="text-sm text-gray-400">No preview available</p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-luxury-primary/20 to-luxury-dark/30" />
       
-      <div className="mt-1 text-xs text-center text-gray-400">
-        {isExpired ? 
-          "This snap has expired" : 
-          isAlreadyViewed ? 
-          "This snap has been viewed" : 
-          "Tap to view snap (will expire after viewing)"}
+      <div className="flex flex-col items-center justify-center z-10">
+        <Camera className="h-10 w-10 text-luxury-primary mb-2" />
+        <p className="text-xs font-medium text-white">
+          {hasBeenViewed ? "Snap viewed" : "Tap to view snap"}
+        </p>
+        
+        {message.expires_at && !hasBeenViewed && (
+          <div className="flex items-center gap-1 mt-2 text-xs text-white/70">
+            <Timer className="h-3 w-3" />
+            <span>Expires after viewing</span>
+          </div>
+        )}
       </div>
     </div>
   );

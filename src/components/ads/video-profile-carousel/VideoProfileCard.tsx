@@ -1,59 +1,50 @@
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { DatingAd } from '@/types/dating';
-import { VideoContent } from './VideoContent';
-import { ProfileBadges } from './ProfileBadges';
-import { ProfileInfo } from './ProfileInfo';
-import { AdActions } from './AdActions';
+import { useState, useEffect } from "react";
+import { DatingAd } from "@/types/dating";
+import { VideoContent } from "./VideoContent";
+import { ProfileBadges } from "./ProfileBadges";
+import { ProfileInfo } from "./ProfileInfo";
+import { AdActions } from "./AdActions";
 
 export interface VideoProfileCardProps {
   ad: DatingAd;
   isActive?: boolean;
-  isPreviewMode?: boolean;
   isAnimation?: boolean;
-  onClick?: () => void;
 }
 
-export const VideoProfileCard = ({ 
-  ad, 
-  isActive = false, 
-  isPreviewMode = false,
-  isAnimation = false,
-  onClick
-}: VideoProfileCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
+export const VideoProfileCard = ({ ad, isActive = false, isAnimation = false }: VideoProfileCardProps) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    // Activate video based on active state
+    if (isActive) {
+      const timer = setTimeout(() => {
+        setIsPlaying(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setIsPlaying(false);
+    }
+  }, [isActive]);
 
   return (
-    <motion.div 
-      className="w-full max-w-4xl rounded-xl overflow-hidden relative glass-card group"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      whileHover={{ scale: isPreviewMode ? 1 : 1.02 }}
-      onClick={onClick}
-      layout
-    >
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 z-10 pointer-events-none" />
-      
-      {/* Premium Badge */}
-      <ProfileBadges ad={ad} />
-      
-      {/* Edit/Delete Actions */}
-      <AdActions ad={ad} />
-      
-      {/* Video Content */}
+    <div className={`relative w-full h-full max-w-md mx-auto overflow-hidden rounded-xl bg-luxury-darker ${
+      isAnimation ? 'shadow-2xl' : ''
+    }`}>
       <VideoContent 
-        ad={ad} 
-        isActive={isActive} 
-        isHovered={isHovered} 
-        isAnimation={isAnimation}
+        videoUrl={ad.videoUrl || ad.video_url || ""} 
+        avatarUrl={ad.avatarUrl || ad.avatar_url || ""} 
+        isPlaying={isPlaying}
       />
       
-      {/* Profile Information */}
-      <ProfileInfo ad={ad} isPreviewMode={isPreviewMode} />
-    </motion.div>
+      <ProfileBadges 
+        isPremium={ad.isPremium || ad.is_premium || false}
+        isVerified={ad.isVerified || ad.is_verified || false}
+      />
+      
+      <ProfileInfo ad={ad} isPreviewMode={!isActive} />
+      
+      {isActive && <AdActions ad={ad} />}
+    </div>
   );
 };

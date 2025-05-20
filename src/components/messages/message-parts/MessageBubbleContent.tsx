@@ -1,150 +1,140 @@
 
-import { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageActions } from './MessageActions';
-import { SnapPreview } from './SnapPreview';
-import { formatMessageTime } from '@/utils/date';
-import { useUser } from '@/hooks/useUser';
-
-// Define the Message interface to match what's expected
-export interface Message {
-  id: string;
-  content?: string;
-  media_url?: string[] | null;
-  sender_id?: string;
-  recipient_id?: string;
-  created_at: string;
-  delivery_status?: "sent" | "delivered" | "seen" | "failed";
-  message_type?: string;
-  video_url?: string;
-  duration?: number;
-  is_expired?: boolean;
-  expires_at?: string;
-  viewed_at?: string;
-}
+import { useRef, useState, RefObject } from "react";
+import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { SnapPreview } from "./SnapPreview";
+import { formatMessageTime } from "@/utils/date";
+import { useUser } from "@/hooks/useUser";
 
 export interface MessageBubbleContentProps {
-  message: Message;
+  message: any;
   isOwnMessage: boolean;
-  isEditing?: boolean;
-  editedContent?: string;
-  isUpdating?: boolean;
-  inputRef?: React.MutableRefObject<HTMLInputElement>;
-  onSaveEdit?: () => Promise<void>;
-  onCancelEdit?: () => void;
-  onReport?: () => Promise<void>;
-  onDelete?: () => Promise<void>;
-  onEdit?: () => void;
-  onSnapView?: () => Promise<void>;
-  setEditedContent?: (content: string) => void;
+  isEditing: boolean;
+  editedContent: string;
+  isUpdating: boolean;
+  inputRef: RefObject<HTMLInputElement>;
+  setEditedContent: (content: string) => void;
+  handleEdit: () => void;
+  cancelEditing: () => void;
   onMediaSelect?: (url: string) => void;
+  onSnapView?: () => void;
 }
 
 export const MessageBubbleContent = ({
   message,
   isOwnMessage,
-  isEditing = false,
-  editedContent = "",
-  isUpdating = false,
+  isEditing,
+  editedContent,
+  isUpdating,
   inputRef,
-  onSaveEdit,
-  onCancelEdit,
-  onReport,
-  onDelete,
-  onEdit,
-  onSnapView,
   setEditedContent,
-  onMediaSelect
+  handleEdit,
+  cancelEditing,
+  onMediaSelect,
+  onSnapView
 }: MessageBubbleContentProps) => {
-  const [showActions, setShowActions] = useState(false);
-  const { user } = useUser();
+  const [isHovering, setIsHovering] = useState(false);
+  const { currentUser } = useUser();
   
-  const isSnap = message.message_type === 'snap';
-  const isVideo = message.video_url || (message.media_url && message.media_url.some(url => url.match(/\.(mp4|webm|mov)$/i)));
-
-  // Format message timestamp
-  const formattedTime = formatMessageTime(message.created_at);
-
-  // Handle actions menu toggle
-  const toggleActions = () => {
-    setShowActions(!showActions);
-  };
-
-  // Handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (setEditedContent) {
-      setEditedContent(e.target.value);
+  // Function to render media content if present
+  const renderMediaContent = () => {
+    if (!message.media_url || message.media_url.length === 0) return null;
+    
+    // For snap messages, render specialized preview
+    if (message.message_type === 'snap') {
+      return (
+        <SnapPreview
+          message={message}
+          onClick={onSnapView}
+        />
+      );
     }
+    
+    // For regular media
+    return (
+      <div className="space-y-2 mt-2">
+        {message.media_url.map((url: string, index: number) => {
+          if (url.match(/\.(jpeg|jpg|gif|png)$/i)) {
+            return (
+              <div key={index} className="relative rounded-md overflow-hidden">
+                <img
+                  src={url}
+                  alt="Media"
+                  className="max-w-[250px] max-h-[250px] object-cover rounded-md cursor-pointer"
+                  onClick={() => onMediaSelect?.(url)}
+                />
+              </div>
+            );
+          } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
+            return (
+              <div key={index} className="relative rounded-md overflow-hidden">
+                <video
+                  controls
+                  className="max-w-[250px] max-h-[250px] object-cover rounded-md"
+                >
+                  <source src={url} />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            );
+          }
+          return null;
+        })}
+      </div>
+    );
   };
 
   return (
-    <div className={`group relative flex items-end gap-2 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
-      {!isOwnMessage && (
-        <Avatar className="w-8 h-8">
-          <AvatarImage src={user?.avatar_url || ""} />
-          <AvatarFallback>{user?.username?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-        </Avatar>
+    <div
+      className={cn(
+        "group relative",
+        isOwnMessage ? "items-end" : "items-start"
       )}
-
-      <div className={`relative max-w-[75%] ${isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'} rounded-lg p-3`}>
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      <div
+        className={cn(
+          "px-4 py-3 rounded-xl max-w-md break-words",
+          isOwnMessage
+            ? "bg-luxury-primary text-white rounded-br-none"
+            : "bg-gray-800 text-white rounded-bl-none"
+        )}
+      >
         {isEditing ? (
           <div className="space-y-2">
-            <input
-              ref={inputRef}
-              type="text"
-              defaultValue={editedContent}
-              onChange={handleInputChange}
-              className="w-full bg-transparent outline-none"
-              autoFocus
+            <Textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              className="min-h-[100px] bg-gray-900 border-gray-700"
+              placeholder="Edit your message..."
             />
-            <div className="flex justify-end gap-2">
-              <button 
-                onClick={onCancelEdit}
-                className="text-xs text-foreground/80 hover:text-foreground"
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={cancelEditing}
                 disabled={isUpdating}
               >
                 Cancel
-              </button>
-              <button 
-                onClick={onSaveEdit}
-                className="text-xs text-primary hover:text-primary/90"
-                disabled={isUpdating}
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleEdit}
+                disabled={isUpdating || !editedContent.trim()}
               >
                 {isUpdating ? "Saving..." : "Save"}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
           <>
-            {isSnap ? (
-              <SnapPreview 
-                message={message} 
-                onSnapView={onSnapView} 
-              />
-            ) : (
-              message.content && <p>{message.content}</p>
-            )}
-            {/* Time indicator */}
-            <div className={`text-xs opacity-70 mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}>
-              {formattedTime}
-            </div>
+            <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+            {renderMediaContent()}
           </>
         )}
       </div>
-
-      <MessageActions 
-        onActionClick={(action) => {
-          if (action === 'report') onReport?.();
-          if (action === 'delete') onDelete?.();
-          if (action === 'edit') onEdit?.();
-        }}
-        onReport={onReport} 
-        onDelete={onDelete}
-        onEdit={onEdit}
-        isOwnMessage={isOwnMessage}
-        isVisible={showActions}
-        toggleVisibility={toggleActions}
-      />
     </div>
   );
 };
