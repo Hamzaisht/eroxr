@@ -1,14 +1,12 @@
 
 import { useState, useEffect, createContext, useContext } from "react";
-import { Toast } from "@/components/ui/toast";
-
-type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>;
+import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 type ToastType = {
   id: string;
-  title?: string;
+  title?: React.ReactNode;
   description?: React.ReactNode;
-  action?: React.ReactNode;
+  action?: ToastActionElement;
   variant?: "default" | "destructive" | "warning" | "success";
   duration?: number;
   open?: boolean;
@@ -23,18 +21,44 @@ type ToastContextValue = {
   updateToast: (id: string, toast: Partial<ToastType>) => void;
 };
 
+const TOAST_LIMIT = 5;
+const TOAST_REMOVE_DELAY = 1000000;
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+let count = 0;
+const genId = () => {
+  count = (count + 1) % Number.MAX_VALUE;
+  return count.toString();
+};
+
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastType[]>([]);
 
   const addToast = (toast: Omit<ToastType, "id">) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, ...toast }]);
+    const id = genId();
+    
+    setToasts((prev) => [
+      ...prev,
+      { 
+        id, 
+        ...toast, 
+        open: true,
+        onOpenChange: (open) => {
+          if (!open) removeToast(id);
+        }
+      }
+    ].slice(0, TOAST_LIMIT));
   };
 
   const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    const timeout = setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== id));
+      toastTimeouts.delete(id);
+    }, TOAST_REMOVE_DELAY);
+
+    toastTimeouts.set(id, timeout);
   };
 
   const updateToast = (id: string, toast: Partial<ToastType>) => {
@@ -44,22 +68,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const handleTimeout = (toast: ToastType) => {
-      if (toast.duration !== undefined) {
-        const timeout = setTimeout(() => {
-          removeToast(toast.id);
-        }, toast.duration);
-
-        return () => clearTimeout(timeout);
-      }
-    };
-
-    const timeouts = toasts.map(handleTimeout);
-
     return () => {
-      timeouts.forEach((clearFn) => clearFn && clearFn());
+      toastTimeouts.forEach((timeout) => clearTimeout(timeout));
     };
-  }, [toasts]);
+  }, []);
 
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast, updateToast }}>
@@ -92,10 +104,8 @@ export const toast = (props: Omit<ToastType, "id">) => {
   console.warn("Using toast outside of ToastProvider. This may not work as expected.");
   
   // Simple implementation that just shows a browser alert if context isn't available
-  if (!document.querySelector('[data-toast-container]')) {
+  if (typeof window !== 'undefined') {
     console.warn(props.title, props.description);
-    if (typeof window !== 'undefined') {
-      alert(`${props.title}: ${props.description}`);
-    }
+    alert(`${props.title}: ${props.description}`);
   }
 };
