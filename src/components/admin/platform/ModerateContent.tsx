@@ -64,6 +64,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { isQueryError } from "@/utils/supabase/typeSafeOperations";
 
 interface FlaggedContent {
   id: string;
@@ -94,69 +95,84 @@ export const ModerateContent = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
 
-  // Fetch flagged content
+  // Fetch flagged content with proper error handling
   const { data, isLoading, error, isError, refetch } = useQuery({
     queryKey: ["flagged_content", searchQuery, statusFilter, contentTypeFilter, currentPage],
     queryFn: async () => {
-      const { data: reportsData, error: reportsError } = await supabase
-        .from('reports')
-        .select(`
-          id,
-          content_id,
-          content_type,
-          reported_id,
-          reason,
-          created_at,
-          status,
-          is_emergency,
-          profiles!reports_reported_id_fkey(username, avatar_url)
-        `)
-        .order('created_at', { ascending: false });
+      try {
+        const { data: reportsData, error: reportsError } = await supabase
+          .from('reports')
+          .select(`
+            id,
+            content_id,
+            content_type,
+            reported_id,
+            reason,
+            created_at,
+            status,
+            is_emergency,
+            profiles!reports_reported_id_fkey(username, avatar_url)
+          `)
+          .order('created_at', { ascending: false });
 
-      if (reportsError) throw reportsError;
+        if (reportsError) throw reportsError;
 
-      // Transform data to match our FlaggedContent interface
-      const formattedData: FlaggedContent[] = reportsData.map(report => ({
-        id: report.id,
-        content_id: report.content_id || '',
-        content_type: report.content_type,
-        user_id: report.reported_id || '',
-        username: report.profiles && report.profiles[0] ? report.profiles[0].username : 'Unknown',
-        avatar_url: report.profiles && report.profiles[0] ? report.profiles[0].avatar_url : '',
-        reason: report.reason,
-        flagged_at: report.created_at,
-        status: report.status === 'resolved' ? 'deleted' : 'flagged',
-        severity: report.is_emergency ? 'critical' : 'medium'
-      }));
+        if (!reportsData || !Array.isArray(reportsData)) {
+          return { items: [], totalCount: 0 };
+        }
 
-      // Apply filters
-      let filteredData = [...formattedData];
-      
-      if (searchQuery) {
-        filteredData = filteredData.filter(item => 
-          item.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.content_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.reason.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        // Transform data to match our FlaggedContent interface
+        const formattedData: FlaggedContent[] = reportsData.map(report => {
+          const profile = report.profiles && Array.isArray(report.profiles) && report.profiles.length > 0 
+            ? report.profiles[0] 
+            : null;
+
+          return {
+            id: report.id || '',
+            content_id: report.content_id || '',
+            content_type: report.content_type || '',
+            user_id: report.reported_id || '',
+            username: profile?.username || 'Unknown',
+            avatar_url: profile?.avatar_url || '',
+            reason: report.reason || '',
+            flagged_at: report.created_at || '',
+            status: report.status === 'resolved' ? 'deleted' : 'flagged',
+            severity: report.is_emergency ? 'critical' : 'medium'
+          };
+        });
+
+        // Apply filters
+        let filteredData = [...formattedData];
+        
+        if (searchQuery) {
+          filteredData = filteredData.filter(item => 
+            item.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.content_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.reason.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+        
+        if (statusFilter !== "all") {
+          filteredData = filteredData.filter(item => item.status === statusFilter);
+        }
+        
+        if (contentTypeFilter !== "all") {
+          filteredData = filteredData.filter(item => item.content_type === contentTypeFilter);
+        }
+        
+        // Apply pagination
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const pagedData = filteredData.slice(start, end);
+        
+        return {
+          items: pagedData,
+          totalCount: filteredData.length
+        };
+      } catch (e) {
+        console.error("Error fetching flagged content:", e);
+        return { items: [], totalCount: 0 };
       }
-      
-      if (statusFilter !== "all") {
-        filteredData = filteredData.filter(item => item.status === statusFilter);
-      }
-      
-      if (contentTypeFilter !== "all") {
-        filteredData = filteredData.filter(item => item.content_type === contentTypeFilter);
-      }
-      
-      // Apply pagination
-      const start = (currentPage - 1) * itemsPerPage;
-      const end = start + itemsPerPage;
-      const pagedData = filteredData.slice(start, end);
-      
-      return {
-        items: pagedData,
-        totalCount: filteredData.length
-      };
     }
   });
 

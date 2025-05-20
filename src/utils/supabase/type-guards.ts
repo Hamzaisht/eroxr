@@ -1,3 +1,4 @@
+
 import { Database } from '@/integrations/supabase/types/database.types';
 import { PostgrestFilterBuilder } from '@supabase/supabase-js';
 

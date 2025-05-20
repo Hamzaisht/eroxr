@@ -1,3 +1,4 @@
+
 // Import the existing components and hooks
 import { useEffect } from 'react';
 import { supabase, setUserIdForRls } from '@/integrations/supabase/client';

@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types/database.types";
 import { AvailabilityStatus } from "@/utils/media/types";
 

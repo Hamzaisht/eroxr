@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
@@ -60,8 +61,8 @@ export const SubscribedCreators = () => {
               banner_url
             )
           `)
-          .eq("user_id" as string, userId as string)
-          .order("created_at" as string, { ascending: false });
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
           
         if (error || !data || !Array.isArray(data)) {
           console.error("Error fetching subscriptions:", error || "Invalid data format");

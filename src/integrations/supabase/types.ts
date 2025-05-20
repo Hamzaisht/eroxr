@@ -2633,6 +2633,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_top_trending_hashtags: {
         Args: Record<PropertyKey, never>
         Returns: {

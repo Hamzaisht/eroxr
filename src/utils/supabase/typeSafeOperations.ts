@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types/database.types";
 import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,9 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type PostRow = Database['public']['Tables']['posts']['Row'];
 export type StoryRow = Database['public']['Tables']['stories']['Row'];
-export type SubscriptionRow = Database['public']['Tables']['creator_subscriptions']['Row'];
 
-// Using extended syntax for optional table types - this handles tables that may not exist in the schema
+// Using extended syntax for optional table types with fallbacks
+export type SubscriptionRow = 'creator_subscriptions' extends keyof Database['public']['Tables'] 
+  ? Database['public']['Tables']['creator_subscriptions']['Row'] 
+  : { id: string; creator_id: string; user_id: string; created_at: string };
+
 export type AdminLogRow = 'admin_logs' extends keyof Database['public']['Tables'] 
   ? Database['public']['Tables']['admin_logs']['Row'] 
   : { id: string; admin_id: string; action: string; action_type: string; created_at: string; target_id?: string; target_type?: string; details?: Record<string, any>; };
@@ -18,7 +22,7 @@ export type FlaggedContentRow = 'flagged_content' extends keyof Database['public
   : { id: string; content_id: string; content_type: string; reason: string; severity: string; status: string; };
 
 /**
- * Helper function to call the set_request_user_id RPC function
+ * Helper function to call the set_request_user_id function
  * This should be called before making authenticated database queries
  */
 export async function ensureUserIdSet(): Promise<void> {
