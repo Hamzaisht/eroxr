@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,8 +28,8 @@ import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
 import { updateProfileStatus } from "@/utils/supabase/db-helpers";
-import { isProfileRow } from "@/utils/supabase/typeSafeOperations";
 
+// Define proper types for profiles table
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
 export function UserMenu() {
@@ -40,7 +40,7 @@ export function UserMenu() {
   const session = useSession();
   const supabaseClient = useSupabaseClient();
 
-  // Fetch user profile data
+  // Fetch user profile data with proper typing
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['user-profile', session?.user?.id],
     queryFn: async () => {
@@ -49,28 +49,28 @@ export function UserMenu() {
       const { data, error } = await supabase
         .from('profiles')
         .select("*")
-        .eq("id" as keyof ProfileRow, session.user.id as string)
+        .eq("id", session.user.id)
         .maybeSingle();
         
-      if (error) {
+      if (error || !data) {
         console.error('Error fetching profile:', error);
         return null;
       }
       
-      return data;
+      return data as ProfileRow;
     },
     enabled: !!session?.user?.id,
   });
 
   // Extract profile data safely with better error handling
-  const safeProfile = getSafeProfile(profile);
+  const safeProfile = profile ? getSafeProfile(profile) : null;
 
   // Initialize status from profile data
-  useState(() => {
+  useEffect(() => {
     if (safeProfile?.status) {
       setCurrentStatus(convertToStatus(safeProfile.status));
     }
-  });
+  }, [safeProfile]);
 
   const signOut = async () => {
     setIsSigningOut(true);
@@ -111,7 +111,7 @@ export function UserMenu() {
           break;
       }
       
-      await updateProfileStatus(session.user.id as string, dbStatus);
+      await updateProfileStatus(session.user.id, dbStatus);
       
       setCurrentStatus(newStatus);
     } catch (error) {
