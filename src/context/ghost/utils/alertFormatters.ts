@@ -1,82 +1,74 @@
 
-import { LiveAlert } from '@/types/alerts';
+import { LiveAlert } from "@/types/alerts";
 
-/**
- * Format flagged content as a LiveAlert
- */
-export function formatFlaggedContentAsAlert(flaggedContent: any): Partial<LiveAlert> {
-  return {
-    id: flaggedContent.id,
-    type: 'violation',
-    severity: flaggedContent.severity || 'medium',
-    title: flaggedContent.reason || 'Content Flagged',
-    description: flaggedContent.notes || 'No additional details',
-    timestamp: flaggedContent.flagged_at,
-    created_at: flaggedContent.flagged_at,
-    userId: flaggedContent.user_id,
-    username: flaggedContent.user?.username,
-    contentId: flaggedContent.content_id,
-    isRead: false,
-    alert_type: 'violation'
-  };
-}
-
-/**
- * Format a report as a LiveAlert
- */
-export function formatReportAsAlert(report: any): Partial<LiveAlert> {
-  return {
-    id: report.id,
-    type: 'risk',
-    severity: report.is_emergency ? 'critical' : 'medium',
-    title: `Report: ${report.reason}`,
-    description: report.description || 'No additional details',
-    timestamp: report.created_at,
-    created_at: report.created_at,
-    userId: report.reported_id,
-    username: report.reported?.username,
-    contentId: report.content_id,
-    isRead: false,
-    alert_type: 'risk'
-  };
-}
-
-/**
- * Map priority to severity level
- */
-export function mapPriorityToSeverity(priority: string): 'low' | 'medium' | 'high' | 'critical' {
-  switch (priority) {
+// Add missing utility to handle the potential "critical" severity
+const mapSeverity = (severity: string): 'low' | 'medium' | 'high' | 'critical' => {
+  switch (severity?.toLowerCase()) {
     case 'critical':
       return 'critical';
     case 'high':
       return 'high';
-    case 'medium':
-      return 'medium';
     case 'low':
       return 'low';
+    case 'medium':
     default:
       return 'medium';
   }
-}
+};
 
-/**
- * Format system alert to LiveAlert
- */
-export function formatSystemAlertToLiveAlert(alert: any): LiveAlert {
+export const formatFlaggedContentAsAlert = (content: any) => {
   return {
-    id: alert.id || String(Math.random()),
-    type: alert.type || 'system',
-    severity: mapPriorityToSeverity(alert.priority || 'medium'),
-    title: alert.message || alert.title || 'System Alert',
-    description: alert.details || alert.description || '',
-    timestamp: alert.timestamp || new Date().toISOString(),
-    created_at: alert.created_at || new Date().toISOString(),
-    userId: alert.userId || alert.user_id || '',
-    username: alert.username || 'System',
-    contentId: alert.contentId || alert.content_id || '',
-    isRead: alert.isRead || alert.read || false,
-    alert_type: alert.alert_type || 'information',
-    source: alert.source || null,
-    avatar_url: alert.avatar_url || null
+    id: content.id,
+    type: 'violation',
+    alert_type: 'violation',
+    user_id: content.user_id || '',
+    userId: content.user_id || '',
+    username: content.user?.username || 'Unknown',
+    avatar_url: content.user?.avatar_url,
+    timestamp: content.flagged_at || content.created_at,
+    created_at: content.flagged_at || content.created_at,
+    content_type: content.content_type || '',
+    reason: content.reason || '',
+    severity: mapSeverity(content.severity || 'medium'),
+    contentId: content.content_id || '',
+    content_id: content.content_id || '',
+    title: `Flagged ${content.content_type || 'Content'}`,
+    description: content.details || content.notes || content.reason || '',
+    isRead: !!content.is_read,
   };
-}
+};
+
+export const formatReportAsAlert = (report: any) => {
+  return {
+    id: report.id,
+    type: 'violation',
+    alert_type: 'violation',
+    user_id: report.reported_id || '',
+    userId: report.reported_id || '',
+    username: report.reported?.username || 'Unknown User',
+    avatar_url: report.reported?.avatar_url,
+    timestamp: report.created_at,
+    created_at: report.created_at,
+    content_type: report.content_type || '',
+    reason: report.reason || '',
+    severity: report.is_emergency ? 'high' : mapSeverity(report.severity || 'medium'),
+    contentId: report.content_id || '',
+    content_id: report.content_id || '',
+    title: `Content Report`,
+    description: report.description || 'No description provided',
+    isRead: !!report.is_read,
+    requiresAction: report.is_emergency || false
+  };
+};
+
+export const formatSystemAlertToLiveAlert = (alert: any): LiveAlert => {
+  return {
+    ...alert,
+    user_id: alert.user_id || alert.userId || '',
+    userId: alert.userId || alert.user_id || '',
+    content_id: alert.content_id || alert.contentId || '',
+    contentId: alert.contentId || alert.content_id || '',
+    isRead: !!alert.isRead,
+    alert_type: alert.alert_type || (alert.type === 'violation' || alert.type === 'risk' ? alert.type : 'information')
+  } as LiveAlert;
+};

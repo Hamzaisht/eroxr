@@ -49,7 +49,7 @@ export const UniversalMedia = forwardRef(({
       controls={controls}
       muted={muted}
       loop={loop}
-      poster={poster || (typeof mediaItem === 'object' ? mediaItem.poster : undefined)}
+      poster={poster || (mediaItem && typeof mediaItem === 'object' && 'poster' in mediaItem ? mediaItem.poster : undefined)}
       showWatermark={showWatermark}
       onClick={onClick}
       onLoad={onLoad}

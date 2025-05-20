@@ -12,7 +12,7 @@ export interface DatingAd {
   // User identifiers and profile data
   username: string;
   avatarUrl: string;  // Required for consistency
-  videoUrl?: string;
+  videoUrl: string;   // Making this required
   avatar_url?: string;
   video_url?: string;
   
@@ -24,7 +24,7 @@ export interface DatingAd {
   is_active?: boolean;
   
   // Engagement metrics
-  views?: number;     // Make optional to resolve conflict
+  views: number;      // Required
   likes?: number;
   messages?: number;
   view_count?: number;
@@ -34,7 +34,7 @@ export interface DatingAd {
   // Profile details
   tags: string[];      // Required
   location: string;    // Required
-  age?: number;        // Make optional to resolve conflict
+  age: number;         // Required
   gender?: string;
   seeking?: string[];
   last_active?: string;

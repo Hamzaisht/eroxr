@@ -21,14 +21,14 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
     <AnimatePresence mode="popLayout">
       <div className="absolute inset-0 flex items-center justify-center">
         {ads.map((ad, index) => {
-          // Ensure all required props are present
+          // Ensure all required props are present with proper defaults for DatingAd
           const enrichedAd: DatingAd = {
             ...ad,
             tags: ad.tags || [],
-            isPremium: ad.is_premium !== undefined ? ad.is_premium : ad.isPremium,
-            isVerified: ad.is_verified !== undefined ? ad.is_verified : ad.isVerified,
+            isPremium: ad.is_premium !== undefined ? ad.is_premium : ad.isPremium || false,
+            isVerified: ad.is_verified !== undefined ? ad.is_verified : ad.isVerified || false,
             avatarUrl: ad.avatarUrl || ad.avatar_url || "",
-            videoUrl: ad.videoUrl || ad.video_url,
+            videoUrl: ad.videoUrl || ad.video_url || "",
             location: ad.location || "Unknown location", // Ensure location is provided
             age: ad.age || 25, // Default age
             views: ad.views || ad.view_count || 0 // Ensure views is provided

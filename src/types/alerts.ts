@@ -1,5 +1,5 @@
 
-import { SessionStatus, SessionType } from './surveillance';
+import { SessionStatus, SessionType, LiveSession } from './surveillance';
 
 export interface LiveAlert {
   id: string;
@@ -13,15 +13,18 @@ export interface LiveAlert {
   created_at: string;
   content_type?: string;
   reason?: string;
-  severity: 'low' | 'medium' | 'high';
+  severity: 'low' | 'medium' | 'high' | 'critical';
   contentId?: string;
   content_id?: string;
   title: string;
   description: string;
-  isRead?: boolean; // Make optional to fix compatibility issues
+  isRead: boolean; // Make this required
+  requiresAction?: boolean;
   session?: {
     id: string;
     type: SessionType;
     status: SessionStatus;
+    user_id: string;
+    started_at: string;
   };
 }

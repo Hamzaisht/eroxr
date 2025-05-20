@@ -121,8 +121,10 @@ export const GhostModeProvider: React.FC<{ children: React.ReactNode }> = ({
             timestamp: new Date().toISOString(),
             created_at: new Date().toISOString(),
             userId: "user-123",
+            user_id: "user-123", // Added user_id to match type
             username: "suspicious_user",
             contentId: "post-456",
+            content_id: "post-456", // Added content_id to match type
             isRead: false,
             alert_type: 'violation'
           },
@@ -135,8 +137,10 @@ export const GhostModeProvider: React.FC<{ children: React.ReactNode }> = ({
             timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
             created_at: new Date(Date.now() - 15 * 60000).toISOString(),
             userId: "user-234",
+            user_id: "user-234", // Added user_id to match type
             username: "potential_bot",
             contentId: "message-789",
+            content_id: "message-789", // Added content_id to match type
             isRead: false,
             alert_type: 'risk'
           }
@@ -166,8 +170,10 @@ export const GhostModeProvider: React.FC<{ children: React.ReactNode }> = ({
           timestamp: alert.flagged_at,
           created_at: alert.flagged_at,
           userId: alert.user_id,
+          user_id: alert.user_id, // Added user_id to match type
           username: alert.user?.username || 'Unknown User',
           contentId: alert.content_id,
+          content_id: alert.content_id, // Added content_id to match type
           isRead: false,
           alert_type: 'violation'
         }));

@@ -2,7 +2,7 @@
 import { QuickMatch } from "../QuickMatch";
 import { ProfileCompletionPrompt } from "../ProfileCompletionPrompt";
 import { EmptyProfilesState } from "../EmptyProfilesState";
-import { DatingAd } from "@/components/ads/types/dating";
+import { DatingAd } from "@/types/dating";
 
 interface QuickMatchTabProps {
   ads: DatingAd[] | undefined;
@@ -25,7 +25,7 @@ export function QuickMatchTab({
   return hasAds || isLoading ? (
     <>
       {session && userProfile && <ProfileCompletionPrompt userProfile={userProfile} />}
-      <QuickMatch ads={ads || []} userProfile={userProfile || null} />
+      <QuickMatch ads={ads || []} userProfile={userProfile} />
     </>
   ) : (
     <EmptyProfilesState 

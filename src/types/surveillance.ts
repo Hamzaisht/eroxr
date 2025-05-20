@@ -100,7 +100,7 @@ export interface LiveSession {
 // Make the LiveAlert interface compatible with the one in alerts.ts
 export interface LiveAlert {
   id: string;
-  type: 'violation' | 'risk' | 'information';
+  type: 'violation' | 'risk' | 'information' | 'security' | 'system';
   alert_type: 'violation' | 'risk' | 'information';
   user_id: string;
   userId: string; // Making this required to match alerts.ts
@@ -117,7 +117,13 @@ export interface LiveAlert {
   description: string; // Making this required
   isRead: boolean; // Making this required
   requiresAction?: boolean;
-  session?: LiveSession;
+  session?: {
+    id: string;
+    type: SessionType;
+    status: SessionStatus;
+    user_id: string;
+    started_at: string;
+  };
 }
 
 // Define the media source interface
