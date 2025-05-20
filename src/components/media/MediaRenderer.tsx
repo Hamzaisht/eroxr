@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef } from 'react';
 import { MediaType, MediaSource, MediaRendererProps } from '@/utils/media/types';
 import { MediaDisplay } from './MediaDisplay';
-import { extractMediaUrl, normalizeMediaSource } from '@/utils/media/mediaUtils';
+import { extractMediaUrl } from '@/utils/media/mediaUtils';
 
 /**
  * A smart media renderer that handles various media types
@@ -30,22 +30,24 @@ export const MediaRenderer = forwardRef(({
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   
-  // Process the media source to normalize it
+  // Process the media source to get a usable URL
   useEffect(() => {
     try {
-      // Normalize the media source
-      const normalized = normalizeMediaSource(src);
+      // Extract the URL directly (skipping normalization)
+      const url = typeof src === 'string' ? src : extractMediaUrl(src);
       
-      // Extract the URL
-      const url = extractMediaUrl(normalized);
       if (!url) {
         throw new Error("Could not extract media URL");
       }
       
       setMediaUrl(url);
       
-      // Set media type from prop or from normalized source
-      setMediaType(type || normalized.media_type || MediaType.UNKNOWN);
+      // Set media type from prop or determine from source
+      if (type) {
+        setMediaType(type);
+      } else if (typeof src === 'object' && src?.media_type) {
+        setMediaType(src.media_type);
+      }
       
       setIsLoading(false);
       setError(null);
@@ -64,8 +66,8 @@ export const MediaRenderer = forwardRef(({
         // Force remount by temporarily clearing the URL
         setMediaUrl(null);
         setTimeout(() => {
-          const normalized = normalizeMediaSource(src);
-          const url = extractMediaUrl(normalized);
+          // Re-extract URL without normalization
+          const url = typeof src === 'string' ? src : extractMediaUrl(src);
           if (url) setMediaUrl(url);
         }, 50);
       }, 1000);
