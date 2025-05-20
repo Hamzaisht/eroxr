@@ -7,6 +7,7 @@ import { isQueryError } from "@/utils/supabase/typeSafeOperations";
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 type PostInsert = Database['public']['Tables']['posts']['Insert'];
+type PostRow = Database['public']['Tables']['posts']['Row'];
 
 /**
  * Update a user's profile status safely
@@ -23,7 +24,7 @@ export async function updateProfileStatus(userId: string, status: ProfileStatus)
     const { data, error } = await supabase
       .from('profiles')
       .update(updateData)
-      .eq('id' as keyof ProfileRow, userId);
+      .eq('id' as keyof ProfileRow, userId as ProfileRow['id']);
       
     if (error) {
       console.error("Error updating profile status:", error);
@@ -47,16 +48,11 @@ export async function getProfileById(userId: string): Promise<ProfileRow | null>
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id' as keyof ProfileRow, userId)
+      .eq('id' as keyof ProfileRow, userId as ProfileRow['id'])
       .maybeSingle();
       
-    if (error) {
-      console.error("Error fetching profile:", error);
-      return null;
-    }
-    
-    // Check if data exists and isn't an error
-    if (!data || isQueryError(data)) {
+    if (error || !data || isQueryError(data)) {
+      console.error("Error fetching profile:", error || "Invalid data");
       return null;
     }
     
@@ -72,7 +68,7 @@ export async function getProfileById(userId: string): Promise<ProfileRow | null>
  * @param postData The post data to insert
  * @returns The created post data or null if failed
  */
-export async function createPost(postData: PostInsert): Promise<Database['public']['Tables']['posts']['Row'] | null> {
+export async function createPost(postData: PostInsert): Promise<PostRow | null> {
   try {
     const { data, error } = await supabase
       .from('posts')
@@ -80,17 +76,12 @@ export async function createPost(postData: PostInsert): Promise<Database['public
       .select()
       .single();
       
-    if (error) {
-      console.error("Error creating post:", error);
+    if (error || !data || isQueryError(data)) {
+      console.error("Error creating post:", error || "Invalid data");
       return null;
     }
     
-    // Check if data exists and isn't an error
-    if (!data || isQueryError(data)) {
-      return null;
-    }
-    
-    return data;
+    return data as PostRow;
   } catch (error) {
     console.error("Exception creating post:", error);
     return null;
@@ -118,13 +109,8 @@ export async function safeFetch<T>(
       .eq(filterColumn, filterValue)
       .maybeSingle();
       
-    if (error) {
-      console.error(`Error fetching from ${table}:`, error);
-      return null;
-    }
-    
-    // Check if data exists and isn't an error
-    if (!data || isQueryError(data)) {
+    if (error || !data || isQueryError(data)) {
+      console.error(`Error fetching from ${table}:`, error || "Invalid data");
       return null;
     }
     
@@ -132,5 +118,53 @@ export async function safeFetch<T>(
   } catch (error) {
     console.error(`Exception fetching from ${table}:`, error);
     return null;
+  }
+}
+
+/**
+ * Check if a table exists in the Supabase schema
+ * @param tableName The table name to check
+ * @returns True if the table exists, false otherwise
+ */
+export async function doesTableExist(tableName: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .rpc('check_table_exists', { table_name: tableName });
+      
+    if (error || data === null) {
+      console.warn(`Could not verify if table "${tableName}" exists:`, error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error(`Error checking if table "${tableName}" exists:`, error);
+    return false;
+  }
+}
+
+/**
+ * Safe update for any table with proper error handling
+ */
+export async function safeUpdate<T>(
+  table: string,
+  id: string,
+  updateData: Partial<T>
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from(table)
+      .update(updateData)
+      .eq('id', id);
+      
+    if (error) {
+      console.error(`Error updating ${table}:`, error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Exception updating ${table}:`, error);
+    return false;
   }
 }

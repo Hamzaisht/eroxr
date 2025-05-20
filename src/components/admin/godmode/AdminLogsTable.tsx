@@ -3,10 +3,15 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { safeString } from "@/utils/supabase/typeSafeOperations";
+import { safeString, isQueryError } from "@/utils/supabase/typeSafeOperations";
 import { Database } from "@/integrations/supabase/types/database.types";
 
-// Define type for admin log rows
+// Define type for admin log rows with safe fallback
+type AdminLogRow = 'admin_logs' extends keyof Database['public']['Tables'] 
+  ? Database['public']['Tables']['admin_logs']['Row'] 
+  : { id: string; admin_id: string; action: string; action_type: string; created_at: string; target_id?: string; target_type?: string; details?: Record<string, any>; };
+
+// Define type for profile with username
 interface AdminLog {
   id: string;
   admin_id: string;
@@ -17,10 +22,6 @@ interface AdminLog {
   details: any;
   created_at: string;
   admin_name?: string;
-}
-
-interface ProfileWithUsername {
-  username?: string;
 }
 
 export const AdminLogsTable = () => {
@@ -51,7 +52,14 @@ export const AdminLogsTable = () => {
 
       if (error) {
         // This could occur if the table doesn't exist or other query issues
+        console.error("Failed to fetch admin logs:", error.message);
         throw new Error(`Failed to fetch admin logs: ${error.message}`);
+      }
+
+      // Check if data is valid
+      if (!data || isQueryError(data)) {
+        console.error("Invalid data returned from admin logs query");
+        throw new Error(`Failed to fetch admin logs: Invalid data returned`);
       }
 
       // Safely transform data with type checking
@@ -59,17 +67,18 @@ export const AdminLogsTable = () => {
       if (Array.isArray(data)) {
         data.forEach(log => {
           if (log && typeof log === 'object' && 'id' in log) {
-            // Check for profile data which could be an object with username field
+            // Check for profile data safely
             let adminUsername = 'Unknown Admin';
             
-            if (log.profiles && typeof log.profiles === 'object') {
-              // Check if profiles is an array with at least one item
+            if (log.profiles) {
+              // Handle various possible shapes of the profiles data
               if (Array.isArray(log.profiles) && log.profiles.length > 0) {
+                // If profiles is an array with items
                 adminUsername = safeString(log.profiles[0]?.username) || 'Unknown Admin';
               } 
-              // Check if profiles is a direct object with username
-              else if ('username' in log.profiles) {
-                adminUsername = safeString(log.profiles.username) || 'Unknown Admin';
+              else if (typeof log.profiles === 'object' && log.profiles !== null) {
+                // If profiles is a direct object with username
+                adminUsername = safeString((log.profiles as any).username) || 'Unknown Admin';
               }
             }
             
@@ -204,3 +213,5 @@ export const AdminLogsTable = () => {
     </div>
   );
 };
+
+export default AdminLogsTable;

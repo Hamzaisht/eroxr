@@ -8,9 +8,14 @@ export type PostRow = Database['public']['Tables']['posts']['Row'];
 export type StoryRow = Database['public']['Tables']['stories']['Row'];
 export type SubscriptionRow = Database['public']['Tables']['creator_subscriptions']['Row'];
 
-// Using extended syntax for optional table types
-export type AdminLogRow = Database['public']['Tables']['admin_logs'] extends { Row: infer R } ? R : any;
-export type FlaggedContentRow = Database['public']['Tables']['flagged_content'] extends { Row: infer R } ? R : any;
+// Using extended syntax for optional table types - this handles tables that may not exist in the schema
+export type AdminLogRow = 'admin_logs' extends keyof Database['public']['Tables'] 
+  ? Database['public']['Tables']['admin_logs']['Row'] 
+  : { id: string; admin_id: string; action: string; action_type: string; created_at: string; target_id?: string; target_type?: string; details?: Record<string, any>; };
+
+export type FlaggedContentRow = 'flagged_content' extends keyof Database['public']['Tables'] 
+  ? Database['public']['Tables']['flagged_content']['Row'] 
+  : { id: string; content_id: string; content_type: string; reason: string; severity: string; status: string; };
 
 /**
  * Type guard function to check if an object is a ProfileRow
@@ -85,6 +90,13 @@ export function safeDate(value: any): Date | null {
 }
 
 /**
+ * Type-safe key helper for Supabase queries
+ */
+export function asColumnKey<T extends object>(key: keyof T): string {
+  return key as string;
+}
+
+/**
  * Apply filter with proper type checking
  */
 export function applyTypeCheckedFilter<T extends object>(
@@ -117,9 +129,32 @@ export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K)
  * Safely handle data response
  */
 export function safeDataResponse<T>(data: any, error: any): T | null {
-  if (error || !data) {
-    console.error("Database query error:", error);
+  if (error || !data || isQueryError(data)) {
+    console.error("Database query error:", error || (isQueryError(data) ? data.error : "Unknown error"));
     return null;
   }
   return data as T;
+}
+
+/**
+ * Cast value to correct column value type
+ */
+export function asColumnValue<T, K extends keyof T>(table: string, column: K, value: any): any {
+  return value;
+}
+
+/**
+ * Type-safe eq filter for Supabase queries
+ */
+export function safeEq<T>(query: PostgrestFilterBuilder<any, any, any>, column: keyof T, value: any): PostgrestFilterBuilder<any, any, any> {
+  return query.eq(column as string, value);
+}
+
+/**
+ * Type-guard to check if data is a valid response
+ */
+export function isValidData<T>(data: any): data is T {
+  return data !== null && 
+         typeof data === 'object' && 
+         !isQueryError(data);
 }

@@ -4,11 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Database } from "@/integrations/supabase/types/database.types";
-import { safeString } from "@/utils/supabase/typeSafeOperations";
+import { safeString, isQueryError } from "@/utils/supabase/typeSafeOperations";
 
 // Define types for database tables
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
-type SubscriptionRow = Database['public']['Tables']['creator_subscriptions']['Row'];
+
+// Check if creator_subscriptions table exists in schema
+// If not, provide a fallback type
+type SubscriptionRow = 'creator_subscriptions' extends keyof Database['public']['Tables'] 
+  ? Database['public']['Tables']['creator_subscriptions']['Row']
+  : { id: string; creator_id: string; user_id: string; created_at: string };
+
+type SubscriptionKey = keyof SubscriptionRow;
 
 // Define safe creator type
 interface Creator {
@@ -51,16 +58,11 @@ export const SubscribedCreators = () => {
               banner_url
             )
           `)
-          .eq("user_id" as keyof SubscriptionRow, userId as string)
-          .order("created_at" as keyof SubscriptionRow, { ascending: false });
+          .eq("user_id" as string, userId as string)
+          .order("created_at" as string, { ascending: false });
           
-        if (error) {
-          console.error("Error fetching subscriptions:", error);
-          return [];
-        }
-        
-        // Ensure data exists and is an array
-        if (!data || !Array.isArray(data)) {
+        if (error || !data || !Array.isArray(data)) {
+          console.error("Error fetching subscriptions:", error || "Invalid data format");
           return [];
         }
         
@@ -88,6 +90,7 @@ export const SubscribedCreators = () => {
         }).filter(Boolean) as Subscription[];
       } catch (e) {
         console.error("Exception fetching subscriptions:", e);
+        console.warn("The 'creator_subscriptions' table might not exist in the database schema.");
         return [];
       }
     },

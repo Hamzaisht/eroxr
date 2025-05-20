@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -43,9 +42,10 @@ import { ProfileStatus } from "@/utils/supabase/type-guards";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
 import { updateProfileStatus } from "@/utils/supabase/db-helpers";
-import { isProfileRow } from "@/utils/supabase/typeSafeOperations";
+import { isQueryError } from "@/utils/supabase/typeSafeOperations";
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type ProfileKey = keyof ProfileRow;
 
 interface UserMenuItemProps {
   label: string;
@@ -80,16 +80,11 @@ export function UserMenu() {
         const { data, error } = await supabase
           .from('profiles')
           .select("*")
-          .eq("id" as keyof ProfileRow, session.user.id as string)
+          .eq('id' as ProfileKey, session.user.id as ProfileRow['id'])
           .maybeSingle();
           
-        if (error) {
-          console.error('Error fetching profile:', error);
-          return null;
-        }
-        
-        // Check if data exists and is not an error
-        if (!data || 'error' in data) {
+        if (error || !data || isQueryError(data)) {
+          console.error('Error fetching profile:', error || 'Invalid data');
           return null;
         }
         
@@ -161,77 +156,42 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-9 w-9">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
             <AvatarImage src={safeProfile?.avatar_url || ""} alt={safeProfile?.username || "User"} />
-            <AvatarFallback>{safeProfile?.username?.slice(0, 2) || "Guest"}</AvatarFallback>
+            <AvatarFallback>{safeProfile?.username?.slice(0, 2).toUpperCase() || "US"}</AvatarFallback>
           </Avatar>
-          <span className="sr-only">Open user menu</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end">
-        <div className="grid gap-2 px-4 py-2">
-          <p className="text-sm font-medium leading-none">{safeProfile?.username || "Guest"}</p>
-          <p className="text-muted-foreground text-xs">
-            {safeProfile?.email || "No email available"}
-          </p>
-        </div>
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <UserMenuItem label="Profile" icon={User} onClick={() => navigate('/profile')} />
-        <UserMenuItem label="Activity" icon={Activity} />
-        <UserMenuItem label="Settings" icon={Settings} onClick={() => navigate('/settings')} />
+        <UserMenuItem 
+          label="Profile" 
+          icon={CircleUserRound} 
+          onClick={() => navigate(`/profile/${session?.user?.id}`)}
+        />
+        <UserMenuItem 
+          label="Settings" 
+          icon={Settings} 
+          onClick={() => navigate("/settings")}
+        />
+        <UserMenuItem 
+          label="Activity" 
+          icon={Activity} 
+          onClick={() => navigate("/activity")}
+        />
+        <UserMenuItem 
+          label="Help" 
+          icon={HelpCircle} 
+          onClick={() => navigate("/help")}
+        />
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogTrigger asChild>
-              <div className="flex items-center w-full cursor-pointer">
-                <Dot className="mr-2 h-4 w-4" />
-                Set Status
-              </div>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Set Availability Status</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Choose the status you want to display to other users.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="grid gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroup defaultValue={currentStatus.toString()} className="flex flex-col space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="online" id="online" onClick={() => handleStatusChange(AvailabilityStatus.ONLINE)} />
-                      <Label htmlFor="online">Online</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="away" id="away" onClick={() => handleStatusChange(AvailabilityStatus.AWAY)} />
-                      <Label htmlFor="away">Away</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="busy" id="busy" onClick={() => handleStatusChange(AvailabilityStatus.BUSY)} />
-                      <Label htmlFor="busy">Busy</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="offline" id="offline" onClick={() => handleStatusChange(AvailabilityStatus.OFFLINE)} />
-                      <Label htmlFor="offline">Offline</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="invisible" id="invisible" onClick={() => handleStatusChange(AvailabilityStatus.INVISIBLE)} />
-                      <Label htmlFor="invisible">Invisible</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </div>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => setOpen(false)}>Save</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </DropdownMenuItem>
-        <UserMenuItem label="Help" icon={HelpCircle} />
-        <DropdownMenuSeparator />
-        <UserMenuItem label="Sign Out" icon={ArrowRightFromLine} onClick={signOut} />
+        <UserMenuItem 
+          label="Sign out" 
+          icon={ArrowRightFromLine} 
+          onClick={() => supabaseClient.auth.signOut().then(() => navigate("/login"))}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

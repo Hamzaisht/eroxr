@@ -1,10 +1,20 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types/database.types";
+import AdminLogsTable from "./AdminLogsTable";
+import { isQueryError } from "@/utils/supabase/typeSafeOperations";
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type ProfileKey = keyof ProfileRow;
+
+type StoryRow = Database['public']['Tables']['stories']['Row'];
+type StoryKey = keyof StoryRow;
+
+type ReportRow = Database['public']['Tables']['reports']['Row'];
+type ReportKey = keyof ReportRow;
 
 export const GodmodeDashboardHome = () => {
   const [stats, setStats] = useState({
@@ -33,8 +43,8 @@ export const GodmodeDashboardHome = () => {
         const { count: activeUsers, error: activeError } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .eq('is_suspended' as keyof ProfileRow, false)
-          .gt('last_active_at', oneDayAgo.toISOString());
+          .eq('is_suspended' as ProfileKey, false as unknown as ProfileRow['is_suspended'])
+          .gt('last_active_at' as ProfileKey, oneDayAgo.toISOString() as any);
 
         // Count total content (posts and stories)
         const { count: postCount, error: postError } = await supabase
@@ -44,19 +54,19 @@ export const GodmodeDashboardHome = () => {
         const { count: storyCount, error: storyError } = await supabase
           .from('stories')
           .select('*', { count: 'exact', head: true })
-          .eq('is_active', true);
+          .eq('is_active' as StoryKey, true as unknown as StoryRow['is_active']);
 
         // Count pending reports
         const { count: pendingReports, error: reportsError } = await supabase
           .from('reports')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'pending');
+          .eq('status' as ReportKey, 'pending' as unknown as ReportRow['status']);
 
         // Count recent signups (last 24 hours)
         const { count: recentSignups, error: signupsError } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .gt('created_at', oneDayAgo.toISOString());
+          .gt('created_at' as ProfileKey, oneDayAgo.toISOString() as any);
 
         // Update state with fetched data
         setStats({

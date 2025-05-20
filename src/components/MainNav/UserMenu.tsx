@@ -28,9 +28,11 @@ import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
 import { updateProfileStatus } from "@/utils/supabase/db-helpers";
+import { isQueryError } from "@/utils/supabase/typeSafeOperations";
 
 // Define proper types for profiles table
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type ProfileKey = keyof ProfileRow;
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -50,16 +52,11 @@ export function UserMenu() {
         const { data, error } = await supabase
           .from('profiles')
           .select("*")
-          .eq("id" as keyof ProfileRow, session.user.id as string)
+          .eq('id' as ProfileKey, session.user.id as ProfileRow['id'])
           .maybeSingle();
           
-        if (error) {
-          console.error('Error fetching profile:', error);
-          return null;
-        }
-        
-        // Check if data exists and is not an error
-        if (!data || 'error' in data) {
+        if (error || !data || isQueryError(data)) {
+          console.error('Error fetching profile:', error || 'Invalid data');
           return null;
         }
         
