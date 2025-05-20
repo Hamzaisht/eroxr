@@ -1,70 +1,101 @@
-
-import { useState, useEffect } from "react";
-import { AdminLogsTable } from "./AdminLogsTable";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types/database.types";
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
 export const GodmodeDashboardHome = () => {
-  const [totalUsers, setTotalUsers] = useState<number>(0);
-  const [totalCreators, setTotalCreators] = useState<number>(0);
-  const [totalPosts, setTotalPosts] = useState<number>(0);
-  const [totalReports, setTotalReports] = useState<number>(0);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalContent: 0,
+    pendingReports: 0,
+    recentSignups: 0
+  });
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Fetch dashboard stats
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchDashboardStats = async () => {
       setIsLoading(true);
       try {
-        // Fetch total users
-        const { count: usersCount } = await supabase
+        // Count total users
+        const { count: totalUsers, error: usersError } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true });
+
+        // Count active users (those who were online in the last 24 hours)
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
         
-        setTotalUsers(usersCount || 0);
-        
-        // Fetch total creators (users with is_paying_customer=true)
-        const { count: creatorsCount } = await supabase
+        const { count: activeUsers, error: activeError } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .eq("is_paying_customer" as keyof ProfileRow, true);
-        
-        setTotalCreators(creatorsCount || 0);
-        
-        // Fetch total posts
-        const { count: postsCount } = await supabase
+          .eq('is_suspended' as keyof ProfileRow, false)
+          .gt('last_active_at', oneDayAgo.toISOString());
+
+        // Count total content (posts and stories)
+        const { count: postCount, error: postError } = await supabase
           .from('posts')
           .select('*', { count: 'exact', head: true });
-        
-        setTotalPosts(postsCount || 0);
-        
-        // Fetch total reports
-        const { count: reportsCount } = await supabase
+
+        const { count: storyCount, error: storyError } = await supabase
+          .from('stories')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
+
+        // Count pending reports
+        const { count: pendingReports, error: reportsError } = await supabase
           .from('reports')
-          .select('*', { count: 'exact', head: true });
-        
-        setTotalReports(reportsCount || 0);
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending');
+
+        // Count recent signups (last 24 hours)
+        const { count: recentSignups, error: signupsError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .gt('created_at', oneDayAgo.toISOString());
+
+        // Update state with fetched data
+        setStats({
+          totalUsers: totalUsers || 0,
+          activeUsers: activeUsers || 0,
+          totalContent: (postCount || 0) + (storyCount || 0),
+          pendingReports: pendingReports || 0,
+          recentSignups: recentSignups || 0
+        });
+
+        // Handle any errors
+        if (usersError || activeError || postError || storyError || reportsError || signupsError) {
+          throw new Error("Error fetching statistics");
+        }
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard statistics",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchStats();
-  }, []);
+    fetchDashboardStats();
+  }, [toast]);
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Users" value={totalUsers} isLoading={isLoading} />
-        <StatCard title="Total Creators" value={totalCreators} isLoading={isLoading} />
-        <StatCard title="Total Posts" value={totalPosts} isLoading={isLoading} />
-        <StatCard title="Total Reports" value={totalReports} isLoading={isLoading} />
+        <StatCard title="Total Users" value={stats.totalUsers} isLoading={isLoading} />
+        <StatCard title="Active Users" value={stats.activeUsers} isLoading={isLoading} />
+        <StatCard title="Total Content" value={stats.totalContent} isLoading={isLoading} />
+        <StatCard title="Pending Reports" value={stats.pendingReports} isLoading={isLoading} />
+        <StatCard title="Recent Signups" value={stats.recentSignups} isLoading={isLoading} />
       </div>
       
       <AdminLogsTable />

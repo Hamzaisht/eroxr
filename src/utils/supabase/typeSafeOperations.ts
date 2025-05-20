@@ -7,6 +7,8 @@ export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type PostRow = Database['public']['Tables']['posts']['Row'];
 export type StoryRow = Database['public']['Tables']['stories']['Row'];
 export type SubscriptionRow = Database['public']['Tables']['creator_subscriptions']['Row'];
+
+// Using extended syntax for optional table types
 export type AdminLogRow = Database['public']['Tables']['admin_logs'] extends { Row: infer R } ? R : any;
 export type FlaggedContentRow = Database['public']['Tables']['flagged_content'] extends { Row: infer R } ? R : any;
 

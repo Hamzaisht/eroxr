@@ -49,7 +49,7 @@ export const FlaggedContent = () => {
           flagged_by,
           profiles:flagged_by(username, avatar_url)
         `)
-        .eq('status' as string, 'flagged' as string)
+        .eq('status', 'flagged')
         .order('flagged_at', { ascending: false });
       
       if (error) {
@@ -64,7 +64,13 @@ export const FlaggedContent = () => {
       
       if (Array.isArray(data)) {
         data.forEach(item => {
-          if (item && typeof item === 'object' && 'id' in item) {
+          // Skip if item is null or not an object
+          if (!item || typeof item !== 'object') return;
+          
+          // Skip if it's an error object
+          if ('error' in item) return;
+          
+          try {
             // Create safe item with type checking
             const flaggedItem: FlaggedItem = {
               id: item.id?.toString() || '',
@@ -73,13 +79,30 @@ export const FlaggedContent = () => {
               reason: item.reason?.toString() || '',
               severity: item.severity?.toString() || 'medium',
               status: item.status?.toString() || 'flagged',
-              reporter_name: item.profiles && typeof item.profiles === 'object' && 'username' in item.profiles ? 
-                item.profiles.username?.toString() || 'Anonymous' : 'Unknown',
-              reporter_avatar: item.profiles && typeof item.profiles === 'object' && 'avatar_url' in item.profiles ? 
-                item.profiles.avatar_url?.toString() || undefined : undefined
+              reporter_name: 'Anonymous',
+              reporter_avatar: undefined
             };
             
+            // Safely access profile data for the reporter
+            if (item.profiles) {
+              const profile = item.profiles;
+              
+              // Handle if profiles is an array
+              if (Array.isArray(profile) && profile.length > 0) {
+                flaggedItem.reporter_name = profile[0]?.username?.toString() || 'Anonymous';
+                flaggedItem.reporter_avatar = profile[0]?.avatar_url?.toString() || undefined;
+              } 
+              // Handle if profiles is a direct object
+              else if (typeof profile === 'object' && profile !== null) {
+                flaggedItem.reporter_name = profile.username?.toString() || 'Anonymous';
+                flaggedItem.reporter_avatar = profile.avatar_url?.toString() || undefined;
+              }
+            }
+            
             safeItems.push(flaggedItem);
+          } catch (e) {
+            console.error("Error processing flagged content item:", e);
+            // Skip problematic items but continue processing others
           }
         });
       }
@@ -102,7 +125,7 @@ export const FlaggedContent = () => {
       const { error } = await supabase
         .from('flagged_content')
         .update({ status: 'resolved' })
-        .eq('id' as string, id);
+        .eq('id', id);
       
       if (error) throw error;
       

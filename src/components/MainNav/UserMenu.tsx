@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   DropdownMenu,
@@ -49,7 +50,7 @@ export function UserMenu() {
         const { data, error } = await supabase
           .from('profiles')
           .select("*")
-          .eq("id", session.user.id)
+          .eq("id" as keyof ProfileRow, session.user.id as string)
           .maybeSingle();
           
         if (error) {

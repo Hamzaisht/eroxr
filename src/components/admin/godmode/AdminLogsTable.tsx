@@ -59,6 +59,20 @@ export const AdminLogsTable = () => {
       if (Array.isArray(data)) {
         data.forEach(log => {
           if (log && typeof log === 'object' && 'id' in log) {
+            // Check for profile data which could be an object with username field
+            let adminUsername = 'Unknown Admin';
+            
+            if (log.profiles && typeof log.profiles === 'object') {
+              // Check if profiles is an array with at least one item
+              if (Array.isArray(log.profiles) && log.profiles.length > 0) {
+                adminUsername = safeString(log.profiles[0]?.username) || 'Unknown Admin';
+              } 
+              // Check if profiles is a direct object with username
+              else if ('username' in log.profiles) {
+                adminUsername = safeString(log.profiles.username) || 'Unknown Admin';
+              }
+            }
+            
             const adminLog: AdminLog = {
               id: safeString(log.id),
               admin_id: safeString(log.admin_id),
@@ -68,9 +82,7 @@ export const AdminLogsTable = () => {
               target_id: safeString(log.target_id || ''),
               details: log.details || {},
               created_at: safeString(log.created_at),
-              admin_name: (log.profiles && typeof log.profiles === 'object') ? 
-                safeString(log.profiles?.username) || 'Unknown Admin' : 
-                'Unknown Admin'
+              admin_name: adminUsername
             };
             formattedLogs.push(adminLog);
           }
