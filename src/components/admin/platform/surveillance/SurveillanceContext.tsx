@@ -28,6 +28,7 @@ export const SurveillanceProvider = ({
   refreshAlerts = async () => true,
   startSurveillance = async () => true
 }: SurveillanceProviderProps) => {
+  // Using the SurveillanceTab enum value directly rather than a string
   const [activeTab, setActiveTab] = useState<SurveillanceTab>(SurveillanceTab.STREAMS);
   const [error, setError] = useState<string | null>(null);
 

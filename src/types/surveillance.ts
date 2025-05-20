@@ -113,6 +113,7 @@ export interface LiveSession {
     username?: string;
     avatar_url?: string;
   };
+  visibility?: string; // Added to fix errors
 }
 
 /**
@@ -137,7 +138,7 @@ export interface SurveillanceContentItem {
   title: string;
   description: string;
   tags?: string[];
-  visibility: string; // Adding this property
+  visibility: string; // Added this as a required property
   status?: string;
   flagged?: boolean;
   severity?: string;

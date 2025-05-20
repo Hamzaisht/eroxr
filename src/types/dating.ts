@@ -75,16 +75,18 @@ export interface DatingAd {
 export interface FilterOptions {
   minAge: number;
   maxAge: number;
-  minDistance: number;
-  maxDistance: number;
-  verifiedOnly: boolean;
-  premiumOnly: boolean;
-  keyword: string;
-  username: string;
+  minDistance?: number;
+  maxDistance?: number;
+  verifiedOnly?: boolean;
+  premiumOnly?: boolean;
+  keyword?: string;
+  username?: string;
   country?: string;
   city?: string;
   userType?: string;
   tags?: string[];
+  isVerified?: boolean;
+  isPremium?: boolean;
 }
 
 /**
