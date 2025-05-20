@@ -52,10 +52,10 @@ export function UserMenu() {
         const { data, error } = await supabase
           .from('profiles')
           .select("*")
-          .eq('id' as ProfileKey, session.user.id as ProfileRow['id'])
+          .eq('id' as ProfileKey, session.user.id)
           .maybeSingle();
           
-        if (error || !data || isQueryError(data)) {
+        if (error || !data) {
           console.error('Error fetching profile:', error || 'Invalid data');
           return null;
         }

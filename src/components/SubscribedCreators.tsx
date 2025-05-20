@@ -9,12 +9,8 @@ import { safeString, isQueryError, ensureUserIdSet } from "@/utils/supabase/type
 // Define types for database tables
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
-// Check if creator_subscriptions table exists in schema
-// If not, provide a fallback type
-type SubscriptionRow = 'creator_subscriptions' extends keyof Database['public']['Tables'] 
-  ? Database['public']['Tables']['creator_subscriptions']['Row']
-  : { id: string; creator_id: string; user_id: string; created_at: string };
-
+// Define subscription type using type safety
+type SubscriptionRow = Database['public']['Tables']['creator_subscriptions']['Row'];
 type SubscriptionKey = keyof SubscriptionRow;
 
 // Define safe creator type
@@ -61,7 +57,7 @@ export const SubscribedCreators = () => {
               banner_url
             )
           `)
-          .eq("user_id", userId)
+          .eq("user_id" as SubscriptionKey, userId)
           .order("created_at", { ascending: false });
           
         if (error || !data || !Array.isArray(data)) {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -6,10 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { safeString, isQueryError } from "@/utils/supabase/typeSafeOperations";
 import { Database } from "@/integrations/supabase/types/database.types";
 
-// Define type for admin log rows with safe fallback
-type AdminLogRow = 'admin_logs' extends keyof Database['public']['Tables'] 
-  ? Database['public']['Tables']['admin_logs']['Row'] 
-  : { id: string; admin_id: string; action: string; action_type: string; created_at: string; target_id?: string; target_type?: string; details?: Record<string, any>; };
+// Define type for admin log rows with strong typing
+type AdminLogRow = Database['public']['Tables']['admin_logs']['Row'];
+type AdminLogKey = keyof AdminLogRow;
 
 // Define type for profile with username
 interface AdminLog {
@@ -47,7 +45,7 @@ export const AdminLogsTable = () => {
           created_at,
           profiles:admin_id(username)
         `)
-        .order('created_at', { ascending: false })
+        .order('created_at' as AdminLogKey, { ascending: false })
         .limit(100);
 
       if (error) {
