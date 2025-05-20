@@ -48,6 +48,16 @@ export function isImageUrl(url: string | null | undefined): boolean {
 }
 
 /**
+ * Check if a URL is an audio URL
+ * @param url The URL to check
+ */
+export function isAudioUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac'];
+  return audioExtensions.some(ext => url.toLowerCase().includes(ext));
+}
+
+/**
  * Get the file extension from a URL
  * @param url The URL to get the extension from
  */
