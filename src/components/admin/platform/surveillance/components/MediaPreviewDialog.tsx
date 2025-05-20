@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { LiveSession, MediaSource } from "@/types/surveillance";
-import { MediaType } from "@/types/media";
+import { LiveSession } from "@/types/surveillance";
+import { MediaType, MediaSource } from "@/types/media";
 
 interface MediaPreviewDialogProps {
   session: LiveSession | null;
@@ -63,7 +63,7 @@ export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreview
         
         // Create media source object
         const mediaSource: MediaSource = {
-          url: videoUrl || mediaUrl,
+          url: videoUrl || mediaUrl || '',
           type: detectedType,
           content_type: session.content_type
         };

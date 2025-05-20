@@ -1,4 +1,3 @@
-
 /**
  * Dating Ad interface - represents the core dating ad structure
  */
@@ -18,7 +17,7 @@ export interface DatingAd {
   
   // Verification and status
   isVerified: boolean; // Making required with default fallback
-  isPremium?: boolean;
+  isPremium: boolean;  // Making required with default fallback
   is_verified?: boolean;
   is_premium?: boolean;
   is_active?: boolean;
@@ -42,7 +41,7 @@ export interface DatingAd {
   looking_for?: string[];
   country?: string;
   city?: string;
-  age_range?: { lower: number; upper: number };
+  age_range?: { lower: number; upper: number } | [number, number];
   created_at?: string;
   updated_at?: string;
   body_type?: string;
@@ -58,7 +57,7 @@ export interface DatingAd {
   occupation?: string;
   about_me?: string;
   seeking_description?: string;
-  preferred_age_range?: { lower: number; upper: number } | null;
+  preferred_age_range?: { lower: number; upper: number } | [number, number] | null;
   
   // Reference to user object
   user?: {

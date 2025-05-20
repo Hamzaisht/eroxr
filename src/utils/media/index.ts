@@ -5,12 +5,14 @@ export * from './mediaUtils';
 export * from './mediaTypeUtils';
 
 // Explicitly re-export these items to resolve ambiguity and ensure they're available
-export { MediaType, AvailabilityStatus } from './types';
+export { MediaType } from './types';
 export { 
-  determineMediaType, 
+  detectMediaType, 
+  determineMediaType,
   extractMediaUrl, 
   createUniqueFilePath,
-  normalizeMediaSource 
+  normalizeMediaSource,
+  uploadFileToStorage
 } from './mediaUtils';
 export { 
   isImageType, 

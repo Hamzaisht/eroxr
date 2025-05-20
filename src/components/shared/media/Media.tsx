@@ -1,11 +1,11 @@
+
 import { useState, useEffect, forwardRef } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { MediaType, MediaSource } from '@/utils/media/types';
-import { determineMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
-import { getPlayableMediaUrl } from '@/utils/media/urlUtils';
+import { MediaType } from '@/types/media';
+import { detectMediaType, extractMediaUrl } from '@/utils/media/mediaUtils';
 
 type MediaProps = {
-  source: MediaSource | string;
+  source: any;
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
@@ -60,14 +60,12 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
           return;
         }
 
-        // Get playable URL
-        const playableUrl = getPlayableMediaUrl(extractedUrl);
-        setUrl(playableUrl);
+        // Set URL
+        setUrl(extractedUrl);
 
         // Determine media type - using the extracted URL string for type detection
-        const typeString = determineMediaType(extractedUrl);
-        // Set the media type
-        setMediaType(typeString);
+        const type = detectMediaType(extractedUrl);
+        setMediaType(type);
       } catch (err) {
         console.error('Error processing media:', err);
         setError('Failed to process media');
@@ -132,7 +130,7 @@ export const Media = forwardRef<HTMLVideoElement | HTMLImageElement, MediaProps>
     }
 
     // For image content
-    if (mediaType === MediaType.IMAGE) {
+    if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
       return (
         <div className="relative w-full h-full">
           <img

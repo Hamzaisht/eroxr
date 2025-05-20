@@ -3,6 +3,8 @@ export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
+  DOCUMENT = 'document',
+  GIF = 'gif',
   UNKNOWN = 'unknown',
 }
 
@@ -16,6 +18,9 @@ export interface MediaSource {
   height?: number;
   watermark?: boolean;
   creator_id?: string;
+  content_type?: string;
+  media_url?: string;
+  video_url?: string;
 }
 
 export interface MediaOptions {
@@ -30,4 +35,13 @@ export interface MediaOptions {
   onError?: (error?: any) => void;
   onEnded?: () => void;
   onTimeUpdate?: (e: any) => void;
+}
+
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+  fileSize?: number;
+  fileType?: string;
+  metadata?: Record<string, any>;
 }

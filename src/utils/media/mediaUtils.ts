@@ -51,8 +51,10 @@ export const extractMediaUrl = (src: string | MediaSource): string => {
     return src;
   }
   
-  if (src && typeof src === 'object' && 'url' in src) {
-    return src.url;
+  if (src && typeof src === 'object') {
+    if ('url' in src) return src.url;
+    if ('media_url' in src) return src.media_url as string;
+    if ('video_url' in src) return src.video_url as string;
   }
   
   return '';
@@ -71,6 +73,16 @@ export const normalizeMediaSource = (source: string | MediaSource): MediaSource 
   }
   
   if (source && typeof source === 'object' && 'url' in source) {
+    // Ensure type is correct MediaType enum
+    if (typeof source.type === 'string' && source.type !== 'image' && 
+        source.type !== 'video' && source.type !== 'audio' && 
+        source.type !== 'document' && source.type !== 'gif' && 
+        source.type !== 'unknown') {
+      return {
+        ...source,
+        type: detectMediaType(source.url)
+      };
+    }
     // Return existing MediaSource
     return source;
   }
@@ -80,13 +92,17 @@ export const normalizeMediaSource = (source: string | MediaSource): MediaSource 
 };
 
 /**
- * Detect media type from URL
+ * Detect media type from URL or content type
  */
 export const detectMediaType = (url: string): MediaType => {
   const extension = url.split('.').pop()?.toLowerCase() || '';
   
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) {
+  if (['jpg', 'jpeg', 'png', 'webp', 'svg'].includes(extension)) {
     return MediaType.IMAGE;
+  }
+  
+  if (['gif'].includes(extension)) {
+    return MediaType.GIF;
   }
   
   if (['mp4', 'webm', 'ogg', 'mov'].includes(extension)) {
@@ -97,5 +113,12 @@ export const detectMediaType = (url: string): MediaType => {
     return MediaType.AUDIO;
   }
   
+  if (['pdf', 'doc', 'docx', 'txt'].includes(extension)) {
+    return MediaType.DOCUMENT;
+  }
+  
   return MediaType.UNKNOWN;
 };
+
+// Add alias for backward compatibility
+export const determineMediaType = detectMediaType;

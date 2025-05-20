@@ -3,7 +3,7 @@ import { useEffect, useRef, forwardRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2, AlertCircle, RefreshCw, VolumeX } from "lucide-react";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType } from "@/utils/media/types";
+import { MediaType } from "@/types/media";
 
 interface StoryVideoProps {
   videoUrl: string;

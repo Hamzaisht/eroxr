@@ -4,7 +4,7 @@ import { Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInView } from "react-intersection-observer";
 import { MediaRenderer } from "@/components/media/MediaRenderer";
-import { MediaType, MediaSource } from "@/utils/media/types";
+import { MediaType, MediaSource } from "@/types/media";
 import { extractMediaUrl, normalizeMediaSource } from '@/utils/media/mediaUtils';
 
 interface ErosVideoPlayerProps {
@@ -48,7 +48,7 @@ export function ErosVideoPlayer({
   const shouldPlay = isActive && inView;
   
   // Create a properly normalized media source
-  const videoSource = useMemo(() => normalizeMediaSource({
+  const videoSource = useMemo<MediaSource>(() => ({
     url: videoUrl,
     type: MediaType.VIDEO,
     thumbnail: thumbnailUrl

@@ -1,37 +1,39 @@
 
-import { UniversalMedia } from "@/components/shared/media/UniversalMedia";
+import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaSource } from "@/types/media";
 
-interface MediaGridProps {
+export interface MediaGridProps {
   items: MediaSource[];
-  onItemClick: (item: MediaSource) => void;
+  onItemClick?: (item: MediaSource) => void;
 }
 
 export function MediaGrid({ items, onItemClick }: MediaGridProps) {
   if (!items || items.length === 0) {
-    return <div className="text-center py-8 text-muted-foreground">No media available</div>;
+    return (
+      <div className="flex items-center justify-center h-32 bg-muted rounded-md">
+        <p className="text-muted-foreground">No media items</p>
+      </div>
+    );
   }
-  
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
       {items.map((item, index) => (
-        <div key={index} className="relative aspect-square overflow-hidden rounded-md">
+        <div 
+          key={index} 
+          className="aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition"
+          onClick={() => onItemClick && onItemClick(item)}
+        >
           <UniversalMedia
-            item={{
-              url: item.url,
-              type: item.type,
-              // Use optional chaining for additional properties
-              ...(item.thumbnail ? { thumbnail: item.thumbnail } : {}),
-              ...(item.poster ? { poster: item.poster } : {})
-            }}
+            item={item}
             className="w-full h-full object-cover"
-            showWatermark={false}
-            onClick={() => onItemClick(item)}
+            controls={false}
+            muted={true}
+            autoPlay={false}
+            poster={item.thumbnail}
           />
         </div>
       ))}
     </div>
   );
 }
-
-export default MediaGrid;

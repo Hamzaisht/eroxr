@@ -24,6 +24,7 @@ export function QuickMatch({ ads, userProfile }: QuickMatchProps) {
       videoUrl: ad.videoUrl || ad.video_url || "",
       avatarUrl: ad.avatarUrl || ad.avatar_url || "",
       isVerified: ad.isVerified !== undefined ? ad.isVerified : (ad.is_verified || false),
+      isPremium: ad.isPremium !== undefined ? ad.isPremium : (ad.is_premium || false),
     };
 
     return <VideoProfileCard key={ad.id} ad={enrichedAd} />;

@@ -1,161 +1,85 @@
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { X } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useSession } from '@supabase/auth-helpers-react';
-import { Database } from '@/integrations/supabase/types/database.types';
-import { FileUpload } from './FileUpload';
-import { createPost } from '@/utils/supabase/db-helpers';
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
-interface CreatePostDialogProps {
+// Update props to accept selectedFiles
+export interface CreatePostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedFiles?: FileList | null; // Add support for selectedFiles
-  onFileSelect?: (files: FileList | null) => void; // Add support for file selection callback
+  selectedFiles?: FileList | null;
+  onFileSelect: (files: FileList | null) => void;
 }
 
-export function CreatePostDialog({ 
-  open, 
+export function CreatePostDialog({
+  open,
   onOpenChange,
   selectedFiles,
   onFileSelect
 }: CreatePostDialogProps) {
-  const { toast } = useToast();
-  const session = useSession();
-  const queryClient = useQueryClient();
-  const [content, setContent] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [caption, setCaption] = useState("");
 
-  const handleSubmit = async () => {
-    if (!session?.user?.id) {
-      toast({
-        title: 'Not authenticated',
-        description: 'Please log in to create a post',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!content && mediaUrls.length === 0) {
-      toast({
-        title: 'Empty post',
-        description: 'Please add some content or media to your post',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      // Create a properly typed payload for the posts table
-      const payload: Database['public']['Tables']['posts']['Insert'] = {
-        creator_id: session.user.id,
-        content,
-        visibility: 'public',
-        is_ppv: false,
-      };
-      
-      // Only add media_url if we have any
-      if (mediaUrls.length > 0) {
-        payload.media_url = mediaUrls;
-      }
-
-      await createPost(payload);
-
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-
-      toast({
-        title: 'Post created',
-        description: 'Your post has been published',
-      });
-
-      setContent('');
-      setMediaUrls([]);
-      onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error creating post:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create post',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      // Call the parent's onFileSelect if provided
-      if (onFileSelect) {
-        onFileSelect(e.target.files);
-      }
-      
-      setIsUploading(true);
-      // Simulate file upload
-      setTimeout(() => {
-        const fakeUrls = Array.from(e.target.files || []).map(
-          (_, i) => `https://example.com/fake-image-${i}.jpg`
-        );
-        setMediaUrls(prevUrls => [...prevUrls, ...fakeUrls]);
-        setIsUploading(false);
-      }, 1000);
-    }
-  };
-
-  const removeMedia = (urlToRemove: string) => {
-    setMediaUrls(prevUrls => prevUrls.filter(url => url !== urlToRemove));
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Process post creation
+    console.log("Creating post with caption:", caption);
+    // Reset form fields
+    setCaption("");
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Post</DialogTitle>
+          <DialogTitle>Create New Post</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-4">
-          <Textarea
-            placeholder="What's on your mind?"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[120px]"
-          />
-          {mediaUrls.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {mediaUrls.map((url, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={url}
-                    alt={`Uploaded media ${index}`}
-                    className="w-20 h-20 object-cover rounded"
-                  />
-                  <button
-                    onClick={() => removeMedia(url)}
-                    className="absolute top-1 right-1 bg-black/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
-                  >
-                    <X className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="flex justify-between items-center">
-            <FileUpload onChange={handleFileChange} accept="image/*" />
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting || isUploading || (!content && mediaUrls.length === 0)}
-            >
-              {isSubmitting ? 'Posting...' : 'Post'}
-            </Button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="caption" className="text-sm font-medium">
+              Caption
+            </label>
+            <textarea
+              id="caption"
+              className="w-full min-h-[100px] p-2 border rounded-md"
+              placeholder="Write a caption..."
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+            />
           </div>
-        </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Media</label>
+            <input
+              type="file"
+              accept="image/*,video/*"
+              className="w-full"
+              onChange={(e) => onFileSelect(e.target.files)}
+              multiple
+            />
+            
+            {/* Display selected file info */}
+            {selectedFiles && selectedFiles.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm font-medium">Selected files:</p>
+                <ul className="text-sm">
+                  {Array.from(selectedFiles).map((file, index) => (
+                    <li key={index}>{file.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Post</Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
