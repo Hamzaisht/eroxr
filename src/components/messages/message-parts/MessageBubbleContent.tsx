@@ -1,242 +1,151 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
-import { format } from 'date-fns';
-import { UniversalMedia } from "@/components/shared/media/UniversalMedia";
-import { MediaType } from "@/types/media";
-import { MoreHorizontal } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { MessageActions } from './MessageActions';
+import { SnapPreview } from './SnapPreview';
+import { formatMessageTime } from '@/utils/date';
+import { useUser } from '@/hooks/useUser';
 
-// Define Message interface
-interface Message {
+// Define the Message interface to match what's expected
+export interface Message {
   id: string;
   content?: string;
-  sender_id: string;
+  media_url?: string[] | null;
+  sender_id?: string;
+  recipient_id?: string;
   created_at: string;
-  updated_at?: string;
-  original_content?: string;
-  media_url?: string[];
-  viewed_at?: string;
+  delivery_status?: "sent" | "delivered" | "seen" | "failed";
   message_type?: string;
-  delivery_status?: 'sent' | 'delivered' | 'seen' | 'failed';
+  video_url?: string;
+  duration?: number;
+  is_expired?: boolean;
+  expires_at?: string;
+  viewed_at?: string;
 }
 
-// Define MessageActions interface
-interface MessageActionsProps {
-  onActionClick: (action: string) => void;
-  onReport: () => Promise<void>;
-}
-
-// Create a simplified MessageActions component
-const MessageActions = ({ onActionClick, onReport }: MessageActionsProps) => (
-  <div className="absolute right-0 bottom-full mb-1 bg-luxury-dark/90 backdrop-blur-sm rounded-md shadow-lg py-1 z-20">
-    <ul className="text-xs">
-      <li>
-        <button 
-          className="px-4 py-1.5 w-full text-left hover:bg-luxury-primary/20 transition-colors" 
-          onClick={() => onActionClick('copy')}
-        >
-          Copy
-        </button>
-      </li>
-      <li>
-        <button 
-          className="px-4 py-1.5 w-full text-left hover:bg-luxury-primary/20 transition-colors" 
-          onClick={() => onActionClick('reply')}
-        >
-          Reply
-        </button>
-      </li>
-      <li>
-        <button 
-          className="px-4 py-1.5 w-full text-left hover:bg-luxury-primary/20 transition-colors" 
-          onClick={() => onReport()}
-        >
-          Report
-        </button>
-      </li>
-    </ul>
-  </div>
-);
-
-interface MessageBubbleContentProps {
+export interface MessageBubbleContentProps {
   message: Message;
   isOwnMessage: boolean;
-  onImageClick?: (url: string) => void;
+  isEditing?: boolean;
+  editedContent?: string;
+  isUpdating?: boolean;
+  inputRef?: React.MutableRefObject<HTMLInputElement>;
+  onSaveEdit?: () => Promise<void>;
+  onCancelEdit?: () => void;
+  onReport?: () => Promise<void>;
+  onDelete?: () => Promise<void>;
+  onEdit?: () => void;
+  onSnapView?: () => Promise<void>;
 }
 
-export const MessageBubbleContent: React.FC<MessageBubbleContentProps> = ({
+export const MessageBubbleContent = ({
   message,
   isOwnMessage,
-  onImageClick
-}) => {
+  isEditing = false,
+  editedContent = "",
+  isUpdating = false,
+  inputRef,
+  onSaveEdit,
+  onCancelEdit,
+  onReport,
+  onDelete,
+  onEdit,
+  onSnapView
+}: MessageBubbleContentProps) => {
   const [showActions, setShowActions] = useState(false);
-  const messageRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const { toast } = useToast();
-  const supabase = useSupabaseClient();
-  const [user, setUser] = useState<any>(null);
+  const { user } = useUser();
   
-  useEffect(() => {
-    // Fetch user data
-    if (message.sender_id) {
-      supabase
-        .from('profiles')
-        .select('username, avatar_url')
-        .eq('id', message.sender_id)
-        .single()
-        .then(({ data }) => {
-          if (data) setUser(data);
-        });
-    }
-  }, [message.sender_id, supabase]);
-  
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (messageRef.current && !messageRef.current.contains(event.target as Node)) {
-        setShowActions(false);
-      }
-    };
+  const isSnap = message.message_type === 'snap';
+  const isVideo = message.video_url || (message.media_url && message.media_url.some(url => url.match(/\.(mp4|webm|mov)$/i)));
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [messageRef]);
-  
+  // Format message timestamp
+  const formattedTime = formatMessageTime(message.created_at);
+
+  // Handle actions menu toggle
+  const toggleActions = () => {
+    setShowActions(!showActions);
+  };
+
+  // Handle action click
   const handleActionClick = (action: string) => {
-    console.log(`Action ${action} clicked for message ${message.id}`);
     setShowActions(false);
-  };
-  
-  const handleReport = async () => {
-    try {
-      const { error } = await supabase
-        .from('reports')
-        .insert({
-          reporter_id: user?.id,
-          reported_id: message.sender_id,
-          content_id: message.id,
-          content_type: 'message',
-          reason: 'Inappropriate content',
-          description: 'Reported via message actions'
-        });
-        
-      if (error) {
-        console.error("Error reporting message:", error);
-        toast({
-          title: "Error",
-          description: "Could not report message",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      toast({
-        title: "Reported",
-        description: "Message has been reported for review"
-      });
-    } catch (error) {
-      console.error("Error reporting message:", error);
-      toast({
-        title: "Error",
-        description: "Could not report message",
-        variant: "destructive"
-      });
-    } finally {
-      setShowActions(false);
+    
+    switch (action) {
+      case 'report':
+        onReport && onReport();
+        break;
+      case 'delete':
+        onDelete && onDelete();
+        break;
+      case 'edit':
+        onEdit && onEdit();
+        break;
+      default:
+        break;
     }
-  };
-
-  const renderMessageContent = () => {
-    if (message.media_url && message.media_url.length > 0) {
-      return renderImage(message.media_url[0], onImageClick);
-    } else if (message.content) {
-      return <p className="text-sm break-words">{message.content}</p>;
-    } else {
-      return <p className="text-sm italic">Unsupported message type</p>;
-    }
-  };
-
-  const renderImage = (url: string, onImgClick?: (url: string) => void) => {
-    return (
-      <div 
-        className="relative w-full cursor-pointer"
-        onClick={() => onImgClick && onImgClick(url)}
-      >
-        <UniversalMedia
-          item={{
-            url: url,
-            type: MediaType.IMAGE
-          }}
-          className="rounded-lg overflow-hidden max-h-48 w-auto" 
-          controls={false}
-          autoPlay={false}
-          onError={() => console.error(`Failed to load image: ${url}`)}
-        />
-      </div>
-    );
   };
 
   return (
-    <div
-      ref={messageRef}
-      className={cn(
-        "relative flex flex-col w-full rounded-2xl px-3 py-2",
-        isOwnMessage ? "bg-luxury-primary/10 items-end" : "bg-luxury-dark/30 items-start"
-      )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Avatar and Username */}
-      {!isOwnMessage && user && (
-        <div className="flex items-center space-x-2 mb-1">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={user.avatar_url} alt={user.username} />
-            <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <span className="text-xs font-medium">{user.username}</span>
-        </div>
+    <div className={`group relative flex items-end gap-2 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
+      {!isOwnMessage && (
+        <Avatar className="w-8 h-8">
+          <AvatarImage src={user?.avatar_url || ""} />
+          <AvatarFallback>{user?.username?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+        </Avatar>
       )}
 
-      {/* Message Content */}
-      <div className="w-full">
-        {renderMessageContent()}
+      <div className={`relative max-w-[75%] ${isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'} rounded-lg p-3`}>
+        {isEditing ? (
+          <div className="space-y-2">
+            <input
+              ref={inputRef}
+              type="text"
+              defaultValue={editedContent}
+              className="w-full bg-transparent outline-none"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <button 
+                onClick={onCancelEdit}
+                className="text-xs text-foreground/80 hover:text-foreground"
+                disabled={isUpdating}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={onSaveEdit}
+                className="text-xs text-primary hover:text-primary/90"
+                disabled={isUpdating}
+              >
+                {isUpdating ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {isSnap ? (
+              <SnapPreview 
+                message={message} 
+                onSnapView={onSnapView} 
+              />
+            ) : (
+              message.content && <p>{message.content}</p>
+            )}
+            {/* Time indicator */}
+            <div className={`text-xs opacity-70 mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}>
+              {formattedTime}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Timestamp and Actions */}
-      <div className="flex items-center justify-between w-full mt-1">
-        <span className="text-xs text-luxury-neutral/60">
-          {format(new Date(message.created_at), 'MMM dd, HH:mm')}
-        </span>
-        
-        {/* Actions Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowActions(!showActions);
-          }}
-          className={cn(
-            "p-1 rounded-full hover:bg-luxury-dark/40 transition-colors",
-            (showActions || isHovered) ? "visible" : "invisible"
-          )}
-          aria-label="Message actions"
-        >
-          <MoreHorizontal className="h-4 w-4 text-luxury-neutral/70" />
-        </button>
-      </div>
-
-      {/* Message Actions Dropdown */}
-      {showActions && (
-        <MessageActions
-          onActionClick={handleActionClick}
-          onReport={handleReport}
-        />
-      )}
+      <MessageActions 
+        onActionClick={handleActionClick} 
+        onReport={onReport} 
+        isOwnMessage={isOwnMessage}
+        isVisible={showActions}
+        toggleVisibility={toggleActions}
+      />
     </div>
   );
 };
-
-export default MessageBubbleContent;

@@ -18,3 +18,43 @@ export const createUniqueFilePath = (userId: string, file: File | string): strin
   
   return `${userId}/${timestamp}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 };
+
+/**
+ * Runs diagnostic checks on a file object
+ */
+export const runFileDiagnostic = (file: File | Blob): { valid: boolean, error?: string } => {
+  if (!file) {
+    return { valid: false, error: 'No file provided' };
+  }
+  
+  if (!(file instanceof File) && !(file instanceof Blob)) {
+    return { valid: false, error: 'Invalid file object type' };
+  }
+  
+  if (file.size === 0) {
+    return { valid: false, error: 'File is empty (0 bytes)' };
+  }
+  
+  return { valid: true };
+};
+
+/**
+ * Create a preview URL for a file
+ */
+export const createFilePreview = (file: File): string => {
+  try {
+    return URL.createObjectURL(file);
+  } catch (error) {
+    console.error('Error creating file preview:', error);
+    return '';
+  }
+};
+
+/**
+ * Revoke a file preview URL to prevent memory leaks
+ */
+export const revokeFilePreview = (url: string): void => {
+  if (url && url.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
+  }
+};

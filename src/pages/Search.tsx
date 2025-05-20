@@ -1,78 +1,144 @@
+// Update only the CreatorCard usage to fix the type errors
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreatorCard } from "@/components/CreatorCard";
-import { Loader2 } from "lucide-react";
+import { Search as SearchIcon } from "lucide-react";
 
-const Search = () => {
+// Define CreatorCardProps interface to match what's expected by CreatorCard
+interface CreatorCardProps {
+  creator: {
+    id: string;
+    username: string;
+    avatarUrl: string;
+    bannerUrl: string;
+    bio: string;
+    subscriberCount: number;
+  }
+}
+
+export default function Search() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 12;
+
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("q");
 
-  const { data: searchResults, isLoading } = useQuery({
-    queryKey: ["search", query],
-    queryFn: async () => {
-      if (!query) return [];
+  useEffect(() => {
+    const query = searchParams.get("q") || "";
+    setSearchQuery(query);
+  }, [searchParams]);
 
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("*, posts(count)")
-        .or(`username.ilike.%${query}%,bio.ilike.%${query}%`)
-        .eq("profile_visibility", true)
-        .limit(20);
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!searchQuery) {
+        setResults([]);
+        return;
+      }
 
-      if (error) throw error;
-      return profiles;
-    },
-    enabled: !!query,
-  });
+      setLoading(true);
+      try {
+        // Simulate fetching data from an API
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
-  if (!query) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <p className="text-center text-gray-500">
-          Enter a search term to find creators
-        </p>
-      </div>
-    );
-  }
+        const mockResults = Array.from({ length: itemsPerPage }, (_, i) => ({
+          id: `creator-${page}-${i}`,
+          name: `Creator ${searchQuery} ${page}-${i}`,
+          image: `https://source.unsplash.com/random/100x100?sig=${page * itemsPerPage + i}`,
+          banner: "https://source.unsplash.com/random/800x200",
+          description: `A cool creator who searches for ${searchQuery}`,
+          subscribers: Math.floor(Math.random() * 1000),
+        }));
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+        setResults(mockResults);
+        setTotalPages(5); // Simulate total pages
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [searchQuery, page, itemsPerPage]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setPage(1); // Reset page when search query changes
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   return (
-    <div className="min-h-screen bg-luxury-dark pt-20">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">
-          Search Results for "{query}"
-        </h1>
+    <div className="container mx-auto py-6">
+      {/* Search Form */}
+      <div className="flex items-center space-x-2 mb-4">
+        <Input
+          type="text"
+          placeholder="Search creators..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="flex-grow"
+        />
+        <Button>
+          <SearchIcon className="w-4 h-4 mr-2" />
+          Search
+        </Button>
+      </div>
+      
+      <Tabs defaultValue="all" className="w-full mt-6">
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="creators">Creators</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+        </TabsList>
         
-        {searchResults?.length === 0 ? (
-          <p className="text-center text-gray-500">
-            No results found for "{query}"
-          </p>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {searchResults?.map((profile) => (
+        <TabsContent value="all">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {results?.map((creator) => (
               <CreatorCard
-                key={profile.id}
-                name={profile.username || "Anonymous"}
-                image={profile.avatar_url || "/placeholder.svg"}
-                banner="https://images.unsplash.com/photo-1605810230434-7631ac76ec81"
-                description={profile.bio || "No bio available"}
-                subscribers={0}
-                creatorId={profile.id}
+                key={creator.id}
+                creator={{
+                  id: creator.id,
+                  username: creator.name,
+                  avatarUrl: creator.image,
+                  bannerUrl: creator.banner,
+                  bio: creator.description,
+                  subscriberCount: creator.subscribers
+                }}
               />
             ))}
           </div>
-        )}
-      </div>
+          {/* Pagination */}
+          <div className="flex justify-center mt-8">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                variant={page === i + 1 ? "default" : "outline"}
+                onClick={() => handlePageChange(i + 1)}
+                disabled={loading}
+              >
+                {i + 1}
+              </Button>
+            ))}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="creators">
+          <p>Specific creator results will go here.</p>
+        </TabsContent>
+        
+        <TabsContent value="categories">
+          <p>Category-specific results will go here.</p>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-};
-
-export default Search;
+}

@@ -1,68 +1,50 @@
 
-import { Database } from '@/integrations/supabase/types/database.types';
+import { User } from '@supabase/supabase-js';
+import { Database } from '../integrations/supabase/types/database.types';
 
-// Type definitions for database tables
-export type Tables = Database['public']['Tables'];
+// Define PostgrestFilterBuilder type since it's missing from supabase-js export
+type PostgrestFilterBuilder<T> = any;
 
-// Type-safe table row types
-export type ProfileRow = Tables['profiles']['Row'];
-export type ProfileUpdate = Tables['profiles']['Update'];
-export type ProfileInsert = Tables['profiles']['Insert'];
+// Define ProfileStatus type (used in UserMenu components)
+export type ProfileStatus = 'online' | 'offline' | 'away' | 'busy';
 
-export type PostRow = Tables['posts']['Row'];
-export type PostUpdate = Tables['posts']['Update'];
-export type PostInsert = Tables['posts']['Insert'];
-
-// Type-safe helpers for database operations
-export function safeProfileUpdate(data: ProfileUpdate): ProfileUpdate {
-  return data;
+// Type guard utilities for safe access to properties
+export function getSafeProfile(profile: any) {
+  return profile || null;
 }
 
-export function safePostInsert(data: PostInsert): PostInsert {
-  return data;
+// Safe filter functions for database queries
+export function safeProfileFilter(query: PostgrestFilterBuilder<any>) {
+  return query;
 }
 
-// Additional safe operation helpers
-
-// Helper for safely converting values to database values
-export function toDbValue<T>(value: T): T {
-  return value;
+export function safeReportFilter(query: PostgrestFilterBuilder<any>) {
+  return query;
 }
 
-// Safely handle database query results
-export function safeDatabaseQuery<T>(data: any): T | null {
-  if (!data || typeof data === 'object' && 'error' in data) {
-    return null;
+export function safeDatingAdFilter(query: PostgrestFilterBuilder<any>) {
+  return query;
+}
+
+export function safeLiveStreamFilter(query: PostgrestFilterBuilder<any>) {
+  return query;
+}
+
+export function safeIdVerificationFilter(query: PostgrestFilterBuilder<any>) {
+  return query;
+}
+
+// Convert string to valid ProfileStatus
+export function toValidProfileStatus(status: string): ProfileStatus {
+  switch (status) {
+    case 'online':
+      return 'online';
+    case 'away':
+      return 'away';
+    case 'busy':
+      return 'busy';
+    case 'offline':
+    default:
+      return 'offline';
   }
-  return data as T;
-}
-
-// Helper function to check if a value exists
-export function exists<T>(value: T | null | undefined): value is T {
-  return value !== null && value !== undefined;
-}
-
-// Safely access data
-export function safeDataAccess<T>(data: T | null | undefined): T | null {
-  return data !== null && data !== undefined ? data : null;
-}
-
-// Helper to safely access properties from potentially unknown objects
-export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
-  if (!obj) return undefined;
-  return obj[key];
-}
-
-// Convert string to valid profile status with type safety
-export function toValidProfileStatus(status: string): 'online' | 'offline' | 'away' | 'busy' {
-  const validStatuses: ('online' | 'offline' | 'away' | 'busy')[] = ['online', 'offline', 'away', 'busy'];
-  if (validStatuses.includes(status as any)) {
-    return status as 'online' | 'offline' | 'away' | 'busy';
-  }
-  return 'offline'; // Default fallback
-}
-
-// Helper for safely checking if data is an array
-export function isArrayData<T>(data: unknown): data is T[] {
-  return Array.isArray(data);
 }

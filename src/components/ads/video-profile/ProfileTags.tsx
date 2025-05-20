@@ -1,45 +1,66 @@
 
 import { Badge } from "@/components/ui/badge";
-import type { DatingAd } from "../types/dating";
+import { DatingAd } from "@/types/dating";
+import { getLowerAgeValue, getUpperAgeValue } from "@/utils/dating/ageRangeHelper";
 
 interface ProfileTagsProps {
   ad: DatingAd;
+  onTagClick?: (tag: string) => void;
 }
 
-export const ProfileTags = ({ ad }: ProfileTagsProps) => {
-  const renderTags = () => {
-    const tags = [];
-    
-    if (ad.age_range) {
-      tags.push(`${ad.age_range.lower}-${ad.age_range.upper} y/o`);
+export const ProfileTags = ({ ad, onTagClick }: ProfileTagsProps) => {
+  // Helper to handle tag clicks
+  const handleTagClick = (tag: string) => {
+    if (onTagClick) {
+      onTagClick(tag);
     }
-    
-    if (ad.body_type) {
-      tags.push(ad.body_type);
-    }
-    
-    if (ad.is_verified) {
-      tags.push('Verified');
-    }
-    
-    if (ad.education_level) {
-      tags.push(ad.education_level);
-    }
-
-    return tags;
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {renderTags().map((tag, index) => (
+    <div className="flex flex-wrap gap-1.5 mt-2">
+      {/* Age Range Badge */}
+      {ad.age_range && (
         <Badge 
-          key={index}
-          variant="secondary" 
-          className="bg-luxury-primary/10 text-luxury-primary border-luxury-primary/20"
+          variant="secondary"
+          className="text-xs bg-black/40 hover:bg-black/60"
+          onClick={() => handleTagClick(`age-${getLowerAgeValue(ad.age_range)}-${getUpperAgeValue(ad.age_range)}`)}
+        >
+          {getLowerAgeValue(ad.age_range)}-{getUpperAgeValue(ad.age_range)}
+        </Badge>
+      )}
+      
+      {/* Relationship Status */}
+      {ad.relationship_status && (
+        <Badge 
+          variant="secondary"
+          className="text-xs bg-black/40 hover:bg-black/60"
+          onClick={() => handleTagClick(ad.relationship_status || '')}
+        >
+          {ad.relationship_status}
+        </Badge>
+      )}
+      
+      {/* Tags */}
+      {ad.tags?.slice(0, 3).map((tag) => (
+        <Badge
+          key={tag}
+          variant="secondary"
+          className="text-xs bg-black/40 hover:bg-black/60"
+          onClick={() => handleTagClick(tag)}
         >
           {tag}
         </Badge>
       ))}
+      
+      {/* Show more badge if there are more tags */}
+      {ad.tags && ad.tags.length > 3 && (
+        <Badge 
+          variant="secondary" 
+          className="text-xs bg-black/40 hover:bg-black/60"
+        >
+          +{ad.tags.length - 3}
+        </Badge>
+      )}
     </div>
   );
 };

@@ -1,14 +1,16 @@
 
-// Replace the snippet:
-// Fix the uploadFileToStorage call
-const filePath = createUniqueFilePath(session.user.id, file as File);
-const result = await uploadFileToStorage('posts', filePath, file as File);
-
-// With:
 import { createUniqueFilePath, uploadFileToStorage } from '@/utils/media/mediaUtils';
 
-// Usage example:
-// const sessionUserId = '123'; // Replace with actual user ID
-// const fileToUpload = selectedFile; // Replace with actual file
-// const filePath = createUniqueFilePath(sessionUserId, fileToUpload);
-// const result = await uploadFileToStorage('posts', filePath, fileToUpload);
+// Fix the uploadFileToStorage call with proper parameters
+export const uploadFile = async (userId: string, fileToUpload: File) => {
+  try {
+    const filePath = createUniqueFilePath(userId, fileToUpload);
+    const result = await uploadFileToStorage('posts', filePath, fileToUpload);
+    return result;
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    return { success: false, error: 'Failed to upload file' };
+  }
+};
+
+export default uploadFile;

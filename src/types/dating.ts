@@ -70,3 +70,19 @@ export interface DatingAd {
   // For UI integration
   onTagClick?: (tag: string, e?: React.MouseEvent) => void;
 }
+
+// Additional types for filtering and searching
+export interface FilterOptions {
+  ageRange?: [number, number];
+  gender?: string;
+  relationship_status?: string;
+  body_type?: string;
+  height?: [number, number];
+  tags?: string[];
+  country?: string;
+  city?: string;
+}
+
+export type SearchCategory = 'all' | 'nearby' | 'popular' | 'new' | 'premium' | 'verified';
+
+export type DatingAdAction = 'view' | 'like' | 'message' | 'report' | 'block' | 'save';

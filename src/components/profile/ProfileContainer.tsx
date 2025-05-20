@@ -1,156 +1,148 @@
-import { useState, useEffect } from "react";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
-import { ProfileTabs } from "./ProfileTabs";
-import { FollowButton } from "./FollowButton";
 
-interface ProfileContainerProps {
-  userId: string;
+// Replace Next.js imports with React Router
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
+
+import { ProfileTabs } from './ProfileTabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { FollowButton } from './FollowButton';
+
+export interface ProfileContainerProps {
+  id?: string;
+  isEditing?: boolean;
+  setIsEditing?: (isEditing: boolean) => void;
 }
 
-export function ProfileContainer({ userId }: ProfileContainerProps) {
+export const ProfileContainer = ({ id, isEditing = false, setIsEditing = () => {} }: ProfileContainerProps) => {
+  const { id: profileId } = useParams();
+  const userId = id || profileId;
   const [profile, setProfile] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [postCount, setPostCount] = useState(0);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const session = useSession();
-  const router = useRouter();
+  const supabase = useSupabaseClient();
 
+  // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
-      setIsLoading(true);
+      if (!userId) return;
+
       try {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", userId)
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(`
+            *,
+            posts:posts(count)
+          `)
+          .eq('id', userId)
           .single();
 
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
-          return;
+        if (error) throw error;
+        setProfile(data);
+        
+        // Check if logged-in user follows this profile
+        if (session?.user?.id && session.user.id !== userId) {
+          const { data: followData } = await supabase
+            .from('followers')
+            .select()
+            .eq('follower_id', session.user.id)
+            .eq('following_id', userId)
+            .maybeSingle();
+          
+          setIsFollowing(!!followData);
         }
-
-        setProfile(profileData);
-
-        // Fetch post count
-        const { count: posts, error: postsError } = await supabase
-          .from("posts")
-          .select("*", { count: "exact", head: true })
-          .eq("creator_id", userId);
-
-        if (postsError) {
-          console.error("Error fetching post count:", postsError);
-        } else {
-          setPostCount(posts || 0);
-        }
-
-        // Fetch follower count
-        const { count: followers, error: followersError } = await supabase
-          .from("followers")
-          .select("*", { count: "exact", head: true })
-          .eq("following_id", userId);
-
-        if (followersError) {
-          console.error("Error fetching follower count:", followersError);
-        } else {
-          setFollowerCount(followers || 0);
-        }
-
-        // Fetch following count
-        const { count: followings, error: followingsError } = await supabase
-          .from("followers")
-          .select("*", { count: "exact", head: true })
-          .eq("follower_id", userId);
-
-        if (followingsError) {
-          console.error("Error fetching following count:", followingsError);
-        } else {
-          setFollowingCount(followings || 0);
-        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load profile',
+          variant: 'destructive',
+        });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [userId]);
+  }, [userId, supabase, toast, session?.user?.id]);
 
-  useEffect(() => {
-    const checkFollowingStatus = async () => {
-      if (!session?.user?.id || !profile?.id) return;
+  const handleFollow = async () => {
+    if (!session?.user) {
+      navigate('/login');
+      return;
+    }
 
-      const { data, error } = await supabase
-        .from("followers")
-        .select("*")
-        .eq("follower_id", session.user.id)
-        .eq("following_id", profile.id)
-        .single();
+    setFollowLoading(true);
+    try {
+      await supabase.from('followers').insert({
+        follower_id: session.user.id,
+        following_id: userId,
+      });
+      setIsFollowing(true);
+      toast({
+        description: `You are now following ${profile?.username}`,
+      });
+    } catch (error) {
+      console.error('Error following user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to follow user',
+        variant: 'destructive',
+      });
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
-      if (error) {
-        console.error("Error checking follow status:", error);
-        return;
-      }
-
-      setIsFollowing(!!data);
-    };
-
-    checkFollowingStatus();
-  }, [session?.user?.id, profile?.id]);
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center space-y-4 p-8">
-        <Skeleton className="h-24 w-24 rounded-full" />
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-6 w-64" />
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="flex flex-col items-center space-y-4 p-8">
-        <p className="text-lg text-muted-foreground">
-          User profile not found.
-        </p>
-        <Button onClick={() => router.push("/")}>Go to Home</Button>
-      </div>
-    );
-  }
+  const handleUnfollow = async () => {
+    if (!session?.user) return;
+    
+    setFollowLoading(true);
+    try {
+      await supabase
+        .from('followers')
+        .delete()
+        .eq('follower_id', session.user.id)
+        .eq('following_id', userId);
+      
+      setIsFollowing(false);
+      toast({
+        description: `You have unfollowed ${profile?.username}`,
+      });
+    } catch (error) {
+      console.error('Error unfollowing user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to unfollow user',
+        variant: 'destructive',
+      });
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col space-y-6 p-8">
-      <div className="flex items-center space-x-4">
-        <Avatar className="h-24 w-24">
-          <AvatarImage src={profile.avatar_url} alt={profile.username} />
-          <AvatarFallback>{profile.username?.[0]?.toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold">{profile.username}</h2>
-          <p className="text-muted-foreground">{profile.bio || "No bio available"}</p>
-        </div>
-      </div>
-      {session?.user?.id !== profile.id && (
-        <FollowButton
-          isFollowing={isFollowing}
-          followerId={session?.user?.id || ""}
-          followingId={profile.id}
-          onFollowStatusChange={setIsFollowing}
-        />
-      )}
-      <ProfileTabs 
-        userId={profile?.id || ''} 
-        postCount={postCount} 
-        followerCount={followerCount} 
-        followingCount={followingCount} 
-      />
+    <div>
+      {/* Profile header content */}
+      
+      <Tabs defaultValue="posts" className="pt-6">
+        <ProfileTabs profile={profile} />
+        <TabsContent value="posts">
+          {/* Posts content */}
+        </TabsContent>
+        <TabsContent value="media">
+          {/* Media content */}
+        </TabsContent>
+        <TabsContent value="about">
+          {/* About content */}
+        </TabsContent>
+      </Tabs>
     </div>
   );
-}
+};
