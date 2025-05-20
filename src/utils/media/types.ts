@@ -1,4 +1,8 @@
 
+import { MediaSource as GlobalMediaSource, MediaType } from '@/types/media';
+
+export { MediaType };
+
 export enum AvailabilityStatus {
   ONLINE = "online",
   AWAY = "away",
@@ -7,25 +11,13 @@ export enum AvailabilityStatus {
   INVISIBLE = "invisible"
 }
 
-export interface MediaSource {
-  url: string;
-  type: MediaType;
-  poster?: string;
-  thumbnail?: string;
+// Extend the global MediaSource with backward compatibility properties
+export interface MediaSource extends GlobalMediaSource {
   // Additional properties for backward compatibility
   media_url?: string | string[];
   video_url?: string;
   media_urls?: string[];
   video_urls?: string[];
-  creator_id?: string;
-}
-
-export enum MediaType {
-  IMAGE = "image",
-  VIDEO = "video",
-  AUDIO = "audio",
-  DOCUMENT = "document",
-  UNKNOWN = "unknown"
 }
 
 export type MediaOptions = {
@@ -45,6 +37,8 @@ export type MediaOptions = {
 
 export type UniversalMediaProps = {
   item: MediaSource | string;
+  alt?: string;
+  maxRetries?: number;
 } & MediaOptions;
 
 export interface UploadResult {

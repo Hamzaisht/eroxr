@@ -48,3 +48,36 @@ export const defaultSearchCategories: SearchCategory[] = [
 
 // Default nordic countries
 export const nordicCountries = ["denmark", "finland", "iceland", "norway", "sweden"];
+
+// Match calculator utility
+export const matchCalculator = {
+  calculateCompatibility: (userPrefs: any, adProfile: any): number => {
+    let score = 0;
+    const maxScore = 100;
+    
+    // Basic matching logic (placeholder)
+    // In a real app, this would be much more sophisticated
+    if (userPrefs.lookingFor === adProfile.gender || userPrefs.lookingFor === 'any') {
+      score += 30;
+    }
+    
+    if (adProfile.lookingFor.includes(userPrefs.gender) || adProfile.lookingFor.includes('any')) {
+      score += 30;
+    }
+    
+    // Location match
+    if (userPrefs.country === adProfile.country) {
+      score += 20;
+    }
+    
+    // Interest match
+    if (userPrefs.interests && adProfile.interests) {
+      const commonInterests = userPrefs.interests.filter((i: string) => 
+        adProfile.interests.includes(i)
+      );
+      score += Math.min(20, commonInterests.length * 5);
+    }
+    
+    return Math.min(maxScore, score);
+  }
+};

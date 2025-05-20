@@ -1,11 +1,11 @@
 
-import { ProtectedMedia } from "@/components/security/ProtectedMedia";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType } from "@/utils/media/types";
+import { ProtectedMedia } from "@/components/security/ProtectedMedia";
+import { UniversalMedia } from "@/components/media/UniversalMedia"; 
+import { MediaType } from "@/types/media";
+import { reportMediaError } from "@/utils/media/mediaMonitoring";
 
 interface PostContentProps {
   content: string;
@@ -35,9 +35,18 @@ export const PostContent = ({
     
     // Track retry count
     const currentRetries = retries[url] || 0;
-    if (currentRetries < 2) {
-      setRetries(prev => ({ ...prev, [url]: currentRetries + 1 }));
-    } else {
+    const newRetryCount = currentRetries + 1;
+    setRetries(prev => ({ ...prev, [url]: newRetryCount }));
+    
+    if (newRetryCount >= 2) {
+      reportMediaError(
+        url,
+        'load_failure',
+        newRetryCount,
+        url.match(/\.(mp4|webm|mov)($|\?)/i) ? 'video' : 'image',
+        'PostContent'
+      );
+      
       toast({
         title: "Error loading media",
         description: "Failed to load media content after multiple attempts",
@@ -49,25 +58,6 @@ export const PostContent = ({
   const handleRetry = (url: string) => {
     setLoadError(prev => ({ ...prev, [url]: false }));
   };
-
-  // Error fallback component
-  const ErrorFallback = ({ message, url }: { message: string, url?: string }) => (
-    <div className="w-full h-full flex items-center justify-center bg-luxury-darker rounded-lg">
-      <div className="flex flex-col items-center justify-center text-luxury-neutral/70 p-8">
-        <AlertCircle className="w-8 h-8 mb-2" />
-        <p className="mb-3">{message}</p>
-        {url && (
-          <button 
-            onClick={() => handleRetry(url)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-luxury-primary/80 hover:bg-luxury-primary text-white rounded-md"
-          >
-            <RefreshCw className="h-4 w-4" /> 
-            Retry
-          </button>
-        )}
-      </div>
-    </div>
-  );
 
   return (
     <motion.div
@@ -92,14 +82,7 @@ export const PostContent = ({
                   {videoUrls && videoUrls.length > 0 && (
                     <div className="space-y-4">
                       {videoUrls.map((url, index) => {
-                        if (!url) return <ErrorFallback key={`video-error-${index}`} message="Video not available" />;
-                        if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`video-error-${index}`} message="Failed to load video" url={url} />;
-                        
-                        const mediaItem = { 
-                          video_url: url, 
-                          creator_id: creatorId,
-                          media_type: MediaType.VIDEO
-                        };
+                        if (!url) return null;
                         
                         return (
                           <motion.div
@@ -111,7 +94,11 @@ export const PostContent = ({
                             onClick={() => onMediaClick(url)}
                           >
                             <UniversalMedia
-                              item={mediaItem}
+                              item={{
+                                url: url,
+                                type: MediaType.VIDEO,
+                                creator_id: creatorId
+                              }}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
                               controls={true}
@@ -126,14 +113,7 @@ export const PostContent = ({
                   {mediaUrls && mediaUrls.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {mediaUrls.map((url, index) => {
-                        if (!url) return <ErrorFallback key={`image-error-${index}`} message="Image not available" />;
-                        if (loadError[url] && retries[url] >= 2) return <ErrorFallback key={`image-error-${index}`} message="Failed to load image" url={url} />;
-                        
-                        const mediaItem = { 
-                          media_url: url,
-                          creator_id: creatorId,
-                          media_type: MediaType.IMAGE
-                        };
+                        if (!url) return null;
                         
                         return (
                           <motion.div
@@ -145,7 +125,11 @@ export const PostContent = ({
                             onClick={() => onMediaClick(url)}
                           >
                             <UniversalMedia
-                              item={mediaItem}
+                              item={{
+                                url: url,
+                                type: MediaType.IMAGE,
+                                creator_id: creatorId
+                              }}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               onError={() => handleMediaError(url)}
                             />

@@ -1,8 +1,26 @@
 
 import { forwardRef, Ref, useMemo } from 'react';
 import { MediaRenderer } from './MediaRenderer';
-import { MediaType, MediaSource, UniversalMediaProps } from '@/utils/media/types';
+import { MediaSource, MediaType } from '@/types/media';
 import { normalizeMediaSource } from '@/utils/media/mediaUtils';
+
+interface UniversalMediaProps {
+  item: MediaSource | string;
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  showWatermark?: boolean;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: (error: any) => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
+  alt?: string;
+  maxRetries?: number;
+}
 
 export const UniversalMedia = forwardRef(({
   item,
@@ -29,7 +47,6 @@ export const UniversalMedia = forwardRef(({
   return (
     <MediaRenderer
       src={mediaItem}
-      type={mediaItem.media_type}
       className={className}
       autoPlay={autoPlay}
       controls={controls}

@@ -1,6 +1,6 @@
 
 import { DatingAd } from '../../../types/dating';
-import { Eye, MessageCircle, Click } from 'lucide-react';
+import { Eye, MessageCircle, BarChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AdStatsProps {
@@ -45,7 +45,7 @@ export const AdStats = ({ ad }: AdStatsProps) => {
       </div>
       
       <div className="flex items-center gap-1">
-        <Click className="w-3 h-3 text-luxury-primary/70" />
+        <BarChart className="w-3 h-3 text-luxury-primary/70" />
         <span>
           {formatNumber(clickCount)}
         </span>

@@ -4,7 +4,7 @@ import { Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DatingAd } from '../types/dating';
 import { UniversalMedia } from '@/components/media/UniversalMedia';
-import { MediaType } from '@/utils/media/types';
+import { MediaType } from '@/types/media';
 
 interface VideoContentProps {
   ad: DatingAd;

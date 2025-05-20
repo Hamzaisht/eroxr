@@ -1,148 +1,120 @@
 
-import { useState } from 'react';
+import React from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { X, Filter } from "lucide-react";
+import { DatingFiltersPanel } from './DatingFiltersPanel';
 import { DatingAd } from '@/components/ads/types/dating';
-import { Button } from '@/components/ui/button';
-import { X, Filter } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Dispatch, SetStateAction } from 'react';
 
-interface DatingFilterSidebarProps {
+export interface DatingFilterSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
   ads: DatingAd[];
-  onFilter: (filteredAds: DatingAd[]) => void;
-  showFilterPanel?: boolean;
+  onFilter: Dispatch<SetStateAction<DatingAd[]>>;
 }
 
-export const DatingFilterSidebar = ({
-  ads,
-  onFilter,
-  showFilterPanel = false
-}: DatingFilterSidebarProps) => {
-  const [selectedGender, setSelectedGender] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-
-  // Handle filter change
-  const applyFilters = () => {
-    let filtered = [...ads];
+export function DatingFilterSidebar({ isOpen, onClose, ads, onFilter }: DatingFilterSidebarProps) {
+  const [isFilterCollapsed, setIsFilterCollapsed] = React.useState(false);
+  const [selectedCountry, setSelectedCountry] = React.useState<"denmark" | "finland" | "iceland" | "norway" | "sweden">("sweden");
+  const [selectedGender, setSelectedGender] = React.useState<string | null>(null);
+  const [selectedLookingFor, setSelectedLookingFor] = React.useState<string | null>(null);
+  const [ageRange, setAgeRange] = React.useState<[number, number]>([18, 99]);
+  const [distanceRange, setDistanceRange] = React.useState<[number, number]>([0, 200]);
+  const [selectedVerified, setSelectedVerified] = React.useState(false);
+  const [selectedPremium, setSelectedPremium] = React.useState(false);
+  const [selectedTag, setSelectedTag] = React.useState<string | null>(null);
+  
+  const handleApplyFilters = () => {
+    const filteredAds = ads.filter(ad => {
+      // Filter by country
+      if (ad.country && ad.country !== selectedCountry) {
+        return false;
+      }
+      
+      // Filter by gender/seeker
+      if (selectedGender && ad.user_type !== selectedGender) {
+        return false;
+      }
+      
+      // Filter by looking for
+      if (selectedLookingFor && !ad.looking_for.includes(selectedLookingFor)) {
+        return false;
+      }
+      
+      // Filter by age range
+      if (ad.age && (ad.age < ageRange[0] || ad.age > ageRange[1])) {
+        return false;
+      }
+      
+      // Filter by verified status
+      if (selectedVerified && !ad.isVerified) {
+        return false;
+      }
+      
+      // Filter by premium status
+      if (selectedPremium && !ad.isPremium) {
+        return false;
+      }
+      
+      // Filter by tag
+      if (selectedTag && (!ad.tags || !ad.tags.includes(selectedTag))) {
+        return false;
+      }
+      
+      return true;
+    });
     
-    // Apply gender filter if selected
-    if (selectedGender) {
-      filtered = filtered.filter(ad => {
-        if (selectedGender === 'male') {
-          return ad.relationship_status === 'single' && ad.user_type === 'male';
-        } else if (selectedGender === 'female') {
-          return ad.relationship_status === 'single' && ad.user_type === 'female';
-        } else if (selectedGender === 'couple') {
-          return ad.relationship_status === 'couple';
-        }
-        return true;
-      });
-    }
-    
-    // Apply looking for filter if selected
-    if (selectedType) {
-      filtered = filtered.filter(ad => {
-        return ad.looking_for.includes(selectedType);
-      });
-    }
-    
-    onFilter(filtered);
-  };
-
-  // Reset filters
-  const resetFilters = () => {
-    setSelectedGender(null);
-    setSelectedType(null);
-    onFilter(ads);
+    onFilter(filteredAds);
+    onClose();
   };
 
   return (
-    <div className={cn(
-      "bg-luxury-darker/80 backdrop-blur-sm rounded-lg border border-luxury-primary/10 p-4 transition-all",
-      showFilterPanel ? "block" : "hidden md:block",
-      "w-full md:w-64 lg:w-72 xl:w-80 h-fit sticky top-4"
-    )}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-lg text-luxury-primary">Filters</h3>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="md:hidden"
-          onClick={() => onFilter(ads)}
-        >
-          <X className="h-5 w-5" />
-        </Button>
-      </div>
-      
-      <div className="space-y-6">
-        {/* Gender Filter */}
-        <div>
-          <h4 className="text-sm font-medium text-luxury-neutral mb-2">Gender</h4>
-          <div className="flex flex-wrap gap-2">
-            {['male', 'female', 'couple'].map((gender) => (
-              <Button
-                key={gender}
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "capitalize",
-                  selectedGender === gender 
-                    ? "bg-luxury-primary text-white border-luxury-primary"
-                    : "bg-luxury-darker border-luxury-primary/20"
-                )}
-                onClick={() => {
-                  setSelectedGender(prev => prev === gender ? null : gender);
-                }}
-              >
-                {gender}
-              </Button>
-            ))}
+    <Sheet open={isOpen} onOpenChange={open => !open && onClose()}>
+      <SheetContent side="right" className="w-full sm:max-w-md bg-luxury-darker border-luxury-neutral/20">
+        <SheetHeader className="flex flex-row items-center justify-between">
+          <SheetTitle className="text-luxury-neutral flex items-center gap-2">
+            <Filter className="w-5 h-5" />
+            <span>Filter Dating Ads</span>
+          </SheetTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+            <X className="h-4 w-4" />
+          </Button>
+        </SheetHeader>
+        
+        <div className="mt-6">
+          <DatingFiltersPanel
+            isFilterCollapsed={isFilterCollapsed}
+            setIsFilterCollapsed={setIsFilterCollapsed}
+            showFilters={true}
+            selectedCountry={selectedCountry}
+            setSelectedCountry={setSelectedCountry}
+            selectedGender={selectedGender}
+            setSelectedGender={setSelectedGender}
+            selectedLookingFor={selectedLookingFor}
+            setSelectedLookingFor={setSelectedLookingFor}
+            ageRange={ageRange}
+            setAgeRange={setAgeRange}
+            distanceRange={distanceRange}
+            setDistanceRange={setDistanceRange}
+            selectedVerified={selectedVerified}
+            setSelectedVerified={setSelectedVerified}
+            selectedPremium={selectedPremium}
+            setSelectedPremium={setSelectedPremium}
+            selectedTag={selectedTag}
+            setSelectedTag={setSelectedTag}
+          />
+          
+          <div className="mt-6 flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleApplyFilters}>
+              Apply Filters
+            </Button>
           </div>
         </div>
-        
-        {/* Looking For Filter */}
-        <div>
-          <h4 className="text-sm font-medium text-luxury-neutral mb-2">Looking For</h4>
-          <div className="flex flex-wrap gap-2">
-            {['male', 'female', 'couple', 'any'].map((type) => (
-              <Button
-                key={type}
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "capitalize",
-                  selectedType === type 
-                    ? "bg-luxury-primary text-white border-luxury-primary"
-                    : "bg-luxury-darker border-luxury-primary/20"
-                )}
-                onClick={() => {
-                  setSelectedType(prev => prev === type ? null : type);
-                }}
-              >
-                {type}
-              </Button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="flex-1"
-            onClick={resetFilters}
-          >
-            Reset
-          </Button>
-          <Button 
-            variant="default" 
-            size="sm"
-            className="flex-1 bg-luxury-primary"
-            onClick={applyFilters}
-          >
-            Apply Filters
-          </Button>
-        </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
-};
+}

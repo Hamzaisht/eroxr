@@ -1,46 +1,51 @@
 
 /**
- * Reports a media error for logging and debugging
- * @param url - URL of the media that failed
- * @param errorType - Type of error (e.g., 'load_failure', 'playback_error')
- * @param retryCount - Number of retries attempted
- * @param mediaType - Type of media ('video', 'image', 'audio')
- * @param componentName - Name of component where error occurred
+ * Report media errors for monitoring and analytics
+ * 
+ * @param url The URL of the media that failed
+ * @param errorType Type of error that occurred
+ * @param retryCount Number of times retry was attempted
+ * @param mediaType Type of media (image, video, etc)
+ * @param component Component where the error occurred
  */
 export function reportMediaError(
   url: string,
-  errorType: string,
+  errorType: 'load_failure' | 'playback_error' | 'network_error' | 'timeout' | 'other',
   retryCount: number,
   mediaType: string,
-  componentName: string
+  component: string
 ): void {
-  // Log the error details to console
-  console.error(`Media ${errorType} in ${componentName}:`, {
+  // Log the error for local debugging
+  console.error('Media Error Report:', {
     url,
-    mediaType,
+    errorType,
     retryCount,
+    mediaType,
+    component,
     timestamp: new Date().toISOString(),
-    userAgent: navigator.userAgent
   });
-  
-  // In the future, this could send errors to a monitoring service
-  // For now, just console logging
+
+  // In a production app, this would send data to an analytics service
+  // For now, we'll just log it to the console
 }
 
 /**
- * Track media playback success
- * @param url - URL of the media
- * @param mediaType - Type of media
- * @param componentName - Name of component
+ * Track media playback events for analytics
  */
-export function trackMediaSuccess(
-  url: string,
-  mediaType: string,
-  componentName: string
+export function trackMediaPlayback(
+  mediaId: string,
+  action: 'play' | 'pause' | 'seek' | 'complete',
+  position: number,
+  duration: number
 ): void {
-  console.log(`Media loaded successfully in ${componentName}:`, {
-    url,
-    mediaType,
-    timestamp: new Date().toISOString()
+  // Log the playback event
+  console.log('Media Playback Event:', {
+    mediaId,
+    action,
+    position,
+    duration,
+    timestamp: new Date().toISOString(),
   });
+  
+  // In a production app, this would send data to an analytics service
 }

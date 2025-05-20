@@ -1,13 +1,12 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { MediaType } from "@/utils/media/types";
+import { MediaType } from "@/types/media";
 
-// Define the MediaRendererProps interface if it's not exported elsewhere
+// Define the MediaRendererProps interface
 export interface MediaRendererProps {
   children?: React.ReactNode;
-  mediaType: MediaType;
-  className?: string;
   src?: any;
+  className?: string;
   autoPlay?: boolean;
   controls?: boolean;
   muted?: boolean;
@@ -23,9 +22,27 @@ export interface MediaRendererProps {
   ref?: React.Ref<HTMLVideoElement | HTMLImageElement>;
 }
 
-export const MediaRenderer: React.FC<MediaRendererProps> = ({ children, mediaType, className, ...rest }) => {
+export const MediaRenderer: React.FC<MediaRendererProps> = ({ 
+  children, 
+  className = "",
+  src,
+  autoPlay = false,
+  controls = true,
+  muted = true,
+  loop = false,
+  poster,
+  showWatermark = false,
+  onLoad,
+  onError,
+  onEnded,
+  onTimeUpdate,
+  allowRetry = false,
+  maxRetries = 2,
+  ...rest 
+}) => {
   const [isSupported, setIsSupported] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const mediaType = src?.type || MediaType.UNKNOWN;
 
   useEffect(() => {
     const checkSupport = () => {
@@ -55,9 +72,46 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({ children, mediaTyp
     );
   }
 
+  const renderMedia = () => {
+    if (!src) return null;
+    
+    const url = src.url || '';
+    
+    if (mediaType === MediaType.VIDEO) {
+      return (
+        <video 
+          src={url}
+          className={className}
+          autoPlay={autoPlay}
+          controls={controls}
+          muted={muted}
+          loop={loop}
+          poster={poster || src.poster || src.thumbnail}
+          onLoadedMetadata={onLoad}
+          onError={onError}
+          onEnded={onEnded}
+          {...rest}
+        />
+      );
+    } else if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
+      return (
+        <img 
+          src={url} 
+          className={className}
+          onLoad={onLoad}
+          onError={onError}
+          alt="Media content"
+          {...rest}
+        />
+      );
+    }
+    
+    return <div>Unsupported media format</div>;
+  };
+
   return (
     <div className={className} ref={containerRef}>
-      {children}
+      {children || renderMedia()}
     </div>
   );
 };

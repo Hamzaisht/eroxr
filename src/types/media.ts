@@ -1,4 +1,21 @@
 
+export enum MediaType {
+  IMAGE = "image",
+  GIF = "gif",
+  VIDEO = "video",
+  AUDIO = "audio",
+  DOCUMENT = "document",
+  UNKNOWN = "unknown"
+}
+
+export interface MediaSource {
+  url: string;
+  type: MediaType;
+  thumbnail?: string;
+  poster?: string;
+  creator_id?: string;
+}
+
 export interface UploadResult {
   success: boolean;
   url?: string;

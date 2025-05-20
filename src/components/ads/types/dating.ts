@@ -11,6 +11,7 @@ export interface DatingAd {
   videoUrl?: string;
   isVerified?: boolean;
   isPremium?: boolean;
+  views?: number;
   
   // Age properties
   age_range: {
@@ -36,7 +37,7 @@ export interface DatingAd {
   looking_for: string[];
   
   // Media & visuals
-  tags?: string[];
+  tags: string[];
   media_url?: string[] | string;
   video_url?: string;
   avatar_url?: string;

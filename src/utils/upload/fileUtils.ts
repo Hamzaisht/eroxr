@@ -35,3 +35,29 @@ function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
+
+/**
+ * Create a unique file path based on user ID and file
+ * @param userId User ID
+ * @param file File object or filename
+ * @returns Unique file path
+ */
+export function createUniqueFilePath(userId: string, file: File | string): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 9);
+  
+  const fileName = typeof file === 'string' 
+    ? file 
+    : file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  
+  return `${userId}/${timestamp}-${random}-${fileName}`;
+}
+
+/**
+ * Create a unique file path based on original name
+ * @param originalName Original file name
+ * @returns Unique file path
+ */
+export function createUniqueFilePath2(originalName: string): string {
+  return `${Date.now()}-${originalName}`;
+}
