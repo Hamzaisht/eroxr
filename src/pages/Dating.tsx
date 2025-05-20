@@ -30,7 +30,7 @@ const Dating = () => {
   const [selectedCountry, setSelectedCountry] = useState<NordicCountry | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedSeeker, setSelectedSeeker] = useState<string | null>(null);
-  const [selectedLookingFor, setSelectedLookingFor] = useState<string | null>(null);
+  const [selectedLookingFor, setSelectedLookingFor] = useState<string[] | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     minAge: 18,
@@ -142,7 +142,7 @@ const Dating = () => {
       selectedSeeker={selectedSeeker}
       setSelectedSeeker={setSelectedSeeker}
       selectedLookingFor={selectedLookingFor}
-      setSelectedLookingFor={setSelectedLookingFor}
+      setSelectedLookingFor={setSelectedLookingFor as (lookingFor: string[] | null) => void}
       selectedTag={selectedTag}
       setSelectedTag={setSelectedTag}
       activeTab={activeTab}

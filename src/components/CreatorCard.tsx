@@ -14,6 +14,7 @@ export interface CreatorCardProps {
   isVerified?: boolean;
   isPremium?: boolean;
   followerCount?: number;
+  subscriberCount?: number;
 }
 
 export const CreatorCard: React.FC<CreatorCardProps> = ({
@@ -24,7 +25,8 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
   bannerUrl,
   isVerified,
   isPremium,
-  followerCount
+  followerCount,
+  subscriberCount
 }) => {
   const navigate = useNavigate();
   
@@ -44,8 +46,14 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
         <div className="pt-10">
           <h3 className="text-lg font-bold">{username || "Anonymous Creator"}</h3>
           <p className="text-sm text-muted-foreground line-clamp-2">{bio || "No bio available"}</p>
-          {followerCount !== undefined && (
-            <p className="text-xs text-muted-foreground mt-1">{followerCount} followers</p>
+          {(subscriberCount !== undefined || followerCount !== undefined) && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {subscriberCount !== undefined 
+                ? `${subscriberCount} subscribers`
+                : followerCount !== undefined 
+                  ? `${followerCount} followers` 
+                  : "0 followers"}
+            </p>
           )}
           {isVerified && (
             <span className="inline-flex items-center text-blue-500 text-xs mt-1">

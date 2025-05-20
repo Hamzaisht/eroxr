@@ -67,5 +67,27 @@ export const useStorageService = () => {
     }
   };
 
-  return { uploadFile, isUploading };
+  // Add uploadVideoToStorage function specifically for shorts
+  const uploadVideoToStorage = async (
+    userId: string,
+    videoFile: File
+  ): Promise<{ path?: string; error?: string }> => {
+    setIsUploading(true);
+    try {
+      const result = await uploadFile(videoFile, "shorts", userId);
+      
+      if (!result.success) {
+        return { error: result.error };
+      }
+      
+      return { path: result.url };
+    } catch (error: any) {
+      console.error("Error uploading video to storage:", error);
+      return { error: error.message || "Failed to upload video" };
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return { uploadFile, uploadVideoToStorage, isUploading };
 };

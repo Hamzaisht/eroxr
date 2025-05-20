@@ -9,10 +9,11 @@ import { AdActions } from "./AdActions";
 export interface VideoProfileCardProps {
   ad: DatingAd;
   isActive?: boolean;
+  isPreviewMode?: boolean;
   isAnimation?: boolean;
 }
 
-export const VideoProfileCard = ({ ad, isActive = false, isAnimation = false }: VideoProfileCardProps) => {
+export const VideoProfileCard = ({ ad, isActive = false, isPreviewMode = false, isAnimation = false }: VideoProfileCardProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {

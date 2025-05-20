@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
@@ -114,12 +115,12 @@ export default function SearchPage() {
             {searchResults.map((creator) => (
               <CreatorCard
                 key={creator.id}
+                creatorId={creator.id}
                 username={creator.username}
                 avatarUrl={creator.avatar_url}
                 bannerUrl={creator.banner_url}
                 bio={creator.bio}
                 subscriberCount={creator.subscriber_count || 0}
-                creatorId={creator.id}
               />
             ))}
           </div>
