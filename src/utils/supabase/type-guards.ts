@@ -102,16 +102,16 @@ export function safeIdVerificationFilter<K extends keyof IdVerificationRow>(colu
   return [column as string, value];
 }
 
-export function safeUserSubscriptionFilter<K extends keyof Tables['user_subscriptions']['Row']>(
+export function safeUserSubscriptionFilter<K extends keyof UserSubscriptionRow>(
   column: K, 
-  value: Tables['user_subscriptions']['Row'][K]
+  value: UserSubscriptionRow[K]
 ): [string, any] {
   return [column as string, value];
 }
 
-export function safeCreatorSubscriptionFilter<K extends keyof Tables['creator_subscriptions']['Row']>(
+export function safeCreatorSubscriptionFilter<K extends keyof CreatorSubscriptionRow>(
   column: K, 
-  value: Tables['creator_subscriptions']['Row'][K]
+  value: CreatorSubscriptionRow[K]
 ): [string, any] {
   return [column as string, value];
 }

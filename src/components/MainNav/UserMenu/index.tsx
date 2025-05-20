@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -41,6 +40,7 @@ import { getSafeProfile } from "@/utils/supabase/helpers";
 import { ProfileStatus } from "@/utils/supabase/type-guards";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
+import { updateProfileStatus } from "@/utils/supabase/db-helpers";
 
 interface UserMenuItemProps {
   label: string;
@@ -126,20 +126,7 @@ export function UserMenu() {
           dbStatus = "offline";
       }
       
-      // Create a properly typed update object
-      const updates: Database['public']['Tables']['profiles']['Update'] = { 
-        status: dbStatus 
-      };
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', session.user.id);
-        
-      if (error) {
-        console.error('Error updating status:', error);
-        return;
-      }
+      await updateProfileStatus(session.user.id, dbStatus);
       
       setCurrentStatus(newStatus);
     } catch (error) {

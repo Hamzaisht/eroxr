@@ -32,6 +32,22 @@ export const updateProfileStatus = async (
 };
 
 /**
+ * Type-safe function for updating profile fields
+ */
+export const updateProfileFields = async (
+  userId: string,
+  updateData: Database['public']['Tables']['profiles']['Update']
+) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updateData)
+    .eq('id', userId);
+
+  if (error) throw error;
+  return data;
+};
+
+/**
  * Type-safe function for fetching user profile
  */
 export const fetchUserProfile = async (userId: string) => {

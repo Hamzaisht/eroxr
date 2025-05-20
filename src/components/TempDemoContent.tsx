@@ -64,12 +64,11 @@ export function TempDemoContent() {
           throw error;
         }
 
-        // Safely transform the data to ensure we have valid profile objects
-        const safeProfiles = Array.isArray(profiles) ? 
-          profiles.filter(profile => profile !== null && typeof profile === 'object') as ProfileData[] : 
-          [];
-          
-        setData(safeProfiles);
+        // Safely transform the data
+        if (profiles) {
+          const safeProfiles = profiles as ProfileData[];
+          setData(safeProfiles);
+        }
       } catch (error: any) {
         toast({
           title: "Error",

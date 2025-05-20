@@ -1,9 +1,7 @@
-
 import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -27,6 +25,7 @@ import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/integrations/supabase/types/database.types";
+import { updateProfileStatus } from "@/utils/supabase/db-helpers";
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -107,20 +106,7 @@ export function UserMenu() {
           break;
       }
       
-      // Create a properly typed update object
-      const updates: Database['public']['Tables']['profiles']['Update'] = {
-        status: dbStatus 
-      };
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', session.user.id);
-        
-      if (error) {
-        console.error('Error updating status:', error);
-        return;
-      }
+      await updateProfileStatus(session.user.id, dbStatus);
       
       setCurrentStatus(newStatus);
     } catch (error) {
