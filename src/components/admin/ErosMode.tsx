@@ -1,14 +1,15 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@supabase/auth-helpers-react';
 import { Database } from '@/integrations/supabase/types/database.types';
-import { FileUpload } from './FileUpload';
+import { FileUpload } from '@/components/FileUpload';
+import { createPost } from '@/utils/supabase/db-helpers';
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -50,19 +51,16 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
       const payload: Database['public']['Tables']['posts']['Insert'] = {
         creator_id: session.user.id,
         content,
-        media_url: mediaUrls.length > 0 ? mediaUrls : null,
         visibility: 'public',
-        is_ppv: false, // Required field in the schema
+        is_ppv: false,
       };
-
-      const { data, error } = await supabase
-        .from('posts')
-        .insert(payload)
-        .select();
-
-      if (error) {
-        throw error;
+      
+      // Only add media_url if we have any
+      if (mediaUrls.length > 0) {
+        payload.media_url = mediaUrls;
       }
+
+      await createPost(payload);
 
       queryClient.invalidateQueries({ queryKey: ['posts'] });
 

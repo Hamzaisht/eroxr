@@ -64,10 +64,8 @@ export function TempDemoContent() {
           throw error;
         }
 
-        // Safely transform the data
         if (profiles) {
-          const safeProfiles = profiles as ProfileData[];
-          setData(safeProfiles);
+          setData(profiles as ProfileData[]);
         }
       } catch (error: any) {
         toast({

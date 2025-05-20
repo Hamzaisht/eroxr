@@ -5,7 +5,7 @@ import { Database } from '@/integrations/supabase/types/database.types';
 /**
  * Type-safe function for creating post entries
  */
-export const createPost = async (postData: Omit<Database['public']['Tables']['posts']['Insert'], 'id'>) => {
+export const createPost = async (postData: Database['public']['Tables']['posts']['Insert']) => {
   const { data, error } = await supabase
     .from('posts')
     .insert(postData)
