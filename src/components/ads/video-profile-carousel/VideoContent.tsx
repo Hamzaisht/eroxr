@@ -1,20 +1,21 @@
 
 import { useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DatingAd } from "@/types/dating";
 
 interface VideoContentProps {
-  videoUrl: string;
-  avatarUrl: string;
-  isPlaying: boolean;
+  ad: DatingAd;
+  isActive: boolean; 
+  isPreviewMode: boolean;
 }
 
-export const VideoContent = ({ videoUrl, avatarUrl, isPlaying }: VideoContentProps) => {
+export const VideoContent = ({ ad, isActive, isPreviewMode }: VideoContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
     if (!videoRef.current) return;
     
-    if (isPlaying) {
+    if (isActive) {
       videoRef.current.play().catch(err => {
         console.error('Video playback error:', err);
       });
@@ -22,7 +23,10 @@ export const VideoContent = ({ videoUrl, avatarUrl, isPlaying }: VideoContentPro
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
-  }, [isPlaying]);
+  }, [isActive]);
+
+  const videoUrl = ad.videoUrl || ad.video_url || "";
+  const avatarUrl = ad.avatarUrl || ad.avatar_url || "";
 
   return (
     <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/80">

@@ -1,3 +1,4 @@
+
 // Updating the relevant parts only to fix type errors
 import { useState, useEffect, useMemo } from "react";
 import { DatingFiltersPanel } from "../components/dating/DatingFiltersPanel";
@@ -27,6 +28,14 @@ export interface DatingFiltersPanelProps {
   handleResetFilters: () => void;
   selectedCity?: string;
   setSelectedCity?: (city: string) => void;
+  selectedVerified: boolean;
+  setSelectedVerified: (verified: boolean) => void;
+  selectedPremium: boolean;
+  setSelectedPremium: (premium: boolean) => void;
+  selectedTag: string | null;
+  setSelectedTag: (tag: string | null) => void;
+  distanceRange: [number, number];
+  setDistanceRange: (range: [number, number]) => void;
 }
 
 export interface DatingContentProps {
@@ -55,6 +64,10 @@ export default function DatingMainContent(props: any) {
   const [selectedLookingFor, setSelectedLookingFor] = useState<string[]>([]);
   const [isFilterApplied, setIsFilterApplied] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
+  const [selectedVerified, setSelectedVerified] = useState(false);
+  const [selectedPremium, setSelectedPremium] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [distanceRange, setDistanceRange] = useState<[number, number]>([0, 100]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -262,6 +275,14 @@ export default function DatingMainContent(props: any) {
         handleResetFilters={props.handleResetFilters || handleResetFilters}
         selectedCity={props.selectedCity || selectedCity}
         setSelectedCity={props.setSelectedCity || setSelectedCity}
+        selectedVerified={props.selectedVerified || selectedVerified}
+        setSelectedVerified={props.setSelectedVerified || setSelectedVerified}
+        selectedPremium={props.selectedPremium || selectedPremium}
+        setSelectedPremium={props.setSelectedPremium || setSelectedPremium}
+        selectedTag={props.selectedTag || selectedTag}
+        setSelectedTag={props.setSelectedTag || setSelectedTag}
+        distanceRange={props.distanceRange || distanceRange}
+        setDistanceRange={props.setDistanceRange || setDistanceRange}
       />
       
       {/* Content Section */}

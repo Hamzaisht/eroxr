@@ -9,7 +9,7 @@ export interface VideoProfileCardProps {
   ad: DatingAd;
   isPreviewMode?: boolean;
   isAnimation?: boolean;
-  isActive?: boolean; // Add the isActive prop to fix the type error
+  isActive?: boolean;
 }
 
 export const VideoProfileCard = ({ 

@@ -16,10 +16,12 @@ interface DatingFiltersPanelProps {
   setSelectedCountry: (country: "denmark" | "finland" | "iceland" | "norway" | "sweden") => void;
   selectedGender: string | null;
   setSelectedGender: (gender: string | null) => void;
-  selectedLookingFor: string | null;
-  setSelectedLookingFor: (lookingFor: string | null) => void;
-  ageRange: [number, number];
-  setAgeRange: (range: [number, number]) => void;
+  selectedLookingFor: string[] | null;
+  setSelectedLookingFor: (lookingFor: string[] | null) => void;
+  minAge: number; // Changed from ageRange to minAge/maxAge
+  setMinAge: (age: number) => void;
+  maxAge: number;
+  setMaxAge: (age: number) => void;
   distanceRange: [number, number];
   setDistanceRange: (range: [number, number]) => void;
   selectedVerified: boolean;
@@ -28,6 +30,8 @@ interface DatingFiltersPanelProps {
   setSelectedPremium: (premium: boolean) => void;
   selectedTag: string | null;
   setSelectedTag: (tag: string | null) => void;
+  selectedCity?: string;
+  setSelectedCity?: (city: string) => void;
 }
 
 export function DatingFiltersPanel({
@@ -40,8 +44,10 @@ export function DatingFiltersPanel({
   setSelectedGender,
   selectedLookingFor,
   setSelectedLookingFor,
-  ageRange,
-  setAgeRange,
+  minAge, // Using minAge and maxAge instead of ageRange
+  setMinAge,
+  maxAge,
+  setMaxAge,
   distanceRange,
   setDistanceRange,
   selectedVerified,
@@ -50,6 +56,8 @@ export function DatingFiltersPanel({
   setSelectedPremium,
   selectedTag,
   setSelectedTag,
+  selectedCity,
+  setSelectedCity,
 }: DatingFiltersPanelProps) {
   // Common tags that might be used for filtering
   const popularTags = [
@@ -122,9 +130,19 @@ export function DatingFiltersPanel({
               {["male", "female", "couple", "any"].map((lookingFor) => (
                 <Button
                   key={lookingFor}
-                  variant={selectedLookingFor === lookingFor ? "default" : "outline"}
+                  variant={selectedLookingFor?.includes(lookingFor) ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSelectedLookingFor(selectedLookingFor === lookingFor ? null : lookingFor)}
+                  onClick={() => {
+                    if (selectedLookingFor?.includes(lookingFor)) {
+                      setSelectedLookingFor(
+                        selectedLookingFor.filter(item => item !== lookingFor)
+                      );
+                    } else {
+                      setSelectedLookingFor(
+                        selectedLookingFor ? [...selectedLookingFor, lookingFor] : [lookingFor]
+                      );
+                    }
+                  }}
                   className="capitalize"
                 >
                   {lookingFor}
@@ -138,15 +156,20 @@ export function DatingFiltersPanel({
             <div className="flex justify-between">
               <Label>Age range</Label>
               <span className="text-sm text-luxury-neutral">
-                {ageRange[0]} - {ageRange[1]} years
+                {minAge} - {maxAge} years
               </span>
             </div>
             <Slider 
-              defaultValue={ageRange} 
+              defaultValue={[minAge, maxAge]} 
               min={18} 
               max={99} 
               step={1}
-              onValueChange={(value) => setAgeRange([value[0], value[1]])}
+              onValueChange={(value) => {
+                if (Array.isArray(value) && value.length === 2) {
+                  setMinAge(value[0]);
+                  setMaxAge(value[1]);
+                }
+              }}
               className="my-6"
             />
           </div>
@@ -208,6 +231,29 @@ export function DatingFiltersPanel({
               ))}
             </div>
           </div>
+          
+          {/* City filter, if available */}
+          {setSelectedCity && (
+            <div className="space-y-2">
+              <Label>City</Label>
+              <Select 
+                value={selectedCity || ''} 
+                onValueChange={(value: string) => setSelectedCity(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select city" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Any city</SelectItem>
+                  <SelectItem value="Copenhagen">Copenhagen</SelectItem>
+                  <SelectItem value="Stockholm">Stockholm</SelectItem>
+                  <SelectItem value="Oslo">Oslo</SelectItem>
+                  <SelectItem value="Helsinki">Helsinki</SelectItem>
+                  <SelectItem value="Reykjavik">Reykjavik</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       )}
     </div>
