@@ -2,7 +2,7 @@
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 
 // Update the CreatePostDialog component to accept selectedFiles
-interface CreatePostDialogProps {
+interface ProfileDialogsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedFiles?: FileList | null;
@@ -14,7 +14,7 @@ export const ProfileDialogs = ({
   onOpenChange,
   selectedFiles,
   onFileSelect
-}: CreatePostDialogProps) => {
+}: ProfileDialogsProps) => {
   return (
     <CreatePostDialog 
       open={open}

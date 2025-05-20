@@ -17,7 +17,7 @@ export interface DatingAd {
   video_url?: string;
   
   // Verification and status
-  isVerified?: boolean;
+  isVerified: boolean; // Making required with default fallback
   isPremium?: boolean;
   is_verified?: boolean;
   is_premium?: boolean;

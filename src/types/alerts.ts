@@ -1,5 +1,5 @@
 
-import { SessionStatus, SessionType, LiveSession } from './surveillance';
+import { SessionStatus, SessionType } from './surveillance';
 
 export interface LiveAlert {
   id: string;
@@ -18,7 +18,7 @@ export interface LiveAlert {
   content_id?: string;
   title: string;
   description: string;
-  isRead: boolean; // Make this required
+  isRead: boolean;
   requiresAction?: boolean;
   session?: {
     id: string;

@@ -3,26 +3,31 @@ export enum MediaType {
   IMAGE = 'image',
   VIDEO = 'video',
   AUDIO = 'audio',
-  DOCUMENT = 'document',
-  GIF = 'gif',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 export interface MediaSource {
   url: string;
   type: MediaType;
-  creator_id?: string;
-  timestamp?: string;
-  poster?: string;
   thumbnail?: string;
-  metadata?: Record<string, any>;
+  poster?: string; // Add poster for video sources
+  duration?: number; 
+  width?: number;
+  height?: number;
+  watermark?: boolean;
+  creator_id?: string;
 }
 
-export interface UploadResult {
-  url: string;
-  path: string;
-  success: boolean;
-  error?: string;
-  type: MediaType;
-  metadata?: Record<string, any>;
+export interface MediaOptions {
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: (error?: any) => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (e: any) => void;
 }

@@ -2,7 +2,7 @@
 "use client"
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { DatingAd } from '../types/dating';
+import { DatingAd } from '@/types/dating';
 import { VideoProfileCard } from '../video-profile-card';
 
 interface CarouselContainerProps {
@@ -64,3 +64,5 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
     </AnimatePresence>
   );
 };
+
+export default CarouselContainer;

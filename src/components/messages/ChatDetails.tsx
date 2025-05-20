@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useLocation } from 'react-router-dom'; // Use React Router instead of Next
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,19 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Paperclip, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Message } from "@/integrations/supabase/types/messages";
-import { ChatMediaGallery } from "@/components/messages/chat/ChatMediaGallery";
-import { MessageBubble } from "@/components/messages/message-parts/MessageBubble";
-import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/hooks/useUser";
-import { useMediaQuery } from "@/hooks/use-mobile";
-import { BottomChatBar } from "@/components/messages/chat/BottomChatBar";
 
-interface ChatDetailsProps {
-  otherUserId: string;
+// Create simplified interfaces for now
+interface Message {
+  id: string;
+  sender_id: string;
+  text?: string | null;
+  image_urls?: string[] | null;
+  video_urls?: string[] | null;
+  created_at: string;
 }
 
-export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
+export function ChatDetails({ otherUserId }: { otherUserId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -30,12 +30,10 @@ export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [showMediaGallery, setShowMediaGallery] = useState(false);
-  const searchParams = useSearchParams();
-  const chatId = searchParams.get('chatId');
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const chatId = params.get('chatId');
   const session = useSession();
-  const { toast } = useToast();
-  const { user } = useUser();
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -85,11 +83,6 @@ export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
 
       if (error) {
         console.error("Error fetching messages:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load messages",
-          variant: "destructive",
-        });
       } else {
         setMessages(data || []);
       }
@@ -109,21 +102,11 @@ export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
 
       if (error) {
         console.error("Error fetching other user:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load user details",
-          variant: "destructive",
-        });
       } else {
         setOtherUser(data);
       }
     } catch (error) {
       console.error("Unexpected error fetching other user:", error);
-      toast({
-        title: "Unexpected Error",
-        description: "Failed to load user details",
-        variant: "destructive",
-      });
     }
   };
 
@@ -146,11 +129,6 @@ export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
 
       if (error) {
         console.error("Error sending message:", error);
-        toast({
-          title: "Error",
-          description: "Failed to send message",
-          variant: "destructive",
-        });
       }
 
       setNewMessage("");
@@ -171,7 +149,7 @@ export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
 
   // Upload media files to Supabase storage
   const uploadMedia = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !session?.user?.id) return;
 
     setUploadingFiles(true);
     try {
@@ -195,17 +173,8 @@ export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
       );
 
       setMediaUrls(urls);
-      toast({
-        title: "Media Uploaded",
-        description: "All media files uploaded successfully.",
-      });
     } catch (error: any) {
       console.error("Media upload error:", error);
-      toast({
-        title: "Upload Error",
-        description: error.message || "Failed to upload media files.",
-        variant: "destructive",
-      });
     } finally {
       setUploadingFiles(false);
     }
@@ -217,14 +186,116 @@ export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
     setMediaUrls(newMediaUrls);
   };
 
-  // Handle image click (for media gallery)
+  // Simplified message bubble component
+  const MessageBubble = ({ message, isCurrentUser }: { message: Message, isCurrentUser: boolean }) => (
+    <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-4`}>
+      <div className={`rounded-lg px-4 py-2 max-w-[75%] ${isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
+        <p>{message.text}</p>
+        {message.image_urls?.map((url, idx) => (
+          <img 
+            key={idx} 
+            src={url} 
+            alt="Message attachment" 
+            className="mt-2 rounded-lg max-h-48 w-auto" 
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  // Simplified bottom chat bar
+  const BottomChatBar = () => (
+    <div className="flex items-center gap-2 border-t p-3">
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="text-muted-foreground"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploadingFiles}
+      >
+        <Paperclip className="h-5 w-5" />
+      </Button>
+      <Input
+        placeholder="Type a message..."
+        value={newMessage}
+        onChange={(e) => setNewMessage(e.target.value)}
+        className="flex-1"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+          }
+        }}
+      />
+      <Button
+        type="button"
+        size="icon"
+        onClick={handleSendMessage}
+        disabled={isSending || (!newMessage.trim() && mediaUrls.length === 0)}
+      >
+        <Send className="h-5 w-5" />
+      </Button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={handleMediaSelect}
+        disabled={uploadingFiles}
+      />
+    </div>
+  );
+
+  // Simplified media gallery
+  const ChatMediaGallery = ({ 
+    images = [], 
+    videos = [],
+    onMediaClick = () => {}
+  }: { 
+    images?: string[], 
+    videos?: string[],
+    onMediaClick?: (url: string) => void
+  }) => (
+    <div className="space-y-2">
+      {images.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium mb-2">Images</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {images.map((url, idx) => (
+              <img 
+                key={idx}
+                src={url}
+                alt={`Gallery image ${idx}`}
+                className="w-full h-24 object-cover rounded cursor-pointer"
+                onClick={() => onMediaClick(url)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      {videos.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium mb-2">Videos</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {videos.map((url, idx) => (
+              <video
+                key={idx}
+                src={url}
+                className="w-full h-24 object-cover rounded cursor-pointer"
+                onClick={() => onMediaClick(url)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+  
   const handleMediaClick = (url: string) => {
     console.log("Media clicked:", url);
   };
-
-  const onMediaSelect = (url: string) => {
-    console.log("Selected media url", url)
-  }
 
   return (
     <div className="flex flex-col h-full">
@@ -254,7 +325,6 @@ export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
               key={message.id}
               message={message}
               isCurrentUser={message.sender_id === session?.user?.id}
-              onImageClick={handleMediaClick}
             />
           ))
         )}
@@ -271,23 +341,16 @@ export const ChatDetails = ({ otherUserId }: ChatDetailsProps) => {
             videos={messages
               .filter(msg => msg.video_urls && msg.video_urls.length > 0)
               .flatMap(msg => msg.video_urls || [])}
-            userId={otherUser?.id}
-            onMediaClick={onMediaSelect}
+            onMediaClick={handleMediaClick}
           />
         </div>
       )}
 
       {/* Bottom Chat Bar */}
-      <BottomChatBar
-        newMessage={newMessage}
-        setNewMessage={setNewMessage}
-        handleSendMessage={handleSendMessage}
-        uploadingFiles={uploadingFiles}
-        mediaUrls={mediaUrls}
-        handleRemoveMedia={handleRemoveMedia}
-        handleMediaSelect={handleMediaSelect}
-        isSending={isSending}
-      />
+      <BottomChatBar />
     </div>
   );
-};
+}
+
+// Export the component
+export default ChatDetails;

@@ -1,16 +1,65 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Avatar } from "@/components/ui/avatar"
-import { AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
-import { useUser } from '@/hooks/useUser';
 import { UniversalMedia } from "@/components/shared/media/UniversalMedia";
-import { MediaType } from "@/utils/media/types";
-import { Message } from '@/types/messages';
+import { MediaType } from "@/types/media";
 import { MoreHorizontal } from 'lucide-react';
-import { MessageActions } from './MessageActions';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
+
+// Define Message interface
+interface Message {
+  id: string;
+  content?: string;
+  sender_id: string;
+  created_at: string;
+  updated_at?: string;
+  original_content?: string;
+  media_url?: string[];
+  viewed_at?: string;
+  message_type?: string;
+  delivery_status?: 'sent' | 'delivered' | 'seen' | 'failed';
+}
+
+// Define MessageActions interface
+interface MessageActionsProps {
+  onActionClick: (action: string) => void;
+  onReport: () => Promise<void>;
+}
+
+// Create a simplified MessageActions component
+const MessageActions = ({ onActionClick, onReport }: MessageActionsProps) => (
+  <div className="absolute right-0 bottom-full mb-1 bg-luxury-dark/90 backdrop-blur-sm rounded-md shadow-lg py-1 z-20">
+    <ul className="text-xs">
+      <li>
+        <button 
+          className="px-4 py-1.5 w-full text-left hover:bg-luxury-primary/20 transition-colors" 
+          onClick={() => onActionClick('copy')}
+        >
+          Copy
+        </button>
+      </li>
+      <li>
+        <button 
+          className="px-4 py-1.5 w-full text-left hover:bg-luxury-primary/20 transition-colors" 
+          onClick={() => onActionClick('reply')}
+        >
+          Reply
+        </button>
+      </li>
+      <li>
+        <button 
+          className="px-4 py-1.5 w-full text-left hover:bg-luxury-primary/20 transition-colors" 
+          onClick={() => onReport()}
+        >
+          Report
+        </button>
+      </li>
+    </ul>
+  </div>
+);
 
 interface MessageBubbleContentProps {
   message: Message;
@@ -23,12 +72,26 @@ export const MessageBubbleContent: React.FC<MessageBubbleContentProps> = ({
   isOwnMessage,
   onImageClick
 }) => {
-  const { user } = useUser(message.sender_id);
   const [showActions, setShowActions] = useState(false);
   const messageRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
   const supabase = useSupabaseClient();
+  const [user, setUser] = useState<any>(null);
+  
+  useEffect(() => {
+    // Fetch user data
+    if (message.sender_id) {
+      supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', message.sender_id)
+        .single()
+        .then(({ data }) => {
+          if (data) setUser(data);
+        });
+    }
+  }, [message.sender_id, supabase]);
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -88,20 +151,20 @@ export const MessageBubbleContent: React.FC<MessageBubbleContentProps> = ({
   };
 
   const renderMessageContent = () => {
-    if (message.media_url) {
-      return renderImage(message.media_url, onImageClick);
-    } else if (message.text) {
-      return <p className="text-sm break-words">{message.text}</p>;
+    if (message.media_url && message.media_url.length > 0) {
+      return renderImage(message.media_url[0], onImageClick);
+    } else if (message.content) {
+      return <p className="text-sm break-words">{message.content}</p>;
     } else {
       return <p className="text-sm italic">Unsupported message type</p>;
     }
   };
 
-  const renderImage = (url: string, onImageClick?: (url: string) => void) => {
+  const renderImage = (url: string, onImgClick?: (url: string) => void) => {
     return (
       <div 
         className="relative w-full cursor-pointer"
-        onClick={() => onImageClick && onImageClick(url)}
+        onClick={() => onImgClick && onImgClick(url)}
       >
         <UniversalMedia
           item={{
@@ -168,7 +231,6 @@ export const MessageBubbleContent: React.FC<MessageBubbleContentProps> = ({
       {/* Message Actions Dropdown */}
       {showActions && (
         <MessageActions
-          message={message}
           onActionClick={handleActionClick}
           onReport={handleReport}
         />
@@ -176,3 +238,5 @@ export const MessageBubbleContent: React.FC<MessageBubbleContentProps> = ({
     </div>
   );
 };
+
+export default MessageBubbleContent;

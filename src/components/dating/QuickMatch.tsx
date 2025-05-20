@@ -19,10 +19,11 @@ export function QuickMatch({ ads, userProfile }: QuickMatchProps) {
       ...ad,
       tags: ad.tags || [],
       location: ad.location || "Unknown location",
-      age: ad.age || 25, // Default age
+      age: ad.age || 25, // Default age 
       views: ad.views || ad.view_count || 0, // Required property
       videoUrl: ad.videoUrl || ad.video_url || "",
-      avatarUrl: ad.avatarUrl || ad.avatar_url || ""
+      avatarUrl: ad.avatarUrl || ad.avatar_url || "",
+      isVerified: ad.isVerified !== undefined ? ad.isVerified : (ad.is_verified || false),
     };
 
     return <VideoProfileCard key={ad.id} ad={enrichedAd} />;
@@ -30,3 +31,5 @@ export function QuickMatch({ ads, userProfile }: QuickMatchProps) {
 
   return <div className="dating-quickmatch-container">{enrichedAds}</div>;
 }
+
+export default QuickMatch;

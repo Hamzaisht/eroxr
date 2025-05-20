@@ -34,3 +34,5 @@ export function QuickMatchTab({
     />
   );
 }
+
+export default QuickMatchTab;

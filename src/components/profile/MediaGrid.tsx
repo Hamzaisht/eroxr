@@ -8,6 +8,10 @@ interface MediaGridProps {
 }
 
 export function MediaGrid({ items, onItemClick }: MediaGridProps) {
+  if (!items || items.length === 0) {
+    return <div className="text-center py-8 text-muted-foreground">No media available</div>;
+  }
+  
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
       {items.map((item, index) => (
@@ -16,8 +20,9 @@ export function MediaGrid({ items, onItemClick }: MediaGridProps) {
             item={{
               url: item.url,
               type: item.type,
-              // Use optional chaining for thumbnail
-              ...(item.thumbnail ? { thumbnail: item.thumbnail } : {})
+              // Use optional chaining for additional properties
+              ...(item.thumbnail ? { thumbnail: item.thumbnail } : {}),
+              ...(item.poster ? { poster: item.poster } : {})
             }}
             className="w-full h-full object-cover"
             showWatermark={false}
@@ -28,3 +33,5 @@ export function MediaGrid({ items, onItemClick }: MediaGridProps) {
     </div>
   );
 }
+
+export default MediaGrid;

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,16 @@ import { createPost } from '@/utils/supabase/db-helpers';
 interface CreatePostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  selectedFiles?: FileList | null; // Add support for selectedFiles
+  onFileSelect?: (files: FileList | null) => void; // Add support for file selection callback
 }
 
-export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) {
+export function CreatePostDialog({ 
+  open, 
+  onOpenChange,
+  selectedFiles,
+  onFileSelect
+}: CreatePostDialogProps) {
   const { toast } = useToast();
   const session = useSession();
   const queryClient = useQueryClient();
@@ -85,6 +93,11 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      // Call the parent's onFileSelect if provided
+      if (onFileSelect) {
+        onFileSelect(e.target.files);
+      }
+      
       setIsUploading(true);
       // Simulate file upload
       setTimeout(() => {
