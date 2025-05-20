@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -49,9 +50,8 @@ export function ErosVideoPlayer({
   // Create a properly normalized media source
   const videoSource = useMemo(() => normalizeMediaSource({
     url: videoUrl,
-    video_url: videoUrl,
-    thumbnail_url: thumbnailUrl,
-    media_type: MediaType.VIDEO,
+    type: MediaType.VIDEO,
+    thumbnail: thumbnailUrl
   }), [videoUrl, thumbnailUrl]);
   
   const handleError = () => {
@@ -84,7 +84,6 @@ export function ErosVideoPlayer({
     <div ref={ref} className={cn("relative w-full h-full overflow-hidden", className)}>
       <MediaRenderer
         src={videoSource}
-        type={MediaType.VIDEO}
         className="w-full h-full object-cover"
         poster={thumbnailUrl}
         autoPlay={shouldPlay}

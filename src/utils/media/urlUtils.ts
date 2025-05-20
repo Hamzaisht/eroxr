@@ -53,16 +53,6 @@ export function isImageUrl(url: string | null | undefined): boolean {
  */
 export function isAudioUrl(url: string | null | undefined): boolean {
   if (!url) return false;
-  const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac'];
+  const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.flac'];
   return audioExtensions.some(ext => url.toLowerCase().includes(ext));
-}
-
-/**
- * Get the file extension from a URL
- * @param url The URL to get the extension from
- */
-export function getFileExtension(url: string | null | undefined): string | null {
-  if (!url) return null;
-  const match = url.match(/\.([a-zA-Z0-9]+)($|\?)/);
-  return match ? match[1].toLowerCase() : null;
 }

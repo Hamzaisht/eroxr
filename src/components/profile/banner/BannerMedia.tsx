@@ -21,14 +21,15 @@ export const BannerMedia = ({ mediaUrl, mediaType, isHovering }: BannerMediaProp
       return;
     }
     
+    const type = mediaType === 'video' 
+      ? MediaType.VIDEO 
+      : mediaType === 'gif'
+        ? MediaType.GIF
+        : MediaType.IMAGE;
+        
     const item = {
-      media_url: mediaType === 'image' || mediaType === 'gif' ? mediaUrl : null,
-      video_url: mediaType === 'video' ? mediaUrl : null,
-      media_type: mediaType === 'video' 
-        ? MediaType.VIDEO 
-        : mediaType === 'gif'
-          ? MediaType.GIF
-          : MediaType.IMAGE,
+      url: mediaUrl,
+      type: type
     };
     
     setFinalMediaItem(item);

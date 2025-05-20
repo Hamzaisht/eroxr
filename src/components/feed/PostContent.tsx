@@ -3,9 +3,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedMedia } from "@/components/security/ProtectedMedia";
-import { MediaRenderer } from "@/components/media/MediaRenderer";
+import { UniversalMedia } from "@/components/media/UniversalMedia"; 
+import { MediaType } from "@/types/media";
 import { reportMediaError } from "@/utils/media/mediaMonitoring";
-import { MediaType } from "@/utils/media/types";
 
 interface PostContentProps {
   content: string;
@@ -93,16 +93,15 @@ export const PostContent = ({
                             className="relative aspect-video w-full cursor-pointer"
                             onClick={() => onMediaClick(url)}
                           >
-                            <MediaRenderer
-                              src={url}
-                              type={MediaType.VIDEO}
+                            <UniversalMedia
+                              item={{
+                                url: url,
+                                type: MediaType.VIDEO,
+                                creator_id: creatorId
+                              }}
                               className="w-full h-full rounded-lg overflow-hidden"
                               onError={() => handleMediaError(url)}
                               controls={true}
-                              autoPlay={false}
-                              muted={true}
-                              allowRetry={true}
-                              maxRetries={1}
                             />
                           </motion.div>
                         );
@@ -125,13 +124,14 @@ export const PostContent = ({
                             className="relative aspect-[4/3] cursor-pointer group"
                             onClick={() => onMediaClick(url)}
                           >
-                            <MediaRenderer
-                              src={url}
-                              type={MediaType.IMAGE}
+                            <UniversalMedia
+                              item={{
+                                url: url,
+                                type: MediaType.IMAGE,
+                                creator_id: creatorId
+                              }}
                               className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                               onError={() => handleMediaError(url)}
-                              allowRetry={true}
-                              maxRetries={1}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </motion.div>

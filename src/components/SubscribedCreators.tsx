@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatorCard } from "@/components/CreatorCard";
@@ -52,7 +53,7 @@ export const SubscribedCreators = () => {
               banner_url
             )
           `)
-          .eq("user_id", userId)
+          .eq("user_id" as keyof Database['public']['Tables']['creator_subscriptions']['Row'], userId)
           .order("created_at", { ascending: false });
           
         if (error || !data || !Array.isArray(data)) {

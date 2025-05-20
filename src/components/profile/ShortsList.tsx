@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { VideoPlayer } from '@/components/video/VideoPlayer';
+import { UniversalMedia } from '@/components/media/UniversalMedia';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Short } from '@/components/home/types/short';
+import { MediaType } from '@/types/media';
 
 interface ShortsListProps {
   shorts: Short[];
@@ -44,12 +45,15 @@ export const ShortsList: React.FC<ShortsListProps> = ({ shorts }) => {
             <DialogTitle>Short Video</DialogTitle>
           </DialogHeader>
           {selectedShort && (
-            <VideoPlayer
-              url={selectedShort.video_urls?.[0] || ''}
-              poster={selectedShort.video_thumbnail_url || selectedShort.media_url?.[0] || ''}
+            <UniversalMedia
+              item={{
+                url: selectedShort.video_urls?.[0] || '',
+                type: MediaType.VIDEO,
+                thumbnail: selectedShort.video_thumbnail_url || selectedShort.media_url?.[0] || ''
+              }}
+              className="w-full aspect-video"
+              controls={true}
               autoPlay={true}
-              showCloseButton={true}
-              onClose={() => setSelectedShort(null)}
               onError={() => handleShortError(selectedShort.id)}
             />
           )}

@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Image, Users, CircuitBoard, MessageCircle, Video } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -6,7 +7,7 @@ import { CreatorsFeed } from "@/components/CreatorsFeed";
 import { MediaGrid } from "./MediaGrid";
 import { EmptyState } from "./EmptyState";
 import { useParams } from "react-router-dom";
-import { VideoProfileCarousel } from "@/components/ads/video-profile-carousel";
+import { VideoProfileCarousel } from "./VideoProfileCarousel";
 import { useAdsQuery } from "@/components/ads/hooks/useAdsQuery";
 import { useState, useEffect } from "react";
 import { useFeedQuery } from "@/components/feed/useFeedQuery";

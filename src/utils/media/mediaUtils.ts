@@ -1,100 +1,93 @@
 
-import { MediaSource, MediaType } from "@/types/media";
+import { MediaSource, MediaType } from '@/types/media';
 
 /**
- * Extract media URL from various object shapes
- * @param media The media item to extract URL from
+ * Extract media URL from various source formats
+ * @param source The media source object or string
+ * @returns The extracted URL
  */
-export function extractMediaUrl(media: any): string {
-  if (typeof media === 'string') {
-    return media;
+export function extractMediaUrl(source: MediaSource | string | null | undefined): string | null {
+  if (!source) return null;
+
+  if (typeof source === 'string') {
+    return source;
   }
 
-  // Handle various shapes of media objects
-  return media?.url || 
-         media?.media_url || 
-         media?.video_url || 
-         media?.thumbnail || 
-         media?.poster || 
-         '';
+  // Try to get the URL from various properties
+  return source.url || 
+         source.media_url || 
+         source.video_url ||
+         null;
 }
 
 /**
- * Determine the type of media from a URL or object
- * @param media The media to check
- */
-export function determineMediaType(media: any): MediaType {
-  if (!media) return MediaType.UNKNOWN;
-
-  // If media already has a type, use it
-  if (media.type && typeof media.type === 'string') {
-    if (Object.values(MediaType).includes(media.type as MediaType)) {
-      return media.type as MediaType;
-    }
-  }
-
-  if (media.media_type && typeof media.media_type === 'string') {
-    if (Object.values(MediaType).includes(media.media_type as MediaType)) {
-      return media.media_type as MediaType;
-    }
-  }
-
-  // Check by URL extension
-  const url = extractMediaUrl(media);
-  if (!url) return MediaType.UNKNOWN;
-
-  const extension = url.split('.').pop()?.toLowerCase();
-  if (!extension) return MediaType.UNKNOWN;
-
-  if (['jpg', 'jpeg', 'png', 'webp', 'avif'].includes(extension)) {
-    return MediaType.IMAGE;
-  } else if (['gif'].includes(extension)) {
-    return MediaType.GIF;
-  } else if (['mp4', 'webm', 'ogg', 'mov'].includes(extension)) {
-    return MediaType.VIDEO;
-  } else if (['mp3', 'wav', 'ogg', 'aac'].includes(extension)) {
-    return MediaType.AUDIO;
-  } else if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'].includes(extension)) {
-    return MediaType.DOCUMENT;
-  }
-
-  return MediaType.UNKNOWN;
-}
-
-/**
- * Normalize a media source to ensure it has the correct shape
- * @param item The media source to normalize
+ * Normalize a media source to ensure it has the expected properties
+ * @param item The media item to normalize
+ * @returns A normalized MediaSource object
  */
 export function normalizeMediaSource(item: MediaSource | string): MediaSource {
   if (typeof item === 'string') {
+    // Convert string URL to MediaSource object
     return {
       url: item,
-      type: determineMediaType(item)
+      type: determineMediaType(item),
     };
   }
 
-  // Handle legacy format
-  if ('media_url' in item || 'video_url' in item) {
+  // Ensure the object has a URL property
+  if (!item.url && (item.media_url || item.video_url)) {
+    const url = item.media_url || item.video_url || '';
+    const type = item.type || determineMediaType(url);
+
     return {
-      url: item.url || item.media_url || item.video_url || '',
-      type: item.type || determineMediaType(item),
-      thumbnail: item.thumbnail || undefined,
-      poster: item.poster || undefined
+      ...item,
+      url,
+      type,
     };
   }
 
+  // If item already has URL and type, return it as is
+  if (item.url && item.type) {
+    return item;
+  }
+
+  // Fallback - create a default MediaSource
   return {
-    url: item.url || '',
-    type: item.type || determineMediaType(item),
+    url: extractMediaUrl(item) || '',
+    type: item.type || MediaType.UNKNOWN,
     thumbnail: item.thumbnail || undefined,
-    poster: item.poster || undefined
   };
 }
 
 /**
- * Create a unique file path for uploads
- * @param originalName Original file name
+ * Determine the media type based on the URL
+ * @param url The media URL
+ * @returns The determined MediaType
  */
-export function createUniqueFilePath(originalName: string): string {
-  return `${Date.now()}-${originalName}`;
+export function determineMediaType(url: string): MediaType {
+  if (!url) return MediaType.UNKNOWN;
+  
+  const lowercaseUrl = url.toLowerCase();
+  
+  if (lowercaseUrl.match(/\.(mp4|webm|mov|avi|m4v)($|\?)/i)) {
+    return MediaType.VIDEO;
+  }
+  
+  if (lowercaseUrl.match(/\.(jpg|jpeg|png|webp|avif|tif|tiff)($|\?)/i)) {
+    return MediaType.IMAGE;
+  }
+  
+  if (lowercaseUrl.match(/\.(gif)($|\?)/i)) {
+    return MediaType.GIF;
+  }
+  
+  if (lowercaseUrl.match(/\.(mp3|wav|ogg|aac)($|\?)/i)) {
+    return MediaType.AUDIO;
+  }
+  
+  if (lowercaseUrl.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)($|\?)/i)) {
+    return MediaType.DOCUMENT;
+  }
+  
+  return MediaType.UNKNOWN;
 }

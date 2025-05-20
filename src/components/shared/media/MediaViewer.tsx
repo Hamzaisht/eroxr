@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { UniversalMedia } from './UniversalMedia';
 import { getPlayableMediaUrl } from '@/utils/media/mediaUrlUtils';
+import { MediaType } from '@/types/media';
 
 interface MediaViewerProps {
   media: string | null;
@@ -34,7 +35,8 @@ export const MediaViewer = ({ media, onClose, creatorId }: MediaViewerProps) => 
         <div className="w-full flex items-center justify-center">
           <UniversalMedia
             item={{
-              media_url: processedUrl,
+              url: processedUrl,
+              type: MediaType.VIDEO,
               creator_id: creatorId
             }}
             className="max-h-[80vh] w-auto"

@@ -69,10 +69,9 @@ export const ShortVideoPlayer = memo(({
     <UniversalMedia
       item={{
         url: videoUrl,
-        video_url: videoUrl,
-        thumbnail_url: thumbnailUrl,
-        creator_id: creatorId,
-        media_type: MediaType.VIDEO
+        type: MediaType.VIDEO,
+        thumbnail: thumbnailUrl,
+        creator_id: creatorId
       }}
       className="h-full w-full object-cover"
       autoPlay={isCurrentVideo}
