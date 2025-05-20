@@ -36,8 +36,13 @@ export const useMediaService = () => {
         mediaSource.url = mediaSource.video_url;
         mediaSource.type = MediaType.VIDEO;
       } else if (mediaSource.media_url) {
-        mediaSource.url = mediaSource.media_url;
-        mediaSource.type = isVideoUrl(mediaSource.media_url)
+        // Convert array to string if needed
+        if (Array.isArray(mediaSource.media_url) && mediaSource.media_url.length > 0) {
+          mediaSource.url = mediaSource.media_url[0];
+        } else {
+          mediaSource.url = mediaSource.media_url as string;
+        }
+        mediaSource.type = isVideoUrl(mediaSource.url)
           ? MediaType.VIDEO
           : MediaType.IMAGE;
       }

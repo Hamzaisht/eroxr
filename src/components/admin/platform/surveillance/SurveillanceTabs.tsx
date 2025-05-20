@@ -2,7 +2,7 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSurveillance } from "./SurveillanceContext";
 import { AlertsList } from "./AlertsList";
-import { LiveAlert } from "@/types/surveillance";
+import { LiveAlert } from "@/types/alerts";
 import { ContentSurveillanceTabs } from "./ContentSurveillanceTabs";
 import { CreatorEarningsSurveillance } from "./CreatorEarningsSurveillance";
 import { useState } from "react";
@@ -95,7 +95,7 @@ export const SurveillanceTabs = ({ liveAlerts, onSelectAlert }: SurveillanceTabs
       className="w-full"
     >
       <SurveillanceTabsList
-        liveAlerts={liveAlerts}
+        liveAlerts={liveAlerts as any}
         activeTab={activeTab}
       />
       

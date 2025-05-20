@@ -103,7 +103,7 @@ export interface LiveAlert {
   type: 'violation' | 'risk' | 'information';
   alert_type: 'violation' | 'risk' | 'information';
   user_id: string;
-  userId?: string;
+  userId: string; // Making this required to match alerts.ts
   username: string;
   avatar_url?: string;
   timestamp: string;
@@ -111,11 +111,11 @@ export interface LiveAlert {
   content_type?: string;
   reason?: string;
   severity: 'high' | 'medium' | 'low' | 'critical';
-  contentId?: string;
+  contentId: string; // Making this required to match alerts.ts
   content_id?: string;
-  title: string;
-  description: string;
-  isRead?: boolean;
+  title: string; // Making this required to match alerts.ts
+  description: string; // Making this required
+  isRead: boolean; // Making this required
   requiresAction?: boolean;
   session?: LiveSession;
 }
@@ -128,8 +128,8 @@ export interface MediaSource {
   timestamp?: string;
   metadata?: Record<string, any>;
   content_type?: string;
-  poster?: string;
-  thumbnail?: string;
+  poster?: string; // Adding this property
+  thumbnail?: string; // Adding this property
   thumbnail_url?: string;
   media_url?: string | string[];
   video_url?: string;

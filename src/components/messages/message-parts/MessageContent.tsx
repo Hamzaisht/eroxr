@@ -95,7 +95,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
           item={{
             url: url,
             type: MediaType.VIDEO,
-            video_url: url,
+            media_url: url,
             creator_id: message.sender_id || undefined
           }}
           className="w-full max-h-60 object-cover"
@@ -137,7 +137,7 @@ export const MessageContent = ({ message, isCurrentUser, onMediaClick }: Message
           item={{
             url: message.video_url,
             type: MediaType.VIDEO, 
-            video_url: message.video_url,
+            media_url: message.video_url,
             creator_id: message.sender_id || undefined
           }}
           className="w-full max-h-60 object-cover"

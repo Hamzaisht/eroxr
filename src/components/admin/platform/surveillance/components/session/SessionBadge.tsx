@@ -19,7 +19,7 @@ export const SessionBadge = ({ session }: SessionBadgeProps) => {
     // Check for active or live status
     if (status === SessionStatus.ACTIVE || status === 'active' ||
         status === SessionStatus.LIVE || status === 'live') {
-      return "default"; // Changed from success to default as success isn't a valid variant
+      return "default"; // Using default instead of success
     }
     
     // Check for idle status

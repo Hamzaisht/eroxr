@@ -6,7 +6,7 @@ import { SurveillanceTabs } from "./surveillance/SurveillanceTabs";
 import { GhostModePrompt } from "./surveillance/GhostModePrompt";
 import { SurveillanceProvider } from "./surveillance/SurveillanceContext";
 import { LiveSession, SessionType, LiveAlert as SurveillanceLiveAlert } from "@/types/surveillance";
-import { LiveAlert } from "@/types/alerts"; // Use surveillance LiveAlert to match the context
+import { LiveAlert } from "@/types/alerts";
 import { useLiveSurveillanceData } from "./surveillance/hooks/useLiveSurveillanceData";
 import { SurveillanceAlerts } from "./surveillance/components/SurveillanceAlerts";
 import { ActiveSessionMonitor } from "./surveillance/components/ActiveSessionMonitor";
@@ -69,7 +69,7 @@ export const LiveSurveillance = () => {
       // Create a minimal session object from the alert data
       const sessionFromAlert: LiveSession = {
         id: alert.id,
-        type: SessionType.USER,  // Use the enum value instead of string
+        type: SessionType.USER,
         user_id: alert.userId || alert.user_id || '',
         username: alert.username || 'Unknown',
         status: 'active',
@@ -91,11 +91,11 @@ export const LiveSurveillance = () => {
     return <GhostModePrompt />;
   }
 
-  // Format alerts to match LiveAlert type from alerts.ts to surveillance.ts
-  const formattedAlertsForSurveillance: SurveillanceLiveAlert[] = liveAlerts.map(alert => ({
+  // Format alerts to match the expected structure
+  const formattedSurveillanceAlerts: SurveillanceLiveAlert[] = liveAlerts.map(alert => ({
     id: alert.id,
-    type: (alert.type === 'security' || alert.type === 'system') ? 'information' : alert.type as 'violation' | 'risk' | 'information',
-    alert_type: alert.alert_type || ((alert.type === 'violation' || alert.type === 'risk') ? alert.type : 'information') as 'violation' | 'risk' | 'information',
+    type: (alert.type === 'security' || alert.type === 'system') ? 'information' : (alert.type as 'violation' | 'risk' | 'information'),
+    alert_type: alert.alert_type || ((alert.type === 'violation' || alert.type === 'risk') ? alert.type as 'violation' | 'risk' | 'information' : 'information'),
     user_id: alert.user_id || alert.userId || '',
     userId: alert.userId || alert.user_id || '',
     contentId: alert.contentId || alert.content_id || '',
@@ -130,7 +130,7 @@ export const LiveSurveillance = () => {
       
       <div className="lg:col-span-3 space-y-4">
         <SurveillanceProvider
-          liveAlerts={formattedAlertsForSurveillance}
+          liveAlerts={formattedSurveillanceAlerts}
           refreshAlerts={async () => {
             return await refreshAlerts();
           }}
@@ -139,8 +139,8 @@ export const LiveSurveillance = () => {
           }}
         >
           <SurveillanceTabs 
-            liveAlerts={formattedAlertsForSurveillance}
-            onSelectAlert={alert => handleSelectAlert(alert as unknown as LiveAlert)}
+            liveAlerts={formattedSurveillanceAlerts as unknown as LiveAlert[]}
+            onSelectAlert={(alert) => handleSelectAlert(alert as unknown as LiveAlert)}
           />
         </SurveillanceProvider>
         

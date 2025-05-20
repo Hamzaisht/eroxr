@@ -29,7 +29,8 @@ export const CarouselContainer = ({ ads, currentIndex, isActive }: CarouselConta
             isVerified: ad.is_verified !== undefined ? ad.is_verified : ad.isVerified,
             avatarUrl: ad.avatarUrl || ad.avatar_url || "",
             videoUrl: ad.videoUrl || ad.video_url,
-            location: ad.location || "Unknown location", // Default for required location
+            location: ad.location || "Unknown location", // Ensure location is provided
+            age: ad.age || 18, // Provide a default age
           };
           
           return (

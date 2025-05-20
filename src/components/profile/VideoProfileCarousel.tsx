@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { DatingAd } from "@/types/dating";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType } from "@/types/media"; 
+import { MediaType } from "@/utils/media/types"; 
 
 interface VideoProfileCarouselProps {
   ads: DatingAd[];

@@ -11,7 +11,7 @@ export interface DatingAd {
   
   // User identifiers and profile data
   username: string;
-  avatarUrl: string;  // Make this required for consistency
+  avatarUrl: string;  // Required for consistency
   videoUrl?: string;
   avatar_url?: string;
   video_url?: string;
@@ -32,9 +32,9 @@ export interface DatingAd {
   click_count?: number;
   
   // Profile details
-  tags: string[];  // Make this required
-  location?: string;  // Make this optional to resolve conflict
-  age?: number;  // Make this optional to resolve conflict
+  tags: string[];  // Required
+  location: string; // Required
+  age?: number;     // Make optional to resolve conflict
   gender?: string;
   seeking?: string[];
   last_active?: string;
@@ -107,4 +107,11 @@ export interface DatingAdAction {
   type: 'like' | 'message' | 'view' | 'block';
   adId: string;
   userId: string;
+}
+
+// Interface for profile data
+export interface ProfileData {
+  username: string;
+  avatar_url: string;
+  // Add other profile fields as needed
 }
