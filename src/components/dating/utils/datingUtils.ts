@@ -1,83 +1,42 @@
 
-import { SearchCategory } from "@/components/ads/types/dating";
+import { SearchCategory } from '@/types/dating';
 
-// Shortcut map for search categories
-export const shortcutMap: Record<string, { seeker: string; lookingFor: string }> = {
-  "MF4A": { seeker: "couple", lookingFor: "any" },
-  "MF4F": { seeker: "couple", lookingFor: "female" },
-  "MF4M": { seeker: "couple", lookingFor: "male" },
-  "MF4MF": { seeker: "couple", lookingFor: "couple" },
-  "MF4T": { seeker: "couple", lookingFor: "trans" },
-  
-  "F4A": { seeker: "female", lookingFor: "any" },
-  "F4M": { seeker: "female", lookingFor: "male" },
-  "F4F": { seeker: "female", lookingFor: "female" },
-  "F4MF": { seeker: "female", lookingFor: "couple" },
-  "F4T": { seeker: "female", lookingFor: "trans" },
-  
-  "M4A": { seeker: "male", lookingFor: "any" },
-  "M4F": { seeker: "male", lookingFor: "female" },
-  "M4M": { seeker: "male", lookingFor: "male" },
-  "M4MF": { seeker: "male", lookingFor: "couple" },
-  "M4T": { seeker: "male", lookingFor: "trans" }
-};
-
-// Default search categories
-export const defaultSearchCategories: SearchCategory[] = [
-  { seeker: "couple", lookingFor: "female" },
-  { seeker: "couple", lookingFor: "male" },
-  { seeker: "couple", lookingFor: "couple" },
-  { seeker: "couple", lookingFor: "trans" },
-  { seeker: "couple", lookingFor: "any" },
-  
-  { seeker: "female", lookingFor: "male" },
-  { seeker: "female", lookingFor: "female" },
-  { seeker: "female", lookingFor: "couple" },
-  { seeker: "female", lookingFor: "trans" },
-  { seeker: "female", lookingFor: "any" },
-  
-  { seeker: "male", lookingFor: "female" },
-  { seeker: "male", lookingFor: "male" },
-  { seeker: "male", lookingFor: "couple" },
-  { seeker: "male", lookingFor: "trans" },
-  { seeker: "male", lookingFor: "any" },
-  
-  { seeker: "verified", lookingFor: "any" },
-  { seeker: "premium", lookingFor: "any" },
+export const nordicCountries = [
+  'denmark',
+  'finland',
+  'iceland',
+  'norway',
+  'sweden'
 ];
 
-// Default nordic countries
-export const nordicCountries = ["denmark", "finland", "iceland", "norway", "sweden"];
+export const relationshipStatuses = [
+  'single',
+  'couple',
+  'married',
+  'divorced',
+  'separated',
+  'widowed',
+  'open_relationship',
+  'other'
+];
 
-// Match calculator utility
-export const matchCalculator = {
-  calculateCompatibility: (userPrefs: any, adProfile: any): number => {
-    let score = 0;
-    const maxScore = 100;
-    
-    // Basic matching logic (placeholder)
-    // In a real app, this would be much more sophisticated
-    if (userPrefs.lookingFor === adProfile.gender || userPrefs.lookingFor === 'any') {
-      score += 30;
-    }
-    
-    if (adProfile.lookingFor.includes(userPrefs.gender) || adProfile.lookingFor.includes('any')) {
-      score += 30;
-    }
-    
-    // Location match
-    if (userPrefs.country === adProfile.country) {
-      score += 20;
-    }
-    
-    // Interest match
-    if (userPrefs.interests && adProfile.interests) {
-      const commonInterests = userPrefs.interests.filter((i: string) => 
-        adProfile.interests.includes(i)
-      );
-      score += Math.min(20, commonInterests.length * 5);
-    }
-    
-    return Math.min(maxScore, score);
-  }
-};
+export const seekingOptions = [
+  'casual',
+  'relationship',
+  'friendship',
+  'travel_partner',
+  'networking',
+  'anything'
+];
+
+export const defaultSearchCategories: SearchCategory[] = [
+  { seeker: 'male', lookingFor: 'female', label: 'Men seeking Women' },
+  { seeker: 'female', lookingFor: 'male', label: 'Women seeking Men' },
+  { seeker: 'couple', lookingFor: 'female', label: 'Couples seeking Women' },
+  { seeker: 'couple', lookingFor: 'male', label: 'Couples seeking Men' },
+  { seeker: 'female', lookingFor: 'couple', label: 'Women seeking Couples' },
+  { seeker: 'male', lookingFor: 'couple', label: 'Men seeking Couples' },
+  { seeker: 'female', lookingFor: 'female', label: 'Women seeking Women' },
+  { seeker: 'male', lookingFor: 'male', label: 'Men seeking Men' },
+  { seeker: 'any', lookingFor: 'any', label: 'Open to All' }
+];

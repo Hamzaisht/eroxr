@@ -13,9 +13,18 @@ import { Button } from "@/components/ui/button";
 interface CreateDatingAdDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onAdCreationSuccess?: () => void;
 }
 
-export function CreateDatingAdDialog({ isOpen, onClose }: CreateDatingAdDialogProps) {
+export function CreateDatingAdDialog({ isOpen, onClose, onAdCreationSuccess }: CreateDatingAdDialogProps) {
+  const handleGetStarted = () => {
+    // Navigate to the dating ad creation page/flow
+    if (onAdCreationSuccess) {
+      onAdCreationSuccess();
+    }
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md bg-luxury-darker border-luxury-neutral/20">
@@ -39,10 +48,7 @@ export function CreateDatingAdDialog({ isOpen, onClose }: CreateDatingAdDialogPr
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => {
-            // TODO: Implement navigation to the dating ad creation page/flow
-            onClose();
-          }}>
+          <Button onClick={handleGetStarted}>
             Get Started
           </Button>
         </DialogFooter>

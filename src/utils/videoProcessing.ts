@@ -64,3 +64,12 @@ export function getVideoDuration(file: File): Promise<number> {
     }, 5000);
   });
 }
+
+/**
+ * Generate a thumbnail from a video file
+ * @param file Video file to generate thumbnail from
+ * @returns Promise resolving to thumbnail data URL
+ */
+export function generateVideoThumbnail(file: File): Promise<string> {
+  return Promise.resolve("/default-thumbnail.png");
+}

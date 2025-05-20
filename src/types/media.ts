@@ -39,3 +39,14 @@ export interface MediaInfo {
   metadata?: MediaMetadata;
   thumbnail?: string;
 }
+
+/**
+ * Result type for media upload operations
+ */
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  isComplete: boolean;
+  result?: UploadResult;
+}

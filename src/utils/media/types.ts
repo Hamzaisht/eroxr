@@ -13,8 +13,8 @@ export enum AvailabilityStatus {
 
 // Extend the global MediaSource with backward compatibility properties
 export interface MediaSource extends GlobalMediaSource {
-  // Additional properties for backward compatibility
-  media_url?: string | string[];
+  // These are for backward compatibility and should be phased out
+  media_url?: string;
   video_url?: string;
   media_urls?: string[];
   video_urls?: string[];

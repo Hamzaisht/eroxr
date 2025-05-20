@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { DatingAd } from "@/components/ads/types/dating";
+import { DatingAd } from "@/types/dating";
 import { DatingContentController } from "./DatingContentController";
 import { DatingFilterSidebar } from "./DatingFilterSidebar";
 import { Button } from "@/components/ui/button";
@@ -138,12 +139,13 @@ export function DatingResults() {
   return (
     <div className="flex flex-col md:flex-row h-screen">
       {/* Filter Sidebar */}
-      <DatingFilterSidebar
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        ads={ads}
-        onFilter={setFilteredAds}
-      />
+      {isFilterOpen && (
+        <DatingFilterSidebar
+          ads={ads}
+          onFilter={setFilteredAds}
+          onClose={() => setIsFilterOpen(false)}
+        />
+      )}
 
       {/* Content Area */}
       <div className="flex-1 p-4 space-y-4">
@@ -175,8 +177,8 @@ export function DatingResults() {
 
       {/* Create Ad Dialog */}
       <CreateDatingAdDialog
-        open={isCreateAdDialogOpen}
-        onOpenChange={setIsCreateAdDialogOpen}
+        isOpen={isCreateAdDialogOpen}
+        onClose={() => setIsCreateAdDialogOpen(false)}
         onAdCreationSuccess={handleAdCreationSuccess}
       />
     </div>

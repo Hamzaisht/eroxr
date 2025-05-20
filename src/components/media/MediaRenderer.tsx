@@ -1,5 +1,5 @@
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, forwardRef } from 'react';
 import { MediaType } from "@/types/media";
 
 // Define the MediaRendererProps interface
@@ -13,16 +13,16 @@ export interface MediaRendererProps {
   loop?: boolean;
   poster?: string;
   showWatermark?: boolean;
+  onClick?: () => void;
   onLoad?: () => void;
   onError?: (error: any) => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
   allowRetry?: boolean;
   maxRetries?: number;
-  ref?: React.Ref<HTMLVideoElement | HTMLImageElement>;
 }
 
-export const MediaRenderer: React.FC<MediaRendererProps> = ({ 
+export const MediaRenderer = forwardRef<HTMLVideoElement | HTMLImageElement, MediaRendererProps>(({ 
   children, 
   className = "",
   src,
@@ -32,6 +32,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   loop = false,
   poster,
   showWatermark = false,
+  onClick,
   onLoad,
   onError,
   onEnded,
@@ -39,7 +40,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   allowRetry = false,
   maxRetries = 2,
   ...rest 
-}) => {
+}, ref) => {
   const [isSupported, setIsSupported] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const mediaType = src?.type || MediaType.UNKNOWN;
@@ -80,6 +81,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     if (mediaType === MediaType.VIDEO) {
       return (
         <video 
+          ref={ref as React.Ref<HTMLVideoElement>}
           src={url}
           className={className}
           autoPlay={autoPlay}
@@ -90,17 +92,20 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
           onLoadedMetadata={onLoad}
           onError={onError}
           onEnded={onEnded}
+          onClick={onClick}
           {...rest}
         />
       );
     } else if (mediaType === MediaType.IMAGE || mediaType === MediaType.GIF) {
       return (
         <img 
+          ref={ref as React.Ref<HTMLImageElement>}
           src={url} 
           className={className}
           onLoad={onLoad}
           onError={onError}
           alt="Media content"
+          onClick={onClick}
           {...rest}
         />
       );
@@ -114,4 +119,6 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
       {children || renderMedia()}
     </div>
   );
-};
+});
+
+MediaRenderer.displayName = 'MediaRenderer';

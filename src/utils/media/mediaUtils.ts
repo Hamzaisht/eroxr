@@ -1,92 +1,100 @@
 
-import { MediaType, MediaSource } from '@/types/media';
+import { MediaSource, MediaType } from "@/types/media";
 
 /**
- * Extract a usable media URL from various input formats
+ * Extract media URL from various object shapes
+ * @param media The media item to extract URL from
  */
-export function extractMediaUrl(source: MediaSource | string | null | undefined): string | null {
-  if (!source) return null;
-  
-  // If it's a string, assume it's a URL
-  if (typeof source === 'string') return source;
-  
-  // If it has a url property, use it
-  if (source.url) return source.url;
-  
-  // Legacy support for various formats
-  if (source.video_url) return source.video_url;
-  
-  if (source.media_url) {
-    // Handle both string and array formats
-    if (typeof source.media_url === 'string') return source.media_url;
-    if (Array.isArray(source.media_url) && source.media_url.length > 0) {
-      return source.media_url[0];
+export function extractMediaUrl(media: any): string {
+  if (typeof media === 'string') {
+    return media;
+  }
+
+  // Handle various shapes of media objects
+  return media?.url || 
+         media?.media_url || 
+         media?.video_url || 
+         media?.thumbnail || 
+         media?.poster || 
+         '';
+}
+
+/**
+ * Determine the type of media from a URL or object
+ * @param media The media to check
+ */
+export function determineMediaType(media: any): MediaType {
+  if (!media) return MediaType.UNKNOWN;
+
+  // If media already has a type, use it
+  if (media.type && typeof media.type === 'string') {
+    if (Object.values(MediaType).includes(media.type as MediaType)) {
+      return media.type as MediaType;
     }
   }
-  
-  return null;
+
+  if (media.media_type && typeof media.media_type === 'string') {
+    if (Object.values(MediaType).includes(media.media_type as MediaType)) {
+      return media.media_type as MediaType;
+    }
+  }
+
+  // Check by URL extension
+  const url = extractMediaUrl(media);
+  if (!url) return MediaType.UNKNOWN;
+
+  const extension = url.split('.').pop()?.toLowerCase();
+  if (!extension) return MediaType.UNKNOWN;
+
+  if (['jpg', 'jpeg', 'png', 'webp', 'avif'].includes(extension)) {
+    return MediaType.IMAGE;
+  } else if (['gif'].includes(extension)) {
+    return MediaType.GIF;
+  } else if (['mp4', 'webm', 'ogg', 'mov'].includes(extension)) {
+    return MediaType.VIDEO;
+  } else if (['mp3', 'wav', 'ogg', 'aac'].includes(extension)) {
+    return MediaType.AUDIO;
+  } else if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'].includes(extension)) {
+    return MediaType.DOCUMENT;
+  }
+
+  return MediaType.UNKNOWN;
 }
 
 /**
- * Normalize a media source into a standard format
+ * Normalize a media source to ensure it has the correct shape
+ * @param item The media source to normalize
  */
-export function normalizeMediaSource(input: MediaSource | string | null | undefined): MediaSource {
-  if (!input) return { url: '', type: MediaType.UNKNOWN };
-  
-  // If it's a string, convert to object
-  if (typeof input === 'string') {
-    const mediaType = determineMediaType(input);
+export function normalizeMediaSource(item: MediaSource | string): MediaSource {
+  if (typeof item === 'string') {
     return {
-      url: input,
-      type: mediaType
+      url: item,
+      type: determineMediaType(item)
     };
   }
-  
-  // If it's already a MediaSource object but missing the standard URL
-  const source = { ...input };
-  
-  if (!source.url) {
-    // Try to get URL from legacy properties
-    source.url = extractMediaUrl(source) || '';
+
+  // Handle legacy format
+  if ('media_url' in item || 'video_url' in item) {
+    return {
+      url: item.url || item.media_url || item.video_url || '',
+      type: item.type || determineMediaType(item),
+      thumbnail: item.thumbnail || undefined,
+      poster: item.poster || undefined
+    };
   }
-  
-  if (!source.type) {
-    // Determine type from URL
-    source.type = determineMediaType(source.url);
-  }
-  
-  return source;
+
+  return {
+    url: item.url || '',
+    type: item.type || determineMediaType(item),
+    thumbnail: item.thumbnail || undefined,
+    poster: item.poster || undefined
+  };
 }
 
 /**
- * Determine media type from URL or extension
+ * Create a unique file path for uploads
+ * @param originalName Original file name
  */
-export function determineMediaType(url?: string): MediaType {
-  if (!url) return MediaType.UNKNOWN;
-  
-  const extension = url.split('.').pop()?.toLowerCase();
-  
-  if (!extension) return MediaType.UNKNOWN;
-  
-  // Check image extensions
-  if (['jpg', 'jpeg', 'png', 'webp', 'svg'].includes(extension)) {
-    return MediaType.IMAGE;
-  }
-  
-  // Check for GIF format
-  if (extension === 'gif') {
-    return MediaType.GIF;
-  }
-  
-  // Check video extensions
-  if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension)) {
-    return MediaType.VIDEO;
-  }
-  
-  // Check audio extensions
-  if (['mp3', 'wav', 'ogg', 'aac'].includes(extension)) {
-    return MediaType.AUDIO;
-  }
-  
-  return MediaType.UNKNOWN;
+export function createUniqueFilePath(originalName: string): string {
+  return `${Date.now()}-${originalName}`;
 }
