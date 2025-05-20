@@ -20,14 +20,13 @@ import {
   getSafeProfile
 } from "@/utils/supabase/helpers";
 import { 
-  safeProfileUpdate, 
-  safeProfileFilter,
   ProfileStatus,
   toValidProfileStatus
 } from "@/utils/supabase/type-guards";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { AvailabilityIndicator } from "@/components/ui/availability-indicator";
 import { Button } from "@/components/ui/button";
+import { Database } from "@/integrations/supabase/types/database.types";
 
 export function UserMenu() {
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -43,12 +42,10 @@ export function UserMenu() {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq(idColumn, idValue)
+        .eq('id', session.user.id)
         .single();
         
       if (error) {
@@ -110,17 +107,15 @@ export function UserMenu() {
           break;
       }
       
-      // Create a safe update object
-      const updates = safeProfileUpdate({ 
+      // Create a properly typed update object
+      const updates: Database['public']['Tables']['profiles']['Update'] = {
         status: dbStatus 
-      });
-      
-      const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
+      };
       
       const { error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq(idColumn, idValue);
+        .eq('id', session.user.id);
         
       if (error) {
         console.error('Error updating status:', error);

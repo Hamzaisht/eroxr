@@ -8,7 +8,7 @@ import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@supabase/auth-helpers-react';
-import { safePostInsert, PostInsert } from '@/utils/supabase/type-guards';
+import { Database } from '@/integrations/supabase/types/database.types';
 import { FileUpload } from './FileUpload';
 
 interface CreatePostDialogProps {
@@ -47,20 +47,18 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
     try {
       setIsSubmitting(true);
 
-      // Create a validated post data object using the type-safe helper
-      const postData: PostInsert = {
+      // Create a properly typed payload for the posts table
+      const payload: Database['public']['Tables']['posts']['Insert'] = {
         creator_id: session.user.id,
         content,
         media_url: mediaUrls.length > 0 ? mediaUrls : null,
         visibility: 'public',
+        is_ppv: false, // Required field in the schema
       };
-
-      // Use the type-safe helper to ensure data conforms to expected types
-      const safeData = safePostInsert(postData);
 
       const { data, error } = await supabase
         .from('posts')
-        .insert(safeData)
+        .insert(payload)
         .select();
 
       if (error) {

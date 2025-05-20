@@ -32,8 +32,6 @@ export const SubscribedCreators = () => {
     queryFn: async () => {
       if (!userId) return [];
       
-      const [userIdColumn, userIdValue] = safeCreatorSubscriptionFilter("user_id", userId);
-      
       const { data, error } = await supabase
         .from("creator_subscriptions")
         .select(`
@@ -46,7 +44,7 @@ export const SubscribedCreators = () => {
             banner_url
           )
         `)
-        .eq(userIdColumn, userIdValue)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
         
       if (error) {

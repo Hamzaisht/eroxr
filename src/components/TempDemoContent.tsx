@@ -41,9 +41,13 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command"
+import { Database } from '@/integrations/supabase/types/database.types';
+
+// Define a type for profile data
+type ProfileData = Database['public']['Tables']['profiles']['Row'];
 
 export function TempDemoContent() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ProfileData[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -62,7 +66,7 @@ export function TempDemoContent() {
 
         // Safely transform the data to ensure we have valid profile objects
         const safeProfiles = Array.isArray(profiles) ? 
-          profiles.filter(profile => profile !== null && typeof profile === 'object') : 
+          profiles.filter(profile => profile !== null && typeof profile === 'object') as ProfileData[] : 
           [];
           
         setData(safeProfiles);
@@ -92,10 +96,10 @@ export function TempDemoContent() {
             <Card key={index}>
               <CardHeader>
                 <CardTitle>{item?.username || 'No Username'}</CardTitle>
-                <CardDescription>{item?.email || 'No Email'}</CardDescription>
+                <CardDescription>{item?.id || 'No Email'}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p>ID: {item && 'id' in item ? item.id : 'Unknown'}</p>
+                <p>ID: {item?.id || 'Unknown'}</p>
                 <p>Created At: {item?.created_at || 'No Creation Date'}</p>
               </CardContent>
               <CardFooter>

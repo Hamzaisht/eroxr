@@ -38,8 +38,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AvailabilityStatus } from "@/utils/media/types";
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeProfile } from "@/utils/supabase/helpers";
-import { safeProfileUpdate, safeProfileFilter, ProfileStatus } from "@/utils/supabase/type-guards";
+import { ProfileStatus } from "@/utils/supabase/type-guards";
 import { Button } from "@/components/ui/button";
+import { Database } from "@/integrations/supabase/types/database.types";
 
 interface UserMenuItemProps {
   label: string;
@@ -70,12 +71,10 @@ export function UserMenu() {
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq(idColumn, idValue)
+        .eq('id', session.user.id)
         .single();
         
       if (error) {
@@ -127,13 +126,15 @@ export function UserMenu() {
           dbStatus = "offline";
       }
       
-      const updates = safeProfileUpdate({ status: dbStatus });
-      const [idColumn, idValue] = safeProfileFilter('id', session.user.id);
+      // Create a properly typed update object
+      const updates: Database['public']['Tables']['profiles']['Update'] = { 
+        status: dbStatus 
+      };
       
       const { error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq(idColumn, idValue);
+        .eq('id', session.user.id);
         
       if (error) {
         console.error('Error updating status:', error);
