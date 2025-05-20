@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { DirectMessage } from "@/integrations/supabase/types/message";
 import { useOptimisticMessaging, createOptimisticMessage } from "@/utils/messaging/optimisticUpdates";
 import { v4 as uuidv4 } from "uuid";
-import { createUniqueFilePath } from '@/utils/upload/fileUtils';
 import { uploadFileToStorage } from '@/utils/upload/storageService';
 
 interface ChatActionsProps {
@@ -106,7 +106,11 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
     try {
       const filesArray = Array.from(files);
       const uploadPromises = filesArray.map(async (file) => {
-        const path = createUniqueFilePath(session.user.id, file);
+        // Replace createUniqueFilePath with direct UUID generation
+        const fileExt = file.name.split('.').pop() || '';
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const path = `${session.user.id}/${fileName}`;
+        
         const result = await uploadFileToStorage('messages', path, file);
         
         if (!result.success || !result.url) {
@@ -193,8 +197,10 @@ export const useChatActions = ({ recipientId }: ChatActionsProps) => {
       // Create a file from the blob
       const file = new File([blob], `snap-${Date.now()}.jpg`, { type: 'image/jpeg' });
       
-      // Upload the file
-      const path = createUniqueFilePath(session.user.id, file);
+      // Upload the file - replace createUniqueFilePath with direct path creation
+      const fileName = `snap_${uuidv4()}.jpg`;
+      const path = `${session.user.id}/${fileName}`;
+      
       const result = await uploadFileToStorage('snaps', path, file);
       
       if (!result.success || !result.url) {
