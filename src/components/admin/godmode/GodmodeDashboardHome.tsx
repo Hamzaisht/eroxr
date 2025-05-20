@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { isQueryError } from "@/utils/supabase/typeSafeOperations";
+import { AdminLogsTable } from "./AdminLogsTable"; // Import the component correctly
 
 export const GodmodeDashboardHome = () => {
   const [stats, setStats] = useState({
@@ -94,6 +96,30 @@ export const GodmodeDashboardHome = () => {
     fetchDashboardStats();
   }, [toast]);
 
+  // Mock logs data for the AdminLogsTable
+  const mockLogs = [
+    {
+      id: "1",
+      admin_id: "admin-1",
+      action: "ban_user",
+      action_type: "moderation",
+      details: { reason: "Violation of community guidelines" },
+      created_at: new Date().toISOString(),
+      target_id: "user-123",
+      target_type: "user"
+    },
+    {
+      id: "2",
+      admin_id: "admin-2",
+      action: "delete_content",
+      action_type: "moderation",
+      details: { content_type: "post" },
+      created_at: new Date(Date.now() - 3600000).toISOString(),
+      target_id: "post-456",
+      target_type: "post"
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
@@ -106,7 +132,7 @@ export const GodmodeDashboardHome = () => {
         <StatCard title="Recent Signups" value={stats.recentSignups} isLoading={isLoading} />
       </div>
       
-      <AdminLogsTable />
+      <AdminLogsTable logs={mockLogs} isLoading={false} />
     </div>
   );
 };

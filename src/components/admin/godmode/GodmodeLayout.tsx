@@ -43,10 +43,10 @@ function GodmodeLayout() {
     ...alert,
     alert_type: alert.alert_type || (alert.type === 'violation' ? 'violation' : 
                 alert.type === 'risk' ? 'risk' : 'information') as 'violation' | 'risk' | 'information',
-    user_id: alert.user_id || '',
+    userId: alert.userId || alert.user_id || '',
     username: alert.username || 'Unknown',
     created_at: typeof alert.created_at === 'string' ? alert.created_at : new Date().toISOString(),
-  })) as unknown as LiveAlert[];
+  })) as LiveAlert[];
   
   return (
     <SurveillanceProvider

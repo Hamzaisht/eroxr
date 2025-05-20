@@ -15,9 +15,9 @@ interface SurveillanceContextProps {
 
 interface SurveillanceProviderProps {
   children: ReactNode;
-  liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<boolean>;
-  startSurveillance: (session: LiveSession) => Promise<boolean>;
+  liveAlerts?: LiveAlert[];
+  refreshAlerts?: () => Promise<boolean>;
+  startSurveillance?: (session: LiveSession) => Promise<boolean>;
 }
 
 const SurveillanceContext = createContext<SurveillanceContextProps | undefined>(undefined);
@@ -25,8 +25,8 @@ const SurveillanceContext = createContext<SurveillanceContextProps | undefined>(
 export const SurveillanceProvider = ({ 
   children, 
   liveAlerts = [], 
-  refreshAlerts,
-  startSurveillance
+  refreshAlerts = async () => true,
+  startSurveillance = async () => true
 }: SurveillanceProviderProps) => {
   const [activeTab, setActiveTab] = useState<SurveillanceTab>('streams');
   const [error, setError] = useState<string | null>(null);

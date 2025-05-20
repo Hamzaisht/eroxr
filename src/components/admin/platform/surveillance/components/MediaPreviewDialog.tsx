@@ -25,7 +25,14 @@ export function MediaPreviewDialog({ session, open, onOpenChange }: MediaPreview
       
       try {
         // Determine media type
-        let mediaUrl = session.media_url ? session.media_url[0] : null;
+        // Handle media_url as either string or string[]
+        const mediaUrlArray = session.media_url 
+          ? Array.isArray(session.media_url) 
+            ? session.media_url 
+            : [session.media_url] 
+          : [];
+          
+        let mediaUrl = mediaUrlArray.length > 0 ? mediaUrlArray[0] : null;
         const videoUrl = session.video_url || null;
         
         if (!mediaUrl && !videoUrl) {

@@ -70,6 +70,7 @@ export function ContentSurveillanceTabs() {
       creator_avatar: "https://i.pravatar.cc/150?u=txt1",
       created_at: new Date().toISOString(),
       flagged: false,
+      media_url: [],
       severity: "low",
       status: "pending"
     }

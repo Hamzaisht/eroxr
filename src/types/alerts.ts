@@ -7,11 +7,18 @@ export interface LiveAlert {
   description: string;
   timestamp: string;
   isRead: boolean;
-  userId?: string;
+  userId?: string;  // Changed from user_id to userId
   contentId?: string;
   source?: string;
   requiresAction?: boolean;
   metadata?: Record<string, any>;
   session?: any;
   created_at?: string; // Added for compatibility with data from API
+  // Additional API fields
+  username?: string;
+  avatar_url?: string;
+  content_id?: string;
+  reason?: string;
+  status?: string;
+  alert_type?: 'violation' | 'risk' | 'information';
 }

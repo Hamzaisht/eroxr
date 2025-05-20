@@ -73,32 +73,35 @@ export const PaginationLink = ({
   href,
   isActive,
   children,
+  onClick,
   ...props
 }: { 
   href?: string; 
   isActive?: boolean; 
   children: React.ReactNode;
+  onClick?: () => void;
   [key: string]: any;
 }) => (
   <Button 
     variant={isActive ? "default" : "outline"}
     size="icon"
     asChild={!!href}
+    onClick={onClick}
     {...props}
   >
     {href ? <a href={href}>{children}</a> : children}
   </Button>
 );
 
-export const PaginationNext = ({ href, ...props }: { href?: string; [key: string]: any }) => (
-  <PaginationLink href={href} {...props}>
+export const PaginationNext = ({ href, onClick, ...props }: { href?: string; onClick?: () => void; [key: string]: any }) => (
+  <PaginationLink href={href} onClick={onClick} {...props}>
     <ChevronRight className="h-4 w-4" />
     <span className="sr-only">Next page</span>
   </PaginationLink>
 );
 
-export const PaginationPrevious = ({ href, ...props }: { href?: string; [key: string]: any }) => (
-  <PaginationLink href={href} {...props}>
+export const PaginationPrevious = ({ href, onClick, ...props }: { href?: string; onClick?: () => void; [key: string]: any }) => (
+  <PaginationLink href={href} onClick={onClick} {...props}>
     <ChevronLeft className="h-4 w-4" />
     <span className="sr-only">Previous page</span>
   </PaginationLink>
