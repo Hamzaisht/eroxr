@@ -2,109 +2,92 @@
 import { Session } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export async function toggleGhostModeState(
-  session: Session,
-  isSuperAdmin: boolean,
+/**
+ * Toggle ghost mode state
+ */
+export const toggleGhostModeState = async (
+  session: Session | null,
+  canUseGhostMode: boolean,
   isGhostMode: boolean,
   setIsGhostMode: (value: boolean) => void,
   setIsLoading: (value: boolean) => void,
-  stopSurveillance?: () => Promise<boolean>,
-  activeSurveillance?: any
-) {
-  if (!isSuperAdmin) {
-    console.error("Only super admins can use ghost mode");
-    return;
-  }
-
+  stopSurveillance: () => Promise<boolean>,
+  activeSurveillance: any
+) => {
+  if (!session?.user || !canUseGhostMode) return;
+  
   setIsLoading(true);
-
+  
   try {
-    // If currently in ghost mode and watching someone, stop watching
-    if (isGhostMode && activeSurveillance?.isWatching && stopSurveillance) {
+    // If surveillance is active, stop it first
+    if (isGhostMode && activeSurveillance.isWatching) {
       await stopSurveillance();
     }
-
-    // Toggle ghost mode in admin_sessions
+    
+    // Toggle ghost mode in database
     const newGhostModeState = !isGhostMode;
-
-    // Check if session already exists
-    const { data: existingSessions } = await supabase
-      .from('admin_sessions')
-      .select('*')
-      .eq('admin_id', session.user.id)
-      .limit(1);
-
-    if (existingSessions && existingSessions.length > 0) {
-      // Update existing session
-      await supabase
-        .from('admin_sessions')
-        .update({ 
-          ghost_mode: newGhostModeState,
-          last_active_at: new Date().toISOString()
-        })
-        .eq('admin_id', session.user.id);
-    } else {
-      // Create new session
-      await supabase
-        .from('admin_sessions')
-        .insert({
-          admin_id: session.user.id,
-          ghost_mode: newGhostModeState,
-          activated_at: new Date().toISOString()
-        });
+    const { error } = await supabase
+      .from('admin_settings')
+      .upsert({ 
+        user_id: session.user.id,
+        settings_type: 'ghost_mode',
+        value: newGhostModeState 
+      });
+    
+    if (error) {
+      console.error("Error updating ghost mode:", error);
+      return;
     }
-
-    // Log the ghost mode state change
-    await supabase.from('admin_audit_logs').insert({
-      user_id: session.user.id,
-      action: newGhostModeState ? 'ghost_mode_activated' : 'ghost_mode_deactivated',
-      details: {
-        timestamp: new Date().toISOString(),
-        user_email: session.user.email
-      }
+    
+    // Log the action for audit purposes
+    await supabase.from('admin_logs').insert({
+      admin_id: session.user.id,
+      action: newGhostModeState ? 'enabled_ghost_mode' : 'disabled_ghost_mode',
+      action_type: 'admin_settings',
+      details: { timestamp: new Date().toISOString() }
     });
-
-    // Update state
+    
     setIsGhostMode(newGhostModeState);
-  } catch (error) {
-    console.error("Error toggling ghost mode:", error);
+  } catch (err) {
+    console.error("Error toggling ghost mode:", err);
   } finally {
     setIsLoading(false);
   }
-}
+};
 
-export async function syncGhostModeState(
+/**
+ * Sync ghost mode state from database
+ */
+export const syncGhostModeState = async (
   userId: string,
-  isSuperAdmin: boolean,
+  canUseGhostMode: boolean,
   setIsGhostMode: (value: boolean) => void,
   setIsLoading: (value: boolean) => void
-) {
-  if (!isSuperAdmin) {
+) => {
+  if (!canUseGhostMode) {
     setIsGhostMode(false);
-    setIsLoading(false);
     return;
   }
-
+  
   setIsLoading(true);
-
+  
   try {
-    // Check current ghost mode state
-    const { data } = await supabase
-      .from('admin_sessions')
-      .select('ghost_mode')
-      .eq('admin_id', userId)
-      .limit(1)
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('user_id', userId)
+      .eq('settings_type', 'ghost_mode')
       .single();
-
-    if (data) {
-      setIsGhostMode(data.ghost_mode || false);
+    
+    if (!error && data) {
+      setIsGhostMode(!!data.value);
     } else {
       setIsGhostMode(false);
     }
-  } catch (error) {
-    console.error("Error syncing ghost mode state:", error);
+  } catch (err) {
+    console.error("Error syncing ghost mode state:", err);
     setIsGhostMode(false);
   } finally {
     setIsLoading(false);
   }
-}
+};

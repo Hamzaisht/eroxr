@@ -8,9 +8,7 @@ import {
 } from '@/types/dating';
 
 // Re-export the main types
-export type { 
-  MainDatingAd as DatingAd, 
-  MainFilterOptions as FilterOptions, 
-  MainSearchCategory as SearchCategory, 
-  MainDatingAdAction as DatingAdAction 
-};
+export type DatingAd = MainDatingAd;
+export type FilterOptions = MainFilterOptions;
+export type SearchCategory = MainSearchCategory;
+export type DatingAdAction = MainDatingAdAction;

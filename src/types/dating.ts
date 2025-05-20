@@ -32,7 +32,7 @@ export interface DatingAd {
   click_count?: number;
   
   // Profile details
-  tags?: string[];
+  tags: string[];  // Making this required to resolve the type conflict
   location?: string;
   age?: number;
   gender?: string;

@@ -6,6 +6,7 @@ import { LoadingScreen } from "./components/layout/LoadingScreen";
 import { MainLayout } from "./components/layout/MainLayout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ToastProvider } from "./hooks/use-toast";
+import { GhostModeProvider } from "./context/ghost/GhostModeContext";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -25,36 +26,38 @@ const Demo = lazy(() => import("./pages/Demo"));
 function App() {
   return (
     <ToastProvider>
-      <Router>
-        <ScrollToTop />
-        <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/demo" element={<Demo />} />
+      <GhostModeProvider>
+        <Router>
+          <ScrollToTop />
+          <Suspense fallback={<LoadingScreen />}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/demo" element={<Demo />} />
 
-            {/* Protected routes wrapped in MainLayout */}
-            <Route element={<MainLayout />}>
-              <Route path="/home" element={<Home />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/:id" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/dating" element={<Dating />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/shorts" element={<Shorts />} />
-              <Route path="/shorts/upload" element={<ShortsUpload />} />
-            </Route>
+              {/* Protected routes wrapped in MainLayout */}
+              <Route element={<MainLayout />}>
+                <Route path="/home" element={<Home />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:id" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/dating" element={<Dating />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/shorts" element={<Shorts />} />
+                <Route path="/shorts/upload" element={<ShortsUpload />} />
+              </Route>
 
-            {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-        <Toaster />
-      </Router>
+              {/* Fallback route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+          <Toaster />
+        </Router>
+      </GhostModeProvider>
     </ToastProvider>
   );
 }
