@@ -12,29 +12,36 @@ import { SurveillanceAlerts } from "./surveillance/components/SurveillanceAlerts
 import { ActiveSessionMonitor } from "./surveillance/components/ActiveSessionMonitor";
 
 export const LiveSurveillance = () => {
-  const {
-    isGhostMode,
-    activeSurveillance,
-    startSurveillance,
-    stopSurveillance,
-    liveAlerts,
-    refreshAlerts
-  } = useGhostMode();
+  const { isGhostMode } = useGhostMode();
 
   const [loadingRefresh, setLoadingRefresh] = useState<boolean>(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const { sessions, isLoading, fetchActiveSessions } = useLiveSurveillanceData();
   
+  // Mock data since we removed the advanced functionality
+  const [activeSurveillance, setActiveSurveillance] = useState({
+    isWatching: false,
+    session: null as LiveSession | null,
+    startTime: null as string | null
+  });
+  
+  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
+  
   const handleRefresh = async () => {
     setLoadingRefresh(true);
-    await Promise.all([refreshAlerts(), fetchActiveSessions()]);
+    await fetchActiveSessions();
     setLoadingRefresh(false);
   };
   
   const handleStartWatching = async (session: LiveSession) => {
     try {
       console.log("Starting surveillance for session:", session);
-      return await startSurveillance(session);
+      setActiveSurveillance({
+        isWatching: true,
+        session: session,
+        startTime: new Date().toISOString()
+      });
+      return true;
     } catch (error) {
       console.error("Error starting surveillance:", error);
       return false;
@@ -43,7 +50,12 @@ export const LiveSurveillance = () => {
   
   const handleStopWatching = async () => {
     try {
-      return await stopSurveillance();
+      setActiveSurveillance({
+        isWatching: false,
+        session: null,
+        startTime: null
+      });
+      return true;
     } catch (error) {
       console.error("Error stopping surveillance:", error);
       return false;
@@ -67,6 +79,11 @@ export const LiveSurveillance = () => {
       
       handleStartWatching(sessionFromAlert);
     }
+  };
+
+  const refreshAlerts = async () => {
+    console.log("Refreshing alerts (mock function)");
+    return true;
   };
 
   if (!isGhostMode) {
@@ -110,7 +127,7 @@ export const LiveSurveillance = () => {
             return await refreshAlerts();
           }}
           startSurveillance={async (session: LiveSession) => {
-            return await startSurveillance(session);
+            return await handleStartWatching(session);
           }}
         >
           <SurveillanceTabs 

@@ -1,37 +1,36 @@
 
-import { useContext } from 'react';
-import { GhostModeContext } from '@/context/ghost/GhostModeContext';
-import { LiveAlert } from '@/types/alerts';
-import { LiveSession } from '@/types/surveillance';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Extended interface for Ghost Mode context
-export interface GhostModeContextType {
+interface GhostModeContextType {
   isGhostMode: boolean;
-  toggleGhostMode: () => Promise<void>;
-  canUseGhostMode: boolean;
-  isLoading: boolean;
-  liveAlerts: LiveAlert[];
-  refreshAlerts: () => Promise<boolean>;
-  activeSurveillance: {
-    isWatching: boolean;
-    session: LiveSession | null;
-    startTime: string | null;
-  };
-  startSurveillance: (session: LiveSession) => Promise<boolean>;
-  stopSurveillance: () => Promise<boolean>;
+  setIsGhostMode: (value: boolean) => void;
+  toggleGhostMode: () => void;
 }
 
-export function useGhostMode(): GhostModeContextType {
+const GhostModeContext = createContext<GhostModeContextType | undefined>(undefined);
+
+export const useGhostMode = () => {
   const context = useContext(GhostModeContext);
-  
   if (!context) {
-    throw new Error("useGhostMode must be used within a GhostModeProvider");
+    throw new Error('useGhostMode must be used within a GhostModeProvider');
   }
-  
-  return context as GhostModeContextType;
-}
+  return context;
+};
 
-export function useGhostModeToggle() {
-  const { toggleGhostMode } = useGhostMode();
-  return toggleGhostMode;
-}
+export const GhostModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isGhostMode, setIsGhostMode] = useState(false);
+
+  const toggleGhostMode = () => setIsGhostMode((prev) => !prev);
+
+  return (
+    <GhostModeContext.Provider
+      value={{
+        isGhostMode,
+        setIsGhostMode,
+        toggleGhostMode,
+      }}
+    >
+      {children}
+    </GhostModeContext.Provider>
+  );
+};

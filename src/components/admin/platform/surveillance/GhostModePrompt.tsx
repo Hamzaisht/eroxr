@@ -7,13 +7,13 @@ import { useState } from "react";
 
 export const GhostModePrompt = () => {
   const { toast } = useToast();
-  const { toggleGhostMode, isLoading } = useGhostMode();
+  const { toggleGhostMode } = useGhostMode();
   const [isToggling, setIsToggling] = useState(false);
   
   const handleEnableGhostMode = async () => {
     setIsToggling(true);
     try {
-      await toggleGhostMode();
+      toggleGhostMode();
       toast({
         title: "Ghost Mode Enabled",
         description: "You are now browsing invisibly."
@@ -30,7 +30,7 @@ export const GhostModePrompt = () => {
     }
   };
   
-  const loading = isLoading || isToggling;
+  const loading = isToggling;
   
   return (
     <div className="p-8 text-center bg-[#161B22]/80 border border-purple-900/20 rounded-lg max-w-md mx-auto my-12">
