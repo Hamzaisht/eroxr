@@ -1,15 +1,18 @@
+
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
-import { Image } from "next/image";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
 import { MediaType } from "@/utils/media/types";
 
 interface StoryCardProps {
+  id: string;
   username: string;
   avatarUrl?: string;
   mediaUrl?: string;
+  videoUrl?: string;
   mediaType?: 'image' | 'video';
   creatorId: string;
+  createdAt?: string;
   type?: 'circle' | 'square';
   status?: 'online' | 'offline';
   isSelf?: boolean;
@@ -17,11 +20,13 @@ interface StoryCardProps {
 }
 
 export const StoryCard = ({
+  id,
   username,
   avatarUrl,
   mediaUrl,
-  mediaType,
+  videoUrl,
   creatorId,
+  createdAt,
   type = 'circle',
   status,
   isSelf = false,
@@ -60,7 +65,7 @@ export const StoryCard = ({
             "absolute inset-0",
             type === 'circle' ? 'rounded-full' : 'rounded-md'
           )}>
-            <Image
+            <img
               src={avatarUrl}
               alt={`${username}'s avatar`}
               width={size}
@@ -70,15 +75,15 @@ export const StoryCard = ({
           </div>
         )}
         
-        {mediaUrl && mediaType && (
+        {(mediaUrl || videoUrl) && (
           <div className={cn(
             "absolute inset-0",
             type === 'circle' ? 'rounded-full' : 'rounded-md'
           )}>
             <UniversalMedia
               item={{
-                url: mediaUrl,
-                type: mediaType === 'video' ? MediaType.VIDEO : MediaType.IMAGE
+                url: mediaUrl || videoUrl || '',
+                type: videoUrl ? MediaType.VIDEO : MediaType.IMAGE
               }}
               className="object-cover w-full h-full rounded-full"
               autoPlay={false}

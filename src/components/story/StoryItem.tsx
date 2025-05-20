@@ -52,10 +52,12 @@ export const StoryItem = ({
 
   // Create a proper media source object for UniversalMedia
   const mediaItem: MediaSource = {
+    url: story.media_url || story.video_url || '',
+    type: isVideo ? MediaType.VIDEO : MediaType.IMAGE,
     media_url: story.media_url,
     video_url: story.video_url,
-    media_type: isVideo ? MediaType.VIDEO : MediaType.IMAGE,
     creator_id: story.creator_id,
+    media_type: isVideo ? MediaType.VIDEO : MediaType.IMAGE,
   };
 
   return (

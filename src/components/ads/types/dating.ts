@@ -8,9 +8,9 @@ export interface DatingAd {
   user_id: string;
   username: string;
   avatarUrl: string;
-  videoUrl: string;
-  isVerified: boolean;
-  isPremium: boolean;
+  videoUrl?: string;
+  isVerified?: boolean;
+  isPremium?: boolean;
   views: number;
   
   // Age properties
@@ -25,7 +25,7 @@ export interface DatingAd {
   age?: number;
   
   // Location properties
-  location: string;
+  location?: string;
   location_type?: string;
   city?: string;
   country?: string;

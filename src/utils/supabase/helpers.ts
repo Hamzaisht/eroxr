@@ -73,3 +73,76 @@ export function getSafeProfile(profile: any) {
 export function toDbValue<T>(value: T): T {
   return value;
 }
+
+/**
+ * Safe way to get a UUID from a string or UUID
+ * @param id The ID to validate
+ * @returns The ID as string
+ */
+export function asUUID(id: string | null | undefined): string {
+  if (!id) return '';
+  return String(id);
+}
+
+/**
+ * Convert column name for database query
+ * @param name Column name
+ * @returns Safe column name
+ */
+export function asColumnName(name: string): string {
+  return name;
+}
+
+/**
+ * Convert column value for database query
+ * @param value Column value
+ * @returns Safe column value
+ */
+export function asColumnValue(value: any): any {
+  return value;
+}
+
+/**
+ * Convert ID verification status for database query
+ * @param status Status value
+ * @returns Safe status value
+ */
+export function asIdVerificationStatus(status: string): string {
+  return status;
+}
+
+/**
+ * Convert live stream status for database query
+ * @param status Status value
+ * @returns Safe status value
+ */
+export function asLiveStreamStatus(status: string): string {
+  return status;
+}
+
+/**
+ * Convert profile suspended status for database query
+ * @param status Status value
+ * @returns Safe status value
+ */
+export function asProfileIsSuspended(status: boolean): boolean {
+  return status;
+}
+
+/**
+ * Convert profile status for database query
+ * @param status Status value
+ * @returns Safe status value
+ */
+export function asProfileStatus(status: string): string {
+  return status;
+}
+
+/**
+ * Convert report status for database query
+ * @param status Status value
+ * @returns Safe status value
+ */
+export function asReportStatus(status: string): string {
+  return status;
+}

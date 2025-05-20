@@ -43,6 +43,13 @@ export const useMediaService = () => {
       }
     }
 
+    // Ensure type is set
+    if (!mediaSource.type) {
+      mediaSource.type = mediaSource.url ? 
+        (isVideoUrl(mediaSource.url) ? MediaType.VIDEO : MediaType.IMAGE) : 
+        MediaType.UNKNOWN;
+    }
+
     return mediaSource;
   }, []);
 
@@ -61,6 +68,9 @@ export const useMediaService = () => {
 
     // If there's a thumbnail, use it
     if (source.thumbnail) return source.thumbnail;
+    
+    // For backward compatibility
+    if (source.thumbnail_url) return source.thumbnail_url;
 
     return null;
   }, []);

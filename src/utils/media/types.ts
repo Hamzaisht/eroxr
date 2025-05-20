@@ -20,6 +20,9 @@ export interface MediaSource extends GlobalMediaSource {
   video_urls?: string[];
   creator_id?: string;
   media_type?: MediaType;
+  thumbnail?: string;
+  poster?: string;
+  thumbnail_url?: string;
 }
 
 export type MediaOptions = {

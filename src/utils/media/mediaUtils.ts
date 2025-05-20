@@ -22,10 +22,19 @@ export function extractMediaUrl(source: MediaSource | string | null | undefined)
 
 /**
  * Creates a unique file path for uploaded media files
- * @param filename Original filename
+ * @param userId User ID or other identifier
+ * @param filename Original filename or File object
  * @returns A unique filepath with timestamp
  */
-export function createUniqueFilePath(filename: string): string {
+export function createUniqueFilePath(userId: string, filename: string | File): string {
+  const actualFilename = filename instanceof File ? filename.name : filename;
+  return `media/${userId}/${Date.now()}-${actualFilename}`;
+}
+
+/**
+ * Creates a unique file path (legacy version for backward compatibility)
+ */
+export function createUniqueMediaPath(filename: string): string {
   return `media/${Date.now()}-${filename}`;
 }
 

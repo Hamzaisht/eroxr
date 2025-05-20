@@ -85,3 +85,17 @@ export function useToast() {
     update: context.updateToast,
   };
 }
+
+// Export the toast function directly for use in components
+export const toast = (props: Omit<ToastType, "id">) => {
+  // This is a fallback for when used outside of context
+  console.warn("Using toast outside of ToastProvider. This may not work as expected.");
+  
+  // Simple implementation that just shows a browser alert if context isn't available
+  if (!document.querySelector('[data-toast-container]')) {
+    console.warn(props.title, props.description);
+    if (typeof window !== 'undefined') {
+      alert(`${props.title}: ${props.description}`);
+    }
+  }
+};
