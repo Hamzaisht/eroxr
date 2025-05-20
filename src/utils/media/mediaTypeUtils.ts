@@ -1,73 +1,48 @@
 
-import { MediaType } from '@/types/media';
+import { MediaType } from './types';
 
 /**
- * Determines if a file type is an image
- * @param type MIME type to check
+ * Check if the given type is an image type
  */
 export function isImageType(type: string): boolean {
-  return type.startsWith('image/');
+  return type === MediaType.IMAGE || 
+         type === 'image' || 
+         (typeof type === 'string' && type.startsWith('image/'));
 }
 
 /**
- * Determines if a file type is a video
- * @param type MIME type to check
+ * Check if the given type is a video type
  */
 export function isVideoType(type: string): boolean {
-  return type.startsWith('video/');
+  return type === MediaType.VIDEO || 
+         type === 'video' || 
+         (typeof type === 'string' && type.startsWith('video/'));
 }
 
 /**
- * Determines if a file type is an audio file
- * @param type MIME type to check
+ * Check if the given type is an audio type
  */
 export function isAudioType(type: string): boolean {
-  return type.startsWith('audio/');
+  return type === MediaType.AUDIO || 
+         type === 'audio' || 
+         (typeof type === 'string' && type.startsWith('audio/'));
 }
 
 /**
- * Maps a MIME type to a MediaType enum value
- * @param mimeType MIME type to map
+ * Convert a MIME type to a MediaType enum
  */
 export function mimeTypeToMediaType(mimeType: string): MediaType {
-  if (isImageType(mimeType)) {
-    return mimeType === 'image/gif' ? MediaType.GIF : MediaType.IMAGE;
-  }
+  if (!mimeType) return MediaType.UNKNOWN;
   
-  if (isVideoType(mimeType)) {
+  if (mimeType.startsWith('image/')) {
+    return MediaType.IMAGE;
+  } else if (mimeType.startsWith('video/')) {
     return MediaType.VIDEO;
-  }
-  
-  if (isAudioType(mimeType)) {
+  } else if (mimeType.startsWith('audio/')) {
     return MediaType.AUDIO;
-  }
-  
-  if (mimeType.includes('pdf') || mimeType.includes('document') || mimeType.includes('application/')) {
+  } else if (mimeType.startsWith('application/') || mimeType.startsWith('text/')) {
     return MediaType.DOCUMENT;
   }
   
   return MediaType.UNKNOWN;
-}
-
-/**
- * Gets file extension from a MIME type
- * @param mimeType MIME type
- * @returns File extension (without dot)
- */
-export function getExtensionFromMimeType(mimeType: string): string {
-  const mappings: Record<string, string> = {
-    'image/jpeg': 'jpg',
-    'image/jpg': 'jpg',
-    'image/png': 'png',
-    'image/gif': 'gif',
-    'image/webp': 'webp',
-    'video/mp4': 'mp4',
-    'video/webm': 'webm',
-    'video/quicktime': 'mov',
-    'audio/mpeg': 'mp3',
-    'audio/wav': 'wav',
-    'application/pdf': 'pdf'
-  };
-  
-  return mappings[mimeType] || mimeType.split('/').pop() || 'unknown';
 }

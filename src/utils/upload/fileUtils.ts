@@ -1,68 +1,52 @@
 
 /**
- * Creates a unique file path for uploads
- * @param userId User ID for the upload
- * @param file The file being uploaded
- * @returns A unique file path
+ * Creates a URL for previewing a file
+ * @param file File to create preview for
+ * @returns URL to preview the file
  */
-export function createUniqueFilePath(userId: string, file: File): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 9);
-  const extension = file.name.split('.').pop();
-  
-  return `${userId}/${timestamp}-${random}.${extension}`;
+export function createFilePreview(file: File): string {
+  return URL.createObjectURL(file);
 }
 
 /**
- * Analyzes a file for diagnostic purposes
- * @param file The file to analyze
- * @returns Diagnostic information
+ * Revokes a URL created with createFilePreview
+ * @param url URL to revoke
  */
-export function runFileDiagnostic(file: File): { size: number; type: string; name: string } {
-  console.log(`Diagnostic for file: ${file.name}`);
-  console.log(`File size: ${formatFileSize(file.size)}`);
-  console.log(`File type: ${file.type}`);
-  
-  return {
-    size: file.size,
-    type: file.type,
-    name: file.name
-  };
+export function revokeFilePreview(url: string): void {
+  if (url && url.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
+  }
 }
 
 /**
- * Formats file size in a human-readable format
- * @param bytes File size in bytes
- * @returns Formatted file size string
+ * Get the file type category (image, video, audio, document)
+ * @param file File to check
+ * @returns Category string
+ */
+export function getFileType(file: File): string {
+  if (file.type.startsWith('image/')) {
+    return 'image';
+  } else if (file.type.startsWith('video/')) {
+    return 'video';
+  } else if (file.type.startsWith('audio/')) {
+    return 'audio';
+  } else {
+    return 'document';
+  }
+}
+
+/**
+ * Format file size to human-readable string
+ * @param bytes Size in bytes
+ * @returns Formatted string (e.g. "1.5 MB")
  */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-/**
- * Validates if a file is within acceptable size limits
- * @param file File to validate
- * @param maxSizeInMB Maximum allowed size in MB
- * @returns Whether the file is within size limits
- */
-export function validateFileSize(file: File, maxSizeInMB: number = 10): boolean {
-  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-  return file.size <= maxSizeInBytes;
-}
-
-/**
- * Validates if a file is of an allowed type
- * @param file File to validate
- * @param allowedTypes Array of allowed MIME types
- * @returns Whether the file is of an allowed type
- */
-export function validateFileType(file: File, allowedTypes: string[] = []): boolean {
-  if (allowedTypes.length === 0) return true;
-  return allowedTypes.some(type => file.type.startsWith(type) || file.type === type);
 }

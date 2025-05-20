@@ -1,52 +1,64 @@
 
+// Define media types
 export enum MediaType {
   IMAGE = "image",
-  GIF = "gif",
   VIDEO = "video",
   AUDIO = "audio",
   DOCUMENT = "document",
   UNKNOWN = "unknown"
 }
 
+// Base MediaSource interface
 export interface MediaSource {
   url: string;
-  type: MediaType;
-  thumbnail?: string;
-  poster?: string;
+  type: MediaType | string;
   creator_id?: string;
+  contentCategory?: string;
+  thumbnail_url?: string;
+  poster?: string;
+  // These properties are for backward compatibility
+  media_url?: string;
+  video_url?: string;
+  media_urls?: string[];
+  video_urls?: string[];
+  media_type?: MediaType | string;
+  thumbnail?: string;
+}
+
+export interface MediaOptions {
+  className?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  showWatermark?: boolean;
+  showCloseButton?: boolean;
+  creatorId?: string;
+  onClose?: () => void;
+  onClick?: () => void;
+  onLoad?: () => void;
+  onError?: (error: any) => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
 }
 
 export interface UploadResult {
   success: boolean;
   url?: string;
-  path?: string;
   error?: string;
+  fileSize?: number;
+  fileType?: string;
+  metadata?: Record<string, any>;
 }
 
-export interface MediaMetadata {
-  width?: number;
-  height?: number;
-  duration?: number;
-  size?: number;
-  mimeType?: string;
-  createdAt?: string;
-  modifiedAt?: string;
-}
-
-export interface MediaInfo {
-  url: string;
-  type: 'image' | 'video' | 'audio' | 'document' | 'unknown';
-  metadata?: MediaMetadata;
-  thumbnail?: string;
-}
-
-/**
- * Result type for media upload operations
- */
-export interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
-  isComplete: boolean;
-  result?: UploadResult;
+export interface UploadOptions {
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
+  folderPath?: string;
+  bucket?: string;
+  metadata?: Record<string, any>;
+  onProgress?: (progress: number) => void;
+  contentCategory?: string;
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
 }

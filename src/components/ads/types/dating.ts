@@ -10,6 +10,7 @@ export interface DatingAd {
   views: number;
   
   // Age properties
+  age?: number;
   age_range: {
     lower: number;
     upper: number;
@@ -18,7 +19,6 @@ export interface DatingAd {
     lower: number;
     upper: number;
   };
-  age?: number;
   
   // Location properties
   location?: string;

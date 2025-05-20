@@ -69,3 +69,43 @@ export function formatUserActionAlert(
     contentId: details?.contentId || '',
   };
 }
+
+/**
+ * Format flagged content as an alert
+ * @param content Flagged content from database
+ * @returns Formatted LiveAlert
+ */
+export function formatFlaggedContentAsAlert(content: any): LiveAlert {
+  return {
+    id: content.id,
+    alert_type: 'security_alert',
+    timestamp: content.created_at,
+    priority: content.severity || 'medium',
+    read: false,
+    message: `Flagged content: ${content.reason || 'Inappropriate content'}`,
+    details: content,
+    userId: content.user_id,
+    username: content.user?.username || 'Unknown User',
+    contentId: content.content_id,
+  };
+}
+
+/**
+ * Format user report as an alert
+ * @param report Report data from database
+ * @returns Formatted LiveAlert
+ */
+export function formatReportAsAlert(report: any): LiveAlert {
+  return {
+    id: report.id,
+    alert_type: 'user_action',
+    timestamp: report.created_at,
+    priority: report.severity || 'medium',
+    read: false,
+    message: `Report: ${report.reason || 'User reported'}`,
+    details: report,
+    userId: report.reported_id,
+    username: report.reported?.username || 'Unknown User',
+    contentId: report.content_id,
+  };
+}

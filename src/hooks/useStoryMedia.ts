@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
@@ -23,7 +22,7 @@ export const useStoryMedia = (
   const [retryCount, setRetryCount] = useState(0);
   
   const session = useSession();
-  const { toast } = useToast();
+  const toast = useToast();
   
   useEffect(() => {
     if (!mediaUrl) {
