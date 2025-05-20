@@ -49,7 +49,7 @@ export function UserMenu() {
       const { data, error } = await supabase
         .from('profiles')
         .select("*")
-        .eq("id", session.user.id)
+        .eq("id" as keyof ProfileRow, session.user.id)
         .maybeSingle();
         
       if (error || !data) {
