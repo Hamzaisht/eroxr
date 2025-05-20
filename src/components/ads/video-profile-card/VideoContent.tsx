@@ -19,11 +19,13 @@ export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: V
     active: { scale: 1, opacity: 1 }
   };
 
-  console.log("VideoContent - video_url:", ad.video_url);
+  const videoUrl = ad.video_url || ad.videoUrl;
+  
+  console.log("VideoContent - video_url:", videoUrl);
 
   return (
     <div className="relative aspect-video w-full h-[60vh] overflow-hidden bg-black">
-      {ad.video_url ? (
+      {videoUrl ? (
         <motion.div 
           className="w-full h-full flex items-center justify-center"
           variants={isAnimation ? variants : undefined}
@@ -33,9 +35,8 @@ export const VideoContent = ({ ad, isActive, isHovered, isAnimation = false }: V
         >
           <UniversalMedia
             item={{
-              url: ad.video_url,
-              video_url: ad.video_url,
-              media_type: MediaType.VIDEO
+              url: videoUrl,
+              type: MediaType.VIDEO
             }}
             className={cn(
               "w-full h-full object-cover"

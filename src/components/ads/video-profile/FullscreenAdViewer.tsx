@@ -1,12 +1,15 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Video } from 'lucide-react';
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { DatingAd } from '../types/dating';
 
 interface FullscreenAdViewerProps {
-  videoUrl: string | null;
+  videoUrl?: string | null;
   onClose: () => void;
+  ad?: DatingAd;
 }
 
 const VideoPlayer = ({ url, ...props }: any) => {
@@ -45,9 +48,12 @@ const VideoPlayer = ({ url, ...props }: any) => {
   );
 };
 
-export const FullscreenAdViewer = ({ videoUrl, onClose }: FullscreenAdViewerProps) => {
+export const FullscreenAdViewer = ({ videoUrl, ad, onClose }: FullscreenAdViewerProps) => {
   const [isClosing, setIsClosing] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
+
+  // Handle the case where we're passing in an ad object
+  const videoToDisplay = videoUrl || (ad?.video_url || ad?.videoUrl || null);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -57,17 +63,6 @@ export const FullscreenAdViewer = ({ videoUrl, onClose }: FullscreenAdViewerProp
   const handleVideoEnded = () => {
     if (!isMobile) {
       handleClose();
-    }
-  };
-
-  const toggleVideoPlayback = () => {
-    const video = document.querySelector('video');
-    if (video) {
-      if (video.paused) {
-        video.play();
-      } else {
-        video.pause();
-      }
     }
   };
 
@@ -94,9 +89,9 @@ export const FullscreenAdViewer = ({ videoUrl, onClose }: FullscreenAdViewerProp
           <X className="h-6 w-6" />
         </motion.button>
 
-        {videoUrl ? (
+        {videoToDisplay ? (
           <VideoPlayer
-            url={videoUrl}
+            url={videoToDisplay}
             className="h-full w-full object-cover"
             autoPlay={true}
             muted={false}

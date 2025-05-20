@@ -2,7 +2,7 @@
 import { useRef, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType, MediaSource } from "@/utils/media/types";
+import { MediaType } from "@/utils/media/types";
 
 interface VideoControlsProps {
   videoUrl: string | null;
@@ -15,9 +15,9 @@ export const VideoControls = ({ videoUrl, avatarUrl, isActive }: VideoControlsPr
   
   console.log("VideoControls props:", { videoUrl, avatarUrl, isActive });
 
-  const mediaItem: MediaSource = {
+  const mediaItem = {
     url: videoUrl || avatarUrl || '',
-    type: 'video',
+    type: MediaType.VIDEO,
     // Additional fields for backward compatibility
     media_url: avatarUrl || '',
     video_url: videoUrl || '',

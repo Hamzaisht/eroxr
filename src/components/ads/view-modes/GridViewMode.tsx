@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { DatingAd } from "../types/dating";
 import { GridItem } from "./components/GridItem";
 import { FullscreenAdViewer } from "../video-profile/FullscreenAdViewer";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { SkeletonCards } from "./SkeletonCards";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,7 +154,10 @@ export const GridViewMode = ({
       )}
       
       {selectedAd && (
-        <FullscreenAdViewer ad={selectedAd} onClose={() => setSelectedAd(null)} />
+        <FullscreenAdViewer 
+          ad={selectedAd} 
+          onClose={() => setSelectedAd(null)} 
+        />
       )}
     </>
   );

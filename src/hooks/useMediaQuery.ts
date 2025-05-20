@@ -1,43 +1,28 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
-/**
- * Hook that listens for changes to a media query
- * @param query Media query to match
- * @returns Boolean indicating if the media query matches
- */
-export const useMediaQuery = (query: string): boolean => {
-  const [matches, setMatches] = useState<boolean>(() => {
-    // On first render, check if window is available
-    if (typeof window !== 'undefined') {
-      return window.matchMedia(query).matches;
-    }
-    // Server-side rendering or testing environment
-    return false;
-  });
-
+export function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+  
   useEffect(() => {
-    // Check if window exists (browser environment)
-    if (typeof window === 'undefined') return;
-
-    const mediaQuery = window.matchMedia(query);
+    const media = window.matchMedia(query);
     
     // Set initial value
-    setMatches(mediaQuery.matches);
-
-    // Define the listener
-    const handleChange = (event: MediaQueryListEvent) => {
-      setMatches(event.matches);
+    setMatches(media.matches);
+    
+    // Define listener
+    const listener = () => {
+      setMatches(media.matches);
     };
-
-    // Add event listener
-    mediaQuery.addEventListener('change', handleChange);
+    
+    // Listen for changes
+    media.addEventListener('change', listener);
     
     // Cleanup
     return () => {
-      mediaQuery.removeEventListener('change', handleChange);
+      media.removeEventListener('change', listener);
     };
   }, [query]);
-
+  
   return matches;
-};
+}

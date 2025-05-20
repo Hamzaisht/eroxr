@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useMediaQuery } from './useMediaQuery';
 
 export const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -48,5 +49,5 @@ export function useBreakpoint() {
   return breakpoint;
 }
 
-// Re-export useMediaQuery from useMediaQuery.ts
-export { useMediaQuery } from './useMediaQuery';
+// Re-export useMediaQuery
+export { useMediaQuery };

@@ -1,16 +1,29 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { MediaType } from "@/utils/media/types";
-// Import or define MediaRendererProps directly in this file
-import { ReactNode } from "react";
 
 // Define the MediaRendererProps interface if it's not exported elsewhere
 export interface MediaRendererProps {
-  children?: ReactNode;
+  children?: React.ReactNode;
   mediaType: MediaType;
   className?: string;
+  src?: any;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+  showWatermark?: boolean;
+  onLoad?: () => void;
+  onError?: (error: any) => void;
+  onEnded?: () => void;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
+  allowRetry?: boolean;
+  maxRetries?: number;
+  ref?: React.Ref<HTMLVideoElement | HTMLImageElement>;
 }
 
-export const MediaRenderer: React.FC<MediaRendererProps> = ({ children, mediaType, className }) => {
+export const MediaRenderer: React.FC<MediaRendererProps> = ({ children, mediaType, className, ...rest }) => {
   const [isSupported, setIsSupported] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -19,8 +32,16 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({ children, mediaTyp
       if (!containerRef.current) return;
 
       // Basic check - expand this as needed
-      const element = document.createElement(mediaType);
-      setIsSupported(typeof element.canPlayType === "function");
+      if (mediaType === MediaType.VIDEO) {
+        const element = document.createElement('video');
+        setIsSupported(typeof element.canPlayType === "function");
+      } else if (mediaType === MediaType.AUDIO) {
+        const element = document.createElement('audio');
+        setIsSupported(typeof element.canPlayType === "function");
+      } else {
+        // Image is assumed to be supported
+        setIsSupported(true);
+      }
     };
 
     checkSupport();

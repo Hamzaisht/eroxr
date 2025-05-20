@@ -103,15 +103,13 @@ export const ListViewMode = ({ ads, isLoading = false, onMediaClick, userProfile
   };
 
   const handleMediaClick = (media: string | MediaSource) => {
-    const url = typeof media === 'string' ? media : (
-      media.url || 
-      media.media_url || 
-      (Array.isArray(media.media_urls) && media.media_urls[0]) ||
-      media.video_url || 
-      (Array.isArray(media.video_urls) && media.video_urls[0]) || 
-      ''
-    );
-    if (url && onMediaClick) onMediaClick(handleMediaUrl(url));
+    if (typeof media === 'string') {
+      if (onMediaClick) onMediaClick(handleMediaUrl(media));
+    } else {
+      // Handle MediaSource object
+      const url = media.url || '';
+      if (url && onMediaClick) onMediaClick(handleMediaUrl(url));
+    }
   };
 
   const getMatchPercentage = (ad: DatingAd): number | null => {

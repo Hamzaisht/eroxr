@@ -12,6 +12,12 @@ export interface MediaSource {
   type: MediaType;
   poster?: string;
   thumbnail?: string;
+  // Additional properties for backward compatibility
+  media_url?: string | string[];
+  video_url?: string;
+  media_urls?: string[];
+  video_urls?: string[];
+  creator_id?: string;
 }
 
 export enum MediaType {
@@ -22,8 +28,7 @@ export enum MediaType {
   UNKNOWN = "unknown"
 }
 
-export type UniversalMediaProps = {
-  item: MediaSource | string;
+export type MediaOptions = {
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
@@ -36,9 +41,11 @@ export type UniversalMediaProps = {
   onError?: (error: any) => void;
   onEnded?: () => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
-  alt?: string;
-  maxRetries?: number;
-};
+}
+
+export type UniversalMediaProps = {
+  item: MediaSource | string;
+} & MediaOptions;
 
 export interface UploadResult {
   success: boolean;
