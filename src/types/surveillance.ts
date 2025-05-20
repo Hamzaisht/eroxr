@@ -3,7 +3,7 @@ export type SurveillanceTab = 'streams' | 'calls' | 'chats' | 'bodycontact' | 'c
 
 export type LiveSessionType = 'stream' | 'chat' | 'call' | 'bodycontact' | 'content';
 
-// Define LiveSession properties
+// Define LiveSession properties with all required properties
 export interface LiveSession {
   id: string;
   username?: string;
@@ -17,12 +17,23 @@ export interface LiveSession {
   viewer_count?: number;
   started_at: string;
   thumbnail_url?: string;
-  // Additional properties needed
+  
+  // Add missing properties that were referenced in components
   created_at?: string;
   is_active?: boolean;
-  media_url?: string[];
+  is_paused?: boolean;
+  media_url?: string[] | string;
+  video_url?: string;
   content?: string;
   content_type?: string;
+  message_type?: string;
+  recipient_username?: string;
+  recipient_id?: string;
+  sender_username?: string;
+  participants?: number;
+  location?: string;
+  tags?: string[];
+  visibility?: string;
 }
 
 export interface SurveillanceContentItem {
@@ -39,7 +50,16 @@ export interface SurveillanceContentItem {
   media_url?: string[];
   video_url?: string;
   severity?: 'low' | 'medium' | 'high' | 'critical';
-  status?: 'pending' | 'reviewed' | 'removed';
+  status?: 'pending' | 'reviewed' | 'removed' | 'flagged';
+  
+  // Add missing properties that were referenced in components
+  user_id?: string;
+  username?: string;
+  avatar_url?: string;
+  content?: string;
+  content_type?: string;
+  creator_avatar_url?: string;
+  visibility?: string;
 }
 
 export type ContentType = 'image' | 'video' | 'text' | 'audio';
@@ -49,3 +69,16 @@ export interface MediaSource {
   type: string;
   media_type?: string;
 }
+
+export type ModerationAction = 
+  | 'view'
+  | 'edit'
+  | 'flag'
+  | 'warn'
+  | 'pause'
+  | 'unpause'
+  | 'shadowban'
+  | 'ban'
+  | 'delete'
+  | 'force_delete'
+  | 'restore';

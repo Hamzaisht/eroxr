@@ -5,28 +5,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatFlaggedContentAsAlert, formatReportAsAlert } from "@/context/ghost/utils/alertFormatters";
 
 // Helper to map from raw alerts to typed alerts
-const mapToLiveAlerts = (alerts: Omit<LiveAlert, "alert_type">[]): LiveAlert[] => {
+const mapToLiveAlerts = (alerts: Partial<LiveAlert>[]): LiveAlert[] => {
   return alerts.map(alert => {
-    let alert_type: "violation" | "risk" | "information" = "information";
-    
-    if (alert.type === "violation") {
-      alert_type = "violation";
-    } else if (alert.type === "risk") {
-      alert_type = "risk";
-    }
-    
+    // Ensure each alert has all required properties
     return {
-      ...alert,
-      alert_type
+      id: alert.id || String(Math.random()),
+      type: alert.type || 'system',
+      severity: alert.severity || 'medium',
+      title: alert.title || 'Alert',
+      description: alert.description || '',
+      timestamp: alert.timestamp || new Date().toISOString(),
+      isRead: alert.isRead || false
     };
   });
 };
 
 // Mock alerts for development/testing purposes
-const mockAlerts: Omit<LiveAlert, "alert_type">[] = [
+const mockAlerts: Partial<LiveAlert>[] = [
   {
     id: "1",
-    type: "violation",
+    // Using supported type for LiveAlert
+    type: 'security',
     user_id: "user-123",
     username: "suspicious_user",
     avatar_url: "https://i.pravatar.cc/150?u=1",
@@ -45,7 +44,8 @@ const mockAlerts: Omit<LiveAlert, "alert_type">[] = [
   },
   {
     id: "2",
-    type: "risk",
+    // Using supported type for LiveAlert
+    type: 'system',
     user_id: "user-234",
     username: "potential_bot",
     avatar_url: "https://i.pravatar.cc/150?u=2",
@@ -86,20 +86,30 @@ export const useAlertProcessor = () => {
 
       // Format alerts
       const formattedAlerts: LiveAlert[] = [
-        ...(flaggedContent || []).map((content: any) => ({
-          ...formatFlaggedContentAsAlert(content),
-          alert_type: 'risk' as 'violation' | 'risk' | 'information'
-        })),
-        ...(reports || []).map((report: any) => ({
-          ...formatReportAsAlert(report),
-          alert_type: 'violation' as 'violation' | 'risk' | 'information'
-        }))
+        ...(flaggedContent || []).map((content: any) => {
+          const baseAlert = formatFlaggedContentAsAlert(content);
+          return {
+            ...baseAlert,
+            // Use valid type values for LiveAlert
+            type: 'system',
+            isRead: false
+          } as LiveAlert;
+        }),
+        ...(reports || []).map((report: any) => {
+          const baseAlert = formatReportAsAlert(report);
+          return {
+            ...baseAlert,
+            // Use valid type values for LiveAlert
+            type: 'security',
+            isRead: false
+          } as LiveAlert;
+        })
       ];
 
       // Sort by severity
       formattedAlerts.sort((a, b) => {
-        const severityRank = { high: 0, medium: 1, low: 2 };
-        return severityRank[a.severity] - severityRank[b.severity];
+        const severityRank = { critical: 0, high: 1, medium: 2, low: 3 };
+        return (severityRank[a.severity] || 999) - (severityRank[b.severity] || 999);
       });
 
       setAlerts(formattedAlerts);

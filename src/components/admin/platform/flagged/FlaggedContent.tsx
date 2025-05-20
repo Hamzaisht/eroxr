@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Card, 
@@ -11,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types/database.types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { isQueryError } from "@/utils/supabase/typeSafeOperations";
 
 // Define safe interfaces for flagged content
 interface FlaggedItem {
@@ -24,13 +22,6 @@ interface FlaggedItem {
   reporter_name?: string;
   reporter_avatar?: string;
 }
-
-// Check if flagged_content table exists and define its type
-type FlaggedContentRow = 'flagged_content' extends keyof Database['public']['Tables']
-  ? Database['public']['Tables']['flagged_content']['Row']
-  : { id: string; content_id: string; content_type: string; reason: string; severity: string; status: string; };
-
-type FlaggedContentKey = keyof FlaggedContentRow;
 
 export const FlaggedContent = () => {
   const [flaggedItems, setFlaggedItems] = useState<FlaggedItem[]>([]);
@@ -57,7 +48,7 @@ export const FlaggedContent = () => {
           flagged_by,
           profiles:flagged_by(username, avatar_url)
         `)
-        .eq('status' as FlaggedContentKey, 'flagged' as unknown as FlaggedContentRow['status'])
+        .eq('status', 'flagged')
         .order('flagged_at', { ascending: false });
       
       if (error) {
@@ -68,7 +59,7 @@ export const FlaggedContent = () => {
       }
 
       // Check if data is valid
-      if (!data || isQueryError(data)) {
+      if (!data) {
         console.error("Invalid data returned from flagged content query");
         setError("Failed to load flagged content: Invalid data format");
         setLoading(false);
@@ -137,8 +128,8 @@ export const FlaggedContent = () => {
     try {
       const { error } = await supabase
         .from('flagged_content')
-        .update({ status: 'resolved' as FlaggedContentRow['status'] })
-        .eq('id' as FlaggedContentKey, id as unknown as FlaggedContentRow['id']);
+        .update({ status: 'resolved' })
+        .eq('id', id);
       
       if (error) throw error;
       

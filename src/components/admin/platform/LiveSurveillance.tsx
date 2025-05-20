@@ -22,6 +22,7 @@ export const LiveSurveillance = () => {
   } = useGhostMode();
 
   const [loadingRefresh, setLoadingRefresh] = useState<boolean>(false);
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const { sessions, isLoading, fetchActiveSessions } = useLiveSurveillanceData();
   
   const handleRefresh = async () => {
@@ -50,6 +51,7 @@ export const LiveSurveillance = () => {
   };
 
   const handleSelectAlert = (alert: LiveAlert) => {
+    // Only try to start surveillance if the alert has a session property
     if (alert.session) {
       handleStartWatching(alert.session as LiveSession);
     }
@@ -107,6 +109,8 @@ export const LiveSurveillance = () => {
             isLoading={isLoading}
             onMonitorSession={handleStartWatching}
             error={null}
+            actionInProgress={actionInProgress}
+            onRefresh={handleRefresh}
           />
         </SurveillanceProvider>
       </div>

@@ -1,7 +1,7 @@
 
 export interface LiveAlert {
   id: string;
-  type: 'content' | 'security' | 'system' | 'user';
+  type: 'content' | 'security' | 'system' | 'user' | 'violation' | 'risk' | 'information';
   severity: 'low' | 'medium' | 'high' | 'critical';
   title: string;
   description: string;
@@ -12,4 +12,5 @@ export interface LiveAlert {
   source?: string;
   requiresAction?: boolean;
   metadata?: Record<string, any>;
+  session?: any; // Add session property
 }
