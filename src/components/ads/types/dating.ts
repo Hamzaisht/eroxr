@@ -6,8 +6,8 @@ export interface DatingAd {
   title: string;
   description: string;
   user_id: string;
-  username: string;
-  avatarUrl: string;
+  username?: string;
+  avatarUrl?: string;
   videoUrl?: string;
   isVerified?: boolean;
   isPremium?: boolean;

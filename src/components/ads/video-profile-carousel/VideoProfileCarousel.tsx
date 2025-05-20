@@ -113,7 +113,7 @@ export const VideoProfileCarousel = () => {
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border-2 border-white/50">
-                      <AvatarImage src={profile.profiles?.avatar_url} />
+                      <AvatarImage src={profile.profiles?.avatar_url || ''} />
                       <AvatarFallback>
                         {profile.profiles?.username?.charAt(0) || "U"}
                       </AvatarFallback>

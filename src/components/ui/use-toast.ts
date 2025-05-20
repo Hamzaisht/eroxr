@@ -1,16 +1,23 @@
 
-// Import directly from Radix UI to avoid circular references
-import { useToast as useRadixToast } from "@/components/ui/toast";
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
+// Importing directly from our toast component
+import { Toast } from "@/components/ui/toast";
+import { type ToastActionElement } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 5;
 const TOAST_REMOVE_DELAY = 1000000;
 
-type ToastType = ToastProps & {
+export type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>;
+
+export type ToastType = {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  variant?: "default" | "destructive" | "warning" | "success";
+  duration?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  className?: string;
 };
 
 const actionTypes = {
@@ -32,7 +39,7 @@ type ActionType = typeof actionTypes;
 type Action =
   | {
       type: ActionType["ADD_TOAST"];
-      toast: Omit<ToastType, "id">;
+      toast: Omit<ToastType, "id"> & { id?: string };
     }
   | {
       type: ActionType["UPDATE_TOAST"];
@@ -137,10 +144,10 @@ function dispatch(action: Action) {
   });
 }
 
-export function toast({ ...props }: Omit<ToastType, "id">) {
+export function toast(props: Omit<ToastType, "id"> & { id?: string }) {
   const id = props.id || genId();
 
-  const update = (props: ToastType) =>
+  const update = (props: Partial<ToastType> & { id: string }) =>
     dispatch({
       type: actionTypes.UPDATE_TOAST,
       toast: { ...props, id },

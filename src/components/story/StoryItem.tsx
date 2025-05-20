@@ -7,7 +7,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { AvatarImage } from "@/components/ui/avatar";
 import { AvatarFallback } from "@/components/ui/avatar";
 import { UniversalMedia } from "@/components/media/UniversalMedia";
-import { MediaType, MediaSource } from "@/utils/media/types";
+import { MediaType } from "@/utils/media/types";
+import { normalizeMediaSource } from "@/utils/media/mediaUtils";
 
 interface StoryItemProps {
   story: Story;
@@ -51,14 +52,13 @@ export const StoryItem = ({
   };
 
   // Create a proper media source object for UniversalMedia
-  const mediaItem: MediaSource = {
+  const mediaItem = normalizeMediaSource({
     url: story.media_url || story.video_url || '',
-    type: isVideo ? MediaType.VIDEO : MediaType.IMAGE,
     media_url: story.media_url,
     video_url: story.video_url,
     creator_id: story.creator_id,
-    media_type: isVideo ? MediaType.VIDEO : MediaType.IMAGE,
-  };
+    type: isVideo ? MediaType.VIDEO : MediaType.IMAGE
+  });
 
   return (
     <motion.div

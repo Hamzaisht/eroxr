@@ -23,6 +23,7 @@ export interface MediaSource extends GlobalMediaSource {
   thumbnail?: string;
   poster?: string;
   thumbnail_url?: string;
+  contentCategory?: string;
 }
 
 export type MediaOptions = {
@@ -63,4 +64,7 @@ export interface UploadOptions {
   bucket?: string;
   metadata?: Record<string, any>;
   onProgress?: (progress: number) => void;
+  contentCategory?: string;
+  autoResetOnCompletion?: boolean;
+  resetDelay?: number;
 }

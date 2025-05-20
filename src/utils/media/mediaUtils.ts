@@ -1,108 +1,158 @@
 
-import { MediaSource, MediaType } from '@/types/media';
+import { MediaSource, MediaType } from './types';
 
 /**
- * Extract media URL from various source formats
- * @param source The media source object or string
- * @returns The extracted URL
+ * Extracts the media URL from a MediaSource object or string
+ * @param source The source to extract URL from
+ * @returns The extracted URL or empty string
  */
-export function extractMediaUrl(source: MediaSource | string | null | undefined): string | null {
-  if (!source) return null;
-
+export function extractMediaUrl(source: MediaSource | string | null | undefined): string {
+  if (!source) return '';
+  
   if (typeof source === 'string') {
     return source;
   }
-
-  // Try to get the URL from various properties
-  return source.url || 
-         source.media_url || 
-         source.video_url ||
-         null;
+  
+  // Check for url property first (standard)
+  if (source.url) {
+    return source.url;
+  }
+  
+  // Legacy compatibility checks
+  if (source.video_url) {
+    return source.video_url;
+  }
+  
+  if (source.media_url) {
+    if (Array.isArray(source.media_url) && source.media_url.length > 0) {
+      return source.media_url[0];
+    }
+    return typeof source.media_url === 'string' ? source.media_url : '';
+  }
+  
+  return '';
 }
 
 /**
- * Creates a unique file path for uploaded media files
- * @param userId User ID or other identifier
- * @param filename Original filename or File object
- * @returns A unique filepath with timestamp
- */
-export function createUniqueFilePath(userId: string, filename: string | File): string {
-  const actualFilename = filename instanceof File ? filename.name : filename;
-  return `media/${userId}/${Date.now()}-${actualFilename}`;
-}
-
-/**
- * Creates a unique file path (legacy version for backward compatibility)
- */
-export function createUniqueMediaPath(filename: string): string {
-  return `media/${Date.now()}-${filename}`;
-}
-
-/**
- * Normalize a media source to ensure it has the expected properties
- * @param item The media item to normalize
+ * Normalizes different media source formats to a standard MediaSource object
+ * @param source The source to normalize
  * @returns A normalized MediaSource object
  */
-export function normalizeMediaSource(item: MediaSource | string): MediaSource {
-  if (typeof item === 'string') {
-    // Convert string URL to MediaSource object
-    return {
-      url: item,
-      type: determineMediaType(item),
+export function normalizeMediaSource(source: MediaSource | string | null | undefined): MediaSource {
+  if (!source) {
+    return { url: '', type: MediaType.UNKNOWN };
+  }
+  
+  // If it's a string, create a MediaSource object
+  if (typeof source === 'string') {
+    // Try to determine the type from the URL
+    const type = determineMediaTypeFromUrl(source);
+    return { 
+      url: source,
+      type
     };
   }
-
-  // Create a new object to avoid mutating the original
-  const normalized: MediaSource = { ...item };
-
-  // Handle legacy properties
-  if (!normalized.url) {
-    // Try to extract URL from various properties
-    normalized.url = normalized.media_url || normalized.video_url || '';
+  
+  // It's already a MediaSource-like object
+  const normalizedSource: MediaSource = { ...source };
+  
+  // Ensure url property exists (highest priority)
+  if (!normalizedSource.url) {
+    if (normalizedSource.video_url) {
+      normalizedSource.url = normalizedSource.video_url;
+      normalizedSource.type = normalizedSource.type || MediaType.VIDEO;
+    } else if (normalizedSource.media_url) {
+      const mediaUrl = Array.isArray(normalizedSource.media_url) 
+        ? normalizedSource.media_url[0] 
+        : normalizedSource.media_url;
+      normalizedSource.url = mediaUrl;
+      
+      // If type isn't already set, try to determine it
+      if (!normalizedSource.type) {
+        normalizedSource.type = determineMediaTypeFromUrl(mediaUrl);
+      }
+    }
   }
-
-  // Handle legacy type
-  if (!normalized.type && normalized.media_type) {
-    normalized.type = normalized.media_type;
+  
+  // Ensure type exists
+  if (!normalizedSource.type) {
+    normalizedSource.type = normalizedSource.url
+      ? determineMediaTypeFromUrl(normalizedSource.url)
+      : MediaType.UNKNOWN;
   }
-
-  // Determine type if not set
-  if (!normalized.type) {
-    normalized.type = determineMediaType(normalized.url);
+  
+  // Handle media_type backward compatibility
+  if (normalizedSource.media_type && !normalizedSource.type) {
+    normalizedSource.type = normalizedSource.media_type;
   }
-
-  return normalized;
+  
+  return normalizedSource;
 }
 
 /**
- * Determine the media type based on the URL
- * @param url The media URL
- * @returns The determined MediaType
+ * Determines the media type from a URL based on file extension
+ * @param url URL to analyze
+ * @returns The detected MediaType
  */
-export function determineMediaType(url: string): MediaType {
+export function determineMediaTypeFromUrl(url: string): MediaType {
   if (!url) return MediaType.UNKNOWN;
   
-  const lowercaseUrl = url.toLowerCase();
-  
-  if (lowercaseUrl.match(/\.(mp4|webm|mov|avi|m4v)($|\?)/i)) {
+  // Check for video extensions
+  if (/\.(mp4|webm|mov|avi|wmv)(\?.*)?$/i.test(url)) {
     return MediaType.VIDEO;
   }
   
-  if (lowercaseUrl.match(/\.(jpg|jpeg|png|webp|avif|tif|tiff)($|\?)/i)) {
-    return MediaType.IMAGE;
-  }
-  
-  if (lowercaseUrl.match(/\.(gif)($|\?)/i)) {
-    return MediaType.GIF;
-  }
-  
-  if (lowercaseUrl.match(/\.(mp3|wav|ogg|aac)($|\?)/i)) {
+  // Check for audio extensions
+  if (/\.(mp3|wav|ogg|m4a)(\?.*)?$/i.test(url)) {
     return MediaType.AUDIO;
   }
   
-  if (lowercaseUrl.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)($|\?)/i)) {
-    return MediaType.DOCUMENT;
+  // Check for image extensions
+  if (/\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i.test(url)) {
+    return MediaType.IMAGE;
+  }
+  
+  // Check for common video platforms
+  if (url.includes('youtube.com') || url.includes('youtu.be') || 
+      url.includes('vimeo.com') || url.includes('dailymotion.com')) {
+    return MediaType.VIDEO;
   }
   
   return MediaType.UNKNOWN;
+}
+
+/**
+ * Creates a thumbnail URL for a video URL
+ * @param videoUrl The video URL to create a thumbnail for
+ * @returns The thumbnail URL
+ */
+export function createThumbnailUrl(videoUrl: string): string {
+  if (!videoUrl) return '';
+  
+  // YouTube thumbnail
+  const youtubeMatch = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  if (youtubeMatch && youtubeMatch[1]) {
+    return `https://img.youtube.com/vi/${youtubeMatch[1]}/hqdefault.jpg`;
+  }
+  
+  // For other videos, default to replacing extension
+  return videoUrl.replace(/\.(mp4|webm|mov|avi)$/i, '.jpg');
+}
+
+/**
+ * Creates options for file upload components
+ * @param options Basic options
+ * @param additionalOptions Additional options to merge in
+ * @returns Combined upload options
+ */
+export function createUploadOptions(options: {
+  bucket?: string;
+  folderPath?: string;
+  maxSizeInMB?: number;
+  allowedTypes?: string[];
+}, additionalOptions = {}): any {
+  return {
+    ...options,
+    ...additionalOptions
+  };
 }
